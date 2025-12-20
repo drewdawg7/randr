@@ -1,6 +1,6 @@
 use game::combat::{Named, enter_combat};
 use game::entities::mob::{MobKind, MobRegistry};
-use game::entities::{Player, Mob};
+use game::entities::{Mob, Player, Progression};
 mod menu;
 
 use game::item::{ItemKind, ItemRegistry};
@@ -12,6 +12,7 @@ fn main() -> std::io::Result<()> {
         attack: 12,
         gold: 0,
         name: "Drew",
+        prog: Progression::new(),
     };
     let m_registry = MobRegistry::new();
     let i_registry = ItemRegistry::new();

@@ -1,4 +1,4 @@
-use crate::combat::{AttackResult, Combatant, DropsGold, HasGold};
+use crate::{combat::{AttackResult, Combatant, DropsGold, HasGold}, entities::progression::{GivesXP, HasProgression}};
 
 
 pub fn award_kill_gold<K: HasGold, T:DropsGold>(killer: &mut K, target: &mut T) -> i32 
@@ -27,8 +27,8 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 
 pub fn enter_combat<P, M>(player: &mut P, mob: &mut M) 
 where 
-    P: Combatant + HasGold,
-    M: Combatant + DropsGold,
+    P: Combatant + HasGold + HasProgression,
+    M: Combatant + DropsGold + GivesXP,
 {
     while player.is_alive() && mob.is_alive() {
         let a1 = attack(player, mob);
@@ -52,6 +52,8 @@ where
         println!("You died!");
     } else if !mob.is_alive() {
         let gold = award_kill_gold(player, mob);
+        let xp = mob.give_xp();
+        player.gain_xp(xp);
         println!("{} was slain. You have recieved {} gold.", mob.name(), gold);
         
     }

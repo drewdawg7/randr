@@ -1,5 +1,5 @@
 
-use crate::{combat::{Combatant, DropsGold, Named}, registry::{Registry, RegistryDefaults, SpawnFromSpec}};
+use crate::{combat::{Combatant, DropsGold, Named}, entities::progression::GivesXP, registry::{Registry, RegistryDefaults, SpawnFromSpec}};
 use rand::Rng;
 
 pub type MobSpecId = usize;
@@ -79,6 +79,13 @@ impl DropsGold for Mob {
         rng.gen_range(1..=5)
     }
 
+}
+
+impl GivesXP for Mob {
+    fn give_xp(&self) -> i32 {
+        let mut rng = rand::thread_rng();
+        rng.gen_range(15..=20)
+    }
 }
 
 impl Combatant for Mob {

@@ -1,5 +1,5 @@
 
-use crate::combat::{Combatant, HasGold, Named};
+use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}};
 
 #[derive(Debug, Clone)]
 pub struct Player {
@@ -7,6 +7,12 @@ pub struct Player {
     pub health: i32,
     pub attack: i32,
     pub gold: i32,
+    pub prog: Progression,
+}
+
+impl Player {
+    pub fn on_level_up(&mut self) {
+    }
 }
 
 impl Named for Player {
@@ -38,3 +44,13 @@ impl Combatant for Player {
 
 } 
 
+impl HasProgression for Player {
+    fn progression(&self) -> &Progression { &self.prog }
+    fn progression_mut(&mut self) -> &mut Progression {
+        &mut self.prog
+    }
+    fn on_level_up(&mut self) {
+        self.health += 5;
+        self.attack += 1;
+    }
+}
