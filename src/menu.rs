@@ -45,29 +45,33 @@ pub fn run_menu() -> std::io::Result<MenuChoice> {
 
         execute!(stdout, Print("\nUse ↑/↓ and Enter. (Esc to quit)\r\n"))?;
         stdout.flush()?; // fine to keep
+        
 
-        if let Event::Key(key) = event::read()? { match key.code {
-            KeyCode::Up => {
-                selected = if selected == 0 { options.len() - 1 } else { selected - 1 };
+        let ev = event::read()?;
+        if let Event::Key(key) = ev {
+            match key.code {
+                KeyCode::Up => {
+                    selected = if selected == 0 { options.len() - 1 } else { selected - 1 };
+                }
+                KeyCode::Down => {
+                    selected = (selected + 1) % options.len();
+                }
+                KeyCode::Enter => {
+                    terminal::disable_raw_mode()?;
+                    execute!(stdout, cursor::Show, LeaveAlternateScreen)?;
+                    return Ok(match selected {
+                        0 => MenuChoice::Fight,
+                        _ => MenuChoice::Quit,
+                    });
+                }
+                KeyCode::Esc => {
+                    terminal::disable_raw_mode()?;
+                    execute!(stdout, cursor::Show, LeaveAlternateScreen)?;
+                    return Ok(MenuChoice::Quit);
+                }
+                _ => {}
             }
-            KeyCode::Down => {
-                selected = (selected + 1) % options.len();
-            }
-            KeyCode::Enter => {
-                terminal::disable_raw_mode()?;
-                execute!(stdout, cursor::Show, LeaveAlternateScreen)?;
-                return Ok(match selected {
-                    0 => MenuChoice::Fight,
-                    _ => MenuChoice::Quit,
-                });
-            }
-            KeyCode::Esc => {
-                terminal::disable_raw_mode()?;
-                execute!(stdout, cursor::Show, LeaveAlternateScreen)?;
-                return Ok(MenuChoice::Quit);
-            }
-            _ => {}
-        } }
+        }
     }
 
 }
