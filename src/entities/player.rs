@@ -3,7 +3,7 @@ use crate::combat::{Combatant, HasGold, Named};
 
 #[derive(Debug, Clone)]
 pub struct Player {
-    pub name: String,
+    pub name: &'static str,
     pub health: i32,
     pub attack: i32,
     pub gold: i32,
@@ -11,7 +11,7 @@ pub struct Player {
 
 impl Named for Player {
     fn name(&self) -> &str {
-        self.name.as_str()
+        self.name
     }
 }
 

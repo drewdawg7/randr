@@ -1,32 +1,75 @@
-use crate::combat::{Combatant, Named, DropsGold};
+
+use crate::{combat::{Combatant, DropsGold, Named}, registry::{Registry, RegistryDefaults, SpawnFromSpec}};
 use rand::Rng;
+
+pub type MobSpecId = usize;
 
 #[derive(Debug, Clone)]
 pub struct Mob {
-    pub name: String,
+    pub spec: MobKind,
+    pub name: &'static str,
     pub health: i32,
     pub attack: i32,
 }
 
-impl Mob {
-    pub fn new(name: &str) -> Mob {
-        Mob {
-            name: name.into(),
-            health: 22,
-            attack: 4
+pub struct MobSpec {
+    pub name: &'static str,
+    pub max_health: i32,
+    pub attack: i32,
+}
 
+
+#[derive(Debug, Copy, Clone,Eq, PartialEq, Hash)]
+pub enum MobKind {
+    Slime,
+    Goblin
+}
+
+
+
+pub type MobRegistry = Registry<MobKind, MobSpec>; 
+
+impl SpawnFromSpec<MobKind> for MobSpec {
+    type Output = Mob;
+    fn spawn_from_spec(kind: MobKind, spec: &Self) -> Self::Output {
+        Mob {
+            spec: kind,
+            name: spec.name,
+            health: spec.max_health,
+            attack: spec.attack
         }
-    }
-    pub fn spawn_mobs(amount: i32) -> Vec<Mob> {
-        (0..amount)
-            .map(|_| Mob::new("Slime"))
-            .collect()
     }
 }
 
+impl RegistryDefaults<MobKind> for MobSpec {
+    fn defaults() -> impl IntoIterator<Item = (MobKind, MobSpec)> {
+        [
+            (
+                MobKind::Slime,
+                MobSpec {
+                    name: "Slime",
+                    max_health: 10,
+                    attack: 2
+
+                }
+            ),
+            (
+                MobKind::Goblin,
+                MobSpec {
+                    name: "Goblin",
+                    max_health: 15,
+                    attack: 4
+                }
+            )
+        ]
+    }
+}
+
+
+
 impl Named for Mob {
     fn name(&self) -> &str {
-        self.name.as_str()
+        self.name
     }
 }
 
