@@ -1,4 +1,4 @@
-use game::combat::{Combatant, Named, AttackResult, enter_combat};
+use game::combat::{Named, enter_combat};
 use game::entities::{Player, Mob};
 mod menu;
 
