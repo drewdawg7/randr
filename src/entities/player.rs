@@ -1,13 +1,24 @@
 
-use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}};
+use std::fmt::Display;
+
+use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}, inventory::{HasInventory, Inventory}};
 
 #[derive(Debug, Clone)]
 pub struct Player {
     pub name: &'static str,
     pub health: i32,
+    pub max_health: i32,
     pub attack: i32,
     pub gold: i32,
     pub prog: Progression,
+    pub inventory: Inventory,
+}
+
+
+impl Display for Player {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({}/{})", self.name, self.health, self.max_health)
+    }
 }
 
 impl Player {
@@ -29,6 +40,19 @@ impl HasGold for Player {
         &mut self.gold
     }
 }
+
+impl HasInventory for Player {
+    fn inventory(&self) -> &Inventory {
+        &self.inventory
+    }
+
+    fn inventory_mut(&mut self) -> &mut Inventory {
+        &mut self.inventory
+    }
+}
+
+
+
 impl Combatant for Player {
     fn attack_power(&self) -> i32 {
         self.attack

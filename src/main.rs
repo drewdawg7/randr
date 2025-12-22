@@ -1,23 +1,28 @@
-use game::combat::{Named, enter_combat};
+use game::combat::{enter_combat};
 use game::entities::mob::{MobKind, MobRegistry};
 use game::entities::{Mob, Player, Progression};
 mod menu;
 
-use game::item::{ItemKind, ItemRegistry};
+use game::inventory::{EquipmentSlot, HasInventory, Inventory};
+use game::item::definition::{ItemKind, ItemRegistry};
 use menu::{run_menu, MenuChoice};
+
 fn main() -> std::io::Result<()> {
     
     let mut player = Player {
         health: 100,
+        max_health: 100,
         attack: 12,
         gold: 0,
         name: "Drew",
         prog: Progression::new(),
+        inventory: Inventory::new(),
+
     };
     let m_registry = MobRegistry::new();
     let i_registry = ItemRegistry::new();
     let sword = i_registry.spawn(ItemKind::Sword);
-    println!("item: {:?}", sword);
+    player.equip_item(sword, EquipmentSlot::Weapon);
     while let MenuChoice::Fight = run_menu()? {
 
         let mut mobs: Vec<Mob> = Vec::new();
@@ -32,7 +37,7 @@ fn main() -> std::io::Result<()> {
             enter_combat(&mut player, &mut mob);
         }
 
-        println!("{:?}", player);
+        println!("{}", player);
         println!("\nPress Enter to return to menu...");
         let _ = std::io::stdin().read_line(&mut String::new());
     }

@@ -1,3 +1,3 @@
-pub mod item;
+pub mod definition;
 
-pub use item::*;
+pub use definition::Item;

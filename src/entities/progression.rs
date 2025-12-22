@@ -1,4 +1,3 @@
-use rand::Rng;
 
 #[derive(Debug, Default, Clone)]
 pub struct Progression {
