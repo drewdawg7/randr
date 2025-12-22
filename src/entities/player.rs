@@ -1,7 +1,7 @@
 
 use std::fmt::Display;
 
-use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}, inventory::{HasInventory, Inventory}, utilities::{text_bar, text_bar_with_label}};
+use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}, inventory::{EquipmentSlot, HasInventory, Inventory}, utilities::{text_bar, text_bar_with_label}};
 
 #[derive(Debug, Clone)]
 pub struct Player {
@@ -28,14 +28,16 @@ impl Player {
 
         let hp = text_bar_with_label("HP", self.health, self.max_health, 10);
         let gold = format!("{} gold", self.gold);
-
+        let attack = format!("Attack: {} ({})", self.attack_power(), self.attack);
         let xp = self.progression().pretty_print();
         let first_row = format!("{} | {} | {}", self.name, self.progression().level, gold);
+
         let s: String = format!(
-            "\n{}\n{}\n{}\n",
+            "\n{}\n{}\n{}\n{}\n",
             first_row,
             hp,
             xp,
+            attack
         );
         s
     }
@@ -70,9 +72,13 @@ impl HasInventory for Player {
 
 impl Combatant for Player {
     fn attack_power(&self) -> i32 {
-        self.attack
+        let weapon = self.get_equipped_item(EquipmentSlot::Weapon);
+        let weapon_attack = match weapon {
+            Some(w) => w.attack,
+            None => 0
+        };
+        self.attack + weapon_attack
     }
-
     fn health(&self) -> i32 {
         self.health
     }
