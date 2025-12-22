@@ -1,3 +1,5 @@
+use crate::utilities::{text_bar, text_bar_with_label};
+
 
 #[derive(Debug, Default, Clone)]
 pub struct Progression {
@@ -26,6 +28,11 @@ impl Progression {
             gained += 1;
         }
         gained
+    }
+
+    pub fn pretty_print(&self) -> String {
+        let xp_to_next_level = Self::xp_to_next_level(self.level);
+        text_bar_with_label("XP", self.xp, xp_to_next_level, 10)
     }
 }
 

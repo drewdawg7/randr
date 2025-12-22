@@ -1,7 +1,7 @@
 
 use std::fmt::Display;
 
-use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}, inventory::{HasInventory, Inventory}};
+use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}, inventory::{HasInventory, Inventory}, utilities::{text_bar, text_bar_with_label}};
 
 #[derive(Debug, Clone)]
 pub struct Player {
@@ -22,7 +22,22 @@ impl Display for Player {
 }
 
 impl Player {
-    pub fn on_level_up(&mut self) {
+    
+    pub fn pretty_print(&self) -> String {
+
+
+        let hp = text_bar_with_label("HP", self.health, self.max_health, 10);
+        let gold = format!("{} gold", self.gold);
+
+        let xp = self.progression().pretty_print();
+        let first_row = format!("{} | {} | {}", self.name, self.progression().level, gold);
+        let s: String = format!(
+            "\n{}\n{}\n{}\n",
+            first_row,
+            hp,
+            xp,
+        );
+        s
     }
 }
 

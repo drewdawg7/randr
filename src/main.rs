@@ -1,5 +1,6 @@
 use game::combat::{enter_combat};
 use game::entities::mob::{MobKind, MobRegistry};
+use game::entities::progression::HasProgression;
 use game::entities::{Mob, Player, Progression};
 mod menu;
 
@@ -37,7 +38,7 @@ fn main() -> std::io::Result<()> {
             enter_combat(&mut player, &mut mob);
         }
 
-        println!("{}", player);
+        println!("{}", player.pretty_print());
         println!("\nPress Enter to return to menu...");
         let _ = std::io::stdin().read_line(&mut String::new());
     }
