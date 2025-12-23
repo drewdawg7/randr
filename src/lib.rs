@@ -5,3 +5,4 @@ pub mod registry;
 pub mod inventory;
 pub mod utilities;
 pub mod stats;
+pub mod store;

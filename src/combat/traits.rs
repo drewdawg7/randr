@@ -32,4 +32,8 @@ pub trait HasGold {
     fn add_gold(&mut self, amount: i32) {
         *self.gold_mut() += amount;
     }
+
+    fn dec_gold(&mut self, amount: i32) {
+        *self.gold_mut() = (self.gold() - amount).max(0);
+    }
 }

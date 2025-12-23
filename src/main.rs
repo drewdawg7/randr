@@ -8,6 +8,7 @@ mod menu;
 use game::inventory::{EquipmentSlot, HasInventory, Inventory};
 use game::item::definition::{ItemKind, ItemRegistry};
 use game::stats::{self, StatInstance, StatSheet, StatType};
+use game::store::{self, Store};
 use menu::{run_menu, MenuChoice};
 
 fn main() -> std::io::Result<()> {
@@ -46,6 +47,10 @@ fn main() -> std::io::Result<()> {
     let m_registry = MobRegistry::new();
     let i_registry = ItemRegistry::new();
     let sword = i_registry.spawn(ItemKind::Sword);
+    let mut store = Store::new("The Shop");
+    store.add_item(&sword);
+    store.add_item(&sword);
+    print!("{:?}", store);
     player.equip_item(sword, EquipmentSlot::Weapon);
     while let MenuChoice::Fight = run_menu()? {
 

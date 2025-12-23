@@ -4,7 +4,7 @@ use std::fmt::Display;
 use crate::registry::{Registry, RegistryDefaults, SpawnFromSpec};
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Copy, Eq, PartialEq)]
 pub struct Item {
     pub kind: ItemKind,
     pub item_type: ItemType,
