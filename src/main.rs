@@ -52,7 +52,7 @@ fn main() -> std::io::Result<()> {
     store.add_item(&sword);
     print!("{:?}", store);
     player.equip_item(sword, EquipmentSlot::Weapon);
-    while let MenuChoice::Fight = run_menu()? {
+    while let MenuChoice::Fight = run_menu(&store)? {
 
         let mut mobs: Vec<Mob> = Vec::new();
         let m1 = m_registry.spawn(MobKind::Slime);

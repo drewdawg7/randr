@@ -1,49 +1,44 @@
-use std::io::{self, Write};
+use std::io::{self, Stdout, Write};
 
 
 use crossterm::{
-    cursor,
     event::{self, Event, KeyCode},
-    execute,
-    terminal::{self, ClearType},
+    terminal::{self},
     style::Print,
-    terminal::{ EnterAlternateScreen, LeaveAlternateScreen}
 
 };
+use game::{store::Store, ui::{enter_alternate_screen, leave_alternate_screen, move_down, move_up, print_to_screen, reset_screen}};
 
 
 #[derive(Debug, Clone, Copy)]
 pub enum MenuChoice {
     Fight,
+    Store,
     Quit
 }
-pub fn run_menu() -> std::io::Result<MenuChoice> {
+pub fn run_menu(store: &Store) -> std::io::Result<MenuChoice> {
     terminal::enable_raw_mode()?;
     let mut stdout = io::stdout();
+    enter_alternate_screen(&mut stdout);
 
-    execute!(stdout, EnterAlternateScreen, cursor::Hide)?;
-
-    let options = ["Fight", "Quit"];
+    let options = ["Fight", "Store", "Quit"];
     let mut selected: usize = 0;
 
     loop {
-        // redraw
-        execute!(
-            stdout,
-            terminal::Clear(ClearType::All),
-            cursor::MoveTo(0, 0),
-            Print("== Main Menu ==\r\n\r\n"),
-        )?;
-
+        reset_screen(&mut stdout);
         for (i, opt) in options.iter().enumerate() {
             if i == selected {
-                execute!(stdout, Print("> "), Print(*opt), Print("\r\n"))?;
+                print_to_screen(&mut stdout, Print("> "));
+                print_to_screen(&mut stdout, Print(*opt));
+                print_to_screen(&mut stdout, Print("\r\n"));
             } else {
-                execute!(stdout, Print("  "), Print(*opt), Print("\r\n"))?;
+                print_to_screen(&mut stdout, Print(" "));
+                print_to_screen(&mut stdout, Print(*opt));
+                print_to_screen(&mut stdout, Print("\r\n"));
             }
         }
-
-        execute!(stdout, Print("\nUse ↑/↓ and Enter. (Esc to quit)\r\n"))?;
+        
+        print_to_screen(&mut stdout,  Print("\nUse ↑/↓ and Enter. (Esc to quit)\r\n"));
         stdout.flush()?; // fine to keep
         
 
@@ -51,22 +46,31 @@ pub fn run_menu() -> std::io::Result<MenuChoice> {
         if let Event::Key(key) = ev {
             match key.code {
                 KeyCode::Up => {
-                    selected = if selected == 0 { options.len() - 1 } else { selected - 1 };
+                    selected = move_up(selected, options.len());
                 }
                 KeyCode::Down => {
-                    selected = (selected + 1) % options.len();
+                    selected = move_down(selected, options.len());
                 }
                 KeyCode::Enter => {
-                    terminal::disable_raw_mode()?;
-                    execute!(stdout, cursor::Show, LeaveAlternateScreen)?;
-                    return Ok(match selected {
-                        0 => MenuChoice::Fight,
-                        _ => MenuChoice::Quit,
-                    });
+                    match selected {
+                        0 => {
+                            cleanup_tui(&mut stdout)?;
+                            return Ok(MenuChoice::Fight);
+                        }
+                        1 => {
+                            reset_screen(&mut stdout);
+                            run_store_screen(&mut stdout, store)?;
+                            return Ok(MenuChoice::Store);
+                        }
+                        _ => {
+                            cleanup_tui(&mut stdout)?;
+                            return Ok(MenuChoice::Quit);
+                        }
+                    }
                 }
                 KeyCode::Esc => {
                     terminal::disable_raw_mode()?;
-                    execute!(stdout, cursor::Show, LeaveAlternateScreen)?;
+                    leave_alternate_screen(&mut stdout);
                     return Ok(MenuChoice::Quit);
                 }
                 _ => {}
@@ -74,4 +78,31 @@ pub fn run_menu() -> std::io::Result<MenuChoice> {
         }
     }
 
+}
+
+
+fn run_store_screen(stdout: &mut Stdout, store: &Store) -> std::io::Result<()> {
+    terminal::disable_raw_mode()?;
+    print_to_screen(stdout, Print(&store));
+    print_to_screen(stdout, Print("\n> Back"));
+    print_to_screen(stdout, Print("Press Enter to go back. (Esc also works)"));
+    terminal::enable_raw_mode()?;
+    loop {
+        if let Event::Key(key) = event::read()? {
+            match key.code {
+                KeyCode::Enter | KeyCode::Esc => {
+                    reset_screen(stdout);
+                    break
+                },
+                _ => {}
+            }
+        }
+    }
+
+    Ok(())
+}
+
+fn cleanup_tui(stdout: &mut io::Stdout) -> std::io::Result<()> {
+    terminal::disable_raw_mode()?;
+    Ok(())
 }

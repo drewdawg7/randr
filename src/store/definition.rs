@@ -1,4 +1,6 @@
 
+use std::fmt::Display;
+
 use crate::{combat::HasGold, item::Item};
 
 #[derive(Debug)]
@@ -41,6 +43,12 @@ impl StoreItem {
 
     pub fn sell_price(&self) -> i32 {
         self.price / 2
+    }
+}
+
+impl Display for StoreItem {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} |  {}g |  {}", self.item.name, self.price, self.quantity)
     }
 }
 
@@ -98,6 +106,17 @@ impl Store {
                 self.inventory.push(store_item);
             }
        }; 
+    }
+}
+
+
+impl Display for Store {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{}", self.name)?;
+        for item in &self.inventory {
+            writeln!(f, "{}", item)?
+        }
+        Ok(())
     }
 }
 
