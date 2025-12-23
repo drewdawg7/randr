@@ -1,34 +1,67 @@
 
 use std::fmt::Display;
 
-use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}, inventory::{EquipmentSlot, HasInventory, Inventory}, utilities::{text_bar, text_bar_with_label}};
+use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Progression}, inventory::{EquipmentSlot, HasInventory, Inventory}, stats::{HasStats, StatSheet, StatType}, utilities::{text_bar_with_label}};
 
 #[derive(Debug, Clone)]
 pub struct Player {
     pub name: &'static str,
-    pub health: i32,
-    pub max_health: i32,
-    pub attack: i32,
     pub gold: i32,
     pub prog: Progression,
     pub inventory: Inventory,
+    pub stats: StatSheet
 }
 
 
 impl Display for Player {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({}/{})", self.name, self.health, self.max_health)
+        write!(f, "{} ({}/{})", self.name, self.get_health(), self.get_max_health())
     }
 }
 
+impl HasStats for Player {
+    fn get_stat_sheet(&self) -> &StatSheet {
+        &self.stats
+    }
+
+    fn get_stat_sheet_mut(&mut self) -> &mut StatSheet {
+        &mut self.stats
+    }
+}
+
+
 impl Player {
-    
+   
+    pub fn get_attack(&self) -> i32 {
+        self.get_stat_sheet().get_stat_value(StatType::Attack)
+    }
+
+    pub fn increase_attack(&mut self, amount: i32) {
+        self.get_stat_sheet_mut().increase_stat(StatType::Attack, amount);
+    }
+
+    pub fn get_health(&self) -> i32 {
+        self.get_stat_sheet().get_stat_value(StatType::Health)
+    }
+
+    pub fn get_max_health(&self) -> i32 {
+        self.get_stat_sheet().get_max_stat_value(StatType::Health)
+    }
+
+    pub fn increase_health(&mut self, amount: i32) {
+        self.get_stat_sheet_mut().increase_stat(StatType::Health, amount);
+    }
+
+    pub fn decrease_health(&mut self, amount: i32) {
+        self.get_stat_sheet_mut().decrease_stat(StatType::Health, amount);
+    }
+
     pub fn pretty_print(&self) -> String {
 
 
-        let hp = text_bar_with_label("HP", self.health, self.max_health, 10);
+        let hp = text_bar_with_label("HP", self.get_health(), self.get_max_health(), 10);
         let gold = format!("{} gold", self.gold);
-        let attack = format!("Attack: {} ({})", self.attack_power(), self.attack);
+        let attack = format!("Attack: {} ({})", self.attack_power(), self.get_attack());
         let xp = self.progression().pretty_print();
         let first_row = format!("{} | {} | {}", self.name, self.progression().level, gold);
 
@@ -75,17 +108,22 @@ impl Combatant for Player {
         let weapon = self.get_equipped_item(EquipmentSlot::Weapon);
         let weapon_attack = match weapon {
             Some(w) => w.attack,
-            None => 0
+            None    => 0
         };
-        self.attack + weapon_attack
+        let stat = self.get_stat_sheet().get_stat(StatType::Attack);
+
+        match stat {
+            Some(si) => si.current_value + weapon_attack,
+            None     => weapon_attack
+        }
     }
-    fn health(&self) -> i32 {
-        self.health
+    fn increase_health(&mut self, amount: i32) {
+        self.increase_health(amount);
+    }  
+    fn decrease_health(&mut self, amount: i32) {
+        self.decrease_health(amount);
     }
 
-    fn health_mut(&mut self) -> &mut i32 {
-        &mut self.health
-    }
 
 } 
 
@@ -95,7 +133,7 @@ impl HasProgression for Player {
         &mut self.prog
     }
     fn on_level_up(&mut self) {
-        self.health += 5;
-        self.attack += 1;
+        self.increase_health(5);
+        self.increase_attack(1);
     }
 }

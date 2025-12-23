@@ -12,7 +12,7 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 -> AttackResult {
     let target_health_before = defender.health();
     let damage_to_target = attacker.attack_power();
-    *defender.health_mut() -= damage_to_target;
+    defender.take_damage(damage_to_target);
     let target_health_after = defender.health();
     let target_died = defender.is_alive();
     AttackResult {

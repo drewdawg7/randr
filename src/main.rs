@@ -1,23 +1,46 @@
+use std::collections::HashMap;
+
 use game::combat::{enter_combat};
 use game::entities::mob::{MobKind, MobRegistry};
-use game::entities::progression::HasProgression;
 use game::entities::{Mob, Player, Progression};
 mod menu;
 
 use game::inventory::{EquipmentSlot, HasInventory, Inventory};
 use game::item::definition::{ItemKind, ItemRegistry};
+use game::stats::{self, StatInstance, StatSheet, StatType};
 use menu::{run_menu, MenuChoice};
 
 fn main() -> std::io::Result<()> {
     
     let mut player = Player {
-        health: 100,
-        max_health: 100,
-        attack: 12,
         gold: 0,
         name: "Drew",
         prog: Progression::new(),
         inventory: Inventory::new(),
+
+            stats: {
+                let mut stats: HashMap<StatType, StatInstance> = HashMap::new();
+                stats.insert(
+                    StatType::Attack, 
+                    StatInstance {
+                        stat_type: StatType::Attack,
+                        current_value: 12,
+                        max_value: 12
+                    }
+
+                );
+                stats.insert(
+                    StatType::Health, 
+                    StatInstance {
+                        stat_type: StatType::Health,
+                        current_value: 100,
+                        max_value: 100
+                    }
+
+                );
+
+                StatSheet { stats }
+            }
 
     };
     let m_registry = MobRegistry::new();
