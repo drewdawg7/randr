@@ -1,14 +1,11 @@
-use crate::stats::{HasStats, StatType};
+use crate::stats::{HasStats};
 
 pub trait Combatant:Named + HasStats{
     fn attack_power(&self) -> i32;
     fn increase_health(&mut self, amount: i32);
     fn decrease_health(&mut self, amount: i32);
     fn health(&self) -> i32 {
-        match self.get_stat_sheet().get_stat(StatType::Health) {
-            Some(si) => si.current_value,
-            None     => 0
-        }
+        self.hp()
     }
     fn is_alive(&self) -> bool {
         self.health() > 0

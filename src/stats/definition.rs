@@ -13,25 +13,30 @@ impl StatSheet {
     pub fn stats_mut(&mut self) -> &mut HashMap<StatType, StatInstance> {
         &mut self.stats
     }
-    pub fn get_stat(&self, stat: StatType) -> Option<&StatInstance> {
-        self.stats.get(&stat)
+
+
+    pub fn stat(&self, t:StatType) -> Option<&StatInstance> {
+        self.stats.get(&t)
     }
 
-    pub fn get_stat_value(&self, stat: StatType) -> i32 {
-        let si = self.get_stat(stat);
-        match si {
+    pub fn stat_mut(&mut self, t: StatType) -> Option<&mut StatInstance> {
+        self.stats.get_mut(&t)
+    }
+    pub fn value(&self, t: StatType) -> i32 {
+        match self.stat(t) {
             Some(si) => si.current_value,
-            None     => 0,
+            None     => 0
         }
     }
 
-    pub fn get_max_stat_value(&self, stat: StatType) -> i32 {
-        let si = self.get_stat(stat);
-        match si {
+    pub fn max_value(&self, t: StatType) -> i32 {
+        match self.stat(t) {
             Some(si) => si.max_value,
             None     => 0
         }
     }
+
+
     pub fn increase_stat(&mut self, stat: StatType, amount: i32) {
 
         if let Some(si) = self.stats_mut().get_mut(&stat) { si.increase(amount);}

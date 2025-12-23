@@ -17,19 +17,21 @@ pub struct Mob {
 impl Mob {
 
     pub fn get_health(&self) -> i32 {
-        self.get_stat_sheet().get_stat_value(StatType::Health)
+        self.hp()
     }
-
+    pub fn get_attack(&self) -> i32 {
+        self.attack()
+    }
     pub fn get_max_health(&self) -> i32 {
-        self.get_stat_sheet().get_max_stat_value(StatType::Health)
+        self.max_hp()
     }
 
     pub fn increase_health(&mut self, amount: i32) {
-        self.get_stat_sheet_mut().increase_stat(StatType::Health, amount);
+        self.inc_hp(amount);
     }
 
     pub fn decrease_health(&mut self, amount: i32) {
-        self.get_stat_sheet_mut().decrease_stat(StatType::Health, amount);
+        self.dec_hp(amount);
     }
 }
 
@@ -48,11 +50,11 @@ pub enum MobKind {
 
 impl HasStats for Mob {
 
-    fn get_stat_sheet(&self) -> &StatSheet {
+    fn stats(&self) -> &StatSheet {
         &self.stats
     }
 
-    fn get_stat_sheet_mut(&mut self) -> &mut StatSheet {
+    fn stats_mut(&mut self) -> &mut StatSheet {
         &mut self.stats
     }
 }
@@ -141,10 +143,7 @@ impl GivesXP for Mob {
 
 impl Combatant for Mob {
     fn attack_power(&self) -> i32 {
-        match self.get_stat_sheet().get_stat(StatType::Attack) {
-            Some(stat) => stat.current_value,
-            None       => 0,
-        }
+        self.get_attack()
     }
     
     fn health(&self) -> i32 {

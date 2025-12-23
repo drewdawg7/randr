@@ -20,11 +20,11 @@ impl Display for Player {
 }
 
 impl HasStats for Player {
-    fn get_stat_sheet(&self) -> &StatSheet {
+    fn stats(&self) -> &StatSheet {
         &self.stats
     }
 
-    fn get_stat_sheet_mut(&mut self) -> &mut StatSheet {
+    fn stats_mut(&mut self) -> &mut StatSheet {
         &mut self.stats
     }
 }
@@ -33,27 +33,27 @@ impl HasStats for Player {
 impl Player {
    
     pub fn get_attack(&self) -> i32 {
-        self.get_stat_sheet().get_stat_value(StatType::Attack)
+        self.attack()
     }
 
     pub fn increase_attack(&mut self, amount: i32) {
-        self.get_stat_sheet_mut().increase_stat(StatType::Attack, amount);
+        self.inc_attack(amount);
     }
 
     pub fn get_health(&self) -> i32 {
-        self.get_stat_sheet().get_stat_value(StatType::Health)
+        self.hp()
     }
 
     pub fn get_max_health(&self) -> i32 {
-        self.get_stat_sheet().get_max_stat_value(StatType::Health)
+        self.max_hp()
     }
 
     pub fn increase_health(&mut self, amount: i32) {
-        self.get_stat_sheet_mut().increase_stat(StatType::Health, amount);
+        self.inc_hp(amount);
     }
 
     pub fn decrease_health(&mut self, amount: i32) {
-        self.get_stat_sheet_mut().decrease_stat(StatType::Health, amount);
+        self.dec_hp(amount);
     }
 
     pub fn pretty_print(&self) -> String {
@@ -110,12 +110,9 @@ impl Combatant for Player {
             Some(w) => w.attack,
             None    => 0
         };
-        let stat = self.get_stat_sheet().get_stat(StatType::Attack);
 
-        match stat {
-            Some(si) => si.current_value + weapon_attack,
-            None     => weapon_attack
-        }
+        self.get_attack() + weapon_attack
+
     }
     fn increase_health(&mut self, amount: i32) {
         self.increase_health(amount);
