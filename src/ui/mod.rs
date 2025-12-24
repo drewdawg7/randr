@@ -4,6 +4,8 @@ pub mod menuscreen;
 pub mod storescreen;
 pub mod table;
 pub use table::*;
+pub mod menu_component;
+pub use menu_component::*;
 pub use storescreen::*;
 pub use menuscreen::*;
 pub use screen::*;

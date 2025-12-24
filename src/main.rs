@@ -1,22 +1,22 @@
 use std::collections::HashMap;
+use std::io::{self};
+use std::time::Duration;
 
-use game::combat::{enter_combat};
+use crossterm::terminal;
 use game::entities::mob::{MobKind, MobRegistry};
 use game::entities::{Mob, Player, Progression};
-mod menu;
-
-use game::inventory::{EquipmentSlot, HasInventory, Inventory};
 use game::item::definition::{ItemKind, ItemRegistry};
-use game::stats::{StatInstance, StatSheet, StatType};
-use game::store::{Store};
-use game::ui::{key_to_action, MenuScreen, Screen, ScreenId, StoreScreen};
+use ratatui::{Terminal, backend::CrosstermBackend};
+
+use game::ui::{ Id, MenuScreen, ScreenId, StoreScreen};
+use game::inventory::{EquipmentSlot, HasInventory, Inventory};
+use game::stats::{StatSheet, StatType, StatInstance};
+use game::store::Store;
+use game::combat::enter_combat;
+use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
 
 fn main() -> std::io::Result<()> {
-    use crossterm::{event, terminal};
-    use std::io::{self, Write};
-
-
     let mut player = Player {
         gold: 0,
         name: "Drew",
@@ -43,7 +43,11 @@ fn main() -> std::io::Result<()> {
             StatSheet { stats }
         },
     };
-
+    let mut app: Application<Id, Event<NoUserEvent>, NoUserEvent> = Application::init(
+        EventListenerCfg::default()
+            .crossterm_input_listener(Duration::from_millis(20), 3)
+            .poll_timeout(Duration::from_millis(10)),
+    );
     let m_registry: MobRegistry = MobRegistry::new();
     let i_registry: ItemRegistry = ItemRegistry::new();
 
@@ -57,40 +61,39 @@ fn main() -> std::io::Result<()> {
 
     player.equip_item(sword, EquipmentSlot::Weapon);
 
-
-    let mut menu_screen = MenuScreen::new(
-        vec!["Fight".to_string(), "Store".to_string(), "Quit".to_string()]
-    );
-    let mut store_screen = StoreScreen::new(store);
+    let mut menu_screen = MenuScreen::new(&mut app);
+    let mut store_screen = StoreScreen::new(&mut app, &store);
 
     let mut current = ScreenId::Menu;
 
     terminal::enable_raw_mode()?;
-    let mut stdout = io::stdout();
-    game::ui::enter_alternate_screen(&mut stdout);
+    let stdout = io::stdout();
+    let backend = CrosstermBackend::new(stdout);
+    let mut terminal = Terminal::new(backend)?;
+    terminal.clear()?;
 
     // ---------- MAIN LOOP ----------
-
     loop {
         match current {
             ScreenId::Menu => {
-                menu_screen.draw(&mut stdout);
-                stdout.flush()?;
+                terminal.draw(|frame| {
+                    menu_screen.view(&mut app, frame, frame.area());
+                })?;
 
-                if let Some(action) = key_to_action(event::read()?) {
-                    current = menu_screen.handle(action);
+                if let Some(screen) = menu_screen.tick(&mut app) {
+                    current = screen;
                 }
             }
 
             ScreenId::Store => {
-                store_screen.draw(&mut stdout);
-                stdout.flush()?;
+                terminal.draw(|frame| {
+                    store_screen.view(&mut app, frame, frame.area());
+                })?;
 
-                if let Some(action) = key_to_action(event::read()?) {
-                    current = store_screen.handle(action);
+                if let Some(screen) = store_screen.tick(&mut app) {
+                    current = screen;
                 }
             }
-
             ScreenId::Fight => {
                 // ---------- GAMEPLAY PHASE ----------
                 let _ = terminal::disable_raw_mode();
@@ -116,12 +119,5 @@ fn main() -> std::io::Result<()> {
     }
 
     // ---------- CLEANUP ----------
-
-    game::ui::leave_alternate_screen(&mut stdout);
     terminal::disable_raw_mode()
 }
-
-
-
-
-

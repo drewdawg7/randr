@@ -1,69 +1,60 @@
-use std::io::Stdout;
+use std::cell::RefCell;
+use std::rc::Rc;
 
-use crossterm::{style::{Attribute, Color, Print, Stylize}, terminal};
+use tuirealm::{Application, Event, NoUserEvent};
+use ratatui::layout::Rect;
+use ratatui::Frame;
 
-use crate::ui::{move_down, move_up, print_to_screen, reset_screen, Screen, ScreenId, UIAction};
 
+use crate::ui::{Id, ScreenId};
+
+use super::menu_component::{MenuComponent, MenuItem};
 
 pub struct MenuScreen {
-    selected: usize,
-    options: Vec<String>,
+    selected_screen: Rc<RefCell<Option<ScreenId>>>,
 }
 
 impl MenuScreen {
-    pub fn new(options: Vec<String>) -> Self {
-        Self { selected: 0, options }
-    }
-}
+    pub fn new(app: &mut Application<crate::ui::Id, Event<NoUserEvent>, NoUserEvent>) -> Self {
+        let selected_screen: Rc<RefCell<Option<ScreenId>>> = Rc::new(RefCell::new(None));
 
-impl Screen for MenuScreen {
-    fn draw(&self, stdout: &mut Stdout) {
-        reset_screen(stdout);
-        let _ = terminal::disable_raw_mode();
-        let options = ["Fight", "Store", "Quit"];
-        for (i, opt) in options.iter().enumerate() {
-            if i == self.selected {
-                print_to_screen(
-                    stdout,
-                    Print(
-                        "> "
-                        .with(Color::Yellow)
-                    )
-                );
-                print_to_screen(
-                    stdout,
-                    Print(
-                        opt
-                        .with(Color::Yellow)
-                        .attribute(Attribute::Underlined)
-                    )
-                );
-            } else {
-                print_to_screen(stdout, Print("  "));
-                print_to_screen(stdout, Print(*opt));
-            }
-            print_to_screen(stdout, Print("\n"));
-        }
-        print_to_screen(stdout, Print("\nUse ↑/↓ and Enter. (Esc to quit)\n"));
-        let _ = terminal::enable_raw_mode();
+        let fight_screen = Rc::clone(&selected_screen);
+        let store_screen = Rc::clone(&selected_screen);
+        let quit_screen = Rc::clone(&selected_screen);
+
+        let items = vec![
+            MenuItem {
+                label: "Fight".to_string(),
+                action: Box::new(move || {
+                    *fight_screen.borrow_mut() = Some(ScreenId::Fight);
+                }),
+            },
+            MenuItem {
+                label: "Store".to_string(),
+                action: Box::new(move || {
+                    *store_screen.borrow_mut() = Some(ScreenId::Store);
+                }),
+            },
+            MenuItem {
+                label: "Quit".to_string(),
+                action: Box::new(move || {
+                    *quit_screen.borrow_mut() = Some(ScreenId::Quit);
+                }),
+            },
+        ];
+
+        app.mount(Id::Menu, Box::new(MenuComponent::new(items)), vec![]).unwrap();
+
+        Self { selected_screen }
     }
 
-    fn handle(&mut self, action: UIAction) -> ScreenId{
-        match action {
-            UIAction::Up => {
-                self.selected = move_up(self.selected, self.options.len());
-                ScreenId::Menu
-            },
-            UIAction::Down => {
-                self.selected = move_down(self.selected, self.options.len());
-                ScreenId::Menu
-            },
-            UIAction::Activate => match self.selected {
-                0 => ScreenId::Fight,
-                1 => ScreenId::Store,
-                _ => ScreenId::Quit,
-            },
-            UIAction::Back | UIAction::Quit => ScreenId::Quit,
-        }
+    pub fn tick(&mut self, app: &mut Application<Id, Event<NoUserEvent>, NoUserEvent>) -> Option<ScreenId> {
+        app.active(&Id::Menu).unwrap();
+        let _ = app.tick(tuirealm::PollStrategy::Once);
+        self.selected_screen.borrow_mut().take()
+    }
+
+    pub fn view(&self, app: &mut Application<Id, Event<NoUserEvent>, NoUserEvent>, frame: &mut Frame, area: Rect) {
+        app.view(&Id::Menu, frame, area);
     }
 }

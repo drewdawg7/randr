@@ -8,6 +8,7 @@ pub enum ScreenId {
     Quit
 }
 
+#[derive(Eq, PartialEq, Clone)]
 pub enum UIAction {
     Up,
     Down,
@@ -16,6 +17,12 @@ pub enum UIAction {
     Quit,
 }
 
+#[derive(Debug, Eq, PartialEq, Clone, Hash)]
+pub enum Id {
+    Menu,
+    StoreTable,
+    StoreBack,
+}
 pub trait Screen {
     fn draw(&self, stdout: &mut Stdout);
     fn handle(&mut self, action: UIAction) -> ScreenId;

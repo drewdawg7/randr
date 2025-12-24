@@ -1,7 +1,6 @@
 use std::{fmt::Display, io::{stdout, Stdout}};
 
-use crossterm::{cursor, execute, style::Print, terminal::{self, ClearType, EnterAlternateScreen, LeaveAlternateScreen}};
-
+use crossterm::{cursor, execute, style::{Attribute, Color, Print, Stylize}, terminal::{self, ClearType, EnterAlternateScreen, LeaveAlternateScreen}};
 
 
 
@@ -37,4 +36,21 @@ pub fn move_up(selected: usize, num_options: usize) -> usize {
 
 pub fn move_down(selected: usize, num_options: usize) -> usize {
     (selected + 1) % num_options
+}
+
+pub fn menu_cursor(stdout: &mut Stdout) {
+    print_to_screen(stdout, Print("> ".with(Color::Yellow)));
+}
+
+pub fn select_item(stdout: &mut Stdout, item: &str) {
+    menu_cursor(stdout);
+    
+    print_to_screen(
+        stdout,
+        Print(
+            item
+            .with(Color::Yellow)
+            .attribute(Attribute::Underlined)
+        )
+    );
 }

@@ -1,8 +1,7 @@
-use std::io::{Stdout};
-
-use crossterm::style::Print;
-
-use crate::ui::print_to_screen;
+use tuirealm::{Component, Event, MockComponent, Frame, command::{Cmd, CmdResult}, props::{Attribute, AttrValue}, State, NoUserEvent};
+use ratatui::widgets::{Table as RatatuiTable, Row as RatatuiRow, Cell, Block, Borders};
+use ratatui::layout::{Rect, Constraint};
+use ratatui::style::{Style, Color, Modifier};
 
 pub struct Header {
     pub label: String,
@@ -15,11 +14,11 @@ impl Header {
 }
 
 pub struct Row {
-   pub cells: Vec<String>, 
+    pub cells: Vec<String>,
 }
 
 impl Row {
-    fn new<I, T>(cells: I) -> Self
+    pub fn new<I, T>(cells: I) -> Self
     where
         I: IntoIterator<Item = T>,
         T: ToString,
@@ -29,19 +28,20 @@ impl Row {
         }
     }
 }
-pub struct Table {
-    pub headers: Vec<Header>,
-    pub rows: Vec<Row>
+
+pub struct TableComponent {
+    headers: Vec<Header>,
+    rows: Vec<Row>,
 }
 
-
-impl Table {
+impl TableComponent {
     pub fn new(headers: Vec<Header>) -> Self {
         Self {
             headers,
             rows: Vec::new(),
         }
     }
+
     pub fn from_items<T, F, R, const N: usize>(
         headers: [Header; N],
         items: &[T],
@@ -52,50 +52,23 @@ impl Table {
         R: IntoIterator,
         R::Item: ToString,
     {
-        let mut rows = Vec::with_capacity(items.len());
-
-        for item in items {
-            rows.push(Row::new(extract(item)));
-        }
+        let rows: Vec<Row> = items
+            .iter()
+            .map(|item| Row::new(extract(item)))
+            .collect();
 
         Self {
             headers: headers.into(),
             rows,
         }
     }
-    pub fn push_row(&mut self, row: Row) {
+
+    pub fn add_row(&mut self, row: Row) {
         self.rows.push(row);
     }
 
-    pub fn print(&self, stdout: &mut Stdout) {
-        let widths = self.compute_widths();
-
-        // header
-        self.print_cells(
-            stdout,
-            self.headers.iter().map(|h| h.label.as_str()),
-            &widths,
-        );
-        print_to_screen(stdout, Print("\n"));
-
-        // separator
-        self.print_separator(stdout, &widths);
-        print_to_screen(stdout, Print("\n"));
-
-        // rows
-        for row in &self.rows {
-            self.print_cells(
-                stdout,
-                row.cells.iter().map(String::as_str),
-                &widths,
-            );
-            print_to_screen(stdout, Print("\n"));
-        }
-    }
-
-    fn compute_widths(&self) -> Vec<usize> {
-        let mut widths: Vec<usize> =
-            self.headers.iter().map(|h| h.label.len()).collect();
+    fn compute_widths(&self) -> Vec<Constraint> {
+        let mut widths: Vec<usize> = self.headers.iter().map(|h| h.label.len()).collect();
 
         for row in &self.rows {
             for (i, cell) in row.cells.iter().enumerate() {
@@ -108,30 +81,64 @@ impl Table {
         }
 
         widths
+            .into_iter()
+            .map(|w| Constraint::Length((w + 2) as u16))
+            .collect()
+    }
+}
+
+impl MockComponent for TableComponent {
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        let header_cells: Vec<Cell> = self
+            .headers
+            .iter()
+            .map(|h| {
+                Cell::from(h.label.clone())
+                    .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+            })
+            .collect();
+
+        let header_row = RatatuiRow::new(header_cells).height(1);
+
+        let rows: Vec<RatatuiRow> = self
+            .rows
+            .iter()
+            .map(|row| {
+                let cells: Vec<Cell> = row
+                    .cells
+                    .iter()
+                    .map(|c| Cell::from(c.clone()))
+                    .collect();
+                RatatuiRow::new(cells)
+            })
+            .collect();
+
+        let widths = self.compute_widths();
+
+        let table = RatatuiTable::new(rows, &widths)
+            .header(header_row)
+            .block(Block::default().borders(Borders::ALL));
+
+        frame.render_widget(table, area);
     }
 
-    fn print_cells<'a>(
-        &self,
-        stdout: &mut Stdout,
-        cells: impl IntoIterator<Item = &'a str>,
-        widths: &[usize],
-    ) {
-        for (i, cell) in cells.into_iter().enumerate() {
-            let s = format!("{:<width$}", cell, width = widths[i]);
-            print_to_screen(stdout, Print(s));
-
-            if i + 1 < widths.len() {
-                print_to_screen(stdout, Print(" | "));
-            }
-        }
+    fn query(&self, _attr: Attribute) -> Option<AttrValue> {
+        None
     }
 
-    fn print_separator(&self, stdout: &mut Stdout, widths: &[usize]) {
-        for (i, w) in widths.iter().enumerate() {
-            print_to_screen(stdout, Print("-".repeat(*w)));
-            if i + 1 < widths.len() {
-                print_to_screen(stdout, Print("-+-"));
-            }
-        }
+    fn attr(&mut self, _attr: Attribute, _value: AttrValue) {}
+
+    fn state(&self) -> State {
+        State::None
+    }
+
+    fn perform(&mut self, _cmd: Cmd) -> CmdResult {
+        CmdResult::None
+    }
+}
+
+impl Component<Event<NoUserEvent>, NoUserEvent> for TableComponent {
+    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
+        None
     }
 }
