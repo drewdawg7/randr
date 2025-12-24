@@ -1,12 +1,17 @@
 
-use std::fmt::Display;
+use std::{fmt::Display, io::{Write}};
+
 
 use crate::{combat::HasGold, item::Item};
 
+use crossterm::{
+    QueueableCommand,
+    style::{Color, Print, PrintStyledContent, Stylize},
+};
 #[derive(Debug)]
 pub struct Store {
-    name: String,
-    inventory: Vec<StoreItem>
+    pub name: String,
+    pub inventory: Vec<StoreItem>
 
 }
 
@@ -22,9 +27,9 @@ impl Store {
 
 #[derive(Debug)]
 pub struct StoreItem {
-    item: Item,
-    quantity: i32,
-    price: i32,
+    pub item: Item,
+    pub quantity: i32,
+    pub price: i32,
 }
 
 impl StoreItem {
@@ -48,10 +53,24 @@ impl StoreItem {
 
 impl Display for StoreItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} |  {}g |  {}", self.item.name, self.price, self.quantity)
+        write!(f, "{:<10} |{:>4}g |{:>3}", self.item.name, self.price, self.quantity)
     }
 }
 
+impl Display for Store {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "{}", self.name)?;
+        writeln!(f, "{:<10}  {:>4}  {:>3}", "Item", "Price", "Qty")?;
+        writeln!(f,
+            "{:-<10}-+-{:-<4}-+-{:-<3}",
+            "", "", ""
+        )?;
+        for item in &self.inventory {
+            writeln!(f, "{}", item)?
+        }
+        Ok(())
+    }
+}
 impl Store {
 
     pub fn purchase_item<P: HasGold>(&mut self, item: &mut StoreItem, player: &mut P) 
@@ -87,7 +106,6 @@ impl Store {
     }
 
 
-
     pub fn get_store_item_mut(&mut self, item: Item) -> Option<&mut StoreItem> {
         self.inventory
             .iter_mut()
@@ -110,15 +128,6 @@ impl Store {
 }
 
 
-impl Display for Store {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        writeln!(f, "{}", self.name)?;
-        for item in &self.inventory {
-            writeln!(f, "{}", item)?
-        }
-        Ok(())
-    }
-}
 
 pub enum StoreError {
     NotEnoughGold,
