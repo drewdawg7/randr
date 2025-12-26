@@ -1,7 +1,39 @@
-use std::fmt::Display;
+use std::{collections::HashMap, fmt::Display};
 
-use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Player, Progression}, inventory::{EquipmentSlot, HasInventory, Inventory}, stats::{HasStats, StatSheet}};
+use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Player, Progression}, inventory::{EquipmentSlot, HasInventory, Inventory}, stats::{HasStats, StatInstance, StatSheet, StatType}};
 
+
+impl Default for Player {
+    fn default() -> Self {
+        
+        Self {
+            gold: 0,
+            name: "Drew",
+            prog: Progression::new(),
+            inventory: Inventory::new(),
+            stats: {
+                let mut stats: HashMap<StatType, StatInstance> = HashMap::new();
+                stats.insert(
+                    StatType::Attack,
+                    StatInstance {
+                        stat_type: StatType::Attack,
+                        current_value: 12,
+                        max_value: 12,
+                    },
+                );
+                stats.insert(
+                    StatType::Health,
+                    StatInstance {
+                        stat_type: StatType::Health,
+                        current_value: 100,
+                        max_value: 100,
+                    },
+                );
+                StatSheet { stats }
+            },
+        }
+    }
+}
 
 impl Display for Player {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {

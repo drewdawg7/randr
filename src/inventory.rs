@@ -42,7 +42,7 @@ pub trait HasInventory {
 
         match item {
             Some(item) => {
-                self.add_to_inv(item);
+                let _ = self.add_to_inv(item);
                 Ok(())
             }
             None => { Ok(()) }
@@ -50,7 +50,7 @@ pub trait HasInventory {
     }
 
     fn equip_item(&mut self, item: Item, slot: EquipmentSlot) {
-        self.unequip_item(slot);
+        let _ = self.unequip_item(slot);
         self.inventory_mut().equipment.insert(slot, item);
     }
 

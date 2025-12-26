@@ -16,37 +16,38 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
     let target_health_after = defender.health();
     let target_died = defender.is_alive();
     AttackResult {
+        attacker: attacker.name().to_string(),
+        defender: defender.name().to_string(),
         damage_to_target,
         target_health_before,
         target_health_after,
         target_died
     }
 }
+#[derive(Default)]
+pub struct CombatRounds {
+    pub attack_results: Vec<AttackResult>,
+}
+
+impl CombatRounds {
+
+    pub fn add_round(&mut self, round: AttackResult) {
+        self.attack_results.push(round);
+    } 
+}
 
 
-
-pub fn enter_combat<P, M>(player: &mut P, mob: &mut M) 
+pub fn enter_combat<P, M>(player: &mut P, mob: &mut M) -> CombatRounds 
 where 
     P: Combatant + HasGold + HasProgression,
     M: Combatant + DropsGold + GivesXP,
 {
+    let mut cr = CombatRounds::default();    
     while player.is_alive() && mob.is_alive() {
         let a1 = attack(player, mob);
-        println!(
-            "{} did {} damage to {}. {} HP remaining.",
-            player.name(),
-            a1.damage_to_target,
-            mob.name(),
-            mob.health()
-        );
+        cr.add_round(a1);
         let a2 = attack(mob, player);
-        println!(
-                    "{} did {} damage to {}. {} HP remaining.",
-                    mob.name(),
-                    a2.damage_to_target,
-                    player.name(),
-                    player.health()
-        );
+        cr.add_round(a2);
     }
     if !player.is_alive() {
         println!("You died!");
@@ -57,4 +58,5 @@ where
         println!("{} was slain. You have recieved {} gold.", mob.name(), gold);
         
     }
+    cr
 }

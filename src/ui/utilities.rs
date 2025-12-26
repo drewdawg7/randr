@@ -1,4 +1,4 @@
-use std::{fmt::Display, io::{stdout, Stdout}};
+use std::{fmt::Display, io::{Stdout}};
 
 use crossterm::{cursor, execute, style::{Attribute, Color, Print, Stylize}, terminal::{self, ClearType, EnterAlternateScreen, LeaveAlternateScreen}};
 

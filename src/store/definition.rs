@@ -1,13 +1,9 @@
 
-use std::{fmt::Display, io::{Write}};
+use std::{fmt::Display};
 
 
 use crate::{combat::HasGold, item::Item};
 
-use crossterm::{
-    QueueableCommand,
-    style::{Color, Print, PrintStyledContent, Stylize},
-};
 #[derive(Debug)]
 pub struct Store {
     pub name: String,

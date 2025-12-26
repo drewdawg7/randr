@@ -1,12 +1,7 @@
 pub mod utilities;
-pub mod screen;
-pub mod menuscreen;
-pub mod storescreen;
-pub mod table;
-pub use table::*;
-pub mod menu_component;
-pub use menu_component::*;
-pub use storescreen::*;
-pub use menuscreen::*;
-pub use screen::*;
 pub use utilities::*;
+pub mod components;
+pub mod screen;
+pub use components::*;
+
+pub use screen::*; 

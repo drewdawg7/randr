@@ -6,16 +6,15 @@ use ratatui::layout::Rect;
 use ratatui::Frame;
 
 
-use crate::ui::{Id, ScreenId};
+use crate::ui::{menu_component::{MenuComponent, MenuItem}, common::{Id, Screen, ScreenId}};
 
-use super::menu_component::{MenuComponent, MenuItem};
 
 pub struct MenuScreen {
     selected_screen: Rc<RefCell<Option<ScreenId>>>,
 }
 
 impl MenuScreen {
-    pub fn new(app: &mut Application<crate::ui::Id, Event<NoUserEvent>, NoUserEvent>) -> Self {
+    pub fn new(app: &mut Application<Id, Event<NoUserEvent>, NoUserEvent>) -> Self {
         let selected_screen: Rc<RefCell<Option<ScreenId>>> = Rc::new(RefCell::new(None));
 
         let fight_screen = Rc::clone(&selected_screen);
@@ -48,13 +47,17 @@ impl MenuScreen {
         Self { selected_screen }
     }
 
-    pub fn tick(&mut self, app: &mut Application<Id, Event<NoUserEvent>, NoUserEvent>) -> Option<ScreenId> {
-        app.active(&Id::Menu).unwrap();
-        let _ = app.tick(tuirealm::PollStrategy::Once);
-        self.selected_screen.borrow_mut().take()
-    }
 
     pub fn view(&self, app: &mut Application<Id, Event<NoUserEvent>, NoUserEvent>, frame: &mut Frame, area: Rect) {
         app.view(&Id::Menu, frame, area);
+    }
+}
+
+impl Screen for MenuScreen {
+    fn active_id(&self) -> Id {
+        Id::Menu
+    }
+    fn selected_screen_mut(&mut self) -> &mut Rc<RefCell<Option<ScreenId>>> {
+        &mut self.selected_screen
     }
 }
