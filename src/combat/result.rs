@@ -1,4 +1,4 @@
-
+#[derive(Debug, Clone)]
 pub struct AttackResult {
     pub attacker: String,
     pub defender: String,

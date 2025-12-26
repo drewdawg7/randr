@@ -24,13 +24,17 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
         target_died
     }
 }
-#[derive(Default)]
+#[derive(Default, Clone)]
 pub struct CombatRounds {
     pub attack_results: Vec<AttackResult>,
 }
 
 impl CombatRounds {
-
+    pub fn new() -> Self {
+        Self {
+            attack_results: Vec::new()
+        }
+    }
     pub fn add_round(&mut self, round: AttackResult) {
         self.attack_results.push(round);
     } 

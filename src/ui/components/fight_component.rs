@@ -1,4 +1,3 @@
-use std::{cell::RefCell, rc::Rc};
 
 use ratatui::{layout::{Constraint, Direction, Layout}, style::{Color, Style}, text::{Line, Span}, widgets::Paragraph};
 use tuirealm::{command::CmdResult, Component, Event, MockComponent, NoUserEvent, State};
@@ -10,7 +9,7 @@ pub struct FightComponent {
 }
 
 impl FightComponent {
-    pub fn new(combat_rounds: CombatRounds, back_screen: Rc<RefCell<Option<ScreenId>>>) -> Self {
+    pub fn new(combat_rounds: CombatRounds, back_screen: ScreenId) -> Self {
         let attack_components = combat_rounds
             .attack_results
             .into_iter()

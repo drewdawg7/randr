@@ -1,5 +1,3 @@
-use std::cell::RefCell;
-use std::rc::Rc;
 use ratatui::layout::{Constraint, Direction, Layout};
 use tuirealm::{command::CmdResult, Component, Event, MockComponent, NoUserEvent, State};
 
@@ -14,7 +12,7 @@ pub struct StoreComponent {
 }
 
 impl StoreComponent {
-    pub fn new(store: &Store, back_screen: Rc<RefCell<Option<ScreenId>>>) -> Self {
+    pub fn new(store: &Store, back_screen: ScreenId) -> Self {
         let table = TableComponent::from_items(
             [
                 Header::new("Item"),
