@@ -34,7 +34,7 @@ impl MockComponent for FightComponent {
         // Split attack results area
         let attack_constraints: Vec<Constraint> = self.attack_components
             .iter()
-            .map(|_| Constraint::Length(1))
+            .map(|_| Constraint::Length(2))
             .collect();
 
         let attack_chunks = Layout::default()
@@ -86,18 +86,35 @@ impl MockComponent for AttackResultComponent {
 
         let attacker_style = Style::default().fg(Color::Green);
         let defender_style = Style::default().fg(Color::Green);
-
+        let death_style = Style::default().fg(Color::Red);
         let styled_attacker = Span::styled(attacker, attacker_style);
 
         let styled_defender = Span::styled(defender, defender_style);
-        let line = Line::from(vec![
-            styled_attacker,
-            Span::raw(" did "),
-            Span::raw(self.attack_result.damage_to_target.to_string()),
-            Span::raw(" damage to "),
-            styled_defender,
-        ]);
-        let paragraph = Paragraph::new(line);
+        let mut lines = vec![
+            Line::from(vec![
+                styled_attacker,
+                Span::raw(" did "),
+                Span::raw(self.attack_result.damage_to_target.to_string()),
+                Span::raw(" damage to "),
+                styled_defender,
+             ])
+        ];
+        if self.attack_result.target_died { 
+            lines.push(Line::from(vec![
+                    Span::styled(
+                        format!("{} died.", defender),
+                        death_style
+                    ),
+                ]));
+        } else {
+            lines.push(Line::from(vec![
+                    Span::styled(
+                        format!("{}: {} -> {} HP", defender, self.attack_result.target_health_before, self.attack_result.target_health_after),
+                        death_style
+                    ),
+                ]));
+        }
+        let paragraph = Paragraph::new(lines);
         frame.render_widget(paragraph, area);
 
     }

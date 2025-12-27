@@ -2,19 +2,21 @@
 use ratatui::{layout::Rect, Frame};
 use tuirealm::{Application, NoUserEvent, Event};
 
-use crate::{system::{game_state, GameState}, ui::{fightscreen::FightScreen, menuscreen::MenuScreen, storescreen::StoreScreen}};
+use crate::{system::{game_state, GameState}, ui::{fightscreen::FightScreen, menuscreen::MenuScreen, player_profile_screen::PlayerProfileScreen, storescreen::StoreScreen}};
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Copy)]
 pub enum ScreenId {
     Menu,
     Store,
     Fight,
+    Profile,
     Quit
 }
 
 pub enum ScreenKind {
     MainMenu(MenuScreen),
     Store(StoreScreen),
-    Fight(FightScreen)
+    Fight(FightScreen),
+    Profile(PlayerProfileScreen)
 }
 
 #[derive(Eq, PartialEq, Clone)]
@@ -35,6 +37,7 @@ pub enum Id {
     AttackResult,
     Fight,
     FightBack,
+    PlayerProfile,
 }
 
 
@@ -44,21 +47,24 @@ impl ScreenKind {
             ScreenKind::MainMenu(_) => ScreenId::Menu,
             ScreenKind::Store(_)    => ScreenId::Store,
             ScreenKind::Fight(_)    => ScreenId::Fight,
+            ScreenKind::Profile(_)  => ScreenId::Profile,
         }
     }
     pub fn view(&mut self, gs: &mut GameState, frame: &mut Frame, area: Rect) {
         match self {
             ScreenKind::MainMenu(s) => s.view(gs.app_mut(), frame, area),
-            ScreenKind::Store(s) => s.view(gs.app_mut(), frame, area),
-            ScreenKind::Fight(s) => s.view(gs.app_mut(), frame, area),
+            ScreenKind::Store(s)    => s.view(gs.app_mut(), frame, area),
+            ScreenKind::Fight(s)    => s.view(gs.app_mut(), frame, area),
+            ScreenKind::Profile(s)  => s.view(gs.app_mut(), frame, area),
         }
     }
 
     pub fn tick(&mut self, gs: &mut GameState) -> Option<ScreenId> {
         match self {
             ScreenKind::MainMenu(s) => s.tick(gs.app_mut()),
-            ScreenKind::Store(s) => s.tick(gs.app_mut()),
-            ScreenKind::Fight(s) => s.tick(gs.app_mut()),
+            ScreenKind::Store(s)    => s.tick(gs.app_mut()),
+            ScreenKind::Fight(s)    => s.tick(gs.app_mut()),
+            ScreenKind::Profile(s)  => s.tick(gs.app_mut()),
         }
     }
 }

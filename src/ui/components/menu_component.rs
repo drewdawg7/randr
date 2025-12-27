@@ -1,6 +1,6 @@
-use tuirealm::{Component, Event, MockComponent, Frame, command::{Cmd, CmdResult}, props::{Attribute, AttrValue}, State, NoUserEvent};
+use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, BorderType}, Component, Event, Frame, MockComponent, NoUserEvent, State};
 use tuirealm::event::{Key, KeyEvent};
-use ratatui::widgets::{List, ListItem, ListState};
+use ratatui::{layout::{Constraint, Direction, Layout}, style::Stylize, widgets::{Block, Borders, List, ListItem, ListState, Padding}};
 use ratatui::layout::Rect;
 use ratatui::style::{Style, Color};
 
@@ -20,8 +20,6 @@ impl MenuComponent {
         list_state.select(Some(0));
         Self { list_state, items }
     }
-
-
 }
 
 impl MockComponent for MenuComponent {

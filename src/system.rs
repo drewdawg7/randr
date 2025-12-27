@@ -5,7 +5,7 @@ use crossterm::terminal;
 use ratatui::{prelude::{CrosstermBackend}, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
-use crate::{combat::CombatRounds, entities::{mob::{MobKind, MobRegistry}, Mob}, item::{definition::{ItemKind, ItemRegistry}, Item}, store::Store, ui::{common::{Id, ScreenId, ScreenKind}, fightscreen::FightScreen, menuscreen::MenuScreen, storescreen::StoreScreen}};
+use crate::{combat::CombatRounds, entities::{mob::{MobKind, MobRegistry}, Mob, Player}, item::{definition::{ItemKind, ItemRegistry}, Item}, store::Store, ui::{common::{Id, ScreenId, ScreenKind}, fightscreen::FightScreen, menuscreen::MenuScreen, player_profile_screen::PlayerProfileScreen, storescreen::StoreScreen}};
 
 
 static mut GAME_STATE: Option<GameState> = None;
@@ -17,12 +17,13 @@ pub fn game_state() -> &'static mut GameState {
     unsafe { GAME_STATE.as_mut().unwrap() }
 }
 pub struct GameState {
-   item_registry: ItemRegistry,
-   mob_registry: MobRegistry,
-   pub current_screen: ScreenId,
-   screens: HashMap<ScreenId, ScreenKind>,
-   app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
+    item_registry: ItemRegistry,
+    mob_registry: MobRegistry,
+    pub current_screen: ScreenId,
+    screens: HashMap<ScreenId, ScreenKind>,
+    app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
+    pub player: Player,
 }
 
 impl GameState {
@@ -78,6 +79,8 @@ impl GameState {
         self.add_screen(ScreenKind::Store(store_screen));
         let fight_screen = FightScreen::new(&mut self.app, CombatRounds::new());
         self.add_screen(ScreenKind::Fight(fight_screen));
+        let profile_screen = PlayerProfileScreen::new(&mut self.app);
+        self.add_screen(ScreenKind::Profile(profile_screen));
     
     }
 }
@@ -89,6 +92,7 @@ impl Default for GameState {
         let mut terminal: Terminal<CrosstermBackend<io::Stdout>> = Terminal::new(backend).unwrap();
         terminal.clear().unwrap();
         Self {
+            player: Player::default(),
             item_registry: ItemRegistry::new(),
             mob_registry: MobRegistry::new(),
             screens: HashMap::new(),

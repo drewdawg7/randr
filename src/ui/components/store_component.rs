@@ -4,8 +4,10 @@ use tuirealm::{command::CmdResult, Component, Event, MockComponent, NoUserEvent,
 use crate::store::Store;
 use crate::ui::common::ScreenId;
 use crate::ui::components::utilities::back_button;
+use crate::ui::fittedbox::FittedBox;
 use crate::ui::table::{Header, TableComponent};
-use crate::ui::{menu_component::*};
+use crate::ui::menu_component::*;
+
 pub struct StoreComponent {
     table: TableComponent,
     back_menu: MenuComponent,
@@ -34,15 +36,20 @@ impl StoreComponent {
 
 impl MockComponent for StoreComponent {
     fn view(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
+        let width = self.table.content_width();
+        let height = self.table.content_height();
+        let fitted_table = FittedBox::new(self.table.to_widget(), width, height);
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Min(0),
+                Constraint::Length(fitted_table.height()),
                 Constraint::Length(3),
+                Constraint::Min(0),
             ])
             .split(area);
 
-        self.table.view(frame, chunks[0]);
+        frame.render_widget(fitted_table, chunks[0]);
         self.back_menu.view(frame, chunks[1]);
     }
 

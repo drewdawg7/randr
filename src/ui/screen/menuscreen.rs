@@ -2,38 +2,13 @@ use tuirealm::{Application, Event, NoUserEvent};
 use ratatui::layout::Rect;
 use ratatui::Frame;
 
-
-use crate::{system::game_state, ui::{common::{Id, Screen, ScreenId}, menu_component::{MenuComponent, MenuItem}}};
-
+use crate::ui::{common::{Id, Screen}, components::main_menu::MainMenu};
 
 pub struct MenuScreen {}
 
 impl MenuScreen {
     pub fn new(app: &mut Application<Id, Event<NoUserEvent>, NoUserEvent>) -> Self {
-
-        let items = vec![
-            MenuItem {
-                label: "Fight".to_string(),
-                action: Box::new(|| {
-                    game_state().current_screen = ScreenId::Fight;
-                })
-            },
-            MenuItem {
-                label: "Store".to_string(),
-                action: Box::new(|| {
-                    game_state().current_screen = ScreenId::Store;
-                })
-            },
-            MenuItem {
-                label: "Quit".to_string(),
-                action: Box::new(|| {
-                    game_state().current_screen = ScreenId::Quit;
-                })
-            },
-        ];
-
-        app.mount(Id::Menu, Box::new(MenuComponent::new(items)), vec![]).unwrap();
-
+        app.mount(Id::Menu, Box::new(MainMenu::new()), vec![]).unwrap();
         Self {}
     }
 

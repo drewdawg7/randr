@@ -4,3 +4,5 @@ pub mod table;
 pub mod store_component;
 pub mod player_profile;
 pub mod utilities;
+pub mod main_menu;
+pub mod fittedbox;

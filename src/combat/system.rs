@@ -14,7 +14,7 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
     let damage_to_target = attacker.attack_power();
     defender.take_damage(damage_to_target);
     let target_health_after = defender.health();
-    let target_died = defender.is_alive();
+    let target_died = !defender.is_alive();
     AttackResult {
         attacker: attacker.name().to_string(),
         defender: defender.name().to_string(),
@@ -50,8 +50,10 @@ where
     while player.is_alive() && mob.is_alive() {
         let a1 = attack(player, mob);
         cr.add_round(a1);
-        let a2 = attack(mob, player);
-        cr.add_round(a2);
+        if mob.is_alive() {
+            let a2 = attack(mob, player);
+            cr.add_round(a2);
+        }
     }
     if !player.is_alive() {
         println!("You died!");
@@ -59,7 +61,6 @@ where
         let gold = award_kill_gold(player, mob);
         let xp = mob.give_xp();
         player.gain_xp(xp);
-        println!("{} was slain. You have recieved {} gold.", mob.name(), gold);
         
     }
     cr

@@ -1,5 +1,5 @@
 use tuirealm::{Component, Event, MockComponent, Frame, command::{Cmd, CmdResult}, props::{Attribute, AttrValue}, State, NoUserEvent};
-use ratatui::widgets::{Table as RatatuiTable, Row as RatatuiRow, Cell, Block, Borders};
+use ratatui::widgets::{Table as RatatuiTable, Row as RatatuiRow, Cell};
 use ratatui::layout::{Rect, Constraint};
 use ratatui::style::{Style, Color, Modifier};
 
@@ -85,10 +85,28 @@ impl TableComponent {
             .map(|w| Constraint::Length((w + 2) as u16))
             .collect()
     }
-}
 
-impl MockComponent for TableComponent {
-    fn view(&mut self, frame: &mut Frame, area: Rect) {
+    pub fn content_width(&self) -> u16 {
+        let mut widths: Vec<usize> = self.headers.iter().map(|h| h.label.len()).collect();
+        for row in &self.rows {
+            for (i, cell) in row.cells.iter().enumerate() {
+                if i >= widths.len() {
+                    widths.push(cell.len());
+                } else {
+                    widths[i] = widths[i].max(cell.len());
+                }
+            }
+        }
+        // Sum column widths + padding (2 per column) + separators
+        widths.iter().map(|w| w + 2).sum::<usize>() as u16 + 2
+    }
+
+    pub fn content_height(&self) -> u16 {
+        // header + rows
+        (1 + self.rows.len()) as u16
+    }
+
+    pub fn to_widget(&self) -> RatatuiTable<'_> {
         let header_cells: Vec<Cell> = self
             .headers
             .iter()
@@ -115,11 +133,13 @@ impl MockComponent for TableComponent {
 
         let widths = self.compute_widths();
 
-        let table = RatatuiTable::new(rows, &widths)
-            .header(header_row)
-            .block(Block::default().borders(Borders::ALL));
+        RatatuiTable::new(rows, &widths).header(header_row)
+    }
+}
 
-        frame.render_widget(table, area);
+impl MockComponent for TableComponent {
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        frame.render_widget(self.to_widget(), area);
     }
 
     fn query(&self, _attr: Attribute) -> Option<AttrValue> {
