@@ -1,6 +1,6 @@
-pub mod definition;
-pub mod specs;
-pub mod loot;
-pub mod traits;
+pub(crate) mod definition;
+pub(crate) mod specs;
+pub(crate) mod loot;
+pub(crate) mod traits;
 
-pub use definition::{Mob, MobSpec, MobKind, MobRegistry, MobSpecId};
+pub(crate) use definition::{Mob, MobSpec, MobKind, MobRegistry, MobSpecId};

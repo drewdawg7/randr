@@ -1,6 +1,7 @@
-pub mod definition;
-pub mod enums;
+pub(crate) mod definition;
+pub(crate) mod enums;
 mod traits;
 
-pub use definition::{Item, ItemSpec};
-pub use enums::{ItemKind, ItemType};
+pub(crate) use definition::{Item, ItemSpec};
+pub use enums::ItemKind;  // Used by main.rs
+pub(crate) use enums::ItemType;

@@ -1,7 +1,7 @@
-pub mod mob;
-pub mod player;
-pub mod progression;
+pub(crate) mod mob;
+pub(crate) mod player;
+pub(crate) mod progression;
 
-pub use mob::{Mob, MobKind, MobRegistry};
-pub use player::Player;
-pub use progression::Progression;
+pub(crate) use mob::{Mob, MobKind, MobRegistry};
+pub(crate) use player::Player;
+pub(crate) use progression::Progression;

@@ -1,5 +1,5 @@
-pub mod components;
-pub mod screen;
+pub(crate) mod components;
+pub(crate) mod screen;
 
-pub use components::*;
-pub use screen::common::Id;
+pub(crate) use components::*;
+pub use screen::common::Id;  // Used by main.rs

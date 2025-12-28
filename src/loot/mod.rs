@@ -1,6 +1,6 @@
-pub mod definition;
-pub mod enums;
-pub mod traits;
+pub(crate) mod definition;
+pub(crate) mod enums;
+pub(crate) mod traits;
 
-pub use definition::{LootItem, LootTable};
-pub use traits::HasLoot;
+pub(crate) use definition::{LootItem, LootTable};
+pub(crate) use traits::HasLoot;

@@ -1,8 +1,8 @@
 use crossterm::terminal;
-use game::system::{game_state, init_game_state, GameState};
-use game::ui::Id;
-use game::inventory::{EquipmentSlot, HasInventory};
-use game::item::ItemKind;
+use game::{game_state, init_game_state, GameState};
+use game::Id;
+use game::{EquipmentSlot, HasInventory};
+use game::ItemKind;
 
 fn main() -> std::io::Result<()> {
     init_game_state(GameState::default());

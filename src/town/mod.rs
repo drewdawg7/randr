@@ -1,3 +1,3 @@
-pub mod definition;
-pub mod traits;
-pub mod enums;
+pub(crate) mod definition;
+pub(crate) mod traits;
+pub(crate) mod enums;

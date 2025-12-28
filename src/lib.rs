@@ -1,13 +1,19 @@
-pub mod loot;
-pub mod town;
-pub mod blacksmith;
-pub mod entities;
-pub mod combat;
-pub mod item;
-pub mod registry;
-pub mod inventory;
-pub mod utilities;
-pub mod stats;
-pub mod store;
-pub mod ui;
-pub mod system;
+pub(crate) mod loot;
+pub(crate) mod town;
+pub(crate) mod blacksmith;
+pub(crate) mod entities;
+pub(crate) mod combat;
+pub(crate) mod item;
+pub(crate) mod registry;
+pub(crate) mod inventory;
+pub(crate) mod utilities;
+pub(crate) mod stats;
+pub(crate) mod store;
+pub(crate) mod ui;
+pub(crate) mod system;
+
+// Re-exports for main.rs
+pub use inventory::{EquipmentSlot, HasInventory};
+pub use item::ItemKind;
+pub use system::{game_state, init_game_state, GameState};
+pub use ui::Id;
