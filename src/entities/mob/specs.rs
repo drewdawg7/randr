@@ -14,25 +14,11 @@ impl SpawnFromSpec<MobKind> for MobSpec {
             spec: kind,
             name: spec.name,
             stats: {
-                let mut stats: HashMap<StatType, StatInstance> = HashMap::new();
-                stats.insert(
-                    StatType::Attack,
-                    StatInstance {
-                        stat_type: StatType::Attack,
-                        current_value: spec.attack,
-                        max_value: spec.attack,
-                    },
-                );
-
-                stats.insert(
-                    StatType::Health,
-                    StatInstance {
-                        stat_type: StatType::Health,
-                        current_value: spec.max_health,
-                        max_value: spec.max_health,
-                    },
-                );
-                StatSheet { stats }
+                let stats: HashMap<StatType, StatInstance> = HashMap::new();
+                let mut sheet = StatSheet { stats };
+                sheet.insert(StatType::Attack.instance(spec.attack));
+                sheet.insert(StatType::Health.instance(spec.max_health));
+                sheet
             },
             loot_table: loot_table_for(kind),
         }

@@ -8,7 +8,7 @@ use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, Component, Eve
 use crate::{inventory::{EquipmentSlot, HasInventory}, item::{ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED}, Id}};
 
 use super::item_details::render_item_details;
-use super::with_action::WithAction;
+use crate::ui::components::wrappers::with_action::WithAction;
 
 pub struct EquipmentItem {
     pub item: Item,

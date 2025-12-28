@@ -19,9 +19,9 @@ use crate::{
     system::game_state,
     ui::Id,
 };
-use super::item_details::render_item_details;
-use super::utilities::blacksmith_header;
-use super::with_action::WithAction;
+use crate::ui::components::player::item_details::render_item_details;
+use crate::ui::components::utilities::blacksmith_header;
+use crate::ui::components::wrappers::with_action::WithAction;
 
 pub struct UpgradeableItem {
     pub item: Item,

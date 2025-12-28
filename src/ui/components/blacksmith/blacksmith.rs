@@ -9,8 +9,8 @@ use ratatui::{
 };
 
 use crate::{combat::HasGold, system::game_state, ui::Id};
-use super::menu_component::{MenuComponent, MenuItem};
-use super::utilities::{blacksmith_header, DOUBLE_ARROW_UP, RETURN_ARROW};
+use crate::ui::components::screens::menu_component::{MenuComponent, MenuItem};
+use crate::ui::components::utilities::{blacksmith_header, DOUBLE_ARROW_UP, RETURN_ARROW};
 
 pub struct BlacksmithMenu {
     props: Props,

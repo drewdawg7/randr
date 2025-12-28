@@ -12,7 +12,7 @@ use tuirealm::{
 
 use crate::{combat::HasGold, system::game_state, ui::Id};
 use super::store_component::StoreComponent;
-use super::utilities::store_header;
+use crate::ui::components::utilities::store_header;
 
 pub struct StoreTab {
     props: Props,

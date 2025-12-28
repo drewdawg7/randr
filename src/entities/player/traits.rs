@@ -12,32 +12,12 @@ impl Default for Player {
             prog: Progression::new(),
             inventory: Inventory::new(),
             stats: {
-                let mut stats: HashMap<StatType, StatInstance> = HashMap::new();
-                stats.insert(
-                    StatType::Attack,
-                    StatInstance {
-                        stat_type: StatType::Attack,
-                        current_value: 12,
-                        max_value: 12,
-                    },
-                );
-                stats.insert(
-                    StatType::Health,
-                    StatInstance {
-                        stat_type: StatType::Health,
-                        current_value: 100,
-                        max_value: 100,
-                    },
-                );
-                stats.insert(
-                    StatType::Defense,
-                    StatInstance {
-                        stat_type: StatType::Defense,
-                        current_value: 3,
-                        max_value: 3,
-                    },
-                );
-                StatSheet { stats }
+                let stats: HashMap<StatType, StatInstance> = HashMap::new();
+                let mut sheet = StatSheet { stats };
+                sheet.insert(StatType::Attack.instance(12));
+                sheet.insert(StatType::Defense.instance(3));
+                sheet.insert(StatType::Health.instance(100));
+                sheet
             },
         }
     }

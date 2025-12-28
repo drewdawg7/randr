@@ -1,10 +1,10 @@
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::*, text::{Line, Span}, widgets::{List, ListItem, ListState, Paragraph}, Frame};
 use tuirealm::{command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
-use crate::{combat::{Combatant, HasGold, Named}, ui::{utilities::SHIELD, Id}};
+use crate::{combat::{Combatant, HasGold, Named}, ui::Id};
 use crate::system::game_state;
-use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, HEART};
-use crate::ui::fittedbox::FittedBox;
+use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, HEART, SHIELD, RETURN_ARROW};
+use crate::ui::components::fittedbox::FittedBox;
 use super::xp_bar::XpBar;
 
 pub struct PlayerProfile {
@@ -85,7 +85,7 @@ impl MockComponent for PlayerProfile {
             Style::default()
         };
         let back_prefix = if selected { "> " } else { "  " };
-        let back_items = vec![ListItem::new(format!("{}{} Back", back_prefix, crate::ui::utilities::RETURN_ARROW)).style(back_style)];
+        let back_items = vec![ListItem::new(format!("{}{} Back", back_prefix, RETURN_ARROW)).style(back_style)];
         let back_list = List::new(back_items);
         frame.render_stateful_widget(back_list, chunks[2], &mut self.list_state);
     }

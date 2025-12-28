@@ -1,42 +1,8 @@
-use std::collections::HashMap;
-
 use uuid::Uuid;
 
 use crate::item::Item;
 
-#[derive(Debug, Clone)]
-pub struct InventoryItem {
-    pub item: Item,
-    pub quantity: u32,
-}
-
-impl InventoryItem {
-    pub fn new(item: Item) -> Self {
-        Self { item, quantity: 1 }
-    }
-
-    pub fn uuid(&self) -> Uuid {
-        self.item.item_uuid
-    }
-}
-
-#[derive(Default, Debug, Clone)]
-pub struct Inventory {
-    pub items: Vec<InventoryItem>,
-    max_slots: usize,
-    equipment: HashMap<EquipmentSlot, Item>,
-}
-
-
-impl Inventory {
-    pub fn new() -> Self {
-        Inventory { 
-            items: Vec::new(),
-            max_slots: 5,
-            equipment: HashMap::new() 
-        }
-    }
-}
+use super::{EquipmentSlot, Inventory, InventoryError, InventoryItem};
 
 pub trait HasInventory {
     fn inventory(&self) -> &Inventory;
@@ -56,7 +22,7 @@ pub trait HasInventory {
 
     fn add_to_inv(&mut self, item: Item) -> Result<(), InventoryError> {
         let inv = self.inventory_mut();
-        if inv.items.len() >= inv.max_slots {
+        if inv.items.len() >= inv.max_slots() {
             return Err(InventoryError::Full);
         }
         inv.items.push(InventoryItem::new(item));
@@ -64,11 +30,11 @@ pub trait HasInventory {
     }
 
     fn get_equipped_item(&self, slot: EquipmentSlot) -> Option<&Item> {
-        self.inventory().equipment.get(&slot)
+        self.inventory().equipment().get(&slot)
     }
 
     fn unequip_item(&mut self, slot: EquipmentSlot) -> Result<(), InventoryError> {
-        let item = self.inventory_mut().equipment.remove(&slot);
+        let item = self.inventory_mut().equipment_mut().remove(&slot);
 
         match item {
             Some(mut item) => {
@@ -83,7 +49,7 @@ pub trait HasInventory {
     fn equip_item(&mut self, item: &mut Item, slot: EquipmentSlot) {
         let _ = self.unequip_item(slot);
         item.set_is_equipped(true);
-        self.inventory_mut().equipment.insert(slot, item.clone());
+        self.inventory_mut().equipment_mut().insert(slot, item.clone());
     }
 
     fn equip_from_inventory(&mut self, item_uuid: Uuid, slot: EquipmentSlot) {
@@ -93,18 +59,7 @@ pub trait HasInventory {
             let mut item = inv_item.item;
             item.set_is_equipped(true);
             let _ = self.unequip_item(slot);
-            self.inventory_mut().equipment.insert(slot, item);
+            self.inventory_mut().equipment_mut().insert(slot, item);
         }
     }
-}
-
-pub enum InventoryError{
-    Full
-}
-
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum EquipmentSlot {
-    Weapon,
-    OffHand
 }

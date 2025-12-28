@@ -6,7 +6,6 @@ use crossterm::terminal;
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
-use crate::ui::equipment::Equipment;
 use crate::{
     blacksmith::Blacksmith,
     combat::CombatRounds,
@@ -15,6 +14,7 @@ use crate::{
     store::Store,
     ui::{
         Id,
+        equipment::Equipment,
         main_menu::MainMenu,
         fight_component::FightComponent,
         player_profile::PlayerProfile,

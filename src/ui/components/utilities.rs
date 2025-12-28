@@ -3,7 +3,8 @@ use ratatui::{
     text::{Line, Span},
 };
 
-use crate::{blacksmith::Blacksmith, store::Store, system::game_state, ui::{Id, menu_component::{MenuComponent, MenuItem}}};
+use crate::{blacksmith::Blacksmith, store::Store, system::game_state, ui::Id};
+use super::screens::menu_component::{MenuComponent, MenuItem};
 
 pub const HEART: char           = '\u{F004}';
 pub const COIN: char            = '\u{EDE8}';

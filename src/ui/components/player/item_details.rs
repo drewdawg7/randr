@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 use crate::{item::{Item, ItemType}, stats::HasStats};
-use super::utilities::{CROSSED_SWORDS, SHIELD, CHECKED, UNCHECKED, DOUBLE_ARROW_UP};
+use crate::ui::components::utilities::{CROSSED_SWORDS, SHIELD, CHECKED, UNCHECKED, DOUBLE_ARROW_UP};
 
 /// Renders an item details panel showing stats for the given item.
 /// If no item is provided, renders an empty bordered box.

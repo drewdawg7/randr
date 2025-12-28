@@ -35,7 +35,9 @@ impl StatSheet {
             None     => 0
         }
     }
-
+    pub fn insert(&mut self, si: StatInstance){
+        self.stats.insert(si.stat_type, si);
+    }
 
     pub fn increase_stat(&mut self, stat: StatType, amount: i32) {
 
@@ -63,6 +65,8 @@ impl StatInstance {
     pub fn decrease(&mut self, amount: i32) {
         self.current_value = (self.current_value - amount).max(0);
     }
+
+
 }
 
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
@@ -70,4 +74,10 @@ pub enum StatType {
     Health,
     Attack,
     Defense
+}
+
+impl StatType {
+    pub fn instance(self, base_value: i32) -> StatInstance {
+        StatInstance { stat_type: self, current_value: base_value, max_value: base_value }
+    }
 }
