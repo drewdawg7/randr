@@ -22,6 +22,7 @@ use crate::{
         with_back_menu::WithBackMenu,
         blacksmith::BlacksmithMenu,
         blacksmith_items::BlacksmithItems,
+        tabbed_container::{TabbedContainer, TabEntry},
     },
 };
 
@@ -83,9 +84,15 @@ impl GameState {
 
         let fight = WithBackMenu::new(FightComponent::new(), Id::Menu);
         let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
-        let _ = self.app.mount(Id::Equipment, Box::new(Equipment::default()), vec![]);
-        let profile = WithBackMenu::new(PlayerProfile::new(), Id::Menu);
-        let _ = self.app.mount(Id::Profile, Box::new(profile), vec![]);
+
+        // Create tabbed profile with Player and Equipment tabs
+        let profile_tabs = TabbedContainer::new(
+            vec![
+                TabEntry::new("Player", PlayerProfile::new()),
+                TabEntry::new("Equipment", Equipment::default()),
+            ],
+        );
+        let _ = self.app.mount(Id::Profile, Box::new(profile_tabs), vec![]);
 
         let _ = self.app.mount(Id::Blacksmith, Box::new(BlacksmithMenu::default()), vec![]);
         let _ = self.app.mount(Id::BlacksmithItems, Box::new(BlacksmithItems::default()), vec![]);

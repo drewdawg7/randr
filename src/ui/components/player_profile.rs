@@ -1,7 +1,7 @@
-use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::*, text::{Line, Span}, widgets::Paragraph, Frame};
-use tuirealm::{command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State};
+use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::*, text::{Line, Span}, widgets::{List, ListItem, ListState, Paragraph}, Frame};
+use tuirealm::{command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
-use crate::{combat::{Combatant, HasGold, Named}, ui::utilities::SHIELD};
+use crate::{combat::{Combatant, HasGold, Named}, ui::{utilities::SHIELD, Id}};
 use crate::system::game_state;
 use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, HEART};
 use crate::ui::fittedbox::FittedBox;
@@ -10,13 +10,17 @@ use super::xp_bar::XpBar;
 pub struct PlayerProfile {
     props: Props,
     xp_bar: XpBar,
+    list_state: ListState,
 }
 
 impl PlayerProfile {
     pub fn new() -> Self {
+        let mut list_state = ListState::default();
+        list_state.select(Some(0));
         Self {
             props: Props::default(),
             xp_bar: XpBar::new(),
+            list_state,
         }
     }
 }
@@ -63,11 +67,27 @@ impl MockComponent for PlayerProfile {
 
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Length(profile_box.height() + 2), Constraint::Length(1), Constraint::Min(0)])
+            .constraints([
+                Constraint::Length(profile_box.height() + 2),
+                Constraint::Length(1),
+                Constraint::Min(0),
+            ])
             .split(area);
 
         frame.render_widget(profile_box, chunks[0]);
         self.xp_bar.view(frame, chunks[1]);
+
+        // Render back button
+        let selected = self.list_state.selected().unwrap_or(0) == 0;
+        let back_style = if selected {
+            Style::default().fg(Color::Yellow)
+        } else {
+            Style::default()
+        };
+        let back_prefix = if selected { "> " } else { "  " };
+        let back_items = vec![ListItem::new(format!("{}Back", back_prefix)).style(back_style)];
+        let back_list = List::new(back_items);
+        frame.render_stateful_widget(back_list, chunks[2], &mut self.list_state);
     }
 
     fn attr(&mut self, attr: Attribute, value: AttrValue) {
@@ -75,15 +95,27 @@ impl MockComponent for PlayerProfile {
     }
 
     fn state(&self) -> State {
-        State::None
+        State::One(StateValue::Usize(self.list_state.selected().unwrap_or(0)))
     }
 
     fn query(&self, attr: Attribute) -> Option<AttrValue> {
         self.props.get(attr)
     }
 
-    fn perform(&mut self, _cmd: Cmd) -> CmdResult {
-        CmdResult::None
+    fn perform(&mut self, cmd: Cmd) -> CmdResult {
+        match cmd {
+            Cmd::Move(tuirealm::command::Direction::Up) |
+            Cmd::Move(tuirealm::command::Direction::Down) => {
+                // Only one item (back button), so no movement needed
+                CmdResult::None
+            }
+            Cmd::Submit => {
+                // Back button selected
+                game_state().current_screen = Id::Menu;
+                CmdResult::Submit(self.state())
+            }
+            _ => CmdResult::None
+        }
     }
 }
 

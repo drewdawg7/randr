@@ -1,7 +1,7 @@
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, Frame, MockComponent, NoUserEvent, State};
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Style, Stylize}, text::{Line, Span}, widgets::Paragraph};
 
-use crate::{combat::{start_fight, Named}, entities::mob::MobKind, system::game_state, ui::{utilities::{ANVIL, CROSSED_SWORDS, OPEN_DOOR, PERSON, SHIRT, STORE}, Id}};
+use crate::{combat::{start_fight, Named}, entities::mob::MobKind, system::game_state, ui::{utilities::{ANVIL, CROSSED_SWORDS, OPEN_DOOR, PERSON, STORE}, Id}};
 use super::menu_component::{MenuComponent, MenuItem};
 
 pub struct MainMenu {
@@ -24,11 +24,6 @@ impl Default for MainMenu {
             MenuItem {
                 label: format!("{} Profile", PERSON).to_string(),
                 action: Box::new(|| { game_state().current_screen = Id::Profile; })
-            },
-
-            MenuItem {
-                label: format!("{} Equipment", SHIRT).to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Equipment; })
             },
             MenuItem {
                 label: format!("{} Blacksmith", ANVIL).to_string(),

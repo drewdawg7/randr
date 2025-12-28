@@ -126,22 +126,28 @@ impl MockComponent for Equipment {
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
+        let total_items = self.items.len() + 1; // equipment + back button
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
                 let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 { self.items.len() - 1 } else { current - 1 };
+                let new_idx = if current == 0 { total_items - 1 } else { current - 1 };
                 self.list_state.select(Some(new_idx));
                 CmdResult::Changed(self.state())
             }
             Cmd::Move(tuirealm::command::Direction::Down) => {
                 let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % self.items.len();
+                let new_idx = (current + 1) % total_items;
                 self.list_state.select(Some(new_idx));
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {
                 let selected = self.list_state.selected().unwrap_or(0);
-                self.items[selected].perform(Cmd::Submit);
+                if selected == self.items.len() {
+                    // Back button
+                    game_state().current_screen = Id::Menu;
+                } else if selected < self.items.len() {
+                    self.items[selected].perform(Cmd::Submit);
+                }
                 CmdResult::Submit(self.state())
             }
             _ => CmdResult::None
@@ -174,10 +180,6 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for Equipment {
                 } else if selected < self.items.len() {
                     self.items[selected].perform(Cmd::Submit);
                 }
-                None
-            }
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                game_state().current_screen = Id::Menu;
                 None
             }
             _ => None

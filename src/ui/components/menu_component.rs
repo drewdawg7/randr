@@ -1,8 +1,8 @@
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, Frame, MockComponent, NoUserEvent, State, StateValue};
 use tuirealm::event::{Key, KeyEvent};
-use ratatui::widgets::{List, ListItem, ListState};
+use ratatui::{style::Stylize, widgets::{List, ListItem, ListState}};
 use ratatui::layout::Rect;
-use ratatui::style::{Style, Color};
+use ratatui::style::{Style};
 
 pub struct MenuItem {
     pub label: String,
@@ -30,7 +30,7 @@ impl MockComponent for MenuComponent {
             .enumerate()
             .map(|(i, item)| {
                 let style = if self.list_state.selected() == Some(i) {
-                    Style::default().fg(Color::Yellow)
+                    Style::default().yellow()
                 } else {
                     Style::default()
                 };
