@@ -6,3 +6,6 @@ pub mod player_profile;
 pub mod utilities;
 pub mod main_menu;
 pub mod fittedbox;
+pub mod with_back_menu;
+pub mod with_action;
+pub mod xp_bar;

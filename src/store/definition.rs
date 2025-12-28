@@ -4,7 +4,7 @@ use std::{fmt::Display};
 
 use crate::{combat::HasGold, item::Item};
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Store {
     pub name: String,
     pub inventory: Vec<StoreItem>
@@ -21,7 +21,7 @@ impl Store {
 }
 
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct StoreItem {
     pub item: Item,
     pub quantity: i32,

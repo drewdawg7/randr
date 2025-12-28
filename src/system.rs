@@ -1,14 +1,28 @@
 #![allow(static_mut_refs)]
-use std::{collections::HashMap, io::{self, Stdout},  time::Duration};
+use std::io::{self, Stdout};
+use std::time::Duration;
 
 use crossterm::terminal;
-use ratatui::{prelude::{CrosstermBackend}, Terminal};
+use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
-use crate::{combat::CombatRounds, entities::{mob::{MobKind, MobRegistry}, Mob, Player}, item::{definition::{ItemKind, ItemRegistry}, Item}, store::Store, ui::{common::{Id, ScreenId, ScreenKind}, fightscreen::FightScreen, menuscreen::MenuScreen, player_profile_screen::PlayerProfileScreen, storescreen::StoreScreen}};
-
+use crate::{
+    combat::CombatRounds,
+    entities::{mob::{MobKind, MobRegistry}, Mob, Player},
+    item::definition::{ItemKind, ItemRegistry},
+    store::Store,
+    ui::{
+        Id,
+        main_menu::MainMenu,
+        store_component::StoreComponent,
+        fight_component::FightComponent,
+        player_profile::PlayerProfile,
+        with_back_menu::WithBackMenu,
+    },
+};
 
 static mut GAME_STATE: Option<GameState> = None;
+
 pub fn init_game_state(gs: GameState) {
     unsafe { GAME_STATE = Some(gs); }
 }
@@ -16,14 +30,16 @@ pub fn init_game_state(gs: GameState) {
 pub fn game_state() -> &'static mut GameState {
     unsafe { GAME_STATE.as_mut().unwrap() }
 }
+
 pub struct GameState {
     item_registry: ItemRegistry,
     mob_registry: MobRegistry,
-    pub current_screen: ScreenId,
-    screens: HashMap<ScreenId, ScreenKind>,
+    pub current_screen: Id,
     app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
     pub player: Player,
+    store: Store,
+    current_combat: Option<CombatRounds>,
 }
 
 impl GameState {
@@ -31,63 +47,65 @@ impl GameState {
         self.mob_registry.spawn(mob)
     }
 
-    pub fn spawn_item(&self, item: ItemKind) -> Item {
+    pub fn spawn_item(&self, item: ItemKind) -> crate::item::Item {
         self.item_registry.spawn(item)
     }
 
-    fn add_screen(&mut self, screen: ScreenKind) {
-        let id = screen.id();
-        self.screens.insert(id, screen);
+    pub fn current_combat(&self) -> Option<&CombatRounds> {
+        self.current_combat.as_ref()
+    }
 
+    pub fn set_current_combat(&mut self, combat_rounds: CombatRounds) {
+        self.current_combat = Some(combat_rounds);
     }
-    pub fn app_mut(&mut self) -> &mut Application<Id, Event<NoUserEvent>, NoUserEvent> {
-        &mut self.app
+
+    pub fn clear_current_combat(&mut self) {
+        self.current_combat = None;
     }
- 
-    pub fn init_fight(&mut self, combat_rounds: CombatRounds) {
-        let fight_screen = self.screens.get_mut(&ScreenId::Fight);
-        if let Some(sk) = fight_screen && let ScreenKind::Fight(fs) = sk {fs.add_fight(combat_rounds);}
-    }
+
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
-        self.init_screens();
-    } 
 
-    pub fn run_current_screen(&mut self, current: &mut ScreenId) -> std::io::Result<()> {
-        let mut screen = self.screens.remove(current).expect("missing screen");
+        // Mount all components
+        let _ = self.app.mount(Id::Menu, Box::new(MainMenu::new()), vec![]);
 
-        let mut terminal = self.terminal.take().expect("terminal missing");
+        let store = WithBackMenu::new(StoreComponent::new(&self.store), Id::Menu);
+        let _ = self.app.mount(Id::Store, Box::new(store), vec![]);
 
-        terminal.draw(|frame| {
-            screen.view(self, frame, frame.area());
-        })?;
+        let fight = WithBackMenu::new(FightComponent::new(), Id::Menu);
+        let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
 
-        self.terminal = Some(terminal);
+        let profile = WithBackMenu::new(PlayerProfile::new(), Id::Menu);
+        let _ = self.app.mount(Id::Profile, Box::new(profile), vec![]);
+    }
 
-        if let Some(next) = screen.tick(self) {
-            *current = next;
+    pub fn run_current_screen(&mut self) -> std::io::Result<()> {
+        let current = self.current_screen;
+        if current == Id::Quit {
+            return Ok(());
         }
 
-        self.screens.insert(screen.id(), screen);
+        // Clear combat data when leaving fight screen
+        if current != Id::Fight {
+            self.current_combat = None;
+        }
+
+        let mut terminal = self.terminal.take().expect("terminal missing");
+        terminal.draw(|frame| {
+            self.app.view(&current, frame, frame.area());
+        })?;
+        self.terminal = Some(terminal);
+
+        let _ = self.app.active(&current);
+        let _ = self.app.tick(tuirealm::PollStrategy::Once);
+
         Ok(())
-    }
-    fn init_screens(&mut self) {
-        let menu_screen = MenuScreen::new(&mut self.app);
-        self.add_screen(ScreenKind::MainMenu(menu_screen));
-        let store = Store::default();
-        let store_screen = StoreScreen::new(&mut self.app, &store);
-        self.add_screen(ScreenKind::Store(store_screen));
-        let fight_screen = FightScreen::new(&mut self.app, CombatRounds::new());
-        self.add_screen(ScreenKind::Fight(fight_screen));
-        let profile_screen = PlayerProfileScreen::new(&mut self.app);
-        self.add_screen(ScreenKind::Profile(profile_screen));
-    
     }
 }
 
 impl Default for GameState {
     fn default() -> Self {
-          let stdout: io::Stdout = io::stdout();
+        let stdout: io::Stdout = io::stdout();
         let backend: CrosstermBackend<io::Stdout> = CrosstermBackend::new(stdout);
         let mut terminal: Terminal<CrosstermBackend<io::Stdout>> = Terminal::new(backend).unwrap();
         terminal.clear().unwrap();
@@ -95,14 +113,15 @@ impl Default for GameState {
             player: Player::default(),
             item_registry: ItemRegistry::new(),
             mob_registry: MobRegistry::new(),
-            screens: HashMap::new(),
+            store: Store::default(),
             app: Application::init(
                 EventListenerCfg::default()
                     .crossterm_input_listener(Duration::from_millis(20), 3)
                     .poll_timeout(Duration::from_millis(10)),
             ),
             terminal: Some(terminal),
-            current_screen: ScreenId::Menu,
+            current_screen: Id::Menu,
+            current_combat: None,
         }
     }
 }

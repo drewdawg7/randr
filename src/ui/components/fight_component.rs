@@ -1,38 +1,33 @@
+use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Color, Style}, text::{Line, Span}, widgets::Paragraph, Frame};
+use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
-use ratatui::{layout::{Constraint, Direction, Layout}, style::{Color, Style}, text::{Line, Span}, widgets::Paragraph};
-use tuirealm::{command::CmdResult, Component, Event, MockComponent, NoUserEvent, State};
+use crate::combat::AttackResult;
+use crate::system::game_state;
 
-use crate::{combat::{AttackResult, CombatRounds}, ui::{common::ScreenId, components::utilities::back_button, menu_component::{MenuComponent}}};
 pub struct FightComponent {
-    attack_components: Vec<AttackResultComponent>,
-    back_menu: MenuComponent
+    props: Props,
 }
 
 impl FightComponent {
-    pub fn new(combat_rounds: CombatRounds, back_screen: ScreenId) -> Self {
-        let attack_components = combat_rounds
-            .attack_results
-            .into_iter()
-            .map(AttackResultComponent::new)
-            .collect();
-        let back_menu = back_button(back_screen);
-        Self { attack_components, back_menu }
+    pub fn new() -> Self {
+        Self { props: Props::default() }
     }
 }
 
 impl MockComponent for FightComponent {
-    fn view(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
-        // Split into attack results area and back menu area
-        let main_chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Min(0),      // Attack results take remaining space
-                Constraint::Length(3),   // Back menu
-            ])
-            .split(area);
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
+        let Some(combat_rounds) = game_state().current_combat() else {
+            return;
+        };
 
-        // Split attack results area
-        let attack_constraints: Vec<Constraint> = self.attack_components
+        let mut attack_components: Vec<AttackResultComponent> = combat_rounds
+            .attack_results
+            .iter()
+            .cloned()
+            .map(AttackResultComponent::new)
+            .collect();
+
+        let attack_constraints: Vec<Constraint> = attack_components
             .iter()
             .map(|_| Constraint::Length(2))
             .collect();
@@ -40,47 +35,49 @@ impl MockComponent for FightComponent {
         let attack_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints(attack_constraints.as_slice())
-            .split(main_chunks[0]);
+            .split(area);
 
-        for (component, chunk) in self.attack_components.iter_mut().zip(attack_chunks.iter()) {
+        for (component, chunk) in attack_components.iter_mut().zip(attack_chunks.iter()) {
             component.view(frame, *chunk);
         }
-
-        self.back_menu.view(frame, main_chunks[1]);
-    }
-    fn query(&self, _attr: tuirealm::Attribute) -> Option<tuirealm::AttrValue> {
-        None
     }
 
-    fn attr(&mut self, _attr: tuirealm::Attribute, _value: tuirealm::AttrValue) {}
+    fn query(&self, attr: Attribute) -> Option<AttrValue> {
+        self.props.get(attr)
+    }
+
+    fn attr(&mut self, attr: Attribute, value: AttrValue) {
+        self.props.set(attr, value);
+    }
 
     fn state(&self) -> State {
         State::None
     }
 
-    fn perform(&mut self, _cmd: tuirealm::command::Cmd) -> tuirealm::command::CmdResult {
+    fn perform(&mut self, _cmd: Cmd) -> CmdResult {
         CmdResult::None
     }
 }
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for FightComponent {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
-        self.back_menu.on(ev)
+    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
+        None
     }
 }
+
 pub struct AttackResultComponent {
-    pub attack_result: AttackResult
+    props: Props,
+    attack_result: AttackResult
 }
 
 impl AttackResultComponent {
     pub fn new(attack_result: AttackResult) -> Self {
-        Self { attack_result }
+        Self { props: Props::default(), attack_result }
     }
 }
 
-
 impl MockComponent for AttackResultComponent {
-    fn view(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
         let attacker = &self.attack_result.attacker;
         let defender = &self.attack_result.defender;
 
@@ -88,8 +85,8 @@ impl MockComponent for AttackResultComponent {
         let defender_style = Style::default().fg(Color::Green);
         let death_style = Style::default().fg(Color::Red);
         let styled_attacker = Span::styled(attacker, attacker_style);
-
         let styled_defender = Span::styled(defender, defender_style);
+
         let mut lines = vec![
             Line::from(vec![
                 styled_attacker,
@@ -97,36 +94,39 @@ impl MockComponent for AttackResultComponent {
                 Span::raw(self.attack_result.damage_to_target.to_string()),
                 Span::raw(" damage to "),
                 styled_defender,
-             ])
+            ])
         ];
-        if self.attack_result.target_died { 
+
+        if self.attack_result.target_died {
             lines.push(Line::from(vec![
-                    Span::styled(
-                        format!("{} died.", defender),
-                        death_style
-                    ),
-                ]));
+                Span::styled(format!("{} died.", defender), death_style),
+            ]));
         } else {
             lines.push(Line::from(vec![
-                    Span::styled(
-                        format!("{}: {} -> {} HP", defender, self.attack_result.target_health_before, self.attack_result.target_health_after),
-                        death_style
-                    ),
-                ]));
+                Span::styled(
+                    format!("{}: {} -> {} HP", defender, self.attack_result.target_health_before, self.attack_result.target_health_after),
+                    death_style
+                ),
+            ]));
         }
-        let paragraph = Paragraph::new(lines);
-        frame.render_widget(paragraph, area);
 
+        frame.render_widget(Paragraph::new(lines), area);
     }
 
-    fn query(&self, _attr: tuirealm::Attribute) -> Option<tuirealm::AttrValue> { None }
+    fn query(&self, attr: Attribute) -> Option<AttrValue> {
+        self.props.get(attr)
+    }
 
-    fn attr(&mut self, _attr: tuirealm::Attribute, _value: tuirealm::AttrValue) {}
+    fn attr(&mut self, attr: Attribute, value: AttrValue) {
+        self.props.set(attr, value);
+    }
 
-    fn state(&self) -> State { State::None }
+    fn state(&self) -> State {
+        State::None
+    }
 
-    fn perform(&mut self, _cmd: tuirealm::command::Cmd) -> tuirealm::command::CmdResult {
-        CmdResult::None    
+    fn perform(&mut self, _cmd: Cmd) -> CmdResult {
+        CmdResult::None
     }
 }
 

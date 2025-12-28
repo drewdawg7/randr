@@ -1,4 +1,9 @@
-use crate::{combat::{AttackResult, Combatant, DropsGold, HasGold}, entities::progression::{GivesXP, HasProgression}};
+use crate::{
+    combat::{AttackResult, Combatant, DropsGold, HasGold},
+    entities::{mob::MobKind, progression::{GivesXP, HasProgression}},
+    system::game_state,
+    ui::Id,
+};
 
 
 pub fn award_kill_gold<K: HasGold, T:DropsGold>(killer: &mut K, target: &mut T) -> i32 
@@ -58,10 +63,18 @@ where
     if !player.is_alive() {
         println!("You died!");
     } else if !mob.is_alive() {
-        let gold = award_kill_gold(player, mob);
+        let _gold = award_kill_gold(player, mob);
         let xp = mob.give_xp();
         player.gain_xp(xp);
-        
+
     }
     cr
+}
+
+pub fn start_fight(mob_kind: MobKind) {
+    let gs = game_state();
+    let mut mob = gs.spawn_mob(mob_kind);
+    let combat_rounds = enter_combat(&mut gs.player, &mut mob);
+    gs.set_current_combat(combat_rounds);
+    gs.current_screen = Id::Fight;
 }

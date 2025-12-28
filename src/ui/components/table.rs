@@ -1,4 +1,4 @@
-use tuirealm::{Component, Event, MockComponent, Frame, command::{Cmd, CmdResult}, props::{Attribute, AttrValue}, State, NoUserEvent};
+use tuirealm::{Component, Event, MockComponent, Frame, command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, State, NoUserEvent};
 use ratatui::widgets::{Table as RatatuiTable, Row as RatatuiRow, Cell};
 use ratatui::layout::{Rect, Constraint};
 use ratatui::style::{Style, Color, Modifier};
@@ -30,6 +30,7 @@ impl Row {
 }
 
 pub struct TableComponent {
+    props: Props,
     headers: Vec<Header>,
     rows: Vec<Row>,
 }
@@ -37,6 +38,7 @@ pub struct TableComponent {
 impl TableComponent {
     pub fn new(headers: Vec<Header>) -> Self {
         Self {
+            props: Props::default(),
             headers,
             rows: Vec::new(),
         }
@@ -58,6 +60,7 @@ impl TableComponent {
             .collect();
 
         Self {
+            props: Props::default(),
             headers: headers.into(),
             rows,
         }
@@ -142,11 +145,13 @@ impl MockComponent for TableComponent {
         frame.render_widget(self.to_widget(), area);
     }
 
-    fn query(&self, _attr: Attribute) -> Option<AttrValue> {
-        None
+    fn query(&self, attr: Attribute) -> Option<AttrValue> {
+        self.props.get(attr)
     }
 
-    fn attr(&mut self, _attr: Attribute, _value: AttrValue) {}
+    fn attr(&mut self, attr: Attribute, value: AttrValue) {
+        self.props.set(attr, value);
+    }
 
     fn state(&self) -> State {
         State::None

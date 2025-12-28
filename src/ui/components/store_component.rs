@@ -1,20 +1,17 @@
-use ratatui::layout::{Constraint, Direction, Layout};
-use tuirealm::{command::CmdResult, Component, Event, MockComponent, NoUserEvent, State};
+use ratatui::{layout::Rect, Frame};
+use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
 use crate::store::Store;
-use crate::ui::common::ScreenId;
-use crate::ui::components::utilities::back_button;
 use crate::ui::fittedbox::FittedBox;
 use crate::ui::table::{Header, TableComponent};
-use crate::ui::menu_component::*;
 
 pub struct StoreComponent {
+    props: Props,
     table: TableComponent,
-    back_menu: MenuComponent,
 }
 
 impl StoreComponent {
-    pub fn new(store: &Store, back_screen: ScreenId) -> Self {
+    pub fn new(store: &Store) -> Self {
         let table = TableComponent::from_items(
             [
                 Header::new("Item"),
@@ -29,47 +26,37 @@ impl StoreComponent {
             ],
         );
 
-        let back_menu = back_button(back_screen);
-        Self { table, back_menu }
+        Self { props: Props::default(), table }
     }
 }
 
 impl MockComponent for StoreComponent {
-    fn view(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
+    fn view(&mut self, frame: &mut Frame, area: Rect) {
         let width = self.table.content_width();
         let height = self.table.content_height();
         let fitted_table = FittedBox::new(self.table.to_widget(), width, height);
-
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(fitted_table.height()),
-                Constraint::Length(3),
-                Constraint::Min(0),
-            ])
-            .split(area);
-
-        frame.render_widget(fitted_table, chunks[0]);
-        self.back_menu.view(frame, chunks[1]);
+        frame.render_widget(fitted_table, area);
     }
 
-    fn query(&self, _attr: tuirealm::Attribute) -> Option<tuirealm::AttrValue> {
-        None
+    fn query(&self, attr: Attribute) -> Option<AttrValue> {
+        self.props.get(attr)
     }
 
-    fn attr(&mut self, _attr: tuirealm::Attribute, _value: tuirealm::AttrValue) {}
+    fn attr(&mut self, attr: Attribute, value: AttrValue) {
+        self.props.set(attr, value);
+    }
 
     fn state(&self) -> State {
         State::None
     }
 
-    fn perform(&mut self, _cmd: tuirealm::command::Cmd) -> CmdResult {
+    fn perform(&mut self, _cmd: Cmd) -> CmdResult {
         CmdResult::None
     }
 }
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for StoreComponent {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
-        self.back_menu.on(ev)
+    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
+        None
     }
 }

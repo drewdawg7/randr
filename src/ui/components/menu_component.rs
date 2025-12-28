@@ -1,6 +1,6 @@
-use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, BorderType}, Component, Event, Frame, MockComponent, NoUserEvent, State};
+use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, Frame, MockComponent, NoUserEvent, State, StateValue};
 use tuirealm::event::{Key, KeyEvent};
-use ratatui::{layout::{Constraint, Direction, Layout}, style::Stylize, widgets::{Block, Borders, List, ListItem, ListState, Padding}};
+use ratatui::widgets::{List, ListItem, ListState};
 use ratatui::layout::Rect;
 use ratatui::style::{Style, Color};
 
@@ -10,15 +10,16 @@ pub struct MenuItem {
 }
 
 pub struct MenuComponent {
-    pub list_state: ListState,
-    pub items: Vec<MenuItem>,
+    props: Props,
+    list_state: ListState,
+    items: Vec<MenuItem>,
 }
 
 impl MenuComponent {
     pub fn new(items: Vec<MenuItem>) -> Self {
         let mut list_state = ListState::default();
         list_state.select(Some(0));
-        Self { list_state, items }
+        Self { props: Props::default(), list_state, items }
     }
 }
 
@@ -42,18 +43,40 @@ impl MockComponent for MenuComponent {
         frame.render_stateful_widget(list, area, &mut self.list_state);
     }
 
-    fn query(&self, _attr: Attribute) -> Option<AttrValue> {
-        None
+    fn query(&self, attr: Attribute) -> Option<AttrValue> {
+        self.props.get(attr)
     }
 
-    fn attr(&mut self, _attr: Attribute, _value: AttrValue) {}
+    fn attr(&mut self, attr: Attribute, value: AttrValue) {
+        self.props.set(attr, value);
+    }
 
     fn state(&self) -> State {
-        State::None
+        State::One(StateValue::Usize(self.list_state.selected().unwrap_or(0)))
     }
 
-    fn perform(&mut self, _cmd: Cmd) -> CmdResult {
-        CmdResult::None
+    fn perform(&mut self, cmd: Cmd) -> CmdResult {
+        match cmd {
+            Cmd::Move(tuirealm::command::Direction::Up) => {
+                let current = self.list_state.selected().unwrap_or(0);
+                let new_idx = if current == 0 { self.items.len() - 1 } else { current - 1 };
+                self.list_state.select(Some(new_idx));
+                CmdResult::Changed(self.state())
+            }
+            Cmd::Move(tuirealm::command::Direction::Down) => {
+                let current = self.list_state.selected().unwrap_or(0);
+                let new_idx = (current + 1) % self.items.len();
+                self.list_state.select(Some(new_idx));
+                CmdResult::Changed(self.state())
+            }
+            Cmd::Submit => {
+                let selected = self.list_state.selected().unwrap_or(0);
+                let action = &mut self.items[selected].action;
+                action();
+                CmdResult::Submit(self.state())
+            }
+            _ => CmdResult::None
+        }
     }
 }
 
