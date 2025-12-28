@@ -47,7 +47,7 @@ impl Player {
 
         let hp = text_bar_with_label("HP", self.get_health(), self.get_max_health(), 10);
         let gold = format!("{} gold", self.gold);
-        let attack = format!("Attack: {} ({})", self.attack_power(), self.get_attack());
+        let attack = format!("Attack: {} ({})", self.effective_attack(), self.get_attack());
         let xp = self.progression().pretty_print();
         let first_row = format!("{} | {} | {}", self.name, self.progression().level, gold);
 

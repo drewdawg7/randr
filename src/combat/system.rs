@@ -13,14 +13,14 @@ pub fn award_kill_gold<K: HasGold, T:DropsGold>(killer: &mut K, target: &mut T) 
     dropped
 }
 
-pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D) 
+pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 -> AttackResult {
-    let target_health_before = defender.health();
-    let target_defense = defender.defense();
+    let target_health_before = defender.effective_health();
+    let target_defense = defender.effective_defense();
 
-    let damage_to_target = (attacker.attack_power() - target_defense).max(0);
+    let damage_to_target = (attacker.effective_attack() - target_defense).max(0);
     defender.take_damage(damage_to_target);
-    let target_health_after = defender.health();
+    let target_health_after = defender.effective_health();
     let target_died = !defender.is_alive();
     AttackResult {
         attacker: attacker.name().to_string(),

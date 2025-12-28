@@ -192,7 +192,7 @@ impl MockComponent for BlacksmithItems {
         let mut all_items = list_items;
         all_items.push(ListItem::new(Line::from(vec![
             Span::styled(back_prefix, back_style),
-            Span::styled("Back", back_style),
+            Span::styled(format!("{} Back", crate::ui::utilities::RETURN_ARROW), back_style),
         ])));
 
         let list = List::new(all_items);
@@ -259,14 +259,14 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithItems {
                 let selected = self.list_state.selected().unwrap_or(0);
                 if selected == self.items.len() {
                     // Back button
-                    game_state().current_screen = Id::Blacksmith;
+                    game_state().current_screen = Id::Town;
                 } else if selected < self.items.len() {
                     self.items[selected].perform(Cmd::Submit);
                 }
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                game_state().current_screen = Id::Blacksmith;
+                game_state().current_screen = Id::Town;
                 None
             }
             _ => None,

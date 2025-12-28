@@ -107,7 +107,7 @@ impl MockComponent for Equipment {
             Style::default()
         };
         let back_prefix = if back_selected { "> " } else { "  " };
-        list_items.push(ListItem::new(format!("{}Back", back_prefix)).style(back_style));
+        list_items.push(ListItem::new(format!("{}{} Back", back_prefix, crate::ui::utilities::RETURN_ARROW)).style(back_style));
 
         let list = List::new(list_items);
         frame.render_stateful_widget(list, area, &mut self.list_state);

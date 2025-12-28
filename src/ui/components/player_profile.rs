@@ -32,8 +32,8 @@ impl MockComponent for PlayerProfile {
         let health = player.get_health();
         let max_health = player.get_max_health();
         let gold = player.gold();
-        let attack = player.attack_power();
-        let defense = player.defense();
+        let attack = player.effective_attack();
+        let defense = player.effective_defense();
         let lines = vec![
             Line::from(vec![
                 Span::styled(format!("{}", HEART), Style::default().red().bold()),
@@ -85,7 +85,7 @@ impl MockComponent for PlayerProfile {
             Style::default()
         };
         let back_prefix = if selected { "> " } else { "  " };
-        let back_items = vec![ListItem::new(format!("{}Back", back_prefix)).style(back_style)];
+        let back_items = vec![ListItem::new(format!("{}{} Back", back_prefix, crate::ui::utilities::RETURN_ARROW)).style(back_style)];
         let back_list = List::new(back_items);
         frame.render_stateful_widget(back_list, chunks[2], &mut self.list_state);
     }

@@ -1,7 +1,7 @@
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, Frame, MockComponent, NoUserEvent, State};
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Style, Stylize}, text::{Line, Span}, widgets::Paragraph};
 
-use crate::{combat::{start_fight, Named}, entities::mob::MobKind, system::game_state, ui::{utilities::{ANVIL, CROSSED_SWORDS, OPEN_DOOR, PERSON, STORE}, Id}};
+use crate::{combat::{start_fight, Named}, entities::mob::MobKind, system::game_state, ui::{utilities::{CROSSED_SWORDS, HOUSE, OPEN_DOOR, PERSON}, Id}};
 use super::menu_component::{MenuComponent, MenuItem};
 
 pub struct MainMenu {
@@ -18,16 +18,12 @@ impl Default for MainMenu {
                 action: Box::new(|| { start_fight(MobKind::Goblin); })
             },
             MenuItem {
-                label: format!("{} Store", STORE).to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Store; })
+                label: format!("{} Town", HOUSE).to_string(),
+                action: Box::new(|| { game_state().current_screen = Id::Town; })
             },
             MenuItem {
                 label: format!("{} Profile", PERSON).to_string(),
                 action: Box::new(|| { game_state().current_screen = Id::Profile; })
-            },
-            MenuItem {
-                label: format!("{} Blacksmith", ANVIL).to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Blacksmith; })
             },
             MenuItem {
                 label: format!("{} Quit", OPEN_DOOR).to_string(),
@@ -38,7 +34,7 @@ impl Default for MainMenu {
             props: Props::default(),
             menu: MenuComponent::new(items),
         }
-   } 
+   }
 }
 
 impl MockComponent for MainMenu {

@@ -1,11 +1,10 @@
 #[derive(Debug, Clone, Eq, Hash, PartialEq, Copy)]
 pub enum Id {
     Menu,
-    Store,
+    Town,
     Fight,
     Profile,
     Equipment,
-    Blacksmith,
     BlacksmithItems,
     Quit,
 }

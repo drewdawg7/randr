@@ -10,7 +10,7 @@ use ratatui::{
 
 use crate::{combat::HasGold, system::game_state, ui::Id};
 use super::menu_component::{MenuComponent, MenuItem};
-use super::utilities::blacksmith_header;
+use super::utilities::{blacksmith_header, DOUBLE_ARROW_UP, RETURN_ARROW};
 
 pub struct BlacksmithMenu {
     props: Props,
@@ -21,13 +21,13 @@ impl Default for BlacksmithMenu {
     fn default() -> Self {
         let items = vec![
             MenuItem {
-                label: "Upgrade Items".to_string(),
+                label: format!("{} Upgrade Items", DOUBLE_ARROW_UP),
                 action: Box::new(|| {
                     game_state().current_screen = Id::BlacksmithItems;
                 }),
             },
             MenuItem {
-                label: "Back".to_string(),
+                label: format!("{} Back", RETURN_ARROW),
                 action: Box::new(|| {
                     game_state().current_screen = Id::Menu;
                 }),

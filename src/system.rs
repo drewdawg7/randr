@@ -16,13 +16,12 @@ use crate::{
     ui::{
         Id,
         main_menu::MainMenu,
-        store_component::StoreComponent,
         fight_component::FightComponent,
         player_profile::PlayerProfile,
         with_back_menu::WithBackMenu,
-        blacksmith::BlacksmithMenu,
         blacksmith_items::BlacksmithItems,
         tabbed_container::{TabbedContainer, TabEntry},
+        town::TownScreen,
     },
 };
 
@@ -73,14 +72,18 @@ impl GameState {
         &self.blacksmith
     }
 
+    pub fn store(&self) -> &Store {
+        &self.store
+    }
+
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
         // Mount all components
         let _ = self.app.mount(Id::Menu, Box::new(MainMenu::default()), vec![]);
 
-        let store = WithBackMenu::new(StoreComponent::new(&self.store), Id::Menu);
-        let _ = self.app.mount(Id::Store, Box::new(store), vec![]);
+        // Mount Town screen with Store and Blacksmith tabs
+        let _ = self.app.mount(Id::Town, Box::new(TownScreen::new()), vec![]);
 
         let fight = WithBackMenu::new(FightComponent::new(), Id::Menu);
         let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
@@ -94,7 +97,6 @@ impl GameState {
         );
         let _ = self.app.mount(Id::Profile, Box::new(profile_tabs), vec![]);
 
-        let _ = self.app.mount(Id::Blacksmith, Box::new(BlacksmithMenu::default()), vec![]);
         let _ = self.app.mount(Id::BlacksmithItems, Box::new(BlacksmithItems::default()), vec![]);
     }
 

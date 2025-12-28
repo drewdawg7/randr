@@ -89,7 +89,7 @@ impl HasInventory for Player {
 
 
 impl Combatant for Player {
-    fn attack_power(&self) -> i32 {
+    fn effective_attack(&self) -> i32 {
         let weapon = self.get_equipped_item(EquipmentSlot::Weapon);
         let weapon_attack = match weapon {
             Some(w) => w.attack(),
@@ -99,11 +99,11 @@ impl Combatant for Player {
     }
     fn increase_health(&mut self, amount: i32) {
         self.increase_health(amount);
-    }  
+    }
     fn decrease_health(&mut self, amount: i32) {
         self.decrease_health(amount);
     }
-    fn defense(&self) -> i32 {
+    fn effective_defense(&self) -> i32 {
         let offhand = self.get_equipped_item(EquipmentSlot::OffHand);
         let offhand_defense = match offhand {
             Some(off) => off.def(),
@@ -111,8 +111,6 @@ impl Combatant for Player {
         };
         self.get_defense() + offhand_defense
     }
-
-
 } 
 
 impl HasProgression for Player {

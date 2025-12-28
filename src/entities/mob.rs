@@ -142,23 +142,20 @@ impl GivesXP for Mob {
 }
 
 impl Combatant for Mob {
-    fn attack_power(&self) -> i32 {
+    fn effective_attack(&self) -> i32 {
         self.get_attack()
     }
-    
-    fn health(&self) -> i32 {
+
+    fn effective_health(&self) -> i32 {
         self.get_health()
     }
 
-
-
     fn increase_health(&mut self, amount: i32) {
         self.increase_health(amount);
-    }  
+    }
     fn decrease_health(&mut self, amount: i32) {
         self.decrease_health(amount);
     }
-
 }
 
 
