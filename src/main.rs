@@ -2,7 +2,7 @@ use crossterm::terminal;
 use game::system::{game_state, init_game_state, GameState};
 use game::ui::Id;
 use game::inventory::{EquipmentSlot, HasInventory};
-use game::item::definition::ItemKind;
+use game::item::ItemKind;
 
 fn main() -> std::io::Result<()> {
     init_game_state(GameState::default());

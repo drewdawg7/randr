@@ -1,4 +1,6 @@
 pub mod menu_component;
+pub mod blacksmith;
+pub mod blacksmith_items;
 pub mod fight_component;
 pub mod table;
 pub mod store_component;

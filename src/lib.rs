@@ -1,3 +1,4 @@
+pub mod blacksmith;
 pub mod entities;
 pub mod combat;
 pub mod item;

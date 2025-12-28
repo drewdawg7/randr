@@ -1,7 +1,7 @@
 use ratatui::{style::{Color, Style}, widgets::{List, ListItem, ListState}};
 use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
-use crate::{inventory::{EquipmentSlot, HasInventory}, item::{definition::ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED}, Id}};
+use crate::{inventory::{EquipmentSlot, HasInventory}, item::{ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED}, Id}};
 
 use super::with_action::WithAction;
 
@@ -69,10 +69,16 @@ impl MockComponent for Equipment {
             self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon));
         }
 
+        if let Some(item) = game_state().player.get_equipped_item(EquipmentSlot::OffHand) {
+            self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::OffHand));
+        }
         for item in game_state().player.get_inventory_items().iter() {
-            if item.item_type == ItemType::Weapon {
-                self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon));
+            match item.item_type {
+                ItemType::Weapon => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon)),
+                ItemType::Shield => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::OffHand))
+
             }
+
         }
 
         let selected = self.list_state.selected().unwrap_or(0);

@@ -8,9 +8,10 @@ use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
 use crate::ui::equipment::Equipment;
 use crate::{
+    blacksmith::Blacksmith,
     combat::CombatRounds,
     entities::{mob::{MobKind, MobRegistry}, Mob, Player},
-    item::definition::{ItemKind, ItemRegistry},
+    item::{ItemKind, definition::ItemRegistry},
     store::Store,
     ui::{
         Id,
@@ -19,6 +20,8 @@ use crate::{
         fight_component::FightComponent,
         player_profile::PlayerProfile,
         with_back_menu::WithBackMenu,
+        blacksmith::BlacksmithMenu,
+        blacksmith_items::BlacksmithItems,
     },
 };
 
@@ -41,6 +44,7 @@ pub struct GameState {
     pub player: Player,
     store: Store,
     current_combat: Option<CombatRounds>,
+    pub blacksmith: Blacksmith,
 }
 
 impl GameState {
@@ -64,6 +68,10 @@ impl GameState {
         self.current_combat = None;
     }
 
+    pub fn blacksmith(&self) -> &Blacksmith {
+        &self.blacksmith
+    }
+
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
@@ -78,6 +86,9 @@ impl GameState {
         let _ = self.app.mount(Id::Equipment, Box::new(Equipment::default()), vec![]);
         let profile = WithBackMenu::new(PlayerProfile::new(), Id::Menu);
         let _ = self.app.mount(Id::Profile, Box::new(profile), vec![]);
+
+        let _ = self.app.mount(Id::Blacksmith, Box::new(BlacksmithMenu::default()), vec![]);
+        let _ = self.app.mount(Id::BlacksmithItems, Box::new(BlacksmithItems::default()), vec![]);
     }
 
     pub fn run_current_screen(&mut self) -> std::io::Result<()> {
@@ -123,6 +134,7 @@ impl Default for GameState {
             terminal: Some(terminal),
             current_screen: Id::Menu,
             current_combat: None,
+            blacksmith: Blacksmith::new("Village Blacksmith".to_string(), 10, 50),
         }
     }
 }

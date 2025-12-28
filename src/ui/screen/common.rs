@@ -5,5 +5,7 @@ pub enum Id {
     Fight,
     Profile,
     Equipment,
+    Blacksmith,
+    BlacksmithItems,
     Quit,
 }

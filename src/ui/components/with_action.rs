@@ -71,7 +71,6 @@ impl<C: MockComponent> Component<Event<NoUserEvent>, NoUserEvent> for WithAction
     }
 }
 
-/// Extension trait that adds `.with_action()` method to all MockComponents
 pub trait InteractableExt: MockComponent + Sized {
     fn with_action<F: FnMut() + 'static>(self, action: F) -> WithAction<Self> {
         WithAction::new(self, action)

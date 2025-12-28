@@ -1,10 +1,10 @@
 use std::{collections::HashMap};
 
-use crate::item::{Item, definition::ItemKind};
+use crate::item::{Item, ItemKind};
 
 #[derive(Default, Debug, Clone)]
 pub struct Inventory {
-    items: Vec<Item>,
+    pub items: Vec<Item>,
     max_slots: usize,
     equipment: HashMap<EquipmentSlot, Item>,
 }

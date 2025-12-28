@@ -1,17 +1,37 @@
-use crate::{system::game_state, ui::{Id, menu_component::{MenuComponent, MenuItem}}};
+use ratatui::{
+    style::{Style, Stylize},
+    text::{Line, Span},
+};
 
-pub const HEART: char          = '\u{F004}';
-pub const COIN: char           = '\u{EDE8}';
-pub const CROSSED_SWORDS: char = '\u{f0787}';
-pub const CHECKED: char        = '\u{F14A}';
-pub const UNCHECKED: char      = '\u{F0C8}';
-pub const W_DIAMOND: char      = '\u{25C6}';
-pub const B_DIAMOND: char      = '\u{25C7}';
-pub const STORE: char          = '\u{ee17}';
-pub const PERSON: char         = '\u{F415}';
-pub const SHIRT: char          = '\u{EE1C}';
-pub const OPEN_DOOR: char      = '\u{F081C}';
-pub const SHIELD: char         = '\u{F132}';
+use crate::{blacksmith::Blacksmith, system::game_state, ui::{Id, menu_component::{MenuComponent, MenuItem}}};
+
+pub const HEART: char           = '\u{F004}';
+pub const COIN: char            = '\u{EDE8}';
+pub const CROSSED_SWORDS: char  = '\u{f0787}';
+pub const CHECKED: char         = '\u{F14A}';
+pub const UNCHECKED: char       = '\u{F0C8}';
+pub const W_DIAMOND: char       = '\u{25C6}';
+pub const B_DIAMOND: char       = '\u{25C7}';
+pub const STORE: char           = '\u{ee17}';
+pub const PERSON: char          = '\u{F415}';
+pub const SHIRT: char           = '\u{EE1C}';
+pub const OPEN_DOOR: char       = '\u{F081C}';
+pub const SHIELD: char          = '\u{F132}';
+pub const ANVIL: char           = '\u{F089B}';
+pub const DOUBLE_ARROW_UP: char = '\u{F102}';
+
+pub fn blacksmith_header(blacksmith: &Blacksmith, gold: i32) -> Line<'static> {
+    Line::from(vec![
+        Span::styled(blacksmith.name.to_string(), Style::default().cyan()),
+        Span::raw("  |  "),
+        Span::styled(format!("{} ", COIN), Style::default().yellow()),
+        Span::raw(format!("{}", gold)),
+        Span::raw("  |  "),
+        Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().blue()),
+        Span::raw(format!("{}", blacksmith.max_upgrades)),
+    ])
+}
+
 pub fn back_button(back_screen: Id) -> MenuComponent {
     MenuComponent::new(vec![
         MenuItem {
