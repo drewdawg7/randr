@@ -9,3 +9,4 @@ pub mod fittedbox;
 pub mod with_back_menu;
 pub mod with_action;
 pub mod xp_bar;
+pub mod equipment;

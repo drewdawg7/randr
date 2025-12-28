@@ -6,6 +6,7 @@ use crossterm::terminal;
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
+use crate::ui::equipment::Equipment;
 use crate::{
     combat::CombatRounds,
     entities::{mob::{MobKind, MobRegistry}, Mob, Player},
@@ -67,14 +68,14 @@ impl GameState {
         let _ = terminal::enable_raw_mode();
 
         // Mount all components
-        let _ = self.app.mount(Id::Menu, Box::new(MainMenu::new()), vec![]);
+        let _ = self.app.mount(Id::Menu, Box::new(MainMenu::default()), vec![]);
 
         let store = WithBackMenu::new(StoreComponent::new(&self.store), Id::Menu);
         let _ = self.app.mount(Id::Store, Box::new(store), vec![]);
 
         let fight = WithBackMenu::new(FightComponent::new(), Id::Menu);
         let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
-
+        let _ = self.app.mount(Id::Equipment, Box::new(Equipment::default()), vec![]);
         let profile = WithBackMenu::new(PlayerProfile::new(), Id::Menu);
         let _ = self.app.mount(Id::Profile, Box::new(profile), vec![]);
     }

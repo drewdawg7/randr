@@ -4,5 +4,6 @@ pub enum Id {
     Store,
     Fight,
     Profile,
+    Equipment,
     Quit,
 }

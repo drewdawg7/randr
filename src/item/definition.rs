@@ -10,8 +10,13 @@ pub struct Item {
     pub item_type: ItemType,
     pub name: &'static str,
     pub attack: i32,
+    pub is_equipped: bool,
 }
-
+impl Item {
+    pub fn set_is_equipped(&mut self, is_equipped: bool) {
+        self.is_equipped = is_equipped
+    }
+}
 
 #[derive(Debug, Clone)]
 pub struct ItemSpec {
@@ -49,6 +54,7 @@ impl SpawnFromSpec<ItemKind> for ItemSpec {
             item_type: spec.item_type,
             name: spec.name,
             attack: spec.attack,
+            is_equipped: false
         }
     }
 }

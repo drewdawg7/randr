@@ -1,6 +1,6 @@
 use std::{collections::HashMap};
 
-use crate::item::{Item};
+use crate::item::{Item, definition::ItemKind};
 
 #[derive(Default, Debug, Clone)]
 pub struct Inventory {
@@ -24,6 +24,10 @@ pub trait HasInventory {
     fn inventory(&self) -> &Inventory;
     fn inventory_mut(&mut self) -> &mut Inventory;
 
+    fn get_inventory_items(&self) -> &[Item] {
+        &self.inventory().items
+    }
+
     fn add_to_inv(&mut self, item: Item) -> Result<(), InventoryError> {
         let inv = self.inventory_mut();
         if inv.items.len() >= inv.max_slots {
@@ -41,7 +45,8 @@ pub trait HasInventory {
         let item = self.inventory_mut().equipment.remove(&slot);
 
         match item {
-            Some(item) => {
+            Some(mut item) => {
+                item.set_is_equipped(false);
                 let _ = self.add_to_inv(item);
                 Ok(())
             }
@@ -49,11 +54,21 @@ pub trait HasInventory {
         }
     }
 
-    fn equip_item(&mut self, item: Item, slot: EquipmentSlot) {
+    fn equip_item(&mut self, item: &mut Item, slot: EquipmentSlot) {
         let _ = self.unequip_item(slot);
-        self.inventory_mut().equipment.insert(slot, item);
+        item.set_is_equipped(true);
+        self.inventory_mut().equipment.insert(slot, *item);
     }
 
+    fn equip_from_inventory(&mut self, kind: ItemKind, slot: EquipmentSlot) {
+        let index = self.inventory().items.iter().position(|i| i.kind == kind);
+        if let Some(index) = index {
+            let mut item = self.inventory_mut().items.remove(index);
+            item.set_is_equipped(true);
+            let _ = self.unequip_item(slot);
+            self.inventory_mut().equipment.insert(slot, item);
+        }
+    }
 }
 
 pub enum InventoryError{
