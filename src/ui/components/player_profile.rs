@@ -1,7 +1,7 @@
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::*, text::{Line, Span}, widgets::Paragraph, Frame};
 use tuirealm::{command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
-use crate::combat::{Combatant, HasGold, Named};
+use crate::{combat::{Combatant, HasGold, Named}, ui::utilities::SHIELD};
 use crate::system::game_state;
 use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, HEART};
 use crate::ui::fittedbox::FittedBox;
@@ -29,7 +29,7 @@ impl MockComponent for PlayerProfile {
         let max_health = player.get_max_health();
         let gold = player.gold();
         let attack = player.attack_power();
-
+        let defense = player.defense();
         let lines = vec![
             Line::from(vec![
                 Span::styled(format!("{}", HEART), Style::default().red().bold()),
@@ -45,6 +45,12 @@ impl MockComponent for PlayerProfile {
                 Span::styled(format!("{}", CROSSED_SWORDS), Style::default().white()),
                 Span::raw(" "),
                 Span::raw(format!("{}", attack))
+            ]),
+
+            Line::from(vec![
+                Span::styled(format!("{}", SHIELD), Style::default().white()),
+                Span::raw(" "),
+                Span::raw(format!("{}", defense))
             ]),
         ];
 

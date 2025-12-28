@@ -19,7 +19,9 @@ impl Player {
     pub fn get_attack(&self) -> i32 {
         self.attack()
     }
-
+    pub fn get_defense(&self) -> i32 {
+        self.def()
+    }
     pub fn increase_attack(&mut self, amount: i32) {
         self.inc_attack(amount);
     }

@@ -29,6 +29,14 @@ impl Default for Player {
                         max_value: 100,
                     },
                 );
+                stats.insert(
+                    StatType::Defense,
+                    StatInstance {
+                        stat_type: StatType::Defense,
+                        current_value: 3,
+                        max_value: 3,
+                    },
+                );
                 StatSheet { stats }
             },
         }
@@ -84,18 +92,24 @@ impl Combatant for Player {
     fn attack_power(&self) -> i32 {
         let weapon = self.get_equipped_item(EquipmentSlot::Weapon);
         let weapon_attack = match weapon {
-            Some(w) => w.attack,
+            Some(w) => w.attack(),
             None    => 0
         };
-
         self.get_attack() + weapon_attack
-
     }
     fn increase_health(&mut self, amount: i32) {
         self.increase_health(amount);
     }  
     fn decrease_health(&mut self, amount: i32) {
         self.decrease_health(amount);
+    }
+    fn defense(&self) -> i32 {
+        let offhand = self.get_equipped_item(EquipmentSlot::OffHand);
+        let offhand_defense = match offhand {
+            Some(off) => off.def(),
+            None     => 0
+        };
+        self.get_defense() + offhand_defense
     }
 
 

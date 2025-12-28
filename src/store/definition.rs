@@ -81,7 +81,7 @@ impl Store {
         };
         item.dec_quantity(1);
         player.dec_gold(item_cost);
-        Ok(item.item)
+        Ok(item.item.clone())
     }
 
     pub fn sell_item<P: HasGold>(&mut self, item: &mut StoreItem, player: &mut P)
@@ -109,11 +109,11 @@ impl Store {
 
     }
     pub fn add_item(&mut self, item: &Item) {
-       match self.get_store_item_mut(*item) {
+       match self.get_store_item_mut(item.clone()) {
             Some(store_item) => store_item.inc_quantity(1),
             None                  => {
                 let store_item = StoreItem {
-                    item: *item,
+                    item: item.clone(),
                     quantity: 1,
                     price: 5,
                 };

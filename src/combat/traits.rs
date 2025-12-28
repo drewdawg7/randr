@@ -4,6 +4,9 @@ pub trait Combatant:Named + HasStats{
     fn attack_power(&self) -> i32;
     fn increase_health(&mut self, amount: i32);
     fn decrease_health(&mut self, amount: i32);
+    fn defense(&self) -> i32 {
+        self.def()
+    }
     fn health(&self) -> i32 {
         self.hp()
     }
@@ -11,7 +14,6 @@ pub trait Combatant:Named + HasStats{
         self.health() > 0
     }
     fn take_damage(&mut self, damage: i32) {
-
         self.decrease_health(damage);
     }
         

@@ -9,8 +9,10 @@ fn main() -> std::io::Result<()> {
     let game_state = game_state();
     game_state.initialize();
     let mut sword = game_state.spawn_item(ItemKind::Sword);
+    let mut shield = game_state.spawn_item(ItemKind::BasicShield);
 
     game_state.player.equip_item(&mut sword, EquipmentSlot::Weapon);
+    game_state.player.equip_item(&mut shield, EquipmentSlot::OffHand);
 
     loop {
         let current = game_state.current_screen;

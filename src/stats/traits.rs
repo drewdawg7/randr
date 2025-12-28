@@ -25,7 +25,7 @@ pub trait HasStats {
     fn dec(&mut self, stat: StatType, amount: i32) {
         self.stats_mut().decrease_stat(stat, amount);
     }
-
+    // HP
     fn hp(&self) -> i32 {self.value(StatType::Health)}
     fn max_hp(&self) -> i32 {self.max_value(StatType::Health)}
     fn inc_hp(&mut self, amount: i32) { 
@@ -34,12 +34,23 @@ pub trait HasStats {
     fn dec_hp(&mut self, amount: i32) {
         self.stats_mut().decrease_stat(StatType::Health, amount);
     }
+
+    // Attack
     fn attack(&self) -> i32 {self.value(StatType::Attack)}
     fn inc_attack(&mut self, amount: i32) {
         self.stats_mut().increase_stat(StatType::Attack, amount);
     }
     fn dec_attack(&mut self, amount: i32) {
         self.stats_mut().decrease_stat(StatType::Attack, amount);
+    }
+    
+    // Defense
+    fn def(&self) -> i32 {self.value(StatType::Defense)}
+    fn inc_def(&mut self, amount: i32) {
+        self.stats_mut().increase_stat(StatType::Defense, amount);
+    }
+    fn dec_def(&mut self, amount: i32) {
+        self.stats_mut().decrease_stat(StatType::Defense, amount);
     }
 
 }

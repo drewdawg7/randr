@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct StatSheet {
    pub stats: HashMap<StatType, StatInstance>      
 }

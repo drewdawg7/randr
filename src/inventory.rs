@@ -57,7 +57,7 @@ pub trait HasInventory {
     fn equip_item(&mut self, item: &mut Item, slot: EquipmentSlot) {
         let _ = self.unequip_item(slot);
         item.set_is_equipped(true);
-        self.inventory_mut().equipment.insert(slot, *item);
+        self.inventory_mut().equipment.insert(slot, item.clone());
     }
 
     fn equip_from_inventory(&mut self, kind: ItemKind, slot: EquipmentSlot) {
@@ -78,5 +78,6 @@ pub enum InventoryError{
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum EquipmentSlot {
-    Weapon
+    Weapon,
+    OffHand
 }

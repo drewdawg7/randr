@@ -66,12 +66,12 @@ impl MockComponent for Equipment {
         self.items.clear();
 
         if let Some(item) = game_state().player.get_equipped_item(EquipmentSlot::Weapon) {
-            self.items.push(EquipmentItem::new(*item, EquipmentSlot::Weapon));
+            self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon));
         }
 
         for item in game_state().player.get_inventory_items().iter() {
             if item.item_type == ItemType::Weapon {
-                self.items.push(EquipmentItem::new(*item, EquipmentSlot::Weapon));
+                self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon));
             }
         }
 

@@ -11,6 +11,7 @@ pub const STORE: char          = '\u{ee17}';
 pub const PERSON: char         = '\u{F415}';
 pub const SHIRT: char          = '\u{EE1C}';
 pub const OPEN_DOOR: char      = '\u{F081C}';
+pub const SHIELD: char         = '\u{F132}';
 pub fn back_button(back_screen: Id) -> MenuComponent {
     MenuComponent::new(vec![
         MenuItem {
