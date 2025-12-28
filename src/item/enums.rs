@@ -2,7 +2,7 @@
 pub enum ItemKind {
     Sword,
     Dagger,
-    BasicShield
+    BasicShield,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]

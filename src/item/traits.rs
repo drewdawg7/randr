@@ -1,5 +1,7 @@
 use std::{collections::HashMap, fmt::Display};
 
+use uuid::Uuid;
+
 use crate::{
     registry::{RegistryDefaults, SpawnFromSpec},
     stats::{HasStats, StatInstance, StatSheet, StatType},
@@ -28,12 +30,14 @@ impl SpawnFromSpec<ItemKind> for ItemSpec {
 
     fn spawn_from_spec(kind: ItemKind, spec: &Self) -> Self::Output {
         Item {
+            item_uuid: Uuid::new_v4(),
             kind,
             item_type: spec.item_type,
             name: spec.name,
             is_equipped: false,
             num_upgrades: 0,
             max_upgrades: spec.max_upgrades,
+            max_stack_quantity: 1,
             stats: {
                 let mut stats: HashMap<StatType, StatInstance> = HashMap::new();
                 stats.insert(

@@ -15,3 +15,4 @@ pub mod xp_bar;
 pub mod equipment;
 pub mod tabbed_container;
 pub mod town;
+pub mod item_details;

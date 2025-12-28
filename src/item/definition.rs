@@ -1,15 +1,19 @@
+use uuid::Uuid;
+
 use crate::{item::enums::ItemError, registry::Registry, stats::{HasStats, StatSheet}};
 
 pub use super::enums::{ItemKind, ItemType};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Item {
+    pub item_uuid: Uuid,
     pub kind: ItemKind,
     pub item_type: ItemType,
     pub name: &'static str,
     pub is_equipped: bool,
     pub num_upgrades: i32,
     pub max_upgrades: i32,
+    pub max_stack_quantity: u32,
     pub stats: StatSheet,
 }
 
@@ -31,7 +35,7 @@ impl Item {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct ItemSpec {
     pub name: &'static str,
     pub item_type: ItemType,

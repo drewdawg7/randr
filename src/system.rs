@@ -56,6 +56,13 @@ impl GameState {
         self.item_registry.spawn(item)
     }
 
+    pub fn get_item_name(&self, kind: ItemKind) -> &'static str {
+        self.item_registry
+            .get(&kind)
+            .map(|spec| spec.name)
+            .unwrap_or("Unknown")
+    }
+
     pub fn current_combat(&self) -> Option<&CombatRounds> {
         self.current_combat.as_ref()
     }

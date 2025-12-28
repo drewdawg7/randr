@@ -19,6 +19,7 @@ use crate::{
     system::game_state,
     ui::Id,
 };
+use super::item_details::render_item_details;
 use super::utilities::blacksmith_header;
 use super::with_action::WithAction;
 
@@ -36,7 +37,7 @@ impl MockComponent for UpgradeableItem {
 
 impl UpgradeableItem {
     pub fn new(item: Item) -> WithAction<Self> {
-        let kind = item.kind;
+        let item_uuid = item.item_uuid;
         let inner = Self { item };
 
         WithAction::new(inner, move || {
@@ -45,17 +46,15 @@ impl UpgradeableItem {
 
             // Check equipped items first
             for slot in [EquipmentSlot::Weapon, EquipmentSlot::OffHand] {
-                if let Some(equipped) = player.get_equipped_item(slot) && equipped.kind == kind {
+                if let Some(equipped) = player.get_equipped_item(slot) && equipped.item_uuid == item_uuid {
                         // Need to unequip, upgrade, and re-equip
                         let _ = player.unequip_item(slot);
                         // Find the item we just unequipped in inventory
-                        if let Some(idx) = player.get_inventory_items()
-                            .iter()
-                            .position(|i| i.kind == kind)
-                        {
+                        if let Some(idx) = player.find_item_index_by_uuid(item_uuid) {
                             let items = &mut player.inventory_mut().items;
-                            let _ = game_state().blacksmith.upgrade_item(&mut items[idx]);
-                            let mut upgraded = items.remove(idx);
+                            let _ = game_state().blacksmith.upgrade_item(&mut items[idx].item);
+                            let inv_item = items.remove(idx);
+                            let mut upgraded = inv_item.item;
                             player.equip_item(&mut upgraded, slot);
                         }
                         return;
@@ -63,12 +62,9 @@ impl UpgradeableItem {
             }
 
             // Check inventory items
-            if let Some(idx) = player.get_inventory_items()
-                .iter()
-                .position(|i| i.kind == kind)
-            {
+            if let Some(idx) = player.find_item_index_by_uuid(item_uuid) {
                 let items = &mut player.inventory_mut().items;
-                let _ = game_state().blacksmith.upgrade_item(&mut items[idx]);
+                let _ = game_state().blacksmith.upgrade_item(&mut items[idx].item);
             }
         })
     }
@@ -105,8 +101,8 @@ impl BlacksmithItems {
         }
 
         // Add inventory items
-        for item in game_state().player.get_inventory_items().iter() {
-            self.items.push(UpgradeableItem::new(item.clone()));
+        for inv_item in game_state().player.get_inventory_items().iter() {
+            self.items.push(UpgradeableItem::new(inv_item.item.clone()));
         }
     }
 }
@@ -126,6 +122,12 @@ impl MockComponent for BlacksmithItems {
         let max_upgrades = blacksmith.max_upgrades;
         let header_line = blacksmith_header(&blacksmith, player_gold);
         frame.render_widget(Paragraph::new(header_line), chunks[0]);
+
+        // Split content area into list (left) and details (right)
+        let content_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(chunks[1]);
 
         let selected = self.list_state.selected().unwrap_or(0);
 
@@ -196,7 +198,15 @@ impl MockComponent for BlacksmithItems {
         ])));
 
         let list = List::new(all_items);
-        frame.render_stateful_widget(list, chunks[1], &mut self.list_state);
+        frame.render_stateful_widget(list, content_chunks[0], &mut self.list_state);
+
+        // Render item details panel on the right
+        let selected_item = if selected < self.items.len() {
+            Some(&self.items[selected].inner().item)
+        } else {
+            None
+        };
+        render_item_details(frame, content_chunks[1], selected_item);
     }
 
     fn query(&self, attr: Attribute) -> Option<AttrValue> {

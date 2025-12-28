@@ -1,3 +1,4 @@
+pub mod loot;
 pub mod town;
 pub mod blacksmith;
 pub mod entities;

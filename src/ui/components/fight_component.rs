@@ -1,7 +1,7 @@
-use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Color, Style}, text::{Line, Span}, widgets::Paragraph, Frame};
+use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Color, Modifier, Style}, text::{Line, Span}, widgets::Paragraph, Frame};
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
-use crate::combat::AttackResult;
+use crate::combat::{AttackResult, CombatRounds};
 use crate::system::game_state;
 
 pub struct FightComponent {
@@ -27,19 +27,27 @@ impl MockComponent for FightComponent {
             .map(AttackResultComponent::new)
             .collect();
 
-        let attack_constraints: Vec<Constraint> = attack_components
+        // Build constraints: attack results + summary section
+        let mut constraints: Vec<Constraint> = attack_components
             .iter()
             .map(|_| Constraint::Length(2))
             .collect();
+        constraints.push(Constraint::Length(1)); // spacer
+        constraints.push(Constraint::Min(5)); // summary section
 
-        let attack_chunks = Layout::default()
+        let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(attack_constraints.as_slice())
+            .constraints(constraints.as_slice())
             .split(area);
 
-        for (component, chunk) in attack_components.iter_mut().zip(attack_chunks.iter()) {
-            component.view(frame, *chunk);
+        // Render attack results
+        for (i, component) in attack_components.iter_mut().enumerate() {
+            component.view(frame, chunks[i]);
         }
+
+        // Render battle summary
+        let summary_area = chunks[chunks.len() - 1];
+        render_battle_summary(frame, summary_area, combat_rounds);
     }
 
     fn query(&self, attr: Attribute) -> Option<AttrValue> {
@@ -134,4 +142,41 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for AttackResultComponent {
     fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         None
     }
+}
+
+fn render_battle_summary(frame: &mut Frame, area: Rect, combat: &CombatRounds) {
+    let header_style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+    let gold_style = Style::default().fg(Color::Yellow);
+    let xp_style = Style::default().fg(Color::Cyan);
+    let item_style = Style::default().fg(Color::Magenta);
+    let defeat_style = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
+
+    let mut lines = Vec::new();
+
+    if combat.player_won {
+        lines.push(Line::from(Span::styled("== Battle Results ==", header_style)));
+        lines.push(Line::from(vec![
+            Span::styled(format!("+{} gold", combat.gold_gained), gold_style),
+        ]));
+        lines.push(Line::from(vec![
+            Span::styled(format!("+{} XP", combat.xp_gained), xp_style),
+        ]));
+
+        if combat.dropped_loot.is_empty() {
+            lines.push(Line::from(Span::raw("No items dropped")));
+        } else {
+            let gs = game_state();
+            for item_kind in &combat.dropped_loot {
+                let item_name = gs.get_item_name(*item_kind);
+                lines.push(Line::from(vec![
+                    Span::styled(format!("+ {}", item_name), item_style),
+                ]));
+            }
+        }
+    } else {
+        lines.push(Line::from(Span::styled("== DEFEAT ==", defeat_style)));
+        lines.push(Line::from(Span::raw("You have been slain...")));
+    }
+
+    frame.render_widget(Paragraph::new(lines), area);
 }

@@ -1,8 +1,13 @@
-use ratatui::{style::{Color, Style}, widgets::{List, ListItem, ListState}};
+use ratatui::{
+    layout::{Constraint, Direction, Layout},
+    style::{Color, Style},
+    widgets::{List, ListItem, ListState},
+};
 use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
 use crate::{inventory::{EquipmentSlot, HasInventory}, item::{ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED}, Id}};
 
+use super::item_details::render_item_details;
 use super::with_action::WithAction;
 
 pub struct EquipmentItem {
@@ -20,7 +25,7 @@ impl MockComponent for EquipmentItem {
 
 impl EquipmentItem {
     pub fn new(item: Item, slot: EquipmentSlot) -> WithAction<Self> {
-        let kind = item.kind;
+        let item_uuid = item.item_uuid;
         let is_equipped = item.is_equipped;
         let inner = Self { item, slot };
 
@@ -30,7 +35,7 @@ impl EquipmentItem {
             })
         } else {
             WithAction::new(inner, move || {
-                game_state().player.equip_from_inventory(kind, slot);
+                game_state().player.equip_from_inventory(item_uuid, slot);
             })
         }
     }
@@ -72,14 +77,19 @@ impl MockComponent for Equipment {
         if let Some(item) = game_state().player.get_equipped_item(EquipmentSlot::OffHand) {
             self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::OffHand));
         }
-        for item in game_state().player.get_inventory_items().iter() {
+        for inv_item in game_state().player.get_inventory_items().iter() {
+            let item = &inv_item.item;
             match item.item_type {
                 ItemType::Weapon => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon)),
                 ItemType::Shield => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::OffHand))
-
             }
-
         }
+
+        // Split into left (list) and right (details) panels
+        let chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(area);
 
         let selected = self.list_state.selected().unwrap_or(0);
         let mut list_items: Vec<ListItem> = self.items
@@ -110,7 +120,15 @@ impl MockComponent for Equipment {
         list_items.push(ListItem::new(format!("{}{} Back", back_prefix, crate::ui::utilities::RETURN_ARROW)).style(back_style));
 
         let list = List::new(list_items);
-        frame.render_stateful_widget(list, area, &mut self.list_state);
+        frame.render_stateful_widget(list, chunks[0], &mut self.list_state);
+
+        // Render item details panel on the right
+        let selected_item = if selected < self.items.len() {
+            Some(&self.items[selected].inner().item)
+        } else {
+            None
+        };
+        render_item_details(frame, chunks[1], selected_item);
     }
 
     fn query(&self, attr: tuirealm::Attribute) -> Option<tuirealm::AttrValue> {
