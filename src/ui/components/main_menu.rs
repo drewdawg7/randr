@@ -9,37 +9,6 @@ pub struct MainMenu {
     menu: MenuComponent,
 }
 
-impl MainMenu {
-    pub fn new() -> Self {
-        let items = vec![
-            MenuItem {
-                label: "Fight".to_string(),
-                action: Box::new(|| { start_fight(MobKind::Goblin); })
-            },
-            MenuItem {
-                label: "Store".to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Store; })
-            },
-            MenuItem {
-                label: "Profile".to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Profile; })
-            },
-
-            MenuItem {
-                label: "Equipment".to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Equipment; })
-            },
-            MenuItem {
-                label: "Quit".to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Quit; })
-            },
-        ];
-        Self {
-            props: Props::default(),
-            menu: MenuComponent::new(items),
-        }
-    }
-}
 
 impl Default for MainMenu {
    fn default() -> Self {

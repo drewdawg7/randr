@@ -1,34 +1,44 @@
 use ratatui::{style::{Color, Style}, widgets::{List, ListItem, ListState}};
 use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
-use crate::{inventory::{EquipmentSlot, HasInventory}, item::{definition::ItemType, Item}, system::game_state, ui::{utilities::{B_DIAMOND, CHECKED, UNCHECKED, W_DIAMOND}, Id}};
+use crate::{inventory::{EquipmentSlot, HasInventory}, item::{definition::ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED}, Id}};
 
+use super::with_action::WithAction;
 
 pub struct EquipmentItem {
     pub item: Item,
-    pub action: Box<dyn FnMut()>
+    pub slot: EquipmentSlot,
+}
 
+impl MockComponent for EquipmentItem {
+    fn view(&mut self, _frame: &mut ratatui::Frame, _area: ratatui::prelude::Rect) {}
+    fn query(&self, _attr: tuirealm::Attribute) -> Option<tuirealm::AttrValue> { None }
+    fn attr(&mut self, _attr: tuirealm::Attribute, _value: tuirealm::AttrValue) {}
+    fn state(&self) -> State { State::None }
+    fn perform(&mut self, _cmd: Cmd) -> CmdResult { CmdResult::None }
 }
 
 impl EquipmentItem {
-    pub fn new(item: Item, slot: EquipmentSlot) -> Self {
+    pub fn new(item: Item, slot: EquipmentSlot) -> WithAction<Self> {
         let kind = item.kind;
-        let action: Box<dyn FnMut()> = if item.is_equipped {
-            Box::new(move || {
+        let is_equipped = item.is_equipped;
+        let inner = Self { item, slot };
+
+        if is_equipped {
+            WithAction::new(inner, move || {
                 let _ = game_state().player.unequip_item(slot);
             })
         } else {
-            Box::new(move || {
+            WithAction::new(inner, move || {
                 game_state().player.equip_from_inventory(kind, slot);
             })
-        };
-        Self { item, action }
+        }
     }
 }
 
 pub struct Equipment {
     props: Props,
-    items: Vec<EquipmentItem>,
+    items: Vec<WithAction<EquipmentItem>>,
     list_state: ListState
 }
 
@@ -70,6 +80,7 @@ impl MockComponent for Equipment {
             .iter()
             .enumerate()
             .map(|(i, item)| {
+                let inner = item.inner();
                 let style = if selected == i {
                     Style::default().fg(Color::Yellow)
                 } else {
@@ -77,7 +88,7 @@ impl MockComponent for Equipment {
                 };
                 let prefix = if selected == i { "> " } else { "  " };
                 ListItem::new(
-                    format!("{}{} {}", prefix, if item.item.is_equipped {CHECKED} else {UNCHECKED},item.item.name)
+                    format!("{}{} {}", prefix, if inner.item.is_equipped {CHECKED} else {UNCHECKED}, inner.item.name)
                 ).style(style)
             })
             .collect();
@@ -124,8 +135,7 @@ impl MockComponent for Equipment {
             }
             Cmd::Submit => {
                 let selected = self.list_state.selected().unwrap_or(0);
-                let action = &mut self.items[selected].action;
-                action();
+                self.items[selected].perform(Cmd::Submit);
                 CmdResult::Submit(self.state())
             }
             _ => CmdResult::None
@@ -156,8 +166,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for Equipment {
                     // Back button
                     game_state().current_screen = Id::Menu;
                 } else if selected < self.items.len() {
-                    let action = &mut self.items[selected].action;
-                    action();
+                    self.items[selected].perform(Cmd::Submit);
                 }
                 None
             }
