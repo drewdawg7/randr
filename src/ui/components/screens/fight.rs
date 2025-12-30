@@ -1,16 +1,48 @@
-use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Color, Modifier, Style}, text::{Line, Span}, widgets::Paragraph, Frame};
+use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Modifier, Style}, text::{Line, Span}, widgets::Paragraph, Frame};
+
+use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
 use crate::combat::{AttackResult, CombatRounds};
 use crate::system::game_state;
+use crate::ui::Id;
+use crate::ui::components::widgets::menu::{Menu, MenuItem};
+use crate::ui::components::utilities::{CROSSED_SWORDS, RETURN_ARROW};
 
 pub struct FightScreen {
     props: Props,
+    back_menu: Menu,
 }
 
 impl FightScreen {
     pub fn new() -> Self {
-        Self { props: Props::default() }
+        let back_menu = Menu::new(vec![
+            MenuItem {
+                label: format!("{} Fight again", CROSSED_SWORDS),
+                action: Box::new(|| {
+                    let field = &game_state().town.field;
+                    if let Ok(mut mob) = field.spawn_mob() {
+                        let gs = game_state();
+                        let combat_rounds = crate::combat::system::enter_combat(&mut gs.player, &mut mob);
+
+                        // Add dropped loot to player inventory
+                        for item_kind in &combat_rounds.dropped_loot {
+                            let item = gs.spawn_item(*item_kind);
+                            let _ = crate::inventory::HasInventory::add_to_inv(&mut gs.player, item);
+                        }
+
+                        gs.set_current_combat(combat_rounds);
+                    }
+                }),
+            },
+            MenuItem {
+                label: format!("{} Back", RETURN_ARROW),
+                action: Box::new(|| {
+                    game_state().current_screen = Id::Town;
+                }),
+            },
+        ]);
+        Self { props: Props::default(), back_menu }
     }
 }
 
@@ -27,13 +59,24 @@ impl MockComponent for FightScreen {
             .map(AttackResultComponent::new)
             .collect();
 
-        // Build constraints: attack results + summary section
+        // Calculate summary height: header + gold + xp + items (or "no items")
+        let summary_height = if combat_rounds.player_won {
+            4 + combat_rounds.dropped_loot.len().max(1) - 1
+        } else {
+            2 // defeat header + message
+        } as u16;
+
+        let num_attacks = attack_components.len();
+
+        // Build constraints: attack results + spacer + summary + back button + trailing spacer
         let mut constraints: Vec<Constraint> = attack_components
             .iter()
             .map(|_| Constraint::Length(2))
             .collect();
         constraints.push(Constraint::Length(1)); // spacer
-        constraints.push(Constraint::Min(5)); // summary section
+        constraints.push(Constraint::Length(summary_height)); // summary section
+        constraints.push(Constraint::Length(3)); // menu (fight again + back)
+        constraints.push(Constraint::Min(0)); // absorb remaining space at end
 
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -45,9 +88,13 @@ impl MockComponent for FightScreen {
             component.view(frame, chunks[i]);
         }
 
-        // Render battle summary
-        let summary_area = chunks[chunks.len() - 1];
-        render_battle_summary(frame, summary_area, combat_rounds);
+        // Render battle summary (after attacks + spacer)
+        let summary_idx = num_attacks + 1;
+        render_battle_summary(frame, chunks[summary_idx], combat_rounds);
+
+        // Render back button
+        let back_idx = num_attacks + 2;
+        self.back_menu.view(frame, chunks[back_idx]);
     }
 
     fn query(&self, attr: Attribute) -> Option<AttrValue> {
@@ -59,17 +106,17 @@ impl MockComponent for FightScreen {
     }
 
     fn state(&self) -> State {
-        State::None
+        self.back_menu.state()
     }
 
-    fn perform(&mut self, _cmd: Cmd) -> CmdResult {
-        CmdResult::None
+    fn perform(&mut self, cmd: Cmd) -> CmdResult {
+        self.back_menu.perform(cmd)
     }
 }
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
-        None
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
+        self.back_menu.on(ev)
     }
 }
 
@@ -89,9 +136,9 @@ impl MockComponent for AttackResultComponent {
         let attacker = &self.attack_result.attacker;
         let defender = &self.attack_result.defender;
 
-        let attacker_style = Style::default().fg(Color::Green);
-        let defender_style = Style::default().fg(Color::Green);
-        let death_style = Style::default().fg(Color::Red);
+        let attacker_style = Style::default().color(colors::GREEN);
+        let defender_style = Style::default().color(colors::GREEN);
+        let death_style = Style::default().color(colors::RED);
         let styled_attacker = Span::styled(attacker, attacker_style);
         let styled_defender = Span::styled(defender, defender_style);
 
@@ -145,11 +192,11 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for AttackResultComponent {
 }
 
 fn render_battle_summary(frame: &mut Frame, area: Rect, combat: &CombatRounds) {
-    let header_style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
-    let gold_style = Style::default().fg(Color::Yellow);
-    let xp_style = Style::default().fg(Color::Cyan);
-    let item_style = Style::default().fg(Color::Magenta);
-    let defeat_style = Style::default().fg(Color::Red).add_modifier(Modifier::BOLD);
+    let header_style = Style::default().color(colors::YELLOW).add_modifier(Modifier::BOLD);
+    let gold_style = Style::default().color(colors::YELLOW);
+    let xp_style = Style::default().color(colors::CYAN);
+    let item_style = Style::default().color(colors::MAGENTA);
+    let defeat_style = Style::default().color(colors::RED).add_modifier(Modifier::BOLD);
 
     let mut lines = Vec::new();
 

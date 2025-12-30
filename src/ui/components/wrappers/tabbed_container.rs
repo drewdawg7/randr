@@ -1,10 +1,12 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style, Stylize},
+    style::{Style, Stylize},
     text::{Line, Span},
     widgets::Paragraph,
     Frame,
 };
+
+use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{
     command::{Cmd, CmdResult},
     event::{Key, KeyEvent},
@@ -75,9 +77,9 @@ impl MockComponent for TabbedContainer {
             .flat_map(|(i, tab)| {
                 let is_selected = i == self.active_tab;
                 let tab_style = if is_selected {
-                    Style::default().bg(Color::Blue).white().bold()
+                    Style::default().on_color(colors::BLUE).color(colors::WHITE).bold()
                 } else {
-                    Style::default().dark_gray()
+                    Style::default().color(colors::DARK_GRAY)
                 };
                 let label = format!(" {} ", tab.label);
 
@@ -85,7 +87,7 @@ impl MockComponent for TabbedContainer {
                     vec![Span::styled(label, tab_style)]
                 } else {
                     vec![
-                        Span::styled(" | ", Style::default().dark_gray()),
+                        Span::styled(" | ", Style::default().color(colors::DARK_GRAY)),
                         Span::styled(label, tab_style),
                     ]
                 }

@@ -1,10 +1,12 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::Style,
     text::{Line, Span},
     widgets::{List, ListItem, ListState, Paragraph},
     Frame,
 };
+
+use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{
     command::{Cmd, CmdResult},
     event::{Key, KeyEvent},
@@ -141,14 +143,14 @@ impl MockComponent for BlacksmithItems {
                 let can_afford = player_gold >= upgrade_cost;
 
                 let base_style = if is_selected {
-                    Style::default().fg(Color::Yellow)
+                    Style::default().color(colors::YELLOW)
                 } else {
                     Style::default()
                 };
 
                 let line = if at_max {
                     // Item is at max upgrades - show in gray/dim
-                    let dim_style = Style::default().fg(Color::DarkGray);
+                    let dim_style = Style::default().color(colors::DARK_GRAY);
                     Line::from(vec![
                         Span::styled(prefix, base_style),
                         Span::styled(inner.item.name.to_string(), dim_style),
@@ -162,7 +164,7 @@ impl MockComponent for BlacksmithItems {
                     let cost_style = if can_afford {
                         base_style
                     } else {
-                        Style::default().fg(Color::Red)
+                        Style::default().color(colors::RED)
                     };
 
                     Line::from(vec![
@@ -183,7 +185,7 @@ impl MockComponent for BlacksmithItems {
         // Add back button
         let back_selected = selected == self.items.len();
         let back_style = if back_selected {
-            Style::default().fg(Color::Yellow)
+            Style::default().color(colors::YELLOW)
         } else {
             Style::default()
         };

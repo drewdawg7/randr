@@ -1,9 +1,11 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
-    style::{Color, Style},
+    style::Style,
     widgets::{List, ListItem, ListState, Paragraph},
     Frame,
 };
+
+use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{
     command::{Cmd, CmdResult},
     props::{AttrValue, Attribute, Props},
@@ -35,18 +37,21 @@ impl StoreTab {
 
 impl MockComponent for StoreTab {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
+        // Calculate content height: header (1) + rows + borders (2)
+        let store = game_state().store();
+        let content_height = (store.inventory.len() + 3) as u16;
+
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
                 Constraint::Length(2),
-                Constraint::Min(0),
+                Constraint::Length(content_height),
                 Constraint::Length(2),
             ])
             .split(area);
 
         // Render header with store name and gold
         let player_gold = game_state().player.gold();
-        let store = game_state().store();
         let header_line = store_header(store, player_gold);
         frame.render_widget(Paragraph::new(header_line), chunks[0]);
 
@@ -56,7 +61,7 @@ impl MockComponent for StoreTab {
         // Render back button
         let selected = self.list_state.selected().unwrap_or(0) == 0;
         let back_style = if selected {
-            Style::default().fg(Color::Yellow)
+            Style::default().color(colors::YELLOW)
         } else {
             Style::default()
         };

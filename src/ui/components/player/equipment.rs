@@ -1,8 +1,10 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
-    style::{Color, Style},
+    style::Style,
     widgets::{List, ListItem, ListState},
 };
+
+use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
 use crate::{inventory::{EquipmentSlot, HasInventory}, item::{ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED}, Id}};
@@ -96,7 +98,7 @@ impl MockComponent for Equipment {
             .map(|(i, item)| {
                 let inner = item.inner();
                 let style = if selected == i {
-                    Style::default().fg(Color::Yellow)
+                    Style::default().color(colors::YELLOW)
                 } else {
                     Style::default()
                 };
@@ -110,7 +112,7 @@ impl MockComponent for Equipment {
         // Add back button
         let back_selected = selected == self.items.len();
         let back_style = if back_selected {
-            Style::default().fg(Color::Yellow)
+            Style::default().color(colors::YELLOW)
         } else {
             Style::default()
         };

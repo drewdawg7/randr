@@ -1,7 +1,9 @@
 use tuirealm::{Component, Event, MockComponent, Frame, command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, State, NoUserEvent};
 use ratatui::widgets::{Table as RatatuiTable, Row as RatatuiRow, Cell};
 use ratatui::layout::{Rect, Constraint};
-use ratatui::style::{Style, Color, Modifier};
+use ratatui::style::{Style, Modifier};
+
+use crate::ui::theme::{self as colors, ColorExt};
 
 pub struct Header {
     pub label: String,
@@ -105,7 +107,7 @@ impl Table {
             .iter()
             .map(|h| {
                 Cell::from(h.label.clone())
-                    .style(Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD))
+                    .style(Style::default().color(colors::YELLOW).add_modifier(Modifier::BOLD))
             })
             .collect();
 

@@ -1,4 +1,6 @@
-use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::*, text::{Line, Span}, widgets::{List, ListItem, ListState, Paragraph}, Frame};
+use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Style, Stylize}, text::{Line, Span}, widgets::{List, ListItem, ListState, Paragraph}, Frame};
+
+use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
 use crate::{combat::{Combatant, HasGold, Named}, ui::Id};
@@ -36,23 +38,23 @@ impl MockComponent for PlayerProfile {
         let defense = player.effective_defense();
         let lines = vec![
             Line::from(vec![
-                Span::styled(format!("{}", HEART), Style::default().red().bold()),
+                Span::styled(format!("{}", HEART), Style::default().color(colors::RED).bold()),
                 Span::raw(" "),
                 Span::raw(format!("{}/{}", health, max_health))
             ]),
             Line::from(vec![
-                Span::styled(format!("{}", COIN), Style::default().yellow()),
+                Span::styled(format!("{}", COIN), Style::default().color(colors::YELLOW)),
                 Span::raw(" "),
                 Span::raw(format!("{}", gold))
             ]),
             Line::from(vec![
-                Span::styled(format!("{}", CROSSED_SWORDS), Style::default().white()),
+                Span::styled(format!("{}", CROSSED_SWORDS), Style::default().color(colors::WHITE)),
                 Span::raw(" "),
                 Span::raw(format!("{}", attack))
             ]),
 
             Line::from(vec![
-                Span::styled(format!("{}", SHIELD), Style::default().white()),
+                Span::styled(format!("{}", SHIELD), Style::default().color(colors::WHITE)),
                 Span::raw(" "),
                 Span::raw(format!("{}", defense))
             ]),
@@ -63,7 +65,7 @@ impl MockComponent for PlayerProfile {
 
         let profile_box = FittedBox::new(Paragraph::new(lines), width, height)
             .title(name)
-            .title_style(Style::default().bold().green().on_dark_gray());
+            .title_style(Style::default().bold().color(colors::GREEN).on_color(colors::DARK_GRAY));
 
         let chunks = Layout::default()
             .direction(Direction::Vertical)
@@ -80,7 +82,7 @@ impl MockComponent for PlayerProfile {
         // Render back button
         let selected = self.list_state.selected().unwrap_or(0) == 0;
         let back_style = if selected {
-            Style::default().fg(Color::Yellow)
+            Style::default().color(colors::YELLOW)
         } else {
             Style::default()
         };

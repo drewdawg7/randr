@@ -1,7 +1,9 @@
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, Frame, MockComponent, NoUserEvent, State};
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Style, Stylize}, text::{Line, Span}, widgets::Paragraph};
 
-use crate::{combat::{start_fight, Named}, entities::mob::MobKind, system::game_state, ui::{utilities::{CROSSED_SWORDS, HOUSE, OPEN_DOOR, PERSON}, Id}};
+use crate::ui::theme::{self as colors, ColorExt};
+
+use crate::{combat::Named, system::game_state, ui::{utilities::{HOUSE, OPEN_DOOR, PERSON}, Id}};
 use crate::ui::components::widgets::menu::{Menu, MenuItem};
 
 pub struct MainMenuScreen {
@@ -13,10 +15,6 @@ pub struct MainMenuScreen {
 impl Default for MainMenuScreen {
    fn default() -> Self {
         let items = vec![
-            MenuItem {
-                label: format!("{} Fight", CROSSED_SWORDS).to_string(),
-                action: Box::new(|| { start_fight(MobKind::Goblin); })
-            },
             MenuItem {
                 label: format!("{} Town", HOUSE).to_string(),
                 action: Box::new(|| { game_state().current_screen = Id::Town; })
@@ -49,7 +47,7 @@ impl MockComponent for MainMenuScreen {
             .constraints([Constraint::Length(3), Constraint::Min(0)])
             .split(area);
 
-        let style = Style::default().bold().green().underlined();
+        let style = Style::default().bold().color(colors::GREEN).underlined();
         let line = Line::from(vec![
             Span::raw("Hello, "),
             Span::styled(player_name, style)

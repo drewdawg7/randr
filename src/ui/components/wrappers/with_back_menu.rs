@@ -1,4 +1,4 @@
-use ratatui::layout::{Constraint, Direction, Layout, Rect};
+use ratatui::layout::{Constraint, Direction, Flex, Layout, Rect};
 use ratatui::Frame;
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
@@ -26,7 +26,8 @@ impl<C: MockComponent> MockComponent for WithBackMenu<C> {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints([Constraint::Min(0), Constraint::Length(3)])
+            .flex(Flex::Start)
+            .constraints([Constraint::Min(0), Constraint::Length(2)])
             .split(area);
 
         self.content.view(frame, chunks[0]);

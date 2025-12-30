@@ -1,3 +1,4 @@
+pub(crate) mod field;
 pub(crate) mod loot;
 pub(crate) mod town;
 pub(crate) mod blacksmith;

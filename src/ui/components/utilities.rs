@@ -1,7 +1,9 @@
 use ratatui::{
-    style::{Style, Stylize},
+    style::Style,
     text::{Line, Span},
 };
+
+use crate::ui::theme::{self as colors, ColorExt};
 
 use crate::{blacksmith::Blacksmith, store::Store, system::game_state, ui::Id};
 use super::widgets::menu::{Menu, MenuItem};
@@ -23,21 +25,21 @@ pub const RETURN_ARROW: char    = '\u{F17B1}';
 
 pub fn blacksmith_header(blacksmith: &Blacksmith, gold: i32) -> Line<'static> {
     Line::from(vec![
-        Span::styled(blacksmith.name.to_string(), Style::default().cyan()),
+        Span::styled(blacksmith.name.to_string(), Style::default().color(colors::CYAN)),
         Span::raw("  |  "),
-        Span::styled(format!("{} ", COIN), Style::default().yellow()),
+        Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
         Span::raw(format!("{}", gold)),
         Span::raw("  |  "),
-        Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().blue()),
+        Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().color(colors::BLUE)),
         Span::raw(format!("{}", blacksmith.max_upgrades)),
     ])
 }
 
 pub fn store_header(store: &Store, gold: i32) -> Line<'static> {
     Line::from(vec![
-        Span::styled(store.name.to_string(), Style::default().cyan()),
+        Span::styled(store.name.to_string(), Style::default().color(colors::CYAN)),
         Span::raw("  |  "),
-        Span::styled(format!("{} ", COIN), Style::default().yellow()),
+        Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
         Span::raw(format!("{}", gold)),
     ])
 }

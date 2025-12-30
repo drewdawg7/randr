@@ -5,6 +5,7 @@ pub(crate) mod blacksmith;
 pub(crate) mod player;
 pub(crate) mod screens;
 pub(crate) mod utilities;
+pub(crate) mod field;
 
 // Re-export from subdirectories for backwards compatibility
 pub(crate) use wrappers::with_back_menu;

@@ -6,6 +6,7 @@ use crossterm::terminal;
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
+use crate::field::definition::Field;
 use crate::{
     combat::CombatRounds,
     entities::{mob::{MobKind, MobRegistry}, Mob, Player},
@@ -17,7 +18,6 @@ use crate::{
         main_menu::MainMenuScreen,
         fight::FightScreen,
         profile::PlayerProfile,
-        with_back_menu::WithBackMenu,
         items::BlacksmithItems,
         tabbed_container::{TabbedContainer, TabEntry},
         town::TownScreen,
@@ -91,8 +91,7 @@ impl GameState {
         // Mount Town screen with Store and Blacksmith tabs
         let _ = self.app.mount(Id::Town, Box::new(TownScreen::new()), vec![]);
 
-        let fight = WithBackMenu::new(FightScreen::new(), Id::Menu);
-        let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
+        let _ = self.app.mount(Id::Fight, Box::new(FightScreen::new()), vec![]);
 
         // Create tabbed profile with Player and Equipment tabs
         let profile_tabs = TabbedContainer::new(
@@ -139,7 +138,7 @@ impl Default for GameState {
 
         let store = crate::store::Store::default();
         let blacksmith = crate::blacksmith::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
-        let town = Town::new("Village".to_string(), store, blacksmith);
+        let town = Town::new("Village".to_string(), store, blacksmith, Field::default());
 
         Self {
             player: Player::default(),

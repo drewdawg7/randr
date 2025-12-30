@@ -1,3 +1,5 @@
+use std::ops::RangeInclusive;
+
 use crate::{
     loot::LootTable,
     registry::Registry,
@@ -37,7 +39,7 @@ impl Mob {
 pub struct MobSpec {
     pub name: &'static str,
     pub max_health: i32,
-    pub attack: i32,
+    pub attack: RangeInclusive<i32>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]

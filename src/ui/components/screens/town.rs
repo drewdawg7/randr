@@ -6,9 +6,10 @@ use tuirealm::{
 };
 
 use crate::ui::components::blacksmith::menu::BlacksmithMenu;
+use crate::ui::components::field::FieldTab;
 use crate::ui::components::store::tab::StoreTab;
 use crate::ui::components::wrappers::tabbed_container::{TabEntry, TabbedContainer};
-use crate::ui::components::utilities::{ANVIL, STORE};
+use crate::ui::components::utilities::{ANVIL, CROSSED_SWORDS, STORE};
 
 pub struct TownScreen {
     props: Props,
@@ -20,6 +21,7 @@ impl TownScreen {
         let tabs = TabbedContainer::new(vec![
             TabEntry::new(format!("{} Store", STORE), StoreTab::new()),
             TabEntry::new(format!("{} Blacksmith", ANVIL), BlacksmithMenu::default()),
+            TabEntry::new(format!("{} Field", CROSSED_SWORDS), FieldTab::new()),
         ]);
         Self {
             props: Props::default(),
