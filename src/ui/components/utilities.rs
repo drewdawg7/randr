@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use ratatui::{
     style::Style,
     text::{Line, Span},

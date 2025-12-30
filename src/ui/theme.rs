@@ -1,3 +1,4 @@
+#![allow(dead_code)]
 use ratatui::style::{Color, Style};
 
 // RGB color constants - adjust values to match your colorscheme

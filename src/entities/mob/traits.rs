@@ -3,7 +3,7 @@ use rand::Rng;
 use crate::{
     combat::{Combatant, DropsGold, Named},
     entities::progression::GivesXP,
-    loot::{HasLoot, LootTable},
+    loot::{HasLoot, LootTable}, stats::{HasStats, StatSheet},
 };
 
 use super::Mob;
@@ -15,10 +15,7 @@ impl Named for Mob {
 }
 
 impl DropsGold for Mob {
-    fn drop_gold(&self) -> i32 {
-        let mut rng = rand::thread_rng();
-        rng.gen_range(1..=5)
-    }
+    fn drop_gold(&self) -> i32 { self.gold }
 }
 
 impl GivesXP for Mob {
@@ -52,5 +49,15 @@ impl HasLoot for Mob {
 
     fn loot_mut(&mut self) -> &mut LootTable {
         &mut self.loot_table
+    }
+}
+
+impl HasStats for Mob {
+    fn stats(&self) -> &StatSheet {
+        &self.stats
+    }
+
+    fn stats_mut(&mut self) -> &mut StatSheet {
+        &mut self.stats
     }
 }

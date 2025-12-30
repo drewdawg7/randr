@@ -24,6 +24,7 @@ fn create_test_mob(name: &'static str, hp: i32, attack: i32, defense: i32) -> Mo
         spec: MobKind::Slime,
         name,
         stats: StatSheet { stats },
+        gold: 5,
         loot_table: LootTable::default(),
     }
 }

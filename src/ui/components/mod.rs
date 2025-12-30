@@ -7,8 +7,6 @@ pub(crate) mod screens;
 pub(crate) mod utilities;
 pub(crate) mod field;
 
-// Re-export from subdirectories for backwards compatibility
-pub(crate) use wrappers::with_back_menu;
 pub(crate) use wrappers::tabbed_container;
 pub(crate) use blacksmith::items;
 pub(crate) use player::profile;

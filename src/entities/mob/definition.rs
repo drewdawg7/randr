@@ -3,7 +3,7 @@ use std::ops::RangeInclusive;
 use crate::{
     loot::LootTable,
     registry::Registry,
-    stats::StatSheet,
+    stats::{HasStats, StatSheet},
 };
 
 pub type MobSpecId = usize;
@@ -13,6 +13,7 @@ pub struct Mob {
     pub spec: MobKind,
     pub name: &'static str,
     pub stats: StatSheet,
+    pub gold: i32,
     pub loot_table: LootTable,
 }
 
@@ -38,8 +39,9 @@ impl Mob {
 
 pub struct MobSpec {
     pub name: &'static str,
-    pub max_health: i32,
+    pub max_health: RangeInclusive<i32>,
     pub attack: RangeInclusive<i32>,
+    pub dropped_gold: RangeInclusive<i32>,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -50,14 +52,4 @@ pub enum MobKind {
 
 pub type MobRegistry = Registry<MobKind, MobSpec>;
 
-use crate::stats::HasStats;
 
-impl HasStats for Mob {
-    fn stats(&self) -> &StatSheet {
-        &self.stats
-    }
-
-    fn stats_mut(&mut self) -> &mut StatSheet {
-        &mut self.stats
-    }
-}
