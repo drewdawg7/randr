@@ -9,13 +9,14 @@ use ratatui::{
 };
 
 use crate::{combat::HasGold, system::game_state, ui::Id};
-use crate::ui::components::screens::menu_component::{MenuComponent, MenuItem};
+use crate::ui::components::widgets::menu::{Menu, MenuItem};
 use crate::ui::components::utilities::{blacksmith_header, DOUBLE_ARROW_UP, RETURN_ARROW};
 
 pub struct BlacksmithMenu {
     props: Props,
-    menu: MenuComponent,
+    menu: Menu,
 }
+
 
 impl Default for BlacksmithMenu {
     fn default() -> Self {
@@ -35,7 +36,7 @@ impl Default for BlacksmithMenu {
         ];
         Self {
             props: Props::default(),
-            menu: MenuComponent::new(items),
+            menu: Menu::new(items),
         }
     }
 }
@@ -47,10 +48,9 @@ impl MockComponent for BlacksmithMenu {
             .constraints([Constraint::Length(2), Constraint::Min(0)])
             .split(area);
 
-        // Render header with blacksmith name, gold, and max upgrades
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
-        let header_line = blacksmith_header(&blacksmith, player_gold);
+        let header_line = blacksmith_header(blacksmith, player_gold);
         frame.render_widget(Paragraph::new(header_line), chunks[0]);
 
         self.menu.view(frame, chunks[1]);

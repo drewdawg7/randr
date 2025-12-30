@@ -29,20 +29,13 @@ impl Row {
     }
 }
 
-pub struct TableComponent {
+pub struct Table {
     props: Props,
     headers: Vec<Header>,
     rows: Vec<Row>,
 }
 
-impl TableComponent {
-    pub fn new(headers: Vec<Header>) -> Self {
-        Self {
-            props: Props::default(),
-            headers,
-            rows: Vec::new(),
-        }
-    }
+impl Table {
 
     pub fn from_items<T, F, R, const N: usize>(
         headers: [Header; N],
@@ -66,9 +59,6 @@ impl TableComponent {
         }
     }
 
-    pub fn add_row(&mut self, row: Row) {
-        self.rows.push(row);
-    }
 
     fn compute_widths(&self) -> Vec<Constraint> {
         let mut widths: Vec<usize> = self.headers.iter().map(|h| h.label.len()).collect();
@@ -140,7 +130,7 @@ impl TableComponent {
     }
 }
 
-impl MockComponent for TableComponent {
+impl MockComponent for Table {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         frame.render_widget(self.to_widget(), area);
     }
@@ -162,7 +152,7 @@ impl MockComponent for TableComponent {
     }
 }
 
-impl Component<Event<NoUserEvent>, NoUserEvent> for TableComponent {
+impl Component<Event<NoUserEvent>, NoUserEvent> for Table {
     fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         None
     }

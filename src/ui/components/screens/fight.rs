@@ -4,17 +4,17 @@ use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, 
 use crate::combat::{AttackResult, CombatRounds};
 use crate::system::game_state;
 
-pub struct FightComponent {
+pub struct FightScreen {
     props: Props,
 }
 
-impl FightComponent {
+impl FightScreen {
     pub fn new() -> Self {
         Self { props: Props::default() }
     }
 }
 
-impl MockComponent for FightComponent {
+impl MockComponent for FightScreen {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let Some(combat_rounds) = game_state().current_combat() else {
             return;
@@ -67,7 +67,7 @@ impl MockComponent for FightComponent {
     }
 }
 
-impl Component<Event<NoUserEvent>, NoUserEvent> for FightComponent {
+impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
     fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         None
     }

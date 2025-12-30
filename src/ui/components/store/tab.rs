@@ -11,12 +11,12 @@ use tuirealm::{
 };
 
 use crate::{combat::HasGold, system::game_state, ui::Id};
-use super::store_component::StoreComponent;
+use super::store::StoreDisplay;
 use crate::ui::components::utilities::store_header;
 
 pub struct StoreTab {
     props: Props,
-    store_component: StoreComponent,
+    store_display: StoreDisplay,
     list_state: ListState,
 }
 
@@ -27,7 +27,7 @@ impl StoreTab {
         list_state.select(Some(0));
         Self {
             props: Props::default(),
-            store_component: StoreComponent::new(store),
+            store_display: StoreDisplay::new(store),
             list_state,
         }
     }
@@ -51,7 +51,7 @@ impl MockComponent for StoreTab {
         frame.render_widget(Paragraph::new(header_line), chunks[0]);
 
         // Render the store table
-        self.store_component.view(frame, chunks[1]);
+        self.store_display.view(frame, chunks[1]);
 
         // Render back button
         let selected = self.list_state.selected().unwrap_or(0) == 0;

@@ -2,15 +2,15 @@ use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, 
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Style, Stylize}, text::{Line, Span}, widgets::Paragraph};
 
 use crate::{combat::{start_fight, Named}, entities::mob::MobKind, system::game_state, ui::{utilities::{CROSSED_SWORDS, HOUSE, OPEN_DOOR, PERSON}, Id}};
-use super::menu_component::{MenuComponent, MenuItem};
+use crate::ui::components::widgets::menu::{Menu, MenuItem};
 
-pub struct MainMenu {
+pub struct MainMenuScreen {
     props: Props,
-    menu: MenuComponent,
+    menu: Menu,
 }
 
 
-impl Default for MainMenu {
+impl Default for MainMenuScreen {
    fn default() -> Self {
         let items = vec![
             MenuItem {
@@ -32,12 +32,12 @@ impl Default for MainMenu {
         ];
         Self {
             props: Props::default(),
-            menu: MenuComponent::new(items),
+            menu: Menu::new(items),
         }
    }
 }
 
-impl MockComponent for MainMenu {
+impl MockComponent for MainMenuScreen {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let player_name = self.props
             .get(Attribute::Title)
@@ -78,7 +78,7 @@ impl MockComponent for MainMenu {
     }
 }
 
-impl Component<Event<NoUserEvent>, NoUserEvent> for MainMenu {
+impl Component<Event<NoUserEvent>, NoUserEvent> for MainMenuScreen {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         self.menu.on(ev)
     }

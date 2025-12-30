@@ -8,3 +8,4 @@ rand = "0.8"
 crossterm = "0.27"
 ratatui = "0.29.0"
 tuirealm = "3.3.0"
+uuid = { version = "1.0", features = ["v4"] }

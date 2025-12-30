@@ -3,4 +3,4 @@ pub(crate) mod specs;
 pub(crate) mod loot;
 pub(crate) mod traits;
 
-pub(crate) use definition::{Mob, MobSpec, MobKind, MobRegistry, MobSpecId};
+pub(crate) use definition::{Mob, MobKind, MobRegistry};

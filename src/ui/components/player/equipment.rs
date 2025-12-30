@@ -48,8 +48,6 @@ pub struct Equipment {
 }
 
 
-impl Equipment {}
-
 impl Default for Equipment {
     fn default() -> Self {
         

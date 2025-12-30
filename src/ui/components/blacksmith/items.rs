@@ -52,7 +52,7 @@ impl UpgradeableItem {
                         // Find the item we just unequipped in inventory
                         if let Some(idx) = player.find_item_index_by_uuid(item_uuid) {
                             let items = &mut player.inventory_mut().items;
-                            let _ = game_state().blacksmith.upgrade_item(&mut items[idx].item);
+                            let _ = game_state().town.blacksmith.upgrade_item(&mut items[idx].item);
                             let inv_item = items.remove(idx);
                             let mut upgraded = inv_item.item;
                             player.equip_item(&mut upgraded, slot);
@@ -64,7 +64,7 @@ impl UpgradeableItem {
             // Check inventory items
             if let Some(idx) = player.find_item_index_by_uuid(item_uuid) {
                 let items = &mut player.inventory_mut().items;
-                let _ = game_state().blacksmith.upgrade_item(&mut items[idx].item);
+                let _ = game_state().town.blacksmith.upgrade_item(&mut items[idx].item);
             }
         })
     }
@@ -116,14 +116,12 @@ impl MockComponent for BlacksmithItems {
             .constraints([Constraint::Length(2), Constraint::Min(0)])
             .split(area);
 
-        // Render header with blacksmith name, gold, and max upgrades
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
         let max_upgrades = blacksmith.max_upgrades;
-        let header_line = blacksmith_header(&blacksmith, player_gold);
+        let header_line = blacksmith_header(blacksmith, player_gold);
         frame.render_widget(Paragraph::new(header_line), chunks[0]);
 
-        // Split content area into list (left) and details (right)
         let content_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])

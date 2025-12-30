@@ -3,13 +3,13 @@ use ratatui::Frame;
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
 use crate::ui::Id;
-use crate::ui::components::screens::menu_component::MenuComponent;
+use crate::ui::components::widgets::menu::Menu;
 use crate::ui::components::utilities::back_button;
 
 pub struct WithBackMenu<C: MockComponent> {
     props: Props,
     content: C,
-    back_menu: MenuComponent,
+    back_menu: Menu,
 }
 
 impl<C: MockComponent> WithBackMenu<C> {

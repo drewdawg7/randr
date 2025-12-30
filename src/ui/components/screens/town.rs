@@ -5,8 +5,8 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
-use crate::ui::components::blacksmith::blacksmith::BlacksmithMenu;
-use crate::ui::components::store::store_tab::StoreTab;
+use crate::ui::components::blacksmith::menu::BlacksmithMenu;
+use crate::ui::components::store::tab::StoreTab;
 use crate::ui::components::wrappers::tabbed_container::{TabEntry, TabbedContainer};
 use crate::ui::components::utilities::{ANVIL, STORE};
 

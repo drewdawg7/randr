@@ -1,2 +1,2 @@
-pub(crate) mod blacksmith;
-pub(crate) mod blacksmith_items;
+pub(crate) mod menu;
+pub(crate) mod items;

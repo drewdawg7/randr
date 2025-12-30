@@ -1,2 +1,2 @@
-pub(crate) mod store_component;
-pub(crate) mod store_tab;
+pub(crate) mod store;
+pub(crate) mod tab;

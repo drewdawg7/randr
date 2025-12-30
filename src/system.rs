@@ -7,19 +7,18 @@ use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
 use crate::{
-    blacksmith::Blacksmith,
     combat::CombatRounds,
     entities::{mob::{MobKind, MobRegistry}, Mob, Player},
     item::{ItemKind, definition::ItemRegistry},
-    store::Store,
+    town::definition::Town,
     ui::{
         Id,
         equipment::Equipment,
-        main_menu::MainMenu,
-        fight_component::FightComponent,
-        player_profile::PlayerProfile,
+        main_menu::MainMenuScreen,
+        fight::FightScreen,
+        profile::PlayerProfile,
         with_back_menu::WithBackMenu,
-        blacksmith_items::BlacksmithItems,
+        items::BlacksmithItems,
         tabbed_container::{TabbedContainer, TabEntry},
         town::TownScreen,
     },
@@ -42,9 +41,8 @@ pub struct GameState {
     app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
     pub player: Player,
-    store: Store,
+    pub town: Town,
     current_combat: Option<CombatRounds>,
-    pub blacksmith: Blacksmith,
 }
 
 impl GameState {
@@ -75,24 +73,25 @@ impl GameState {
         self.current_combat = None;
     }
 
-    pub fn blacksmith(&self) -> &Blacksmith {
-        &self.blacksmith
+    pub fn blacksmith(&self) -> &crate::blacksmith::Blacksmith {
+        &self.town.blacksmith
     }
 
-    pub fn store(&self) -> &Store {
-        &self.store
+    pub fn store(&self) -> &crate::store::Store {
+        &self.town.store
     }
 
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
         // Mount all components
-        let _ = self.app.mount(Id::Menu, Box::new(MainMenu::default()), vec![]);
+        let menu = MainMenuScreen::default();
+        let _ = self.app.mount(Id::Menu, Box::new(menu), vec![]);
 
         // Mount Town screen with Store and Blacksmith tabs
         let _ = self.app.mount(Id::Town, Box::new(TownScreen::new()), vec![]);
 
-        let fight = WithBackMenu::new(FightComponent::new(), Id::Menu);
+        let fight = WithBackMenu::new(FightScreen::new(), Id::Menu);
         let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
 
         // Create tabbed profile with Player and Equipment tabs
@@ -137,11 +136,16 @@ impl Default for GameState {
         let backend: CrosstermBackend<io::Stdout> = CrosstermBackend::new(stdout);
         let mut terminal: Terminal<CrosstermBackend<io::Stdout>> = Terminal::new(backend).unwrap();
         terminal.clear().unwrap();
+
+        let store = crate::store::Store::default();
+        let blacksmith = crate::blacksmith::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
+        let town = Town::new("Village".to_string(), store, blacksmith);
+
         Self {
             player: Player::default(),
             item_registry: ItemRegistry::new(),
             mob_registry: MobRegistry::new(),
-            store: Store::default(),
+            town,
             app: Application::init(
                 EventListenerCfg::default()
                     .crossterm_input_listener(Duration::from_millis(20), 3)
@@ -150,7 +154,6 @@ impl Default for GameState {
             terminal: Some(terminal),
             current_screen: Id::Menu,
             current_combat: None,
-            blacksmith: Blacksmith::new("Village Blacksmith".to_string(), 10, 50),
         }
     }
 }

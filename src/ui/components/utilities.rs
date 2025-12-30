@@ -4,15 +4,13 @@ use ratatui::{
 };
 
 use crate::{blacksmith::Blacksmith, store::Store, system::game_state, ui::Id};
-use super::screens::menu_component::{MenuComponent, MenuItem};
+use super::widgets::menu::{Menu, MenuItem};
 
 pub const HEART: char           = '\u{F004}';
 pub const COIN: char            = '\u{EDE8}';
 pub const CROSSED_SWORDS: char  = '\u{f0787}';
 pub const CHECKED: char         = '\u{F14A}';
 pub const UNCHECKED: char       = '\u{F0C8}';
-pub const W_DIAMOND: char       = '\u{25C6}';
-pub const B_DIAMOND: char       = '\u{25C7}';
 pub const STORE: char           = '\u{ee17}';
 pub const PERSON: char          = '\u{F415}';
 pub const SHIRT: char           = '\u{EE1C}';
@@ -44,8 +42,8 @@ pub fn store_header(store: &Store, gold: i32) -> Line<'static> {
     ])
 }
 
-pub fn back_button(back_screen: Id) -> MenuComponent {
-    MenuComponent::new(vec![
+pub fn back_button(back_screen: Id) -> Menu {
+    Menu::new(vec![
         MenuItem {
             label: format!("{} Back", RETURN_ARROW),
             action: Box::new(move || {

@@ -9,21 +9,22 @@ pub struct MenuItem {
     pub action: Box<dyn FnMut()>,
 }
 
-pub struct MenuComponent {
+pub struct Menu {
     props: Props,
     list_state: ListState,
     items: Vec<MenuItem>,
 }
 
-impl MenuComponent {
+impl Menu {
     pub fn new(items: Vec<MenuItem>) -> Self {
         let mut list_state = ListState::default();
         list_state.select(Some(0));
         Self { props: Props::default(), list_state, items }
     }
+
 }
 
-impl MockComponent for MenuComponent {
+impl MockComponent for Menu {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let items: Vec<ListItem> = self.items
             .iter()
@@ -80,7 +81,7 @@ impl MockComponent for MenuComponent {
     }
 }
 
-impl Component<Event<NoUserEvent>, NoUserEvent> for MenuComponent {
+impl Component<Event<NoUserEvent>, NoUserEvent> for Menu {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {

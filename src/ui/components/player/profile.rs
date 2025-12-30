@@ -4,7 +4,7 @@ use tuirealm::{command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, 
 use crate::{combat::{Combatant, HasGold, Named}, ui::Id};
 use crate::system::game_state;
 use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, HEART, SHIELD, RETURN_ARROW};
-use crate::ui::components::fittedbox::FittedBox;
+use crate::ui::components::widgets::fitted_box::FittedBox;
 use super::xp_bar::XpBar;
 
 pub struct PlayerProfile {

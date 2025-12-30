@@ -2,17 +2,17 @@ use ratatui::{layout::Rect, Frame};
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
 use crate::store::Store;
-use crate::ui::fittedbox::FittedBox;
-use crate::ui::table::{Header, TableComponent};
+use crate::ui::components::widgets::fitted_box::FittedBox;
+use crate::ui::components::widgets::table::{Header, Table};
 
-pub struct StoreComponent {
+pub struct StoreDisplay {
     props: Props,
-    table: TableComponent,
+    table: Table,
 }
 
-impl StoreComponent {
+impl StoreDisplay {
     pub fn new(store: &Store) -> Self {
-        let table = TableComponent::from_items(
+        let table = Table::from_items(
             [
                 Header::new("Item"),
                 Header::new("Price"),
@@ -30,7 +30,7 @@ impl StoreComponent {
     }
 }
 
-impl MockComponent for StoreComponent {
+impl MockComponent for StoreDisplay {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let width = self.table.content_width();
         let height = self.table.content_height();
@@ -55,7 +55,7 @@ impl MockComponent for StoreComponent {
     }
 }
 
-impl Component<Event<NoUserEvent>, NoUserEvent> for StoreComponent {
+impl Component<Event<NoUserEvent>, NoUserEvent> for StoreDisplay {
     fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         None
     }
