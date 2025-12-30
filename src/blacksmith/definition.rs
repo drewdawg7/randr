@@ -1,4 +1,4 @@
-use crate::{blacksmith::BlacksmithError, combat::HasGold, item::Item, system::game_state};
+use crate::{blacksmith::BlacksmithError, combat::HasGold, entities::Player, item::Item};
 
 
 
@@ -17,15 +17,15 @@ impl Blacksmith {
             base_upgrade_cost
         }
     }
-    pub fn upgrade_item(&self, item: &mut Item) -> Result<(), BlacksmithError>{
+    pub fn upgrade_item(&self, player: &mut Player, item: &mut Item) -> Result<(), BlacksmithError>{
         if item.num_upgrades >= self.max_upgrades {
             return Err(BlacksmithError::MaxUpgradesReached)
         }
         let upgrade_cost = self.calc_upgrade_cost(item);
-        if upgrade_cost > game_state().player.gold {
+        if upgrade_cost > player.gold {
             return Err(BlacksmithError::NotEnoughGold)
         }
-        game_state().player.dec_gold(upgrade_cost);
+        player.dec_gold(upgrade_cost);
         match item.upgrade() {
             Ok(_) => Ok(()),
             Err(e) => Err(BlacksmithError::ItemError(e))

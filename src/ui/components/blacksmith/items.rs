@@ -44,6 +44,7 @@ impl UpgradeableItem {
 
         WithAction::new(inner, move || {
             let gs = game_state();
+            let blacksmith = &gs.town.blacksmith;
             let player = &mut gs.player;
 
             // Check equipped items first
@@ -53,11 +54,10 @@ impl UpgradeableItem {
                         let _ = player.unequip_item(slot);
                         // Find the item we just unequipped in inventory
                         if let Some(idx) = player.find_item_index_by_uuid(item_uuid) {
-                            let items = &mut player.inventory_mut().items;
-                            let _ = game_state().town.blacksmith.upgrade_item(&mut items[idx].item);
-                            let inv_item = items.remove(idx);
-                            let mut upgraded = inv_item.item;
-                            player.equip_item(&mut upgraded, slot);
+                            // Remove item first to avoid borrow conflict
+                            let mut inv_item = player.inventory_mut().items.remove(idx);
+                            let _ = blacksmith.upgrade_item(player, &mut inv_item.item);
+                            player.equip_item(&mut inv_item.item, slot);
                         }
                         return;
                 }
@@ -65,8 +65,10 @@ impl UpgradeableItem {
 
             // Check inventory items
             if let Some(idx) = player.find_item_index_by_uuid(item_uuid) {
-                let items = &mut player.inventory_mut().items;
-                let _ = game_state().town.blacksmith.upgrade_item(&mut items[idx].item);
+                // Remove item, upgrade, then put back
+                let mut inv_item = player.inventory_mut().items.remove(idx);
+                let _ = blacksmith.upgrade_item(player, &mut inv_item.item);
+                player.inventory_mut().items.insert(idx, inv_item);
             }
         })
     }

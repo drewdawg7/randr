@@ -84,16 +84,10 @@ impl GameState {
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
-        // Mount all components
         let menu = MainMenuScreen::default();
         let _ = self.app.mount(Id::Menu, Box::new(menu), vec![]);
-
-        // Mount Town screen with Store and Blacksmith tabs
         let _ = self.app.mount(Id::Town, Box::new(TownScreen::new()), vec![]);
-
         let _ = self.app.mount(Id::Fight, Box::new(FightScreen::new()), vec![]);
-
-        // Create tabbed profile with Player and Equipment tabs
         let profile_tabs = TabbedContainer::new(
             vec![
                 TabEntry::new("Player", PlayerProfile::new()),
@@ -101,7 +95,6 @@ impl GameState {
             ],
         );
         let _ = self.app.mount(Id::Profile, Box::new(profile_tabs), vec![]);
-
         let _ = self.app.mount(Id::BlacksmithItems, Box::new(BlacksmithItems::default()), vec![]);
     }
 
@@ -110,8 +103,6 @@ impl GameState {
         if current == Id::Quit {
             return Ok(());
         }
-
-        // Clear combat data when leaving fight screen
         if current != Id::Fight {
             self.current_combat = None;
         }
@@ -121,10 +112,8 @@ impl GameState {
             self.app.view(&current, frame, frame.area());
         })?;
         self.terminal = Some(terminal);
-
         let _ = self.app.active(&current);
         let _ = self.app.tick(tuirealm::PollStrategy::Once);
-
         Ok(())
     }
 }
