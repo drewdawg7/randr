@@ -86,18 +86,20 @@ pub fn back_button(back_screen: Id) -> Menu {
     ])
 }
 
-/// Renders a location header with a subtle background and colored separator line.
+/// Renders a location header with a themed background and colored separator line.
 /// Returns the remaining area below the header for content rendering.
 ///
 /// # Arguments
 /// * `frame` - The frame to render to
 /// * `area` - The area to render in
 /// * `header_lines` - The header content (name, gold info, etc.)
+/// * `header_bg` - The background color for the header area
 /// * `accent_color` - The theme color for the separator line
 pub fn render_location_header(
     frame: &mut Frame,
     area: Rect,
     header_lines: Vec<Line<'static>>,
+    header_bg: Color,
     accent_color: Color,
 ) -> Rect {
     let header_height = header_lines.len() as u16;
@@ -121,9 +123,9 @@ pub fn render_location_header(
         ])
         .split(chunks[0]);
 
-    // Render header with subtle background
+    // Render header with themed background
     let header_block = Block::default()
-        .style(Style::default().bg(colors::HEADER_BG));
+        .style(Style::default().bg(header_bg));
     let header_paragraph = Paragraph::new(header_lines).block(header_block);
     frame.render_widget(header_paragraph, header_chunks[0]);
 

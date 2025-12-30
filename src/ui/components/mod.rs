@@ -8,7 +8,6 @@ pub(crate) mod utilities;
 pub(crate) mod field;
 
 pub(crate) use wrappers::tabbed_container;
-pub(crate) use blacksmith::items;
 pub(crate) use player::profile;
 pub(crate) use player::equipment;
 pub(crate) use screens::main_menu;

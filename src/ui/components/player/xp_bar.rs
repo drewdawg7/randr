@@ -1,4 +1,4 @@
-use ratatui::{layout::Rect, style::{Style, Stylize}, text::{Line, Span}, widgets::Paragraph, Frame};
+use ratatui::{layout::Rect, style::Style, text::{Line, Span}, widgets::Paragraph, Frame};
 
 use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State};
@@ -32,7 +32,7 @@ impl MockComponent for XpBar {
         let mut spans = vec![Span::raw("[")];
         for i in 0..segments as usize {
             if i < filled {
-                spans.push(Span::styled(FILLED_SEGMENT.to_string(), Style::default().color(colors::YELLOW).bold()));
+                spans.push(Span::styled(FILLED_SEGMENT.to_string(), Style::default().color(colors::CYAN)));
             } else {
                 spans.push(Span::styled(EMPTY_SEGMENT.to_string(), Style::default().color(colors::DARK_GRAY)));
             }

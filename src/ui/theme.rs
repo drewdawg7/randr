@@ -33,6 +33,11 @@ pub const DARK_GRAY: Color = Color::Rgb(66, 66, 66);
 pub const BLACK: Color = Color::Rgb(18, 18, 18);
 pub const BACKGROUND: Color = Color::Rgb(36, 40, 59); // Tokyo Night Storm #24283b
 pub const HEADER_BG: Color = Color::Rgb(45, 50, 70); // Slightly lighter for location headers
+// Themed tab backgrounds (very subtle tints, close to base BACKGROUND)
+pub const STORE_BG: Color = Color::Rgb(38, 38, 54); // Very subtle warm tint
+pub const BLACKSMITH_BG: Color = Color::Rgb(40, 38, 54); // Very subtle warm tint
+pub const FIELD_BG: Color = Color::Rgb(34, 42, 56); // Very subtle green tint
+pub const FIGHT_BG: Color = Color::Rgb(34, 42, 56); // Same as Field
 pub const ORANGE: Color = Color::Rgb(255, 152, 0);
 pub const PURPLE: Color = Color::Rgb(171, 71, 188);
 

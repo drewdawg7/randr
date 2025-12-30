@@ -10,7 +10,7 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
-use crate::ui::components::blacksmith::menu::BlacksmithMenu;
+use crate::ui::components::blacksmith::tab::BlacksmithTab;
 use crate::ui::components::field::FieldTab;
 use crate::ui::components::store::tab::StoreTab;
 use crate::ui::components::wrappers::tabbed_container::{TabEntry, TabbedContainer};
@@ -25,30 +25,28 @@ pub struct TownScreen {
 impl TownScreen {
     pub fn new() -> Self {
         use crate::ui::theme;
+
         let tabs = TabbedContainer::new(vec![
-            TabEntry::with_height(
+            TabEntry::new(
                 Line::from(vec![
                     Span::styled(format!("{}", STORE), Style::default().color(theme::YELLOW)),
                     Span::styled(" Store", Style::default().color(theme::WHITE)),
                 ]),
                 StoreTab::new(),
-                5,
             ),
-            TabEntry::with_height(
+            TabEntry::new(
                 Line::from(vec![
                     Span::styled(format!("{}", ANVIL), Style::default().color(theme::RED)),
                     Span::styled(" Blacksmith", Style::default().color(theme::ORANGE)),
                 ]),
-                BlacksmithMenu::default(),
-                4,
+                BlacksmithTab::new(),
             ),
-            TabEntry::with_height(
+            TabEntry::new(
                 Line::from(vec![
                     Span::styled(format!("{}", CROSSED_SWORDS), Style::default().color(theme::WHITE)),
                     Span::styled(" Field", Style::default().color(theme::GREEN)),
                 ]),
                 FieldTab::new(),
-                3,
             ),
         ]);
         Self {

@@ -109,7 +109,7 @@ impl StoreTab {
 
         // Render header with store name and gold, get remaining area
         let header_lines = store_header(store, player_gold);
-        let content_area = render_location_header(frame, area, header_lines, colors::TAN_WOOD);
+        let content_area = render_location_header(frame, area, header_lines, colors::STORE_BG, colors::WOOD_BROWN);
 
         // Menu options
         let selected = self.list_state.selected().unwrap_or(0);
@@ -135,7 +135,7 @@ impl StoreTab {
 
         // Render header and get remaining area
         let header_lines = store_header(store, player_gold);
-        let content_area = render_location_header(frame, area, header_lines, colors::TAN_WOOD);
+        let content_area = render_location_header(frame, area, header_lines, colors::STORE_BG, colors::WOOD_BROWN);
 
         // Split into left (list) and right (details) panels
         let panels = Layout::default()
@@ -193,7 +193,7 @@ impl StoreTab {
 
         // Render header and get remaining area
         let header_lines = store_header(store, player_gold);
-        let content_area = render_location_header(frame, area, header_lines, colors::TAN_WOOD);
+        let content_area = render_location_header(frame, area, header_lines, colors::STORE_BG, colors::WOOD_BROWN);
 
         // Split into left (list) and right (details) panels
         let panels = Layout::default()

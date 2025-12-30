@@ -89,7 +89,7 @@ fn field_header() -> Vec<Line<'static>> {
     vec![
         // Line 1: Field name
         Line::from(vec![
-            Span::styled(field.name.clone(), Style::default().color(colors::GREEN)),
+            Span::styled(field.name.clone(), Style::default().color(colors::FOREST_GREEN)),
         ]),
         // Line 2: HP | Level XP | Gold
         Line::from(vec![
@@ -110,7 +110,7 @@ impl MockComponent for FieldTab {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         // Render header with field name and get remaining area
         let header_lines = field_header();
-        let content_area = render_location_header(frame, area, header_lines, colors::GREEN);
+        let content_area = render_location_header(frame, area, header_lines, colors::FIELD_BG, colors::FOREST_GREEN);
 
         // Render the menu in remaining area
         self.menu.view(frame, content_area);

@@ -115,15 +115,17 @@ impl MockComponent for TabbedContainer {
         let is_store_tab = self.is_store_tab_active();
         let has_border = self.needs_border();
 
-        // Calculate offsets for decorative borders
+        // Calculate offsets for decorative borders (1 row/col each for top, bottom, left, right)
         let y_offset: u16 = if has_border { 1 } else { 0 };
         let x_offset: u16 = if has_border { 1 } else { 0 };
+        // When we have borders, reserve space for both top (y_offset) and bottom (1 more)
+        let y_reserve: u16 = if has_border { 2 } else { 0 };
 
         let full_area = Rect {
             x: x_offset,
             y: y_offset,
             width: frame_size.width.saturating_sub(x_offset * 2), // Account for left and right
-            height: frame_size.height.saturating_sub(y_offset),
+            height: frame_size.height.saturating_sub(y_reserve),  // Account for top and bottom
         };
 
         // Layout: [Tabs (height 1)] [Content (flex)]
@@ -150,22 +152,28 @@ impl MockComponent for TabbedContainer {
                     // No leading space for first tab - flush with left edge
                 } else {
                     label_spans.push(Span::styled(" | ", Style::default().color(colors::DARK_GRAY)));
-                    label_spans.push(Span::styled(" ", Style::default()));
                 }
+
+                // Active tab gets background highlight
+                let bg_style = if is_selected {
+                    Style::default().bg(colors::HEADER_BG)
+                } else {
+                    Style::default()
+                };
 
                 for span in tab.label.spans.iter() {
                     let styled_span = if is_selected {
-                        // Keep the original foreground color, make bold
-                        Span::styled(span.content.clone(), span.style.bold())
+                        // Keep original foreground color, add background, make bold
+                        Span::styled(span.content.clone(), span.style.bg(colors::HEADER_BG).bold())
                     } else {
-                        // Dim unselected tabs
-                        Span::styled(span.content.clone(), Style::default().color(colors::DARK_GRAY))
+                        // Normal styling for unselected tabs
+                        Span::styled(span.content.clone(), span.style)
                     };
                     label_spans.push(styled_span);
                 }
 
-                // Trailing space
-                label_spans.push(Span::styled(" ", Style::default()));
+                // Trailing space with same background as the tab
+                label_spans.push(Span::styled(" ", bg_style));
 
                 label_spans
             })
@@ -174,33 +182,34 @@ impl MockComponent for TabbedContainer {
         let tabs_line = Line::from(tab_spans);
         frame.render_widget(Paragraph::new(tabs_line), chunks[0]);
 
-        // Calculate tab bar width for the content box
-        let tab_bar_width: usize = self.tabs
-            .iter()
-            .enumerate()
-            .map(|(i, tab)| {
-                let label_width: usize = tab.label.spans.iter()
-                    .map(|s| s.content.chars().count())
-                    .sum();
-                // First tab: no leading space, just trailing space (1)
-                // Other tabs: " | " (3) + leading space (1) + trailing space (1) = 5
-                let extra = if i == 0 { 1 } else { 5 };
-                label_width + extra
-            })
-            .sum();
+        // Use full available width for content area (consistent with fight screen)
+        let box_width = full_area.width;
 
-        // Fill entire content area with BACKGROUND first
-        let bg_fill = Block::default().style(Style::default().on_color(colors::BACKGROUND));
-        frame.render_widget(bg_fill, chunks[1]);
+        // Determine themed background based on active tab
+        let tab_bg = if is_store_tab {
+            colors::STORE_BG
+        } else if is_blacksmith_tab {
+            colors::BLACKSMITH_BG
+        } else if is_field_tab {
+            colors::FIELD_BG
+        } else {
+            colors::BACKGROUND
+        };
 
-        // Render active tab content inside a bordered box
-        let box_width = (tab_bar_width as u16).min(full_area.width);
+        // Fill background ONLY inside the bordered area (not full chunks[1])
+        let bordered_content = Rect {
+            x: x_offset,
+            y: chunks[1].y,
+            width: box_width,
+            height: chunks[1].height,
+        };
+        let bg_fill = Block::default().style(Style::default().on_color(tab_bg));
+        frame.render_widget(bg_fill, bordered_content);
+
+        // Render active tab content - use full available height (no capping)
         if let Some(tab) = self.tabs.get_mut(self.active_tab) {
-            // Create content box with width matching tab bar and height from content_height
-            let box_height = tab.content_height
-                .map(|h| h + 2) // Add 2 for borders
-                .unwrap_or(chunks[1].height)
-                .min(chunks[1].height);
+            // Use full available height for content
+            let box_height = chunks[1].height;
             let content_box_area = Rect {
                 x: x_offset,
                 y: y_offset + 1, // Right below tab bar (accounting for offset)
@@ -213,21 +222,25 @@ impl MockComponent for TabbedContainer {
 
             // Render decorative borders based on active tab
             if has_border {
-                let bottom_y = content_box_area.y + content_box_area.height;
+                // Bottom border at the last row of the frame
+                let bottom_y = frame_size.height.saturating_sub(1);
                 // Total border width includes left border char + content + right border char
                 let total_border_width = box_width + 2;
                 let border_area_top = Rect { x: 0, y: 0, width: total_border_width, height: 1 };
                 let border_area_bottom = Rect { x: 0, y: bottom_y, width: total_border_width, height: 1 };
 
-                // Calculate the number of rows for left/right borders (from tab bar to bottom border)
-                let border_height = bottom_y - y_offset;
+                // Left/right borders span from y_offset to bottom_y (exclusive)
+                let border_height = bottom_y.saturating_sub(y_offset);
+
+                // Border style with themed background
+                let border_style = Style::default().bg(tab_bg);
 
                 if is_field_tab {
                     // Forest borders for Field tab
                     let top_border = forest_border::generate_top_border(total_border_width);
                     let bottom_border = forest_border::generate_bottom_border(total_border_width);
-                    frame.render_widget(Paragraph::new(top_border), border_area_top);
-                    frame.render_widget(Paragraph::new(bottom_border), border_area_bottom);
+                    frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
+                    frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
 
                     // Left and right borders
                     for row in 0..border_height {
@@ -235,15 +248,15 @@ impl MockComponent for TabbedContainer {
                         let right_char = forest_border::generate_right_border_char(row);
                         let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
                         let right_area = Rect { x: x_offset + box_width, y: y_offset + row, width: 1, height: 1 };
-                        frame.render_widget(Paragraph::new(Line::from(left_char)), left_area);
-                        frame.render_widget(Paragraph::new(Line::from(right_char)), right_area);
+                        frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
+                        frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
                     }
                 } else if is_blacksmith_tab {
                     // Ember borders for Blacksmith tab
                     let top_border = ember_border::generate_top_border(total_border_width);
                     let bottom_border = ember_border::generate_bottom_border(total_border_width);
-                    frame.render_widget(Paragraph::new(top_border), border_area_top);
-                    frame.render_widget(Paragraph::new(bottom_border), border_area_bottom);
+                    frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
+                    frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
 
                     // Left and right borders
                     for row in 0..border_height {
@@ -251,15 +264,15 @@ impl MockComponent for TabbedContainer {
                         let right_char = ember_border::generate_right_border_char(row);
                         let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
                         let right_area = Rect { x: x_offset + box_width, y: y_offset + row, width: 1, height: 1 };
-                        frame.render_widget(Paragraph::new(Line::from(left_char)), left_area);
-                        frame.render_widget(Paragraph::new(Line::from(right_char)), right_area);
+                        frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
+                        frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
                     }
                 } else if is_store_tab {
                     // Wood borders for Store tab
                     let top_border = wood_border::generate_top_border(total_border_width);
                     let bottom_border = wood_border::generate_bottom_border(total_border_width);
-                    frame.render_widget(Paragraph::new(top_border), border_area_top);
-                    frame.render_widget(Paragraph::new(bottom_border), border_area_bottom);
+                    frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
+                    frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
 
                     // Left and right borders
                     for row in 0..border_height {
@@ -267,8 +280,8 @@ impl MockComponent for TabbedContainer {
                         let right_char = wood_border::generate_right_border_char(row);
                         let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
                         let right_area = Rect { x: x_offset + box_width, y: y_offset + row, width: 1, height: 1 };
-                        frame.render_widget(Paragraph::new(Line::from(left_char)), left_area);
-                        frame.render_widget(Paragraph::new(Line::from(right_char)), right_area);
+                        frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
+                        frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
                     }
                 }
             }

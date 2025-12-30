@@ -1,2 +1,1 @@
-pub(crate) mod menu;
-pub(crate) mod items;
+pub(crate) mod tab;

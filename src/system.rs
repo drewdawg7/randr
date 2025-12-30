@@ -18,7 +18,6 @@ use crate::{
         main_menu::MainMenuScreen,
         fight::FightScreen,
         profile::PlayerProfile,
-        items::BlacksmithItems,
         tabbed_container::{TabbedContainer, TabEntry},
         town::TownScreen,
     },
@@ -99,7 +98,6 @@ impl GameState {
             ],
         );
         let _ = self.app.mount(Id::Profile, Box::new(profile_tabs), vec![]);
-        let _ = self.app.mount(Id::BlacksmithItems, Box::new(BlacksmithItems::default()), vec![]);
     }
 
     pub fn run_current_screen(&mut self) -> std::io::Result<()> {
