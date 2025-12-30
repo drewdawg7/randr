@@ -3,14 +3,12 @@ use tuirealm::{
     props::{AttrValue, Attribute, Props},
     Component, Event, Frame, MockComponent, NoUserEvent, State,
 };
-use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
-    widgets::Paragraph,
-};
+use ratatui::layout::Rect;
 
-use crate::{combat::HasGold, system::game_state, ui::Id};
+use crate::{combat::HasGold, system::game_state, ui::{utilities::HAMMER, Id}};
 use crate::ui::components::widgets::menu::{Menu, MenuItem};
-use crate::ui::components::utilities::{blacksmith_header, DOUBLE_ARROW_UP, RETURN_ARROW};
+use crate::ui::components::utilities::{blacksmith_header, render_location_header, RETURN_ARROW};
+use crate::ui::theme as colors;
 
 pub struct BlacksmithMenu {
     props: Props,
@@ -22,7 +20,7 @@ impl Default for BlacksmithMenu {
     fn default() -> Self {
         let items = vec![
             MenuItem {
-                label: format!("{} Upgrade Items", DOUBLE_ARROW_UP),
+                label: format!("{} Upgrade Items", HAMMER),
                 action: Box::new(|| {
                     game_state().current_screen = Id::BlacksmithItems;
                 }),
@@ -43,17 +41,14 @@ impl Default for BlacksmithMenu {
 
 impl MockComponent for BlacksmithMenu {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Length(2), Constraint::Min(0)])
-            .split(area);
-
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
-        let header_line = blacksmith_header(blacksmith, player_gold);
-        frame.render_widget(Paragraph::new(header_line), chunks[0]);
 
-        self.menu.view(frame, chunks[1]);
+        // Render header and get remaining area
+        let header_lines = blacksmith_header(blacksmith, player_gold);
+        let content_area = render_location_header(frame, area, header_lines, colors::FLAME_ORANGE);
+
+        self.menu.view(frame, content_area);
     }
 
     fn query(&self, attr: Attribute) -> Option<AttrValue> {

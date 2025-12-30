@@ -1,4 +1,9 @@
-use ratatui::{layout::Rect, Frame};
+use ratatui::{
+    layout::Rect,
+    style::Style,
+    text::{Line, Span},
+    Frame,
+};
 use tuirealm::{
     command::{Cmd, CmdResult},
     props::{AttrValue, Attribute, Props},
@@ -10,6 +15,7 @@ use crate::ui::components::field::FieldTab;
 use crate::ui::components::store::tab::StoreTab;
 use crate::ui::components::wrappers::tabbed_container::{TabEntry, TabbedContainer};
 use crate::ui::components::utilities::{ANVIL, CROSSED_SWORDS, STORE};
+use crate::ui::theme::ColorExt;
 
 pub struct TownScreen {
     props: Props,
@@ -18,10 +24,32 @@ pub struct TownScreen {
 
 impl TownScreen {
     pub fn new() -> Self {
+        use crate::ui::theme;
         let tabs = TabbedContainer::new(vec![
-            TabEntry::new(format!("{} Store", STORE), StoreTab::new()),
-            TabEntry::new(format!("{} Blacksmith", ANVIL), BlacksmithMenu::default()),
-            TabEntry::new(format!("{} Field", CROSSED_SWORDS), FieldTab::new()),
+            TabEntry::with_height(
+                Line::from(vec![
+                    Span::styled(format!("{}", STORE), Style::default().color(theme::YELLOW)),
+                    Span::styled(" Store", Style::default().color(theme::WHITE)),
+                ]),
+                StoreTab::new(),
+                5,
+            ),
+            TabEntry::with_height(
+                Line::from(vec![
+                    Span::styled(format!("{}", ANVIL), Style::default().color(theme::RED)),
+                    Span::styled(" Blacksmith", Style::default().color(theme::ORANGE)),
+                ]),
+                BlacksmithMenu::default(),
+                4,
+            ),
+            TabEntry::with_height(
+                Line::from(vec![
+                    Span::styled(format!("{}", CROSSED_SWORDS), Style::default().color(theme::WHITE)),
+                    Span::styled(" Field", Style::default().color(theme::GREEN)),
+                ]),
+                FieldTab::new(),
+                3,
+            ),
         ]);
         Self {
             props: Props::default(),

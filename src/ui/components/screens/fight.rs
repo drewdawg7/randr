@@ -6,12 +6,14 @@ use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, 
 use crate::combat::{AttackResult, CombatRounds};
 use crate::system::game_state;
 use crate::ui::Id;
+use crate::ui::components::player::xp_bar::XpBar;
 use crate::ui::components::widgets::menu::{Menu, MenuItem};
-use crate::ui::components::utilities::{CROSSED_SWORDS, RETURN_ARROW};
+use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW};
 
 pub struct FightScreen {
     props: Props,
     back_menu: Menu,
+    xp_bar: XpBar,
 }
 
 impl FightScreen {
@@ -42,20 +44,29 @@ impl FightScreen {
                 }),
             },
         ]);
-        Self { props: Props::default(), back_menu }
+        Self { props: Props::default(), back_menu, xp_bar: XpBar::new() }
     }
 }
 
 impl MockComponent for FightScreen {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        let Some(combat_rounds) = game_state().current_combat() else {
+        let gs = game_state();
+        let Some(combat_rounds) = gs.current_combat() else {
             return;
         };
 
-        let mut attack_components: Vec<AttackResultComponent> = combat_rounds
+        // Only show the last 3 rounds of combat
+        let attack_results: Vec<_> = combat_rounds
             .attack_results
             .iter()
+            .rev()
+            .take(3)
+            .rev()
             .cloned()
+            .collect();
+
+        let mut attack_components: Vec<AttackResultComponent> = attack_results
+            .into_iter()
             .map(AttackResultComponent::new)
             .collect();
 
@@ -66,35 +77,88 @@ impl MockComponent for FightScreen {
             2 // defeat header + message
         } as u16;
 
-        let num_attacks = attack_components.len();
+        // Fixed height for combat rounds (3 rounds * 2 lines each = 6)
+        const MAX_ROUNDS: usize = 3;
+        const ROUND_HEIGHT: u16 = 2;
+        const COMBAT_AREA_HEIGHT: u16 = (MAX_ROUNDS as u16) * ROUND_HEIGHT;
 
-        // Build constraints: attack results + spacer + summary + back button + trailing spacer
-        let mut constraints: Vec<Constraint> = attack_components
-            .iter()
-            .map(|_| Constraint::Length(2))
-            .collect();
-        constraints.push(Constraint::Length(1)); // spacer
-        constraints.push(Constraint::Length(summary_height)); // summary section
-        constraints.push(Constraint::Length(3)); // menu (fight again + back)
-        constraints.push(Constraint::Min(0)); // absorb remaining space at end
+        // Build constraints: player stats header + spacer + combat area (fixed) + spacer + summary + back button + trailing spacer
+        let constraints = vec![
+            Constraint::Length(1),                  // player stats header
+            Constraint::Length(1),                  // spacer after header
+            Constraint::Length(COMBAT_AREA_HEIGHT), // fixed combat rounds area
+            Constraint::Length(1),                  // spacer
+            Constraint::Length(summary_height),     // summary section
+            Constraint::Length(3),                  // menu (fight again + back)
+            Constraint::Min(0),                     // absorb remaining space at end
+        ];
 
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints(constraints.as_slice())
             .split(area);
 
-        // Render attack results
+        // Split the combat area into individual round slots
+        let combat_area = chunks[2];
+        let round_constraints: Vec<Constraint> = (0..MAX_ROUNDS)
+            .map(|_| Constraint::Length(ROUND_HEIGHT))
+            .collect();
+        let round_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints(round_constraints)
+            .split(combat_area);
+
+        // Render player stats header using horizontal layout
+        let player = &gs.player;
+        let hp_style = Style::default().color(colors::RED);
+        let xp_style = Style::default().color(colors::CYAN);
+        let gold_style = Style::default().color(colors::YELLOW);
+
+        let header_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([
+                Constraint::Length(11), // HP section
+                Constraint::Length(9),  // XP icon + level
+                Constraint::Length(20), // XpBar component
+                Constraint::Min(0),     // Gold section
+            ])
+            .split(chunks[0]);
+
+        // HP
+        let hp_line = Line::from(vec![
+            Span::styled(format!("{} ", HEART), hp_style),
+            Span::raw(format!("{}/{}  |  ", player.get_health(), player.get_max_health())),
+        ]);
+        frame.render_widget(Paragraph::new(hp_line), header_chunks[0]);
+
+        // XP icon + level
+        let xp_label = Line::from(vec![
+            Span::styled(format!("{} ", DOUBLE_ARROW_UP), xp_style),
+            Span::raw(format!("Lv.{} ", player.prog.level)),
+        ]);
+        frame.render_widget(Paragraph::new(xp_label), header_chunks[1]);
+
+        // XpBar component
+        self.xp_bar.view(frame, header_chunks[2]);
+
+        // Gold
+        let gold_line = Line::from(vec![
+            Span::raw("  |  "),
+            Span::styled(format!("{} ", COIN), gold_style),
+            Span::raw(format!("{}", player.gold)),
+        ]);
+        frame.render_widget(Paragraph::new(gold_line), header_chunks[3]);
+
+        // Render attack results in the fixed round slots
         for (i, component) in attack_components.iter_mut().enumerate() {
-            component.view(frame, chunks[i]);
+            component.view(frame, round_chunks[i]);
         }
 
-        // Render battle summary (after attacks + spacer)
-        let summary_idx = num_attacks + 1;
-        render_battle_summary(frame, chunks[summary_idx], combat_rounds);
+        // Render battle summary (fixed position after combat area + spacer)
+        render_battle_summary(frame, chunks[4], combat_rounds);
 
-        // Render back button
-        let back_idx = num_attacks + 2;
-        self.back_menu.view(frame, chunks[back_idx]);
+        // Render back button (fixed position)
+        self.back_menu.view(frame, chunks[5]);
     }
 
     fn query(&self, attr: Attribute) -> Option<AttrValue> {
@@ -193,9 +257,9 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for AttackResultComponent {
 
 fn render_battle_summary(frame: &mut Frame, area: Rect, combat: &CombatRounds) {
     let header_style = Style::default().color(colors::YELLOW).add_modifier(Modifier::BOLD);
-    let gold_style = Style::default().color(colors::YELLOW);
-    let xp_style = Style::default().color(colors::CYAN);
-    let item_style = Style::default().color(colors::MAGENTA);
+    let gold_icon_style = Style::default().color(colors::YELLOW);
+    let xp_icon_style = Style::default().color(colors::CYAN);
+    let item_icon_style = Style::default().color(colors::MAGENTA);
     let defeat_style = Style::default().color(colors::RED).add_modifier(Modifier::BOLD);
 
     let mut lines = Vec::new();
@@ -203,10 +267,12 @@ fn render_battle_summary(frame: &mut Frame, area: Rect, combat: &CombatRounds) {
     if combat.player_won {
         lines.push(Line::from(Span::styled("== Battle Results ==", header_style)));
         lines.push(Line::from(vec![
-            Span::styled(format!("+{} gold", combat.gold_gained), gold_style),
+            Span::styled(format!("{} ", COIN), gold_icon_style),
+            Span::raw(format!("+{} gold", combat.gold_gained)),
         ]));
         lines.push(Line::from(vec![
-            Span::styled(format!("+{} XP", combat.xp_gained), xp_style),
+            Span::styled(format!("{} ", DOUBLE_ARROW_UP), xp_icon_style),
+            Span::raw(format!("+{} XP", combat.xp_gained)),
         ]));
 
         if combat.dropped_loot.is_empty() {
@@ -216,7 +282,8 @@ fn render_battle_summary(frame: &mut Frame, area: Rect, combat: &CombatRounds) {
             for item_kind in &combat.dropped_loot {
                 let item_name = gs.get_item_name(*item_kind);
                 lines.push(Line::from(vec![
-                    Span::styled(format!("+ {}", item_name), item_style),
+                    Span::styled("+ ", item_icon_style),
+                    Span::raw(item_name),
                 ]));
             }
         }

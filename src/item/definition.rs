@@ -15,6 +15,7 @@ pub struct Item {
     pub max_upgrades: i32,
     pub max_stack_quantity: u32,
     pub stats: StatSheet,
+    pub gold_value: i32,
 }
 
 impl Item {
@@ -42,6 +43,7 @@ pub struct ItemSpec {
     pub max_upgrades: i32,
     pub attack: i32,
     pub defense: i32,
+    pub gold_value: i32,
 }
 
 pub type ItemRegistry = Registry<ItemKind, ItemSpec>;

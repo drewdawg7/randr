@@ -1,3 +1,6 @@
 pub(crate) mod menu;
 pub(crate) mod table;
 pub(crate) mod fitted_box;
+pub(crate) mod forest_border;
+pub(crate) mod ember_border;
+pub(crate) mod wood_border;

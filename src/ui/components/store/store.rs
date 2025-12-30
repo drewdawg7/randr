@@ -21,7 +21,7 @@ impl StoreDisplay {
             &store.inventory,
             |si| [
                 si.item.name.to_string(),
-                format!("{}g", si.price),
+                format!("{}g", si.purchase_price()),
                 si.quantity.to_string(),
             ],
         );

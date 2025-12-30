@@ -34,13 +34,19 @@ pub trait HasInventory {
     }
 
     fn unequip_item(&mut self, slot: EquipmentSlot) -> Result<(), InventoryError> {
+        // Check if inventory has room before removing from equipment
+        if self.inventory().equipment().contains_key(&slot)
+            && self.inventory().items.len() >= self.inventory().max_slots()
+        {
+            return Err(InventoryError::Full);
+        }
+
         let item = self.inventory_mut().equipment_mut().remove(&slot);
 
         match item {
             Some(mut item) => {
                 item.set_is_equipped(false);
-                let _ = self.add_to_inv(item);
-                Ok(())
+                self.add_to_inv(item)
             }
             None => Ok(())
         }
@@ -61,5 +67,25 @@ pub trait HasInventory {
             let _ = self.unequip_item(slot);
             self.inventory_mut().equipment_mut().insert(slot, item);
         }
+    }
+
+    fn remove_item(&mut self, item_uuid: Uuid) -> Option<Item> {
+        // Check equipment slots first
+        let equipment = self.inventory_mut().equipment_mut();
+        for slot in [EquipmentSlot::Weapon, EquipmentSlot::OffHand] {
+            if let Some(item) = equipment.get(&slot) {
+                if item.item_uuid == item_uuid {
+                    return equipment.remove(&slot);
+                }
+            }
+        }
+
+        // Check inventory items
+        if let Some(index) = self.find_item_index_by_uuid(item_uuid) {
+            let inv_item = self.inventory_mut().items.remove(index);
+            return Some(inv_item.item);
+        }
+
+        None
     }
 }

@@ -1,8 +1,7 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::Rect,
     style::Style,
     text::{Line, Span},
-    widgets::Paragraph,
     Frame,
 };
 
@@ -14,10 +13,13 @@ use tuirealm::{
 };
 
 use crate::{
+    combat::HasGold,
+    entities::progression::HasProgression,
+    stats::HasStats,
     system::game_state,
     ui::Id,
 };
-use crate::ui::components::utilities::{CROSSED_SWORDS, RETURN_ARROW};
+use crate::ui::components::utilities::{render_location_header, COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW};
 use crate::ui::components::widgets::menu::{Menu, MenuItem};
 
 pub struct FieldTab {
@@ -68,29 +70,50 @@ impl Default for FieldTab {
     }
 }
 
-fn field_header() -> Line<'static> {
-    let field = &game_state().town.field;
-    Line::from(vec![
-        Span::styled(field.name.clone(), Style::default().color(colors::CYAN)),
-    ])
+fn field_header() -> Vec<Line<'static>> {
+    use crate::entities::progression::Progression;
+
+    let gs = game_state();
+    let field = &gs.town.field;
+    let player = &gs.player;
+
+    // Get player stats
+    let current_hp = player.hp();
+    let max_hp = player.max_hp();
+    let gold = player.gold();
+    let progression = player.progression();
+    let level = progression.level;
+    let current_xp = progression.xp;
+    let xp_to_next = Progression::xp_to_next_level(level);
+
+    vec![
+        // Line 1: Field name
+        Line::from(vec![
+            Span::styled(field.name.clone(), Style::default().color(colors::GREEN)),
+        ]),
+        // Line 2: HP | Level XP | Gold
+        Line::from(vec![
+            Span::styled(format!("{} ", HEART), Style::default().color(colors::RED)),
+            Span::raw(format!("{}/{}", current_hp, max_hp)),
+            Span::raw("  |  "),
+            Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().color(colors::CYAN)),
+            Span::raw(format!("{} ", level)),
+            Span::raw(format!("{}/{}", current_xp, xp_to_next)),
+            Span::raw("  |  "),
+            Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
+            Span::raw(format!("{}", gold)),
+        ]),
+    ]
 }
 
 impl MockComponent for FieldTab {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(2),
-                Constraint::Min(0),
-            ])
-            .split(area);
+        // Render header with field name and get remaining area
+        let header_lines = field_header();
+        let content_area = render_location_header(frame, area, header_lines, colors::GREEN);
 
-        // Render header with field name
-        let header_line = field_header();
-        frame.render_widget(Paragraph::new(header_line), chunks[0]);
-
-        // Render the menu
-        self.menu.view(frame, chunks[1]);
+        // Render the menu in remaining area
+        self.menu.view(frame, content_area);
     }
 
     fn attr(&mut self, attr: Attribute, value: AttrValue) {

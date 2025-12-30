@@ -81,6 +81,10 @@ impl GameState {
         &self.town.store
     }
 
+    pub fn store_mut(&mut self) -> &mut crate::store::Store {
+        &mut self.town.store
+    }
+
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
@@ -90,8 +94,8 @@ impl GameState {
         let _ = self.app.mount(Id::Fight, Box::new(FightScreen::new()), vec![]);
         let profile_tabs = TabbedContainer::new(
             vec![
-                TabEntry::new("Player", PlayerProfile::new()),
-                TabEntry::new("Equipment", Equipment::default()),
+                TabEntry::new("Player".into(), PlayerProfile::new()),
+                TabEntry::new("Equipment".into(), Equipment::default()),
             ],
         );
         let _ = self.app.mount(Id::Profile, Box::new(profile_tabs), vec![]);
@@ -109,6 +113,14 @@ impl GameState {
 
         let mut terminal = self.terminal.take().expect("terminal missing");
         terminal.draw(|frame| {
+            use ratatui::widgets::Block;
+            use ratatui::style::Style;
+            use crate::ui::theme as colors;
+
+            frame.render_widget(
+                Block::default().style(Style::default().bg(colors::BACKGROUND)),
+                frame.area()
+            );
             self.app.view(&current, frame, frame.area());
         })?;
         self.terminal = Some(terminal);

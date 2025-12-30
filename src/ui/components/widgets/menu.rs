@@ -2,9 +2,9 @@ use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, 
 use tuirealm::event::{Key, KeyEvent};
 use ratatui::{widgets::{List, ListItem, ListState}};
 use ratatui::layout::Rect;
-use ratatui::style::Style;
+use ratatui::text::{Line, Span};
 
-use crate::ui::theme::{self as colors, ColorExt};
+use crate::ui::components::utilities::selection_prefix;
 
 pub struct MenuItem {
     pub label: String,
@@ -32,13 +32,10 @@ impl MockComponent for Menu {
             .iter()
             .enumerate()
             .map(|(i, item)| {
-                let style = if self.list_state.selected() == Some(i) {
-                    Style::default().color(colors::YELLOW)
-                } else {
-                    Style::default()
-                };
-                let prefix = if self.list_state.selected() == Some(i) { "> " } else { "  " };
-                ListItem::new(format!("{}{}", prefix, item.label)).style(style)
+                ListItem::new(Line::from(vec![
+                    selection_prefix(self.list_state.selected() == Some(i)),
+                    Span::raw(item.label.clone()),
+                ]))
             })
             .collect();
 

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use rand::Rng;
-
 use crate::{
     registry::{RegistryDefaults, SpawnFromSpec},
     stats::{StatInstance, StatSheet, StatType},

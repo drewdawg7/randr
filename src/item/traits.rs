@@ -3,8 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use uuid::Uuid;
 
 use crate::{
-    registry::{RegistryDefaults, SpawnFromSpec},
-    stats::{HasStats, StatInstance, StatSheet, StatType},
+    loot::traits::WorthGold, registry::{RegistryDefaults, SpawnFromSpec}, stats::{HasStats, StatInstance, StatSheet, StatType}
 };
 
 use super::{Item, ItemSpec, ItemKind, ItemType};
@@ -25,6 +24,10 @@ impl Display for Item {
     }
 }
 
+impl WorthGold for Item {
+    fn gold_value(&self) -> i32 { self.gold_value }
+}
+
 impl SpawnFromSpec<ItemKind> for ItemSpec {
     type Output = Item;
 
@@ -38,6 +41,7 @@ impl SpawnFromSpec<ItemKind> for ItemSpec {
             num_upgrades: 0,
             max_upgrades: spec.max_upgrades,
             max_stack_quantity: 1,
+            gold_value: spec.gold_value,
             stats: {
                 let mut stats: HashMap<StatType, StatInstance> = HashMap::new();
                 stats.insert(
@@ -72,7 +76,8 @@ impl RegistryDefaults<ItemKind> for ItemSpec {
                     item_type: ItemType::Weapon,
                     attack: 10,
                     defense: 0,
-                    max_upgrades: 5
+                    max_upgrades: 5,
+                    gold_value: 15
                 }
             ),
             (
@@ -82,7 +87,8 @@ impl RegistryDefaults<ItemKind> for ItemSpec {
                     item_type: ItemType::Weapon,
                     attack: 6,
                     defense: 0,
-                    max_upgrades: 5
+                    max_upgrades: 5,
+                    gold_value: 10,
                 }
             ),
             (
@@ -92,7 +98,8 @@ impl RegistryDefaults<ItemKind> for ItemSpec {
                     item_type: ItemType::Shield,
                     attack: 0,
                     defense: 4,
-                    max_upgrades: 5
+                    max_upgrades: 5,
+                    gold_value: 15
                 }
             )
         ]

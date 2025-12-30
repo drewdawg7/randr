@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Line, Span},
-    widgets::{List, ListItem, ListState, Paragraph},
+    widgets::{List, ListItem, ListState},
     Frame,
 };
 
@@ -22,7 +22,7 @@ use crate::{
     ui::Id,
 };
 use crate::ui::components::player::item_details::render_item_details;
-use crate::ui::components::utilities::blacksmith_header;
+use crate::ui::components::utilities::{blacksmith_header, item_display, render_location_header, selection_prefix, RETURN_ARROW};
 use crate::ui::components::wrappers::with_action::WithAction;
 
 pub struct UpgradeableItem {
@@ -47,17 +47,13 @@ impl UpgradeableItem {
             let blacksmith = &gs.town.blacksmith;
             let player = &mut gs.player;
 
-            // Check equipped items first
+            // Check equipped items first - upgrade in-place without unequipping
             for slot in [EquipmentSlot::Weapon, EquipmentSlot::OffHand] {
                 if let Some(equipped) = player.get_equipped_item(slot) && equipped.item_uuid == item_uuid {
-                        // Need to unequip, upgrade, and re-equip
-                        let _ = player.unequip_item(slot);
-                        // Find the item we just unequipped in inventory
-                        if let Some(idx) = player.find_item_index_by_uuid(item_uuid) {
-                            // Remove item first to avoid borrow conflict
-                            let mut inv_item = player.inventory_mut().items.remove(idx);
-                            let _ = blacksmith.upgrade_item(player, &mut inv_item.item);
-                            player.equip_item(&mut inv_item.item, slot);
+                        // Remove from equipment, upgrade, and put back
+                        if let Some(mut item) = player.inventory_mut().equipment_mut().remove(&slot) {
+                            let _ = blacksmith.upgrade_item(player, &mut item);
+                            player.inventory_mut().equipment_mut().insert(slot, item);
                         }
                         return;
                 }
@@ -115,21 +111,18 @@ impl MockComponent for BlacksmithItems {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         self.rebuild_items();
 
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([Constraint::Length(2), Constraint::Min(0)])
-            .split(area);
-
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
         let max_upgrades = blacksmith.max_upgrades;
-        let header_line = blacksmith_header(blacksmith, player_gold);
-        frame.render_widget(Paragraph::new(header_line), chunks[0]);
+
+        // Render header and get remaining area
+        let header_lines = blacksmith_header(blacksmith, player_gold);
+        let content_area = render_location_header(frame, area, header_lines, colors::FLAME_ORANGE);
 
         let content_chunks = Layout::default()
             .direction(Direction::Horizontal)
             .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(chunks[1]);
+            .split(content_area);
 
         let selected = self.list_state.selected().unwrap_or(0);
 
@@ -139,43 +132,27 @@ impl MockComponent for BlacksmithItems {
             .map(|(i, item)| {
                 let inner = item.inner();
                 let is_selected = selected == i;
-                let prefix = if is_selected { "> " } else { "  " };
                 let upgrade_cost = blacksmith.calc_upgrade_cost(&inner.item);
                 let at_max = inner.item.num_upgrades >= max_upgrades;
                 let can_afford = player_gold >= upgrade_cost;
 
-                let base_style = if is_selected {
-                    Style::default().color(colors::YELLOW)
-                } else {
-                    Style::default()
-                };
-
                 let line = if at_max {
-                    // Item is at max upgrades - show in gray/dim
-                    let dim_style = Style::default().color(colors::DARK_GRAY);
                     Line::from(vec![
-                        Span::styled(prefix, base_style),
-                        Span::styled(inner.item.name.to_string(), dim_style),
-                        Span::styled(
-                            format!(" ({}/{}) - ", inner.item.num_upgrades, max_upgrades),
-                            dim_style,
-                        ),
-                        Span::styled("MAX", dim_style),
+                        selection_prefix(is_selected),
+                        item_display(&inner.item),
+                        Span::styled(" - MAX", Style::default().color(colors::DARK_GRAY)),
                     ])
                 } else {
                     let cost_style = if can_afford {
-                        base_style
+                        Style::default()
                     } else {
                         Style::default().color(colors::RED)
                     };
 
                     Line::from(vec![
-                        Span::styled(prefix, base_style),
-                        Span::styled(inner.item.name.to_string(), base_style),
-                        Span::styled(
-                            format!(" ({}/{}) - ", inner.item.num_upgrades, max_upgrades),
-                            base_style,
-                        ),
+                        selection_prefix(is_selected),
+                        item_display(&inner.item),
+                        Span::raw(" - "),
                         Span::styled(format!("{} gold", upgrade_cost), cost_style),
                     ])
                 };
@@ -186,17 +163,10 @@ impl MockComponent for BlacksmithItems {
 
         // Add back button
         let back_selected = selected == self.items.len();
-        let back_style = if back_selected {
-            Style::default().color(colors::YELLOW)
-        } else {
-            Style::default()
-        };
-        let back_prefix = if back_selected { "> " } else { "  " };
-
         let mut all_items = list_items;
         all_items.push(ListItem::new(Line::from(vec![
-            Span::styled(back_prefix, back_style),
-            Span::styled(format!("{} Back", crate::ui::utilities::RETURN_ARROW), back_style),
+            selection_prefix(back_selected),
+            Span::raw(format!("{} Back", RETURN_ARROW)),
         ])));
 
         let list = List::new(all_items);

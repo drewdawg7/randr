@@ -2,7 +2,7 @@
 use std::{fmt::Display};
 
 
-use crate::{combat::HasGold, item::Item};
+use crate::{combat::HasGold, item::Item, loot::traits::WorthGold};
 
 #[derive(Debug, Clone)]
 pub struct Store {
@@ -25,7 +25,6 @@ impl Store {
 pub struct StoreItem {
     pub item: Item,
     pub quantity: i32,
-    pub price: i32,
 }
 
 impl StoreItem {
@@ -39,17 +38,17 @@ impl StoreItem {
     }
 
     pub fn purchase_price(&self) -> i32 {
-        self.price
+        self.item.purchase_price()
     }
 
     pub fn sell_price(&self) -> i32 {
-        self.price / 2
+        self.item.sell_price()
     }
 }
 
 impl Display for StoreItem {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{:<10} |{:>4}g |{:>3}", self.item.name, self.price, self.quantity)
+        write!(f, "{:<10} |{:>4}g |{:>3}", self.item.name, self.purchase_price(), self.quantity)
     }
 }
 
@@ -94,8 +93,7 @@ impl Store {
     }
 
     pub fn get_store_item(&self, item: Item) -> Option<&StoreItem> {
-        self
-            .inventory
+        self.inventory
             .iter()
             .find(|si| si.item == item)
 
@@ -111,11 +109,10 @@ impl Store {
     pub fn add_item(&mut self, item: &Item) {
        match self.get_store_item_mut(item.clone()) {
             Some(store_item) => store_item.inc_quantity(1),
-            None                  => {
+            None => {
                 let store_item = StoreItem {
                     item: item.clone(),
                     quantity: 1,
-                    price: 5,
                 };
                 self.inventory.push(store_item);
             }
@@ -128,4 +125,10 @@ impl Store {
 pub enum StoreError {
     NotEnoughGold,
     OutOfStock
+}
+
+pub fn sell_player_item<P: HasGold>(player: &mut P, item: &Item) -> i32 {
+    let sell_price = item.sell_price();
+    player.add_gold(sell_price);
+    sell_price
 }

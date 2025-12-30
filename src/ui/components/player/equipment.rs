@@ -1,13 +1,12 @@
 use ratatui::{
     layout::{Constraint, Direction, Layout},
-    style::Style,
+    text::{Line, Span},
     widgets::{List, ListItem, ListState},
 };
-
-use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
-use crate::{inventory::{EquipmentSlot, HasInventory}, item::{ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED}, Id}};
+use crate::{inventory::{EquipmentSlot, HasInventory}, item::{ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED, RETURN_ARROW}, Id}};
+use crate::ui::components::utilities::{item_display, selection_prefix};
 
 use super::item_details::render_item_details;
 use crate::ui::components::wrappers::with_action::WithAction;
@@ -97,27 +96,21 @@ impl MockComponent for Equipment {
             .enumerate()
             .map(|(i, item)| {
                 let inner = item.inner();
-                let style = if selected == i {
-                    Style::default().color(colors::YELLOW)
-                } else {
-                    Style::default()
-                };
-                let prefix = if selected == i { "> " } else { "  " };
-                ListItem::new(
-                    format!("{}{} {}", prefix, if inner.item.is_equipped {CHECKED} else {UNCHECKED}, inner.item.name)
-                ).style(style)
+                let checkbox = if inner.item.is_equipped { CHECKED } else { UNCHECKED };
+                ListItem::new(Line::from(vec![
+                    selection_prefix(selected == i),
+                    Span::raw(format!("{} ", checkbox)),
+                    item_display(&inner.item),
+                ]))
             })
             .collect();
 
         // Add back button
         let back_selected = selected == self.items.len();
-        let back_style = if back_selected {
-            Style::default().color(colors::YELLOW)
-        } else {
-            Style::default()
-        };
-        let back_prefix = if back_selected { "> " } else { "  " };
-        list_items.push(ListItem::new(format!("{}{} Back", back_prefix, crate::ui::utilities::RETURN_ARROW)).style(back_style));
+        list_items.push(ListItem::new(Line::from(vec![
+            selection_prefix(back_selected),
+            Span::raw(format!("{} Back", RETURN_ARROW)),
+        ])));
 
         let list = List::new(list_items);
         frame.render_stateful_widget(list, chunks[0], &mut self.list_state);
