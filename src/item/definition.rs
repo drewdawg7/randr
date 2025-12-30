@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{item::enums::ItemError, registry::Registry, stats::{HasStats, StatSheet}};
+use crate::{item::enums::{ItemError, ItemQuality}, registry::Registry, stats::{HasStats, StatSheet}};
 
 pub use super::enums::{ItemKind, ItemType};
 
@@ -16,6 +16,7 @@ pub struct Item {
     pub max_stack_quantity: u32,
     pub stats: StatSheet,
     pub gold_value: i32,
+    pub quality: ItemQuality,
 }
 
 impl Item {

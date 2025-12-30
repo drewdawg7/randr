@@ -12,6 +12,28 @@ const SCROLL_DARK: ratatui::style::Color = colors::TAN_WOOD;
 const SCROLL_LIGHT: ratatui::style::Color = colors::CREAM_WOOD;
 const SCROLL_MID: ratatui::style::Color = colors::LIGHT_BEIGE;
 
+/// A line of content with optional styling
+pub struct StyledContent {
+    pub text: String,
+    pub color: Option<ratatui::style::Color>,
+}
+
+impl StyledContent {
+    pub fn plain(text: impl Into<String>) -> Self {
+        Self { text: text.into(), color: None }
+    }
+
+    pub fn colored(text: impl Into<String>, color: ratatui::style::Color) -> Self {
+        Self { text: text.into(), color: Some(color) }
+    }
+}
+
+impl From<String> for StyledContent {
+    fn from(text: String) -> Self {
+        Self::plain(text)
+    }
+}
+
 /// Render content inside an ASCII scroll border
 ///
 /// The scroll looks like:
@@ -30,15 +52,25 @@ pub fn render_scroll_with_content(
     area: Rect,
     content_lines: Vec<String>,
 ) {
+    let styled: Vec<StyledContent> = content_lines.into_iter().map(StyledContent::from).collect();
+    render_scroll_with_styled_content(frame, area, styled);
+}
+
+/// Render styled content inside an ASCII scroll border
+pub fn render_scroll_with_styled_content(
+    frame: &mut Frame,
+    area: Rect,
+    content_lines: Vec<StyledContent>,
+) {
     let content_width = content_lines
         .iter()
-        .map(|s| s.chars().count())
+        .map(|s| s.text.chars().count())
         .max()
         .unwrap_or(0)
         .max(18) as u16; // minimum width of 18
 
     let mut lines: Vec<Line> = Vec::new();
-    let mut content_iter = content_lines.iter();
+    let mut content_iter = content_lines.into_iter();
 
     // Line 1: Top edge with underscores
     lines.push(generate_top_line(content_width));
@@ -47,16 +79,16 @@ pub fn render_scroll_with_content(
     lines.push(generate_fold_top(content_width));
 
     // Line 3: First side line WITH content
-    let content1 = content_iter.next().map(|s| s.as_str()).unwrap_or("");
-    lines.push(generate_first_side_with_content(content1, content_width));
+    let content1 = content_iter.next();
+    lines.push(generate_first_side_with_styled_content(content1.as_ref(), content_width));
 
     // Line 4: Fold corner WITH content
-    let content2 = content_iter.next().map(|s| s.as_str()).unwrap_or("");
-    lines.push(generate_fold_corner_with_content(content2, content_width));
+    let content2 = content_iter.next();
+    lines.push(generate_fold_corner_with_styled_content(content2.as_ref(), content_width));
 
     // Remaining content lines
     for content in content_iter {
-        lines.push(generate_content_line(content, content_width));
+        lines.push(generate_styled_content_line(&content, content_width));
     }
 
     // Bottom section
@@ -149,6 +181,61 @@ fn generate_content_line(content: &str, content_width: u16) -> Line<'static> {
         Span::styled("    ", Style::default()),
         Span::styled("|", Style::default().fg(SCROLL_DARK)),
         Span::styled(padded, Style::default().fg(colors::WHITE)),
+        Span::styled("|", Style::default().fg(SCROLL_DARK)),
+        Span::styled(".", Style::default().fg(SCROLL_MID)),
+    ])
+}
+
+/// First side with styled content: "|   |" + content + padding + "|."
+fn generate_first_side_with_styled_content(content: Option<&StyledContent>, content_width: u16) -> Line<'static> {
+    let (text, color) = match content {
+        Some(c) => (c.text.as_str(), c.color.unwrap_or(colors::WHITE)),
+        None => ("", colors::WHITE),
+    };
+    let padding_len = content_width as usize - text.chars().count();
+    let padding = " ".repeat(padding_len);
+    Line::from(vec![
+        Span::styled("|", Style::default().fg(SCROLL_DARK)),
+        Span::styled("   ", Style::default()),
+        Span::styled("|", Style::default().fg(SCROLL_DARK)),
+        Span::styled(text.to_string(), Style::default().fg(color)),
+        Span::styled(padding, Style::default()),
+        Span::styled("|", Style::default().fg(SCROLL_DARK)),
+        Span::styled(".", Style::default().fg(SCROLL_MID)),
+    ])
+}
+
+/// Fold corner with styled content: " \_ |" + content + padding + "|."
+fn generate_fold_corner_with_styled_content(content: Option<&StyledContent>, content_width: u16) -> Line<'static> {
+    let (text, color) = match content {
+        Some(c) => (c.text.as_str(), c.color.unwrap_or(colors::WHITE)),
+        None => ("", colors::WHITE),
+    };
+    let padding_len = content_width as usize - text.chars().count();
+    let padding = " ".repeat(padding_len);
+    Line::from(vec![
+        Span::styled(" ", Style::default()),
+        Span::styled("\\", Style::default().fg(SCROLL_DARK)),
+        Span::styled("_", Style::default().fg(SCROLL_LIGHT)),
+        Span::styled(" ", Style::default()),
+        Span::styled("|", Style::default().fg(SCROLL_DARK)),
+        Span::styled(text.to_string(), Style::default().fg(color)),
+        Span::styled(padding, Style::default()),
+        Span::styled("|", Style::default().fg(SCROLL_DARK)),
+        Span::styled(".", Style::default().fg(SCROLL_MID)),
+    ])
+}
+
+/// Styled content line: "    |" + content + padding + "|."
+fn generate_styled_content_line(content: &StyledContent, content_width: u16) -> Line<'static> {
+    let color = content.color.unwrap_or(colors::WHITE);
+    let padding_len = content_width as usize - content.text.chars().count();
+    let padding = " ".repeat(padding_len);
+    Line::from(vec![
+        Span::styled("    ", Style::default()),
+        Span::styled("|", Style::default().fg(SCROLL_DARK)),
+        Span::styled(content.text.clone(), Style::default().fg(color)),
+        Span::styled(padding, Style::default()),
         Span::styled("|", Style::default().fg(SCROLL_DARK)),
         Span::styled(".", Style::default().fg(SCROLL_MID)),
     ])

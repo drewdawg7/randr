@@ -1,6 +1,6 @@
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::Style, text::{Line, Span}, widgets::{Block, Paragraph}, Frame};
 
-use crate::ui::theme::{self as colors, ColorExt};
+use crate::ui::theme::{self as colors, quality_color, ColorExt};
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
 use crate::combat::{AttackResult, CombatRounds};
@@ -26,11 +26,13 @@ impl FightScreen {
                     let field = &game_state().town.field;
                     if let Ok(mut mob) = field.spawn_mob() {
                         let gs = game_state();
-                        let combat_rounds = crate::combat::system::enter_combat(&mut gs.player, &mut mob);
+                        let mut combat_rounds = crate::combat::system::enter_combat(&mut gs.player, &mut mob);
 
-                        // Add dropped loot to player inventory
-                        for item_kind in &combat_rounds.dropped_loot {
-                            let item = gs.spawn_item(*item_kind);
+                        // Spawn items with quality and add to both dropped_loot and inventory
+                        let loot_kinds = combat_rounds.loot_kinds().to_vec();
+                        for item_kind in loot_kinds {
+                            let item = gs.spawn_item(item_kind);
+                            combat_rounds.dropped_loot.push(item.clone());
                             let _ = crate::inventory::HasInventory::add_to_inv(&mut gs.player, item);
                         }
 
@@ -314,12 +316,13 @@ fn render_battle_summary(frame: &mut Frame, area: Rect, combat: &CombatRounds) {
             Span::raw(format!("+{} XP", combat.xp_gained)),
         ]));
 
-        if !combat.dropped_loot.is_empty() {
-            let gs = game_state();
-            for item_kind in &combat.dropped_loot {
-                let item_name = gs.get_item_name(*item_kind);
-                lines.push(Line::from(format!("+ {} dropped", item_name)));
-            }
+        for item in &combat.dropped_loot {
+            let color = quality_color(item.quality);
+            lines.push(Line::from(vec![
+                Span::raw("+ "),
+                Span::styled(item.name.to_string(), Style::default().color(color)),
+                Span::raw(" dropped"),
+            ]));
         }
     } else {
         lines.push(Line::from(Span::styled("== Defeat ==", Style::default().color(colors::RED))));

@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 use ratatui::style::{Color, Style};
 
+use crate::item::enums::ItemQuality;
+
 // RGB color constants - adjust values to match your colorscheme
 pub const YELLOW: Color = Color::Rgb(255, 204, 0);
 pub const CYAN: Color = Color::Rgb(0, 188, 212);
@@ -30,6 +32,7 @@ pub const CREAM_WOOD: Color = Color::Rgb(235, 210, 180);
 pub const WHITE: Color = Color::Rgb(240, 240, 240);
 pub const MAGENTA: Color = Color::Rgb(156, 39, 176);
 pub const DARK_GRAY: Color = Color::Rgb(66, 66, 66);
+pub const GREY: Color = Color::Rgb(128, 128, 128);
 pub const BLACK: Color = Color::Rgb(18, 18, 18);
 pub const BACKGROUND: Color = Color::Rgb(36, 40, 59); // Tokyo Night Storm #24283b
 pub const HEADER_BG: Color = Color::Rgb(45, 50, 70); // Slightly lighter for location headers
@@ -49,6 +52,18 @@ pub fn upgrade_color(num_upgrades: i32) -> Color {
         2 => BLUE,
         3 => PURPLE,
         _ => ORANGE,
+    }
+}
+
+/// Returns a color based on item quality
+pub fn quality_color(quality: ItemQuality) -> Color {
+    match quality {
+        ItemQuality::Poor => GREY,
+        ItemQuality::Normal => WHITE,
+        ItemQuality::Improved => GREEN,
+        ItemQuality::WellForged => BLUE,
+        ItemQuality::Masterworked => PURPLE,
+        ItemQuality::Mythic => RED,
     }
 }
 

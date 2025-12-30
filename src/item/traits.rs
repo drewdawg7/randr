@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use uuid::Uuid;
 
 use crate::{
-    loot::traits::WorthGold, registry::{RegistryDefaults, SpawnFromSpec}, stats::{HasStats, StatInstance, StatSheet, StatType}
+    item::enums::ItemQuality, loot::traits::WorthGold, registry::{RegistryDefaults, SpawnFromSpec}, stats::{HasStats, StatInstance, StatSheet, StatType}
 };
 
 use super::{Item, ItemSpec, ItemKind, ItemType};
@@ -32,6 +32,11 @@ impl SpawnFromSpec<ItemKind> for ItemSpec {
     type Output = Item;
 
     fn spawn_from_spec(kind: ItemKind, spec: &Self) -> Self::Output {
+        let quality = ItemQuality::roll();
+        let mut sheet = StatSheet { stats: HashMap::new() };
+        sheet.insert(StatType::Attack.instance(spec.attack));
+        sheet.insert(StatType::Defense.instance(spec.defense));
+        let q_sheet = quality.multiply_stats(sheet);
         Item {
             item_uuid: Uuid::new_v4(),
             kind,
@@ -42,26 +47,8 @@ impl SpawnFromSpec<ItemKind> for ItemSpec {
             max_upgrades: spec.max_upgrades,
             max_stack_quantity: 1,
             gold_value: spec.gold_value,
-            stats: {
-                let mut stats: HashMap<StatType, StatInstance> = HashMap::new();
-                stats.insert(
-                    StatType::Attack,
-                    StatInstance {
-                        stat_type: StatType::Attack,
-                        current_value: spec.attack,
-                        max_value: spec.attack,
-                    },
-                );
-                stats.insert(
-                    StatType::Defense,
-                    StatInstance {
-                        stat_type: StatType::Defense,
-                        current_value: spec.defense,
-                        max_value: spec.defense,
-                    },
-                );
-                StatSheet { stats }
-            },
+            stats: q_sheet,
+            quality,
         }
     }
 }

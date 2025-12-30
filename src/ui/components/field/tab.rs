@@ -36,11 +36,13 @@ impl FieldTab {
                     let field = &game_state().town.field;
                     if let Ok(mut mob) = field.spawn_mob() {
                         let gs = game_state();
-                        let combat_rounds = crate::combat::system::enter_combat(&mut gs.player, &mut mob);
+                        let mut combat_rounds = crate::combat::system::enter_combat(&mut gs.player, &mut mob);
 
-                        // Add dropped loot to player inventory
-                        for item_kind in &combat_rounds.dropped_loot {
-                            let item = gs.spawn_item(*item_kind);
+                        // Spawn items with quality and add to both dropped_loot and inventory
+                        let loot_kinds = combat_rounds.loot_kinds().to_vec();
+                        for item_kind in loot_kinds {
+                            let item = gs.spawn_item(item_kind);
+                            combat_rounds.dropped_loot.push(item.clone());
                             let _ = crate::inventory::HasInventory::add_to_inv(&mut gs.player, item);
                         }
 

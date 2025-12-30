@@ -13,12 +13,9 @@ impl StatSheet {
     pub fn stats_mut(&mut self) -> &mut HashMap<StatType, StatInstance> {
         &mut self.stats
     }
-
-
     pub fn stat(&self, t:StatType) -> Option<&StatInstance> {
         self.stats.get(&t)
     }
-
     pub fn stat_mut(&mut self, t: StatType) -> Option<&mut StatInstance> {
         self.stats.get_mut(&t)
     }

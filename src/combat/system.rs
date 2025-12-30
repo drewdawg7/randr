@@ -2,7 +2,7 @@ use crate::{
     combat::{AttackResult, Combatant, DropsGold, HasGold},
     entities::{mob::MobKind, progression::{GivesXP, HasProgression}},
     inventory::HasInventory,
-    item::ItemKind,
+    item::{Item, ItemKind},
     loot::HasLoot,
     system::game_state,
     ui::Id,
@@ -37,7 +37,10 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 #[derive(Default, Clone)]
 pub struct CombatRounds {
     pub attack_results: Vec<AttackResult>,
-    pub dropped_loot: Vec<ItemKind>,
+    /// Spawned items with full quality info, for display and inventory
+    pub dropped_loot: Vec<Item>,
+    /// Item kinds rolled from loot table, used internally before spawning
+    loot_kinds: Vec<ItemKind>,
     pub gold_gained: i32,
     pub xp_gained: i32,
     pub player_won: bool,
@@ -48,6 +51,7 @@ impl CombatRounds {
         Self {
             attack_results: Vec::new(),
             dropped_loot: Vec::new(),
+            loot_kinds: Vec::new(),
             gold_gained: 0,
             xp_gained: 0,
             player_won: false,
@@ -55,6 +59,10 @@ impl CombatRounds {
     }
     pub fn add_round(&mut self, round: AttackResult) {
         self.attack_results.push(round);
+    }
+
+    pub fn loot_kinds(&self) -> &[ItemKind] {
+        &self.loot_kinds
     }
 }
 
@@ -81,8 +89,8 @@ where
         cr.xp_gained = mob.give_xp();
         player.gain_xp(cr.xp_gained);
 
-        // Roll for loot drops
-        cr.dropped_loot = mob.loot().roll_drops();
+        // Roll for loot drops (kinds only - items spawned later with quality)
+        cr.loot_kinds = mob.loot().roll_drops();
     }
     cr
 }
@@ -90,11 +98,12 @@ where
 pub fn start_fight(mob_kind: MobKind) {
     let gs = game_state();
     let mut mob = gs.spawn_mob(mob_kind);
-    let combat_rounds = enter_combat(&mut gs.player, &mut mob);
+    let mut combat_rounds = enter_combat(&mut gs.player, &mut mob);
 
-    // Add dropped loot to player inventory
-    for item_kind in &combat_rounds.dropped_loot {
+    // Spawn items with quality and add to both dropped_loot and inventory
+    for item_kind in &combat_rounds.loot_kinds.clone() {
         let item = gs.spawn_item(*item_kind);
+        combat_rounds.dropped_loot.push(item.clone());
         let _ = gs.player.add_to_inv(item);
     }
 

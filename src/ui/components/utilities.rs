@@ -8,7 +8,7 @@ use ratatui::{
 };
 
 use crate::item::Item;
-use crate::ui::theme::{self as colors, upgrade_color, ColorExt};
+use crate::ui::theme::{self as colors, quality_color, ColorExt};
 
 use crate::{blacksmith::Blacksmith, store::Store, system::game_state, ui::Id};
 use super::widgets::menu::{Menu, MenuItem};
@@ -38,10 +38,10 @@ pub fn selection_prefix(is_selected: bool) -> Span<'static> {
     }
 }
 
-/// Returns a styled Span for an item name with upgrade count, colored by upgrade level.
+/// Returns a styled Span for an item name with upgrade count, colored by quality.
 /// Format: "{name} (+{num_upgrades})"
 pub fn item_display(item: &Item) -> Span<'static> {
-    let color = upgrade_color(item.num_upgrades);
+    let color = quality_color(item.quality);
     Span::styled(
         format!("{} (+{})", item.name, item.num_upgrades),
         Style::default().color(color),
