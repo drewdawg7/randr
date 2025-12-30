@@ -1,17 +1,13 @@
 use ratatui::{
     layout::Rect,
-    style::{Color, Style, Stylize},
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
     Frame,
 };
 
-use crate::ui::{theme::{self as colors, upgrade_color, ColorExt}, utilities::HAMMER};
+use crate::ui::components::widgets::scroll_border::render_scroll_with_content;
+use crate::ui::components::utilities::{CROSSED_SWORDS, SHIELD, COIN};
+use crate::ui::utilities::HAMMER;
 
 use crate::{item::Item, stats::HasStats};
-use crate::ui::components::utilities::{CROSSED_SWORDS, SHIELD, CHECKED, UNCHECKED, COIN};
-
-const PANEL_BG: Color = Color::Rgb(50, 55, 75);
 
 pub fn render_item_details_with_price(
     frame: &mut Frame,
@@ -21,59 +17,26 @@ pub fn render_item_details_with_price(
 ) {
     match item {
         Some(item) => {
-            let mut lines = vec![];
+            let mut content_lines: Vec<String> = vec![];
 
-            // Item name with upgrade color
-            let name_color = upgrade_color(item.num_upgrades);
-            lines.push(Line::from(Span::styled(
-                format!("{} (+{})", item.name, item.num_upgrades),
-                Style::default().color(name_color).bold(),
-            )));
+            // Item name with (E) prefix if equipped, and upgrade count
+            let equipped_prefix = if item.is_equipped { "(E) " } else { "" };
+            content_lines.push(format!("{}{} (+{})", equipped_prefix, item.name, item.num_upgrades));
 
-            // Attack and Defense with icons only
+            // Stats displayed vertically
             let attack = item.attack();
             let defense = item.def();
-            lines.push(Line::from(vec![
-                Span::styled(format!("{} ", CROSSED_SWORDS), Style::default().color(colors::RED)),
-                Span::styled(format!("{:<4}", attack), Style::default().color(colors::WHITE)),
-                Span::styled(format!("{} ", SHIELD), Style::default().color(colors::BLUE)),
-                Span::styled(format!("{}", defense), Style::default().color(colors::WHITE)),
-            ]));
 
-            // Upgrades and equipped status on same line
-            let (equipped_icon, equipped_style) = if item.is_equipped {
-                (CHECKED, Style::default().color(colors::GREEN))
-            } else {
-                (UNCHECKED, Style::default().color(colors::DARK_GRAY))
-            };
-            lines.push(Line::from(vec![
-                Span::styled(format!("{} ", HAMMER), Style::default().color(colors::BLACK)),
-                Span::styled(format!("{}/{}  ", item.num_upgrades, item.max_upgrades), Style::default().color(colors::WHITE)),
-                Span::styled(format!("{}", equipped_icon), equipped_style),
-            ]));
+            content_lines.push(format!("{} Attack: {}", CROSSED_SWORDS, attack));
+            content_lines.push(format!("{} Defense: {}", SHIELD, defense));
+            content_lines.push(format!("{} Upgrades: {}/{}", HAMMER, item.num_upgrades, item.max_upgrades));
 
             // Price (if provided)
             if let Some((amount, label)) = price {
-                lines.push(Line::from(vec![
-                    Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
-                    Span::styled(format!("{} ", label), Style::default().color(colors::WHITE)),
-                    Span::styled(format!("{}g", amount), Style::default().color(colors::YELLOW)),
-                ]));
+                content_lines.push(format!("{} {}: {}g", COIN, label, amount));
             }
 
-            // Create compact box that fits content
-            let content_height = lines.len() as u16;
-            let content_width = 18u16;
-            let box_area = Rect::new(
-                area.x,
-                area.y,
-                content_width.min(area.width),
-                content_height.min(area.height),
-            );
-
-            let block = Block::default().style(Style::default().bg(PANEL_BG));
-            let paragraph = Paragraph::new(lines).block(block);
-            frame.render_widget(paragraph, box_area);
+            render_scroll_with_content(frame, area, content_lines);
         }
         None => {}
     }
