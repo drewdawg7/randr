@@ -7,7 +7,7 @@ use ratatui::{
 };
 use tuirealm::{
     command::{Cmd, CmdResult},
-    event::{Key, KeyEvent},
+    event::{Key, KeyEvent, KeyModifiers},
     props::{AttrValue, Attribute, Props},
     Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
@@ -15,12 +15,11 @@ use tuirealm::{
 use crate::{
     combat::HasGold,
     inventory::{EquipmentSlot, HasInventory, InventoryItem},
-    item::ItemType,
     system::game_state,
     ui::Id,
 };
 use crate::ui::components::player::item_details::render_item_details;
-use crate::ui::components::utilities::{blacksmith_header, item_display, render_location_header, selection_prefix, DOUBLE_ARROW_UP, RETURN_ARROW};
+use crate::ui::components::utilities::{blacksmith_header, item_display, lock_prefix, render_location_header, selection_prefix, DOUBLE_ARROW_UP, RETURN_ARROW};
 use crate::ui::utilities::HAMMER;
 use crate::item::enums::{ItemKind, ItemQuality};
 use crate::ui::theme as colors;
@@ -230,6 +229,7 @@ impl BlacksmithTab {
                 let line = if at_max {
                     Line::from(vec![
                         selection_prefix(is_selected),
+                        lock_prefix(item),
                         item_display(item, None),
                         Span::styled(" - MAX", Style::default().fg(colors::DARK_GRAY)),
                     ])
@@ -242,6 +242,7 @@ impl BlacksmithTab {
 
                     Line::from(vec![
                         selection_prefix(is_selected),
+                        lock_prefix(item),
                         item_display(item, None),
                         Span::raw(" - "),
                         Span::styled(format!("{} gold", upgrade_cost), cost_style),
@@ -382,6 +383,7 @@ impl BlacksmithTab {
                 let line = if at_max {
                     Line::from(vec![
                         selection_prefix(is_selected),
+                        lock_prefix(item),
                         item_display(item, None),
                         Span::raw(" - "),
                         Span::styled(item.quality.display_name(), Style::default().fg(current_quality_color)),
@@ -392,6 +394,7 @@ impl BlacksmithTab {
                     let next_quality_color = colors::quality_color(next_quality);
                     Line::from(vec![
                         selection_prefix(is_selected),
+                        lock_prefix(item),
                         item_display(item, None),
                         Span::raw(" - "),
                         Span::styled(item.quality.display_name(), Style::default().fg(current_quality_color)),
@@ -491,18 +494,26 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
                         let inv_item = &self.cached_items[selected];
                         let item = &inv_item.item;
                         let item_uuid = item.item_uuid;
-                        let slot = match item.item_type {
-                            ItemType::Weapon => Some(EquipmentSlot::Weapon),
-                            ItemType::Shield => Some(EquipmentSlot::OffHand),
-                            ItemType::Ring   => Some(EquipmentSlot::Ring),
-                            ItemType::Material => None,
-                        };
-                        if let Some(slot) = slot {
+                        if let Some(slot) = item.item_type.equipment_slot() {
                             if item.is_equipped {
                                 let _ = game_state().player.unequip_item(slot);
                             } else {
                                 game_state().player.equip_from_inventory(item_uuid, slot);
                             }
+                        }
+                    }
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char('L'), modifiers: KeyModifiers::SHIFT }) => {
+                // Shift+L to toggle lock in items mode
+                if self.state == BlacksmithState::Items || self.state == BlacksmithState::ItemQuality {
+                    self.rebuild_items();
+                    let selected = self.list_state.selected().unwrap_or(0);
+                    if selected < self.cached_items.len() {
+                        let item_uuid = self.cached_items[selected].item.item_uuid;
+                        if let Some(inv_item) = game_state().player.find_item_by_uuid_mut(item_uuid) {
+                            inv_item.item.toggle_lock();
                         }
                     }
                 }

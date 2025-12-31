@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Display};
 
-use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Player, Progression}, inventory::{HasInventory, Inventory}, stats::{HasStats, StatInstance, StatSheet, StatType}};
+use crate::{combat::{Combatant, HasGold, IsKillable, Named, PlayerDeathResult}, entities::{progression::HasProgression, Player, Progression}, inventory::{HasInventory, Inventory}, stats::{HasStats, StatInstance, StatSheet, StatType}};
 
 
 impl Default for Player {
@@ -40,7 +40,17 @@ impl HasStats for Player {
     }
 }
 
+impl IsKillable for Player {
+    type DeathResult = PlayerDeathResult;
 
+    fn on_death(&mut self) -> PlayerDeathResult {
+        let gold_lost = ((self.gold() as f64) * 0.05).round() as i32;
+        self.dec_gold(gold_lost);
+        // Restore health to full
+        self.inc(StatType::Health, self.max_hp());
+        PlayerDeathResult { gold_lost }
+    }
+}
 
 impl Named for Player {
     fn name(&self) -> &str {

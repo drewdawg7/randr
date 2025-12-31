@@ -128,6 +128,9 @@ pub enum StoreError {
 }
 
 pub fn sell_player_item(player: &mut Player, item: &Item) -> i32 {
+    if item.is_locked {
+        return 0; // Cannot sell locked items
+    }
     let sell_price = item.sell_price();
     player.add_gold(sell_price);
     if let Some(inv_item) = player.find_item_by_kind(item.kind) {

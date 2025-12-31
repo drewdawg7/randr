@@ -43,6 +43,7 @@ pub const FIELD_BG: Color = Color::Rgb(34, 42, 56); // Very subtle green tint
 pub const FIGHT_BG: Color = Color::Rgb(34, 42, 56); // Same as Field
 pub const ORANGE: Color = Color::Rgb(255, 152, 0);
 pub const PURPLE: Color = Color::Rgb(171, 71, 188);
+pub const BRONZE: Color = Color::Rgb(205, 127, 50);
 // Soft colors for stat comparisons
 pub const SOFT_GREEN: Color = Color::Rgb(100, 200, 100);
 pub const SOFT_RED: Color = Color::Rgb(200, 100, 100);

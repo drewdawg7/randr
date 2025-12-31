@@ -6,7 +6,7 @@ use ratatui::{
 };
 use tuirealm::{
     command::{Cmd, CmdResult},
-    event::{Key, KeyEvent},
+    event::{Key, KeyEvent, KeyModifiers},
     props::{AttrValue, Attribute, Props},
     Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
@@ -14,14 +14,13 @@ use tuirealm::{
 use crate::{
     combat::HasGold,
     inventory::{EquipmentSlot, HasInventory, InventoryItem},
-    item::ItemType,
     loot::WorthGold,
     store::sell_player_item,
     system::game_state,
     ui::Id,
 };
 use crate::ui::components::player::item_details::render_item_details_with_price;
-use crate::ui::components::utilities::{item_display, render_location_header, selection_prefix, store_header, RETURN_ARROW};
+use crate::ui::components::utilities::{item_display, lock_prefix, render_location_header, selection_prefix, store_header, RETURN_ARROW};
 use crate::ui::theme as colors;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -153,6 +152,7 @@ impl StoreTab {
                 let available = if si.quantity > 0 { "" } else { " (Out of stock)" };
                 ListItem::new(Line::from(vec![
                     selection_prefix(selected == i),
+                    lock_prefix(&si.item),
                     item_display(&si.item, Some(si.quantity as u32)),
                     Span::raw(format!(" - {}g{}", si.purchase_price(), available)),
                 ]))
@@ -211,6 +211,7 @@ impl StoreTab {
             .map(|(i, inv_item)| {
                 ListItem::new(Line::from(vec![
                     selection_prefix(selected == i),
+                    lock_prefix(&inv_item.item),
                     item_display(&inv_item.item, Some(inv_item.quantity)),
                     Span::raw(format!(" - {}g", inv_item.item.sell_price())),
                 ]))
@@ -407,18 +408,26 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                         let inv_item = &player_items[selected];
                         let item = &inv_item.item;
                         let item_uuid = item.item_uuid;
-                        let slot = match item.item_type {
-                            ItemType::Weapon => Some(EquipmentSlot::Weapon),
-                            ItemType::Shield => Some(EquipmentSlot::OffHand),
-                            ItemType::Ring   => Some(EquipmentSlot::Ring),
-                            ItemType::Material => None,
-                        };
-                        if let Some(slot) = slot {
+                        if let Some(slot) = item.item_type.equipment_slot() {
                             if item.is_equipped {
                                 let _ = game_state().player.unequip_item(slot);
                             } else {
                                 game_state().player.equip_from_inventory(item_uuid, slot);
                             }
+                        }
+                    }
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char('L'), modifiers: KeyModifiers::SHIFT }) => {
+                // Shift+L to toggle lock in sell mode
+                if self.state == StoreState::Sell {
+                    let player_items = self.get_player_items();
+                    let selected = self.list_state.selected().unwrap_or(0);
+                    if selected < player_items.len() {
+                        let item_uuid = player_items[selected].item.item_uuid;
+                        if let Some(inv_item) = game_state().player.find_item_by_uuid_mut(item_uuid) {
+                            inv_item.item.toggle_lock();
                         }
                     }
                 }

@@ -1,7 +1,5 @@
-use rand::Rng;
-
 use crate::{
-    combat::{Combatant, DropsGold, Named},
+    combat::{Combatant, DropsGold, IsKillable, MobDeathResult, Named},
     entities::progression::GivesXP,
     loot::{HasLoot, LootTable}, stats::{HasStats, StatSheet},
 };
@@ -51,5 +49,17 @@ impl HasStats for Mob {
 
     fn stats_mut(&mut self) -> &mut StatSheet {
         &mut self.stats
+    }
+}
+
+impl IsKillable for Mob {
+    type DeathResult = MobDeathResult;
+
+    fn on_death(&mut self) -> MobDeathResult {
+        MobDeathResult {
+            gold_dropped: self.drop_gold(),
+            xp_dropped: self.give_xp(),
+            loot_kinds: self.loot().roll_drops(),
+        }
     }
 }

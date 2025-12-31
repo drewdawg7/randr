@@ -82,7 +82,8 @@ pub enum StatType {
     Health,
     Attack,
     Defense,
-    GoldFind
+    GoldFind,
+    Mining
 }
 
 impl StatType {

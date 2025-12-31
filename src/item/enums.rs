@@ -1,4 +1,4 @@
-use rand::{thread_rng, Rng};
+use rand::Rng;
 
 use crate::stats::StatSheet;
 
@@ -8,20 +8,99 @@ pub enum ItemKind {
     Dagger,
     BasicShield,
     QualityUpgradeStone,
-    GoldRing
+    GoldRing,
+    BronzePickaxe,
+    Coal,
+    CopperOre,
+    TinOre,
 }
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Item Type Hierarchy
+// ─────────────────────────────────────────────────────────────────────────────
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ItemType {
+    Equipment(EquipmentType),
+    Material(MaterialType),
+    Consumable(ConsumableType),
+    QuestItem,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum EquipmentType {
     Weapon,
     Shield,
-    Material,
     Ring,
+    Tool(ToolKind),
 }
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum MaterialType {
+    Ore,
+    Gem,
+    CraftingMaterial,
+    UpgradeStone,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum ConsumableType {
+    Potion,
+    Food,
+    Scroll,
+}
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+pub enum ToolKind {
+    Pickaxe,
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// ItemType Helper Methods
+// ─────────────────────────────────────────────────────────────────────────────
 
 impl ItemType {
     pub fn is_equipment(&self) -> bool {
-        matches!(self, ItemType::Weapon | ItemType::Shield | ItemType::Ring)
+        matches!(self, ItemType::Equipment(_))
+    }
+
+    pub fn is_stackable(&self) -> bool {
+        !self.is_equipment() && !self.is_quest_item()
+    }
+
+    pub fn is_tool(&self) -> bool {
+        matches!(self, ItemType::Equipment(EquipmentType::Tool(_)))
+    }
+
+    pub fn is_material(&self) -> bool {
+        matches!(self, ItemType::Material(_))
+    }
+
+    pub fn is_consumable(&self) -> bool {
+        matches!(self, ItemType::Consumable(_))
+    }
+
+    pub fn is_quest_item(&self) -> bool {
+        matches!(self, ItemType::QuestItem)
+    }
+
+    pub fn equipment_slot(&self) -> Option<crate::inventory::EquipmentSlot> {
+        match self {
+            ItemType::Equipment(eq) => Some(eq.slot()),
+            _ => None,
+        }
+    }
+}
+
+impl EquipmentType {
+    pub fn slot(&self) -> crate::inventory::EquipmentSlot {
+        use crate::inventory::EquipmentSlot;
+        match self {
+            EquipmentType::Weapon => EquipmentSlot::Weapon,
+            EquipmentType::Shield => EquipmentSlot::OffHand,
+            EquipmentType::Ring => EquipmentSlot::Ring,
+            EquipmentType::Tool(_) => EquipmentSlot::Tool,
+        }
     }
 }
 

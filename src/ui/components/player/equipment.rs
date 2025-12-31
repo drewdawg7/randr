@@ -3,10 +3,10 @@ use ratatui::{
     text::{Line, Span},
     widgets::{List, ListItem, ListState},
 };
-use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
+use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent, KeyModifiers}, Component, Event, MockComponent, NoUserEvent, Props, State, StateValue};
 
-use crate::{inventory::{EquipmentSlot, HasInventory}, item::{ItemType, Item}, system::game_state, ui::{utilities::{CHECKED, UNCHECKED, RETURN_ARROW}, Id}};
-use crate::ui::components::utilities::{item_display, selection_prefix};
+use crate::{inventory::{EquipmentSlot, HasInventory}, item::Item, system::game_state, ui::{utilities::{CHECKED, UNCHECKED, RETURN_ARROW}, Id}};
+use crate::ui::components::utilities::{item_display, lock_prefix, selection_prefix};
 
 use super::item_details::render_item_details;
 use crate::ui::components::wrappers::with_action::WithAction;
@@ -78,12 +78,8 @@ impl MockComponent for Equipment {
         }
         for inv_item in game_state().player.get_inventory_items().iter() {
             let item = &inv_item.item;
-            match item.item_type {
-                ItemType::Weapon => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon)),
-
-                ItemType::Ring => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Ring)),
-                ItemType::Shield => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::OffHand)),
-                ItemType::Material => {} // Materials are not equipment
+            if let Some(slot) = item.item_type.equipment_slot() {
+                self.items.push(EquipmentItem::new(item.clone(), slot));
             }
         }
 
@@ -103,6 +99,7 @@ impl MockComponent for Equipment {
                 ListItem::new(Line::from(vec![
                     selection_prefix(selected == i),
                     Span::raw(format!("{} ", checkbox)),
+                    lock_prefix(&inner.item),
                     item_display(&inner.item, None),
                 ]))
             })
@@ -201,6 +198,17 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for Equipment {
                 let selected = self.list_state.selected().unwrap_or(0);
                 if selected < self.items.len() {
                     self.items[selected].perform(Cmd::Submit);
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char('L'), modifiers: KeyModifiers::SHIFT }) => {
+                // Shift+L to toggle lock
+                let selected = self.list_state.selected().unwrap_or(0);
+                if selected < self.items.len() {
+                    let item_uuid = self.items[selected].inner().item.item_uuid;
+                    if let Some(inv_item) = game_state().player.find_item_by_uuid_mut(item_uuid) {
+                        inv_item.item.toggle_lock();
+                    }
                 }
                 None
             }

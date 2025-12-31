@@ -2,12 +2,13 @@
 pub enum EquipmentSlot {
     Weapon,
     OffHand,
-    Ring
+    Ring,
+    Tool,
 }
 
 impl EquipmentSlot {
     pub fn all() -> &'static [EquipmentSlot] {
-        &[EquipmentSlot::Weapon, EquipmentSlot::OffHand, EquipmentSlot::Ring]
+        &[EquipmentSlot::Weapon, EquipmentSlot::OffHand, EquipmentSlot::Ring, EquipmentSlot::Tool]
     }
 }
 

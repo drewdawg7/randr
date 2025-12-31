@@ -1,20 +1,31 @@
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::Style, text::{Line, Span}, widgets::{Block, Paragraph}, Frame};
 
 use crate::ui::theme::{self as colors, quality_color, ColorExt};
-use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
+use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent, KeyModifiers}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
 
 use crate::combat::{AttackResult, CombatRounds};
 use crate::system::game_state;
 use crate::ui::Id;
 use crate::ui::components::player::xp_bar::XpBar;
+use crate::ui::components::player::item_details::render_item_details;
 use crate::ui::components::widgets::menu::{Menu, MenuItem};
 use crate::ui::components::widgets::forest_border;
-use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW};
+use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW, item_display, lock_prefix, selection_prefix};
+use crate::inventory::{HasInventory, EquipmentSlot};
+use crate::item::Item;
+
+#[derive(Clone, Copy, PartialEq)]
+enum FightFocus {
+    Menu,
+    Inventory,
+}
 
 pub struct FightScreen {
     props: Props,
     back_menu: Menu,
     xp_bar: XpBar,
+    focus: FightFocus,
+    inventory_selected: usize,
 }
 
 impl FightScreen {
@@ -47,7 +58,56 @@ impl FightScreen {
                 }),
             },
         ]);
-        Self { props: Props::default(), back_menu, xp_bar: XpBar::new() }
+        Self {
+            props: Props::default(),
+            back_menu,
+            xp_bar: XpBar::new(),
+            focus: FightFocus::Menu,
+            inventory_selected: 0,
+        }
+    }
+
+    fn get_inventory_items(&self) -> Vec<(Item, EquipmentSlot)> {
+        let gs = game_state();
+        let player = &gs.player;
+        let mut items = Vec::new();
+
+        if let Some(inv_item) = player.get_equipped_item(EquipmentSlot::Weapon) {
+            items.push((inv_item.item.clone(), EquipmentSlot::Weapon));
+        }
+        if let Some(inv_item) = player.get_equipped_item(EquipmentSlot::OffHand) {
+            items.push((inv_item.item.clone(), EquipmentSlot::OffHand));
+        }
+        if let Some(inv_item) = player.get_equipped_item(EquipmentSlot::Ring) {
+            items.push((inv_item.item.clone(), EquipmentSlot::Ring));
+        }
+        for inv_item in player.get_inventory_items().iter() {
+            if let Some(slot) = inv_item.item.item_type.equipment_slot() {
+                items.push((inv_item.item.clone(), slot));
+            }
+        }
+        items
+    }
+
+    fn get_inventory_count(&self) -> usize {
+        self.get_inventory_items().len()
+    }
+
+    fn get_selected_item(&self) -> Option<Item> {
+        let items = self.get_inventory_items();
+        items.get(self.inventory_selected).map(|(item, _)| item.clone())
+    }
+
+    fn toggle_equip_selected(&mut self) {
+        let items = self.get_inventory_items();
+        if let Some((item, slot)) = items.get(self.inventory_selected) {
+            let gs = game_state();
+            if item.is_equipped {
+                let _ = gs.player.unequip_item(*slot);
+            } else {
+                gs.player.equip_from_inventory(item.item_uuid, *slot);
+            }
+        }
     }
 }
 
@@ -78,6 +138,28 @@ impl MockComponent for FightScreen {
         let bg_fill = Block::default().style(Style::default().on_color(colors::FIGHT_BG));
         frame.render_widget(bg_fill, content_area);
 
+        // First split: header area (full width) then body area
+        let main_chunks = Layout::default()
+            .direction(Direction::Vertical)
+            .constraints([
+                Constraint::Length(1), // player stats header (full width)
+                Constraint::Length(1), // separator (full width)
+                Constraint::Min(0),    // body area
+            ])
+            .split(content_area);
+
+        let header_area = main_chunks[0];
+        let separator_area = main_chunks[1];
+        let body_area = main_chunks[2];
+
+        // Split body area horizontally: left for battle, right for inventory
+        let horizontal_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
+            .split(body_area);
+        let left_panel = horizontal_chunks[0];
+        let right_panel = horizontal_chunks[1];
+
         // Only show the last 4 rounds of combat
         let attack_results: Vec<_> = combat_rounds
             .attack_results
@@ -105,10 +187,8 @@ impl MockComponent for FightScreen {
         const ROUND_HEIGHT: u16 = 3; // 2 lines content + 1 separator
         const COMBAT_AREA_HEIGHT: u16 = (MAX_ROUNDS as u16) * ROUND_HEIGHT;
 
-        // Build constraints for content inside border
-        let constraints = vec![
-            Constraint::Length(1),                  // player stats header
-            Constraint::Length(1),                  // spacer/separator after header
+        // Build constraints for left panel (battle content)
+        let left_constraints = vec![
             Constraint::Length(COMBAT_AREA_HEIGHT), // fixed combat rounds area
             Constraint::Length(1),                  // spacer
             Constraint::Length(summary_height),     // summary section
@@ -116,13 +196,13 @@ impl MockComponent for FightScreen {
             Constraint::Min(0),                     // absorb remaining space at end
         ];
 
-        let chunks = Layout::default()
+        let left_chunks = Layout::default()
             .direction(Direction::Vertical)
-            .constraints(constraints.as_slice())
-            .split(content_area);
+            .constraints(left_constraints.as_slice())
+            .split(left_panel);
 
         // Split the combat area into individual round slots
-        let combat_area = chunks[2];
+        let combat_area = left_chunks[0];
         let round_constraints: Vec<Constraint> = (0..MAX_ROUNDS)
             .map(|_| Constraint::Length(ROUND_HEIGHT))
             .collect();
@@ -131,7 +211,7 @@ impl MockComponent for FightScreen {
             .constraints(round_constraints)
             .split(combat_area);
 
-        // Render player stats header using horizontal layout
+        // Render player stats header using horizontal layout (full width)
         let player = &gs.player;
         let hp_style = Style::default().color(colors::RED);
         let xp_style = Style::default().color(colors::CYAN);
@@ -145,7 +225,7 @@ impl MockComponent for FightScreen {
                 Constraint::Length(20), // XpBar component
                 Constraint::Min(0),     // Gold section
             ])
-            .split(chunks[0]);
+            .split(header_area);
 
         // HP
         let hp_line = Line::from(vec![
@@ -172,11 +252,11 @@ impl MockComponent for FightScreen {
         ]);
         frame.render_widget(Paragraph::new(gold_line), header_chunks[3]);
 
-        // Render separator line after header
+        // Render separator line after header (full width)
         let separator = Line::from(vec![
             Span::styled("─".repeat(content_area.width as usize), Style::default().color(colors::DARK_FOREST)),
         ]);
-        frame.render_widget(Paragraph::new(separator), chunks[1]);
+        frame.render_widget(Paragraph::new(separator), separator_area);
 
         // Render attack results in the fixed round slots
         for (i, component) in attack_components.iter_mut().enumerate() {
@@ -184,10 +264,25 @@ impl MockComponent for FightScreen {
         }
 
         // Render battle summary (fixed position after combat area + spacer)
-        render_battle_summary(frame, chunks[4], combat_rounds);
+        render_battle_summary(frame, left_chunks[2], combat_rounds);
 
         // Render back button (fixed position)
-        self.back_menu.view(frame, chunks[5]);
+        self.back_menu.view(frame, left_chunks[3]);
+
+        // Split right panel: inventory list (left) and item details (right)
+        let right_chunks = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(right_panel);
+
+        // Render inventory list
+        let inv_focused = self.focus == FightFocus::Inventory;
+        let inventory_items = self.get_inventory_items();
+        render_inventory_panel(frame, right_chunks[0], inv_focused, self.inventory_selected, &inventory_items);
+
+        // Render item details for selected item
+        let selected_item = self.get_selected_item();
+        render_item_details(frame, right_chunks[1], selected_item.as_ref());
 
         // Render forest borders
         let total_border_width = content_area.width + 2;
@@ -237,7 +332,55 @@ impl MockComponent for FightScreen {
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
-        self.back_menu.on(ev)
+        // Handle Shift+Tab to toggle focus
+        if let Event::Keyboard(KeyEvent { code: Key::BackTab, modifiers: KeyModifiers::SHIFT }) = ev {
+            self.focus = match self.focus {
+                FightFocus::Menu => FightFocus::Inventory,
+                FightFocus::Inventory => FightFocus::Menu,
+            };
+            return None;
+        }
+
+        match self.focus {
+            FightFocus::Menu => self.back_menu.on(ev),
+            FightFocus::Inventory => {
+                // Handle inventory navigation
+                let item_count = self.get_inventory_count();
+                if item_count == 0 {
+                    return None;
+                }
+
+                match ev {
+                    Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                        if self.inventory_selected == 0 {
+                            self.inventory_selected = item_count.saturating_sub(1);
+                        } else {
+                            self.inventory_selected = self.inventory_selected.saturating_sub(1);
+                        }
+                        None
+                    }
+                    Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
+                        self.inventory_selected = (self.inventory_selected + 1) % item_count;
+                        None
+                    }
+                    Event::Keyboard(KeyEvent { code: Key::Char('E'), modifiers: KeyModifiers::SHIFT }) => {
+                        self.toggle_equip_selected();
+                        None
+                    }
+                    Event::Keyboard(KeyEvent { code: Key::Char('L'), modifiers: KeyModifiers::SHIFT }) => {
+                        let items = self.get_inventory_items();
+                        if let Some((item, _slot)) = items.get(self.inventory_selected) {
+                            let item_uuid = item.item_uuid;
+                            if let Some(inv_item) = game_state().player.find_item_by_uuid_mut(item_uuid) {
+                                inv_item.item.toggle_lock();
+                            }
+                        }
+                        None
+                    }
+                    _ => None
+                }
+            }
+        }
     }
 }
 
@@ -330,4 +473,42 @@ fn render_battle_summary(frame: &mut Frame, area: Rect, combat: &CombatRounds) {
     }
 
     frame.render_widget(Paragraph::new(lines), area);
+}
+
+fn render_inventory_panel(frame: &mut Frame, area: Rect, focused: bool, selected: usize, items: &[(Item, EquipmentSlot)]) {
+    let gs = game_state();
+    let player = &gs.player;
+    let used_slots = player.inventory().items.len();
+    let max_slots = player.inventory().max_slots();
+
+    // Split into slot counter and list
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([Constraint::Length(1), Constraint::Min(0)])
+        .split(area);
+
+    // Slot counter
+    let slot_line = Line::from(Span::styled(
+        format!("{}/{}", used_slots, max_slots),
+        Style::default().color(colors::GREY),
+    ));
+    frame.render_widget(Paragraph::new(slot_line), chunks[0]);
+
+    // Render inventory items
+    let mut lines: Vec<Line> = Vec::new();
+
+    for (idx, (item, _slot)) in items.iter().enumerate() {
+        let is_selected = focused && selected == idx;
+        lines.push(Line::from(vec![
+            selection_prefix(is_selected),
+            lock_prefix(item),
+            item_display(item, None),
+        ]));
+    }
+
+    if lines.is_empty() {
+        lines.push(Line::from(Span::styled("(empty)", Style::default().color(colors::GREY))));
+    }
+
+    frame.render_widget(Paragraph::new(lines), chunks[1]);
 }

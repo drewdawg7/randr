@@ -28,6 +28,8 @@ pub const DOUBLE_ARROW_UP: char = '\u{F102}';
 pub const HOUSE: char           = '\u{F015}';
 pub const RETURN_ARROW: char    = '\u{F17B1}';
 pub const HAMMER: char          = '\u{EEFF}';
+pub const LOCK: char            = '\u{F023}';
+pub const PICKAXE: char         = '\u{F08B7}';
 
 /// Returns a styled prefix Span for list items. Selected items get a yellow ">", unselected get "  ".
 pub fn selection_prefix(is_selected: bool) -> Span<'static> {
@@ -35,6 +37,15 @@ pub fn selection_prefix(is_selected: bool) -> Span<'static> {
         Span::styled("> ", Style::default().color(colors::YELLOW))
     } else {
         Span::raw("  ")
+    }
+}
+
+/// Returns a lock icon Span if the item is locked, otherwise an empty span.
+pub fn lock_prefix(item: &Item) -> Span<'static> {
+    if item.is_locked {
+        Span::styled(format!("{} ", LOCK), Style::default().color(colors::BRONZE))
+    } else {
+        Span::raw("")
     }
 }
 

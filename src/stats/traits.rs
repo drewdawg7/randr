@@ -32,6 +32,7 @@ pub trait HasStats {
 
     // Stat getters
     fn goldfind(&self) -> i32 {self.value(StatType::GoldFind)}
+    fn mining(&self) -> i32 {self.value(StatType::Mining)}
     fn hp(&self) -> i32 { self.value(StatType::Health) }
     fn max_hp(&self) -> i32 { self.max_value(StatType::Health) }
     fn attack(&self) -> i32 { self.value(StatType::Attack) }

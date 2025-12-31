@@ -11,6 +11,7 @@ pub struct Item {
     pub item_type: ItemType,
     pub name: &'static str,
     pub is_equipped: bool,
+    pub is_locked: bool,
     pub num_upgrades: i32,
     pub max_upgrades: i32,
     pub max_stack_quantity: u32,
@@ -23,6 +24,10 @@ pub struct Item {
 impl Item {
     pub fn set_is_equipped(&mut self, is_equipped: bool) {
         self.is_equipped = is_equipped
+    }
+
+    pub fn toggle_lock(&mut self) {
+        self.is_locked = !self.is_locked;
     }
 
     pub fn upgrade(&mut self) -> Result<(), ItemError> {
@@ -76,6 +81,7 @@ pub struct ItemSpec {
     pub max_stack_quantity: u32,
     pub attack: i32,
     pub defense: i32,
+    pub mining: i32,
     pub gold_value: i32,
     pub gold_find: i32,
 }

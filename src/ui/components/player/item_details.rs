@@ -11,8 +11,8 @@ use crate::ui::utilities::HAMMER;
 use crate::ui::theme::{quality_color, SOFT_GREEN, SOFT_RED};
 
 use crate::{
-    inventory::{EquipmentSlot, HasInventory},
-    item::{Item, ItemType},
+    inventory::HasInventory,
+    item::Item,
     stats::HasStats,
     system::game_state,
 };
@@ -21,19 +21,13 @@ const ARROW_UP: char = '↑';
 const ARROW_DOWN: char = '↓';
 
 /// Gets the currently equipped item to compare against based on item type.
-/// Returns None if the item itself is already equipped.
+/// Returns None if the item itself is already equipped or if not equipment.
 fn get_comparison_item(item: &Item) -> Option<Item> {
     if item.is_equipped {
         return None;
     }
 
-    let slot = match item.item_type {
-        ItemType::Weapon => EquipmentSlot::Weapon,
-        ItemType::Shield => EquipmentSlot::OffHand,
-        ItemType::Ring   => EquipmentSlot::Ring,
-        ItemType::Material => return None,
-    };
-
+    let slot = item.item_type.equipment_slot()?;
     game_state().player.get_equipped_item(slot).map(|inv| inv.item.clone())
 }
 
@@ -103,15 +97,19 @@ fn render_item_details_inner(
             if is_equipment {
                 let attack = item.attack();
                 let defense = item.def();
+                let gold_find = item.goldfind();
                 let compare_attack = compare_to.map(|c| c.attack());
                 let compare_defense = compare_to.map(|c| c.def());
+                let compare_gold_find = compare_to.map(|c| c.goldfind());
 
-                content_lines.push(format_stat_with_comparison(CROSSED_SWORDS, "Attack", attack, compare_attack));
-                content_lines.push(format_stat_with_comparison(SHIELD, "Defense", defense, compare_defense));
-
-                let gold_find = item.goldfind();
-                if gold_find > 0 {
-                    let compare_gold_find = compare_to.map(|c| c.goldfind());
+                // Only show stats that are non-zero (or have a non-zero comparison)
+                if attack > 0 || compare_attack.map_or(false, |c| c > 0) {
+                    content_lines.push(format_stat_with_comparison(CROSSED_SWORDS, "Attack", attack, compare_attack));
+                }
+                if defense > 0 || compare_defense.map_or(false, |c| c > 0) {
+                    content_lines.push(format_stat_with_comparison(SHIELD, "Defense", defense, compare_defense));
+                }
+                if gold_find > 0 || compare_gold_find.map_or(false, |c| c > 0) {
                     content_lines.push(format_stat_with_comparison(COIN, "Gold Find", gold_find, compare_gold_find));
                 }
 

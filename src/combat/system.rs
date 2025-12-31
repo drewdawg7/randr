@@ -1,10 +1,8 @@
 use crate::{
-    combat::{AttackResult, Combatant, DropsGold, HasGold},
-    entities::{mob::MobKind, progression::{GivesXP, HasProgression}, Player},
+    combat::{AttackResult, Combatant, DropsGold, HasGold, IsKillable, MobDeathResult},
+    entities::{mob::MobKind, progression::HasProgression, Player},
     inventory::HasInventory,
     item::{Item, ItemKind},
-    loot::HasLoot,
-    stats::{HasStats, StatType},
     system::game_state,
     ui::Id,
 };
@@ -74,7 +72,7 @@ impl CombatRounds {
 
 pub fn enter_combat<M>(player: &mut Player, mob: &mut M) -> CombatRounds
 where
-    M: Combatant + DropsGold + GivesXP + HasLoot,
+    M: Combatant + IsKillable<DeathResult = MobDeathResult>,
 {
     let mut cr = CombatRounds::default();
     while player.is_alive() && mob.is_alive() {
@@ -87,19 +85,24 @@ where
     }
     if !player.is_alive() {
         cr.player_won = false;
-        player.dec_gold(
-            ((player.gold() as f64) * 0.05).round() as i32
-        );
-        player.inc(StatType::Health, player.max_hp());
-
+        let _death_result = player.on_death();
     } else if !mob.is_alive() {
         cr.player_won = true;
-        cr.gold_gained = award_kill_gold(player, mob);
-        cr.xp_gained = mob.give_xp();
+        let death_result = mob.on_death();
+
+        // Apply gold with goldfind bonus
+        let gf = player.get_effective_goldfind();
+        let multiplier = 1.0 + (gf as f64 / 100.0);
+        let gold_with_bonus = ((death_result.gold_dropped as f64) * multiplier).round() as i32;
+        player.add_gold(gold_with_bonus);
+        cr.gold_gained = death_result.gold_dropped;
+
+        // Award XP
+        cr.xp_gained = death_result.xp_dropped;
         player.gain_xp(cr.xp_gained);
 
-        // Roll for loot drops (kinds only - items spawned later with quality)
-        cr.loot_kinds = mob.loot().roll_drops();
+        // Set loot kinds
+        cr.loot_kinds = death_result.loot_kinds;
     }
     cr
 }
