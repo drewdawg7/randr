@@ -55,6 +55,7 @@ pub struct GameState {
     current_combat: Option<CombatRounds>,
     pub active_modal: ModalType,
     pub inventory_modal: InventoryModal,
+    pub show_item_details: bool,
 }
 
 impl GameState {
@@ -75,6 +76,13 @@ impl GameState {
             .get(&kind)
             .map(|spec| spec.name)
             .unwrap_or("Unknown")
+    }
+
+    pub fn is_item_equipment(&self, kind: ItemId) -> bool {
+        self.item_registry
+            .get(&kind)
+            .map(|spec| spec.item_type.is_equipment())
+            .unwrap_or(false)
     }
 
     pub fn get_rock_name(&self, kind: RockId) -> &'static str {
@@ -111,6 +119,9 @@ impl GameState {
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
+        // Populate store with initial stock (must happen after game_state is set)
+        self.town.store.restock();
+
         let menu = ModalWrapper::new(MainMenuScreen::default());
         let _ = self.app.mount(Id::Menu, Box::new(menu), vec![]);
         let town = ModalWrapper::new(TownScreen::new());
@@ -124,6 +135,8 @@ impl GameState {
     }
 
     pub fn run_current_screen(&mut self) -> std::io::Result<()> {
+        self.town.store.check_and_restock();
+
         let current = self.current_screen;
         if current == Id::Quit {
             return Ok(());
@@ -179,6 +192,7 @@ impl Default for GameState {
             current_combat: None,
             active_modal: ModalType::None,
             inventory_modal: InventoryModal::new(),
+            show_item_details: false,
         }
     }
 }

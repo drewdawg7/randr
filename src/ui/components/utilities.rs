@@ -31,6 +31,7 @@ pub const RETURN_ARROW: char    = '\u{F17B1}';
 pub const HAMMER: char          = '\u{EEFF}';
 pub const LOCK: char            = '\u{F023}';
 pub const PICKAXE: char         = '\u{F08B7}';
+pub const HOURGLASS: char       = '\u{F252}';
 
 /// Returns a styled prefix Span for list items. Selected items get a yellow ">", unselected get "  ".
 pub fn selection_prefix(is_selected: bool) -> Span<'static> {
@@ -85,6 +86,15 @@ pub fn blacksmith_header(blacksmith: &Blacksmith, gold: i32, stones: u32) -> Vec
 }
 
 pub fn store_header(store: &Store, gold: i32) -> Vec<Line<'static>> {
+    let secs = store.time_until_restock();
+    let mins = secs / 60;
+    let secs_remaining = secs % 60;
+    let timer_text = if mins > 0 {
+        format!("{}:{:02}", mins, secs_remaining)
+    } else {
+        format!("{}s", secs_remaining)
+    };
+
     vec![
         Line::from(vec![
             Span::styled(store.name.to_string(), Style::default().color(colors::WHITE)),
@@ -92,6 +102,9 @@ pub fn store_header(store: &Store, gold: i32) -> Vec<Line<'static>> {
         Line::from(vec![
             Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
             Span::raw(format!("{}", gold)),
+            Span::raw("  |  "),
+            Span::styled(format!("{} ", HOURGLASS), Style::default().color(colors::CYAN)),
+            Span::raw(timer_text),
         ]),
     ]
 }

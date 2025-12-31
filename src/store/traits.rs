@@ -1,15 +1,11 @@
-use crate::{item::{ItemId, ItemRegistry}, store::Store};
+use crate::{item::ItemId, store::Store};
 
 impl Default for Store {
     fn default() -> Self {
-        let ir = ItemRegistry::new();
-        let sword  = ir.spawn(ItemId::Sword);
-        let dagger = ir.spawn(ItemId::Dagger);
-        let pick   = ir.spawn(ItemId::BronzePickaxe);
         let mut store = Store::new("The Shop");
-        store.add_item(&sword);
-        store.add_item(&dagger);
-        store.add_item(&pick);
+        store.add_stock(ItemId::Sword, 3);
+        store.add_stock(ItemId::Dagger, 3);
+        store.add_stock(ItemId::BronzePickaxe, 2);
         store
     }
 }

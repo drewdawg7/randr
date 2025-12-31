@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::Rect,
     style::Style,
     text::{Line, Span},
     widgets::{List, ListItem, ListState},
@@ -18,7 +18,7 @@ use crate::{
     system::game_state,
     ui::Id,
 };
-use crate::ui::components::player::item_details::render_item_details;
+use crate::ui::components::player::item_details::render_item_details_beside;
 use crate::ui::components::utilities::{blacksmith_header, collect_player_equipment, item_display, list_move_down, list_move_up, lock_prefix, render_location_header, selection_prefix, DOUBLE_ARROW_UP, RETURN_ARROW};
 use crate::ui::utilities::HAMMER;
 use crate::item::enums::{ItemId, ItemQuality};
@@ -194,12 +194,6 @@ impl BlacksmithTab {
         let header_lines = blacksmith_header(blacksmith, player_gold, stones);
         let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
 
-        // Split into left (list) and right (details) panels
-        let panels = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(content_area);
-
         let selected = self.list_state.selected().unwrap_or(0);
 
         let list_items: Vec<ListItem> = self.cached_items
@@ -248,15 +242,15 @@ impl BlacksmithTab {
         ])));
 
         let list = List::new(all_items);
-        frame.render_stateful_widget(list, panels[0], &mut self.list_state);
+        frame.render_stateful_widget(list, content_area, &mut self.list_state);
 
-        // Render item details panel on the right
+        // Render item details beside list if toggled on
         let selected_item = if selected < self.cached_items.len() {
             Some(&self.cached_items[selected].item)
         } else {
             None
         };
-        render_item_details(frame, panels[1], selected_item);
+        render_item_details_beside(frame, content_area, selected_item);
     }
 
     fn handle_menu_cmd(&mut self, cmd: Cmd) -> CmdResult {
@@ -341,12 +335,6 @@ impl BlacksmithTab {
         let header_lines = blacksmith_header(blacksmith, player_gold, stones);
         let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
 
-        // Split into left (list) and right (details) panels
-        let panels = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(content_area);
-
         let selected = self.list_state.selected().unwrap_or(0);
 
         let list_items: Vec<ListItem> = self.cached_items
@@ -394,15 +382,15 @@ impl BlacksmithTab {
         ])));
 
         let list = List::new(all_items);
-        frame.render_stateful_widget(list, panels[0], &mut self.list_state);
+        frame.render_stateful_widget(list, content_area, &mut self.list_state);
 
-        // Render item details panel on the right
+        // Render item details beside list if toggled on
         let selected_item = if selected < self.cached_items.len() {
             Some(&self.cached_items[selected].item)
         } else {
             None
         };
-        render_item_details(frame, panels[1], selected_item);
+        render_item_details_beside(frame, content_area, selected_item);
     }
 
     fn handle_item_quality_cmd(&mut self, cmd: Cmd) -> CmdResult {
@@ -490,6 +478,14 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
                             inv_item.item.toggle_lock();
                         }
                     }
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char('d'), .. }) => {
+                // Toggle item details in items mode
+                if self.state == BlacksmithState::Items || self.state == BlacksmithState::ItemQuality {
+                    let gs = game_state();
+                    gs.show_item_details = !gs.show_item_details;
                 }
                 None
             }

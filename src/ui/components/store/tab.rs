@@ -1,5 +1,6 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::Rect,
+    style::Style,
     text::{Line, Span},
     widgets::{List, ListItem, ListState},
     Frame,
@@ -19,7 +20,7 @@ use crate::{
     system::game_state,
     ui::Id,
 };
-use crate::ui::components::player::item_details::render_item_details_with_price;
+use crate::ui::components::player::item_details::render_item_details_beside;
 use crate::ui::components::utilities::{collect_player_items, item_display, list_move_down, list_move_up, lock_prefix, render_location_header, selection_prefix, store_header, RETURN_ARROW};
 use crate::ui::theme as colors;
 
@@ -121,12 +122,6 @@ impl StoreTab {
         let header_lines = store_header(store, player_gold);
         let content_area = render_location_header(frame, area, header_lines, colors::STORE_BG, colors::WOOD_BROWN);
 
-        // Split into left (list) and right (details) panels
-        let panels = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(content_area);
-
         // Build list of store items + back
         let selected = self.list_state.selected().unwrap_or(0);
         let store_items = &store.inventory;
@@ -134,13 +129,25 @@ impl StoreTab {
             .iter()
             .enumerate()
             .map(|(i, si)| {
-                let available = if si.quantity > 0 { "" } else { " (Out of stock)" };
-                ListItem::new(Line::from(vec![
-                    selection_prefix(selected == i),
-                    lock_prefix(&si.item),
-                    item_display(&si.item, Some(si.quantity as u32)),
-                    Span::raw(format!(" - {}g{}", si.purchase_price(), available)),
-                ]))
+                let item_name = game_state().get_item_name(si.item_id);
+                if let Some(item) = si.display_item() {
+                    // Format: "> Name              x3    50g"
+                    let color = colors::quality_color(item.quality);
+                    ListItem::new(Line::from(vec![
+                        selection_prefix(selected == i),
+                        Span::styled(format!("{:<18}", item_name), Style::default().fg(color)),
+                        Span::styled(format!("x{:<3}", si.quantity()), Style::default().fg(colors::WHITE)),
+                        Span::styled(format!("{:>6}g", item.purchase_price()), Style::default().fg(colors::YELLOW)),
+                    ]))
+                } else {
+                    // Out of stock
+                    ListItem::new(Line::from(vec![
+                        selection_prefix(selected == i),
+                        Span::styled(format!("{:<18}", item_name), Style::default().fg(colors::GREY)),
+                        Span::styled("x0  ", Style::default().fg(colors::GREY)),
+                        Span::styled("   ---", Style::default().fg(colors::GREY)),
+                    ]))
+                }
             })
             .collect();
 
@@ -152,24 +159,15 @@ impl StoreTab {
         ])));
 
         let list = List::new(list_items);
-        frame.render_stateful_widget(list, panels[0], &mut self.list_state);
+        frame.render_stateful_widget(list, content_area, &mut self.list_state);
 
-        // Render item details (auto-compares to equipped item)
+        // Render item details beside list if toggled on
         let selected_item = if selected < store_items.len() {
-            let si = &store_items[selected];
-            Some((&si.item, si.purchase_price()))
+            store_items[selected].display_item()
         } else {
             None
         };
-
-        match selected_item {
-            Some((item, price)) => {
-                render_item_details_with_price(frame, panels[1], Some(item), Some((price, "Buy")));
-            }
-            None => {
-                render_item_details_with_price(frame, panels[1], None, None);
-            }
-        }
+        render_item_details_beside(frame, content_area, selected_item);
     }
 
     fn render_sell(&mut self, frame: &mut Frame, area: Rect) {
@@ -179,12 +177,6 @@ impl StoreTab {
         // Render header and get remaining area
         let header_lines = store_header(store, player_gold);
         let content_area = render_location_header(frame, area, header_lines, colors::STORE_BG, colors::WOOD_BROWN);
-
-        // Split into left (list) and right (details) panels
-        let panels = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(content_area);
 
         // Build list of player items + back
         let player_items = self.get_player_items();
@@ -211,28 +203,15 @@ impl StoreTab {
         ])));
 
         let list = List::new(list_items);
-        frame.render_stateful_widget(list, panels[0], &mut self.list_state);
+        frame.render_stateful_widget(list, content_area, &mut self.list_state);
 
-        // Render item details
+        // Render item details beside list if toggled on
         let selected_item = if selected < player_items.len() {
             Some(&player_items[selected].item)
         } else {
             None
         };
-
-        match selected_item {
-            Some(item) => {
-                render_item_details_with_price(
-                    frame,
-                    panels[1],
-                    Some(item),
-                    Some((item.sell_price(), "Sell")),
-                );
-            }
-            None => {
-                render_item_details_with_price(frame, panels[1], None, None);
-            }
-        }
+        render_item_details_beside(frame, content_area, selected_item);
     }
 
     fn handle_menu_cmd(&mut self, cmd: Cmd) -> CmdResult {
@@ -291,18 +270,25 @@ impl StoreTab {
                     self.state = StoreState::Menu;
                     self.reset_selection();
                 } else if selected < store_len {
-                    // Purchase item - need to avoid borrow conflicts
+                    // Purchase item
                     let gs = game_state();
-                    let store_item = gs.store_mut().inventory.get(selected).cloned();
-                    if let Some(store_item) = store_item {
+
+                    // Take the item from store first
+                    if let Some(item) = gs.store_mut().inventory[selected].take_item() {
+                        let item_cost = item.purchase_price();
                         let player_gold = gs.player.gold();
-                        let item_cost = store_item.purchase_price();
-                        if player_gold >= item_cost && store_item.quantity > 0 {
-                            // Deduct gold and quantity
-                            gs.player.dec_gold(item_cost);
-                            gs.store_mut().inventory[selected].dec_quantity(1);
-                            // Add to inventory
-                            let _ = gs.player.add_to_inv(store_item.item.clone());
+
+                        if player_gold >= item_cost {
+                            // Try to add to inventory
+                            if gs.player.add_to_inv(item.clone()).is_ok() {
+                                gs.player.dec_gold(item_cost);
+                            } else {
+                                // Inventory full - put item back in store
+                                gs.store_mut().inventory[selected].items.push(item);
+                            }
+                        } else {
+                            // Not enough gold - put item back in store
+                            gs.store_mut().inventory[selected].items.push(item);
                         }
                     }
                 }
@@ -403,6 +389,14 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                             inv_item.item.toggle_lock();
                         }
                     }
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char('d'), .. }) => {
+                // Toggle item details in buy/sell mode
+                if self.state == StoreState::Buy || self.state == StoreState::Sell {
+                    let gs = game_state();
+                    gs.show_item_details = !gs.show_item_details;
                 }
                 None
             }

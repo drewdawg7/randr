@@ -132,20 +132,53 @@ fn render_item_details_inner(
     }
 }
 
-/// Renders item details with price, auto-comparing to equipped item
-pub fn render_item_details_with_price(
-    frame: &mut Frame,
-    area: Rect,
-    item: Option<&Item>,
-    price: Option<(i32, &str)>,
-) {
-    let compare_to = item.and_then(get_comparison_item);
-    render_item_details_inner(frame, area, item, compare_to.as_ref(), price);
-}
-
-/// Renders an item details panel showing stats for the given item (without price).
+/// Renders an item details panel showing stats for the given item.
 /// Automatically compares to the currently equipped item of the same type.
 pub fn render_item_details(frame: &mut Frame, area: Rect, item: Option<&Item>) {
     let compare_to = item.and_then(get_comparison_item);
     render_item_details_inner(frame, area, item, compare_to.as_ref(), None);
+}
+
+/// Renders item details panel to the right of list_area.
+/// Only renders if game_state().show_item_details is true and no modal is blocking.
+pub fn render_item_details_beside(frame: &mut Frame, list_area: Rect, item: Option<&Item>) {
+    use crate::system::ModalType;
+
+    let gs = game_state();
+    if !gs.show_item_details {
+        return;
+    }
+
+    // Don't render if inventory modal is active (it will render its own)
+    if gs.active_modal == ModalType::Inventory {
+        return;
+    }
+
+    render_item_details_panel(frame, list_area, item);
+}
+
+/// Renders item details for the inventory modal (always renders if show_item_details is true).
+pub fn render_item_details_for_modal(frame: &mut Frame, list_area: Rect, item: Option<&Item>) {
+    if !game_state().show_item_details {
+        return;
+    }
+
+    render_item_details_panel(frame, list_area, item);
+}
+
+/// Shared rendering logic for item details panel.
+fn render_item_details_panel(frame: &mut Frame, list_area: Rect, item: Option<&Item>) {
+    if let Some(item) = item {
+        let gap = 2u16;
+
+        // Position based on where item text typically ends (~35 chars),
+        // not the full list_area width which may be much larger
+        let item_content_width = 35u16;
+        let x = list_area.x + item_content_width + gap;
+        let y = list_area.y;
+        let details_height = list_area.height;
+
+        let details_area = Rect::new(x, y, 40, details_height);
+        render_item_details(frame, details_area, Some(item));
+    }
 }

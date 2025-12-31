@@ -20,7 +20,7 @@ use crate::{
 // Subtle parchment-tinted background (warm tan/beige tint)
 const PARCHMENT_BG: Color = Color::Rgb(58, 52, 46);
 
-use super::item_details::render_item_details;
+use super::item_details::render_item_details_for_modal;
 
 #[derive(Clone, Copy, PartialEq, Default)]
 pub enum InventoryFilter {
@@ -70,7 +70,6 @@ pub struct InventoryModal {
     items: Vec<InventoryListItem>,
     scroll_offset: usize,
     visible_count: usize,
-    show_details: bool,
     filter: InventoryFilter,
 }
 
@@ -83,7 +82,6 @@ impl InventoryModal {
             items: Vec::new(),
             scroll_offset: 0,
             visible_count: 10,
-            show_details: false,
             filter: InventoryFilter::default(),
         }
     }
@@ -185,15 +183,12 @@ impl InventoryModal {
         self.rebuild_items();
 
         let frame_area = frame.area();
-        let gap = 2u16; // Gap between the two modals
 
-        // Calculate sizes for two separate modals
+        // Calculate sizes for inventory list modal
         let list_width = (frame_area.width * 30 / 100).min(35).max(25);
-        let details_width = (frame_area.width * 35 / 100).min(40).max(30);
         let modal_height = (frame_area.height * 60 / 100).min(20).max(12);
 
-        let total_width = list_width + gap + details_width;
-        let start_x = (frame_area.width.saturating_sub(total_width)) / 2;
+        let start_x = (frame_area.width.saturating_sub(list_width)) / 2;
         let y = (frame_area.height.saturating_sub(modal_height)) / 2;
 
         // Left modal: Inventory list with ASCII border
@@ -219,17 +214,13 @@ impl InventoryModal {
         );
         self.render_item_list(frame, list_area);
 
-        // Right modal: Item details (only if toggled on)
-        if self.show_details {
-            let details_area = Rect::new(start_x + list_width + gap, y, details_width, modal_height);
-
-            let selected_item: Option<&Item> = if self.selected_index() < self.items.len() {
-                Some(&self.items[self.selected_index()].inv_item.item)
-            } else {
-                None
-            };
-            render_item_details(frame, details_area, selected_item);
-        }
+        // Right modal: Item details (rendered beside list if toggled)
+        let selected_item: Option<&Item> = if self.selected_index() < self.items.len() {
+            Some(&self.items[self.selected_index()].inv_item.item)
+        } else {
+            None
+        };
+        render_item_details_for_modal(frame, border_area, selected_item);
     }
 
     fn render_ascii_border(&self, frame: &mut Frame, area: Rect) {
@@ -396,7 +387,8 @@ impl InventoryModal {
                 false
             }
             Key::Char('d') => {
-                self.show_details = !self.show_details;
+                let gs = game_state();
+                gs.show_item_details = !gs.show_item_details;
                 false
             }
             Key::Char('L') => {
