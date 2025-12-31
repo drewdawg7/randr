@@ -7,6 +7,17 @@ use crate::{
 
 use super::definition::ItemSpec;
 
+
+pub static BASIC_HP_POTION: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Basic HP Potion",
+    item_type: ItemType::Consumable(crate::item::enums::ConsumableType::Potion),
+    quality: Some(ItemQuality::Normal),
+    stats: StatSheet::new(),
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 25,
+});
+
 pub static SWORD: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     name: "Sword",
     item_type: ItemType::Equipment(EquipmentType::Weapon),

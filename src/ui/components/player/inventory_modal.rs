@@ -11,7 +11,7 @@ use ratatui::style::Color;
 
 use crate::{
     inventory::{EquipmentSlot, HasInventory, InventoryItem},
-    item::{Item, ItemType},
+    item::{consumable::{use_consumable, ConsumableError}, Item, ItemType},
     system::game_state,
     ui::components::utilities::{item_display, list_move_down, list_move_up, lock_prefix, selection_prefix},
     ui::theme::{DARK_GRAY, DARK_WALNUT, WOOD_BROWN, OAK_BROWN, TAN_WOOD, LIGHT_BEIGE, CREAM_WOOD},
@@ -176,6 +176,47 @@ impl InventoryModal {
         let item_uuid = self.items[selected].inv_item.item.item_uuid;
         if let Some(inv_item) = game_state().player.find_item_by_uuid_mut(item_uuid) {
             inv_item.item.toggle_lock();
+        }
+    }
+
+    fn use_selected_consumable(&mut self) -> Option<String> {
+        let selected = self.selected_index();
+        if selected >= self.items.len() {
+            return None;
+        }
+
+        let list_item = &self.items[selected];
+        let inv_item = &list_item.inv_item;
+
+        // Only allow using consumables
+        if !inv_item.item.item_type.is_consumable() {
+            return Some("Cannot use this item".to_string());
+        }
+
+        let gs = game_state();
+
+        // Attempt to use the consumable
+        match use_consumable(&mut gs.player, inv_item) {
+            Ok(result) => {
+                let description = result.describe();
+                // Decrease quantity after successful use
+                let item_uuid = inv_item.item.item_uuid;
+                if let Some(inv_item) = gs.player.find_item_by_uuid_mut(item_uuid) {
+                    if inv_item.quantity > 1 {
+                        inv_item.quantity -= 1;
+                    } else {
+                        gs.player.remove_item(item_uuid);
+                    }
+                }
+                Some(format!("Used {}! {}", result.item_name, description))
+            }
+            Err(ConsumableError::AlreadyAtFullHealth) => {
+                Some("Already at full health!".to_string())
+            }
+            Err(ConsumableError::NoEffectRegistered) => {
+                Some("This item has no effect".to_string())
+            }
+            Err(_) => Some("Cannot use this item".to_string()),
         }
     }
 
@@ -393,6 +434,11 @@ impl InventoryModal {
             }
             Key::Char('L') => {
                 self.toggle_lock();
+                false
+            }
+            Key::Char('u') | Key::Char('U') => {
+                let _ = self.use_selected_consumable();
+                // TODO: Display message to user
                 false
             }
             Key::Esc | Key::Char('i') => true, // Close modal

@@ -1,3 +1,4 @@
+pub(crate) mod consumable;
 pub(crate) mod definition;
 pub(crate) mod enums;
 pub mod spec;

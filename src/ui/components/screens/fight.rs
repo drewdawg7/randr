@@ -1,114 +1,168 @@
-use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::Style, text::{Line, Span}, widgets::{Block, Paragraph}, Frame};
+use ratatui::{
+    layout::{Alignment, Constraint, Direction, Layout, Rect},
+    style::Style,
+    text::{Line, Span},
+    widgets::{Block, Borders, Paragraph},
+    Frame,
+};
 
-use crate::ui::theme::{self as colors, quality_color, ColorExt};
-use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent, KeyModifiers}, props::{AttrValue, Attribute, Props}, Component, Event, MockComponent, NoUserEvent, State};
+use tuirealm::{
+    command::{Cmd, CmdResult},
+    event::{Key, KeyEvent},
+    props::{AttrValue, Attribute, Props},
+    Component, Event, MockComponent, NoUserEvent, State,
+};
 
-use crate::combat::{AttackResult, CombatRounds};
+use crate::combat::{
+    enemy_attack_step, player_attack_step, process_defeat, process_victory,
+    ActiveCombat, CombatPhase,
+};
+use crate::inventory::HasInventory;
 use crate::system::game_state;
-use crate::ui::Id;
-use crate::ui::components::player::xp_bar::XpBar;
-use crate::ui::components::player::item_details::render_item_details;
-use crate::ui::components::widgets::menu::{Menu, MenuItem};
+use crate::ui::theme::{self as colors, quality_color, ColorExt};
+use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW};
 use crate::ui::components::widgets::border::BorderTheme;
-use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW, item_display, lock_prefix, selection_prefix};
-use crate::inventory::{HasInventory, EquipmentSlot};
-use crate::item::Item;
+use crate::ui::Id;
+
+const PAUSE_FRAMES: u32 = 25; // ~500ms at 50fps
+
+// Placeholder ASCII art (same dimensions for player and enemy)
+const PLAYER_ART: &[&str] = &[
+    r"  O   ",
+    r" -|- ",
+    r" / \  ",
+];
+
+const ENEMY_ART: &[&str] = &[
+    r" /\_/\ ",
+    r"( o.o )",
+    r" > ^ < ",
+];
+
+const ART_WIDTH: u16 = 9;  // 7 chars + 2 for border
+const ART_HEIGHT: u16 = 5; // 3 lines + 2 for border
 
 #[derive(Clone, Copy, PartialEq)]
-enum FightFocus {
-    Menu,
-    Inventory,
+enum FightSelection {
+    Attack,
+    Run,
+}
+
+#[derive(Clone, Copy, PartialEq)]
+enum ResultSelection {
+    FightAgain,
+    Continue,
 }
 
 pub struct FightScreen {
     props: Props,
-    back_menu: Menu,
-    xp_bar: XpBar,
-    focus: FightFocus,
-    inventory_selected: usize,
+    selection: FightSelection,
+    result_selection: ResultSelection,
+    pause_frames: u32,
+    victory_processed: bool,
+    defeat_processed: bool,
 }
 
 impl FightScreen {
     pub fn new() -> Self {
-        let back_menu = Menu::new(vec![
-            MenuItem {
-                label: format!("{} Fight again", CROSSED_SWORDS),
-                action: Box::new(|| {
-                    let field = &game_state().town.field;
-                    if let Ok(mut mob) = field.spawn_mob() {
-                        let gs = game_state();
-                        let mut combat_rounds = crate::combat::system::enter_combat(&mut gs.player, &mut mob);
-
-                        // Spawn items with quality and add to both dropped_loot and inventory
-                        let loot_drops = combat_rounds.loot_drops().to_vec();
-                        for (item_kind, quantity) in loot_drops {
-                            for _ in 0..quantity {
-                                let item = gs.spawn_item(item_kind);
-                                combat_rounds.dropped_loot.push(item.clone());
-                                let _ = crate::inventory::HasInventory::add_to_inv(&mut gs.player, item);
-                            }
-                        }
-
-                        gs.set_current_combat(combat_rounds);
-                    }
-                }),
-            },
-            MenuItem {
-                label: format!("{} Back", RETURN_ARROW),
-                action: Box::new(|| {
-                    game_state().current_screen = Id::Town;
-                }),
-            },
-        ]);
         Self {
             props: Props::default(),
-            back_menu,
-            xp_bar: XpBar::new(),
-            focus: FightFocus::Menu,
-            inventory_selected: 0,
+            selection: FightSelection::Attack,
+            result_selection: ResultSelection::FightAgain,
+            pause_frames: 0,
+            victory_processed: false,
+            defeat_processed: false,
         }
     }
 
-    fn get_inventory_items(&self) -> Vec<(Item, EquipmentSlot)> {
+    fn reset_for_new_combat(&mut self) {
+        self.selection = FightSelection::Attack;
+        self.result_selection = ResultSelection::FightAgain;
+        self.pause_frames = 0;
+        self.victory_processed = false;
+        self.defeat_processed = false;
+    }
+
+    fn execute_player_attack(&mut self) {
         let gs = game_state();
-        let player = &gs.player;
-        let mut items = Vec::new();
-
-        if let Some(inv_item) = player.get_equipped_item(EquipmentSlot::Weapon) {
-            items.push((inv_item.item.clone(), EquipmentSlot::Weapon));
-        }
-        if let Some(inv_item) = player.get_equipped_item(EquipmentSlot::OffHand) {
-            items.push((inv_item.item.clone(), EquipmentSlot::OffHand));
-        }
-        if let Some(inv_item) = player.get_equipped_item(EquipmentSlot::Ring) {
-            items.push((inv_item.item.clone(), EquipmentSlot::Ring));
-        }
-        for inv_item in player.get_inventory_items().iter() {
-            if let Some(slot) = inv_item.item.item_type.equipment_slot() {
-                items.push((inv_item.item.clone(), slot));
+        // Take combat out temporarily to avoid borrow issues
+        if let Some(mut combat) = gs.active_combat.take() {
+            if combat.phase == CombatPhase::PlayerTurn {
+                player_attack_step(&gs.player, &mut combat);
+                self.pause_frames = 0;
             }
+            gs.active_combat = Some(combat);
         }
-        items
     }
 
-    fn get_inventory_count(&self) -> usize {
-        self.get_inventory_items().len()
+    fn execute_run(&self) {
+        game_state().current_screen = Id::Town;
     }
 
-    fn get_selected_item(&self) -> Option<Item> {
-        let items = self.get_inventory_items();
-        items.get(self.inventory_selected).map(|(item, _)| item.clone())
-    }
+    fn advance_pause_phase(&mut self) {
+        let gs = game_state();
 
-    fn toggle_equip_selected(&mut self) {
-        let items = self.get_inventory_items();
-        if let Some((item, slot)) = items.get(self.inventory_selected) {
-            let gs = game_state();
-            if item.is_equipped {
-                let _ = gs.player.unequip_item(*slot);
-            } else {
-                gs.player.equip_from_inventory(item.item_uuid, *slot);
+        // Take combat out temporarily to avoid borrow issues
+        let Some(mut combat) = gs.active_combat.take() else {
+            return;
+        };
+
+        match combat.phase {
+            CombatPhase::PlayerAttacking => {
+                self.pause_frames += 1;
+                if self.pause_frames >= PAUSE_FRAMES {
+                    self.pause_frames = 0;
+                    // Check if mob died - phase would already be Victory
+                    if combat.phase != CombatPhase::Victory {
+                        // Enemy attacks back
+                        enemy_attack_step(&mut combat, &mut gs.player);
+                    }
+                }
             }
+            CombatPhase::EnemyAttacking => {
+                self.pause_frames += 1;
+                if self.pause_frames >= PAUSE_FRAMES {
+                    self.pause_frames = 0;
+                    // Check if player died - phase would already be Defeat
+                    if combat.phase != CombatPhase::Defeat {
+                        combat.phase = CombatPhase::PlayerTurn;
+                    }
+                }
+            }
+            CombatPhase::Victory => {
+                if !self.victory_processed {
+                    process_victory(&mut gs.player, &mut combat);
+                    // Spawn loot items
+                    let loot_drops = combat.loot_drops.clone();
+                    for (item_kind, quantity) in loot_drops {
+                        for _ in 0..quantity {
+                            let item = gs.spawn_item(item_kind);
+                            combat.dropped_loot.push(item.clone());
+                            let _ = gs.player.add_to_inv(item);
+                        }
+                    }
+                    self.victory_processed = true;
+                }
+            }
+            CombatPhase::Defeat => {
+                if !self.defeat_processed {
+                    process_defeat(&mut gs.player);
+                    self.defeat_processed = true;
+                }
+            }
+            _ => {}
+        }
+
+        // Put combat back
+        gs.active_combat = Some(combat);
+    }
+
+    fn start_new_fight(&mut self) {
+        let gs = game_state();
+        let field = &gs.town.field;
+        if let Ok(mob) = field.spawn_mob() {
+            gs.start_combat(mob);
+            self.reset_for_new_combat();
         }
     }
 }
@@ -116,313 +170,85 @@ impl FightScreen {
 impl MockComponent for FightScreen {
     fn view(&mut self, frame: &mut Frame, _area: Rect) {
         let gs = game_state();
-        let Some(combat_rounds) = gs.current_combat() else {
+
+        let Some(combat) = gs.active_combat() else {
+            // No active combat - show empty screen
             return;
         };
 
-        let frame_size = frame.area();
+        // Advance pause phases in view (frame-based timing)
+        // We need to do this with mut access
+        let _ = combat; // End immutable borrow
+        self.advance_pause_phase();
 
-        // Border offsets
-        let y_offset: u16 = 1;
-        let x_offset: u16 = 1;
-
-        // Reserve space for top border (1) and bottom border (1)
-        // Content area is everything between the borders
-        let content_height = frame_size.height.saturating_sub(2); // 2 = top + bottom borders
-        let content_area = Rect {
-            x: x_offset,
-            y: y_offset,
-            width: frame_size.width.saturating_sub(x_offset * 2),
-            height: content_height,
+        // Re-borrow after advance
+        let gs = game_state();
+        let Some(combat) = gs.active_combat() else {
+            return;
         };
 
-        // Fill background with FIGHT_BG
-        let bg_fill = Block::default().style(Style::default().on_color(colors::FIGHT_BG));
-        frame.render_widget(bg_fill, content_area);
+        let player = &gs.player;
+        let frame_size = frame.area();
 
-        // First split: header area (full width) then body area
+        // Fill background
+        let bg = Block::default().style(Style::default().on_color(colors::FIGHT_BG));
+        frame.render_widget(bg, frame_size);
+
+        // Main layout: combatants, combat log, footer
         let main_chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
-                Constraint::Length(1), // player stats header (full width)
-                Constraint::Length(1), // separator (full width)
-                Constraint::Min(0),    // body area
+                Constraint::Length(11), // Combatants area (art + name + HP + stats)
+                Constraint::Min(5),     // Combat history log
+                Constraint::Length(5),  // Footer (actions or results)
             ])
-            .split(content_area);
+            .split(frame_size);
 
-        let header_area = main_chunks[0];
-        let separator_area = main_chunks[1];
-        let body_area = main_chunks[2];
+        let combatants_area = main_chunks[0];
+        let combat_log_area = main_chunks[1];
+        let footer_area = main_chunks[2];
 
-        // Split body area horizontally: left for battle, right for inventory
-        let horizontal_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(40), Constraint::Percentage(60)])
-            .split(body_area);
-        let left_panel = horizontal_chunks[0];
-        let right_panel = horizontal_chunks[1];
+        // === COMBATANTS: Player (left) | Enemy (right) ===
+        render_combatants(frame, combatants_area, player, combat);
 
-        // Only show the last 4 rounds of combat
-        let attack_results: Vec<_> = combat_rounds
-            .attack_results
-            .iter()
-            .rev()
-            .take(4)
-            .rev()
-            .cloned()
-            .collect();
+        // === COMBAT HISTORY LOG ===
+        render_combat_log(frame, combat_log_area, combat);
 
-        let mut attack_components: Vec<AttackResultComponent> = attack_results
-            .into_iter()
-            .map(AttackResultComponent::new)
-            .collect();
-
-        // Calculate summary height: header + gold + xp + items (or "no items")
-        let summary_height = if combat_rounds.player_won {
-            4 + combat_rounds.dropped_loot.len().max(1) - 1
-        } else {
-            2 // defeat header + message
-        } as u16;
-
-        // Fixed height for combat rounds (4 rounds * 3 lines each = 12)
-        const MAX_ROUNDS: usize = 4;
-        const ROUND_HEIGHT: u16 = 3; // 2 lines content + 1 separator
-        const COMBAT_AREA_HEIGHT: u16 = (MAX_ROUNDS as u16) * ROUND_HEIGHT;
-
-        // Build constraints for left panel (battle content)
-        let left_constraints = vec![
-            Constraint::Length(COMBAT_AREA_HEIGHT), // fixed combat rounds area
-            Constraint::Length(1),                  // spacer
-            Constraint::Length(summary_height),     // summary section
-            Constraint::Length(3),                  // menu (fight again + back)
-            Constraint::Min(0),                     // absorb remaining space at end
-        ];
-
-        let left_chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(left_constraints.as_slice())
-            .split(left_panel);
-
-        // Split the combat area into individual round slots
-        let combat_area = left_chunks[0];
-        let round_constraints: Vec<Constraint> = (0..MAX_ROUNDS)
-            .map(|_| Constraint::Length(ROUND_HEIGHT))
-            .collect();
-        let round_chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints(round_constraints)
-            .split(combat_area);
-
-        // Render player stats header using horizontal layout (full width)
-        let player = &gs.player;
-        let hp_style = Style::default().color(colors::RED);
-        let xp_style = Style::default().color(colors::CYAN);
-        let gold_style = Style::default().color(colors::YELLOW);
-
-        let header_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([
-                Constraint::Length(11), // HP section
-                Constraint::Length(9),  // XP icon + level
-                Constraint::Length(20), // XpBar component
-                Constraint::Min(0),     // Gold section
-            ])
-            .split(header_area);
-
-        // HP
-        let hp_line = Line::from(vec![
-            Span::styled(format!("{} ", HEART), hp_style),
-            Span::raw(format!("{}/{}  |  ", player.get_health(), player.get_max_health())),
-        ]);
-        frame.render_widget(Paragraph::new(hp_line), header_chunks[0]);
-
-        // XP icon + level
-        let xp_label = Line::from(vec![
-            Span::styled(format!("{} ", DOUBLE_ARROW_UP), xp_style),
-            Span::raw(format!("Lv.{} ", player.prog.level)),
-        ]);
-        frame.render_widget(Paragraph::new(xp_label), header_chunks[1]);
-
-        // XpBar component
-        self.xp_bar.view(frame, header_chunks[2]);
-
-        // Gold
-        let gold_line = Line::from(vec![
-            Span::raw("  |  "),
-            Span::styled(format!("{} ", COIN), gold_style),
-            Span::raw(format!("{}", player.gold)),
-        ]);
-        frame.render_widget(Paragraph::new(gold_line), header_chunks[3]);
-
-        // Render separator line after header (full width)
-        let separator = Line::from(vec![
-            Span::styled("─".repeat(content_area.width as usize), Style::default().color(colors::DARK_FOREST)),
-        ]);
-        frame.render_widget(Paragraph::new(separator), separator_area);
-
-        // Render attack results in the fixed round slots
-        for (i, component) in attack_components.iter_mut().enumerate() {
-            component.view(frame, round_chunks[i]);
+        // === FOOTER: Actions or Results ===
+        match combat.phase {
+            CombatPhase::PlayerTurn => {
+                render_action_menu(frame, footer_area, self.selection);
+            }
+            CombatPhase::PlayerAttacking | CombatPhase::EnemyAttacking => {
+                render_action_menu(frame, footer_area, self.selection);
+            }
+            CombatPhase::Victory | CombatPhase::Defeat => {
+                render_results(frame, footer_area, combat, self.result_selection);
+            }
         }
 
-        // Render battle summary (fixed position after combat area + spacer)
-        render_battle_summary(frame, left_chunks[2], combat_rounds);
-
-        // Render back button (fixed position)
-        self.back_menu.view(frame, left_chunks[3]);
-
-        // Split right panel: inventory list (left) and item details (right)
-        let right_chunks = Layout::default()
-            .direction(Direction::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(right_panel);
-
-        // Render inventory list
-        let inv_focused = self.focus == FightFocus::Inventory;
-        let inventory_items = self.get_inventory_items();
-        render_inventory_panel(frame, right_chunks[0], inv_focused, self.inventory_selected, &inventory_items);
-
-        // Render item details for selected item
-        let selected_item = self.get_selected_item();
-        render_item_details(frame, right_chunks[1], selected_item.as_ref());
-
-        // Render forest borders
-        let total_border_width = content_area.width + 2;
-        // Bottom border is at the last row of the frame
-        let bottom_y = frame_size.height.saturating_sub(1);
-        let border_height = content_height;
-
-        // Border style with themed background
+        // ASCII art border (like other screens)
+        let border = BorderTheme::Forest;
         let border_style = Style::default().on_color(colors::FIGHT_BG);
 
         // Top and bottom borders
-        let border_area_top = Rect { x: 0, y: 0, width: total_border_width, height: 1 };
-        let border_area_bottom = Rect { x: 0, y: bottom_y, width: total_border_width, height: 1 };
-
-        let border = BorderTheme::Forest;
-        let top_border = border.generate_top_border(total_border_width);
-        let bottom_border = border.generate_bottom_border(total_border_width);
-        frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
-        frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
+        let top_border = border.generate_top_border(frame_size.width);
+        let bottom_border = border.generate_bottom_border(frame_size.width);
+        let top_area = Rect::new(0, 0, frame_size.width, 1);
+        let bottom_area = Rect::new(0, frame_size.height.saturating_sub(1), frame_size.width, 1);
+        frame.render_widget(Paragraph::new(top_border).style(border_style), top_area);
+        frame.render_widget(Paragraph::new(bottom_border).style(border_style), bottom_area);
 
         // Left and right borders
-        for row in 0..border_height {
+        let content_height = frame_size.height.saturating_sub(2);
+        for row in 0..content_height {
             let left_char = border.generate_left_border_char(row);
             let right_char = border.generate_right_border_char(row);
-            let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
-            let right_area = Rect { x: x_offset + content_area.width, y: y_offset + row, width: 1, height: 1 };
+            let left_area = Rect::new(0, 1 + row, 1, 1);
+            let right_area = Rect::new(frame_size.width.saturating_sub(1), 1 + row, 1, 1);
             frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
             frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
         }
-    }
-
-    fn query(&self, attr: Attribute) -> Option<AttrValue> {
-        self.props.get(attr)
-    }
-
-    fn attr(&mut self, attr: Attribute, value: AttrValue) {
-        self.props.set(attr, value);
-    }
-
-    fn state(&self) -> State {
-        self.back_menu.state()
-    }
-
-    fn perform(&mut self, cmd: Cmd) -> CmdResult {
-        self.back_menu.perform(cmd)
-    }
-}
-
-impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
-    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
-        // Handle Shift+Tab to toggle focus
-        if let Event::Keyboard(KeyEvent { code: Key::BackTab, modifiers: KeyModifiers::SHIFT }) = ev {
-            self.focus = match self.focus {
-                FightFocus::Menu => FightFocus::Inventory,
-                FightFocus::Inventory => FightFocus::Menu,
-            };
-            return None;
-        }
-
-        match self.focus {
-            FightFocus::Menu => self.back_menu.on(ev),
-            FightFocus::Inventory => {
-                // Handle inventory navigation
-                let item_count = self.get_inventory_count();
-                if item_count == 0 {
-                    return None;
-                }
-
-                match ev {
-                    Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                        if self.inventory_selected == 0 {
-                            self.inventory_selected = item_count.saturating_sub(1);
-                        } else {
-                            self.inventory_selected = self.inventory_selected.saturating_sub(1);
-                        }
-                        None
-                    }
-                    Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
-                        self.inventory_selected = (self.inventory_selected + 1) % item_count;
-                        None
-                    }
-                    Event::Keyboard(KeyEvent { code: Key::Char('E'), modifiers: KeyModifiers::SHIFT }) => {
-                        self.toggle_equip_selected();
-                        None
-                    }
-                    Event::Keyboard(KeyEvent { code: Key::Char('L'), modifiers: KeyModifiers::SHIFT }) => {
-                        let items = self.get_inventory_items();
-                        if let Some((item, _slot)) = items.get(self.inventory_selected) {
-                            let item_uuid = item.item_uuid;
-                            if let Some(inv_item) = game_state().player.find_item_by_uuid_mut(item_uuid) {
-                                inv_item.item.toggle_lock();
-                            }
-                        }
-                        None
-                    }
-                    _ => None
-                }
-            }
-        }
-    }
-}
-
-pub struct AttackResultComponent {
-    props: Props,
-    attack_result: AttackResult,
-}
-
-impl AttackResultComponent {
-    pub fn new(attack_result: AttackResult) -> Self {
-        Self { props: Props::default(), attack_result }
-    }
-}
-
-impl MockComponent for AttackResultComponent {
-    fn view(&mut self, frame: &mut Frame, area: Rect) {
-        let attacker = &self.attack_result.attacker;
-        let defender = &self.attack_result.defender;
-
-        let mut lines = vec![
-            // Simple attack line
-            Line::from(vec![
-                Span::raw(format!("{} dealt ", attacker)),
-                Span::styled(self.attack_result.damage_to_target.to_string(), Style::default().color(colors::RED)),
-                Span::raw(format!(" damage to {}", defender)),
-            ]),
-        ];
-
-        if self.attack_result.target_died {
-            lines.push(Line::from(vec![
-                Span::styled(format!("{} has been slain!", defender), Style::default().color(colors::RED)),
-            ]));
-        } else {
-            lines.push(Line::from(vec![
-                Span::raw(format!("{} HP: {} → {}", defender, self.attack_result.target_health_before, self.attack_result.target_health_after)),
-            ]));
-        }
-
-        frame.render_widget(Paragraph::new(lines), area);
     }
 
     fn query(&self, attr: Attribute) -> Option<AttrValue> {
@@ -442,76 +268,404 @@ impl MockComponent for AttackResultComponent {
     }
 }
 
-impl Component<Event<NoUserEvent>, NoUserEvent> for AttackResultComponent {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
+impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
+        let gs = game_state();
+        let Some(combat) = gs.active_combat() else {
+            return None;
+        };
+
+        let phase = combat.phase;
+        let _ = combat;
+
+        match phase {
+            CombatPhase::PlayerTurn => {
+                match ev {
+                    Event::Keyboard(KeyEvent { code: Key::Up, .. }) |
+                    Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
+                        self.selection = match self.selection {
+                            FightSelection::Attack => FightSelection::Run,
+                            FightSelection::Run => FightSelection::Attack,
+                        };
+                    }
+                    Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {
+                        match self.selection {
+                            FightSelection::Attack => {
+                                self.execute_player_attack();
+                            }
+                            FightSelection::Run => {
+                                self.execute_run();
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            CombatPhase::PlayerAttacking | CombatPhase::EnemyAttacking => {
+                // During pause phases, any key advances (or just wait for frames)
+                // For now we just let frames advance
+            }
+            CombatPhase::Victory | CombatPhase::Defeat => {
+                match ev {
+                    Event::Keyboard(KeyEvent { code: Key::Left, .. }) |
+                    Event::Keyboard(KeyEvent { code: Key::Right, .. }) => {
+                        if phase == CombatPhase::Victory {
+                            self.result_selection = match self.result_selection {
+                                ResultSelection::FightAgain => ResultSelection::Continue,
+                                ResultSelection::Continue => ResultSelection::FightAgain,
+                            };
+                        }
+                    }
+                    Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {
+                        match self.result_selection {
+                            ResultSelection::FightAgain if phase == CombatPhase::Victory => {
+                                self.start_new_fight();
+                            }
+                            ResultSelection::Continue | ResultSelection::FightAgain => {
+                                game_state().current_screen = Id::Town;
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+        }
+
         None
     }
 }
 
-fn render_battle_summary(frame: &mut Frame, area: Rect, combat: &CombatRounds) {
+fn render_combatants(frame: &mut Frame, area: Rect, player: &crate::entities::Player, combat: &ActiveCombat) {
+    // Split into left (player) and right (enemy) halves
+    let chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+        .split(area);
+
+    let left_area = chunks[0];
+    let right_area = chunks[1];
+
+    // === PLAYER (left side, left-aligned) ===
+    render_player_panel(frame, left_area, player);
+
+    // === ENEMY (right side, right-aligned) ===
+    render_combatant_right(
+        frame,
+        right_area,
+        combat.mob.name,
+        ENEMY_ART,
+        combat.mob.get_health(),
+        combat.mob.get_max_health(),
+    );
+}
+
+fn render_player_panel(frame: &mut Frame, area: Rect, player: &crate::entities::Player) {
+    use crate::entities::progression::{HasProgression, Progression};
+    use crate::combat::HasGold;
+
+    // Layout: art box, name, HP, HP bar, stats
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(ART_HEIGHT), // Art box
+            Constraint::Length(1),          // Name
+            Constraint::Length(1),          // HP text
+            Constraint::Length(1),          // HP bar
+            Constraint::Length(1),          // Level + XP
+            Constraint::Length(1),          // Gold
+            Constraint::Min(0),             // Remaining
+        ])
+        .split(area);
+
+    // Art box (left-aligned with padding)
+    let art_x = area.x + 2;
+    let art_rect = Rect::new(art_x, chunks[0].y, ART_WIDTH, ART_HEIGHT);
+
+    let art_block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().color(colors::GREY));
+    frame.render_widget(art_block, art_rect);
+
+    let art_lines: Vec<Line> = PLAYER_ART
+        .iter()
+        .map(|line| Line::from(Span::styled(*line, Style::default().color(colors::WHITE))))
+        .collect();
+    let inner_rect = Rect::new(art_rect.x + 1, art_rect.y + 1, art_rect.width - 2, art_rect.height - 2);
+    frame.render_widget(Paragraph::new(art_lines), inner_rect);
+
+    // Name (left-aligned)
+    let name_line = Line::from(vec![
+        Span::raw("  "),
+        Span::styled("Player", Style::default().color(colors::WHITE)),
+    ]);
+    frame.render_widget(Paragraph::new(name_line), chunks[1]);
+
+    // HP text
+    let hp = player.get_health();
+    let max_hp = player.get_max_health();
+    let hp_pct = (hp as f64 / max_hp as f64 * 100.0).max(0.0) as u16;
+    let hp_text = Line::from(vec![
+        Span::raw("  "),
+        Span::styled(format!("{} ", HEART), Style::default().color(colors::RED)),
+        Span::raw(format!("{}/{}", hp.max(0), max_hp)),
+    ]);
+    frame.render_widget(Paragraph::new(hp_text), chunks[2]);
+
+    // HP bar
+    let hp_col = hp_color(hp_pct);
+    let bar_line = Line::from(vec![
+        Span::raw("  "),
+        Span::styled(hp_bar(hp_pct, 15), Style::default().color(hp_col)),
+    ]);
+    frame.render_widget(Paragraph::new(bar_line), chunks[3]);
+
+    // Level + XP
+    let prog = player.progression();
+    let xp_to_next = Progression::xp_to_next_level(prog.level);
+    let level_line = Line::from(vec![
+        Span::raw("  "),
+        Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().color(colors::CYAN)),
+        Span::raw(format!("Lv.{} ", prog.level)),
+        Span::styled(format!("{}/{}", prog.xp, xp_to_next), Style::default().color(colors::GREY)),
+    ]);
+    frame.render_widget(Paragraph::new(level_line), chunks[4]);
+
+    // Gold
+    let gold_line = Line::from(vec![
+        Span::raw("  "),
+        Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
+        Span::raw(format!("{}", player.gold())),
+    ]);
+    frame.render_widget(Paragraph::new(gold_line), chunks[5]);
+}
+
+fn render_combatant_right(
+    frame: &mut Frame,
+    area: Rect,
+    name: &str,
+    art: &[&str],
+    hp: i32,
+    max_hp: i32,
+) {
+    // Layout: art box, name, HP
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(ART_HEIGHT), // Art box
+            Constraint::Length(1),          // Name
+            Constraint::Length(1),          // HP text
+            Constraint::Length(1),          // HP bar
+            Constraint::Min(0),             // Remaining
+        ])
+        .split(area);
+
+    // Art box (right-aligned with padding)
+    let art_x = area.x + area.width - ART_WIDTH - 2;
+    let art_rect = Rect::new(art_x, chunks[0].y, ART_WIDTH, ART_HEIGHT);
+
+    let art_block = Block::default()
+        .borders(Borders::ALL)
+        .border_style(Style::default().color(colors::GREY));
+    frame.render_widget(art_block, art_rect);
+
+    let art_lines: Vec<Line> = art
+        .iter()
+        .map(|line| Line::from(Span::styled(*line, Style::default().color(colors::WHITE))))
+        .collect();
+    let inner_rect = Rect::new(art_rect.x + 1, art_rect.y + 1, art_rect.width - 2, art_rect.height - 2);
+    frame.render_widget(Paragraph::new(art_lines), inner_rect);
+
+    // Name (right-aligned)
+    let name_line = Line::from(Span::styled(name, Style::default().color(colors::WHITE)));
+    let name_area = Rect::new(area.x, chunks[1].y, area.width - 2, 1);
+    frame.render_widget(Paragraph::new(name_line).alignment(Alignment::Right), name_area);
+
+    // HP text (right-aligned)
+    let hp_pct = (hp as f64 / max_hp as f64 * 100.0).max(0.0) as u16;
+    let hp_text = Line::from(vec![
+        Span::styled(format!("{} ", HEART), Style::default().color(colors::RED)),
+        Span::raw(format!("{}/{}", hp.max(0), max_hp)),
+    ]);
+    let hp_area = Rect::new(area.x, chunks[2].y, area.width - 2, 1);
+    frame.render_widget(Paragraph::new(hp_text).alignment(Alignment::Right), hp_area);
+
+    // HP bar (right-aligned)
+    let hp_color = hp_color(hp_pct);
+    let bar_line = Line::from(Span::styled(hp_bar(hp_pct, 15), Style::default().color(hp_color)));
+    let bar_area = Rect::new(area.x, chunks[3].y, area.width - 2, 1);
+    frame.render_widget(Paragraph::new(bar_line).alignment(Alignment::Right), bar_area);
+}
+
+fn render_combat_log(frame: &mut Frame, area: Rect, combat: &ActiveCombat) {
+    let mut lines: Vec<Line> = Vec::new();
+
+    // Group attacks into rounds (each round = player attack + enemy counter-attack)
+    let attacks = &combat.rounds.attack_results;
+    let mut round_num = 0;
+
+    // Process attacks in pairs (player attack, then enemy attack)
+    let mut i = 0;
+    while i < attacks.len() {
+        round_num += 1;
+
+        // Round header
+        lines.push(Line::from(Span::styled(
+            format!("Round {}", round_num),
+            Style::default().color(colors::YELLOW),
+        )));
+
+        // First attack of the round
+        let atk1 = &attacks[i];
+        let color1 = if atk1.attacker == "Player" { colors::GREEN } else { colors::RED };
+        lines.push(Line::from(vec![
+            Span::styled(&atk1.attacker, Style::default().color(color1)),
+            Span::raw(" dealt "),
+            Span::styled(atk1.damage_to_target.to_string(), Style::default().color(color1)),
+            Span::raw(format!(" damage to {}", atk1.defender)),
+        ]));
+        i += 1;
+
+        // Second attack of the round (if exists)
+        if i < attacks.len() {
+            let atk2 = &attacks[i];
+            let color2 = if atk2.attacker == "Player" { colors::GREEN } else { colors::RED };
+            lines.push(Line::from(vec![
+                Span::styled(&atk2.attacker, Style::default().color(color2)),
+                Span::raw(" dealt "),
+                Span::styled(atk2.damage_to_target.to_string(), Style::default().color(color2)),
+                Span::raw(format!(" damage to {}", atk2.defender)),
+            ]));
+            i += 1;
+        }
+
+        lines.push(Line::from("")); // Blank line between rounds
+    }
+
+    // Only show the last 3 rounds (each round = header + 2-3 lines + blank)
+    // Calculate how many lines per round (~4) and keep last 3 rounds worth
+    let max_lines = 12; // ~3 rounds * 4 lines each
+    let skip = lines.len().saturating_sub(max_lines);
+    let visible_lines: Vec<Line> = lines.into_iter().skip(skip).collect();
+
+    if visible_lines.is_empty() {
+        let empty_msg = vec![Line::from(Span::styled(
+            "No attacks yet...",
+            Style::default().color(colors::GREY),
+        ))];
+        frame.render_widget(Paragraph::new(empty_msg).alignment(Alignment::Center), area);
+    } else {
+        frame.render_widget(Paragraph::new(visible_lines).alignment(Alignment::Center), area);
+    }
+}
+
+fn render_action_menu(frame: &mut Frame, area: Rect, selection: FightSelection) {
+    let chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(1), // Spacer
+            Constraint::Length(1), // Attack
+            Constraint::Length(1), // Run
+            Constraint::Min(0),    // Remaining
+        ])
+        .split(area);
+
+    let attack_prefix = if selection == FightSelection::Attack { "> " } else { "  " };
+    let run_prefix = if selection == FightSelection::Run { "> " } else { "  " };
+
+    let attack_style = if selection == FightSelection::Attack {
+        Style::default().color(colors::YELLOW)
+    } else {
+        Style::default().color(colors::WHITE)
+    };
+
+    let run_style = if selection == FightSelection::Run {
+        Style::default().color(colors::YELLOW)
+    } else {
+        Style::default().color(colors::WHITE)
+    };
+
+    let attack_line = Line::from(vec![
+        Span::styled(attack_prefix, attack_style),
+        Span::styled(format!("{} Attack", CROSSED_SWORDS), attack_style),
+    ]);
+    let run_line = Line::from(vec![
+        Span::styled(run_prefix, run_style),
+        Span::styled(format!("{} Run", RETURN_ARROW), run_style),
+    ]);
+
+    frame.render_widget(Paragraph::new(attack_line).alignment(Alignment::Center), chunks[1]);
+    frame.render_widget(Paragraph::new(run_line).alignment(Alignment::Center), chunks[2]);
+}
+
+fn render_results(frame: &mut Frame, area: Rect, combat: &ActiveCombat, selection: ResultSelection) {
+    let is_victory = combat.phase == CombatPhase::Victory;
+
     let mut lines = Vec::new();
 
-    if combat.player_won {
+    if is_victory {
         lines.push(Line::from(Span::styled("== Victory ==", Style::default().color(colors::YELLOW))));
         lines.push(Line::from(vec![
             Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
-            Span::raw(format!("+{} gold", combat.gold_gained)),
-        ]));
-        lines.push(Line::from(vec![
+            Span::raw(format!("+{} gold  ", combat.gold_gained)),
             Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().color(colors::CYAN)),
             Span::raw(format!("+{} XP", combat.xp_gained)),
         ]));
 
+        // Show dropped items
         for item in &combat.dropped_loot {
             let color = quality_color(item.quality);
             lines.push(Line::from(vec![
                 Span::raw("+ "),
                 Span::styled(item.name.to_string(), Style::default().color(color)),
-                Span::raw(" dropped"),
             ]));
         }
+
+        // Menu options
+        let fight_prefix = if selection == ResultSelection::FightAgain { "> " } else { "  " };
+        let cont_prefix = if selection == ResultSelection::Continue { "> " } else { "  " };
+        let fight_style = if selection == ResultSelection::FightAgain {
+            Style::default().color(colors::YELLOW)
+        } else {
+            Style::default().color(colors::WHITE)
+        };
+        let cont_style = if selection == ResultSelection::Continue {
+            Style::default().color(colors::YELLOW)
+        } else {
+            Style::default().color(colors::WHITE)
+        };
+
+        lines.push(Line::from(vec![
+            Span::styled(fight_prefix, fight_style),
+            Span::styled(format!("{} Fight Again", CROSSED_SWORDS), fight_style),
+            Span::raw("    "),
+            Span::styled(cont_prefix, cont_style),
+            Span::styled(format!("{} Continue", RETURN_ARROW), cont_style),
+        ]));
     } else {
         lines.push(Line::from(Span::styled("== Defeat ==", Style::default().color(colors::RED))));
         lines.push(Line::from("You have been slain..."));
-    }
-
-    frame.render_widget(Paragraph::new(lines), area);
-}
-
-fn render_inventory_panel(frame: &mut Frame, area: Rect, focused: bool, selected: usize, items: &[(Item, EquipmentSlot)]) {
-    let gs = game_state();
-    let player = &gs.player;
-    let used_slots = player.inventory().items.len();
-    let max_slots = player.inventory().max_slots();
-
-    // Split into slot counter and list
-    let chunks = Layout::default()
-        .direction(Direction::Vertical)
-        .constraints([Constraint::Length(1), Constraint::Min(0)])
-        .split(area);
-
-    // Slot counter
-    let slot_line = Line::from(Span::styled(
-        format!("{}/{}", used_slots, max_slots),
-        Style::default().color(colors::GREY),
-    ));
-    frame.render_widget(Paragraph::new(slot_line), chunks[0]);
-
-    // Render inventory items
-    let mut lines: Vec<Line> = Vec::new();
-
-    for (idx, (item, _slot)) in items.iter().enumerate() {
-        let is_selected = focused && selected == idx;
+        lines.push(Line::from(""));
         lines.push(Line::from(vec![
-            selection_prefix(is_selected),
-            lock_prefix(item),
-            item_display(item, None),
+            Span::styled("> ", Style::default().color(colors::YELLOW)),
+            Span::styled(format!("{} Continue", RETURN_ARROW), Style::default().color(colors::YELLOW)),
         ]));
     }
 
-    if lines.is_empty() {
-        lines.push(Line::from(Span::styled("(empty)", Style::default().color(colors::GREY))));
-    }
+    frame.render_widget(Paragraph::new(lines).alignment(Alignment::Center), area);
+}
 
-    frame.render_widget(Paragraph::new(lines), chunks[1]);
+fn hp_bar(pct: u16, width: u16) -> String {
+    let filled = ((pct as f64 / 100.0) * width as f64).round() as u16;
+    let empty = width.saturating_sub(filled);
+    format!("[{}{}]", "█".repeat(filled as usize), "░".repeat(empty as usize))
+}
+
+fn hp_color(pct: u16) -> ratatui::style::Color {
+    if pct > 60 {
+        colors::GREEN
+    } else if pct > 30 {
+        colors::YELLOW
+    } else {
+        colors::RED
+    }
 }

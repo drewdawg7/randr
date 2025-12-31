@@ -9,9 +9,9 @@ use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 use crate::field::definition::Field;
 use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::{
-    combat::CombatRounds,
+    combat::{ActiveCombat, CombatRounds},
     entities::{mob::{MobKind, MobRegistry}, Mob, Player},
-    item::{ItemId, ItemRegistry},
+    item::{consumable::ConsumableRegistry, ItemId, ItemRegistry},
     mine::rock::{Rock, RockId, RockRegistry},
     town::definition::Town,
     ui::{
@@ -47,12 +47,14 @@ pub struct GameState {
     item_registry: ItemRegistry,
     mob_registry: MobRegistry,
     rock_registry: RockRegistry,
+    consumable_registry: ConsumableRegistry,
     pub current_screen: Id,
     app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
     pub player: Player,
     pub town: Town,
     current_combat: Option<CombatRounds>,
+    pub active_combat: Option<ActiveCombat>,
     pub active_modal: ModalType,
     pub inventory_modal: InventoryModal,
     pub show_item_details: bool,
@@ -92,6 +94,10 @@ impl GameState {
             .unwrap_or("Unknown")
     }
 
+    pub fn consumable_registry(&self) -> &ConsumableRegistry {
+        &self.consumable_registry
+    }
+
     pub fn current_combat(&self) -> Option<&CombatRounds> {
         self.current_combat.as_ref()
     }
@@ -102,6 +108,22 @@ impl GameState {
 
     pub fn clear_current_combat(&mut self) {
         self.current_combat = None;
+    }
+
+    pub fn start_combat(&mut self, mob: Mob) {
+        self.active_combat = Some(ActiveCombat::new(mob));
+    }
+
+    pub fn active_combat(&self) -> Option<&ActiveCombat> {
+        self.active_combat.as_ref()
+    }
+
+    pub fn active_combat_mut(&mut self) -> Option<&mut ActiveCombat> {
+        self.active_combat.as_mut()
+    }
+
+    pub fn end_combat(&mut self) {
+        self.active_combat = None;
     }
 
     pub fn blacksmith(&self) -> &crate::blacksmith::Blacksmith {
@@ -143,6 +165,7 @@ impl GameState {
         }
         if current != Id::Fight {
             self.current_combat = None;
+            self.active_combat = None;
         }
 
         let mut terminal = self.terminal.take().expect("terminal missing");
@@ -181,6 +204,7 @@ impl Default for GameState {
             item_registry: ItemRegistry::new(),
             mob_registry: MobRegistry::new(),
             rock_registry: RockRegistry::new(),
+            consumable_registry: ConsumableRegistry::new(),
             town,
             app: Application::init(
                 EventListenerCfg::default()
@@ -190,6 +214,7 @@ impl Default for GameState {
             terminal: Some(terminal),
             current_screen: Id::Menu,
             current_combat: None,
+            active_combat: None,
             active_modal: ModalType::None,
             inventory_modal: InventoryModal::new(),
             show_item_details: false,

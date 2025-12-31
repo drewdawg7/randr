@@ -13,6 +13,7 @@ pub enum ItemId {
     Coal,
     CopperOre,
     TinOre,
+    BasicHPPotion,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -108,6 +109,7 @@ pub enum ItemError {
     MaxUpgradesReached,
     NotEquipment,
     MaxQualityReached,
+    NotAConsumable,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]

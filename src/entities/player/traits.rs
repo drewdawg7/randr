@@ -1,6 +1,12 @@
 use std::{collections::HashMap, fmt::Display};
 
-use crate::{combat::{Combatant, HasGold, IsKillable, Named, PlayerDeathResult}, entities::{progression::HasProgression, Player, Progression}, inventory::{HasInventory, Inventory}, stats::{HasStats, StatInstance, StatSheet, StatType}};
+use crate::{
+    combat::{Combatant, HasGold, IsKillable, Named, PlayerDeathResult},
+    entities::{progression::HasProgression, Player, Progression},
+    inventory::{HasInventory, Inventory},
+    item::consumable::{ApplyEffect, ConsumableEffect},
+    stats::{HasStats, StatInstance, StatSheet, StatType},
+};
 
 
 impl Default for Player {
@@ -102,5 +108,35 @@ impl HasProgression for Player {
         self.inc(StatType::Health, 5);
         self.inc_max(StatType::Health, 5);
         self.inc(StatType::Attack, 1);
+    }
+}
+
+impl ApplyEffect for Player {
+    fn apply_effect(&mut self, effect: &ConsumableEffect) -> i32 {
+        match effect {
+            ConsumableEffect::RestoreHealth(amount) => {
+                let hp_before = self.hp();
+                let max_hp = self.max_hp();
+                let actual_heal = (*amount).min(max_hp - hp_before);
+                self.increase_health(actual_heal);
+                actual_heal
+            }
+            ConsumableEffect::RestoreHealthPercent(percent) => {
+                let max_hp = self.max_hp();
+                let hp_before = self.hp();
+                let heal_amount = ((max_hp as f32) * percent).round() as i32;
+                let actual_heal = heal_amount.min(max_hp - hp_before);
+                self.increase_health(actual_heal);
+                actual_heal
+            }
+        }
+    }
+
+    fn can_apply_effect(&self, effect: &ConsumableEffect) -> bool {
+        match effect {
+            ConsumableEffect::RestoreHealth(_) | ConsumableEffect::RestoreHealthPercent(_) => {
+                self.hp() < self.max_hp()
+            }
+        }
     }
 }
