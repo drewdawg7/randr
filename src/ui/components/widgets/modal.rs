@@ -30,12 +30,6 @@ impl Modal {
         }
     }
 
-    pub fn size(mut self, width: u16, height: u16) -> Self {
-        self.width = width;
-        self.height = height;
-        self
-    }
-
     fn centered_rect(&self, frame_area: Rect) -> Rect {
         let x = frame_area.x + (frame_area.width.saturating_sub(self.width)) / 2;
         let y = frame_area.y + (frame_area.height.saturating_sub(self.height)) / 2;

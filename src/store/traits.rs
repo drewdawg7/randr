@@ -1,4 +1,4 @@
-use crate::{item::{ItemId, definition::ItemRegistry}, store::Store};
+use crate::{item::{ItemId, ItemRegistry}, store::Store};
 
 impl Default for Store {
     fn default() -> Self {

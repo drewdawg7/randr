@@ -19,7 +19,7 @@ use crate::{
     ui::Id,
 };
 use crate::ui::components::player::item_details::render_item_details;
-use crate::ui::components::utilities::{blacksmith_header, item_display, lock_prefix, render_location_header, selection_prefix, DOUBLE_ARROW_UP, RETURN_ARROW};
+use crate::ui::components::utilities::{blacksmith_header, collect_player_equipment, item_display, list_move_down, list_move_up, lock_prefix, render_location_header, selection_prefix, DOUBLE_ARROW_UP, RETURN_ARROW};
 use crate::ui::utilities::HAMMER;
 use crate::item::enums::{ItemId, ItemQuality};
 use crate::ui::theme as colors;
@@ -55,21 +55,7 @@ impl BlacksmithTab {
     }
 
     fn rebuild_items(&mut self) {
-        self.cached_items.clear();
-
-        // Add equipped items
-        for slot in EquipmentSlot::all() {
-            if let Some(inv_item) = game_state().player.get_equipped_item(*slot) {
-                self.cached_items.push(inv_item.clone());
-            }
-        }
-
-        // Add inventory items (equipment only - materials can't be upgraded)
-        for inv_item in game_state().player.get_inventory_items().iter() {
-            if inv_item.item.item_type.is_equipment() {
-                self.cached_items.push(inv_item.clone());
-            }
-        }
+        self.cached_items = collect_player_equipment();
     }
 
     fn upgrade_item_at(&mut self, index: usize) {
@@ -277,15 +263,11 @@ impl BlacksmithTab {
         const MENU_SIZE: usize = 3; // Upgrade Items, Upgrade Item Quality, Back
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 { MENU_SIZE - 1 } else { current - 1 };
-                self.list_state.select(Some(new_idx));
+                list_move_up(&mut self.list_state, MENU_SIZE);
                 CmdResult::Changed(self.state())
             }
             Cmd::Move(tuirealm::command::Direction::Down) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % MENU_SIZE;
-                self.list_state.select(Some(new_idx));
+                list_move_down(&mut self.list_state, MENU_SIZE);
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {
@@ -319,15 +301,11 @@ impl BlacksmithTab {
 
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 { total_items - 1 } else { current - 1 };
-                self.list_state.select(Some(new_idx));
+                list_move_up(&mut self.list_state, total_items);
                 CmdResult::Changed(self.state())
             }
             Cmd::Move(tuirealm::command::Direction::Down) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % total_items;
-                self.list_state.select(Some(new_idx));
+                list_move_down(&mut self.list_state, total_items);
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {
@@ -433,15 +411,11 @@ impl BlacksmithTab {
 
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 { total_items - 1 } else { current - 1 };
-                self.list_state.select(Some(new_idx));
+                list_move_up(&mut self.list_state, total_items);
                 CmdResult::Changed(self.state())
             }
             Cmd::Move(tuirealm::command::Direction::Down) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % total_items;
-                self.list_state.select(Some(new_idx));
+                list_move_down(&mut self.list_state, total_items);
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {

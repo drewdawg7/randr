@@ -13,14 +13,14 @@ use tuirealm::{
 
 use crate::{
     combat::HasGold,
-    inventory::{EquipmentSlot, HasInventory, InventoryItem},
+    inventory::{HasInventory, InventoryItem},
     loot::WorthGold,
     store::sell_player_item,
     system::game_state,
     ui::Id,
 };
 use crate::ui::components::player::item_details::render_item_details_with_price;
-use crate::ui::components::utilities::{item_display, lock_prefix, render_location_header, selection_prefix, store_header, RETURN_ARROW};
+use crate::ui::components::utilities::{collect_player_items, item_display, list_move_down, list_move_up, lock_prefix, render_location_header, selection_prefix, store_header, RETURN_ARROW};
 use crate::ui::theme as colors;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -52,22 +52,7 @@ impl StoreTab {
     }
 
     fn get_player_items(&self) -> Vec<InventoryItem> {
-        let player = &game_state().player;
-        let mut items = Vec::new();
-
-        // Add equipped items first
-        for slot in EquipmentSlot::all() {
-            if let Some(inv_item) = player.get_equipped_item(*slot) {
-                items.push(inv_item.clone());
-            }
-        }
-
-        // Add inventory items
-        for inv_item in player.get_inventory_items() {
-            items.push(inv_item.clone());
-        }
-
-        items
+        collect_player_items()
     }
 }
 
@@ -254,15 +239,11 @@ impl StoreTab {
         const MENU_SIZE: usize = 3; // Buy, Sell, Back
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 { MENU_SIZE - 1 } else { current - 1 };
-                self.list_state.select(Some(new_idx));
+                list_move_up(&mut self.list_state, MENU_SIZE);
                 CmdResult::Changed(self.state())
             }
             Cmd::Move(tuirealm::command::Direction::Down) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % MENU_SIZE;
-                self.list_state.select(Some(new_idx));
+                list_move_down(&mut self.list_state, MENU_SIZE);
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {
@@ -296,15 +277,11 @@ impl StoreTab {
 
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 { total_items - 1 } else { current - 1 };
-                self.list_state.select(Some(new_idx));
+                list_move_up(&mut self.list_state, total_items);
                 CmdResult::Changed(self.state())
             }
             Cmd::Move(tuirealm::command::Direction::Down) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % total_items;
-                self.list_state.select(Some(new_idx));
+                list_move_down(&mut self.list_state, total_items);
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {
@@ -346,15 +323,11 @@ impl StoreTab {
 
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 { total_items - 1 } else { current - 1 };
-                self.list_state.select(Some(new_idx));
+                list_move_up(&mut self.list_state, total_items);
                 CmdResult::Changed(self.state())
             }
             Cmd::Move(tuirealm::command::Direction::Down) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % total_items;
-                self.list_state.select(Some(new_idx));
+                list_move_down(&mut self.list_state, total_items);
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {

@@ -4,7 +4,6 @@ pub enum Id {
     Town,
     Fight,
     Profile,
-    Equipment,
     Mine,
     Quit,
 }

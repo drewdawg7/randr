@@ -11,18 +11,16 @@ use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::{
     combat::CombatRounds,
     entities::{mob::{MobKind, MobRegistry}, Mob, Player},
-    item::{ItemId, definition::ItemRegistry},
+    item::{ItemId, ItemRegistry},
     mine::rock::{Rock, RockId, RockRegistry},
     town::definition::Town,
     ui::{
         Id,
         components::mine::screen::MineScreen,
-        equipment::Equipment,
         main_menu::MainMenuScreen,
         fight::FightScreen,
         modal_wrapper::ModalWrapper,
         profile::PlayerProfile,
-        tabbed_container::{TabbedContainer, TabEntry},
         town::TownScreen,
     },
 };
@@ -121,13 +119,8 @@ impl GameState {
         let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
         let mine = ModalWrapper::new(MineScreen::new());
         let _ = self.app.mount(Id::Mine, Box::new(mine), vec![]);
-        let profile_tabs = ModalWrapper::new(TabbedContainer::new(
-            vec![
-                TabEntry::new("Player".into(), PlayerProfile::new()),
-                TabEntry::new("Equipment".into(), Equipment::default()),
-            ],
-        ));
-        let _ = self.app.mount(Id::Profile, Box::new(profile_tabs), vec![]);
+        let profile = ModalWrapper::new(PlayerProfile::new());
+        let _ = self.app.mount(Id::Profile, Box::new(profile), vec![]);
     }
 
     pub fn run_current_screen(&mut self) -> std::io::Result<()> {

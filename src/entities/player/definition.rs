@@ -1,4 +1,3 @@
-use crate::combat::HasGold;
 use crate::HasInventory;
 use crate::{entities::Progression, inventory::Inventory, stats::StatSheet};
 use crate::stats::{HasStats, StatType};

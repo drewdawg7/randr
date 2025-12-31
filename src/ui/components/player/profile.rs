@@ -1,7 +1,7 @@
 use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Style, Stylize}, text::{Line, Span}, widgets::{List, ListItem, ListState, Paragraph}, Frame};
 
 use crate::ui::theme::{self as colors, ColorExt};
-use tuirealm::{command::{Cmd, CmdResult}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State, StateValue};
+use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
 use crate::{combat::{Combatant, HasGold, Named}, ui::Id};
 use crate::system::game_state;
@@ -122,7 +122,13 @@ impl MockComponent for PlayerProfile {
 }
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for PlayerProfile {
-    fn on(&mut self, _ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
-        None
+    fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
+        match ev {
+            Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {
+                game_state().current_screen = Id::Menu;
+                None
+            }
+            _ => None
+        }
     }
 }

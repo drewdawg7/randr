@@ -1,10 +1,8 @@
-use std::ops::RangeInclusive;
-
 use crate::{
-    entities::mob::enums::MobQuality, loot::LootTable, registry::Registry, stats::{HasStats, StatSheet}
+    entities::mob::enums::{MobKind, MobQuality},
+    loot::LootTable,
+    stats::{HasStats, StatSheet},
 };
-
-pub type MobSpecId = usize;
 
 #[derive(Debug, Clone)]
 pub struct Mob {
@@ -30,23 +28,3 @@ impl Mob {
         self.max_hp()
     }
 }
-
-pub struct MobSpec {
-    pub name: &'static str,
-    pub max_health: RangeInclusive<i32>,
-    pub attack: RangeInclusive<i32>,
-    pub dropped_gold: RangeInclusive<i32>,
-    pub dropped_xp: RangeInclusive<i32>,
-    pub quality: MobQuality,
-}
-
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum MobKind {
-    Slime,
-    Goblin,
-    Dragon,
-}
-
-pub type MobRegistry = Registry<MobKind, MobSpec>;
-
-

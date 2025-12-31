@@ -13,7 +13,7 @@ use crate::{
     inventory::{EquipmentSlot, HasInventory, InventoryItem},
     item::{Item, ItemType},
     system::game_state,
-    ui::components::utilities::{item_display, lock_prefix, selection_prefix},
+    ui::components::utilities::{item_display, list_move_down, list_move_up, lock_prefix, selection_prefix},
     ui::theme::{DARK_GRAY, DARK_WALNUT, WOOD_BROWN, OAK_BROWN, TAN_WOOD, LIGHT_BEIGE, CREAM_WOOD},
 };
 
@@ -141,26 +141,12 @@ impl InventoryModal {
     }
 
     fn move_up(&mut self) {
-        if self.items.is_empty() {
-            return;
-        }
-        let current = self.selected_index();
-        let new_idx = if current == 0 {
-            self.items.len() - 1
-        } else {
-            current - 1
-        };
-        self.list_state.select(Some(new_idx));
+        list_move_up(&mut self.list_state, self.items.len());
         self.adjust_scroll();
     }
 
     fn move_down(&mut self) {
-        if self.items.is_empty() {
-            return;
-        }
-        let current = self.selected_index();
-        let new_idx = (current + 1) % self.items.len();
-        self.list_state.select(Some(new_idx));
+        list_move_down(&mut self.list_state, self.items.len());
         self.adjust_scroll();
     }
 

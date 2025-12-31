@@ -3,10 +3,11 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::{Color, Style},
     text::{Line, Span},
-    widgets::{Block, Paragraph},
+    widgets::{Block, Paragraph, ListState},
     Frame,
 };
 
+use crate::inventory::{EquipmentSlot, HasInventory, InventoryItem};
 use crate::item::Item;
 use crate::ui::theme::{self as colors, quality_color, ColorExt};
 
@@ -161,4 +162,66 @@ pub fn render_location_header(
 
     // Return the remaining area for content
     chunks[1]
+}
+
+/// Collects all player items (equipped + inventory).
+pub fn collect_player_items() -> Vec<InventoryItem> {
+    let player = &game_state().player;
+    let mut items = Vec::new();
+
+    // Add equipped items first
+    for slot in EquipmentSlot::all() {
+        if let Some(inv_item) = player.get_equipped_item(*slot) {
+            items.push(inv_item.clone());
+        }
+    }
+
+    // Add inventory items
+    for inv_item in player.get_inventory_items() {
+        items.push(inv_item.clone());
+    }
+
+    items
+}
+
+/// Collects player equipment items (equipped + inventory equipment only).
+pub fn collect_player_equipment() -> Vec<InventoryItem> {
+    let player = &game_state().player;
+    let mut items = Vec::new();
+
+    // Add equipped items
+    for slot in EquipmentSlot::all() {
+        if let Some(inv_item) = player.get_equipped_item(*slot) {
+            items.push(inv_item.clone());
+        }
+    }
+
+    // Add inventory items (equipment only - materials can't be upgraded)
+    for inv_item in player.get_inventory_items().iter() {
+        if inv_item.item.item_type.is_equipment() {
+            items.push(inv_item.clone());
+        }
+    }
+
+    items
+}
+
+/// Move selection up in a list with wrapping.
+pub fn list_move_up(list_state: &mut ListState, item_count: usize) {
+    if item_count == 0 {
+        return;
+    }
+    let current = list_state.selected().unwrap_or(0);
+    let new_idx = if current == 0 { item_count - 1 } else { current - 1 };
+    list_state.select(Some(new_idx));
+}
+
+/// Move selection down in a list with wrapping.
+pub fn list_move_down(list_state: &mut ListState, item_count: usize) {
+    if item_count == 0 {
+        return;
+    }
+    let current = list_state.selected().unwrap_or(0);
+    let new_idx = if current >= item_count - 1 { 0 } else { current + 1 };
+    list_state.select(Some(new_idx));
 }

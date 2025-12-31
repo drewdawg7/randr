@@ -46,11 +46,6 @@ impl StyledContent {
         }
     }
 
-    /// Get the full text content (for width calculation)
-    pub fn full_text(&self) -> String {
-        self.segments.iter().map(|s| s.text.as_str()).collect()
-    }
-
     /// Get the total character count
     pub fn char_count(&self) -> usize {
         self.segments.iter().map(|s| s.text.chars().count()).sum()
@@ -61,28 +56,6 @@ impl From<String> for StyledContent {
     fn from(text: String) -> Self {
         Self::plain(text)
     }
-}
-
-/// Render content inside an ASCII scroll border
-///
-/// The scroll looks like:
-/// ```text
-///    ______________________________
-///  / \                             \.
-/// |   | <content line 1>           |.
-///  \_ | <content line 2>           |.
-///     | <content line 3>           |.
-///     |   _________________________|___
-///     |  /                            /.
-///     \_/dc__________________________/.
-/// ```
-pub fn render_scroll_with_content(
-    frame: &mut Frame,
-    area: Rect,
-    content_lines: Vec<String>,
-) {
-    let styled: Vec<StyledContent> = content_lines.into_iter().map(StyledContent::from).collect();
-    render_scroll_with_styled_content(frame, area, styled);
 }
 
 /// Render styled content inside an ASCII scroll border
@@ -171,46 +144,6 @@ fn generate_fold_top(content_width: u16) -> Line<'static> {
         Span::styled("\\", Style::default().fg(SCROLL_DARK)),
         Span::styled(spaces, Style::default()),
         Span::styled("\\", Style::default().fg(SCROLL_DARK)),
-        Span::styled(".", Style::default().fg(SCROLL_MID)),
-    ])
-}
-
-/// First side with content: "|   |" + content + "|."
-fn generate_first_side_with_content(content: &str, content_width: u16) -> Line<'static> {
-    let padded = format!("{:<width$}", content, width = content_width as usize);
-    Line::from(vec![
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled("   ", Style::default()),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(padded, Style::default().fg(colors::WHITE)),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(".", Style::default().fg(SCROLL_MID)),
-    ])
-}
-
-/// Fold corner with content: " \_ |" + content + "|."
-fn generate_fold_corner_with_content(content: &str, content_width: u16) -> Line<'static> {
-    let padded = format!("{:<width$}", content, width = content_width as usize);
-    Line::from(vec![
-        Span::styled(" ", Style::default()),
-        Span::styled("\\", Style::default().fg(SCROLL_DARK)),
-        Span::styled("_", Style::default().fg(SCROLL_LIGHT)),
-        Span::styled(" ", Style::default()),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(padded, Style::default().fg(colors::WHITE)),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(".", Style::default().fg(SCROLL_MID)),
-    ])
-}
-
-/// Content line: "    |" + content (padded) + "|."
-fn generate_content_line(content: &str, content_width: u16) -> Line<'static> {
-    let padded = format!("{:<width$}", content, width = content_width as usize);
-    Line::from(vec![
-        Span::styled("    ", Style::default()),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(padded, Style::default().fg(colors::WHITE)),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
         Span::styled(".", Style::default().fg(SCROLL_MID)),
     ])
 }

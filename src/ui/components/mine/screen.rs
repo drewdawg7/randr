@@ -20,7 +20,7 @@ use crate::mine::rock::RockArt;
 use crate::system::game_state;
 use crate::ui::Id;
 use crate::ui::components::utilities::{render_location_header, PICKAXE, RETURN_ARROW};
-use crate::ui::components::widgets::stone_border;
+use crate::ui::components::widgets::border::BorderTheme;
 use crate::HasInventory;
 
 // HP bar block characters
@@ -392,15 +392,16 @@ impl MockComponent for MineScreen {
         let border_area_top = Rect { x: 0, y: 0, width: total_border_width, height: 1 };
         let border_area_bottom = Rect { x: 0, y: bottom_y, width: total_border_width, height: 1 };
 
-        let top_border = stone_border::generate_top_border(total_border_width);
-        let bottom_border = stone_border::generate_bottom_border(total_border_width);
+        let border = BorderTheme::Stone;
+        let top_border = border.generate_top_border(total_border_width);
+        let bottom_border = border.generate_bottom_border(total_border_width);
         frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
         frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
 
         // Left and right borders
         for row in 0..border_height {
-            let left_char = stone_border::generate_left_border_char(row);
-            let right_char = stone_border::generate_right_border_char(row);
+            let left_char = border.generate_left_border_char(row);
+            let right_char = border.generate_right_border_char(row);
             let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
             let right_area = Rect { x: x_offset + content_area.width, y: y_offset + row, width: 1, height: 1 };
             frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);

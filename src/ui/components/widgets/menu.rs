@@ -4,7 +4,7 @@ use ratatui::{widgets::{List, ListItem, ListState}};
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 
-use crate::ui::components::utilities::selection_prefix;
+use crate::ui::components::utilities::{list_move_down, list_move_up, selection_prefix};
 
 pub struct MenuItem {
     pub label: String,
@@ -58,15 +58,11 @@ impl MockComponent for Menu {
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 { self.items.len() - 1 } else { current - 1 };
-                self.list_state.select(Some(new_idx));
+                list_move_up(&mut self.list_state, self.items.len());
                 CmdResult::Changed(self.state())
             }
             Cmd::Move(tuirealm::command::Direction::Down) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % self.items.len();
-                self.list_state.select(Some(new_idx));
+                list_move_down(&mut self.list_state, self.items.len());
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {
@@ -84,19 +80,11 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for Menu {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = if current == 0 {
-                    self.items.len() - 1
-                } else {
-                    current - 1
-                };
-                self.list_state.select(Some(new_idx));
+                list_move_up(&mut self.list_state, self.items.len());
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
-                let current = self.list_state.selected().unwrap_or(0);
-                let new_idx = (current + 1) % self.items.len();
-                self.list_state.select(Some(new_idx));
+                list_move_down(&mut self.list_state, self.items.len());
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {

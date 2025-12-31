@@ -135,38 +135,6 @@ impl RockArt {
         RockArt { cells, width, height }
     }
 
-    /// Generate a simple single-color rock (for rocks with no ore drops)
-    pub fn generate_simple(color: Color) -> Self {
-        let mut rng = rand::thread_rng();
-
-        let height = ROCK_SHAPE.len();
-        let width = ROCK_SHAPE.iter().map(|s| s.len()).max().unwrap_or(0);
-
-        let mut cells: Vec<Vec<RockCell>> = Vec::with_capacity(height);
-
-        for row_str in ROCK_SHAPE {
-            let mut row: Vec<RockCell> = Vec::with_capacity(width);
-
-            for ch in row_str.chars() {
-                let cell = if ch == ' ' {
-                    RockCell { ch: ' ', color: Color::Reset }
-                } else {
-                    let block_idx = rng.gen_range(0..BLOCK_CHARS.len());
-                    RockCell { ch: BLOCK_CHARS[block_idx], color }
-                };
-                row.push(cell);
-            }
-
-            while row.len() < width {
-                row.push(RockCell { ch: ' ', color: Color::Reset });
-            }
-
-            cells.push(row);
-        }
-
-        RockArt { cells, width, height }
-    }
-
     /// Convert to ratatui Lines for rendering
     pub fn to_lines(&self) -> Vec<Line<'static>> {
         self.cells

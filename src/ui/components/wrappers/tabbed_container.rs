@@ -7,7 +7,7 @@ use ratatui::{
 };
 
 use crate::ui::theme::{self as colors, ColorExt};
-use crate::ui::components::widgets::{forest_border, ember_border, wood_border};
+use crate::ui::components::widgets::border::BorderTheme;
 use tuirealm::{
     command::{Cmd, CmdResult},
     event::{Key, KeyEvent},
@@ -21,11 +21,11 @@ pub trait TabContent: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>
 /// Blanket implementation: any type implementing both traits gets TabContent for free
 impl<T: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> TabContent for T {}
 
-/// A tab entry with a label and content component
+/// A tab entry with a label, content component, and optional border theme
 pub struct TabEntry {
     pub label: Line<'static>,
     pub content: Box<dyn TabContent>,
-    pub content_height: Option<u16>,
+    pub border_theme: BorderTheme,
 }
 
 impl TabEntry {
@@ -33,19 +33,15 @@ impl TabEntry {
         Self {
             label,
             content: Box::new(content),
-            content_height: None,
+            border_theme: BorderTheme::None,
         }
     }
 
-    pub fn with_height<C: TabContent + 'static>(
-        label: Line<'static>,
-        content: C,
-        content_height: u16,
-    ) -> Self {
+    pub fn with_border<C: TabContent + 'static>(label: Line<'static>, content: C, border_theme: BorderTheme) -> Self {
         Self {
             label,
             content: Box::new(content),
-            content_height: Some(content_height),
+            border_theme,
         }
     }
 }
@@ -79,36 +75,10 @@ impl TabbedContainer {
         self.active_tab = new_idx;
     }
 
-    /// Check if the active tab is a Field tab (by checking if label contains "Field")
-    fn is_field_tab_active(&self) -> bool {
-        if let Some(tab) = self.tabs.get(self.active_tab) {
-            tab.label.spans.iter().any(|span| span.content.contains("Field"))
-        } else {
-            false
-        }
-    }
-
-    /// Check if the active tab is a Blacksmith tab (by checking if label contains "Blacksmith")
-    fn is_blacksmith_tab_active(&self) -> bool {
-        if let Some(tab) = self.tabs.get(self.active_tab) {
-            tab.label.spans.iter().any(|span| span.content.contains("Blacksmith"))
-        } else {
-            false
-        }
-    }
-
-    /// Check if the active tab is a Store tab (by checking if label contains "Store")
-    fn is_store_tab_active(&self) -> bool {
-        if let Some(tab) = self.tabs.get(self.active_tab) {
-            tab.label.spans.iter().any(|span| span.content.contains("Store"))
-        } else {
-            false
-        }
-    }
-
-    /// Check if the active tab needs a decorative border
-    fn needs_border(&self) -> bool {
-        self.is_field_tab_active() || self.is_blacksmith_tab_active() || self.is_store_tab_active()
+    fn active_border_theme(&self) -> BorderTheme {
+        self.tabs.get(self.active_tab)
+            .map(|tab| tab.border_theme)
+            .unwrap_or(BorderTheme::None)
     }
 }
 
@@ -116,10 +86,8 @@ impl MockComponent for TabbedContainer {
     fn view(&mut self, frame: &mut Frame, _area: Rect) {
         // Use the actual frame size for absolute positioning
         let frame_size = frame.area();
-        let is_field_tab = self.is_field_tab_active();
-        let is_blacksmith_tab = self.is_blacksmith_tab_active();
-        let is_store_tab = self.is_store_tab_active();
-        let has_border = self.needs_border();
+        let border_theme = self.active_border_theme();
+        let has_border = border_theme != BorderTheme::None;
 
         // Calculate offsets for decorative borders (1 row/col each for top, bottom, left, right)
         let y_offset: u16 = if has_border { 1 } else { 0 };
@@ -191,15 +159,13 @@ impl MockComponent for TabbedContainer {
         // Use full available width for content area (consistent with fight screen)
         let box_width = full_area.width;
 
-        // Determine themed background based on active tab
-        let tab_bg = if is_store_tab {
-            colors::STORE_BG
-        } else if is_blacksmith_tab {
-            colors::BLACKSMITH_BG
-        } else if is_field_tab {
-            colors::FIELD_BG
-        } else {
-            colors::BACKGROUND
+        // Determine themed background based on active tab's border theme
+        let tab_bg = match border_theme {
+            BorderTheme::Wood => colors::STORE_BG,
+            BorderTheme::Ember => colors::BLACKSMITH_BG,
+            BorderTheme::Forest => colors::FIELD_BG,
+            BorderTheme::Stone => colors::MINE_BG,
+            BorderTheme::None => colors::BACKGROUND,
         };
 
         // Fill background ONLY inside the bordered area (not full chunks[1])
@@ -241,54 +207,20 @@ impl MockComponent for TabbedContainer {
                 // Border style with themed background
                 let border_style = Style::default().bg(tab_bg);
 
-                if is_field_tab {
-                    // Forest borders for Field tab
-                    let top_border = forest_border::generate_top_border(total_border_width);
-                    let bottom_border = forest_border::generate_bottom_border(total_border_width);
-                    frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
-                    frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
+                // Render top and bottom borders
+                let top_border = border_theme.generate_top_border(total_border_width);
+                let bottom_border = border_theme.generate_bottom_border(total_border_width);
+                frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
+                frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
 
-                    // Left and right borders
-                    for row in 0..border_height {
-                        let left_char = forest_border::generate_left_border_char(row);
-                        let right_char = forest_border::generate_right_border_char(row);
-                        let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
-                        let right_area = Rect { x: x_offset + box_width, y: y_offset + row, width: 1, height: 1 };
-                        frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
-                        frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
-                    }
-                } else if is_blacksmith_tab {
-                    // Ember borders for Blacksmith tab
-                    let top_border = ember_border::generate_top_border(total_border_width);
-                    let bottom_border = ember_border::generate_bottom_border(total_border_width);
-                    frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
-                    frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
-
-                    // Left and right borders
-                    for row in 0..border_height {
-                        let left_char = ember_border::generate_left_border_char(row);
-                        let right_char = ember_border::generate_right_border_char(row);
-                        let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
-                        let right_area = Rect { x: x_offset + box_width, y: y_offset + row, width: 1, height: 1 };
-                        frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
-                        frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
-                    }
-                } else if is_store_tab {
-                    // Wood borders for Store tab
-                    let top_border = wood_border::generate_top_border(total_border_width);
-                    let bottom_border = wood_border::generate_bottom_border(total_border_width);
-                    frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
-                    frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
-
-                    // Left and right borders
-                    for row in 0..border_height {
-                        let left_char = wood_border::generate_left_border_char(row);
-                        let right_char = wood_border::generate_right_border_char(row);
-                        let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
-                        let right_area = Rect { x: x_offset + box_width, y: y_offset + row, width: 1, height: 1 };
-                        frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
-                        frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
-                    }
+                // Render left and right borders
+                for row in 0..border_height {
+                    let left_char = border_theme.generate_left_border_char(row);
+                    let right_char = border_theme.generate_right_border_char(row);
+                    let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
+                    let right_area = Rect { x: x_offset + box_width, y: y_offset + row, width: 1, height: 1 };
+                    frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
+                    frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
                 }
             }
         }
