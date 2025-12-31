@@ -3,4 +3,5 @@ pub enum RockId {
     Coal,
     Copper,
     Tin,
+    Mixed,
 }

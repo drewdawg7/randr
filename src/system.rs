@@ -7,10 +7,12 @@ use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
 use crate::field::definition::Field;
+use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::{
     combat::CombatRounds,
     entities::{mob::{MobKind, MobRegistry}, Mob, Player},
     item::{ItemId, definition::ItemRegistry},
+    mine::rock::{Rock, RockId, RockRegistry},
     town::definition::Town,
     ui::{
         Id,
@@ -25,6 +27,14 @@ use crate::{
     },
 };
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum ModalType {
+    #[default]
+    None,
+    Keybinds,
+    Inventory,
+}
+
 static mut GAME_STATE: Option<GameState> = None;
 
 pub fn init_game_state(gs: GameState) {
@@ -38,13 +48,15 @@ pub fn game_state() -> &'static mut GameState {
 pub struct GameState {
     item_registry: ItemRegistry,
     mob_registry: MobRegistry,
+    rock_registry: RockRegistry,
     pub current_screen: Id,
     app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
     pub player: Player,
     pub town: Town,
     current_combat: Option<CombatRounds>,
-    pub modal_open: bool,
+    pub active_modal: ModalType,
+    pub inventory_modal: InventoryModal,
 }
 
 impl GameState {
@@ -56,8 +68,19 @@ impl GameState {
         self.item_registry.spawn(item)
     }
 
+    pub fn spawn_rock(&self, rock: RockId) -> Rock {
+        self.rock_registry.spawn(rock)
+    }
+
     pub fn get_item_name(&self, kind: ItemId) -> &'static str {
         self.item_registry
+            .get(&kind)
+            .map(|spec| spec.name)
+            .unwrap_or("Unknown")
+    }
+
+    pub fn get_rock_name(&self, kind: RockId) -> &'static str {
+        self.rock_registry
             .get(&kind)
             .map(|spec| spec.name)
             .unwrap_or("Unknown")
@@ -144,13 +167,14 @@ impl Default for GameState {
 
         let store = crate::store::Store::default();
         let blacksmith = crate::blacksmith::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
-        let mine = crate::mine::Mine::new("The Village Mine".to_string());
+        let mine = crate::mine::Mine::default();
         let town = Town::new("Village".to_string(), store, blacksmith, Field::default(), mine);
 
         Self {
             player: Player::default(),
             item_registry: ItemRegistry::new(),
             mob_registry: MobRegistry::new(),
+            rock_registry: RockRegistry::new(),
             town,
             app: Application::init(
                 EventListenerCfg::default()
@@ -160,7 +184,8 @@ impl Default for GameState {
             terminal: Some(terminal),
             current_screen: Id::Menu,
             current_combat: None,
-            modal_open: false,
+            active_modal: ModalType::None,
+            inventory_modal: InventoryModal::new(),
         }
     }
 }

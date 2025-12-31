@@ -16,22 +16,12 @@ use tuirealm::{
 };
 
 use crate::combat::IsKillable;
-use crate::item::Item;
-use crate::mine::rock::RockId;
+use crate::mine::rock::RockArt;
 use crate::system::game_state;
 use crate::ui::Id;
 use crate::ui::components::utilities::{render_location_header, PICKAXE, RETURN_ARROW};
 use crate::ui::components::widgets::stone_border;
 use crate::HasInventory;
-
-/// Get color for rock type
-fn rock_color(rock_id: RockId) -> ratatui::style::Color {
-    match rock_id {
-        RockId::Copper => colors::COPPER_ORE,
-        RockId::Coal => colors::COAL_BLACK,
-        RockId::Tin => colors::TIN_ORE,
-    }
-}
 
 // HP bar block characters
 const BLOCK_FULL: char = '█';
@@ -39,23 +29,14 @@ const BLOCK_DARK: char = '▓';
 const BLOCK_MED: char = '▒';
 const BLOCK_LIGHT: char = '░';
 
-const ROCK_ART: &[&str] = &[
-    "        ██████        ",
-    "    ████▒▒▒▒▒▒████    ",
-    "  ██▒▒░░░░░░░░░░▒▒██  ",
-    "  ██▒▒▒▒▒▒▒▒▒▒▓▓▓▓██  ",
-    "██▓▓▒▒▒▒▒▒▒▒▓▓▓▓▓▓▓▓██",
-    "██▓▓▒▒▒▒▒▒▒▒▓▓████▓▓██",
-    "██▓▓▓▓▒▒▒▒▓▓▓▓▓▓▓▓████",
-    "  ████▓▓▓▓▓▓▓▓██████  ",
-];
-
 pub struct MineScreen {
     props: Props,
     selected_row: usize,    // 0 = mine options, 1 = back button
     selected_mine: usize,   // 0, 1, or 2 for which mine option
     active_button: usize,   // Which mine button is currently active (0, 1, or 2)
-    recent_drops: Vec<Item>, // Items dropped from the last rock kill
+    recent_drops: Vec<(crate::item::ItemId, u32)>, // Pre-grouped drops (item, count)
+    current_rock_art: Option<RockArt>, // Generated art for current rock
+    last_rock_max_hp: i32,  // Track when rock changes (new rock = full hp)
 }
 
 impl MineScreen {
@@ -66,6 +47,8 @@ impl MineScreen {
             selected_mine: 0,
             active_button: 0,
             recent_drops: Vec::new(),
+            current_rock_art: None,
+            last_rock_max_hp: 0,
         }
     }
 
@@ -77,6 +60,34 @@ impl MineScreen {
             new_button = rng.gen_range(0..3);
         }
         self.active_button = new_button;
+    }
+
+    /// Ensure we have rock art for the current rock, regenerate if rock changed
+    fn ensure_rock_art(&mut self) {
+        let gs = game_state();
+        if let Some(rock) = &gs.town.mine.current_rock {
+            let current_max = rock.stats.max_value(crate::stats::StatType::Health);
+            let current_hp = rock.stats.value(crate::stats::StatType::Health);
+
+            // Regenerate if: no art, or rock respawned (hp == max and max changed)
+            let needs_regen = self.current_rock_art.is_none()
+                || (current_hp == current_max && current_max != self.last_rock_max_hp);
+
+            if needs_regen {
+                self.current_rock_art = Some(RockArt::generate(&rock.loot));
+                self.last_rock_max_hp = current_max;
+            }
+        } else {
+            self.current_rock_art = None;
+        }
+    }
+
+    /// Render the rock art to Lines for display
+    fn render_rock_lines(&self) -> Vec<Line<'static>> {
+        match &self.current_rock_art {
+            Some(art) => art.to_lines(),
+            None => vec![],
+        }
     }
 }
 
@@ -146,6 +157,9 @@ impl MockComponent for MineScreen {
         // Ensure a rock exists when viewing the mine
         game_state().town.mine.ensure_rock_exists();
 
+        // Generate/update rock art if needed
+        self.ensure_rock_art();
+
         let frame_size = frame.area();
 
         // Border offsets
@@ -181,24 +195,36 @@ impl MockComponent for MineScreen {
             let mut drop_lines: Vec<Line> = vec![
                 Line::from(Span::styled("Drops:", Style::default().color(colors::YELLOW))),
             ];
-            for drop in &self.recent_drops {
-                let item_name = gs.get_item_name(drop.kind);
+
+            for (item_kind, count) in &self.recent_drops {
+                let item_name = gs.get_item_name(*item_kind);
+                let display = if *count > 1 {
+                    format!("  {} (x{})", item_name, count)
+                } else {
+                    format!("  {}", item_name)
+                };
                 drop_lines.push(Line::from(Span::styled(
-                    format!("  {}", item_name),
+                    display,
                     Style::default().color(colors::WHITE),
                 )));
             }
+
             let drops_area = Rect {
                 x: remaining_area.x + 1,
                 y: remaining_area.y,
-                width: 20,
+                width: 25,
                 height: drop_lines.len() as u16,
             };
             frame.render_widget(Paragraph::new(drop_lines), drops_area);
         }
 
+        // Get rock art dimensions
+        let (rock_width, rock_height) = self.current_rock_art
+            .as_ref()
+            .map(|art| (art.width as u16, art.height as u16))
+            .unwrap_or((22, 8));
+
         // Split remaining area: rock art, HP bar, HP text, horizontal mine options, and back button
-        let rock_height = ROCK_ART.len() as u16;
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -216,28 +242,32 @@ impl MockComponent for MineScreen {
         let mine_options_area = chunks[3];
         let back_button_area = chunks[4];
 
-        // Render rock art centered with color based on rock type
-        let rock_width = ROCK_ART.iter().map(|s| s.chars().count()).max().unwrap_or(0) as u16;
-        let rock_x = rock_area.x + rock_area.width.saturating_sub(rock_width) / 2;
-        let rock_y = rock_area.y + 1; // 1 line padding from top
-
-        // Get rock color based on current rock type
-        let current_rock_color = game_state()
+        // Render rock name centered above rock art
+        let rock_name = game_state()
             .town
             .mine
             .current_rock
             .as_ref()
-            .map(|r| rock_color(r.rock_id))
-            .unwrap_or(colors::GRANITE);
+            .map(|r| game_state().get_rock_name(r.rock_id))
+            .unwrap_or("Rock");
+        let rock_name_width = rock_name.len() as u16;
+        let rock_name_x = rock_area.x + rock_area.width.saturating_sub(rock_name_width) / 2;
+        let rock_name_area = Rect {
+            x: rock_name_x,
+            y: rock_area.y,
+            width: rock_name_width,
+            height: 1,
+        };
+        frame.render_widget(
+            Paragraph::new(Line::from(Span::styled(rock_name, Style::default().color(colors::LIGHT_STONE)))),
+            rock_name_area,
+        );
 
-        let rock_lines: Vec<Line> = ROCK_ART
-            .iter()
-            .map(|line| {
-                Line::from(vec![
-                    Span::styled(*line, Style::default().color(current_rock_color)),
-                ])
-            })
-            .collect();
+        // Render rock art centered below name
+        let rock_x = rock_area.x + rock_area.width.saturating_sub(rock_width) / 2;
+        let rock_y = rock_area.y + 1; // 1 line below name
+
+        let rock_lines = self.render_rock_lines();
 
         let rock_render_area = Rect {
             x: rock_x,
@@ -438,12 +468,23 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
                         if !rock.is_alive() {
                             // Rock died - roll drops and add to inventory
                             let drops = rock.roll_drops();
-                            self.recent_drops = drops.clone();
+
+                            // Group drops by item kind for display
+                            let mut counts: std::collections::HashMap<crate::item::ItemId, u32> = std::collections::HashMap::new();
+                            for drop in &drops {
+                                *counts.entry(drop.kind).or_insert(0) += 1;
+                            }
+                            let mut grouped: Vec<_> = counts.into_iter().collect();
+                            grouped.sort_by_key(|(kind, _)| gs.get_item_name(*kind));
+                            self.recent_drops = grouped;
+
+                            // Add to inventory
                             for drop in drops {
                                 let _ = gs.player.add_to_inv(drop);
                             }
-                            // Spawn a new rock
+                            // Spawn a new rock and regenerate art
                             gs.town.mine.spawn_rock();
+                            self.current_rock_art = None; // Force regeneration on next view
                         } else {
                             // Rock still alive - put it back
                             gs.town.mine.current_rock = Some(rock);

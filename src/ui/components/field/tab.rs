@@ -39,11 +39,13 @@ impl FieldTab {
                         let mut combat_rounds = crate::combat::system::enter_combat(&mut gs.player, &mut mob);
 
                         // Spawn items with quality and add to both dropped_loot and inventory
-                        let loot_kinds = combat_rounds.loot_kinds().to_vec();
-                        for item_kind in loot_kinds {
-                            let item = gs.spawn_item(item_kind);
-                            combat_rounds.dropped_loot.push(item.clone());
-                            let _ = crate::inventory::HasInventory::add_to_inv(&mut gs.player, item);
+                        let loot_drops = combat_rounds.loot_drops().to_vec();
+                        for (item_kind, quantity) in loot_drops {
+                            for _ in 0..quantity {
+                                let item = gs.spawn_item(item_kind);
+                                combat_rounds.dropped_loot.push(item.clone());
+                                let _ = crate::inventory::HasInventory::add_to_inv(&mut gs.player, item);
+                            }
                         }
 
                         gs.set_current_combat(combat_rounds);

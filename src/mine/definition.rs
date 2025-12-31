@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 use rand::Rng;
 
-use crate::mine::rock::{Rock, RockId};
+use crate::{game_state, mine::rock::{Rock, RockId}};
 
 pub struct Mine {
     pub name: String,
     pub rock_weights: HashMap<RockId, i32>,
-    pub rocks: HashMap<RockId, Rock>,
     pub current_rock: Option<Rock>,
 }
 
@@ -17,15 +16,9 @@ impl Mine {
         rock_weights.insert(RockId::Coal, 30);
         rock_weights.insert(RockId::Tin, 20);
 
-        let mut rocks = HashMap::new();
-        rocks.insert(RockId::Copper, Rock::copper_rock());
-        rocks.insert(RockId::Coal, Rock::coal_rock());
-        rocks.insert(RockId::Tin, Rock::tin_rock());
-
         Self {
             name,
             rock_weights,
-            rocks,
             current_rock: None,
         }
     }
@@ -43,9 +36,7 @@ impl Mine {
         for (rock_id, weight) in &self.rock_weights {
             roll -= weight;
             if roll < 0 {
-                if let Some(rock_template) = self.rocks.get(rock_id) {
-                    self.current_rock = Some(rock_template.clone());
-                }
+                self.current_rock = Some(game_state().spawn_rock(*rock_id));
                 break;
             }
         }

@@ -17,6 +17,7 @@ impl Default for Player {
                 sheet.insert(StatType::Attack.instance(12));
                 sheet.insert(StatType::Defense.instance(3));
                 sheet.insert(StatType::GoldFind.instance(0));
+                sheet.insert(StatType::Mining.instance(100));
                 sheet.insert(StatType::Health.instance(100));
                 sheet
             },

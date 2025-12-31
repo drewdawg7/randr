@@ -43,7 +43,7 @@ impl Inventory {
     pub fn new() -> Self {
         Inventory {
             items: Vec::new(),
-            max_slots: 10,
+            max_slots: 15,
             equipment: HashMap::new()
         }
     }

@@ -1,14 +1,11 @@
-use std::collections::HashMap;
-
 use crate::{
     combat::IsKillable,
     entities::Player,
     game_state,
     item::Item,
-    loot::{LootItem, LootTable},
-    stats::{StatSheet, StatType},
+    loot::LootTable,
+    stats::StatSheet,
     HasInventory,
-    ItemId,
 };
 
 use super::enums::RockId;
@@ -21,54 +18,13 @@ pub struct Rock {
 }
 
 impl Rock {
-    pub fn copper_rock() -> Self {
-        let mut table = LootTable::default();
-        if let Ok(item) = LootItem::new(ItemId::CopperOre, 1, 1) {
-            let _ = table.add_loot_item(item);
-        }
-        let mut stats = HashMap::new();
-        stats.insert(StatType::Health, StatType::instance(StatType::Health, 50));
-
-        Self {
-            rock_id: RockId::Copper,
-            stats: StatSheet { stats },
-            loot: table,
-        }
-    }
-
-    pub fn coal_rock() -> Self {
-        let mut table = LootTable::default();
-        if let Ok(item) = LootItem::new(ItemId::Coal, 1, 1) {
-            let _ = table.add_loot_item(item);
-        }
-        let mut stats = HashMap::new();
-        stats.insert(StatType::Health, StatType::instance(StatType::Health, 50));
-        Self {
-            rock_id: RockId::Coal,
-            stats: StatSheet { stats },
-            loot: table,
-        }
-    }
-
-    pub fn tin_rock() -> Self {
-        let mut table = LootTable::default();
-        if let Ok(item) = LootItem::new(ItemId::TinOre, 1, 1) {
-            let _ = table.add_loot_item(item);
-        }
-        let mut stats = HashMap::new();
-        stats.insert(StatType::Health, StatType::instance(StatType::Health, 50));
-        Self {
-            rock_id: RockId::Tin,
-            stats: StatSheet { stats },
-            loot: table,
-        }
-    }
-
     pub fn roll_drops(&self) -> Vec<Item> {
         let drops = self.loot.roll_drops();
         drops
             .iter()
-            .map(|item_kind| game_state().spawn_item(*item_kind))
+            .flat_map(|(item_kind, quantity)| {
+                (0..*quantity).map(move |_| game_state().spawn_item(*item_kind))
+            })
             .collect()
     }
 

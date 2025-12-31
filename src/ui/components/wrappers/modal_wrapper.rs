@@ -7,7 +7,7 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
-use crate::system::game_state;
+use crate::system::{game_state, ModalType};
 use crate::ui::components::widgets::modal::Modal;
 
 /// A wrapper that adds modal overlay capability to any component.
@@ -32,17 +32,25 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
         // Always render wrapped content
         self.content.view(frame, area);
 
-        // Render keybind guide modal if open
-        if game_state().modal_open {
-            let lines = vec![
-                "Keybinds".to_string(),
-                "".to_string(),
-                "Shift+I  Show/hide this guide".to_string(),
-                "Shift+E  Equip/unequip item".to_string(),
-                "Shift+L  Lock/unlock item".to_string(),
-            ];
-            let modal = Modal::new(lines);
-            modal.render(frame);
+        // Render active modal
+        match game_state().active_modal {
+            ModalType::None => {}
+            ModalType::Keybinds => {
+                let lines = vec![
+                    "Keybinds".to_string(),
+                    "".to_string(),
+                    "i        Open inventory".to_string(),
+                    "d        Toggle item details".to_string(),
+                    "Shift+I  Show/hide this guide".to_string(),
+                    "Shift+E  Equip/unequip item".to_string(),
+                    "Shift+L  Lock/unlock item".to_string(),
+                ];
+                let modal = Modal::new(lines);
+                modal.render(frame);
+            }
+            ModalType::Inventory => {
+                game_state().inventory_modal.render(frame);
+            }
         }
     }
 
@@ -59,8 +67,8 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
-        if game_state().modal_open {
-            CmdResult::None // Block commands when modal is open
+        if game_state().active_modal != ModalType::None {
+            CmdResult::None // Block commands when any modal is open
         } else {
             self.content.perform(cmd)
         }
@@ -69,14 +77,42 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
 
 impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Event<NoUserEvent>, NoUserEvent> for ModalWrapper<C> {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
-        // Check for Shift+I toggle (capital I means Shift was held)
+        // Handle Shift+I for keybinds modal toggle
         if let Event::Keyboard(KeyEvent { code: Key::Char('I'), .. }) = ev {
-            game_state().modal_open = !game_state().modal_open;
-            return None; // Consume event
+            let gs = game_state();
+            gs.active_modal = if gs.active_modal == ModalType::Keybinds {
+                ModalType::None
+            } else {
+                ModalType::Keybinds
+            };
+            return None;
         }
 
-        // If modal is open, block all other events
-        if game_state().modal_open {
+        // Handle lowercase 'i' for inventory modal
+        if let Event::Keyboard(KeyEvent { code: Key::Char('i'), .. }) = ev {
+            let gs = game_state();
+            if gs.active_modal == ModalType::Inventory {
+                gs.active_modal = ModalType::None;
+            } else {
+                gs.active_modal = ModalType::Inventory;
+                gs.inventory_modal.reset();
+            }
+            return None;
+        }
+
+        // If inventory modal is open, forward events to it
+        if game_state().active_modal == ModalType::Inventory {
+            if let Event::Keyboard(KeyEvent { code, .. }) = ev {
+                let should_close = game_state().inventory_modal.handle_input(code);
+                if should_close {
+                    game_state().active_modal = ModalType::None;
+                }
+            }
+            return None;
+        }
+
+        // If keybinds modal is open, block all events
+        if game_state().active_modal == ModalType::Keybinds {
             return None;
         }
 

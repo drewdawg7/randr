@@ -15,7 +15,7 @@ pub struct AttackResult {
 pub struct MobDeathResult {
     pub gold_dropped: i32,
     pub xp_dropped: i32,
-    pub loot_kinds: Vec<ItemId>,
+    pub loot_drops: Vec<(ItemId, i32)>, // (item_id, quantity)
 }
 
 /// Result of player dying

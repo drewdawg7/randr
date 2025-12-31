@@ -42,8 +42,8 @@ pub struct CombatRounds {
     pub attack_results: Vec<AttackResult>,
     /// Spawned items with full quality info, for display and inventory
     pub dropped_loot: Vec<Item>,
-    /// Item kinds rolled from loot table, used internally before spawning
-    loot_kinds: Vec<ItemId>,
+    /// Item drops rolled from loot table (item_id, quantity), used internally before spawning
+    loot_drops: Vec<(ItemId, i32)>,
     pub gold_gained: i32,
     pub xp_gained: i32,
     pub player_won: bool,
@@ -54,7 +54,7 @@ impl CombatRounds {
         Self {
             attack_results: Vec::new(),
             dropped_loot: Vec::new(),
-            loot_kinds: Vec::new(),
+            loot_drops: Vec::new(),
             gold_gained: 0,
             xp_gained: 0,
             player_won: false,
@@ -64,8 +64,8 @@ impl CombatRounds {
         self.attack_results.push(round);
     }
 
-    pub fn loot_kinds(&self) -> &[ItemId] {
-        &self.loot_kinds
+    pub fn loot_drops(&self) -> &[(ItemId, i32)] {
+        &self.loot_drops
     }
 }
 
@@ -101,8 +101,8 @@ where
         cr.xp_gained = death_result.xp_dropped;
         player.gain_xp(cr.xp_gained);
 
-        // Set loot kinds
-        cr.loot_kinds = death_result.loot_kinds;
+        // Set loot drops
+        cr.loot_drops = death_result.loot_drops;
     }
     cr
 }
@@ -113,10 +113,12 @@ pub fn start_fight(mob_kind: MobKind) {
     let mut combat_rounds = enter_combat(&mut gs.player, &mut mob);
 
     // Spawn items with quality and add to both dropped_loot and inventory
-    for item_kind in &combat_rounds.loot_kinds.clone() {
-        let item = gs.spawn_item(*item_kind);
-        combat_rounds.dropped_loot.push(item.clone());
-        let _ = gs.player.add_to_inv(item);
+    for (item_kind, quantity) in &combat_rounds.loot_drops.clone() {
+        for _ in 0..*quantity {
+            let item = gs.spawn_item(*item_kind);
+            combat_rounds.dropped_loot.push(item.clone());
+            let _ = gs.player.add_to_inv(item);
+        }
     }
 
     gs.set_current_combat(combat_rounds);
