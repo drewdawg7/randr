@@ -37,9 +37,6 @@ impl HasLoot for Mob {
         &self.loot_table
     }
 
-    fn loot_mut(&mut self) -> &mut LootTable {
-        &mut self.loot_table
-    }
 }
 
 impl HasStats for Mob {

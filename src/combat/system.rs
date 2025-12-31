@@ -1,23 +1,8 @@
 use crate::{
-    combat::{AttackResult, Combatant, DropsGold, HasGold, IsKillable, MobDeathResult},
-    entities::{mob::MobKind, progression::HasProgression, Player},
-    inventory::HasInventory,
+    combat::{AttackResult, Combatant, HasGold, IsKillable, MobDeathResult},
+    entities::{progression::HasProgression, Player},
     item::{Item, ItemId},
-    system::game_state,
-    ui::Id,
 };
-
-
-pub fn award_kill_gold<T:DropsGold>(killer: &mut Player, target: &mut T) -> i32 
-{ 
-    let dropped = target.drop_gold();
-    let gf = killer.get_effective_goldfind();
-    let multiplier =  1.0 + (gf as f64 / 100.0);
-    killer.add_gold(
-        ((dropped as f64) * multiplier).round() as i32
-        );
-    dropped
-}
 
 pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 -> AttackResult {
@@ -107,20 +92,3 @@ where
     cr
 }
 
-pub fn start_fight(mob_kind: MobKind) {
-    let gs = game_state();
-    let mut mob = gs.spawn_mob(mob_kind);
-    let mut combat_rounds = enter_combat(&mut gs.player, &mut mob);
-
-    // Spawn items with quality and add to both dropped_loot and inventory
-    for (item_kind, quantity) in &combat_rounds.loot_drops.clone() {
-        for _ in 0..*quantity {
-            let item = gs.spawn_item(*item_kind);
-            combat_rounds.dropped_loot.push(item.clone());
-            let _ = gs.player.add_to_inv(item);
-        }
-    }
-
-    gs.set_current_combat(combat_rounds);
-    gs.current_screen = Id::Fight;
-}

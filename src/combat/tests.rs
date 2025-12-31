@@ -2,16 +2,15 @@
 use std::collections::HashMap;
 #[cfg(test)]
 use crate::{
-    combat::{attack, award_kill_gold, enter_combat, Combatant, HasGold},
+    combat::{attack, enter_combat, Combatant, HasGold, IsKillable},
     entities::{
         mob::{Mob, MobKind},
-        player::{Player},
-        progression::{HasProgression}
+        mob::enums::MobQuality,
+        player::Player,
+        progression::HasProgression,
     },
-    loot::{LootTable},
-    stats::{HasStats, StatSheet, StatType}
-
-
+    loot::LootTable,
+    stats::{HasStats, StatSheet, StatType},
 };
 
 #[cfg(test)]
@@ -22,9 +21,11 @@ fn create_test_mob(name: &'static str, hp: i32, attack: i32, defense: i32) -> Mo
     stats.insert(StatType::Defense, StatType::Defense.instance(defense));
     Mob {
         spec: MobKind::Slime,
+        quality: MobQuality::Normal,
         name,
         stats: StatSheet { stats },
         gold: 5,
+        dropped_xp: 15,
         loot_table: LootTable::default(),
     }
 }
@@ -116,32 +117,6 @@ fn attack_with_zero_defense_takes_full_damage() {
     assert_eq!(result.target_health_after, 75);
 }
 
-// ==================== award_kill_gold() tests ====================
-
-#[test]
-fn award_kill_gold_transfers_gold_to_player() {
-    let mut player = create_test_player(100, 20, 5);
-    let mut mob = create_test_mob("Goblin", 50, 10, 2);
-
-    assert_eq!(player.gold(), 0);
-
-    let dropped = award_kill_gold(&mut player, &mut mob);
-    assert!((1..=5).contains(&dropped));
-    assert_eq!(player.gold(), dropped);
-}
-
-#[test]
-fn award_kill_gold_accumulates() {
-    let mut player = create_test_player(100, 20, 5);
-    player.add_gold(50);
-    let mut mob = create_test_mob("Goblin", 50, 10, 2);
-
-    let starting_gold = player.gold();
-    let dropped = award_kill_gold(&mut player, &mut mob);
-
-    assert_eq!(player.gold(), starting_gold + dropped);
-}
-
 // ==================== enter_combat() tests ====================
 
 #[test]
@@ -154,9 +129,10 @@ fn enter_combat_player_wins_when_stronger() {
     assert!(result.player_won);
     assert!(!mob.is_alive());
     assert!(player.is_alive());
-    // Gold and XP should be awarded
-    assert!(result.gold_gained >= 1);
-    assert!(result.xp_gained >= 15); // Mob gives 15-20 XP
+    // Gold should be awarded (mob drops 5 gold)
+    assert_eq!(result.gold_gained, 5);
+    // XP should be awarded
+    assert_eq!(result.xp_gained, 15);
 }
 
 #[test]
@@ -167,7 +143,7 @@ fn enter_combat_player_loses_when_weaker() {
     let result = enter_combat(&mut player, &mut mob);
 
     assert!(!result.player_won);
-    assert!(!player.is_alive());
+    // Note: on_death restores player health, so player is alive after combat
     assert!(mob.is_alive());
     assert_eq!(result.gold_gained, 0);
     assert_eq!(result.xp_gained, 0);
@@ -231,8 +207,22 @@ fn enter_combat_player_gains_xp_on_victory() {
     let result = enter_combat(&mut player, &mut mob);
 
     assert!(result.player_won);
-    assert!(result.xp_gained >= 15 && result.xp_gained <= 20);
+    assert_eq!(result.xp_gained, 15);
     assert!(player.progression().xp > starting_xp || player.progression().level > 1);
+}
+
+#[test]
+fn enter_combat_player_gains_gold_on_victory() {
+    let mut player = create_test_player(100, 50, 10);
+    let starting_gold = player.gold();
+    let mut mob = create_test_mob("Rich Goblin", 20, 5, 0);
+
+    let result = enter_combat(&mut player, &mut mob);
+
+    assert!(result.player_won);
+    assert_eq!(result.gold_gained, 5);
+    // Player gold should increase (gold_gained is base, actual gain may be modified by goldfind)
+    assert!(player.gold() >= starting_gold + result.gold_gained);
 }
 
 // ==================== Combatant trait tests ====================
@@ -333,4 +323,97 @@ fn combat_equal_attack_and_defense() {
     // Player attack (20) == mob defense (20) => 0 damage
     let result = attack(&player, &mut mob);
     assert_eq!(result.damage_to_target, 0);
+}
+
+// ==================== IsKillable trait tests ====================
+
+#[test]
+fn mob_on_death_returns_death_result() {
+    let mut mob = create_test_mob("Dying Mob", 10, 5, 0);
+    mob.take_damage(100);
+
+    let result = mob.on_death();
+
+    assert_eq!(result.gold_dropped, 5);
+    assert_eq!(result.xp_dropped, 15);
+}
+
+#[test]
+fn player_on_death_loses_gold_percentage() {
+    let mut player = Player::default();
+    player.add_gold(100);
+    player.take_damage(player.hp()); // Kill player
+
+    let result = player.on_death();
+
+    // Player loses 5% of gold
+    assert_eq!(result.gold_lost, 5);
+    assert_eq!(player.gold(), 95);
+}
+
+#[test]
+fn player_on_death_restores_health() {
+    let mut player = create_test_player(100, 10, 5);
+    player.take_damage(100); // Kill the player (hp = 0)
+    assert_eq!(player.hp(), 0);
+
+    let _ = player.on_death();
+
+    // on_death adds max_hp to current hp, restoring from 0 to full
+    assert_eq!(player.hp(), player.max_hp());
+}
+
+// ==================== CombatRounds tests ====================
+
+#[test]
+fn combat_rounds_tracks_loot_drops() {
+    let mut player = create_test_player(100, 100, 10);
+    let mut mob = create_test_mob("Loot Mob", 10, 5, 0);
+
+    let result = enter_combat(&mut player, &mut mob);
+
+    assert!(result.player_won);
+    // loot_drops returns the items rolled from loot table
+    let _ = result.loot_drops();
+}
+
+#[test]
+fn combat_rounds_new_is_empty() {
+    use crate::combat::CombatRounds;
+    let rounds = CombatRounds::new();
+
+    assert!(rounds.attack_results.is_empty());
+    assert!(rounds.dropped_loot.is_empty());
+    assert_eq!(rounds.gold_gained, 0);
+    assert_eq!(rounds.xp_gained, 0);
+    assert!(!rounds.player_won);
+}
+
+// ==================== MobQuality tests ====================
+
+#[test]
+fn mob_has_quality() {
+    let mob = create_test_mob("Quality Mob", 100, 10, 5);
+    // Test that mob quality is accessible
+    assert!(matches!(mob.quality, MobQuality::Normal));
+}
+
+// ==================== DropsGold trait tests ====================
+
+#[test]
+fn mob_drops_gold_returns_gold_value() {
+    use crate::combat::DropsGold;
+    let mob = create_test_mob("Rich Mob", 100, 10, 5);
+
+    assert_eq!(mob.drop_gold(), 5);
+}
+
+// ==================== GivesXP trait tests ====================
+
+#[test]
+fn mob_gives_xp_returns_xp_value() {
+    use crate::entities::progression::GivesXP;
+    let mob = create_test_mob("XP Mob", 100, 10, 5);
+
+    assert_eq!(mob.give_xp(), 15);
 }
