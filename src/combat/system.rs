@@ -1,18 +1,23 @@
 use crate::{
     combat::{AttackResult, Combatant, DropsGold, HasGold},
-    entities::{mob::MobKind, progression::{GivesXP, HasProgression}},
+    entities::{mob::MobKind, progression::{GivesXP, HasProgression}, Player},
     inventory::HasInventory,
     item::{Item, ItemKind},
     loot::HasLoot,
+    stats::{HasStats, StatType},
     system::game_state,
     ui::Id,
 };
 
 
-pub fn award_kill_gold<K: HasGold, T:DropsGold>(killer: &mut K, target: &mut T) -> i32 
-{
+pub fn award_kill_gold<T:DropsGold>(killer: &mut Player, target: &mut T) -> i32 
+{ 
     let dropped = target.drop_gold();
-    killer.add_gold(dropped);
+    let gf = killer.get_effective_goldfind();
+    let multiplier =  1.0 + (gf as f64 / 100.0);
+    killer.add_gold(
+        ((dropped as f64) * multiplier).round() as i32
+        );
     dropped
 }
 
@@ -67,9 +72,8 @@ impl CombatRounds {
 }
 
 
-pub fn enter_combat<P, M>(player: &mut P, mob: &mut M) -> CombatRounds
+pub fn enter_combat<M>(player: &mut Player, mob: &mut M) -> CombatRounds
 where
-    P: Combatant + HasGold + HasProgression,
     M: Combatant + DropsGold + GivesXP + HasLoot,
 {
     let mut cr = CombatRounds::default();
@@ -86,7 +90,7 @@ where
         player.dec_gold(
             ((player.gold() as f64) * 0.05).round() as i32
         );
-        player.increase_health(player.max_hp());
+        player.inc(StatType::Health, player.max_hp());
 
     } else if !mob.is_alive() {
         cr.player_won = true;

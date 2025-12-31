@@ -1,6 +1,6 @@
 use std::{collections::HashMap, fmt::Display};
 
-use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Player, Progression}, inventory::{EquipmentSlot, HasInventory, Inventory}, stats::{HasStats, StatInstance, StatSheet, StatType}};
+use crate::{combat::{Combatant, HasGold, Named}, entities::{progression::HasProgression, Player, Progression}, inventory::{HasInventory, Inventory}, stats::{HasStats, StatInstance, StatSheet, StatType}};
 
 
 impl Default for Player {
@@ -16,6 +16,7 @@ impl Default for Player {
                 let mut sheet = StatSheet { stats };
                 sheet.insert(StatType::Attack.instance(12));
                 sheet.insert(StatType::Defense.instance(3));
+                sheet.insert(StatType::GoldFind.instance(0));
                 sheet.insert(StatType::Health.instance(100));
                 sheet
             },
@@ -70,26 +71,11 @@ impl HasInventory for Player {
 
 impl Combatant for Player {
     fn effective_attack(&self) -> i32 {
-        let weapon = self.get_equipped_item(EquipmentSlot::Weapon);
-        let weapon_attack = match weapon {
-            Some(w) => w.attack(),
-            None    => 0
-        };
-        self.get_attack() + weapon_attack
+        self.get_attack() + self.inventory().sum_equipment_stats(StatType::Attack)
     }
-    fn increase_health(&mut self, amount: i32) {
-        self.increase_health(amount);
-    }
-    fn decrease_health(&mut self, amount: i32) {
-        self.decrease_health(amount);
-    }
+
     fn effective_defense(&self) -> i32 {
-        let offhand = self.get_equipped_item(EquipmentSlot::OffHand);
-        let offhand_defense = match offhand {
-            Some(off) => off.def(),
-            None     => 0
-        };
-        self.get_defense() + offhand_defense
+        self.get_defense() + self.inventory().sum_equipment_stats(StatType::Defense)
     }
 } 
 
@@ -100,10 +86,10 @@ impl HasProgression for Player {
     }
     fn on_level_up(&mut self) {
         if self.level() % 10 == 0 {
-            self.increase_defense(1);
+            self.inc(StatType::Defense, 1);
         }
-        self.increase_health(5);
-        self.increase_max_health(5);
-        self.increase_attack(1);
+        self.inc(StatType::Health, 5);
+        self.inc_max(StatType::Health, 5);
+        self.inc(StatType::Attack, 1);
     }
 }

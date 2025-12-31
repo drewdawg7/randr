@@ -32,13 +32,6 @@ impl Combatant for Mob {
     fn effective_health(&self) -> i32 {
         self.get_health()
     }
-
-    fn increase_health(&mut self, amount: i32) {
-        self.increase_health(amount);
-    }
-    fn decrease_health(&mut self, amount: i32) {
-        self.decrease_health(amount);
-    }
 }
 
 impl HasLoot for Mob {

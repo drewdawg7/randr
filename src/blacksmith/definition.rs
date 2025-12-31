@@ -1,4 +1,4 @@
-use crate::{blacksmith::BlacksmithError, combat::HasGold, entities::Player, item::Item};
+use crate::{blacksmith::BlacksmithError, combat::HasGold, entities::Player, item::Item, HasInventory, ItemKind};
 
 
 
@@ -18,6 +18,10 @@ impl Blacksmith {
         }
     }
     pub fn upgrade_item(&self, player: &mut Player, item: &mut Item) -> Result<(), BlacksmithError>{
+        // Only equipment can be upgraded
+        if !item.item_type.is_equipment() {
+            return Err(BlacksmithError::NotEquipment);
+        }
         if item.num_upgrades >= self.max_upgrades {
             return Err(BlacksmithError::MaxUpgradesReached)
         }
@@ -25,11 +29,31 @@ impl Blacksmith {
         if upgrade_cost > player.gold {
             return Err(BlacksmithError::NotEnoughGold)
         }
-        player.dec_gold(upgrade_cost);
+
         match item.upgrade() {
-            Ok(_) => Ok(()),
+            Ok(_) => {
+                player.dec_gold(upgrade_cost);
+                Ok(())
+            },
             Err(e) => Err(BlacksmithError::ItemError(e))
         }
+    }
+    pub fn upgrade_item_quality(&self, player: &mut Player, item: &mut Item) -> Result<(), BlacksmithError> {
+        // Only equipment can have quality upgraded
+        if !item.item_type.is_equipment() {
+            return Err(BlacksmithError::NotEquipment);
+        }
+        // Check if player has an upgrade stone
+        let stone = player.find_item_by_kind(ItemKind::QualityUpgradeStone)
+            .ok_or(BlacksmithError::NoUpgradeStones)?
+            .clone();
+
+        // Upgrade the item quality
+        item.upgrade_quality().map_err(BlacksmithError::ItemError)?;
+
+        // Decrease the upgrade stone quantity
+        player.decrease_item_quantity(&stone, 1);
+        Ok(())
     }
     pub fn calc_upgrade_cost(&self, item: &Item) -> i32 {
         let multiplier = item.quality.upgrade_cost_multiplier();

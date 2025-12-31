@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{item::enums::{ItemError, ItemQuality}, registry::Registry, stats::{HasStats, StatSheet}};
+use crate::{item::enums::{ItemError, ItemQuality}, registry::Registry, stats::{HasStats, StatSheet, StatType}};
 
 pub use super::enums::{ItemKind, ItemType};
 
@@ -14,6 +14,7 @@ pub struct Item {
     pub num_upgrades: i32,
     pub max_upgrades: i32,
     pub max_stack_quantity: u32,
+    pub base_stats: StatSheet,
     pub stats: StatSheet,
     pub gold_value: i32,
     pub quality: ItemQuality,
@@ -25,20 +26,44 @@ impl Item {
     }
 
     pub fn upgrade(&mut self) -> Result<(), ItemError> {
+        if !self.item_type.is_equipment() {
+            return Err(ItemError::NotEquipment);
+        }
         if self.num_upgrades >= self.max_upgrades {
-            return Err(ItemError::MaxUpgradesReached)
+            return Err(ItemError::MaxUpgradesReached);
         }
         self.num_upgrades += 1;
         let multiplier = 1.1;
-        match self.item_type {
-            ItemType::Weapon => self.inc_attack(
-                ((self.attack() as f64) * (multiplier - 1.0)).round().max(1.0) as i32,
-            ),
-            ItemType::Shield => self.inc_def(
-                ((self.def() as f64) * (multiplier - 1.0)).round().max(1.0) as i32,
-            ),
-        };
+
+        // Upgrade all stats that have a base value > 0
+        for stat_type in StatType::all() {
+            let base_value = self.base_stats.value(*stat_type);
+            if base_value > 0 {
+                let increase = ((base_value as f64) * (multiplier - 1.0)).round().max(1.0) as i32;
+                self.base_stats.increase_stat(*stat_type, increase);
+            }
+        }
+
+        self.recalculate_stats();
         Ok(())
+    }
+
+    fn recalculate_stats(&mut self) {
+        self.stats = self.quality.multiply_stats(self.base_stats.clone());
+    }
+
+    pub fn upgrade_quality(&mut self) -> Result<(), ItemError> {
+        if self.quality == ItemQuality::Mythic {
+            return Err(ItemError::MaxQualityReached)
+        }
+        match self.quality.next_quality() {
+            Some(next) => {
+                self.quality = next;
+                self.recalculate_stats();
+                Ok(())
+            }
+            None => Ok(())
+        }
     }
 }
 
@@ -46,10 +71,13 @@ impl Item {
 pub struct ItemSpec {
     pub name: &'static str,
     pub item_type: ItemType,
+    pub quality: Option<ItemQuality>,
     pub max_upgrades: i32,
+    pub max_stack_quantity: u32,
     pub attack: i32,
     pub defense: i32,
     pub gold_value: i32,
+    pub gold_find: i32,
 }
 
 pub type ItemRegistry = Registry<ItemKind, ItemSpec>;

@@ -69,18 +69,21 @@ impl MockComponent for Equipment {
     fn view(&mut self, frame: &mut ratatui::Frame, area: ratatui::prelude::Rect) {
         self.items.clear();
 
-        if let Some(item) = game_state().player.get_equipped_item(EquipmentSlot::Weapon) {
-            self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon));
+        if let Some(inv_item) = game_state().player.get_equipped_item(EquipmentSlot::Weapon) {
+            self.items.push(EquipmentItem::new(inv_item.item.clone(), EquipmentSlot::Weapon));
         }
 
-        if let Some(item) = game_state().player.get_equipped_item(EquipmentSlot::OffHand) {
-            self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::OffHand));
+        if let Some(inv_item) = game_state().player.get_equipped_item(EquipmentSlot::OffHand) {
+            self.items.push(EquipmentItem::new(inv_item.item.clone(), EquipmentSlot::OffHand));
         }
         for inv_item in game_state().player.get_inventory_items().iter() {
             let item = &inv_item.item;
             match item.item_type {
                 ItemType::Weapon => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Weapon)),
-                ItemType::Shield => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::OffHand))
+
+                ItemType::Ring => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::Ring)),
+                ItemType::Shield => self.items.push(EquipmentItem::new(item.clone(), EquipmentSlot::OffHand)),
+                ItemType::Material => {} // Materials are not equipment
             }
         }
 
@@ -100,7 +103,7 @@ impl MockComponent for Equipment {
                 ListItem::new(Line::from(vec![
                     selection_prefix(selected == i),
                     Span::raw(format!("{} ", checkbox)),
-                    item_display(&inner.item),
+                    item_display(&inner.item, None),
                 ]))
             })
             .collect();

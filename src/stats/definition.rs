@@ -81,10 +81,15 @@ impl StatInstance {
 pub enum StatType {
     Health,
     Attack,
-    Defense
+    Defense,
+    GoldFind
 }
 
 impl StatType {
+    pub fn all() -> &'static [StatType] {
+        &[StatType::Health, StatType::Attack, StatType::Defense, StatType::GoldFind]
+    }
+
     pub fn instance(self, base_value: i32) -> StatInstance {
         StatInstance { stat_type: self, current_value: base_value, max_value: base_value }
     }

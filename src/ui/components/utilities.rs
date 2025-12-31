@@ -38,17 +38,23 @@ pub fn selection_prefix(is_selected: bool) -> Span<'static> {
     }
 }
 
-/// Returns a styled Span for an item name with upgrade count, colored by quality.
-/// Format: "{name} (+{num_upgrades})"
-pub fn item_display(item: &Item) -> Span<'static> {
+/// Returns a styled Span for an item, colored by quality.
+/// - Equipment: "{name} (+{num_upgrades})"
+/// - Materials: "{name} (x{quantity})"
+pub fn item_display(item: &Item, quantity: Option<u32>) -> Span<'static> {
     let color = quality_color(item.quality);
-    Span::styled(
-        format!("{} (+{})", item.name, item.num_upgrades),
-        Style::default().color(color),
-    )
+    let text = if item.item_type.is_equipment() {
+        format!("{} (+{})", item.name, item.num_upgrades)
+    } else {
+        match quantity {
+            Some(q) => format!("{} (x{})", item.name, q),
+            None => item.name.to_string(),
+        }
+    };
+    Span::styled(text, Style::default().color(color))
 }
 
-pub fn blacksmith_header(blacksmith: &Blacksmith, gold: i32) -> Vec<Line<'static>> {
+pub fn blacksmith_header(blacksmith: &Blacksmith, gold: i32, stones: u32) -> Vec<Line<'static>> {
     vec![
         Line::from(vec![
             Span::styled(blacksmith.name.to_string(), Style::default().color(colors::ORANGE)),
@@ -59,6 +65,9 @@ pub fn blacksmith_header(blacksmith: &Blacksmith, gold: i32) -> Vec<Line<'static
             Span::raw("  |  "),
             Span::styled(format!("{} ", HAMMER), Style::default().color(colors::BLACK)),
             Span::raw(format!("{}", blacksmith.max_upgrades)),
+            Span::raw("  |  "),
+            Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().color(colors::PURPLE)),
+            Span::raw(format!("{}", stones)),
         ]),
     ]
 }

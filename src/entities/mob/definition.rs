@@ -21,19 +21,13 @@ impl Mob {
     pub fn get_health(&self) -> i32 {
         self.hp()
     }
+
     pub fn get_attack(&self) -> i32 {
         self.attack()
     }
+
     pub fn get_max_health(&self) -> i32 {
         self.max_hp()
-    }
-
-    pub fn increase_health(&mut self, amount: i32) {
-        self.inc_hp(amount);
-    }
-
-    pub fn decrease_health(&mut self, amount: i32) {
-        self.dec_hp(amount);
     }
 }
 

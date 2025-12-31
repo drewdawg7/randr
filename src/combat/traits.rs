@@ -1,9 +1,13 @@
-use crate::stats::{HasStats};
+use crate::stats::{HasStats, StatType};
 
 pub trait Combatant:Named + HasStats{
     fn effective_attack(&self) -> i32;
-    fn increase_health(&mut self, amount: i32);
-    fn decrease_health(&mut self, amount: i32);
+    fn increase_health(&mut self, amount: i32) {
+        self.inc(StatType::Health, amount);
+    }
+    fn decrease_health(&mut self, amount: i32) {
+        self.dec(StatType::Health, amount);
+    }
     fn effective_defense(&self) -> i32 {
         self.def()
     }

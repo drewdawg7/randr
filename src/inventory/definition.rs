@@ -3,6 +3,7 @@ use std::collections::HashMap;
 use uuid::Uuid;
 
 use crate::item::Item;
+use crate::stats::StatType;
 
 use super::EquipmentSlot;
 
@@ -20,13 +21,21 @@ impl InventoryItem {
     pub fn uuid(&self) -> Uuid {
         self.item.item_uuid
     }
+
+    pub fn decrease_quantity(&mut self, amount: u32) {
+        self.quantity = (self.quantity - amount).max(0);
+    }
+
+    pub fn increase_quantity(&mut self, amount: u32) {
+        self.quantity += amount;
+    }
 }
 
 #[derive(Default, Debug, Clone)]
 pub struct Inventory {
     pub items: Vec<InventoryItem>,
     max_slots: usize,
-    equipment: HashMap<EquipmentSlot, Item>,
+    equipment: HashMap<EquipmentSlot, InventoryItem>,
 }
 
 
@@ -39,15 +48,22 @@ impl Inventory {
         }
     }
 
-    pub fn equipment(&self) -> &HashMap<EquipmentSlot, Item> {
+    pub fn equipment(&self) -> &HashMap<EquipmentSlot, InventoryItem> {
         &self.equipment
     }
 
-    pub fn equipment_mut(&mut self) -> &mut HashMap<EquipmentSlot, Item> {
+    pub fn equipment_mut(&mut self) -> &mut HashMap<EquipmentSlot, InventoryItem> {
         &mut self.equipment
     }
 
     pub fn max_slots(&self) -> usize {
         self.max_slots
+    }
+
+    pub fn sum_equipment_stats(&self, stat_type: StatType) -> i32 {
+        self.equipment
+            .values()
+            .map(|inv_item| inv_item.item.stats.value(stat_type))
+            .sum()
     }
 }

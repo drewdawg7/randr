@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use uuid::Uuid;
 
 use crate::{
-    item::enums::ItemQuality, loot::traits::WorthGold, registry::{RegistryDefaults, SpawnFromSpec}, stats::{HasStats, StatInstance, StatSheet, StatType}
+    item::enums::ItemQuality, loot::traits::WorthGold, registry::{RegistryDefaults, SpawnFromSpec}, stats::{HasStats, StatSheet, StatType}
 };
 
 use super::{Item, ItemSpec, ItemKind, ItemType};
@@ -36,11 +36,13 @@ impl SpawnFromSpec<ItemKind> for ItemSpec {
     type Output = Item;
 
     fn spawn_from_spec(kind: ItemKind, spec: &Self) -> Self::Output {
-        let quality = ItemQuality::roll();
-        let mut sheet = StatSheet { stats: HashMap::new() };
-        sheet.insert(StatType::Attack.instance(spec.attack));
-        sheet.insert(StatType::Defense.instance(spec.defense));
-        let q_sheet = quality.multiply_stats(sheet);
+        // Use fixed quality from spec, or roll if None
+        let quality = spec.quality.unwrap_or_else(ItemQuality::roll);
+        let mut base_stats = StatSheet { stats: HashMap::new() };
+        base_stats.insert(StatType::Attack.instance(spec.attack));
+        base_stats.insert(StatType::Defense.instance(spec.defense));
+        base_stats.insert(StatType::GoldFind.instance(spec.gold_find));
+        let stats = quality.multiply_stats(base_stats.clone());
         Item {
             item_uuid: Uuid::new_v4(),
             kind,
@@ -49,9 +51,10 @@ impl SpawnFromSpec<ItemKind> for ItemSpec {
             is_equipped: false,
             num_upgrades: 0,
             max_upgrades: spec.max_upgrades,
-            max_stack_quantity: 1,
+            max_stack_quantity: spec.max_stack_quantity,
             gold_value: spec.gold_value,
-            stats: q_sheet,
+            base_stats,
+            stats,
             quality,
         }
     }
@@ -65,9 +68,12 @@ impl RegistryDefaults<ItemKind> for ItemSpec {
                 ItemSpec {
                     name: "Sword",
                     item_type: ItemType::Weapon,
+                    quality: None,
                     attack: 10,
                     defense: 0,
+                    gold_find: 0,
                     max_upgrades: 5,
+                    max_stack_quantity: 1,
                     gold_value: 15
                 }
             ),
@@ -76,9 +82,12 @@ impl RegistryDefaults<ItemKind> for ItemSpec {
                 ItemSpec {
                     name: "Dagger",
                     item_type: ItemType::Weapon,
+                    quality: None,
                     attack: 6,
                     defense: 0,
+                    gold_find: 0,
                     max_upgrades: 5,
+                    max_stack_quantity: 1,
                     gold_value: 10,
                 }
             ),
@@ -87,10 +96,42 @@ impl RegistryDefaults<ItemKind> for ItemSpec {
                 ItemSpec {
                     name: "Basic Shield",
                     item_type: ItemType::Shield,
+                    quality: None,
                     attack: 0,
                     defense: 4,
+                    gold_find: 0,
                     max_upgrades: 5,
+                    max_stack_quantity: 1,
                     gold_value: 15
+                }
+            ),
+
+            (
+                ItemKind::GoldRing,
+                ItemSpec {
+                    name: "Midas' Touch",
+                    item_type: ItemType::Ring,
+                    quality: None,
+                    attack: 0,
+                    defense: 0,
+                    gold_find: 10,
+                    max_upgrades: 7,
+                    max_stack_quantity: 1,
+                    gold_value: 50
+                }
+            ),
+            (
+                ItemKind::QualityUpgradeStone,
+                ItemSpec {
+                    name: "Magic Rock",
+                    item_type: ItemType::Material,
+                    quality: Some(ItemQuality::Mythic),
+                    attack: 0,
+                    defense: 0,
+                    gold_find: 0,
+                    max_upgrades: 0,
+                    max_stack_quantity: 99,
+                    gold_value: 500,
                 }
             )
         ]

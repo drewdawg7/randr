@@ -2,7 +2,7 @@
 use std::{fmt::Display};
 
 
-use crate::{combat::HasGold, item::Item, loot::traits::WorthGold};
+use crate::{combat::HasGold, entities::Player, inventory::HasInventory, item::Item, loot::traits::WorthGold};
 
 #[derive(Debug, Clone)]
 pub struct Store {
@@ -127,8 +127,12 @@ pub enum StoreError {
     OutOfStock
 }
 
-pub fn sell_player_item<P: HasGold>(player: &mut P, item: &Item) -> i32 {
+pub fn sell_player_item(player: &mut Player, item: &Item) -> i32 {
     let sell_price = item.sell_price();
     player.add_gold(sell_price);
+    if let Some(inv_item) = player.find_item_by_kind(item.kind) {
+        let inv_item = inv_item.clone();
+        player.decrease_item_quantity(&inv_item, 1);
+    }
     sell_price
 }

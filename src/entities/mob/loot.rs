@@ -12,6 +12,9 @@ pub fn loot_table_for(kind: MobKind) -> LootTable {
             if let Ok(item) = LootItem::new(ItemKind::Dagger, 1, 10) {
                 let _ = table.add_loot_item(item);
             }
+            if let Ok(item) = LootItem::new(ItemKind::GoldRing, 1, 100) {
+                let _ = table.add_loot_item(item);
+            }
             table
         }
         MobKind::Goblin => {
@@ -22,11 +25,17 @@ pub fn loot_table_for(kind: MobKind) -> LootTable {
             if let Ok(item) = LootItem::new(ItemKind::BasicShield, 1, 15) {
                 let _ = table.add_loot_item(item);
             }
+            if let Ok(item) = LootItem::new(ItemKind::GoldRing, 1, 100) {
+                let _ = table.add_loot_item(item);
+            }
             table
         }
         MobKind::Dragon => {
             let mut table = LootTable::default();
-            if let Ok(item) = LootItem::new(ItemKind::Sword, 1, 1) {
+            if let Ok(item) = LootItem::new(ItemKind::GoldRing, 1, 100) {
+                let _ = table.add_loot_item(item);
+            }
+            if let Ok(item) = LootItem::new(ItemKind::QualityUpgradeStone, 1, 1) {
                 let _ = table.add_loot_item(item);
             }
             table

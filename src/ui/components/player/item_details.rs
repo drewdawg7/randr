@@ -30,9 +30,11 @@ fn get_comparison_item(item: &Item) -> Option<Item> {
     let slot = match item.item_type {
         ItemType::Weapon => EquipmentSlot::Weapon,
         ItemType::Shield => EquipmentSlot::OffHand,
+        ItemType::Ring   => EquipmentSlot::Ring,
+        ItemType::Material => return None,
     };
 
-    game_state().player.get_equipped_item(slot).cloned()
+    game_state().player.get_equipped_item(slot).map(|inv| inv.item.clone())
 }
 
 /// Formats a stat comparison as colored text segments
@@ -80,13 +82,16 @@ fn render_item_details_inner(
         Some(item) => {
             let mut content_lines: Vec<StyledContent> = vec![];
             let color = quality_color(item.quality);
+            let is_equipment = item.item_type.is_equipment();
 
             // Item name as header/title with quality color
             let equipped_prefix = if item.is_equipped { "(E) " } else { "" };
-            content_lines.push(StyledContent::colored(
-                format!("{}{} (+{})", equipped_prefix, item.name, item.num_upgrades),
-                color,
-            ));
+            let name_display = if is_equipment {
+                format!("{}{} (+{})", equipped_prefix, item.name, item.num_upgrades)
+            } else {
+                format!("{}{}", equipped_prefix, item.name)
+            };
+            content_lines.push(StyledContent::colored(name_display, color));
 
             // Quality line below item name
             content_lines.push(StyledContent::colored(
@@ -94,15 +99,24 @@ fn render_item_details_inner(
                 color,
             ));
 
-            // Stats displayed vertically with comparison
-            let attack = item.attack();
-            let defense = item.def();
-            let compare_attack = compare_to.map(|c| c.attack());
-            let compare_defense = compare_to.map(|c| c.def());
+            // Stats and upgrades only for equipment
+            if is_equipment {
+                let attack = item.attack();
+                let defense = item.def();
+                let compare_attack = compare_to.map(|c| c.attack());
+                let compare_defense = compare_to.map(|c| c.def());
 
-            content_lines.push(format_stat_with_comparison(CROSSED_SWORDS, "Attack", attack, compare_attack));
-            content_lines.push(format_stat_with_comparison(SHIELD, "Defense", defense, compare_defense));
-            content_lines.push(StyledContent::plain(format!("{} Upgrades: {}/{}", HAMMER, item.num_upgrades, item.max_upgrades)));
+                content_lines.push(format_stat_with_comparison(CROSSED_SWORDS, "Attack", attack, compare_attack));
+                content_lines.push(format_stat_with_comparison(SHIELD, "Defense", defense, compare_defense));
+
+                let gold_find = item.goldfind();
+                if gold_find > 0 {
+                    let compare_gold_find = compare_to.map(|c| c.goldfind());
+                    content_lines.push(format_stat_with_comparison(COIN, "Gold Find", gold_find, compare_gold_find));
+                }
+
+                content_lines.push(StyledContent::plain(format!("{} Upgrades: {}/{}", HAMMER, item.num_upgrades, item.max_upgrades)));
+            }
 
             // Price (if provided)
             if let Some((amount, label)) = price {

@@ -14,27 +14,29 @@ use tuirealm::{
 
 use crate::{
     combat::HasGold,
-    inventory::{EquipmentSlot, HasInventory},
-    item::{Item, ItemType},
+    inventory::{EquipmentSlot, HasInventory, InventoryItem},
+    item::ItemType,
     system::game_state,
     ui::Id,
 };
 use crate::ui::components::player::item_details::render_item_details;
-use crate::ui::components::utilities::{blacksmith_header, item_display, render_location_header, selection_prefix, RETURN_ARROW};
+use crate::ui::components::utilities::{blacksmith_header, item_display, render_location_header, selection_prefix, DOUBLE_ARROW_UP, RETURN_ARROW};
 use crate::ui::utilities::HAMMER;
+use crate::item::enums::{ItemKind, ItemQuality};
 use crate::ui::theme as colors;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum BlacksmithState {
     Menu,
     Items,
+    ItemQuality,
 }
 
 pub struct BlacksmithTab {
     props: Props,
     state: BlacksmithState,
     list_state: ListState,
-    cached_items: Vec<Item>,
+    cached_items: Vec<InventoryItem>,
 }
 
 impl BlacksmithTab {
@@ -57,16 +59,17 @@ impl BlacksmithTab {
         self.cached_items.clear();
 
         // Add equipped items
-        if let Some(item) = game_state().player.get_equipped_item(EquipmentSlot::Weapon) {
-            self.cached_items.push(item.clone());
-        }
-        if let Some(item) = game_state().player.get_equipped_item(EquipmentSlot::OffHand) {
-            self.cached_items.push(item.clone());
+        for slot in EquipmentSlot::all() {
+            if let Some(inv_item) = game_state().player.get_equipped_item(*slot) {
+                self.cached_items.push(inv_item.clone());
+            }
         }
 
-        // Add inventory items
+        // Add inventory items (equipment only - materials can't be upgraded)
         for inv_item in game_state().player.get_inventory_items().iter() {
-            self.cached_items.push(inv_item.item.clone());
+            if inv_item.item.item_type.is_equipment() {
+                self.cached_items.push(inv_item.clone());
+            }
         }
     }
 
@@ -75,17 +78,17 @@ impl BlacksmithTab {
             return;
         }
 
-        let item_uuid = self.cached_items[index].item_uuid;
+        let item_uuid = self.cached_items[index].item.item_uuid;
         let gs = game_state();
         let blacksmith = &gs.town.blacksmith;
 
         // Check equipped items first
-        for slot in [EquipmentSlot::Weapon, EquipmentSlot::OffHand] {
-            if let Some(equipped) = gs.player.get_equipped_item(slot) {
-                if equipped.item_uuid == item_uuid {
-                    if let Some(mut item) = gs.player.inventory_mut().equipment_mut().remove(&slot) {
-                        let _ = blacksmith.upgrade_item(&mut gs.player, &mut item);
-                        gs.player.inventory_mut().equipment_mut().insert(slot, item);
+        for slot in EquipmentSlot::all() {
+            if let Some(equipped) = gs.player.get_equipped_item(*slot) {
+                if equipped.item.item_uuid == item_uuid {
+                    if let Some(mut inv_item) = gs.player.inventory_mut().equipment_mut().remove(slot) {
+                        let _ = blacksmith.upgrade_item(&mut gs.player, &mut inv_item.item);
+                        gs.player.inventory_mut().equipment_mut().insert(*slot, inv_item);
                     }
                     return;
                 }
@@ -99,6 +102,36 @@ impl BlacksmithTab {
             gs.player.inventory_mut().items.insert(idx, inv_item);
         }
     }
+
+    fn upgrade_item_quality_at(&mut self, index: usize) {
+        if index >= self.cached_items.len() {
+            return;
+        }
+
+        let item_uuid = self.cached_items[index].item.item_uuid;
+        let gs = game_state();
+        let blacksmith = &gs.town.blacksmith;
+
+        // Check equipped items first
+        for slot in EquipmentSlot::all() {
+            if let Some(equipped) = gs.player.get_equipped_item(*slot) {
+                if equipped.item.item_uuid == item_uuid {
+                    if let Some(mut inv_item) = gs.player.inventory_mut().equipment_mut().remove(slot) {
+                        let _ = blacksmith.upgrade_item_quality(&mut gs.player, &mut inv_item.item);
+                        gs.player.inventory_mut().equipment_mut().insert(*slot, inv_item);
+                    }
+                    return;
+                }
+            }
+        }
+
+        // Check inventory items
+        if let Some(idx) = gs.player.find_item_index_by_uuid(item_uuid) {
+            let mut inv_item = gs.player.inventory_mut().items.remove(idx);
+            let _ = blacksmith.upgrade_item_quality(&mut gs.player, &mut inv_item.item);
+            gs.player.inventory_mut().items.insert(idx, inv_item);
+        }
+    }
 }
 
 impl MockComponent for BlacksmithTab {
@@ -106,6 +139,7 @@ impl MockComponent for BlacksmithTab {
         match self.state {
             BlacksmithState::Menu => self.render_menu(frame, area),
             BlacksmithState::Items => self.render_items(frame, area),
+            BlacksmithState::ItemQuality => self.render_item_quality(frame, area),
         }
     }
 
@@ -125,6 +159,7 @@ impl MockComponent for BlacksmithTab {
         match self.state {
             BlacksmithState::Menu => self.handle_menu_cmd(cmd),
             BlacksmithState::Items => self.handle_items_cmd(cmd),
+            BlacksmithState::ItemQuality => self.handle_item_quality_cmd(cmd),
         }
     }
 }
@@ -133,9 +168,11 @@ impl BlacksmithTab {
     fn render_menu(&mut self, frame: &mut Frame, area: Rect) {
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
+        let stones = game_state().player.find_item_by_kind(ItemKind::QualityUpgradeStone)
+            .map(|inv| inv.quantity).unwrap_or(0);
 
         // Render header and get remaining area
-        let header_lines = blacksmith_header(blacksmith, player_gold);
+        let header_lines = blacksmith_header(blacksmith, player_gold, stones);
         let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
 
         // Menu options
@@ -147,6 +184,10 @@ impl BlacksmithTab {
             ])),
             ListItem::new(Line::from(vec![
                 selection_prefix(selected == 1),
+                Span::raw(format!("{} Upgrade Item Quality", DOUBLE_ARROW_UP)),
+            ])),
+            ListItem::new(Line::from(vec![
+                selection_prefix(selected == 2),
                 Span::raw(format!("{} Back", RETURN_ARROW)),
             ])),
         ];
@@ -161,9 +202,11 @@ impl BlacksmithTab {
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
         let max_upgrades = blacksmith.max_upgrades;
+        let stones = game_state().player.find_item_by_kind(ItemKind::QualityUpgradeStone)
+            .map(|inv| inv.quantity).unwrap_or(0);
 
         // Render header and get remaining area
-        let header_lines = blacksmith_header(blacksmith, player_gold);
+        let header_lines = blacksmith_header(blacksmith, player_gold, stones);
         let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
 
         // Split into left (list) and right (details) panels
@@ -177,7 +220,8 @@ impl BlacksmithTab {
         let list_items: Vec<ListItem> = self.cached_items
             .iter()
             .enumerate()
-            .map(|(i, item)| {
+            .map(|(i, inv_item)| {
+                let item = &inv_item.item;
                 let is_selected = selected == i;
                 let upgrade_cost = blacksmith.calc_upgrade_cost(item);
                 let at_max = item.num_upgrades >= max_upgrades;
@@ -186,7 +230,7 @@ impl BlacksmithTab {
                 let line = if at_max {
                     Line::from(vec![
                         selection_prefix(is_selected),
-                        item_display(item),
+                        item_display(item, None),
                         Span::styled(" - MAX", Style::default().fg(colors::DARK_GRAY)),
                     ])
                 } else {
@@ -198,7 +242,7 @@ impl BlacksmithTab {
 
                     Line::from(vec![
                         selection_prefix(is_selected),
-                        item_display(item),
+                        item_display(item, None),
                         Span::raw(" - "),
                         Span::styled(format!("{} gold", upgrade_cost), cost_style),
                     ])
@@ -221,7 +265,7 @@ impl BlacksmithTab {
 
         // Render item details panel on the right
         let selected_item = if selected < self.cached_items.len() {
-            Some(&self.cached_items[selected])
+            Some(&self.cached_items[selected].item)
         } else {
             None
         };
@@ -229,7 +273,7 @@ impl BlacksmithTab {
     }
 
     fn handle_menu_cmd(&mut self, cmd: Cmd) -> CmdResult {
-        const MENU_SIZE: usize = 2; // Upgrade Items, Back
+        const MENU_SIZE: usize = 3; // Upgrade Items, Upgrade Item Quality, Back
         match cmd {
             Cmd::Move(tuirealm::command::Direction::Up) => {
                 let current = self.list_state.selected().unwrap_or(0);
@@ -252,6 +296,11 @@ impl BlacksmithTab {
                         self.reset_selection();
                     }
                     1 => {
+                        // Upgrade Item Quality
+                        self.state = BlacksmithState::ItemQuality;
+                        self.reset_selection();
+                    }
+                    2 => {
                         // Back
                         game_state().current_screen = Id::Menu;
                     }
@@ -300,6 +349,118 @@ impl BlacksmithTab {
             _ => CmdResult::None,
         }
     }
+
+    fn render_item_quality(&mut self, frame: &mut Frame, area: Rect) {
+        self.rebuild_items();
+
+        let player_gold = game_state().player.gold();
+        let blacksmith = game_state().blacksmith();
+        let stones = game_state().player.find_item_by_kind(ItemKind::QualityUpgradeStone)
+            .map(|inv| inv.quantity).unwrap_or(0);
+
+        // Render header and get remaining area
+        let header_lines = blacksmith_header(blacksmith, player_gold, stones);
+        let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
+
+        // Split into left (list) and right (details) panels
+        let panels = Layout::default()
+            .direction(Direction::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(content_area);
+
+        let selected = self.list_state.selected().unwrap_or(0);
+
+        let list_items: Vec<ListItem> = self.cached_items
+            .iter()
+            .enumerate()
+            .map(|(i, inv_item)| {
+                let item = &inv_item.item;
+                let is_selected = selected == i;
+                let at_max = item.quality == ItemQuality::Mythic;
+                let current_quality_color = colors::quality_color(item.quality);
+
+                let line = if at_max {
+                    Line::from(vec![
+                        selection_prefix(is_selected),
+                        item_display(item, None),
+                        Span::raw(" - "),
+                        Span::styled(item.quality.display_name(), Style::default().fg(current_quality_color)),
+                        Span::styled(" (MAX)", Style::default().fg(colors::DARK_GRAY)),
+                    ])
+                } else {
+                    let next_quality = item.quality.next_quality().unwrap();
+                    let next_quality_color = colors::quality_color(next_quality);
+                    Line::from(vec![
+                        selection_prefix(is_selected),
+                        item_display(item, None),
+                        Span::raw(" - "),
+                        Span::styled(item.quality.display_name(), Style::default().fg(current_quality_color)),
+                        Span::raw(" -> "),
+                        Span::styled(next_quality.display_name(), Style::default().fg(next_quality_color)),
+                    ])
+                };
+
+                ListItem::new(line)
+            })
+            .collect();
+
+        // Add back button
+        let back_selected = selected == self.cached_items.len();
+        let mut all_items = list_items;
+        all_items.push(ListItem::new(Line::from(vec![
+            selection_prefix(back_selected),
+            Span::raw(format!("{} Back", RETURN_ARROW)),
+        ])));
+
+        let list = List::new(all_items);
+        frame.render_stateful_widget(list, panels[0], &mut self.list_state);
+
+        // Render item details panel on the right
+        let selected_item = if selected < self.cached_items.len() {
+            Some(&self.cached_items[selected].item)
+        } else {
+            None
+        };
+        render_item_details(frame, panels[1], selected_item);
+    }
+
+    fn handle_item_quality_cmd(&mut self, cmd: Cmd) -> CmdResult {
+        self.rebuild_items();
+        let total_items = self.cached_items.len() + 1; // items + back
+
+        match cmd {
+            Cmd::Move(tuirealm::command::Direction::Up) => {
+                let current = self.list_state.selected().unwrap_or(0);
+                let new_idx = if current == 0 { total_items - 1 } else { current - 1 };
+                self.list_state.select(Some(new_idx));
+                CmdResult::Changed(self.state())
+            }
+            Cmd::Move(tuirealm::command::Direction::Down) => {
+                let current = self.list_state.selected().unwrap_or(0);
+                let new_idx = (current + 1) % total_items;
+                self.list_state.select(Some(new_idx));
+                CmdResult::Changed(self.state())
+            }
+            Cmd::Submit => {
+                let selected = self.list_state.selected().unwrap_or(0);
+                if selected == self.cached_items.len() {
+                    // Back
+                    self.state = BlacksmithState::Menu;
+                    self.reset_selection();
+                } else if selected < self.cached_items.len() {
+                    // Upgrade item quality
+                    self.upgrade_item_quality_at(selected);
+                }
+                CmdResult::Submit(self.state())
+            }
+            Cmd::Cancel => {
+                self.state = BlacksmithState::Menu;
+                self.reset_selection();
+                CmdResult::Changed(self.state())
+            }
+            _ => CmdResult::None,
+        }
+    }
 }
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
@@ -323,20 +484,25 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
             }
             Event::Keyboard(KeyEvent { code: Key::Char('E'), .. }) => {
                 // Shift+E to equip/unequip in items mode
-                if self.state == BlacksmithState::Items {
+                if self.state == BlacksmithState::Items || self.state == BlacksmithState::ItemQuality {
                     self.rebuild_items();
                     let selected = self.list_state.selected().unwrap_or(0);
                     if selected < self.cached_items.len() {
-                        let item = &self.cached_items[selected];
+                        let inv_item = &self.cached_items[selected];
+                        let item = &inv_item.item;
                         let item_uuid = item.item_uuid;
                         let slot = match item.item_type {
-                            ItemType::Weapon => EquipmentSlot::Weapon,
-                            ItemType::Shield => EquipmentSlot::OffHand,
+                            ItemType::Weapon => Some(EquipmentSlot::Weapon),
+                            ItemType::Shield => Some(EquipmentSlot::OffHand),
+                            ItemType::Ring   => Some(EquipmentSlot::Ring),
+                            ItemType::Material => None,
                         };
-                        if item.is_equipped {
-                            let _ = game_state().player.unequip_item(slot);
-                        } else {
-                            game_state().player.equip_from_inventory(item_uuid, slot);
+                        if let Some(slot) = slot {
+                            if item.is_equipped {
+                                let _ = game_state().player.unequip_item(slot);
+                            } else {
+                                game_state().player.equip_from_inventory(item_uuid, slot);
+                            }
                         }
                     }
                 }

@@ -13,8 +13,8 @@ use tuirealm::{
 
 use crate::{
     combat::HasGold,
-    inventory::{EquipmentSlot, HasInventory},
-    item::{Item, ItemType},
+    inventory::{EquipmentSlot, HasInventory, InventoryItem},
+    item::ItemType,
     loot::WorthGold,
     store::sell_player_item,
     system::game_state,
@@ -52,20 +52,20 @@ impl StoreTab {
         self.list_state.select(Some(0));
     }
 
-    fn get_player_items(&self) -> Vec<Item> {
+    fn get_player_items(&self) -> Vec<InventoryItem> {
         let player = &game_state().player;
         let mut items = Vec::new();
 
         // Add equipped items first
-        for slot in [crate::inventory::EquipmentSlot::Weapon, crate::inventory::EquipmentSlot::OffHand] {
-            if let Some(item) = player.get_equipped_item(slot) {
-                items.push(item.clone());
+        for slot in EquipmentSlot::all() {
+            if let Some(inv_item) = player.get_equipped_item(*slot) {
+                items.push(inv_item.clone());
             }
         }
 
         // Add inventory items
         for inv_item in player.get_inventory_items() {
-            items.push(inv_item.item.clone());
+            items.push(inv_item.clone());
         }
 
         items
@@ -153,7 +153,7 @@ impl StoreTab {
                 let available = if si.quantity > 0 { "" } else { " (Out of stock)" };
                 ListItem::new(Line::from(vec![
                     selection_prefix(selected == i),
-                    item_display(&si.item),
+                    item_display(&si.item, Some(si.quantity as u32)),
                     Span::raw(format!(" - {}g{}", si.purchase_price(), available)),
                 ]))
             })
@@ -208,11 +208,11 @@ impl StoreTab {
         let mut list_items: Vec<ListItem> = player_items
             .iter()
             .enumerate()
-            .map(|(i, item)| {
+            .map(|(i, inv_item)| {
                 ListItem::new(Line::from(vec![
                     selection_prefix(selected == i),
-                    item_display(item),
-                    Span::raw(format!(" - {}g", item.sell_price())),
+                    item_display(&inv_item.item, Some(inv_item.quantity)),
+                    Span::raw(format!(" - {}g", inv_item.item.sell_price())),
                 ]))
             })
             .collect();
@@ -229,7 +229,7 @@ impl StoreTab {
 
         // Render item details
         let selected_item = if selected < player_items.len() {
-            Some(&player_items[selected])
+            Some(&player_items[selected].item)
         } else {
             None
         };
@@ -363,12 +363,9 @@ impl StoreTab {
                     self.state = StoreState::Menu;
                     self.reset_selection();
                 } else if selected < player_items.len() {
-                    // Sell item
-                    let item_uuid = player_items[selected].item_uuid;
+                    let inv_item = &player_items[selected];
                     let gs = game_state();
-                    if let Some(item) = gs.player.remove_item(item_uuid) {
-                        sell_player_item(&mut gs.player, &item);
-                    }
+                    sell_player_item(&mut gs.player, &inv_item.item);
                 }
                 CmdResult::Submit(self.state())
             }
@@ -407,16 +404,21 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                     let player_items = self.get_player_items();
                     let selected = self.list_state.selected().unwrap_or(0);
                     if selected < player_items.len() {
-                        let item = &player_items[selected];
+                        let inv_item = &player_items[selected];
+                        let item = &inv_item.item;
                         let item_uuid = item.item_uuid;
                         let slot = match item.item_type {
-                            ItemType::Weapon => EquipmentSlot::Weapon,
-                            ItemType::Shield => EquipmentSlot::OffHand,
+                            ItemType::Weapon => Some(EquipmentSlot::Weapon),
+                            ItemType::Shield => Some(EquipmentSlot::OffHand),
+                            ItemType::Ring   => Some(EquipmentSlot::Ring),
+                            ItemType::Material => None,
                         };
-                        if item.is_equipped {
-                            let _ = game_state().player.unequip_item(slot);
-                        } else {
-                            game_state().player.equip_from_inventory(item_uuid, slot);
+                        if let Some(slot) = slot {
+                            if item.is_equipped {
+                                let _ = game_state().player.unequip_item(slot);
+                            } else {
+                                game_state().player.equip_from_inventory(item_uuid, slot);
+                            }
                         }
                     }
                 }

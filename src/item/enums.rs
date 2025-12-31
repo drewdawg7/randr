@@ -7,16 +7,28 @@ pub enum ItemKind {
     Sword,
     Dagger,
     BasicShield,
+    QualityUpgradeStone,
+    GoldRing
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum ItemType {
     Weapon,
-    Shield
+    Shield,
+    Material,
+    Ring,
+}
+
+impl ItemType {
+    pub fn is_equipment(&self) -> bool {
+        matches!(self, ItemType::Weapon | ItemType::Shield | ItemType::Ring)
+    }
 }
 
 pub enum ItemError {
     MaxUpgradesReached,
+    NotEquipment,
+    MaxQualityReached,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -40,7 +52,16 @@ impl ItemQuality {
             ItemQuality::Mythic => "Mythic",
         }
     }
-
+    pub fn next_quality(&self) -> Option<ItemQuality>{
+            match self {
+                ItemQuality::Poor         => Some(ItemQuality::Normal),
+                ItemQuality::Normal       => Some(ItemQuality::Improved),
+                ItemQuality::Improved     => Some(ItemQuality::WellForged),
+                ItemQuality::WellForged   => Some(ItemQuality::Masterworked),
+                ItemQuality::Masterworked => Some(ItemQuality::Mythic),
+                ItemQuality::Mythic       => None
+            }
+    }
     pub fn roll() -> Self {
         let mut rng = rand::thread_rng();
         let roll = rng.gen_range(0..100);
