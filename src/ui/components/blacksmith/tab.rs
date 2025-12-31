@@ -15,7 +15,7 @@ use tuirealm::{
 use crate::{
     combat::HasGold,
     inventory::{EquipmentSlot, HasInventory},
-    item::Item,
+    item::{Item, ItemType},
     system::game_state,
     ui::Id,
 };
@@ -319,6 +319,27 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
             }
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 self.perform(Cmd::Cancel);
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char('E'), .. }) => {
+                // Shift+E to equip/unequip in items mode
+                if self.state == BlacksmithState::Items {
+                    self.rebuild_items();
+                    let selected = self.list_state.selected().unwrap_or(0);
+                    if selected < self.cached_items.len() {
+                        let item = &self.cached_items[selected];
+                        let item_uuid = item.item_uuid;
+                        let slot = match item.item_type {
+                            ItemType::Weapon => EquipmentSlot::Weapon,
+                            ItemType::Shield => EquipmentSlot::OffHand,
+                        };
+                        if item.is_equipped {
+                            let _ = game_state().player.unequip_item(slot);
+                        } else {
+                            game_state().player.equip_from_inventory(item_uuid, slot);
+                        }
+                    }
+                }
                 None
             }
             _ => None,

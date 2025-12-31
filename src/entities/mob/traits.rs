@@ -20,8 +20,7 @@ impl DropsGold for Mob {
 
 impl GivesXP for Mob {
     fn give_xp(&self) -> i32 {
-        let mut rng = rand::thread_rng();
-        rng.gen_range(15..=20)
+        self.dropped_xp
     }
 }
 

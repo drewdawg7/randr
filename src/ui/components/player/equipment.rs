@@ -115,7 +115,7 @@ impl MockComponent for Equipment {
         let list = List::new(list_items);
         frame.render_stateful_widget(list, chunks[0], &mut self.list_state);
 
-        // Render item details panel on the right
+        // Render item details panel on the right (auto-compares to equipped item)
         let selected_item = if selected < self.items.len() {
             Some(&self.items[selected].inner().item)
         } else {
@@ -189,6 +189,14 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for Equipment {
                     // Back button
                     game_state().current_screen = Id::Menu;
                 } else if selected < self.items.len() {
+                    self.items[selected].perform(Cmd::Submit);
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char('E'), .. }) => {
+                // Shift+E to equip/unequip
+                let selected = self.list_state.selected().unwrap_or(0);
+                if selected < self.items.len() {
                     self.items[selected].perform(Cmd::Submit);
                 }
                 None

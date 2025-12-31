@@ -1,9 +1,7 @@
 use std::ops::RangeInclusive;
 
 use crate::{
-    loot::LootTable,
-    registry::Registry,
-    stats::{HasStats, StatSheet},
+    entities::mob::enums::MobQuality, loot::LootTable, registry::Registry, stats::{HasStats, StatSheet}
 };
 
 pub type MobSpecId = usize;
@@ -11,9 +9,11 @@ pub type MobSpecId = usize;
 #[derive(Debug, Clone)]
 pub struct Mob {
     pub spec: MobKind,
+    pub quality: MobQuality,
     pub name: &'static str,
     pub stats: StatSheet,
     pub gold: i32,
+    pub dropped_xp: i32,
     pub loot_table: LootTable,
 }
 
@@ -42,12 +42,15 @@ pub struct MobSpec {
     pub max_health: RangeInclusive<i32>,
     pub attack: RangeInclusive<i32>,
     pub dropped_gold: RangeInclusive<i32>,
+    pub dropped_xp: RangeInclusive<i32>,
+    pub quality: MobQuality,
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum MobKind {
     Slime,
     Goblin,
+    Dragon,
 }
 
 pub type MobRegistry = Registry<MobKind, MobSpec>;

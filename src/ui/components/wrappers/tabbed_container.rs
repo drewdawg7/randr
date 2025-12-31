@@ -15,15 +15,21 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
 
+/// Trait for tab content that can handle both rendering and events
+pub trait TabContent: MockComponent + Component<Event<NoUserEvent>, NoUserEvent> {}
+
+/// Blanket implementation: any type implementing both traits gets TabContent for free
+impl<T: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> TabContent for T {}
+
 /// A tab entry with a label and content component
 pub struct TabEntry {
     pub label: Line<'static>,
-    pub content: Box<dyn MockComponent>,
+    pub content: Box<dyn TabContent>,
     pub content_height: Option<u16>,
 }
 
 impl TabEntry {
-    pub fn new<C: MockComponent + 'static>(label: Line<'static>, content: C) -> Self {
+    pub fn new<C: TabContent + 'static>(label: Line<'static>, content: C) -> Self {
         Self {
             label,
             content: Box::new(content),
@@ -31,7 +37,7 @@ impl TabEntry {
         }
     }
 
-    pub fn with_height<C: MockComponent + 'static>(
+    pub fn with_height<C: TabContent + 'static>(
         label: Line<'static>,
         content: C,
         content_height: u16,
@@ -313,7 +319,7 @@ impl MockComponent for TabbedContainer {
 impl Component<Event<NoUserEvent>, NoUserEvent> for TabbedContainer {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         match ev {
-            // Tab switching with Left/Right
+            // Tab switching with Left/Right - TabbedContainer handles these
             Event::Keyboard(KeyEvent { code: Key::Left, .. }) => {
                 self.switch_tab(-1);
                 None
@@ -322,27 +328,14 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for TabbedContainer {
                 self.switch_tab(1);
                 None
             }
-            // Forward Up/Down/Enter to active tab content
-            Event::Keyboard(KeyEvent { code: Key::Up, .. })
-            | Event::Keyboard(KeyEvent { code: Key::Down, .. })
-            | Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {
+            // Forward ALL other events to the active tab
+            _ => {
                 if let Some(tab) = self.tabs.get_mut(self.active_tab) {
-                    // Convert event to command for MockComponent
-                    let cmd = match ev {
-                        Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                            Cmd::Move(tuirealm::command::Direction::Up)
-                        }
-                        Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
-                            Cmd::Move(tuirealm::command::Direction::Down)
-                        }
-                        Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => Cmd::Submit,
-                        _ => return None,
-                    };
-                    tab.content.perform(cmd);
+                    tab.content.on(ev)
+                } else {
+                    None
                 }
-                None
             }
-            _ => None,
         }
     }
 }

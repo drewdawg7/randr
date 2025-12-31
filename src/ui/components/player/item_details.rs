@@ -1,24 +1,82 @@
 //#![warn(clippy::single_match)]
 use ratatui::{
     layout::Rect,
+    style::Color,
     Frame,
 };
 
 use crate::ui::components::widgets::scroll_border::{render_scroll_with_styled_content, StyledContent};
 use crate::ui::components::utilities::{CROSSED_SWORDS, SHIELD, COIN};
 use crate::ui::utilities::HAMMER;
-use crate::ui::theme::quality_color;
+use crate::ui::theme::{quality_color, SOFT_GREEN, SOFT_RED};
 
-use crate::{item::Item, stats::HasStats};
+use crate::{
+    inventory::{EquipmentSlot, HasInventory},
+    item::{Item, ItemType},
+    stats::HasStats,
+    system::game_state,
+};
 
-pub fn render_item_details_with_price(
+const ARROW_UP: char = '↑';
+const ARROW_DOWN: char = '↓';
+
+/// Gets the currently equipped item to compare against based on item type.
+/// Returns None if the item itself is already equipped.
+fn get_comparison_item(item: &Item) -> Option<Item> {
+    if item.is_equipped {
+        return None;
+    }
+
+    let slot = match item.item_type {
+        ItemType::Weapon => EquipmentSlot::Weapon,
+        ItemType::Shield => EquipmentSlot::OffHand,
+    };
+
+    game_state().player.get_equipped_item(slot).cloned()
+}
+
+/// Formats a stat comparison as colored text segments
+/// Returns (base_text, comparison_segments) where comparison_segments may be empty
+fn format_stat_with_comparison(
+    icon: char,
+    stat_name: &str,
+    value: i32,
+    compare_value: Option<i32>,
+) -> StyledContent {
+    let base_text = format!("{} {}: {}", icon, stat_name, value);
+
+    match compare_value {
+        Some(compare) => {
+            let diff = value - compare;
+            if diff == 0 {
+                // No change, just show the base stat
+                StyledContent::plain(base_text)
+            } else {
+                let (arrow, color): (char, Color) = if diff > 0 {
+                    (ARROW_UP, SOFT_GREEN)
+                } else {
+                    (ARROW_DOWN, SOFT_RED)
+                };
+                let comparison_text = format!(" ({}{}", arrow, diff.abs());
+                StyledContent::multi(vec![
+                    (base_text, None),
+                    (comparison_text, Some(color)),
+                    (")".to_string(), Some(color)),
+                ])
+            }
+        }
+        None => StyledContent::plain(base_text),
+    }
+}
+
+fn render_item_details_inner(
     frame: &mut Frame,
     area: Rect,
     item: Option<&Item>,
+    compare_to: Option<&Item>,
     price: Option<(i32, &str)>,
 ) {
     match item {
-
         Some(item) => {
             let mut content_lines: Vec<StyledContent> = vec![];
             let color = quality_color(item.quality);
@@ -36,12 +94,14 @@ pub fn render_item_details_with_price(
                 color,
             ));
 
-            // Stats displayed vertically
+            // Stats displayed vertically with comparison
             let attack = item.attack();
             let defense = item.def();
+            let compare_attack = compare_to.map(|c| c.attack());
+            let compare_defense = compare_to.map(|c| c.def());
 
-            content_lines.push(StyledContent::plain(format!("{} Attack: {}", CROSSED_SWORDS, attack)));
-            content_lines.push(StyledContent::plain(format!("{} Defense: {}", SHIELD, defense)));
+            content_lines.push(format_stat_with_comparison(CROSSED_SWORDS, "Attack", attack, compare_attack));
+            content_lines.push(format_stat_with_comparison(SHIELD, "Defense", defense, compare_defense));
             content_lines.push(StyledContent::plain(format!("{} Upgrades: {}/{}", HAMMER, item.num_upgrades, item.max_upgrades)));
 
             // Price (if provided)
@@ -55,7 +115,20 @@ pub fn render_item_details_with_price(
     }
 }
 
+/// Renders item details with price, auto-comparing to equipped item
+pub fn render_item_details_with_price(
+    frame: &mut Frame,
+    area: Rect,
+    item: Option<&Item>,
+    price: Option<(i32, &str)>,
+) {
+    let compare_to = item.and_then(get_comparison_item);
+    render_item_details_inner(frame, area, item, compare_to.as_ref(), price);
+}
+
 /// Renders an item details panel showing stats for the given item (without price).
+/// Automatically compares to the currently equipped item of the same type.
 pub fn render_item_details(frame: &mut Frame, area: Rect, item: Option<&Item>) {
-    render_item_details_with_price(frame, area, item, None);
+    let compare_to = item.and_then(get_comparison_item);
+    render_item_details_inner(frame, area, item, compare_to.as_ref(), None);
 }

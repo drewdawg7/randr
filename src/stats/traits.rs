@@ -28,6 +28,9 @@ pub trait HasStats {
     // HP
     fn hp(&self) -> i32 {self.value(StatType::Health)}
     fn max_hp(&self) -> i32 {self.max_value(StatType::Health)}
+    fn inc_max_hp(&mut self, amount: i32) {
+        self.stats_mut().increase_stat_max(StatType::Health, amount);
+    }
     fn inc_hp(&mut self, amount: i32) { 
         self.stats_mut().increase_stat(StatType::Health, amount);
     }
@@ -52,6 +55,7 @@ pub trait HasStats {
     fn dec_def(&mut self, amount: i32) {
         self.stats_mut().decrease_stat(StatType::Defense, amount);
     }
+
 
 }
 

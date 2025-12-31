@@ -17,6 +17,7 @@ use crate::{
         equipment::Equipment,
         main_menu::MainMenuScreen,
         fight::FightScreen,
+        modal_wrapper::ModalWrapper,
         profile::PlayerProfile,
         tabbed_container::{TabbedContainer, TabEntry},
         town::TownScreen,
@@ -42,6 +43,7 @@ pub struct GameState {
     pub player: Player,
     pub town: Town,
     current_combat: Option<CombatRounds>,
+    pub modal_open: bool,
 }
 
 impl GameState {
@@ -87,16 +89,18 @@ impl GameState {
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
-        let menu = MainMenuScreen::default();
+        let menu = ModalWrapper::new(MainMenuScreen::default());
         let _ = self.app.mount(Id::Menu, Box::new(menu), vec![]);
-        let _ = self.app.mount(Id::Town, Box::new(TownScreen::new()), vec![]);
-        let _ = self.app.mount(Id::Fight, Box::new(FightScreen::new()), vec![]);
-        let profile_tabs = TabbedContainer::new(
+        let town = ModalWrapper::new(TownScreen::new());
+        let _ = self.app.mount(Id::Town, Box::new(town), vec![]);
+        let fight = ModalWrapper::new(FightScreen::new());
+        let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
+        let profile_tabs = ModalWrapper::new(TabbedContainer::new(
             vec![
                 TabEntry::new("Player".into(), PlayerProfile::new()),
                 TabEntry::new("Equipment".into(), Equipment::default()),
             ],
-        );
+        ));
         let _ = self.app.mount(Id::Profile, Box::new(profile_tabs), vec![]);
     }
 
@@ -152,6 +156,7 @@ impl Default for GameState {
             terminal: Some(terminal),
             current_screen: Id::Menu,
             current_combat: None,
+            modal_open: false,
         }
     }
 }

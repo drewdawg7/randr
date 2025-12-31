@@ -8,7 +8,8 @@ impl Default for Field {
             name: "The Village Field".to_string(),
             spawnable_mobs: vec![
                 MobKind::Goblin,
-                MobKind::Slime
+                MobKind::Slime,
+                MobKind::Dragon,
             ]
         }
     }

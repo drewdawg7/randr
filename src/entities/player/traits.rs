@@ -99,7 +99,11 @@ impl HasProgression for Player {
         &mut self.prog
     }
     fn on_level_up(&mut self) {
+        if self.level() % 10 == 0 {
+            self.increase_defense(1);
+        }
         self.increase_health(5);
+        self.increase_max_health(5);
         self.increase_attack(1);
     }
 }

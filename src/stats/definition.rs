@@ -37,12 +37,18 @@ impl StatSheet {
     }
 
     pub fn increase_stat(&mut self, stat: StatType, amount: i32) {
-
         if let Some(si) = self.stats_mut().get_mut(&stat) { si.increase(amount);}
     }
 
+    pub fn increase_stat_max(&mut self, stat: StatType, amount: i32) {
+        if let Some(si) = self.stats_mut().get_mut(&stat) { si.increase_max(amount);}
+    }
     pub fn decrease_stat(&mut self, stat: StatType, amount: i32) {
         if let Some(si) = self.stats_mut().get_mut(&stat) {si.decrease(amount);}
+    }
+
+    pub fn decrease_stat_max(&mut self, stat: StatType, amount: i32) {
+        if let Some(si) = self.stats_mut().get_mut(&stat) {si.decrease_max(amount);}
     }
 }
 
@@ -58,9 +64,14 @@ impl StatInstance {
     pub fn increase(&mut self, amount: i32) {
         self.current_value += amount;
     }
-
+    pub fn increase_max(&mut self, amount: i32) {
+        self.max_value += amount;
+    }
     pub fn decrease(&mut self, amount: i32) {
         self.current_value = (self.current_value - amount).max(0);
+    }
+    pub fn decrease_max(&mut self, amount: i32) {
+        self.max_value = (self.max_value - amount).max(0);
     }
 
 

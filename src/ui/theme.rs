@@ -43,6 +43,9 @@ pub const FIELD_BG: Color = Color::Rgb(34, 42, 56); // Very subtle green tint
 pub const FIGHT_BG: Color = Color::Rgb(34, 42, 56); // Same as Field
 pub const ORANGE: Color = Color::Rgb(255, 152, 0);
 pub const PURPLE: Color = Color::Rgb(171, 71, 188);
+// Soft colors for stat comparisons
+pub const SOFT_GREEN: Color = Color::Rgb(100, 200, 100);
+pub const SOFT_RED: Color = Color::Rgb(200, 100, 100);
 
 /// Returns a color based on upgrade count (0=white, 1=green, 2=blue, 3=purple, 4+=orange)
 pub fn upgrade_color(num_upgrades: i32) -> Color {

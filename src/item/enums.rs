@@ -66,6 +66,26 @@ impl ItemQuality {
         }
     }
 
+    pub fn value_multiplier(&self) -> f64 {
+        match self {
+            ItemQuality::Poor         => 0.90,
+            ItemQuality::Normal       => 1.0,
+            ItemQuality::Improved     => 1.1,
+            ItemQuality::WellForged   => 1.2,
+            ItemQuality::Masterworked => 1.3,
+            ItemQuality::Mythic       => 1.4,
+        }
+    }
+    pub fn upgrade_cost_multiplier(&self) -> f64 {
+        match self {
+            ItemQuality::Poor         => 0.90,
+            ItemQuality::Normal       => 1.0,
+            ItemQuality::Improved     => 1.1,
+            ItemQuality::WellForged   => 1.2,
+            ItemQuality::Masterworked => 1.3,
+            ItemQuality::Mythic       => 1.4,
+        }
+    }
     pub fn multiply_stats(&self, mut sheet: StatSheet) -> StatSheet {
         let multiplier = self.multiplier();
         for stat in sheet.stats_mut().values_mut() {

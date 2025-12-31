@@ -13,8 +13,8 @@ use tuirealm::{
 
 use crate::{
     combat::HasGold,
-    inventory::HasInventory,
-    item::Item,
+    inventory::{EquipmentSlot, HasInventory},
+    item::{Item, ItemType},
     loot::WorthGold,
     store::sell_player_item,
     system::game_state,
@@ -169,7 +169,7 @@ impl StoreTab {
         let list = List::new(list_items);
         frame.render_stateful_widget(list, panels[0], &mut self.list_state);
 
-        // Render item details
+        // Render item details (auto-compares to equipped item)
         let selected_item = if selected < store_items.len() {
             let si = &store_items[selected];
             Some((&si.item, si.purchase_price()))
@@ -399,6 +399,27 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
             }
             Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
                 self.perform(Cmd::Cancel);
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char('E'), .. }) => {
+                // Shift+E to equip/unequip in sell mode
+                if self.state == StoreState::Sell {
+                    let player_items = self.get_player_items();
+                    let selected = self.list_state.selected().unwrap_or(0);
+                    if selected < player_items.len() {
+                        let item = &player_items[selected];
+                        let item_uuid = item.item_uuid;
+                        let slot = match item.item_type {
+                            ItemType::Weapon => EquipmentSlot::Weapon,
+                            ItemType::Shield => EquipmentSlot::OffHand,
+                        };
+                        if item.is_equipped {
+                            let _ = game_state().player.unequip_item(slot);
+                        } else {
+                            game_state().player.equip_from_inventory(item_uuid, slot);
+                        }
+                    }
+                }
                 None
             }
             _ => None,

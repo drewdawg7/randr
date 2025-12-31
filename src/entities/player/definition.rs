@@ -33,7 +33,9 @@ impl Player {
     pub fn get_max_health(&self) -> i32 {
         self.max_hp()
     }
-
+    pub fn increase_defense(&mut self, amount: i32) {
+        self.inc_def(amount);
+    }
     pub fn increase_health(&mut self, amount: i32) {
         self.inc_hp(amount);
     }
@@ -41,7 +43,9 @@ impl Player {
     pub fn decrease_health(&mut self, amount: i32) {
         self.dec_hp(amount);
     }
-
+    pub fn increase_max_health(&mut self, amount: i32) {
+        self.inc_max_hp(amount);
+    }
     pub fn pretty_print(&self) -> String {
 
 

@@ -8,6 +8,7 @@ pub(crate) mod utilities;
 pub(crate) mod field;
 
 pub(crate) use wrappers::tabbed_container;
+pub(crate) use wrappers::modal_wrapper;
 pub(crate) use player::profile;
 pub(crate) use player::equipment;
 pub(crate) use screens::main_menu;

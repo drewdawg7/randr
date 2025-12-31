@@ -12,19 +12,48 @@ const SCROLL_DARK: ratatui::style::Color = colors::TAN_WOOD;
 const SCROLL_LIGHT: ratatui::style::Color = colors::CREAM_WOOD;
 const SCROLL_MID: ratatui::style::Color = colors::LIGHT_BEIGE;
 
-/// A line of content with optional styling
-pub struct StyledContent {
+/// A single styled segment of text
+pub struct StyledSegment {
     pub text: String,
     pub color: Option<ratatui::style::Color>,
 }
 
+/// A line of content with optional styling, supporting multiple colored segments
+pub struct StyledContent {
+    pub segments: Vec<StyledSegment>,
+}
+
 impl StyledContent {
     pub fn plain(text: impl Into<String>) -> Self {
-        Self { text: text.into(), color: None }
+        Self {
+            segments: vec![StyledSegment { text: text.into(), color: None }],
+        }
     }
 
     pub fn colored(text: impl Into<String>, color: ratatui::style::Color) -> Self {
-        Self { text: text.into(), color: Some(color) }
+        Self {
+            segments: vec![StyledSegment { text: text.into(), color: Some(color) }],
+        }
+    }
+
+    /// Create content with multiple colored segments
+    pub fn multi(segments: Vec<(String, Option<ratatui::style::Color>)>) -> Self {
+        Self {
+            segments: segments
+                .into_iter()
+                .map(|(text, color)| StyledSegment { text, color })
+                .collect(),
+        }
+    }
+
+    /// Get the full text content (for width calculation)
+    pub fn full_text(&self) -> String {
+        self.segments.iter().map(|s| s.text.as_str()).collect()
+    }
+
+    /// Get the total character count
+    pub fn char_count(&self) -> usize {
+        self.segments.iter().map(|s| s.text.chars().count()).sum()
     }
 }
 
@@ -64,7 +93,7 @@ pub fn render_scroll_with_styled_content(
 ) {
     let content_width = content_lines
         .iter()
-        .map(|s| s.text.chars().count())
+        .map(|s| s.char_count())
         .max()
         .unwrap_or(0)
         .max(18) as u16; // minimum width of 18
@@ -188,57 +217,81 @@ fn generate_content_line(content: &str, content_width: u16) -> Line<'static> {
 
 /// First side with styled content: "|   |" + content + padding + "|."
 fn generate_first_side_with_styled_content(content: Option<&StyledContent>, content_width: u16) -> Line<'static> {
-    let (text, color) = match content {
-        Some(c) => (c.text.as_str(), c.color.unwrap_or(colors::WHITE)),
-        None => ("", colors::WHITE),
-    };
-    let padding_len = content_width as usize - text.chars().count();
-    let padding = " ".repeat(padding_len);
-    Line::from(vec![
+    let mut spans = vec![
         Span::styled("|", Style::default().fg(SCROLL_DARK)),
         Span::styled("   ", Style::default()),
         Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(text.to_string(), Style::default().fg(color)),
-        Span::styled(padding, Style::default()),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(".", Style::default().fg(SCROLL_MID)),
-    ])
+    ];
+
+    let char_count = match content {
+        Some(c) => {
+            for segment in &c.segments {
+                let color = segment.color.unwrap_or(colors::WHITE);
+                spans.push(Span::styled(segment.text.clone(), Style::default().fg(color)));
+            }
+            c.char_count()
+        }
+        None => 0,
+    };
+
+    let padding_len = content_width as usize - char_count;
+    let padding = " ".repeat(padding_len);
+    spans.push(Span::styled(padding, Style::default()));
+    spans.push(Span::styled("|", Style::default().fg(SCROLL_DARK)));
+    spans.push(Span::styled(".", Style::default().fg(SCROLL_MID)));
+
+    Line::from(spans)
 }
 
 /// Fold corner with styled content: " \_ |" + content + padding + "|."
 fn generate_fold_corner_with_styled_content(content: Option<&StyledContent>, content_width: u16) -> Line<'static> {
-    let (text, color) = match content {
-        Some(c) => (c.text.as_str(), c.color.unwrap_or(colors::WHITE)),
-        None => ("", colors::WHITE),
-    };
-    let padding_len = content_width as usize - text.chars().count();
-    let padding = " ".repeat(padding_len);
-    Line::from(vec![
+    let mut spans = vec![
         Span::styled(" ", Style::default()),
         Span::styled("\\", Style::default().fg(SCROLL_DARK)),
         Span::styled("_", Style::default().fg(SCROLL_LIGHT)),
         Span::styled(" ", Style::default()),
         Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(text.to_string(), Style::default().fg(color)),
-        Span::styled(padding, Style::default()),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(".", Style::default().fg(SCROLL_MID)),
-    ])
+    ];
+
+    let char_count = match content {
+        Some(c) => {
+            for segment in &c.segments {
+                let color = segment.color.unwrap_or(colors::WHITE);
+                spans.push(Span::styled(segment.text.clone(), Style::default().fg(color)));
+            }
+            c.char_count()
+        }
+        None => 0,
+    };
+
+    let padding_len = content_width as usize - char_count;
+    let padding = " ".repeat(padding_len);
+    spans.push(Span::styled(padding, Style::default()));
+    spans.push(Span::styled("|", Style::default().fg(SCROLL_DARK)));
+    spans.push(Span::styled(".", Style::default().fg(SCROLL_MID)));
+
+    Line::from(spans)
 }
 
 /// Styled content line: "    |" + content + padding + "|."
 fn generate_styled_content_line(content: &StyledContent, content_width: u16) -> Line<'static> {
-    let color = content.color.unwrap_or(colors::WHITE);
-    let padding_len = content_width as usize - content.text.chars().count();
-    let padding = " ".repeat(padding_len);
-    Line::from(vec![
+    let mut spans = vec![
         Span::styled("    ", Style::default()),
         Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(content.text.clone(), Style::default().fg(color)),
-        Span::styled(padding, Style::default()),
-        Span::styled("|", Style::default().fg(SCROLL_DARK)),
-        Span::styled(".", Style::default().fg(SCROLL_MID)),
-    ])
+    ];
+
+    for segment in &content.segments {
+        let color = segment.color.unwrap_or(colors::WHITE);
+        spans.push(Span::styled(segment.text.clone(), Style::default().fg(color)));
+    }
+
+    let padding_len = content_width as usize - content.char_count();
+    let padding = " ".repeat(padding_len);
+    spans.push(Span::styled(padding, Style::default()));
+    spans.push(Span::styled("|", Style::default().fg(SCROLL_DARK)));
+    spans.push(Span::styled(".", Style::default().fg(SCROLL_MID)));
+
+    Line::from(spans)
 }
 
 /// Bottom fold start: "    |   " + "_" repeated + "|___"

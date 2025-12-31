@@ -25,7 +25,11 @@ impl Display for Item {
 }
 
 impl WorthGold for Item {
-    fn gold_value(&self) -> i32 { self.gold_value }
+    fn gold_value(&self) -> i32 {
+        let base = self.gold_value;
+        let quality_multiplier = self.quality.value_multiplier();
+        ((base as f64) * quality_multiplier).round() as i32
+    }
 }
 
 impl SpawnFromSpec<ItemKind> for ItemSpec {

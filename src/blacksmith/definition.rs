@@ -32,6 +32,8 @@ impl Blacksmith {
         }
     }
     pub fn calc_upgrade_cost(&self, item: &Item) -> i32 {
-        (item.num_upgrades + 1) * self.base_upgrade_cost
+        let multiplier = item.quality.upgrade_cost_multiplier();
+        let base = (item.num_upgrades + 1) * self.base_upgrade_cost;
+        ((base as f64) * multiplier).round() as i32
     }
 }

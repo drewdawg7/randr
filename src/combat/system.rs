@@ -83,6 +83,11 @@ where
     }
     if !player.is_alive() {
         cr.player_won = false;
+        player.dec_gold(
+            ((player.gold() as f64) * 0.05).round() as i32
+        );
+        player.increase_health(player.max_hp());
+
     } else if !mob.is_alive() {
         cr.player_won = true;
         cr.gold_gained = award_kill_gold(player, mob);

@@ -29,9 +29,14 @@ impl Item {
             return Err(ItemError::MaxUpgradesReached)
         }
         self.num_upgrades += 1;
+        let multiplier = 1.1;
         match self.item_type {
-            ItemType::Weapon => self.inc_attack(3),
-            ItemType::Shield => self.inc_def(1),
+            ItemType::Weapon => self.inc_attack(
+                ((self.attack() as f64) * (multiplier - 1.0)).round().max(1.0) as i32,
+            ),
+            ItemType::Shield => self.inc_def(
+                ((self.def() as f64) * (multiplier - 1.0)).round().max(1.0) as i32,
+            ),
         };
         Ok(())
     }
