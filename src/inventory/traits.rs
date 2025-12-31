@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{item::Item, ItemKind};
+use crate::{item::Item, ItemId};
 
 use super::{EquipmentSlot, Inventory, InventoryError, InventoryItem};
 
@@ -16,7 +16,7 @@ pub trait HasInventory {
         self.inventory().items.iter().find(|inv_item| inv_item.uuid() == uuid)
     }
 
-    fn find_item_by_kind(&self, kind: ItemKind) -> Option<&InventoryItem> {
+    fn find_item_by_kind(&self, kind: ItemId) -> Option<&InventoryItem> {
         // Check inventory items first
         if let Some(inv_item) = self.inventory().items.iter().find(|inv_item| inv_item.item.kind == kind) {
             return Some(inv_item);
@@ -60,7 +60,7 @@ pub trait HasInventory {
             .retain(|inv_item| inv_item.uuid() != uuid);
     }
     
-    fn find_item_by_kind_mut(&mut self, kind: ItemKind) -> Option<&mut InventoryItem> {
+    fn find_item_by_kind_mut(&mut self, kind: ItemId) -> Option<&mut InventoryItem> {
         self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.kind == kind)
     }
 

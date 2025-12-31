@@ -19,7 +19,7 @@ use crate::{
     system::game_state,
     ui::Id,
 };
-use crate::ui::components::utilities::{render_location_header, COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW};
+use crate::ui::components::utilities::{render_location_header, COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, PICKAXE, RETURN_ARROW};
 use crate::ui::components::widgets::menu::{Menu, MenuItem};
 
 pub struct FieldTab {
@@ -49,6 +49,12 @@ impl FieldTab {
                         gs.set_current_combat(combat_rounds);
                         gs.current_screen = Id::Fight;
                     }
+                }),
+            },
+            MenuItem {
+                label: format!("{} Mine", PICKAXE),
+                action: Box::new(|| {
+                    game_state().current_screen = Id::Mine;
                 }),
             },
             MenuItem {

@@ -8,11 +8,12 @@ use crate::{
     loot::{LootItem, LootTable},
     stats::{StatSheet, StatType},
     HasInventory,
-    ItemKind,
+    ItemId,
 };
 
 use super::enums::RockId;
 
+#[derive(Clone)]
 pub struct Rock {
     pub rock_id: RockId,
     pub stats: StatSheet,
@@ -22,7 +23,7 @@ pub struct Rock {
 impl Rock {
     pub fn copper_rock() -> Self {
         let mut table = LootTable::default();
-        if let Ok(item) = LootItem::new(ItemKind::CopperOre, 1, 1) {
+        if let Ok(item) = LootItem::new(ItemId::CopperOre, 1, 1) {
             let _ = table.add_loot_item(item);
         }
         let mut stats = HashMap::new();
@@ -37,7 +38,7 @@ impl Rock {
 
     pub fn coal_rock() -> Self {
         let mut table = LootTable::default();
-        if let Ok(item) = LootItem::new(ItemKind::Coal, 1, 1) {
+        if let Ok(item) = LootItem::new(ItemId::Coal, 1, 1) {
             let _ = table.add_loot_item(item);
         }
         let mut stats = HashMap::new();
@@ -51,7 +52,7 @@ impl Rock {
 
     pub fn tin_rock() -> Self {
         let mut table = LootTable::default();
-        if let Ok(item) = LootItem::new(ItemKind::TinOre, 1, 1) {
+        if let Ok(item) = LootItem::new(ItemId::TinOre, 1, 1) {
             let _ = table.add_loot_item(item);
         }
         let mut stats = HashMap::new();

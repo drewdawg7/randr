@@ -6,7 +6,7 @@ use ratatui::{
 };
 
 use crate::ui::components::widgets::scroll_border::{render_scroll_with_styled_content, StyledContent};
-use crate::ui::components::utilities::{CROSSED_SWORDS, SHIELD, COIN};
+use crate::ui::components::utilities::{CROSSED_SWORDS, SHIELD, COIN, PICKAXE};
 use crate::ui::utilities::HAMMER;
 use crate::ui::theme::{quality_color, SOFT_GREEN, SOFT_RED};
 
@@ -98,9 +98,11 @@ fn render_item_details_inner(
                 let attack = item.attack();
                 let defense = item.def();
                 let gold_find = item.goldfind();
+                let mining = item.mining();
                 let compare_attack = compare_to.map(|c| c.attack());
                 let compare_defense = compare_to.map(|c| c.def());
                 let compare_gold_find = compare_to.map(|c| c.goldfind());
+                let compare_mining = compare_to.map(|c| c.mining());
 
                 // Only show stats that are non-zero (or have a non-zero comparison)
                 if attack > 0 || compare_attack.map_or(false, |c| c > 0) {
@@ -111,6 +113,9 @@ fn render_item_details_inner(
                 }
                 if gold_find > 0 || compare_gold_find.map_or(false, |c| c > 0) {
                     content_lines.push(format_stat_with_comparison(COIN, "Gold Find", gold_find, compare_gold_find));
+                }
+                if mining > 0 || compare_mining.map_or(false, |c| c > 0) {
+                    content_lines.push(format_stat_with_comparison(PICKAXE, "Mining", mining, compare_mining));
                 }
 
                 content_lines.push(StyledContent::plain(format!("{} Upgrades: {}/{}", HAMMER, item.num_upgrades, item.max_upgrades)));

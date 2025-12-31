@@ -4,5 +4,6 @@ pub(crate) mod fitted_box;
 pub(crate) mod forest_border;
 pub(crate) mod ember_border;
 pub(crate) mod wood_border;
+pub(crate) mod stone_border;
 pub(crate) mod scroll_border;
 pub(crate) mod modal;

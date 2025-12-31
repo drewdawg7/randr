@@ -48,7 +48,7 @@ Core behaviors are implemented as traits allowing composition:
 - `entities/player` - Player struct with stats, inventory, progression
 - `entities/mob` - Enemy definitions with MobRegistry
 - `combat/system` - Turn-based combat logic via `enter_combat()` function
-- `item/` - Item system with ItemKind, ItemType (Weapon/Shield), upgrades
+- `item/` - Item system with ItemId, ItemType (Weapon/Shield), upgrades
 - `blacksmith/` - Item upgrade system with gold cost
 - `store/` - Shop system for purchasing items
 - `stats/` - StatSheet with StatType enum (Health, Attack, Defense)

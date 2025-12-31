@@ -6,6 +6,7 @@ pub(crate) mod player;
 pub(crate) mod screens;
 pub(crate) mod utilities;
 pub(crate) mod field;
+pub(crate) mod mine;
 
 pub(crate) use wrappers::tabbed_container;
 pub(crate) use wrappers::modal_wrapper;

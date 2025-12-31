@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::fmt::Display;
 
 use uuid::Uuid;
 
@@ -6,7 +6,7 @@ use crate::{
     item::{enums::ItemQuality, ToolKind}, loot::traits::WorthGold, registry::{RegistryDefaults, SpawnFromSpec}, stats::{HasStats, StatSheet, StatType}
 };
 
-use super::{Item, ItemSpec, ItemKind, ItemType, EquipmentType, MaterialType};
+use super::{Item, ItemSpec, ItemId, ItemType, EquipmentType, MaterialType};
 
 impl HasStats for Item {
     fn stats(&self) -> &StatSheet {
@@ -32,17 +32,13 @@ impl WorthGold for Item {
     }
 }
 
-impl SpawnFromSpec<ItemKind> for ItemSpec {
+impl SpawnFromSpec<ItemId> for ItemSpec {
     type Output = Item;
 
-    fn spawn_from_spec(kind: ItemKind, spec: &Self) -> Self::Output {
+    fn spawn_from_spec(kind: ItemId, spec: &Self) -> Self::Output {
         // Use fixed quality from spec, or roll if None
         let quality = spec.quality.unwrap_or_else(ItemQuality::roll);
-        let mut base_stats = StatSheet { stats: HashMap::new() };
-        base_stats.insert(StatType::Attack.instance(spec.attack));
-        base_stats.insert(StatType::Defense.instance(spec.defense));
-        base_stats.insert(StatType::GoldFind.instance(spec.gold_find));
-        base_stats.insert(StatType::Mining.instance(spec.mining));
+        let base_stats = spec.stats.clone();
         let stats = quality.multiply_stats(base_stats.clone());
         Item {
             item_uuid: Uuid::new_v4(),
@@ -62,141 +58,114 @@ impl SpawnFromSpec<ItemKind> for ItemSpec {
     }
 }
 
-impl RegistryDefaults<ItemKind> for ItemSpec {
-    fn defaults() -> impl IntoIterator<Item = (ItemKind, Self)> {
+impl RegistryDefaults<ItemId> for ItemSpec {
+    fn defaults() -> impl IntoIterator<Item = (ItemId, Self)> {
         [
             (
-                ItemKind::Sword,
+                ItemId::Sword,
                 ItemSpec {
                     name: "Sword",
                     item_type: ItemType::Equipment(EquipmentType::Weapon),
                     quality: None,
-                    attack: 10,
-                    defense: 0,
-                    mining: 0,
-                    gold_find: 0,
+                    stats: StatSheet::new().with(StatType::Attack, 10),
                     max_upgrades: 5,
                     max_stack_quantity: 1,
                     gold_value: 15
                 }
             ),
             (
-                ItemKind::BronzePickaxe,
+                ItemId::BronzePickaxe,
                 ItemSpec {
                     name: "Bronze Pickaxe",
                     item_type: ItemType::Equipment(EquipmentType::Tool(ToolKind::Pickaxe)),
                     quality: None,
-                    attack: 10,
-                    defense: 0,
-                    gold_find: 0,
-                    mining: 10,
+                    stats: StatSheet::new()
+                        .with(StatType::Attack, 10)
+                        .with(StatType::Mining, 10),
                     max_upgrades: 5,
                     max_stack_quantity: 1,
                     gold_value: 50
                 }
             ),
             (
-                ItemKind::Dagger,
+                ItemId::Dagger,
                 ItemSpec {
                     name: "Dagger",
                     item_type: ItemType::Equipment(EquipmentType::Weapon),
                     quality: None,
-                    attack: 6,
-                    defense: 0,
-                    mining: 0,
-                    gold_find: 0,
+                    stats: StatSheet::new().with(StatType::Attack, 6),
                     max_upgrades: 5,
                     max_stack_quantity: 1,
                     gold_value: 10,
                 }
             ),
             (
-                ItemKind::BasicShield,
+                ItemId::BasicShield,
                 ItemSpec {
                     name: "Basic Shield",
                     item_type: ItemType::Equipment(EquipmentType::Shield),
                     quality: None,
-                    attack: 0,
-                    mining: 0,
-                    defense: 4,
-                    gold_find: 0,
+                    stats: StatSheet::new().with(StatType::Defense, 4),
                     max_upgrades: 5,
                     max_stack_quantity: 1,
                     gold_value: 15
                 }
             ),
             (
-                ItemKind::GoldRing,
+                ItemId::GoldRing,
                 ItemSpec {
                     name: "Midas' Touch",
-                    mining: 0,
                     item_type: ItemType::Equipment(EquipmentType::Ring),
                     quality: None,
-                    attack: 0,
-                    defense: 0,
-                    gold_find: 10,
+                    stats: StatSheet::new().with(StatType::GoldFind, 10),
                     max_upgrades: 7,
                     max_stack_quantity: 1,
                     gold_value: 50
                 }
             ),
             (
-                ItemKind::QualityUpgradeStone,
+                ItemId::QualityUpgradeStone,
                 ItemSpec {
                     name: "Magic Rock",
-                    mining: 0,
                     item_type: ItemType::Material(MaterialType::UpgradeStone),
                     quality: Some(ItemQuality::Mythic),
-                    attack: 0,
-                    defense: 0,
-                    gold_find: 0,
+                    stats: StatSheet::new(),
                     max_upgrades: 0,
                     max_stack_quantity: 99,
                     gold_value: 500,
                 }
             ),
-
             (
-                ItemKind::Coal,
+                ItemId::Coal,
                 ItemSpec {
                     name: "Coal",
-                    mining: 0,
                     item_type: ItemType::Material(MaterialType::Ore),
                     quality: Some(ItemQuality::Normal),
-                    attack: 0,
-                    defense: 0,
-                    gold_find: 0,
+                    stats: StatSheet::new(),
                     max_upgrades: 0,
                     max_stack_quantity: 99,
                     gold_value: 4,
                 }
             ),
-
             (
-                ItemKind::CopperOre,
+                ItemId::CopperOre,
                 ItemSpec {
                     name: "Copper Ore",
-                    mining: 0,
                     item_type: ItemType::Material(MaterialType::Ore),
                     quality: Some(ItemQuality::Normal),
-                    attack: 0,
-                    defense: 0,
-                    gold_find: 0,
+                    stats: StatSheet::new(),
                     max_upgrades: 0,
                     max_stack_quantity: 99,
                     gold_value: 5,
                 }
             ),
             (
-                ItemKind::TinOre,
+                ItemId::TinOre,
                 ItemSpec {
                     name: "Tin Ore",
-                    mining: 0,
                     item_type: ItemType::Material(MaterialType::Ore),
                     quality: Some(ItemQuality::Normal),
-                    attack: 0,
-                    defense: 0,
-                    gold_find: 0,
+                    stats: StatSheet::new(),
                     max_upgrades: 0,
                     max_stack_quantity: 99,
                     gold_value: 5,

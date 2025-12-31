@@ -10,10 +10,11 @@ use crate::field::definition::Field;
 use crate::{
     combat::CombatRounds,
     entities::{mob::{MobKind, MobRegistry}, Mob, Player},
-    item::{ItemKind, definition::ItemRegistry},
+    item::{ItemId, definition::ItemRegistry},
     town::definition::Town,
     ui::{
         Id,
+        components::mine::screen::MineScreen,
         equipment::Equipment,
         main_menu::MainMenuScreen,
         fight::FightScreen,
@@ -51,11 +52,11 @@ impl GameState {
         self.mob_registry.spawn(mob)
     }
 
-    pub fn spawn_item(&self, item: ItemKind) -> crate::item::Item {
+    pub fn spawn_item(&self, item: ItemId) -> crate::item::Item {
         self.item_registry.spawn(item)
     }
 
-    pub fn get_item_name(&self, kind: ItemKind) -> &'static str {
+    pub fn get_item_name(&self, kind: ItemId) -> &'static str {
         self.item_registry
             .get(&kind)
             .map(|spec| spec.name)
@@ -95,6 +96,8 @@ impl GameState {
         let _ = self.app.mount(Id::Town, Box::new(town), vec![]);
         let fight = ModalWrapper::new(FightScreen::new());
         let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
+        let mine = ModalWrapper::new(MineScreen::new());
+        let _ = self.app.mount(Id::Mine, Box::new(mine), vec![]);
         let profile_tabs = ModalWrapper::new(TabbedContainer::new(
             vec![
                 TabEntry::new("Player".into(), PlayerProfile::new()),
@@ -141,7 +144,8 @@ impl Default for GameState {
 
         let store = crate::store::Store::default();
         let blacksmith = crate::blacksmith::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
-        let town = Town::new("Village".to_string(), store, blacksmith, Field::default());
+        let mine = crate::mine::Mine::new("The Village Mine".to_string());
+        let town = Town::new("Village".to_string(), store, blacksmith, Field::default(), mine);
 
         Self {
             player: Player::default(),

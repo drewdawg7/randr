@@ -22,6 +22,12 @@ pub const DEEP_ORANGE: Color = Color::Rgb(180, 70, 20);
 pub const FLAME_ORANGE: Color = Color::Rgb(255, 120, 30);
 pub const BRIGHT_YELLOW: Color = Color::Rgb(255, 200, 50);
 pub const HOT_WHITE: Color = Color::Rgb(255, 240, 200);
+// Stone/rock colors (for Mine screen ASCII art border)
+pub const DEEP_SLATE: Color = Color::Rgb(30, 30, 35);
+pub const DARK_STONE: Color = Color::Rgb(50, 50, 55);
+pub const GRANITE: Color = Color::Rgb(80, 80, 85);
+pub const LIGHT_STONE: Color = Color::Rgb(120, 120, 125);
+pub const PALE_ROCK: Color = Color::Rgb(160, 160, 165);
 // Wood/plank colors (for Store tab ASCII art border)
 pub const DARK_WALNUT: Color = Color::Rgb(50, 35, 20);
 pub const WOOD_BROWN: Color = Color::Rgb(101, 67, 33);
@@ -41,12 +47,16 @@ pub const STORE_BG: Color = Color::Rgb(38, 38, 54); // Very subtle warm tint
 pub const BLACKSMITH_BG: Color = Color::Rgb(40, 38, 54); // Very subtle warm tint
 pub const FIELD_BG: Color = Color::Rgb(34, 42, 56); // Very subtle green tint
 pub const FIGHT_BG: Color = Color::Rgb(34, 42, 56); // Same as Field
+pub const MINE_BG: Color = Color::Rgb(32, 32, 38); // Very subtle grey tint
 pub const ORANGE: Color = Color::Rgb(255, 152, 0);
 pub const PURPLE: Color = Color::Rgb(171, 71, 188);
 pub const BRONZE: Color = Color::Rgb(205, 127, 50);
 // Soft colors for stat comparisons
 pub const SOFT_GREEN: Color = Color::Rgb(100, 200, 100);
 pub const SOFT_RED: Color = Color::Rgb(200, 100, 100);
+// Rock type colors
+pub const COPPER_ORE: Color = Color::Rgb(184, 115, 51);  // Copper orange
+pub const TIN_ORE: Color = Color::Rgb(180, 180, 190);    // Silver-ish
 
 /// Returns a color based on upgrade count (0=white, 1=green, 2=blue, 3=purple, 4+=orange)
 pub fn upgrade_color(num_upgrades: i32) -> Color {

@@ -1,9 +1,9 @@
 use rand::Rng;
 
-use crate::{item::ItemKind, loot::enums::LootError};
+use crate::{item::ItemId, loot::enums::LootError};
 
 pub struct LootItem {
-    item_kind: ItemKind,
+    item_kind: ItemId,
     numerator: i32,
     denominator: i32,
 }
@@ -22,16 +22,16 @@ impl LootTable {
         Ok(())
     }
 
-    pub fn get_loot_item_from_kind(&self, kind: &ItemKind) -> Option<&LootItem> {
+    pub fn get_loot_item_from_kind(&self, kind: &ItemId) -> Option<&LootItem> {
         self.loot.iter().find(|i| i.item_kind == *kind)
     }
 
-    pub fn check_item_kind(&self, kind: &ItemKind) -> bool {
+    pub fn check_item_kind(&self, kind: &ItemId) -> bool {
         self.get_loot_item_from_kind(kind).is_some()
     }
 
     /// Roll each item independently, return all items that dropped.
-    pub fn roll_drops(&self) -> Vec<ItemKind> {
+    pub fn roll_drops(&self) -> Vec<ItemId> {
         let mut rng = rand::thread_rng();
         self.loot
             .iter()
@@ -45,7 +45,7 @@ impl LootTable {
 }
 
 impl LootItem {
-    pub fn new(item: ItemKind, numerator: i32, denominator: i32) -> Result<Self, LootError> {
+    pub fn new(item: ItemId, numerator: i32, denominator: i32) -> Result<Self, LootError> {
         if denominator == 0 || denominator < numerator {
             return Err(LootError::InvalidDivision);
         };

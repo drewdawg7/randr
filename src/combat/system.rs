@@ -2,7 +2,7 @@ use crate::{
     combat::{AttackResult, Combatant, DropsGold, HasGold, IsKillable, MobDeathResult},
     entities::{mob::MobKind, progression::HasProgression, Player},
     inventory::HasInventory,
-    item::{Item, ItemKind},
+    item::{Item, ItemId},
     system::game_state,
     ui::Id,
 };
@@ -43,7 +43,7 @@ pub struct CombatRounds {
     /// Spawned items with full quality info, for display and inventory
     pub dropped_loot: Vec<Item>,
     /// Item kinds rolled from loot table, used internally before spawning
-    loot_kinds: Vec<ItemKind>,
+    loot_kinds: Vec<ItemId>,
     pub gold_gained: i32,
     pub xp_gained: i32,
     pub player_won: bool,
@@ -64,7 +64,7 @@ impl CombatRounds {
         self.attack_results.push(round);
     }
 
-    pub fn loot_kinds(&self) -> &[ItemKind] {
+    pub fn loot_kinds(&self) -> &[ItemId] {
         &self.loot_kinds
     }
 }

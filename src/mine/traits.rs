@@ -16,7 +16,8 @@ impl Default for Mine {
         Self {
             name: "Village Mine".to_string(),
             rock_weights,
-            rocks
+            rocks,
+            current_rock: None,
         }
     }
 }

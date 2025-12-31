@@ -1,6 +1,6 @@
 #[cfg(test)]
 use crate::{
-    item::{Item, ItemKind, ItemType},
+    item::{Item, ItemId, ItemType},
     stats::{StatType, StatInstance, StatSheet, HasStats},
     blacksmith::{Blacksmith, BlacksmithError},
     entities::{
@@ -33,7 +33,7 @@ fn create_test_item(
 
     Item {
         item_uuid: Uuid::new_v4(),
-        kind: ItemKind::Sword,
+        kind: ItemId::Sword,
         item_type,
         name,
         is_equipped: false,

@@ -3,7 +3,7 @@ use rand::Rng;
 use crate::stats::StatSheet;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum ItemKind {
+pub enum ItemId {
     Sword,
     Dagger,
     BasicShield,

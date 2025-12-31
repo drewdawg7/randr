@@ -5,5 +5,6 @@ pub enum Id {
     Fight,
     Profile,
     Equipment,
+    Mine,
     Quit,
 }

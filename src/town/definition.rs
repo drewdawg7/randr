@@ -1,23 +1,21 @@
-use crate::{blacksmith::Blacksmith, field::definition::Field, store::Store};
-
-
+use crate::{blacksmith::Blacksmith, field::definition::Field, mine::Mine, store::Store};
 
 pub struct Town {
     pub name: String,
     pub store: Store,
     pub blacksmith: Blacksmith,
-    pub field: Field
+    pub field: Field,
+    pub mine: Mine,
 }
 
-
 impl Town {
-    pub fn new(name: String, store: Store, blacksmith: Blacksmith, field: Field)
-    -> Self {
+    pub fn new(name: String, store: Store, blacksmith: Blacksmith, field: Field, mine: Mine) -> Self {
         Self {
             name,
             store,
             blacksmith,
-            field
+            field,
+            mine,
         }
     }
 }

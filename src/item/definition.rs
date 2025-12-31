@@ -1,13 +1,13 @@
 use uuid::Uuid;
 
-use crate::{item::enums::{ItemError, ItemQuality}, registry::Registry, stats::{HasStats, StatSheet, StatType}};
+use crate::{item::enums::{ItemError, ItemQuality}, registry::Registry, stats::{StatSheet, StatType}};
 
-pub use super::enums::{ItemKind, ItemType};
+pub use super::enums::{ItemId, ItemType};
 
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Item {
     pub item_uuid: Uuid,
-    pub kind: ItemKind,
+    pub kind: ItemId,
     pub item_type: ItemType,
     pub name: &'static str,
     pub is_equipped: bool,
@@ -79,11 +79,8 @@ pub struct ItemSpec {
     pub quality: Option<ItemQuality>,
     pub max_upgrades: i32,
     pub max_stack_quantity: u32,
-    pub attack: i32,
-    pub defense: i32,
-    pub mining: i32,
+    pub stats: StatSheet,
     pub gold_value: i32,
-    pub gold_find: i32,
 }
 
-pub type ItemRegistry = Registry<ItemKind, ItemSpec>;
+pub type ItemRegistry = Registry<ItemId, ItemSpec>;

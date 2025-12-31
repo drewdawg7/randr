@@ -21,7 +21,7 @@ use crate::{
 use crate::ui::components::player::item_details::render_item_details;
 use crate::ui::components::utilities::{blacksmith_header, item_display, lock_prefix, render_location_header, selection_prefix, DOUBLE_ARROW_UP, RETURN_ARROW};
 use crate::ui::utilities::HAMMER;
-use crate::item::enums::{ItemKind, ItemQuality};
+use crate::item::enums::{ItemId, ItemQuality};
 use crate::ui::theme as colors;
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -167,7 +167,7 @@ impl BlacksmithTab {
     fn render_menu(&mut self, frame: &mut Frame, area: Rect) {
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
-        let stones = game_state().player.find_item_by_kind(ItemKind::QualityUpgradeStone)
+        let stones = game_state().player.find_item_by_kind(ItemId::QualityUpgradeStone)
             .map(|inv| inv.quantity).unwrap_or(0);
 
         // Render header and get remaining area
@@ -201,7 +201,7 @@ impl BlacksmithTab {
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
         let max_upgrades = blacksmith.max_upgrades;
-        let stones = game_state().player.find_item_by_kind(ItemKind::QualityUpgradeStone)
+        let stones = game_state().player.find_item_by_kind(ItemId::QualityUpgradeStone)
             .map(|inv| inv.quantity).unwrap_or(0);
 
         // Render header and get remaining area
@@ -356,7 +356,7 @@ impl BlacksmithTab {
 
         let player_gold = game_state().player.gold();
         let blacksmith = game_state().blacksmith();
-        let stones = game_state().player.find_item_by_kind(ItemKind::QualityUpgradeStone)
+        let stones = game_state().player.find_item_by_kind(ItemId::QualityUpgradeStone)
             .map(|inv| inv.quantity).unwrap_or(0);
 
         // Render header and get remaining area

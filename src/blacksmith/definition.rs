@@ -1,4 +1,4 @@
-use crate::{blacksmith::BlacksmithError, combat::HasGold, entities::Player, item::Item, HasInventory, ItemKind};
+use crate::{blacksmith::BlacksmithError, combat::HasGold, entities::Player, item::Item, HasInventory, ItemId};
 
 
 
@@ -44,7 +44,7 @@ impl Blacksmith {
             return Err(BlacksmithError::NotEquipment);
         }
         // Check if player has an upgrade stone
-        let stone = player.find_item_by_kind(ItemKind::QualityUpgradeStone)
+        let stone = player.find_item_by_kind(ItemId::QualityUpgradeStone)
             .ok_or(BlacksmithError::NoUpgradeStones)?
             .clone();
 

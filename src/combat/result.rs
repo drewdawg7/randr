@@ -1,4 +1,4 @@
-use crate::item::{Item, ItemKind};
+use crate::item::{Item, ItemId};
 
 #[derive(Debug, Clone)]
 pub struct AttackResult {
@@ -15,7 +15,7 @@ pub struct AttackResult {
 pub struct MobDeathResult {
     pub gold_dropped: i32,
     pub xp_dropped: i32,
-    pub loot_kinds: Vec<ItemKind>,
+    pub loot_kinds: Vec<ItemId>,
 }
 
 /// Result of player dying

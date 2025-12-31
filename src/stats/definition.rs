@@ -6,7 +6,24 @@ pub struct StatSheet {
    pub stats: HashMap<StatType, StatInstance>      
 }
 
+impl Default for StatSheet {
+    fn default() -> Self {
+        Self { stats: HashMap::new() }
+    }
+}
+
 impl StatSheet {
+    pub fn new() -> Self {
+        Self::default()
+    }
+
+    pub fn with(mut self, stat_type: StatType, value: i32) -> Self {
+        if value != 0 {
+            self.insert(stat_type.instance(value));
+        }
+        self
+    }
+
     pub fn stats(&self) -> &HashMap<StatType, StatInstance> {
        &self.stats
     }
@@ -88,7 +105,7 @@ pub enum StatType {
 
 impl StatType {
     pub fn all() -> &'static [StatType] {
-        &[StatType::Health, StatType::Attack, StatType::Defense, StatType::GoldFind]
+        &[StatType::Health, StatType::Attack, StatType::Defense, StatType::GoldFind, StatType::Mining]
     }
 
     pub fn instance(self, base_value: i32) -> StatInstance {
