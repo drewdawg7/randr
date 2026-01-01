@@ -8,15 +8,15 @@ use crate::{
     system::game_state,
     ui::components::player::item_details::render_item_details_beside,
     ui::components::utilities::{blacksmith_header, collect_player_equipment, render_location_header},
-    ui::components::widgets::item_list::{ItemList, ItemListConfig, NoFilter, UpgradeableItem},
+    ui::components::widgets::item_list::{InventoryFilter, ItemList, ItemListConfig, UpgradeableItem},
     ui::theme as colors,
 };
 
 use super::StateChange;
 
-pub fn create_item_list() -> ItemList<UpgradeableItem, NoFilter> {
+pub fn create_item_list() -> ItemList<UpgradeableItem, InventoryFilter> {
     let config = ItemListConfig {
-        show_filter_button: false,
+        show_filter_button: true,
         show_scroll_indicators: true,
         visible_count: 10,
         show_back_button: true,
@@ -26,7 +26,7 @@ pub fn create_item_list() -> ItemList<UpgradeableItem, NoFilter> {
     ItemList::new(config)
 }
 
-fn rebuild_items(item_list: &mut ItemList<UpgradeableItem, NoFilter>) {
+fn rebuild_items(item_list: &mut ItemList<UpgradeableItem, InventoryFilter>) {
     let items = collect_player_equipment();
     let player_gold = game_state().player.gold();
     let blacksmith = game_state().blacksmith();
@@ -50,7 +50,7 @@ fn rebuild_items(item_list: &mut ItemList<UpgradeableItem, NoFilter>) {
     item_list.set_items(upgrade_items);
 }
 
-pub fn render(frame: &mut Frame, area: Rect, item_list: &mut ItemList<UpgradeableItem, NoFilter>) {
+pub fn render(frame: &mut Frame, area: Rect, item_list: &mut ItemList<UpgradeableItem, InventoryFilter>) {
     rebuild_items(item_list);
 
     let player_gold = game_state().player.gold();
@@ -75,7 +75,7 @@ pub fn render(frame: &mut Frame, area: Rect, item_list: &mut ItemList<Upgradeabl
 
 pub fn handle(
     cmd: Cmd,
-    item_list: &mut ItemList<UpgradeableItem, NoFilter>,
+    item_list: &mut ItemList<UpgradeableItem, InventoryFilter>,
 ) -> (CmdResult, Option<StateChange>) {
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {

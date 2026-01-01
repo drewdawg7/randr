@@ -8,7 +8,7 @@ use crate::{
     system::game_state,
     ui::components::player::item_details::render_item_details_beside,
     ui::components::utilities::{blacksmith_header, collect_player_equipment, render_location_header},
-    ui::components::widgets::item_list::{ItemList, ItemListConfig, NoFilter, QualityItem},
+    ui::components::widgets::item_list::{InventoryFilter, ItemList, ItemListConfig, QualityItem},
     ui::theme as colors,
 };
 // Note: HasGold is still needed for blacksmith_header
@@ -17,9 +17,9 @@ const STONES_REQUIRED_PER_UPGRADE: u32 = 1;
 
 use super::StateChange;
 
-pub fn create_item_list() -> ItemList<QualityItem, NoFilter> {
+pub fn create_item_list() -> ItemList<QualityItem, InventoryFilter> {
     let config = ItemListConfig {
-        show_filter_button: false,
+        show_filter_button: true,
         show_scroll_indicators: true,
         visible_count: 10,
         show_back_button: true,
@@ -29,7 +29,7 @@ pub fn create_item_list() -> ItemList<QualityItem, NoFilter> {
     ItemList::new(config)
 }
 
-fn rebuild_items(item_list: &mut ItemList<QualityItem, NoFilter>) {
+fn rebuild_items(item_list: &mut ItemList<QualityItem, InventoryFilter>) {
     let items = collect_player_equipment();
     let player_stones = game_state()
         .player
@@ -58,7 +58,7 @@ fn rebuild_items(item_list: &mut ItemList<QualityItem, NoFilter>) {
     item_list.set_items(quality_items);
 }
 
-pub fn render(frame: &mut Frame, area: Rect, item_list: &mut ItemList<QualityItem, NoFilter>) {
+pub fn render(frame: &mut Frame, area: Rect, item_list: &mut ItemList<QualityItem, InventoryFilter>) {
     rebuild_items(item_list);
 
     let player_gold = game_state().player.gold();
@@ -83,7 +83,7 @@ pub fn render(frame: &mut Frame, area: Rect, item_list: &mut ItemList<QualityIte
 
 pub fn handle(
     cmd: Cmd,
-    item_list: &mut ItemList<QualityItem, NoFilter>,
+    item_list: &mut ItemList<QualityItem, InventoryFilter>,
 ) -> (CmdResult, Option<StateChange>) {
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {

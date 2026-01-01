@@ -20,7 +20,7 @@ use crate::{
     ui::components::utilities::{
         collect_player_items, render_location_header, selection_prefix, store_header, RETURN_ARROW,
     },
-    ui::components::widgets::item_list::{ItemList, ItemListConfig, NoFilter, SellableItem, StoreBuyItem},
+    ui::components::widgets::item_list::{InventoryFilter, ItemList, ItemListConfig, SellableItem, StoreBuyItem},
     ui::theme as colors,
 };
 
@@ -35,8 +35,8 @@ pub struct StoreTab {
     props: Props,
     state: StoreState,
     menu_list_state: ListState,
-    buy_list: ItemList<StoreBuyItem, NoFilter>,
-    sell_list: ItemList<SellableItem, NoFilter>,
+    buy_list: ItemList<StoreBuyItem, InventoryFilter>,
+    sell_list: ItemList<SellableItem, InventoryFilter>,
 }
 
 impl StoreTab {
@@ -45,7 +45,7 @@ impl StoreTab {
         menu_list_state.select(Some(0));
 
         let buy_config = ItemListConfig {
-            show_filter_button: false,
+            show_filter_button: true,
             show_scroll_indicators: true,
             visible_count: 10,
             show_back_button: true,
@@ -54,7 +54,7 @@ impl StoreTab {
         };
 
         let sell_config = ItemListConfig {
-            show_filter_button: false,
+            show_filter_button: true,
             show_scroll_indicators: true,
             visible_count: 10,
             show_back_button: true,
@@ -372,6 +372,18 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                 if self.state == StoreState::Buy || self.state == StoreState::Sell {
                     let gs = game_state();
                     gs.show_item_details = !gs.show_item_details;
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('f') | Key::Char('F'),
+                ..
+            }) => {
+                // Cycle filter in buy/sell mode
+                if self.state == StoreState::Buy {
+                    self.buy_list.cycle_filter();
+                } else if self.state == StoreState::Sell {
+                    self.sell_list.cycle_filter();
                 }
                 None
             }

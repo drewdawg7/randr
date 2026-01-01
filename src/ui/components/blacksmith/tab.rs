@@ -8,7 +8,7 @@ use tuirealm::{
 
 use crate::inventory::HasInventory;
 use crate::system::game_state;
-use crate::ui::components::widgets::item_list::{ItemList, NoFilter, QualityItem, UpgradeableItem};
+use crate::ui::components::widgets::item_list::{InventoryFilter, ItemList, QualityItem, UpgradeableItem};
 
 use super::{forge, menu, quality, smelt, upgrade};
 
@@ -35,8 +35,8 @@ pub struct BlacksmithTab {
     menu_list_state: ListState,
     smelt_list_state: ListState,
     forge_list_state: ListState,
-    upgrade_list: ItemList<UpgradeableItem, NoFilter>,
-    quality_list: ItemList<QualityItem, NoFilter>,
+    upgrade_list: ItemList<UpgradeableItem, InventoryFilter>,
+    quality_list: ItemList<QualityItem, InventoryFilter>,
 }
 
 impl BlacksmithTab {
@@ -208,6 +208,18 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
                 if self.state == BlacksmithState::Upgrade || self.state == BlacksmithState::Quality
                 {
                     game_state().show_item_details = !game_state().show_item_details;
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Char('f') | Key::Char('F'),
+                ..
+            }) => {
+                // Cycle filter in upgrade/quality mode
+                if self.state == BlacksmithState::Upgrade {
+                    self.upgrade_list.cycle_filter();
+                } else if self.state == BlacksmithState::Quality {
+                    self.quality_list.cycle_filter();
                 }
                 None
             }
