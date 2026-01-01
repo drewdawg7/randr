@@ -1,5 +1,6 @@
 use crate::{
-    field::{definition::Field, FieldId},
+    field::FieldId,
+    location::Field,
     registry::{RegistryDefaults, SpawnFromSpec},
 };
 
@@ -10,10 +11,7 @@ impl SpawnFromSpec<FieldId> for FieldSpec {
     type Output = Field;
 
     fn spawn_from_spec(_kind: FieldId, spec: &Self) -> Self::Output {
-        Field {
-            name: spec.name.to_string(),
-            mob_weights: spec.mob_weights.clone(),
-        }
+        Field::new(spec.name.to_string(), spec.mob_weights.clone())
     }
 }
 

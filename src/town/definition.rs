@@ -1,4 +1,4 @@
-use crate::{field::definition::Field, location::{Blacksmith, Store}, mine::Mine};
+use crate::{location::{Blacksmith, Field, Store}, mine::Mine};
 
 pub struct Town {
     pub name: String,

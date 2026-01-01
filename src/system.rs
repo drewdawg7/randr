@@ -6,7 +6,8 @@ use crossterm::terminal;
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
-use crate::field::{Field, FieldId, FieldRegistry};
+use crate::field::{FieldId, FieldRegistry};
+use crate::location::Field;
 use crate::item::recipe::RecipeRegistry;
 use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::{
