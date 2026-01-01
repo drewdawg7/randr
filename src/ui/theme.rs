@@ -28,6 +28,15 @@ pub const DARK_STONE: Color = Color::Rgb(50, 50, 55);
 pub const GRANITE: Color = Color::Rgb(80, 80, 85);
 pub const LIGHT_STONE: Color = Color::Rgb(120, 120, 125);
 pub const PALE_ROCK: Color = Color::Rgb(160, 160, 165);
+// Mystic/Alchemy colors (for Alchemist tab ASCII art border)
+pub const DEEP_VIOLET: Color = Color::Rgb(48, 25, 70);
+pub const DARK_PURPLE: Color = Color::Rgb(75, 35, 100);
+pub const MYSTIC_PURPLE: Color = Color::Rgb(120, 60, 150);
+pub const BRIGHT_VIOLET: Color = Color::Rgb(160, 90, 200);
+pub const PALE_LAVENDER: Color = Color::Rgb(200, 150, 230);
+pub const MYSTIC_GLOW: Color = Color::Rgb(180, 100, 255);
+pub const VAPOR_CYAN: Color = Color::Rgb(100, 200, 220);
+pub const BUBBLE_GREEN: Color = Color::Rgb(100, 255, 150);
 // Wood/plank colors (for Store tab ASCII art border)
 pub const DARK_WALNUT: Color = Color::Rgb(50, 35, 20);
 pub const WOOD_BROWN: Color = Color::Rgb(101, 67, 33);
@@ -48,6 +57,7 @@ pub const BLACKSMITH_BG: Color = Color::Rgb(40, 38, 54); // Very subtle warm tin
 pub const FIELD_BG: Color = Color::Rgb(34, 42, 56); // Very subtle green tint
 pub const FIGHT_BG: Color = Color::Rgb(34, 42, 56); // Same as Field
 pub const MINE_BG: Color = Color::Rgb(32, 32, 38); // Very subtle grey tint
+pub const ALCHEMIST_BG: Color = Color::Rgb(38, 32, 48); // Very subtle purple tint
 pub const ORANGE: Color = Color::Rgb(255, 152, 0);
 pub const PURPLE: Color = Color::Rgb(171, 71, 188);
 pub const BRONZE: Color = Color::Rgb(205, 127, 50);

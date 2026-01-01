@@ -165,6 +165,7 @@ impl MockComponent for TabbedContainer {
             BorderTheme::Ember => colors::BLACKSMITH_BG,
             BorderTheme::Forest => colors::FIELD_BG,
             BorderTheme::Stone => colors::MINE_BG,
+            BorderTheme::Mystic => colors::ALCHEMIST_BG,
             BorderTheme::None => colors::BACKGROUND,
         };
 

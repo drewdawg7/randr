@@ -13,6 +13,7 @@ pub enum BorderTheme {
     Ember,
     Wood,
     Stone,
+    Mystic,
 }
 
 impl BorderTheme {
@@ -23,6 +24,7 @@ impl BorderTheme {
             BorderTheme::Ember => "~'^\"~",
             BorderTheme::Wood => "=#=[=]=",
             BorderTheme::Stone => "#^.~#",
+            BorderTheme::Mystic => "*~o~*",
         }
     }
 
@@ -33,6 +35,7 @@ impl BorderTheme {
             BorderTheme::Ember => ".o@O#",
             BorderTheme::Wood => "]_|_[_|_",
             BorderTheme::Stone => "_.-~.",
+            BorderTheme::Mystic => "~.o.~",
         }
     }
 
@@ -43,6 +46,7 @@ impl BorderTheme {
             BorderTheme::Ember => &['!', '|', '*', ':', '\''],
             BorderTheme::Wood => &['[', '|', '#', '|'],
             BorderTheme::Stone => &['[', '{', '|', '#', ':'],
+            BorderTheme::Mystic => &['|', ':', '*', '~', 'o'],
         }
     }
 
@@ -53,6 +57,7 @@ impl BorderTheme {
             BorderTheme::Ember => &['\'', ':', '|', '*', '!'],
             BorderTheme::Wood => &[']', '|', '#', '|'],
             BorderTheme::Stone => &[']', '}', '|', '#', ':'],
+            BorderTheme::Mystic => &['|', ':', '*', '~', 'o'],
         }
     }
 
@@ -99,6 +104,18 @@ impl BorderTheme {
                 colors::GRANITE,
                 colors::DARK_STONE,
             ],
+            BorderTheme::Mystic => &[
+                colors::DEEP_VIOLET,
+                colors::DARK_PURPLE,
+                colors::MYSTIC_PURPLE,
+                colors::BRIGHT_VIOLET,
+                colors::PALE_LAVENDER,
+                colors::MYSTIC_GLOW,
+                colors::PALE_LAVENDER,
+                colors::BRIGHT_VIOLET,
+                colors::MYSTIC_PURPLE,
+                colors::DARK_PURPLE,
+            ],
         }
     }
 
@@ -133,6 +150,14 @@ impl BorderTheme {
                 colors::GRANITE,
                 colors::DEEP_SLATE,
             ],
+            BorderTheme::Mystic => &[
+                colors::DARK_PURPLE,
+                colors::DEEP_VIOLET,
+                colors::MYSTIC_PURPLE,
+                colors::DARK_PURPLE,
+                colors::BRIGHT_VIOLET,
+                colors::MYSTIC_PURPLE,
+            ],
         }
     }
 
@@ -159,6 +184,15 @@ impl BorderTheme {
                 colors::OAK_BROWN,
             ],
             BorderTheme::Stone => self.top_colors(),
+            BorderTheme::Mystic => &[
+                colors::DEEP_VIOLET,
+                colors::DARK_PURPLE,
+                colors::MYSTIC_PURPLE,
+                colors::BRIGHT_VIOLET,
+                colors::MYSTIC_GLOW,
+                colors::BRIGHT_VIOLET,
+                colors::MYSTIC_PURPLE,
+            ],
         }
     }
 
