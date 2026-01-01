@@ -24,7 +24,6 @@ use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HE
 use crate::ui::components::widgets::border::BorderTheme;
 use crate::ui::Id;
 
-const PAUSE_FRAMES: u32 = 25; // ~500ms at 50fps
 
 // Placeholder ASCII art (same dimensions for player and enemy)
 const PLAYER_ART: &[&str] = &[
@@ -58,7 +57,6 @@ pub struct FightScreen {
     props: Props,
     selection: FightSelection,
     result_selection: ResultSelection,
-    pause_frames: u32,
     victory_processed: bool,
     defeat_processed: bool,
 }
@@ -69,7 +67,6 @@ impl FightScreen {
             props: Props::default(),
             selection: FightSelection::Attack,
             result_selection: ResultSelection::FightAgain,
-            pause_frames: 0,
             victory_processed: false,
             defeat_processed: false,
         }
@@ -78,7 +75,6 @@ impl FightScreen {
     fn reset_for_new_combat(&mut self) {
         self.selection = FightSelection::Attack;
         self.result_selection = ResultSelection::FightAgain;
-        self.pause_frames = 0;
         self.victory_processed = false;
         self.defeat_processed = false;
     }
@@ -86,75 +82,69 @@ impl FightScreen {
     fn execute_player_attack(&mut self) {
         let gs = game_state();
         // Take combat out temporarily to avoid borrow issues
-        if let Some(mut combat) = gs.active_combat.take() {
-            if combat.phase == CombatPhase::PlayerTurn {
-                player_attack_step(&gs.player, &mut combat);
-                self.pause_frames = 0;
-            }
+        let Some(mut combat) = gs.active_combat.take() else {
+            return;
+        };
+
+        if combat.phase != CombatPhase::PlayerTurn {
             gs.active_combat = Some(combat);
+            return;
         }
+
+        // Player attacks
+        player_attack_step(&gs.player, &mut combat);
+
+        // If mob died, process victory
+        if combat.phase == CombatPhase::Victory {
+            self.process_victory(&mut combat);
+        } else {
+            // Enemy counter-attacks
+            enemy_attack_step(&mut combat, &mut gs.player);
+
+            // If player died, process defeat
+            if combat.phase == CombatPhase::Defeat {
+                self.process_defeat();
+            } else {
+                // Back to player turn
+                combat.phase = CombatPhase::PlayerTurn;
+            }
+        }
+
+        gs.active_combat = Some(combat);
     }
 
     fn execute_run(&self) {
         game_state().current_screen = Id::Town;
     }
 
-    fn advance_pause_phase(&mut self) {
-        let gs = game_state();
-
-        // Take combat out temporarily to avoid borrow issues
-        let Some(mut combat) = gs.active_combat.take() else {
+    fn process_victory(&mut self, combat: &mut ActiveCombat) {
+        if self.victory_processed {
             return;
-        };
-
-        match combat.phase {
-            CombatPhase::PlayerAttacking => {
-                self.pause_frames += 1;
-                if self.pause_frames >= PAUSE_FRAMES {
-                    self.pause_frames = 0;
-                    // Check if mob died - phase would already be Victory
-                    if combat.phase != CombatPhase::Victory {
-                        // Enemy attacks back
-                        enemy_attack_step(&mut combat, &mut gs.player);
-                    }
-                }
-            }
-            CombatPhase::EnemyAttacking => {
-                self.pause_frames += 1;
-                if self.pause_frames >= PAUSE_FRAMES {
-                    self.pause_frames = 0;
-                    // Check if player died - phase would already be Defeat
-                    if combat.phase != CombatPhase::Defeat {
-                        combat.phase = CombatPhase::PlayerTurn;
-                    }
-                }
-            }
-            CombatPhase::Victory => {
-                if !self.victory_processed {
-                    process_victory(&mut gs.player, &mut combat);
-                    // Spawn loot items
-                    let loot_drops = combat.loot_drops.clone();
-                    for (item_kind, quantity) in loot_drops {
-                        for _ in 0..quantity {
-                            let item = gs.spawn_item(item_kind);
-                            combat.dropped_loot.push(item.clone());
-                            let _ = gs.player.add_to_inv(item);
-                        }
-                    }
-                    self.victory_processed = true;
-                }
-            }
-            CombatPhase::Defeat => {
-                if !self.defeat_processed {
-                    process_defeat(&mut gs.player);
-                    self.defeat_processed = true;
-                }
-            }
-            _ => {}
         }
 
-        // Put combat back
-        gs.active_combat = Some(combat);
+        let gs = game_state();
+        process_victory(&mut gs.player, combat);
+
+        // Spawn loot items
+        let loot_drops = combat.loot_drops.clone();
+        for (item_kind, quantity) in loot_drops {
+            for _ in 0..quantity {
+                let item = gs.spawn_item(item_kind);
+                combat.dropped_loot.push(item.clone());
+                let _ = gs.player.add_to_inv(item);
+            }
+        }
+
+        self.victory_processed = true;
+    }
+
+    fn process_defeat(&mut self) {
+        if self.defeat_processed {
+            return;
+        }
+
+        process_defeat(&mut game_state().player);
+        self.defeat_processed = true;
     }
 
     fn start_new_fight(&mut self) {
@@ -173,17 +163,6 @@ impl MockComponent for FightScreen {
 
         let Some(combat) = gs.active_combat() else {
             // No active combat - show empty screen
-            return;
-        };
-
-        // Advance pause phases in view (frame-based timing)
-        // We need to do this with mut access
-        let _ = combat; // End immutable borrow
-        self.advance_pause_phase();
-
-        // Re-borrow after advance
-        let gs = game_state();
-        let Some(combat) = gs.active_combat() else {
             return;
         };
 
@@ -216,14 +195,11 @@ impl MockComponent for FightScreen {
 
         // === FOOTER: Actions or Results ===
         match combat.phase {
-            CombatPhase::PlayerTurn => {
-                render_action_menu(frame, footer_area, self.selection);
-            }
-            CombatPhase::PlayerAttacking | CombatPhase::EnemyAttacking => {
-                render_action_menu(frame, footer_area, self.selection);
-            }
             CombatPhase::Victory | CombatPhase::Defeat => {
                 render_results(frame, footer_area, combat, self.result_selection);
+            }
+            _ => {
+                render_action_menu(frame, footer_area, self.selection);
             }
         }
 
@@ -301,10 +277,6 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
                     _ => {}
                 }
             }
-            CombatPhase::PlayerAttacking | CombatPhase::EnemyAttacking => {
-                // During pause phases, any key advances (or just wait for frames)
-                // For now we just let frames advance
-            }
             CombatPhase::Victory | CombatPhase::Defeat => {
                 match ev {
                     Event::Keyboard(KeyEvent { code: Key::Left, .. }) |
@@ -329,6 +301,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
                     _ => {}
                 }
             }
+            _ => {}
         }
 
         None
@@ -412,11 +385,9 @@ fn render_player_panel(frame: &mut Frame, area: Rect, player: &crate::entities::
     frame.render_widget(Paragraph::new(hp_text), chunks[2]);
 
     // HP bar
-    let hp_col = hp_color(hp_pct);
-    let bar_line = Line::from(vec![
-        Span::raw("  "),
-        Span::styled(hp_bar(hp_pct, 15), Style::default().color(hp_col)),
-    ]);
+    let mut bar_spans = vec![Span::raw("  ")];
+    bar_spans.extend(hp_bar_spans(hp_pct, 10));
+    let bar_line = Line::from(bar_spans);
     frame.render_widget(Paragraph::new(bar_line), chunks[3]);
 
     // Level + XP
@@ -490,8 +461,7 @@ fn render_combatant_right(
     frame.render_widget(Paragraph::new(hp_text).alignment(Alignment::Right), hp_area);
 
     // HP bar (right-aligned)
-    let hp_color = hp_color(hp_pct);
-    let bar_line = Line::from(Span::styled(hp_bar(hp_pct, 15), Style::default().color(hp_color)));
+    let bar_line = Line::from(hp_bar_spans(hp_pct, 10));
     let bar_area = Rect::new(area.x, chunks[3].y, area.width - 2, 1);
     frame.render_widget(Paragraph::new(bar_line).alignment(Alignment::Right), bar_area);
 }
@@ -654,10 +624,25 @@ fn render_results(frame: &mut Frame, area: Rect, combat: &ActiveCombat, selectio
     frame.render_widget(Paragraph::new(lines).alignment(Alignment::Center), area);
 }
 
-fn hp_bar(pct: u16, width: u16) -> String {
+const FILLED_HEART: char = '❤';
+const EMPTY_HEART: char = '♡';
+
+fn hp_bar_spans(pct: u16, width: u16) -> Vec<Span<'static>> {
     let filled = ((pct as f64 / 100.0) * width as f64).round() as u16;
     let empty = width.saturating_sub(filled);
-    format!("[{}{}]", "█".repeat(filled as usize), "░".repeat(empty as usize))
+
+    vec![
+        Span::raw("["),
+        Span::styled(
+            FILLED_HEART.to_string().repeat(filled as usize),
+            Style::default().color(colors::RED),
+        ),
+        Span::styled(
+            EMPTY_HEART.to_string().repeat(empty as usize),
+            Style::default().color(colors::DARK_GRAY),
+        ),
+        Span::raw("]"),
+    ]
 }
 
 fn hp_color(pct: u16) -> ratatui::style::Color {

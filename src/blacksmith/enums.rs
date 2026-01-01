@@ -1,9 +1,15 @@
-use crate::item::enums::ItemError;
-
+use crate::item::{enums::ItemError, recipe::enums::RecipeError};
+#[derive(Debug)]
 pub enum BlacksmithError {
     MaxUpgradesReached,
     NotEnoughGold,
     NoUpgradeStones,
     NotEquipment,
-    ItemError(ItemError)
+    InvalidBlacksmithRecipe,
+    ItemError(ItemError),
+    RecipeError(RecipeError),
+    NotEnoughFuel,
+    NoFuel,
+    ItemNotFound,
+    InventoryFull,
 }

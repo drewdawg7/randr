@@ -30,7 +30,7 @@ pub fn use_consumable<T: ApplyEffect>(
     inv_item: &InventoryItem,
 ) -> Result<ConsumableResult, ConsumableError> {
     let item = &inv_item.item;
-    let item_id = item.kind;
+    let item_id = item.item_id;
 
     // Verify item is a consumable
     if !item.item_type.is_consumable() {

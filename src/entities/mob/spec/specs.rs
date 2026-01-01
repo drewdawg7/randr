@@ -1,6 +1,10 @@
 use once_cell::sync::Lazy;
 
-use crate::entities::mob::enums::MobQuality;
+use crate::{
+    entities::mob::enums::MobQuality,
+    item::ItemId,
+    loot::LootTable,
+};
 
 use super::definition::MobSpec;
 
@@ -11,6 +15,9 @@ pub static SLIME: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     attack: 2..=4,
     dropped_gold: 1..=3,
     dropped_xp: 5..=9,
+    loot: LootTable::new()
+        .with(ItemId::Dagger, 1, 10, 1..=1)
+        .with(ItemId::GoldRing, 1, 100, 1..=1),
 });
 
 pub static GOBLIN: Lazy<MobSpec> = Lazy::new(|| MobSpec {
@@ -20,6 +27,10 @@ pub static GOBLIN: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     attack: 4..=6,
     dropped_gold: 5..=7,
     dropped_xp: 13..=20,
+    loot: LootTable::new()
+        .with(ItemId::Sword, 1, 15, 1..=1)
+        .with(ItemId::BasicShield, 1, 15, 1..=1)
+        .with(ItemId::GoldRing, 1, 100, 1..=1),
 });
 
 pub static DRAGON: Lazy<MobSpec> = Lazy::new(|| MobSpec {
@@ -29,4 +40,7 @@ pub static DRAGON: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     attack: 25..=30,
     dropped_gold: 250..=350,
     dropped_xp: 500..=750,
+    loot: LootTable::new()
+        .with(ItemId::GoldRing, 1, 100, 1..=1)
+        .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
 });

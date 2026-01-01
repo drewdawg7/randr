@@ -7,7 +7,7 @@ pub use super::enums::{ItemId, ItemType};
 #[derive(Debug, Clone, Eq, PartialEq)]
 pub struct Item {
     pub item_uuid: Uuid,
-    pub kind: ItemId,
+    pub item_id: ItemId,
     pub item_type: ItemType,
     pub name: &'static str,
     pub is_equipped: bool,

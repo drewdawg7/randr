@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use crate::registry::Registry;
+use crate::{loot::LootTable, registry::Registry};
 
 use super::super::enums::{MobKind, MobQuality};
 
@@ -12,6 +12,7 @@ pub struct MobSpec {
     pub dropped_gold: RangeInclusive<i32>,
     pub dropped_xp: RangeInclusive<i32>,
     pub quality: MobQuality,
+    pub loot: LootTable,
 }
 
 pub type MobRegistry = Registry<MobKind, MobSpec>;

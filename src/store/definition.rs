@@ -174,20 +174,50 @@ impl Store {
 
     /// Add a specific item to the store (e.g., when player sells)
     pub fn add_item(&mut self, item: Item) {
-        match self.get_store_item_by_id_mut(item.kind) {
+        match self.get_store_item_by_id_mut(item.item_id) {
             Some(store_item) => {
                 store_item.items.push(item);
             }
             None => {
                 // Create new slot for this item type
                 let store_item = StoreItem {
-                    item_id: item.kind,
+                    item_id: item.item_id,
                     items: vec![item],
                     max_quantity: 1,
                 };
                 self.inventory.push(store_item);
             }
         };
+    }
+
+    /// Attempt to purchase an item at the given index.
+    /// Returns Some(item) on success, None on failure (out of stock, insufficient gold, inventory full).
+    pub fn purchase_item(&mut self, player: &mut Player, index: usize) -> Option<Item> {
+        if index >= self.inventory.len() {
+            return None;
+        }
+
+        // Take item from store
+        let item = self.inventory[index].take_item()?;
+        let cost = item.purchase_price();
+
+        // Check gold
+        if player.gold() < cost {
+            // Not enough gold - put item back
+            self.inventory[index].items.push(item);
+            return None;
+        }
+
+        // Try to add to inventory
+        if player.add_to_inv(item.clone()).is_err() {
+            // Inventory full - put item back
+            self.inventory[index].items.push(item);
+            return None;
+        }
+
+        // Deduct gold
+        player.dec_gold(cost);
+        Some(item)
     }
 }
 
@@ -197,7 +227,7 @@ pub fn sell_player_item(player: &mut Player, item: &Item) -> i32 {
     }
     let sell_price = item.sell_price();
     player.add_gold(sell_price);
-    if let Some(inv_item) = player.find_item_by_kind(item.kind) {
+    if let Some(inv_item) = player.find_item_by_id(item.item_id) {
         let inv_item = inv_item.clone();
         player.decrease_item_quantity(&inv_item, 1);
     }

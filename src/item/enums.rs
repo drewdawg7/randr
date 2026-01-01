@@ -14,6 +14,9 @@ pub enum ItemId {
     CopperOre,
     TinOre,
     BasicHPPotion,
+    BronzeIngot,
+    TinIngot,
+    CopperIngot,
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -105,6 +108,7 @@ impl EquipmentType {
     }
 }
 
+#[derive(Debug)]
 pub enum ItemError {
     MaxUpgradesReached,
     NotEquipment,

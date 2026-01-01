@@ -6,6 +6,7 @@ impl Default for Blacksmith {
             name: "Blacksmith".to_string(),
             max_upgrades: 4,
             base_upgrade_cost: 5,
+            fuel_amount: 0
         }
     }
 }

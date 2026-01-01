@@ -16,20 +16,20 @@ pub trait HasInventory {
         self.inventory().items.iter().find(|inv_item| inv_item.uuid() == uuid)
     }
 
-    fn find_item_by_kind(&self, kind: ItemId) -> Option<&InventoryItem> {
+    fn find_item_by_id(&self, item_id: ItemId) -> Option<&InventoryItem> {
         // Check inventory items first
-        if let Some(inv_item) = self.inventory().items.iter().find(|inv_item| inv_item.item.kind == kind) {
+        if let Some(inv_item) = self.inventory().items.iter().find(|inv_item| inv_item.item.item_id == item_id) {
             return Some(inv_item);
         }
         // Check equipment
-        self.inventory().equipment().values().find(|inv_item| inv_item.item.kind == kind)
+        self.inventory().equipment().values().find(|inv_item| inv_item.item.item_id == item_id)
     }
 
     fn decrease_item_quantity(&mut self, inv_item: &InventoryItem, amount: u32) {
-        let kind = inv_item.item.kind;
+        let item_id = inv_item.item.item_id;
 
         // Check inventory items
-        if let Some(index) = self.inventory().items.iter().position(|i| i.item.kind == kind) {
+        if let Some(index) = self.inventory().items.iter().position(|i| i.item.item_id == item_id) {
             self.inventory_mut().items[index].decrease_quantity(amount);
             if self.inventory().items[index].quantity == 0 {
                 self.inventory_mut().items.remove(index);
@@ -39,7 +39,7 @@ pub trait HasInventory {
 
         // Check equipment
         let slot_to_remove = self.inventory().equipment().iter()
-            .find(|(_, inv)| inv.item.kind == kind)
+            .find(|(_, inv)| inv.item.item_id == item_id)
             .map(|(slot, _)| *slot);
 
         if let Some(slot) = slot_to_remove {
@@ -60,8 +60,8 @@ pub trait HasInventory {
             .retain(|inv_item| inv_item.uuid() != uuid);
     }
     
-    fn find_item_by_kind_mut(&mut self, kind: ItemId) -> Option<&mut InventoryItem> {
-        self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.kind == kind)
+    fn find_item_by_id_mut(&mut self, item_id: ItemId) -> Option<&mut InventoryItem> {
+        self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.item_id == item_id)
     }
 
     fn find_item_by_uuid_mut(&mut self, uuid: Uuid) -> Option<&mut InventoryItem> {
@@ -83,7 +83,7 @@ pub trait HasInventory {
         // Try to stack with existing item of same kind (only for non-equipment)
         if !item.item_type.is_equipment() {
             if let Some(existing) = inv.items.iter_mut()
-                .find(|i| i.item.kind == item.kind && i.quantity < i.item.max_stack_quantity)
+                .find(|i| i.item.item_id == item.item_id && i.quantity < i.item.max_stack_quantity)
             {
                 existing.quantity += 1;
                 return Ok(());

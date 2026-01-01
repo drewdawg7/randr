@@ -8,7 +8,7 @@ use crate::{
     stats::{StatInstance, StatSheet, StatType},
 };
 
-use super::super::{definition::Mob, loot::loot_table_for};
+use super::super::definition::Mob;
 use super::definition::MobSpec;
 use super::specs::{DRAGON, GOBLIN, SLIME};
 
@@ -47,7 +47,7 @@ impl SpawnFromSpec<MobKind> for MobSpec {
                 sheet.insert(StatType::Health.instance(max_hp));
                 sheet
             },
-            loot_table: loot_table_for(kind),
+            loot_table: spec.loot.clone(),
             dropped_xp,
         }
     }

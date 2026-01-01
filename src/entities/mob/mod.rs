@@ -1,6 +1,5 @@
 pub(crate) mod definition;
 pub(crate) mod enums;
-pub(crate) mod loot;
 pub mod spec;
 mod traits;
 

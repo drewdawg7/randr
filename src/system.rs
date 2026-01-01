@@ -6,7 +6,8 @@ use crossterm::terminal;
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
-use crate::field::definition::Field;
+use crate::field::{Field, FieldId, FieldRegistry};
+use crate::item::recipe::RecipeRegistry;
 use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::{
     combat::{ActiveCombat, CombatRounds},
@@ -47,7 +48,9 @@ pub struct GameState {
     item_registry: ItemRegistry,
     mob_registry: MobRegistry,
     rock_registry: RockRegistry,
+    field_registry: FieldRegistry,
     consumable_registry: ConsumableRegistry,
+    recipe_registry: RecipeRegistry,
     pub current_screen: Id,
     app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
@@ -73,6 +76,10 @@ impl GameState {
         self.rock_registry.spawn(rock)
     }
 
+    pub fn spawn_field(&self, field: FieldId) -> Field {
+        self.field_registry.spawn(field)
+    }
+
     pub fn get_item_name(&self, kind: ItemId) -> &'static str {
         self.item_registry
             .get(&kind)
@@ -96,6 +103,10 @@ impl GameState {
 
     pub fn consumable_registry(&self) -> &ConsumableRegistry {
         &self.consumable_registry
+    }
+
+    pub fn recipe_registry(&self) -> &RecipeRegistry {
+        &self.recipe_registry
     }
 
     pub fn current_combat(&self) -> Option<&CombatRounds> {
@@ -197,14 +208,18 @@ impl Default for GameState {
         let store = crate::store::Store::default();
         let blacksmith = crate::blacksmith::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
         let mine = crate::mine::Mine::default();
-        let town = Town::new("Village".to_string(), store, blacksmith, Field::default(), mine);
+        let field_registry = FieldRegistry::new();
+        let field = field_registry.spawn(FieldId::VillageField);
+        let town = Town::new("Village".to_string(), store, blacksmith, field, mine);
 
         Self {
             player: Player::default(),
             item_registry: ItemRegistry::new(),
             mob_registry: MobRegistry::new(),
             rock_registry: RockRegistry::new(),
+            field_registry,
             consumable_registry: ConsumableRegistry::new(),
+            recipe_registry: RecipeRegistry::new(),
             town,
             app: Application::init(
                 EventListenerCfg::default()

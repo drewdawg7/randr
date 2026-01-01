@@ -28,14 +28,18 @@ impl Rock {
             .collect()
     }
 
-    pub fn mine(&mut self, player: &mut Player) {
+    /// Mine this rock. Returns drops if rock was destroyed, None otherwise.
+    pub fn mine(&mut self, player: &mut Player) -> Option<Vec<Item>> {
         let damage = player.get_effective_mining();
         self.take_damage(damage);
         if !self.is_alive() {
             let result = self.on_death();
-            for drop in result.drops {
-                let _ = player.add_to_inv(drop);
+            for drop in &result.drops {
+                let _ = player.add_to_inv(drop.clone());
             }
+            Some(result.drops)
+        } else {
+            None
         }
     }
 }

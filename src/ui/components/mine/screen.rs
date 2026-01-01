@@ -15,13 +15,11 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
-use crate::combat::IsKillable;
 use crate::mine::rock::RockArt;
 use crate::system::game_state;
 use crate::ui::Id;
 use crate::ui::components::utilities::{render_location_header, PICKAXE, RETURN_ARROW};
 use crate::ui::components::widgets::border::BorderTheme;
-use crate::HasInventory;
 
 // HP bar block characters
 const BLOCK_FULL: char = '█';
@@ -460,32 +458,21 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
                 } else if self.selected_row == 0 && self.selected_mine == self.active_button {
                     // Active mine button selected - perform mining
                     let gs = game_state();
-                    let mining_power = gs.player.get_effective_mining();
 
-                    // Take the rock temporarily to check death
                     if let Some(mut rock) = gs.town.mine.current_rock.take() {
-                        rock.take_damage(mining_power);
-
-                        if !rock.is_alive() {
-                            // Rock died - roll drops and add to inventory
-                            let drops = rock.roll_drops();
-
-                            // Group drops by item kind for display
+                        if let Some(drops) = rock.mine(&mut gs.player) {
+                            // Rock was destroyed - group drops for UI display
                             let mut counts: std::collections::HashMap<crate::item::ItemId, u32> = std::collections::HashMap::new();
                             for drop in &drops {
-                                *counts.entry(drop.kind).or_insert(0) += 1;
+                                *counts.entry(drop.item_id).or_insert(0) += 1;
                             }
                             let mut grouped: Vec<_> = counts.into_iter().collect();
                             grouped.sort_by_key(|(kind, _)| gs.get_item_name(*kind));
                             self.recent_drops = grouped;
 
-                            // Add to inventory
-                            for drop in drops {
-                                let _ = gs.player.add_to_inv(drop);
-                            }
                             // Spawn a new rock and regenerate art
                             gs.town.mine.spawn_rock();
-                            self.current_rock_art = None; // Force regeneration on next view
+                            self.current_rock_art = None;
                         } else {
                             // Rock still alive - put it back
                             gs.town.mine.current_rock = Some(rock);

@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::{
-    item::{enums::ItemQuality, spec::specs::BASIC_HP_POTION},
+    item::{enums::ItemQuality, spec::specs::{BASIC_HP_POTION, BRONZE_INGOT, COPPER_INGOT, TIN_INGOT}},
     registry::{RegistryDefaults, SpawnFromSpec},
 };
 
@@ -15,14 +15,14 @@ use super::specs::{
 impl SpawnFromSpec<ItemId> for ItemSpec {
     type Output = Item;
 
-    fn spawn_from_spec(kind: ItemId, spec: &Self) -> Self::Output {
+    fn spawn_from_spec(item_id: ItemId, spec: &Self) -> Self::Output {
         // Use fixed quality from spec, or roll if None
         let quality = spec.quality.unwrap_or_else(ItemQuality::roll);
         let base_stats = spec.stats.clone();
         let stats = quality.multiply_stats(base_stats.clone());
         Item {
             item_uuid: Uuid::new_v4(),
-            kind,
+            item_id,
             item_type: spec.item_type,
             name: spec.name,
             is_equipped: false,
@@ -51,6 +51,9 @@ impl RegistryDefaults<ItemId> for ItemSpec {
             (ItemId::Coal, COAL.clone()),
             (ItemId::CopperOre, COPPER_ORE.clone()),
             (ItemId::TinOre, TIN_ORE.clone()),
+            (ItemId::CopperIngot, COPPER_INGOT.clone()),
+            (ItemId::TinIngot, TIN_INGOT.clone()),
+            (ItemId::BronzeIngot, BRONZE_INGOT.clone()),
         ]
     }
 }

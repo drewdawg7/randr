@@ -1,31 +1,34 @@
-use rand::seq::SliceRandom;
+use std::collections::HashMap;
+
+use rand::Rng;
 
 use crate::{entities::{mob::MobKind, Mob}, field::enums::FieldError, game_state};
 
-
-
 pub struct Field {
     pub name: String,
-    pub spawnable_mobs: Vec<MobKind>
+    pub mob_weights: HashMap<MobKind, i32>,
 }
 
-
 impl Field {
-    
-    pub fn new(name: String, spawnable_mobs: Vec<MobKind>) -> Self {
-        Self {
-            name,
-            spawnable_mobs
-        }
+    pub fn new(name: String, mob_weights: HashMap<MobKind, i32>) -> Self {
+        Self { name, mob_weights }
     }
 
     pub fn spawn_mob(&self) -> Result<Mob, FieldError> {
-        let mk = {
-            match  self.spawnable_mobs.choose(&mut rand::thread_rng()) {
-                Some(mk) => mk,
-                None     => return Err(FieldError::MobSpawnError)
+        let total_weight: i32 = self.mob_weights.values().sum();
+        if total_weight == 0 {
+            return Err(FieldError::MobSpawnError);
+        }
+
+        let mut rng = rand::thread_rng();
+        let mut roll = rng.gen_range(0..total_weight);
+
+        for (mob_kind, weight) in &self.mob_weights {
+            roll -= weight;
+            if roll < 0 {
+                return Ok(game_state().spawn_mob(*mob_kind));
             }
-        };
-        Ok(game_state().spawn_mob(*mk))
+        }
+        Err(FieldError::MobSpawnError)
     }
 }

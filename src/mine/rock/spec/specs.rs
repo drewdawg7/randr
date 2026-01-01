@@ -9,7 +9,8 @@ pub static COPPER_ROCK: Lazy<RockSpec> = Lazy::new(|| RockSpec {
     name: "Copper Rock",
     health: 50,
     loot: LootTable::new()
-        .with(ItemId::CopperOre, 1, 1, 1..=3),
+        .with(ItemId::CopperOre, 1, 1, 1..=3)
+        .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
 });
 
 pub static COAL_ROCK: Lazy<RockSpec> = Lazy::new(|| RockSpec {
@@ -17,14 +18,17 @@ pub static COAL_ROCK: Lazy<RockSpec> = Lazy::new(|| RockSpec {
     name: "Coal Rock",
     health: 50,
     loot: LootTable::new()
-        .with(ItemId::Coal, 1, 1, 1..=2),
+        .with(ItemId::Coal, 1, 1, 1..=2)
+        .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
 });
 
 pub static TIN_ROCK: Lazy<RockSpec> = Lazy::new(|| RockSpec {
     rock_id: RockId::Tin,
     name: "Tin Rock",
     health: 50,
-    loot: LootTable::new().with(ItemId::TinOre, 1, 1, 1..=3),
+    loot: LootTable::new()
+        .with(ItemId::TinOre, 1, 1, 1..=3)
+        .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
 });
 
 pub static MIXED_ROCK: Lazy<RockSpec> = Lazy::new(|| RockSpec {
@@ -34,5 +38,6 @@ pub static MIXED_ROCK: Lazy<RockSpec> = Lazy::new(|| RockSpec {
     loot: LootTable::new()
         .with(ItemId::TinOre, 1, 2, 1..=4)
         .with(ItemId::CopperOre, 1, 2, 1..=4)
-        .with(ItemId::Coal, 1, 2, 1..=4),
+        .with(ItemId::Coal, 1, 2, 1..=4)
+        .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
 });

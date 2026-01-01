@@ -8,6 +8,35 @@ use crate::{
 use super::definition::ItemSpec;
 
 
+
+pub static BRONZE_INGOT: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Bronze Ingot",
+    item_type: ItemType::Material(MaterialType::CraftingMaterial),
+    quality: Some(ItemQuality::Normal),
+    stats: StatSheet::new(),
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 15,
+});
+
+pub static TIN_INGOT: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Tin Ingot",
+    item_type: ItemType::Material(MaterialType::CraftingMaterial),
+    quality: Some(ItemQuality::Normal),
+    stats: StatSheet::new(),
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 10,
+});
+pub static COPPER_INGOT: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Copper Ingot",
+    item_type: ItemType::Material(MaterialType::CraftingMaterial),
+    quality: Some(ItemQuality::Normal),
+    stats: StatSheet::new(),
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 10,
+});
 pub static BASIC_HP_POTION: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     name: "Basic HP Potion",
     item_type: ItemType::Consumable(crate::item::enums::ConsumableType::Potion),

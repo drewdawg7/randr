@@ -10,7 +10,7 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
-use crate::ui::components::blacksmith::tab::BlacksmithTab;
+use crate::ui::components::blacksmith::BlacksmithTab;
 use crate::ui::components::field::FieldTab;
 use crate::ui::components::store::tab::StoreTab;
 use crate::ui::components::widgets::border::BorderTheme;

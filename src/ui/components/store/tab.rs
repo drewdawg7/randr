@@ -270,27 +270,11 @@ impl StoreTab {
                     self.state = StoreState::Menu;
                     self.reset_selection();
                 } else if selected < store_len {
-                    // Purchase item
+                    // Purchase item - need to avoid borrow conflict
                     let gs = game_state();
-
-                    // Take the item from store first
-                    if let Some(item) = gs.store_mut().inventory[selected].take_item() {
-                        let item_cost = item.purchase_price();
-                        let player_gold = gs.player.gold();
-
-                        if player_gold >= item_cost {
-                            // Try to add to inventory
-                            if gs.player.add_to_inv(item.clone()).is_ok() {
-                                gs.player.dec_gold(item_cost);
-                            } else {
-                                // Inventory full - put item back in store
-                                gs.store_mut().inventory[selected].items.push(item);
-                            }
-                        } else {
-                            // Not enough gold - put item back in store
-                            gs.store_mut().inventory[selected].items.push(item);
-                        }
-                    }
+                    let store = &mut gs.town.store;
+                    let player = &mut gs.player;
+                    let _ = store.purchase_item(player, selected);
                 }
                 CmdResult::Submit(self.state())
             }
