@@ -4,7 +4,8 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 ## Skills
-1. updating-code: You must use the skill for any changes to code, this includes while planning changes. Plans should include information from this skill.
+1. updating-code: The skill must be used for any changes to code, this includes while planning changes. Plans should include information from this skill.
+2. ascii-art: The skill must be used whenever ascii art needs to be made or edited.
 
 ## Build Commands
 

@@ -137,7 +137,7 @@ impl GameState {
         self.active_combat = None;
     }
 
-    pub fn blacksmith(&self) -> &crate::blacksmith::Blacksmith {
+    pub fn blacksmith(&self) -> &crate::location::Blacksmith {
         &self.town.blacksmith
     }
 
@@ -206,7 +206,7 @@ impl Default for GameState {
         terminal.clear().unwrap();
 
         let store = crate::location::Store::default();
-        let blacksmith = crate::blacksmith::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
+        let blacksmith = crate::location::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
         let mine = crate::mine::Mine::default();
         let field_registry = FieldRegistry::new();
         let field = field_registry.spawn(FieldId::VillageField);

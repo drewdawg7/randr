@@ -23,4 +23,4 @@ Link to list of symbols: https://nerdfonts.ytyng.com
 * Name files descriptively and add in actual examples from the code base. Provide explanations on where it was used, colors that were used, etc.
 * If a file starts to get too large, split it out and put it into a subdirectory.
 * Focus on writing documentation such that it is easy to reference and understand.
-
+* Feel free to create smaller documentation files that just explain smaller concepts but do not have full ascii art. For example, a file that lists a lot of the useful nerdfont symbols and what they were used for.

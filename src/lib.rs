@@ -2,7 +2,6 @@ pub(crate) mod field;
 pub(crate) mod location;
 pub(crate) mod loot;
 pub(crate) mod town;
-pub(crate) mod blacksmith;
 pub(crate) mod entities;
 pub(crate) mod combat;
 pub(crate) mod item;

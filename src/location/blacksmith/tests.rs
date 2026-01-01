@@ -3,7 +3,7 @@ use crate::{
     item::{Item, ItemId, ItemType},
     item::enums::{EquipmentType, ItemQuality, MaterialType},
     stats::{StatType, StatSheet, HasStats},
-    blacksmith::{Blacksmith, BlacksmithError},
+    location::blacksmith::{Blacksmith, BlacksmithError},
     entities::Player,
     combat::HasGold,
 };
