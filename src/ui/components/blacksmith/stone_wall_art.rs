@@ -69,32 +69,20 @@ fn generate_wall_line(row_in_pattern: usize, width: usize) -> Line<'static> {
     Line::from(spans)
 }
 
-/// Renders stone wall pattern filling the entire dead space area.
+/// Renders stone wall pattern filling the entire area.
 /// The pattern tiles to fill whatever space is available.
-pub fn render_stone_patches(frame: &mut Frame, area: Rect, menu_item_count: u16) {
-    let dead_space_start_y = area.y + menu_item_count;
-    let dead_space_height = area.height.saturating_sub(menu_item_count);
-
-    // Only render if we have dead space
-    if dead_space_height == 0 || area.width == 0 {
+pub fn render_stone_wall(frame: &mut Frame, area: Rect) {
+    if area.height == 0 || area.width == 0 {
         return;
     }
 
-    // Generate lines to fill the entire dead space
+    // Generate lines to fill the entire area
     let mut lines: Vec<Line<'static>> = Vec::new();
 
-    for row in 0..dead_space_height {
+    for row in 0..area.height {
         let line = generate_wall_line(row as usize, area.width as usize);
         lines.push(line);
     }
 
-    // Render the tiled wall pattern in the dead space
-    let wall_rect = Rect {
-        x: area.x,
-        y: dead_space_start_y,
-        width: area.width,
-        height: dead_space_height,
-    };
-
-    frame.render_widget(Paragraph::new(lines), wall_rect);
+    frame.render_widget(Paragraph::new(lines), area);
 }

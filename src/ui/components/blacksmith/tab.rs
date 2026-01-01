@@ -82,7 +82,11 @@ impl BlacksmithTab {
 impl MockComponent for BlacksmithTab {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         match self.state {
-            BlacksmithState::Menu => menu::render(frame, area, &mut self.menu_list_state),
+            BlacksmithState::Menu => {
+                // Render stone wall background first, then menu on top
+                super::stone_wall_art::render_stone_wall(frame, area);
+                menu::render(frame, area, &mut self.menu_list_state);
+            }
             BlacksmithState::Upgrade => upgrade::render(frame, area, &mut self.upgrade_list),
             BlacksmithState::Quality => quality::render(frame, area, &mut self.quality_list),
             BlacksmithState::Smelt => smelt::render(frame, area, &mut self.smelt_list_state),
