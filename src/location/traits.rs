@@ -3,7 +3,6 @@ use std::time::Duration;
 use crate::entities::Player;
 use crate::item::ItemId;
 
-use super::activity::ActivityId;
 use super::enums::{LocationId, LocationType};
 
 /// Error returned when player cannot enter a location
@@ -58,14 +57,4 @@ pub trait Location {
 
     /// Called when player exits the location
     fn on_exit(&mut self, _player: &mut Player) {}
-
-    // === Activities ===
-
-    /// List of activities available at this location
-    fn available_activities(&self) -> &[ActivityId];
-
-    /// Check if a specific activity is currently available
-    fn is_activity_available(&self, activity: ActivityId, _player: &Player) -> bool {
-        self.available_activities().contains(&activity)
-    }
 }

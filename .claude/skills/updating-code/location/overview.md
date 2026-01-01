@@ -7,7 +7,6 @@ src/location/
 ├── mod.rs              # Main exports
 ├── enums.rs            # LocationId, LocationType, subtypes
 ├── traits.rs           # Location trait, LocationEntryError
-├── activity.rs         # ActivityId, ActivitySpec
 ├── spec/
 │   ├── mod.rs
 │   ├── definition.rs   # LocationSpec, LocationData, StoreData, etc.
@@ -58,14 +57,6 @@ Core trait all locations implement:
 - **Identity**: `id()`, `name()`, `description()`, `location_type()`
 - **Timer/Refresh**: `tick()`, `refresh()`, `time_until_refresh()`
 - **Entry/Exit**: `can_enter()`, `on_enter()`, `on_exit()`
-- **Activities**: `available_activities()`, `is_activity_available()`
-
-### ActivityId (activity.rs)
-Activities available at locations:
-- `Buy`, `Sell` (Store)
-- `Upgrade`, `UpgradeQuality`, `Smelt`, `Forge` (Blacksmith)
-- `Fight` (Field)
-- `MineRock` (Mine)
 
 ### LocationSpec (spec/definition.rs)
 Unified spec for all locations:
@@ -76,7 +67,6 @@ pub struct LocationSpec {
     pub description: &'static str,
     pub refresh_interval: Option<Duration>,
     pub min_level: Option<i32>,
-    pub activities: Vec<ActivitySpec>,
     pub data: LocationData,  // Location-specific config
 }
 ```
@@ -112,24 +102,28 @@ Helper methods:
 
 ## Spawning Locations
 
-Locations are created via `Default::default()`:
+Locations are created using the spec system via `from_spec()`:
 ```rust
-let store = Store::default();
-let blacksmith = Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
-let field = Field::default();
-let mine = Mine::default();
+use crate::location::spec::specs::{VILLAGE_STORE, VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE};
+use crate::location::{Store, Blacksmith, Field, Mine, LocationData};
+
+let store = match &VILLAGE_STORE.data {
+    LocationData::Store(data) => Store::from_spec(&VILLAGE_STORE, data),
+    _ => unreachable!(),
+};
+let blacksmith = match &VILLAGE_BLACKSMITH.data {
+    LocationData::Blacksmith(data) => Blacksmith::from_spec(&VILLAGE_BLACKSMITH, data),
+    _ => unreachable!(),
+};
+// etc.
 ```
 
-Or from specs:
-```rust
-let store = Store::from_spec(&VILLAGE_STORE, &store_data);
-```
+See `src/system.rs` for the canonical example of location creation.
 
 ## Files to Modify for Location Changes
 
 | Change | Files |
 |--------|-------|
-| Add new location type | `enums.rs`, `traits.rs`, `spec/definition.rs`, `spec/specs.rs`, new submodule |
-| Add new activity | `activity.rs`, relevant location's traits.rs |
+| Add new location type | `enums.rs`, `spec/definition.rs`, `spec/specs.rs`, new submodule |
 | Modify location behavior | `<location>/definition.rs`, `<location>/traits.rs` |
-| Add location to town | `town/definition.rs` |
+| Add location to town | `town/definition.rs`, `system.rs` |

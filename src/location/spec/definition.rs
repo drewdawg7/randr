@@ -6,7 +6,6 @@ use crate::item::ItemId;
 use crate::location::mine::RockId;
 use crate::registry::Registry;
 
-use super::super::activity::ActivitySpec;
 use super::super::enums::LocationId;
 
 /// Unified spec that all locations share
@@ -22,9 +21,6 @@ pub struct LocationSpec {
 
     // === Entry Requirements (optional) ===
     pub min_level: Option<i32>,
-
-    // === Activities ===
-    pub activities: Vec<ActivitySpec>,
 
     // === Location-Specific Data ===
     pub data: LocationData,

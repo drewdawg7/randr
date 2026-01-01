@@ -2,7 +2,7 @@ use std::time::Duration;
 
 use crate::{
     entities::Player,
-    location::{ActivityId, Location, LocationEntryError, LocationId},
+    location::{Location, LocationEntryError, LocationId},
 };
 
 use super::definition::Blacksmith;
@@ -55,21 +55,5 @@ impl Location for Blacksmith {
 
     fn on_exit(&mut self, _player: &mut Player) {
         // No special action on exit
-    }
-
-    fn available_activities(&self) -> &[ActivityId] {
-        &[
-            ActivityId::Upgrade,
-            ActivityId::UpgradeQuality,
-            ActivityId::Smelt,
-            ActivityId::Forge,
-        ]
-    }
-
-    fn is_activity_available(&self, activity: ActivityId, _player: &Player) -> bool {
-        match activity {
-            ActivityId::Smelt | ActivityId::Forge => self.fuel_amount > 0,
-            _ => self.available_activities().contains(&activity),
-        }
     }
 }

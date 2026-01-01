@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::{
     entities::{mob::MobId, Player},
-    location::{ActivityId, Location, LocationEntryError, LocationId},
+    location::{Location, LocationEntryError, LocationId},
 };
 
 use super::definition::Field;
@@ -59,9 +59,5 @@ impl Location for Field {
 
     fn on_exit(&mut self, _player: &mut Player) {
         // No special action on exit
-    }
-
-    fn available_activities(&self) -> &[ActivityId] {
-        &[ActivityId::Fight]
     }
 }

@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::{
     entities::Player,
-    location::{ActivityId, Location, LocationEntryError, LocationId},
+    location::{Location, LocationEntryError, LocationId},
 };
 
 use super::definition::Mine;
@@ -61,16 +61,5 @@ impl Location for Mine {
 
     fn on_exit(&mut self, _player: &mut Player) {
         // No special action on exit
-    }
-
-    fn available_activities(&self) -> &[ActivityId] {
-        &[ActivityId::MineRock]
-    }
-
-    fn is_activity_available(&self, activity: ActivityId, _player: &Player) -> bool {
-        match activity {
-            ActivityId::MineRock => self.current_rock.is_some(),
-            _ => false,
-        }
     }
 }

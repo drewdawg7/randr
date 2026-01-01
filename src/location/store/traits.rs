@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::{
     entities::Player,
     item::ItemId,
-    location::{ActivityId, Location, LocationEntryError, LocationId, LocationType},
+    location::{Location, LocationEntryError, LocationId},
 };
 
 use super::definition::Store;
@@ -55,9 +55,5 @@ impl Location for Store {
 
     fn on_exit(&mut self, _player: &mut Player) {
         // No special action on exit
-    }
-
-    fn available_activities(&self) -> &[ActivityId] {
-        &[ActivityId::Buy, ActivityId::Sell]
     }
 }
