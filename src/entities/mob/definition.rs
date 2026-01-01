@@ -1,12 +1,12 @@
 use crate::{
-    entities::mob::enums::{MobKind, MobQuality},
+    entities::mob::enums::{MobId, MobQuality},
     loot::LootTable,
     stats::{HasStats, StatSheet},
 };
 
 #[derive(Debug, Clone)]
 pub struct Mob {
-    pub spec: MobKind,
+    pub spec: MobId,
     pub quality: MobQuality,
     pub name: &'static str,
     pub stats: StatSheet,

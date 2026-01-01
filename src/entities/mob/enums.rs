@@ -5,7 +5,7 @@ pub enum MobQuality {
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum MobKind {
+pub enum MobId {
     Slime,
     Goblin,
     Cow,

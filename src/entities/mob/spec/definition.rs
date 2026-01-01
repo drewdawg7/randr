@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use crate::{loot::LootTable, registry::Registry};
 
-use super::super::enums::{MobKind, MobQuality};
+use super::super::enums::{MobId, MobQuality};
 
 #[derive(Clone)]
 pub struct MobSpec {
@@ -15,4 +15,4 @@ pub struct MobSpec {
     pub loot: LootTable,
 }
 
-pub type MobRegistry = Registry<MobKind, MobSpec>;
+pub type MobRegistry = Registry<MobId, MobSpec>;

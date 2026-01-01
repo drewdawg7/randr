@@ -3,7 +3,7 @@ use std::{collections::HashMap};
 use rand::Rng;
 
 use crate::{
-    entities::mob::{enums::MobKind, spec::specs::COW},
+    entities::mob::{enums::MobId, spec::specs::COW},
     registry::{RegistryDefaults, SpawnFromSpec},
     stats::{StatInstance, StatSheet, StatType},
 };
@@ -12,10 +12,10 @@ use super::super::definition::Mob;
 use super::definition::MobSpec;
 use super::specs::{DRAGON, GOBLIN, SLIME};
 
-impl SpawnFromSpec<MobKind> for MobSpec {
+impl SpawnFromSpec<MobId> for MobSpec {
     type Output = Mob;
 
-    fn spawn_from_spec(kind: MobKind, spec: &Self) -> Self::Output {
+    fn spawn_from_spec(kind: MobId, spec: &Self) -> Self::Output {
         let mut rng = rand::thread_rng();
         let hp_min = spec.max_health.start();
         let hp_max = spec.max_health.end();
@@ -53,14 +53,14 @@ impl SpawnFromSpec<MobKind> for MobSpec {
     }
 }
 
-impl RegistryDefaults<MobKind> for MobSpec {
-    fn defaults() -> impl IntoIterator<Item = (MobKind, Self)> {
+impl RegistryDefaults<MobId> for MobSpec {
+    fn defaults() -> impl IntoIterator<Item = (MobId, Self)> {
         [
-            (MobKind::Slime, SLIME.clone()),
-            
-            (MobKind::Cow, COW.clone()),
-            (MobKind::Goblin, GOBLIN.clone()),
-            (MobKind::Dragon, DRAGON.clone()),
+            (MobId::Slime, SLIME.clone()),
+
+            (MobId::Cow, COW.clone()),
+            (MobId::Goblin, GOBLIN.clone()),
+            (MobId::Dragon, DRAGON.clone()),
         ]
     }
 }
