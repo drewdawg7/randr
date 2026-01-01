@@ -33,28 +33,29 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
 
     let selected = list_state.selected().unwrap_or(0);
+    let text_style = Style::default().fg(colors::WHITE);
     let menu_items: Vec<ListItem> = vec![
         ListItem::new(Line::from(vec![
             selection_prefix(selected == 0),
-            Span::raw(format!("{} Upgrade Items", HAMMER)),
+            Span::styled(format!("{} Upgrade Items", HAMMER), text_style),
         ])),
         ListItem::new(Line::from(vec![
             selection_prefix(selected == 1),
-            Span::raw(format!("{} Upgrade Item Quality", DOUBLE_ARROW_UP)),
+            Span::styled(format!("{} Upgrade Item Quality", DOUBLE_ARROW_UP), text_style),
         ])),
         ListItem::new(Line::from(vec![
             selection_prefix(selected == 2),
             Span::styled(format!("{}", FIRE), Style::default().fg(colors::FLAME_ORANGE)),
-            Span::raw(" Smelt Ores"),
+            Span::styled(" Smelt Ores", text_style),
         ])),
         ListItem::new(Line::from(vec![
             selection_prefix(selected == 3),
             Span::styled(format!("{}", CROSSED_SWORDS), Style::default().fg(colors::LIGHT_STONE)),
-            Span::raw(" Forge Items"),
+            Span::styled(" Forge Items", text_style),
         ])),
         ListItem::new(Line::from(vec![
             selection_prefix(selected == 4),
-            Span::raw(format!("{} Back", RETURN_ARROW)),
+            Span::styled(format!("{} Back", RETURN_ARROW), text_style),
         ])),
     ];
 
