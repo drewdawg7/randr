@@ -5,6 +5,7 @@ pub enum LocationId {
     VillageStore,
     // Crafting locations
     VillageBlacksmith,
+    VillageAlchemist,
     // Combat locations
     VillageField,
     // Resource locations
@@ -28,6 +29,7 @@ pub enum CommerceSubtype {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CraftingSubtype {
     Blacksmith,
+    Alchemist,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -46,6 +48,7 @@ impl LocationId {
         match self {
             LocationId::VillageStore => LocationType::Commerce(CommerceSubtype::Store),
             LocationId::VillageBlacksmith => LocationType::Crafting(CraftingSubtype::Blacksmith),
+            LocationId::VillageAlchemist => LocationType::Crafting(CraftingSubtype::Alchemist),
             LocationId::VillageField => LocationType::Combat(CombatSubtype::Field),
             LocationId::VillageMine => LocationType::Resource(ResourceSubtype::Mine),
         }

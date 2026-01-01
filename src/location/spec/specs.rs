@@ -9,7 +9,7 @@ use crate::location::enums::LocationId;
 use crate::location::mine::RockId;
 
 use super::definition::{
-    BlacksmithData, FieldData, LocationData, LocationSpec, MineData, StoreData,
+    AlchemistData, BlacksmithData, FieldData, LocationData, LocationSpec, MineData, StoreData,
 };
 
 pub static VILLAGE_STORE: Lazy<LocationSpec> = Lazy::new(|| LocationSpec {
@@ -37,6 +37,15 @@ pub static VILLAGE_BLACKSMITH: Lazy<LocationSpec> = Lazy::new(|| LocationSpec {
         max_upgrades: 10,
         base_upgrade_cost: 10,
     }),
+});
+
+pub static VILLAGE_ALCHEMIST: Lazy<LocationSpec> = Lazy::new(|| LocationSpec {
+    location_id: LocationId::VillageAlchemist,
+    name: "Village Alchemist",
+    description: "A mystical shop where potions are brewed from magical ingredients",
+    refresh_interval: None,
+    min_level: None,
+    data: LocationData::Alchemist(AlchemistData {}),
 });
 
 pub static VILLAGE_FIELD: Lazy<LocationSpec> = Lazy::new(|| LocationSpec {

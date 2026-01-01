@@ -31,6 +31,7 @@ pub struct LocationSpec {
 pub enum LocationData {
     Store(StoreData),
     Blacksmith(BlacksmithData),
+    Alchemist(AlchemistData),
     Field(FieldData),
     Mine(MineData),
 }
@@ -45,6 +46,11 @@ pub struct StoreData {
 pub struct BlacksmithData {
     pub max_upgrades: i32,
     pub base_upgrade_cost: i32,
+}
+
+#[derive(Clone)]
+pub struct AlchemistData {
+    // Empty for now, but follows pattern for future expansion
 }
 
 #[derive(Clone)]
