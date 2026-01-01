@@ -8,6 +8,7 @@ pub enum RecipeError {
 pub enum RecipeType {
     Smelting,  // ore to ingot
     Forging,   // crafting items from materials
+    Alchemy,   // brewing potions
 }
 
 #[derive(Copy, Clone, PartialEq, Eq, Hash, Debug)]
@@ -27,7 +28,10 @@ impl RecipeId {
             RecipeId::BronzeSword,
             RecipeId::TinSword,
             RecipeId::CopperSword,
-            RecipeId::BasicHPPotion,
         ]
+    }
+
+    pub fn all_alchemy_recipes() -> Vec<RecipeId> {
+        vec![RecipeId::BasicHPPotion]
     }
 }

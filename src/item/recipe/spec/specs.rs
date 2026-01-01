@@ -73,5 +73,5 @@ pub static BASIC_HP_POTION_RECIPE: Lazy<RecipeSpec> = Lazy::new(|| RecipeSpec {
     ]),
     output: ItemId::BasicHPPotion,
     output_quantity: 1,
-    recipe_type: RecipeType::Forging,
+    recipe_type: RecipeType::Alchemy,
 });
