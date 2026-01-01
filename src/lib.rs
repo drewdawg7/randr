@@ -10,7 +10,6 @@ pub(crate) mod registry;
 pub(crate) mod inventory;
 pub(crate) mod utilities;
 pub(crate) mod stats;
-pub(crate) mod store;
 pub(crate) mod ui;
 pub(crate) mod system;
 pub(crate) mod mine;

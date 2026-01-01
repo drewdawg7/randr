@@ -11,7 +11,7 @@ use crate::inventory::{EquipmentSlot, HasInventory, InventoryItem};
 use crate::item::Item;
 use crate::ui::theme::{self as colors, quality_color, ColorExt};
 
-use crate::{blacksmith::Blacksmith, store::Store, system::game_state, ui::Id};
+use crate::{blacksmith::Blacksmith, location::Store, system::game_state, ui::Id};
 use super::widgets::menu::{Menu, MenuItem};
 
 pub const HEART: char           = '\u{F004}';

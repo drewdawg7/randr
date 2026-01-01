@@ -1,6 +1,7 @@
 pub mod activity;
 pub mod enums;
 pub mod spec;
+pub mod store;
 pub mod traits;
 
 pub use activity::{ActivityId, ActivitySpec};
@@ -10,4 +11,5 @@ pub use enums::{
 pub use spec::{
     BlacksmithData, FieldData, LocationData, LocationRegistry, LocationSpec, MineData, StoreData,
 };
+pub use store::{sell_player_item, Store, StoreItem};
 pub use traits::{Location, LocationEntryError};

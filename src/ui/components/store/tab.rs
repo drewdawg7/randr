@@ -15,8 +15,8 @@ use tuirealm::{
 use crate::{
     combat::HasGold,
     inventory::{HasInventory, InventoryItem},
+    location::sell_player_item,
     loot::WorthGold,
-    store::sell_player_item,
     system::game_state,
     ui::Id,
 };

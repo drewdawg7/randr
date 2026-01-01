@@ -141,11 +141,11 @@ impl GameState {
         &self.town.blacksmith
     }
 
-    pub fn store(&self) -> &crate::store::Store {
+    pub fn store(&self) -> &crate::location::Store {
         &self.town.store
     }
 
-    pub fn store_mut(&mut self) -> &mut crate::store::Store {
+    pub fn store_mut(&mut self) -> &mut crate::location::Store {
         &mut self.town.store
     }
 
@@ -205,7 +205,7 @@ impl Default for GameState {
         let mut terminal: Terminal<CrosstermBackend<io::Stdout>> = Terminal::new(backend).unwrap();
         terminal.clear().unwrap();
 
-        let store = crate::store::Store::default();
+        let store = crate::location::Store::default();
         let blacksmith = crate::blacksmith::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
         let mine = crate::mine::Mine::default();
         let field_registry = FieldRegistry::new();
