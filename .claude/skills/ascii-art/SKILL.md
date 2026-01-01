@@ -3,7 +3,7 @@ name: ascii-art
 description: Guidelines and procedures for creating, using, and editing ascii art. Use when code changes requires ascii art
 ---
 ## Overview
-Because this game uses a TUI it uses ascii art throughout in order to provide graphics. This guide covers bestpractices around creating, using, and editing ascii art throughought the project. This guide also aims to provide examples and explanations to make future ascii art generation easier.
+Because this game uses a TUI it uses ascii art throughout in order to provide graphics. This guide covers bestpractices around creating, using, and editing ascii art throughought the project. This guide also aims to provide examples and explanations to make future ascii art generation easier. This directory will also contain examples and documentation to make things easier. Make sure you update this documentation frequently.
 
 
 ## Density
