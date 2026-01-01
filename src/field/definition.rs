@@ -2,15 +2,15 @@ use std::collections::HashMap;
 
 use rand::Rng;
 
-use crate::{entities::{mob::MobKind, Mob}, field::enums::FieldError, game_state};
+use crate::{entities::{mob::MobId, Mob}, field::enums::FieldError, game_state};
 
 pub struct Field {
     pub name: String,
-    pub mob_weights: HashMap<MobKind, i32>,
+    pub mob_weights: HashMap<MobId, i32>,
 }
 
 impl Field {
-    pub fn new(name: String, mob_weights: HashMap<MobKind, i32>) -> Self {
+    pub fn new(name: String, mob_weights: HashMap<MobId, i32>) -> Self {
         Self { name, mob_weights }
     }
 

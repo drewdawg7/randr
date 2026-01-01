@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use crate::{entities::mob::MobKind, registry::Registry};
+use crate::{entities::mob::MobId, registry::Registry};
 
 use super::super::FieldId;
 
@@ -8,7 +8,7 @@ use super::super::FieldId;
 pub struct FieldSpec {
     pub field_id: FieldId,
     pub name: &'static str,
-    pub mob_weights: HashMap<MobKind, i32>,
+    pub mob_weights: HashMap<MobId, i32>,
 }
 
 pub type FieldRegistry = Registry<FieldId, FieldSpec>;

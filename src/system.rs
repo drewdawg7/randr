@@ -11,7 +11,7 @@ use crate::item::recipe::RecipeRegistry;
 use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::{
     combat::{ActiveCombat, CombatRounds},
-    entities::{mob::{MobKind, MobRegistry}, Mob, Player},
+    entities::{mob::{MobId, MobRegistry}, Mob, Player},
     item::{consumable::ConsumableRegistry, ItemId, ItemRegistry},
     mine::rock::{Rock, RockId, RockRegistry},
     town::definition::Town,
@@ -64,7 +64,7 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn spawn_mob(&self, mob: MobKind) -> Mob {
+    pub fn spawn_mob(&self, mob: MobId) -> Mob {
         self.mob_registry.spawn(mob)
     }
 
