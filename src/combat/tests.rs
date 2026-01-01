@@ -4,7 +4,7 @@ use std::collections::HashMap;
 use crate::{
     combat::{attack, enter_combat, Combatant, HasGold, IsKillable},
     entities::{
-        mob::{Mob, MobKind},
+        mob::{Mob, MobId},
         mob::enums::MobQuality,
         player::Player,
         progression::HasProgression,
@@ -20,7 +20,7 @@ fn create_test_mob(name: &'static str, hp: i32, attack: i32, defense: i32) -> Mo
     stats.insert(StatType::Attack, StatType::Attack.instance(attack));
     stats.insert(StatType::Defense, StatType::Defense.instance(defense));
     Mob {
-        spec: MobKind::Slime,
+        spec: MobId::Slime,
         quality: MobQuality::Normal,
         name,
         stats: StatSheet { stats },
