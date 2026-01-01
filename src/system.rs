@@ -7,8 +7,10 @@ use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
 use crate::item::recipe::RecipeRegistry;
-use crate::location::spec::specs::{VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE, VILLAGE_STORE};
-use crate::location::{Blacksmith, Field, LocationData, Mine, Store};
+use crate::location::spec::specs::{
+    VILLAGE_ALCHEMIST, VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE, VILLAGE_STORE,
+};
+use crate::location::{Alchemist, Blacksmith, Field, LocationData, Mine, Store};
 use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::{
     combat::{ActiveCombat, CombatRounds},
@@ -145,6 +147,10 @@ impl GameState {
         &mut self.town.store
     }
 
+    pub fn alchemist(&self) -> &crate::location::Alchemist {
+        &self.town.alchemist
+    }
+
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
@@ -209,6 +215,10 @@ impl Default for GameState {
             LocationData::Blacksmith(data) => Blacksmith::from_spec(&VILLAGE_BLACKSMITH, data),
             _ => unreachable!(),
         };
+        let alchemist = match &VILLAGE_ALCHEMIST.data {
+            LocationData::Alchemist(data) => Alchemist::from_spec(&VILLAGE_ALCHEMIST, data),
+            _ => unreachable!(),
+        };
         let field = match &VILLAGE_FIELD.data {
             LocationData::Field(data) => Field::from_spec(&VILLAGE_FIELD, data),
             _ => unreachable!(),
@@ -217,7 +227,7 @@ impl Default for GameState {
             LocationData::Mine(data) => Mine::from_spec(&VILLAGE_MINE, data),
             _ => unreachable!(),
         };
-        let town = Town::new("Village".to_string(), store, blacksmith, field, mine);
+        let town = Town::new("Village".to_string(), store, blacksmith, alchemist, field, mine);
 
         Self {
             player: Player::default(),
