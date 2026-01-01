@@ -20,6 +20,7 @@ When refactoring or updating code always do the following:
 
 ## Documentation
 * The main purpose of the documentation is to make it so that you can more easily find the areas you need to update for future requests, so that you don't have to search through the whole code base, and can instead scan the documents. Therefore, you should be descriptive. Include file names, module names,/ function names, concepts, etc.
+* Documentation around UI decisions and patterns is important.
 * Documentation should be written such that you can efficiently scan it for information to minimize token waste and time waste.
 * If necessary, you may re-organize the documentation within .claude/skills/updating-code, including deleting, renaming, moving, or editing files. 
 * If several files are repeating similar things, extract that information into higher level documentation.
