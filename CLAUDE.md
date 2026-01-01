@@ -1,6 +1,10 @@
 # CLAUDE.md
 
+
+
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+## Skills
+1. updating-code: You must use the skill for any changes to code, this includes while planning changes. Plans should include information from this skill.
 
 ## Build Commands
 
@@ -21,16 +25,15 @@ The game uses a global mutable `GameState` singleton accessed via `game_state()`
 
 ### Screen/Component System
 
-The UI is screen-based using `tuirealm::Application`. Screens are identified by `ui::Id` enum (Menu, Store, Fight, Profile, Equipment, Blacksmith, BlacksmithItems, Quit). The main loop in `main.rs` calls `run_current_screen()` until `Id::Quit` is reached.
+The UI is screen-based using `tuirealm::Application`. Screens are identified by `ui::Id` enum (Menu, Town, Fight, Profile, Mine, Quit). The main loop in `main.rs` calls `run_current_screen()` until `Id::Quit` is reached.
 
 UI components in `src/ui/components/` implement `tuirealm::Component`. Common wrapper patterns:
-- `WithBackMenu<T>` - wraps components with back navigation
-- `WithAction<T>` - adds action handling
+- `ModalWrapper` - wraps screens with modal overlay support (keybinds, inventory)
 - `TabbedContainer` - combines multiple components as tabs
 
 ### Registry Pattern
 
-Entities (items, mobs) use a generic `Registry<K, V>` pattern (`src/registry.rs`) with:
+Entities (items, mobs, rocks) use a generic `Registry<K, V>` pattern (`src/registry.rs`) with:
 - `RegistryDefaults<K>` trait - provides default specs
 - `SpawnFromSpec<K>` trait - creates instances from specs
 - Specs define static data, spawned instances are mutable
@@ -49,6 +52,8 @@ Core behaviors are implemented as traits allowing composition:
 - `entities/mob` - Enemy definitions with MobRegistry
 - `combat/system` - Turn-based combat logic via `enter_combat()` function
 - `item/` - Item system with ItemId, ItemType (Weapon/Shield), upgrades
+- `mine/` - Mining system with RockRegistry for mineable resources
 - `blacksmith/` - Item upgrade system with gold cost
 - `store/` - Shop system for purchasing items
 - `stats/` - StatSheet with StatType enum (Health, Attack, Defense)
+- `town/` - Town structure containing store, blacksmith, field, and mine
