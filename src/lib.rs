@@ -1,4 +1,3 @@
-pub(crate) mod field;
 pub(crate) mod location;
 pub(crate) mod loot;
 pub(crate) mod town;

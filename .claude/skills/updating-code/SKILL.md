@@ -17,8 +17,9 @@ When refactoring or updating code always do the following:
 10. **Merge**: Once all of the above is done, commit any outstanding changes, push, merge the branch into main, and then delete. Once merged, push the main branch.
 11. **Additional Documentation**: Create additional documentation within .claude/skills/updating-code that will allow you to use this skill more efficiently if needed.
 
-The main purpose of the documentation is to make it so that you can more easily find the areas you need to update for future requests, so that you don't have to search through the whole code base, and can instead scan the documents. Therefore, you should be descriptive. Include file names, module names,/ function names, concepts, etc.
 
-Documentation should be written such that you can efficiently scan it for information to minimize token waste and time waste.
-
-If necessary, you may re-organize the documentation within .claude/skills/updating-code, including deleting, renaming, moving, or editing files.
+## Documentation
+* The main purpose of the documentation is to make it so that you can more easily find the areas you need to update for future requests, so that you don't have to search through the whole code base, and can instead scan the documents. Therefore, you should be descriptive. Include file names, module names,/ function names, concepts, etc.
+* Documentation should be written such that you can efficiently scan it for information to minimize token waste and time waste.
+* If necessary, you may re-organize the documentation within .claude/skills/updating-code, including deleting, renaming, moving, or editing files. 
+* If several files are repeating similar things, extract that information into higher level documentation.
