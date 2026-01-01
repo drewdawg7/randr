@@ -32,6 +32,9 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     let header_lines = blacksmith_header(blacksmith, player_gold, stones);
     let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
 
+    // Render decorative stone wall patches in dead space (background layer)
+    super::stone_wall_art::render_stone_patches(frame, content_area, 5);
+
     let selected = list_state.selected().unwrap_or(0);
     let menu_items: Vec<ListItem> = vec![
         ListItem::new(Line::from(vec![
