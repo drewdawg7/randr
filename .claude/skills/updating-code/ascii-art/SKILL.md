@@ -28,6 +28,9 @@ Default to using ascii art borders over normal ratatui borders.
 ## Background Color
 Make sure background colors match to the ascii art's colors when possible.
 
+## UI Design
+When designing larger UIs, such as screens, use ascii art to fill in deadspace. This doesn't have to be large pieces or full graphics, it can be just small details throught the page.
+
 ## Documentation
 * When creating ascii art, if the user likes something that has been made add it as an example in .claude/skills/ascii art.
 * Name files descriptively and add in actual examples from the code base. Provide explanations on where it was used, colors that were used, etc.

@@ -1,7 +1,8 @@
 use once_cell::sync::Lazy;
 
-use crate::{item::ItemId, loot::LootTable, mine::rock::RockId};
+use crate::{item::ItemId, loot::LootTable};
 
+use super::super::RockId;
 use super::definition::RockSpec;
 
 pub static COPPER_ROCK: Lazy<RockSpec> = Lazy::new(|| RockSpec {

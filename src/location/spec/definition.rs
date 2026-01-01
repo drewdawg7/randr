@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use crate::entities::mob::MobId;
 use crate::item::ItemId;
-use crate::mine::rock::RockId;
+use crate::location::mine::RockId;
 use crate::registry::Registry;
 
 use super::super::activity::ActivitySpec;

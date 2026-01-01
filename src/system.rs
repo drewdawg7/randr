@@ -14,7 +14,7 @@ use crate::{
     combat::{ActiveCombat, CombatRounds},
     entities::{mob::{MobId, MobRegistry}, Mob, Player},
     item::{consumable::ConsumableRegistry, ItemId, ItemRegistry},
-    mine::rock::{Rock, RockId, RockRegistry},
+    location::mine::{Rock, RockId, RockRegistry},
     town::definition::Town,
     ui::{
         Id,
@@ -208,7 +208,7 @@ impl Default for GameState {
 
         let store = crate::location::Store::default();
         let blacksmith = crate::location::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
-        let mine = crate::mine::Mine::default();
+        let mine = crate::location::Mine::default();
         let field_registry = FieldRegistry::new();
         let field = field_registry.spawn(FieldId::VillageField);
         let town = Town::new("Village".to_string(), store, blacksmith, field, mine);

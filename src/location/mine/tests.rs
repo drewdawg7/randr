@@ -1,6 +1,6 @@
 #[cfg(test)]
 use crate::{
-    mine::{
+    location::mine::{
         definition::Mine,
         rock::{Rock, RockId},
     },

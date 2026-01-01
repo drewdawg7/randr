@@ -1,10 +1,11 @@
 use crate::{
-    mine::rock::spec::specs::MIXED_ROCK, registry::{RegistryDefaults, SpawnFromSpec}, stats::{StatSheet, StatType}
+    registry::{RegistryDefaults, SpawnFromSpec},
+    stats::{StatSheet, StatType},
 };
 
 use super::super::{Rock, RockId};
 use super::definition::RockSpec;
-use super::specs::{COAL_ROCK, COPPER_ROCK, TIN_ROCK};
+use super::specs::{COAL_ROCK, COPPER_ROCK, MIXED_ROCK, TIN_ROCK};
 
 impl SpawnFromSpec<RockId> for RockSpec {
     type Output = Rock;

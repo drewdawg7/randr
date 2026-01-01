@@ -7,7 +7,7 @@ use crate::entities::mob::MobId;
 use crate::item::ItemId;
 use crate::location::activity::{ActivityId, ActivitySpec};
 use crate::location::enums::LocationId;
-use crate::mine::rock::RockId;
+use crate::location::mine::RockId;
 
 use super::definition::{
     BlacksmithData, FieldData, LocationData, LocationSpec, MineData, StoreData,

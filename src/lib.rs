@@ -11,7 +11,6 @@ pub(crate) mod utilities;
 pub(crate) mod stats;
 pub(crate) mod ui;
 pub(crate) mod system;
-pub(crate) mod mine;
 // Re-exports for main.rs
 pub use inventory::{EquipmentSlot, HasInventory};
 pub use item::ItemId;

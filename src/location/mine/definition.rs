@@ -1,15 +1,34 @@
 use std::collections::HashMap;
+
 use rand::Rng;
 
-use crate::{game_state, mine::rock::{Rock, RockId}};
+use crate::{
+    game_state,
+    location::{LocationId, LocationSpec, MineData},
+};
+
+use super::rock::{Rock, RockId};
 
 pub struct Mine {
+    pub(crate) location_id: LocationId,
     pub name: String,
+    pub(crate) description: String,
     pub rock_weights: HashMap<RockId, i32>,
     pub current_rock: Option<Rock>,
 }
 
 impl Mine {
+    /// Create a Mine from a LocationSpec
+    pub fn from_spec(spec: &LocationSpec, data: &MineData) -> Self {
+        Mine {
+            location_id: spec.location_id,
+            name: spec.name.to_string(),
+            description: spec.description.to_string(),
+            rock_weights: data.rock_weights.clone(),
+            current_rock: None,
+        }
+    }
+
     pub fn new(name: String) -> Self {
         let mut rock_weights = HashMap::new();
         rock_weights.insert(RockId::Copper, 50);
@@ -17,7 +36,9 @@ impl Mine {
         rock_weights.insert(RockId::Tin, 20);
 
         Self {
+            location_id: LocationId::VillageMine,
             name,
+            description: String::new(),
             rock_weights,
             current_rock: None,
         }
@@ -52,5 +73,14 @@ impl Mine {
     /// Get a mutable reference to the current rock
     pub fn current_rock_mut(&mut self) -> Option<&mut Rock> {
         self.current_rock.as_mut()
+    }
+
+    // Location trait accessors
+    pub fn location_id(&self) -> LocationId {
+        self.location_id
+    }
+
+    pub fn description(&self) -> &str {
+        &self.description
     }
 }

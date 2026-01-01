@@ -15,7 +15,7 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
-use crate::mine::rock::RockArt;
+use crate::location::mine::RockArt;
 use crate::system::game_state;
 use crate::ui::Id;
 use crate::ui::components::utilities::{render_location_header, PICKAXE, RETURN_ARROW};
