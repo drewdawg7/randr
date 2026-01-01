@@ -1,3 +1,5 @@
+mod anvil_art;
+mod forge;
 mod forge_art;
 mod menu;
 mod quality;

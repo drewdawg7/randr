@@ -3,10 +3,11 @@ use std::collections::HashMap;
 use crate::{
     entities::Player,
     game_state,
-    item::{recipe::enums::{RecipeError, RecipeId}, Item},
+    item::{ItemId, Item},
     HasInventory,
-    ItemId,
 };
+
+use super::enums::{RecipeError, RecipeId};
 
 use super::spec::RecipeSpec;
 

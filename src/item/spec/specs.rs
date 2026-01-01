@@ -8,7 +8,34 @@ use crate::{
 use super::definition::ItemSpec;
 
 
+pub static BRONZE_SWORD: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Bronze Sword",
+    item_type: ItemType::Equipment(EquipmentType::Weapon),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Attack, 16),
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 25,
+});
+pub static TIN_SWORD: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Tin Sword",
+    item_type: ItemType::Equipment(EquipmentType::Weapon),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Attack, 12),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 15,
+});
 
+pub static COPPER_SWORD: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Copper Sword",
+    item_type: ItemType::Equipment(EquipmentType::Weapon),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Attack, 12),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 15,
+});
 pub static BRONZE_INGOT: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     name: "Bronze Ingot",
     item_type: ItemType::Material(MaterialType::CraftingMaterial),
@@ -119,6 +146,25 @@ pub static COAL: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     gold_value: 4,
 });
 
+
+pub static SLIMEGEL: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Slime Gel",
+    item_type: ItemType::Material(MaterialType::CraftingMaterial),
+    quality: Some(ItemQuality::Normal),
+    stats: StatSheet::new(),
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 4,
+});
+pub static COWHIDE: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Cowhide",
+    item_type: ItemType::Material(MaterialType::CraftingMaterial),
+    quality: Some(ItemQuality::Normal),
+    stats: StatSheet::new(),
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 4,
+});
 pub static COPPER_ORE: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     name: "Copper Ore",
     item_type: ItemType::Material(MaterialType::Ore),

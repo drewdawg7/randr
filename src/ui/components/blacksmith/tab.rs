@@ -10,13 +10,14 @@ use crate::inventory::HasInventory;
 use crate::system::game_state;
 use crate::ui::components::utilities::collect_player_equipment;
 
-use super::{menu, quality, smelt, upgrade};
+use super::{forge, menu, quality, smelt, upgrade};
 
 pub enum StateChange {
     ToMenu,
     ToUpgrade,
     ToQuality,
     ToSmelt,
+    ToForge,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq)]
@@ -25,6 +26,7 @@ enum BlacksmithState {
     Upgrade,
     Quality,
     Smelt,
+    Forge,
 }
 
 pub struct BlacksmithTab {
@@ -54,6 +56,7 @@ impl BlacksmithTab {
             StateChange::ToUpgrade => self.state = BlacksmithState::Upgrade,
             StateChange::ToQuality => self.state = BlacksmithState::Quality,
             StateChange::ToSmelt => self.state = BlacksmithState::Smelt,
+            StateChange::ToForge => self.state = BlacksmithState::Forge,
         }
         self.reset_selection();
     }
@@ -66,6 +69,7 @@ impl MockComponent for BlacksmithTab {
             BlacksmithState::Upgrade => upgrade::render(frame, area, &mut self.list_state),
             BlacksmithState::Quality => quality::render(frame, area, &mut self.list_state),
             BlacksmithState::Smelt => smelt::render(frame, area, &mut self.list_state),
+            BlacksmithState::Forge => forge::render(frame, area, &mut self.list_state),
         }
     }
 
@@ -87,6 +91,7 @@ impl MockComponent for BlacksmithTab {
             BlacksmithState::Upgrade => upgrade::handle(cmd, &mut self.list_state),
             BlacksmithState::Quality => quality::handle(cmd, &mut self.list_state),
             BlacksmithState::Smelt => smelt::handle(cmd, &mut self.list_state),
+            BlacksmithState::Forge => forge::handle(cmd, &mut self.list_state),
         };
 
         if let Some(change) = state_change {

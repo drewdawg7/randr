@@ -10,8 +10,7 @@ use tuirealm::command::{Cmd, CmdResult};
 use crate::{
     combat::HasGold,
     inventory::HasInventory,
-    item::enums::ItemId,
-    item::recipe::enums::RecipeId,
+    item::{ItemId, recipe::RecipeId},
     system::game_state,
 };
 use crate::ui::components::utilities::{

@@ -5,9 +5,8 @@ use crate::{
     combat::HasGold,
     entities::Player,
     inventory::EquipmentSlot,
-    item::{recipe::{definition::Recipe, enums::RecipeId}, Item},
+    item::{recipe::{Recipe, RecipeId}, Item, ItemId},
     HasInventory,
-    ItemId,
 };
 
 

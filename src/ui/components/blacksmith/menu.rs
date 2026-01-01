@@ -10,13 +10,13 @@ use tuirealm::command::{Cmd, CmdResult};
 use crate::{
     combat::HasGold,
     inventory::HasInventory,
-    item::enums::ItemId,
+    item::ItemId,
     system::game_state,
     ui::Id,
 };
 use crate::ui::components::utilities::{
     blacksmith_header, list_move_down, list_move_up, render_location_header,
-    selection_prefix, DOUBLE_ARROW_UP, FIRE, RETURN_ARROW,
+    selection_prefix, CROSSED_SWORDS, DOUBLE_ARROW_UP, FIRE, RETURN_ARROW,
 };
 use crate::ui::utilities::HAMMER;
 use crate::ui::theme as colors;
@@ -49,6 +49,11 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
         ])),
         ListItem::new(Line::from(vec![
             selection_prefix(selected == 3),
+            Span::styled(format!("{}", CROSSED_SWORDS), Style::default().fg(colors::LIGHT_STONE)),
+            Span::raw(" Forge Items"),
+        ])),
+        ListItem::new(Line::from(vec![
+            selection_prefix(selected == 4),
             Span::raw(format!("{} Back", RETURN_ARROW)),
         ])),
     ];
@@ -58,7 +63,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
-    const MENU_SIZE: usize = 4;
+    const MENU_SIZE: usize = 5;
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {
             list_move_up(list_state, MENU_SIZE);
@@ -74,7 +79,8 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
                 0 => Some(StateChange::ToUpgrade),
                 1 => Some(StateChange::ToQuality),
                 2 => Some(StateChange::ToSmelt),
-                3 => {
+                3 => Some(StateChange::ToForge),
+                4 => {
                     game_state().current_screen = Id::Menu;
                     None
                 }

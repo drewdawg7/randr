@@ -2,22 +2,7 @@ use rand::Rng;
 
 use crate::stats::StatSheet;
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
-pub enum ItemId {
-    Sword,
-    Dagger,
-    BasicShield,
-    QualityUpgradeStone,
-    GoldRing,
-    BronzePickaxe,
-    Coal,
-    CopperOre,
-    TinOre,
-    BasicHPPotion,
-    BronzeIngot,
-    TinIngot,
-    CopperIngot,
-}
+pub use super::item_id::ItemId;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Item Type Hierarchy
@@ -199,5 +184,5 @@ impl ItemQuality {
             stat.max_value     = ((stat.max_value     as f64) * multiplier).round() as i32;
         }
         sheet
-    } 
+    }
 }

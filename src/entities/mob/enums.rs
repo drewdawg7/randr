@@ -8,5 +8,6 @@ pub enum MobQuality {
 pub enum MobKind {
     Slime,
     Goblin,
+    Cow,
     Dragon,
 }

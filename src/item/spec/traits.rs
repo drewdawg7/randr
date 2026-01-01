@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::{
-    item::{enums::ItemQuality, spec::specs::{BASIC_HP_POTION, BRONZE_INGOT, COPPER_INGOT, TIN_INGOT}},
+    item::{enums::ItemQuality, spec::specs::{BASIC_HP_POTION, BRONZE_INGOT, BRONZE_SWORD, COPPER_INGOT, COPPER_SWORD, COWHIDE, SLIMEGEL, TIN_INGOT, TIN_SWORD}},
     registry::{RegistryDefaults, SpawnFromSpec},
 };
 
@@ -54,6 +54,11 @@ impl RegistryDefaults<ItemId> for ItemSpec {
             (ItemId::CopperIngot, COPPER_INGOT.clone()),
             (ItemId::TinIngot, TIN_INGOT.clone()),
             (ItemId::BronzeIngot, BRONZE_INGOT.clone()),
+            (ItemId::BronzeSword, BRONZE_SWORD.clone()),
+            (ItemId::TinSword, TIN_SWORD.clone()),
+            (ItemId::CopperSword, COPPER_SWORD.clone()),
+            (ItemId::SlimeGel, SLIMEGEL.clone()),
+            (ItemId::Cowhide, COWHIDE.clone()),
         ]
     }
 }

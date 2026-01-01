@@ -8,6 +8,17 @@ use crate::{
 
 use super::definition::MobSpec;
 
+pub static COW: Lazy<MobSpec> = Lazy::new(|| MobSpec {
+    name: "Cow",
+    quality: MobQuality::Normal,
+    max_health: 8..=12,
+    attack: 1..=4,
+    dropped_gold: 1..=3,
+    dropped_xp: 5..=9,
+    loot: LootTable::new()
+        .with(ItemId::Cowhide, 3, 4, 1..=3)
+        .with(ItemId::GoldRing, 1, 1000, 1..=1),
+});
 pub static SLIME: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     name: "Slime",
     quality: MobQuality::Normal,
@@ -16,7 +27,7 @@ pub static SLIME: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     dropped_gold: 1..=3,
     dropped_xp: 5..=9,
     loot: LootTable::new()
-        .with(ItemId::Dagger, 1, 10, 1..=1)
+        .with(ItemId::SlimeGel, 3, 4, 1..=4)
         .with(ItemId::GoldRing, 1, 100, 1..=1),
 });
 

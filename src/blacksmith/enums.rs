@@ -1,4 +1,4 @@
-use crate::item::{enums::ItemError, recipe::enums::RecipeError};
+use crate::item::{enums::ItemError, recipe::RecipeError};
 #[derive(Debug)]
 pub enum BlacksmithError {
     MaxUpgradesReached,
