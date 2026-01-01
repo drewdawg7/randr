@@ -23,3 +23,4 @@ When refactoring or updating code always do the following:
 * Documentation should be written such that you can efficiently scan it for information to minimize token waste and time waste.
 * If necessary, you may re-organize the documentation within .claude/skills/updating-code, including deleting, renaming, moving, or editing files. 
 * If several files are repeating similar things, extract that information into higher level documentation.
+* Documentation should only ever include examples from the codebase or closely related.
