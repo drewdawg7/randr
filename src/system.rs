@@ -6,7 +6,6 @@ use crossterm::terminal;
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
-use crate::field::{FieldId, FieldRegistry};
 use crate::location::Field;
 use crate::item::recipe::RecipeRegistry;
 use crate::ui::components::player::inventory_modal::InventoryModal;
@@ -49,7 +48,6 @@ pub struct GameState {
     item_registry: ItemRegistry,
     mob_registry: MobRegistry,
     rock_registry: RockRegistry,
-    field_registry: FieldRegistry,
     consumable_registry: ConsumableRegistry,
     recipe_registry: RecipeRegistry,
     pub current_screen: Id,
@@ -75,10 +73,6 @@ impl GameState {
 
     pub fn spawn_rock(&self, rock: RockId) -> Rock {
         self.rock_registry.spawn(rock)
-    }
-
-    pub fn spawn_field(&self, field: FieldId) -> Field {
-        self.field_registry.spawn(field)
     }
 
     pub fn get_item_name(&self, kind: ItemId) -> &'static str {
@@ -209,8 +203,7 @@ impl Default for GameState {
         let store = crate::location::Store::default();
         let blacksmith = crate::location::Blacksmith::new("Village Blacksmith".to_string(), 10, 50);
         let mine = crate::location::Mine::default();
-        let field_registry = FieldRegistry::new();
-        let field = field_registry.spawn(FieldId::VillageField);
+        let field = Field::default();
         let town = Town::new("Village".to_string(), store, blacksmith, field, mine);
 
         Self {
@@ -218,7 +211,6 @@ impl Default for GameState {
             item_registry: ItemRegistry::new(),
             mob_registry: MobRegistry::new(),
             rock_registry: RockRegistry::new(),
-            field_registry,
             consumable_registry: ConsumableRegistry::new(),
             recipe_registry: RecipeRegistry::new(),
             town,
