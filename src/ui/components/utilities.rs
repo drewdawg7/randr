@@ -33,6 +33,7 @@ pub const LOCK: char            = '\u{F023}';
 pub const PICKAXE: char         = '\u{F08B7}';
 pub const HOURGLASS: char       = '\u{F252}';
 pub const FIRE: char            = '\u{F0238}';
+pub const FLASK: char           = '\u{F0093}';
 
 /// Returns a styled prefix Span for list items. Selected items get a yellow ">", unselected get "  ".
 pub fn selection_prefix(is_selected: bool) -> Span<'static> {

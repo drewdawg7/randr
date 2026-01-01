@@ -2,6 +2,7 @@ pub(crate) mod wrappers;
 pub(crate) mod widgets;
 pub(crate) mod store;
 pub(crate) mod blacksmith;
+pub(crate) mod alchemist;
 pub(crate) mod player;
 pub(crate) mod screens;
 pub(crate) mod utilities;

@@ -10,12 +10,13 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
+use crate::ui::components::alchemist::AlchemistTab;
 use crate::ui::components::blacksmith::BlacksmithTab;
 use crate::ui::components::field::FieldTab;
 use crate::ui::components::store::tab::StoreTab;
 use crate::ui::components::widgets::border::BorderTheme;
 use crate::ui::components::wrappers::tabbed_container::{TabEntry, TabbedContainer};
-use crate::ui::components::utilities::{ANVIL, CROSSED_SWORDS, STORE};
+use crate::ui::components::utilities::{ANVIL, CROSSED_SWORDS, FLASK, STORE};
 use crate::ui::theme::ColorExt;
 
 pub struct TownScreen {
@@ -43,6 +44,14 @@ impl TownScreen {
                 ]),
                 BlacksmithTab::new(),
                 BorderTheme::Ember,
+            ),
+            TabEntry::with_border(
+                Line::from(vec![
+                    Span::styled(format!("{}", FLASK), Style::default().color(theme::MYSTIC_GLOW)),
+                    Span::styled(" Alchemist", Style::default().color(theme::BRIGHT_VIOLET)),
+                ]),
+                AlchemistTab::new(),
+                BorderTheme::Mystic,
             ),
             TabEntry::with_border(
                 Line::from(vec![
