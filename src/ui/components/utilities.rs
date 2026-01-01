@@ -70,19 +70,20 @@ pub fn item_display(item: &Item, quantity: Option<u32>) -> Span<'static> {
 }
 
 pub fn blacksmith_header(blacksmith: &Blacksmith, gold: i32, stones: u32) -> Vec<Line<'static>> {
+    let text_style = Style::default().fg(colors::WHITE);
     vec![
         Line::from(vec![
             Span::styled(blacksmith.name.to_string(), Style::default().color(colors::ORANGE)),
         ]),
         Line::from(vec![
             Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
-            Span::raw(format!("{}", gold)),
-            Span::raw("  |  "),
+            Span::styled(format!("{}", gold), text_style),
+            Span::styled("  |  ", text_style),
             Span::styled(format!("{} ", HAMMER), Style::default().color(colors::BLACK)),
-            Span::raw(format!("{}", blacksmith.max_upgrades)),
-            Span::raw("  |  "),
+            Span::styled(format!("{}", blacksmith.max_upgrades), text_style),
+            Span::styled("  |  ", text_style),
             Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().color(colors::PURPLE)),
-            Span::raw(format!("{}", stones)),
+            Span::styled(format!("{}", stones), text_style),
         ]),
     ]
 }
