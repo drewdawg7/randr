@@ -42,13 +42,14 @@ src/location/
 Identifies specific location instances (like ItemId, MobId):
 - `VillageStore`
 - `VillageBlacksmith`
+- `VillageAlchemist`
 - `VillageField`
 - `VillageMine`
 
 ### LocationType (enums.rs)
 Categories with nested subtypes:
 - `Commerce(CommerceSubtype)` - Store
-- `Crafting(CraftingSubtype)` - Blacksmith
+- `Crafting(CraftingSubtype)` - Blacksmith, Alchemist
 - `Combat(CombatSubtype)` - Field
 - `Resource(ResourceSubtype)` - Mine
 
@@ -90,6 +91,7 @@ pub struct Town {
     pub name: String,
     pub store: Store,
     pub blacksmith: Blacksmith,
+    pub alchemist: Alchemist,
     pub field: Field,
     pub mine: Mine,
 }

@@ -21,6 +21,7 @@ Use these as templates when adding new locations:
 |----------|------|-------|
 | Store | Commerce | `src/location/store/` |
 | Blacksmith | Crafting | `src/location/blacksmith/` |
+| Alchemist | Crafting | `src/location/alchemist/` |
 | Field | Combat | `src/location/field/` |
 | Mine | Resource | `src/location/mine/` |
 
