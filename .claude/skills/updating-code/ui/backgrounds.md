@@ -102,7 +102,7 @@ let style = match ((col / 5) + (row / 2)) % 3 {
 | Location | File | Pattern | Colors |
 |----------|------|---------|--------|
 | Blacksmith | `stone_wall_art.rs` | Stone wall (braille) | DARK_STONE, GRANITE, LIGHT_STONE |
-| Store | `wood_planks_art.rs` | Wood planks (braille + box) | DARK_WALNUT, WOOD_BROWN, OAK_BROWN |
+| Store | `wood_planks_art.rs` | Wood grain (dense braille) | DARK_WALNUT, WOOD_BROWN, OAK_BROWN |
 | Field | `grass_art.rs` | Grass/meadow (braille) | DARK_FOREST, FOREST_GREEN, LIME_GREEN |
 | Alchemist | `lab_stone_art.rs` | Dark lab stone (braille) | DEEP_VIOLET, DARK_PURPLE, MYSTIC_PURPLE |
 

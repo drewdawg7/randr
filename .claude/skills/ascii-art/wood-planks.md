@@ -1,26 +1,26 @@
-# Wood Planks Pattern
+# Wood Grain Pattern
 
 ## Overview
 
-A braille-based wood plank pattern used as a tiling background for the store menu screen.
+A dense braille-based wood grain pattern used as a tiling background for the store menu screen.
 
 ## Pattern
 
 ```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⠀⠀⠤⠀⠀⠀⠀⠀⠐⠀⠀⠀⠤⠀⠀⠀⠀⠀⠀⠤⠀⠀⠀⠀⠐⠀⠀⠀⠀⠀
-⠀⠀⠀⠀⠐⠀⠀⠀⠀⠀⠤⠀⠀⠀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠤⠀⠀⠀⠐⠀⠀
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⠀⠤⠀⠀⠀⠀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠤⠀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠤⠀⠀⠀
-⠀⠀⠀⠐⠀⠀⠤⠀⠀⠀⠀⠀⠐⠀⠀⠀⠀⠀⠀⠀⠤⠀⠀⠀⠐⠀⠀⠀⠀⠀
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-⠀⠀⠀⠀⠀⠤⠀⠀⠀⠀⠐⠀⠀⠀⠀⠤⠀⠀⠀⠀⠀⠀⠐⠀⠀⠀⠀⠀⠤⠀
-⠀⠐⠀⠀⠀⠀⠀⠀⠤⠀⠀⠀⠀⠀⠐⠀⠀⠀⠀⠤⠀⠀⠀⠀⠀⠀⠀⠐⠀⠀
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤⠤
+⠒⠒⠒⠤⠤⠒⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤
+⠤⠤⠒⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒⠒⠤⠤⠤⠒⠒
+⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒
+⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒⠒⠤
+⠒⠒⠒⠒⠤⠤⠒⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤
+⠤⠤⠒⠒⠒⠒⠤⠤⠤⠒⠒⠒⠤⠤⠒⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒
+⠒⠒⠤⠤⠤⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒
+⠤⠤⠤⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒⠒⠤⠤⠒⠒⠒⠒⠤⠤⠤⠒⠒⠒⠤
+⠒⠒⠒⠤⠤⠒⠒⠒⠒⠤⠤⠤⠒⠒⠒⠤⠤⠒⠒⠒⠤⠤⠤⠒⠒⠒⠒⠤⠤⠒
 ```
 
 - **Dimensions**: 30 chars wide x 10 rows
-- **Characters**: Box drawing (━) + braille (sparse dots for grain)
+- **Characters**: Dense braille (⠤ and ⠒) for smooth wood grain
 - **Usage**: Tiling background for Store
 
 ## Colors Used
@@ -40,7 +40,7 @@ Key functions:
 
 ## Design Notes
 
-- Horizontal lines (━) suggest wooden plank separations
-- Sparse braille dots create wood grain texture
-- Pattern alternates between grain rows and separator rows
-- Evokes a merchant shop floor/counter feel
+- Dense, uniform braille creates subtle wood grain texture
+- Alternating ⠤ and ⠒ suggest horizontal grain direction
+- Subtle variation avoids visual distraction
+- Color variation adds depth without overwhelming
