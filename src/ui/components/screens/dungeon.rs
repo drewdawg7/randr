@@ -21,8 +21,10 @@ use crate::{
             backgrounds::render_stone_wall,
             dungeon::minimap,
             utilities::{selection_prefix, RETURN_ARROW},
+            widgets::border::BorderTheme,
         },
-        theme as colors, Id,
+        theme::{self as colors, ColorExt},
+        Id,
     },
 };
 
@@ -274,8 +276,18 @@ impl Default for DungeonScreen {
 
 impl MockComponent for DungeonScreen {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
+        let frame_size = frame.area();
+
         // Render stone wall background first
         render_stone_wall(frame, area);
+
+        // Calculate inner area (inside the border - 1px on each side)
+        let inner_area = Rect {
+            x: area.x + 1,
+            y: area.y + 1,
+            width: area.width.saturating_sub(2),
+            height: area.height.saturating_sub(2),
+        };
 
         let gs = game_state();
 
@@ -293,7 +305,7 @@ impl MockComponent for DungeonScreen {
         let chunks = Layout::default()
             .direction(LayoutDirection::Vertical)
             .constraints([Constraint::Length(4), Constraint::Min(10)])
-            .split(area);
+            .split(inner_area);
 
         // Render header
         self.render_header(frame, chunks[0]);
@@ -304,8 +316,31 @@ impl MockComponent for DungeonScreen {
             DungeonState::Navigation => self.render_navigation(frame, chunks[1]),
         }
 
-        // Render minimap in bottom-left corner
-        self.render_minimap(frame, area);
+        // Render minimap in bottom-left corner (inside border)
+        self.render_minimap(frame, inner_area);
+
+        // Render ASCII art border (Stone theme like dungeon tab)
+        let border = BorderTheme::Stone;
+        let border_style = Style::default().on_color(colors::MINE_BG);
+
+        // Top and bottom borders
+        let top_border = border.generate_top_border(frame_size.width);
+        let bottom_border = border.generate_bottom_border(frame_size.width);
+        let top_area = Rect::new(0, 0, frame_size.width, 1);
+        let bottom_area = Rect::new(0, frame_size.height.saturating_sub(1), frame_size.width, 1);
+        frame.render_widget(Paragraph::new(top_border).style(border_style), top_area);
+        frame.render_widget(Paragraph::new(bottom_border).style(border_style), bottom_area);
+
+        // Left and right borders
+        let content_height = frame_size.height.saturating_sub(2);
+        for row in 0..content_height {
+            let left_char = border.generate_left_border_char(row);
+            let right_char = border.generate_right_border_char(row);
+            let left_area = Rect::new(0, 1 + row, 1, 1);
+            let right_area = Rect::new(frame_size.width.saturating_sub(1), 1 + row, 1, 1);
+            frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
+            frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
+        }
     }
 
     fn attr(&mut self, attr: Attribute, value: AttrValue) {
