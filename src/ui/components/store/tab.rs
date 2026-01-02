@@ -12,8 +12,7 @@ use tuirealm::{
 
 use crate::{
     combat::HasGold,
-    inventory::HasInventory,
-    location::sell_player_item,
+    commands::{apply_result, execute, GameCommand},
     system::game_state,
     ui::components::player::item_details::render_item_details_beside,
     ui::components::utilities::{
@@ -221,22 +220,9 @@ impl StoreTab {
                     // Find the index of this item in the store inventory
                     let item_id = buy_item.store_item.item_id;
                     let gs = game_state();
-                    if let Some(idx) = gs.store().inventory.iter().position(|si| si.item_id == item_id) {
-                        let store = &mut gs.town.store;
-                        let player = &mut gs.player;
-                        match store.purchase_item(player, idx) {
-                            Ok(item) => gs.toasts.success(format!("Purchased {}!", item.name)),
-                            Err(e) => {
-                                use crate::location::StoreError;
-                                let msg = match e {
-                                    StoreError::OutOfStock => "Out of stock",
-                                    StoreError::NotEnoughGold => "Not enough gold",
-                                    StoreError::InventoryFull => "Inventory is full",
-                                    StoreError::InvalidIndex => "Item not found",
-                                };
-                                gs.toasts.error(msg);
-                            }
-                        }
+                    if let Some(store_idx) = gs.store().inventory.iter().position(|si| si.item_id == item_id) {
+                        let result = execute(GameCommand::PurchaseItem { store_idx });
+                        apply_result(&result);
                     }
                 }
                 CmdResult::Submit(self.state())
@@ -266,10 +252,9 @@ impl StoreTab {
                     self.state = StoreState::Menu;
                     self.reset_selection();
                 } else if let Some(sell_item) = self.sell_list.selected_item() {
-                    let gs = game_state();
-                    let item_name = sell_item.inv_item.item.name;
-                    sell_player_item(&mut gs.player, &sell_item.inv_item.item);
-                    gs.toasts.success(format!("Sold {}!", item_name));
+                    let item_uuid = sell_item.inv_item.item.item_uuid;
+                    let result = execute(GameCommand::SellItem { item_uuid });
+                    apply_result(&result);
                 }
                 CmdResult::Submit(self.state())
             }
@@ -312,11 +297,12 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                         let item = &sell_item.inv_item.item;
                         let item_uuid = item.item_uuid;
                         if let Some(slot) = item.item_type.equipment_slot() {
-                            if item.is_equipped {
-                                let _ = game_state().player.unequip_item(slot);
+                            let result = if item.is_equipped {
+                                execute(GameCommand::UnequipItem { slot })
                             } else {
-                                game_state().player.equip_from_inventory(item_uuid, slot);
-                            }
+                                execute(GameCommand::EquipItem { item_uuid, slot })
+                            };
+                            apply_result(&result);
                         }
                     }
                 }
@@ -330,9 +316,8 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                 if self.state == StoreState::Sell {
                     if let Some(sell_item) = self.sell_list.selected_item() {
                         let item_uuid = sell_item.inv_item.item.item_uuid;
-                        if let Some(inv_item) = game_state().player.find_item_by_uuid_mut(item_uuid) {
-                            inv_item.item.toggle_lock();
-                        }
+                        let result = execute(GameCommand::ToggleLock { item_uuid });
+                        apply_result(&result);
                     }
                 }
                 None

@@ -13,17 +13,13 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
-use crate::combat::{
-    enemy_attack_step, player_attack_step, process_defeat, process_victory,
-    ActiveCombat, CombatPhase,
-};
-use crate::inventory::HasInventory;
+use crate::combat::{ActiveCombat, CombatPhase};
+use crate::commands::{apply_result, execute, GameCommand};
 use crate::stats::HasStats;
 use crate::system::{game_state, CombatSource};
 use crate::ui::theme::{self as colors, quality_color, ColorExt};
 use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW};
 use crate::ui::components::widgets::border::BorderTheme;
-use crate::ui::Id;
 
 
 // Placeholder ASCII art (same dimensions for player and enemy)
@@ -81,117 +77,31 @@ impl FightScreen {
     }
 
     fn execute_player_attack(&mut self) {
+        let result = execute(GameCommand::PlayerAttack);
+        apply_result(&result);
+
+        // Track victory/defeat for UI state
         let gs = game_state();
-        // Take combat out temporarily to avoid borrow issues
-        let Some(mut combat) = gs.active_combat.take() else {
-            return;
-        };
-
-        if combat.phase != CombatPhase::PlayerTurn {
-            gs.active_combat = Some(combat);
-            return;
-        }
-
-        // Player attacks
-        player_attack_step(&gs.player, &mut combat);
-
-        // If mob died, process victory
-        if combat.phase == CombatPhase::Victory {
-            self.process_victory(&mut combat);
-        } else {
-            // Enemy counter-attacks
-            enemy_attack_step(&mut combat, &mut gs.player);
-
-            // If player died, process defeat
-            if combat.phase == CombatPhase::Defeat {
-                self.process_defeat();
-            } else {
-                // Back to player turn
-                combat.phase = CombatPhase::PlayerTurn;
+        if let Some(combat) = gs.active_combat() {
+            if combat.phase == CombatPhase::Victory {
+                self.victory_processed = true;
+            } else if combat.phase == CombatPhase::Defeat {
+                self.defeat_processed = true;
             }
         }
-
-        gs.active_combat = Some(combat);
     }
 
     fn execute_run(&mut self) {
-        let gs = game_state();
-        // Return to appropriate screen based on combat source
-        match gs.combat_source {
-            CombatSource::Dungeon => {
-                gs.current_screen = Id::Dungeon;
-            }
-            CombatSource::Field => {
-                gs.current_screen = Id::Town;
-            }
-        }
-        // Reset fight screen state for next combat
+        let result = execute(GameCommand::PlayerRun);
+        apply_result(&result);
         self.reset_for_new_combat();
     }
 
-    fn process_victory(&mut self, combat: &mut ActiveCombat) {
-        if self.victory_processed {
-            return;
-        }
-
-        let gs = game_state();
-        process_victory(&mut gs.player, combat);
-
-        // Add loot drops to player inventory
-        for loot_drop in &combat.loot_drops {
-            for _ in 0..loot_drop.quantity {
-                let _ = gs.player.add_to_inv(loot_drop.item.clone());
-            }
-        }
-
-        // If in dungeon, mark the current room as cleared
-        if gs.combat_source == CombatSource::Dungeon {
-            if let Some(dungeon) = gs.dungeon_mut() {
-                if let Some(room) = dungeon.current_room_mut() {
-                    room.clear();
-                }
-            }
-        }
-
-        self.victory_processed = true;
-    }
-
-    fn process_defeat(&mut self) {
-        if self.defeat_processed {
-            return;
-        }
-
-        process_defeat(&mut game_state().player);
-        self.defeat_processed = true;
-    }
-
     fn return_from_combat(&mut self) {
-        let gs = game_state();
-        // Return to appropriate screen based on combat source
-        match gs.combat_source {
-            CombatSource::Dungeon => {
-                // Check if player was defeated - kick them out of dungeon
-                if self.defeat_processed {
-                    gs.toasts.error("You were defeated! Retreating from dungeon...");
-                    gs.reset_dungeon();
-                    gs.leave_dungeon();
-                } else {
-                    // Victory - mark room as cleared and stay in dungeon
-                    if let Some(dungeon) = gs.dungeon_mut() {
-                        if let Some(room) = dungeon.current_room_mut() {
-                            room.clear();
-                        }
-                    }
-                    gs.current_screen = Id::Dungeon;
-                }
-            }
-            CombatSource::Field => {
-                gs.current_screen = Id::Town;
-            }
-        }
+        let result = execute(GameCommand::ReturnFromCombat);
+        apply_result(&result);
         // Reset combat source to default
-        gs.combat_source = CombatSource::default();
-        // Reset fight screen state for next combat
+        game_state().combat_source = CombatSource::default();
         self.reset_for_new_combat();
     }
 
@@ -202,15 +112,11 @@ impl FightScreen {
             self.return_from_combat();
             return;
         }
-        let field = &gs.town.field;
-        if let Ok(mob) = field.spawn_mob() {
-            gs.start_combat(mob);
+        let result = execute(GameCommand::StartNewFight);
+        apply_result(&result);
+        if result.success {
             self.reset_for_new_combat();
         }
-    }
-
-    fn is_from_dungeon(&self) -> bool {
-        game_state().combat_source == CombatSource::Dungeon
     }
 }
 

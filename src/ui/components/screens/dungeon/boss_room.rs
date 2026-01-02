@@ -11,9 +11,8 @@ use ratatui::{
 };
 
 use crate::{
-    combat::{self, Combatant, DealsDamage, HasGold, IsKillable, Named},
-    entities::progression::HasProgression,
-    inventory::HasInventory,
+    combat::IsKillable,
+    commands::{apply_result, execute, CommandMessage, GameCommand},
     stats::HasStats,
     system::game_state,
     ui::{
@@ -191,106 +190,30 @@ pub fn handle_submit(boss_combat_log: &mut Vec<String>) -> Option<DungeonState> 
         return None;
     }
 
-    // Get player attack stats
-    let player_attack = gs.player.get_attack();
+    // Execute the attack boss command
+    let result = execute(GameCommand::AttackBoss);
 
-    // Player attacks boss
-    let (player_damage, boss_died) = {
-        if let Some(dungeon) = gs.dungeon_mut() {
-            if let Some(boss) = dungeon.boss.as_mut() {
-                let raw_damage = player_attack.roll_damage();
-                let defense = boss.effective_defense();
-                let damage = combat::apply_defense(raw_damage, defense);
-                boss.take_damage(damage);
-                let died = !boss.is_alive();
-                (damage, died)
-            } else {
-                (0, true)
-            }
-        } else {
-            (0, true)
-        }
-    };
-
-    boss_combat_log.push(format!("You deal {} damage to Dragon!", player_damage));
-
-    if boss_died {
-        // Victory! Get death rewards from boss
-        let death_result = {
-            if let Some(dungeon) = gs.dungeon_mut() {
-                dungeon.boss.as_mut().map(|boss| boss.on_death())
-            } else {
-                None
-            }
+    // Extract message for combat log before applying result
+    if let Some(ref msg) = result.message {
+        let text = match msg {
+            CommandMessage::Success(s) => s.clone(),
+            CommandMessage::Info(s) => s.clone(),
+            CommandMessage::Error(s) => s.clone(),
         };
-
-        if let Some(death_result) = death_result {
-            // Apply gold with goldfind bonus
-            let gf = gs.player.effective_goldfind();
-            let multiplier = 1.0 + (gf as f64 / 100.0);
-            let gold_with_bonus =
-                ((death_result.gold_dropped as f64) * multiplier).round() as i32;
-            gs.player.add_gold(gold_with_bonus);
-
-            // Award XP
-            gs.player.gain_xp(death_result.xp_dropped);
-
-            // Add loot to inventory
-            for loot in &death_result.loot_drops {
-                for _ in 0..loot.quantity {
-                    let _ = gs.player.add_to_inv(loot.item.clone());
-                }
-                gs.toasts
-                    .success(format!("Obtained: {} x{}", loot.item.name, loot.quantity));
-            }
-
-            gs.toasts.success(format!(
-                "Dragon defeated! +{} gold, +{} XP",
-                gold_with_bonus, death_result.xp_dropped
-            ));
-        }
-
-        // Clear the boss room
-        if let Some(dungeon) = gs.dungeon_mut() {
-            if let Some(room) = dungeon.current_room_mut() {
-                room.clear();
-            }
-            dungeon.boss = None;
-        }
-
-        boss_combat_log.push("Dragon has been slain!".to_string());
-        return Some(DungeonState::Navigation);
+        boss_combat_log.push(text);
     }
 
-    // Boss attacks player (if boss still alive)
-    let (boss_attack_range, boss_name) = {
-        if let Some(dungeon) = gs.dungeon() {
-            if let Some(boss) = &dungeon.boss {
-                (Some(boss.get_attack()), boss.name().to_string())
-            } else {
-                (None, String::new())
-            }
-        } else {
-            (None, String::new())
-        }
-    };
+    apply_result(&result);
 
-    if let Some(attack_range) = boss_attack_range {
-        let raw_damage = attack_range.roll_damage();
-        let defense = gs.player.effective_defense();
-        let damage = combat::apply_defense(raw_damage, defense);
-        gs.player.take_damage(damage);
+    // Check if boss was defeated (room should be cleared)
+    let boss_defeated = gs
+        .dungeon()
+        .and_then(|d| d.current_room())
+        .map(|r| r.is_cleared)
+        .unwrap_or(false);
 
-        boss_combat_log.push(format!("{} deals {} damage to you!", boss_name, damage));
-
-        // Check if player died
-        if !gs.player.is_alive() {
-            // Player died - process death and kick out of dungeon
-            gs.player.on_death();
-            gs.toasts.error("You were slain by the Dragon!");
-            gs.reset_dungeon();
-            gs.leave_dungeon();
-        }
+    if boss_defeated {
+        return Some(DungeonState::Navigation);
     }
 
     None // Stay in BossRoom state

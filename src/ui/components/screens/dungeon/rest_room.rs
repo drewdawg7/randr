@@ -11,7 +11,7 @@ use ratatui::{
 };
 
 use crate::{
-    combat::Combatant,
+    commands::{apply_result, execute, GameCommand},
     stats::HasStats,
     system::game_state,
     ui::{
@@ -181,23 +181,11 @@ pub fn render(
 /// Handle rest room submit action.
 /// Returns the new state to transition to, or None to stay in current state.
 pub fn handle_submit(rest_selection: usize) -> Option<DungeonState> {
-    let gs = game_state();
-
     match rest_selection {
         0 => {
-            // Rest/Heal: restore 50% of max HP
-            let player = &mut gs.player;
-            let max_hp = player.max_hp();
-            let current_hp = player.hp();
-
-            if current_hp < max_hp {
-                let heal_amount = (max_hp as f32 * 0.5).round() as i32;
-                let actual_heal = heal_amount.min(max_hp - current_hp);
-                player.increase_health(actual_heal);
-                gs.toasts.success(format!("Rested and recovered {} HP!", actual_heal));
-            } else {
-                gs.toasts.info("Already at full health!");
-            }
+            // Rest/Heal: use command
+            let result = execute(GameCommand::Rest);
+            apply_result(&result);
             None // Stay in RestRoom state
         }
         1 => {

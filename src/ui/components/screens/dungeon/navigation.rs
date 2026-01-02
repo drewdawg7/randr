@@ -12,6 +12,7 @@ use ratatui::{
 use tuirealm::command::Direction as CmdDirection;
 
 use crate::{
+    commands::{apply_result, execute, GameCommand},
     dungeon::Direction,
     system::game_state,
     ui::{
@@ -187,11 +188,10 @@ fn render_leave_button(frame: &mut Frame, area: Rect, compass_selection: Compass
 
 /// Handle navigation submit action.
 pub fn handle_submit(compass_selection: CompassPosition) -> Option<DungeonState> {
-    let gs = game_state();
-
     match compass_selection {
         CompassPosition::Center => {
-            gs.leave_dungeon();
+            let result = execute(GameCommand::LeaveDungeon);
+            apply_result(&result);
             None // Screen will change
         }
         CompassPosition::North => try_move(Direction::North),
@@ -203,27 +203,21 @@ pub fn handle_submit(compass_selection: CompassPosition) -> Option<DungeonState>
 
 /// Try to move in a direction, returns new state if successful.
 fn try_move(direction: Direction) -> Option<DungeonState> {
-    let gs = game_state();
-    if let Some(dungeon) = gs.dungeon_mut() {
-        if dungeon.move_player(direction).is_ok() {
-            // Check if entering a boss room - go directly to boss fight
-            let is_boss_room = dungeon
-                .current_room()
-                .map(|r| r.room_type == crate::dungeon::RoomType::Boss && !r.is_cleared)
-                .unwrap_or(false);
+    let result = execute(GameCommand::MoveDungeon { direction });
+    apply_result(&result);
 
-            if is_boss_room {
-                // Spawn boss if needed
-                if dungeon.boss.is_none() {
-                    let dragon = gs.spawn_mob(crate::entities::mob::MobId::Dragon);
-                    if let Some(d) = gs.dungeon_mut() {
-                        d.boss = Some(dragon);
-                    }
-                }
-                return Some(DungeonState::BossRoom);
-            } else {
-                return Some(DungeonState::RoomEntry);
-            }
+    // After moving, check if we entered a boss room
+    let gs = game_state();
+    if let Some(dungeon) = gs.dungeon() {
+        let is_boss_room = dungeon
+            .current_room()
+            .map(|r| r.room_type == crate::dungeon::RoomType::Boss && !r.is_cleared)
+            .unwrap_or(false);
+
+        if is_boss_room {
+            return Some(DungeonState::BossRoom);
+        } else {
+            return Some(DungeonState::RoomEntry);
         }
     }
     None

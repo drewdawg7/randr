@@ -26,6 +26,7 @@ use tuirealm::{
 };
 
 use crate::{
+    commands::{apply_result, execute, GameCommand},
     dungeon::RoomType,
     system::game_state,
     ui::{
@@ -314,7 +315,8 @@ impl MockComponent for DungeonScreen {
             Cmd::Cancel => {
                 // ESC to leave dungeon (but not from boss room!)
                 if self.state != DungeonState::BossRoom {
-                    game_state().leave_dungeon();
+                    let result = execute(GameCommand::LeaveDungeon);
+                    apply_result(&result);
                 }
                 CmdResult::Submit(tuirealm::State::None)
             }

@@ -11,14 +11,12 @@ use ratatui::{
 };
 
 use crate::{
+    commands::{apply_result, execute, GameCommand},
     dungeon::RoomType,
-    entities::mob::MobId,
-    inventory::HasInventory,
-    system::{game_state, CombatSource},
+    system::game_state,
     ui::{
         components::utilities::selection_prefix,
         theme as colors,
-        Id,
     },
 };
 
@@ -122,81 +120,27 @@ pub fn handle_submit() -> Option<DungeonState> {
         return None;
     };
 
+    // Execute the enter room command (handles combat, chest, etc.)
+    let result = execute(GameCommand::EnterRoom);
+    apply_result(&result);
+
+    // If screen changed (e.g., to Fight), return None
+    if result.screen_change.is_some() {
+        return None;
+    }
+
+    // Determine UI state based on room type
     match room_type {
         RoomType::Monster => {
-            // Spawn a mob and start combat
-            let mob_result = {
-                if let Some(dungeon) = gs.dungeon() {
-                    dungeon.spawn_mob()
-                } else {
-                    return None;
-                }
-            };
-
-            match mob_result {
-                Ok(mob) => {
-                    gs.combat_source = CombatSource::Dungeon;
-                    gs.start_combat(mob);
-                    gs.current_screen = Id::Fight;
-                    None // Screen changed
-                }
-                Err(_) => {
-                    gs.toasts.error("No enemies to fight!");
-                    None
-                }
-            }
+            // Monster room starts combat - screen change handled by command
+            None
         }
         RoomType::Boss => {
-            // Boss room - spawn boss once and transition to BossRoom state (trapped!)
-            let needs_spawn = gs.dungeon().map(|d| d.boss.is_none()).unwrap_or(false);
-            if needs_spawn {
-                // Spawn the dragon boss
-                let dragon = gs.spawn_mob(MobId::Dragon);
-                if let Some(dungeon) = gs.dungeon_mut() {
-                    dungeon.boss = Some(dragon);
-                }
-            }
+            // Boss room - transition to BossRoom state
             Some(DungeonState::BossRoom)
         }
-        RoomType::Chest => {
-            // Open the chest and get loot
-            let loot_drops = {
-                if let Some(dungeon) = gs.dungeon_mut() {
-                    if let Some(room) = dungeon.current_room_mut() {
-                        let drops = room.open_chest();
-                        room.clear();
-                        drops
-                    } else {
-                        vec![]
-                    }
-                } else {
-                    vec![]
-                }
-            };
-
-            // Now add items to inventory and show toasts
-            for loot_drop in &loot_drops {
-                for _ in 0..loot_drop.quantity {
-                    let _ = gs.player.add_to_inv(loot_drop.item.clone());
-                }
-                gs.toasts.success(format!(
-                    "Found: {} x{}",
-                    loot_drop.item.name, loot_drop.quantity
-                ));
-            }
-            if loot_drops.is_empty() {
-                gs.toasts.info("The chest was empty.");
-            }
-
-            Some(DungeonState::Navigation)
-        }
         _ => {
-            // For other room types, just clear and move to navigation
-            if let Some(dungeon) = gs.dungeon_mut() {
-                if let Some(room) = dungeon.current_room_mut() {
-                    room.clear();
-                }
-            }
+            // Other room types go to Navigation after being cleared
             Some(DungeonState::Navigation)
         }
     }
