@@ -88,6 +88,8 @@ Span::styled(format!("{}", gold), text_style)
 
 ### Files with explicit colors for backgrounds:
 - `src/ui/components/widgets/menu.rs` - Generic Menu widget (WHITE text)
+- `src/ui/components/widgets/item_list/definition.rs` - Back button, scroll indicators
+- `src/ui/components/widgets/item_list/impls.rs` - ListItem suffix_spans (separators, costs)
 - `src/ui/components/screens/main_menu.rs` - Main menu greeting text
 - `src/ui/components/blacksmith/menu.rs` - Menu item text
 - `src/ui/components/blacksmith/smelt.rs` - Fuel bar, menu items (uses direct buffer rendering)
