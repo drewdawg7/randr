@@ -106,7 +106,8 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for AlchemistTab {
                 self.perform(Cmd::Cancel);
                 None
             }
-            _ => None,
+            // Pass unhandled events back to parent (for tab switching)
+            _ => Some(ev),
         }
     }
 }

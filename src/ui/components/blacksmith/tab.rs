@@ -242,7 +242,8 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
                 }
                 None
             }
-            _ => None,
+            // Pass unhandled events back to parent (for tab switching)
+            _ => Some(ev),
         }
     }
 }
