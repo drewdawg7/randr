@@ -1,5 +1,6 @@
 mod brew;
 mod flask_art;
+mod lab_stone_art;
 mod menu;
 mod tab;
 

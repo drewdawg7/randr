@@ -1,6 +1,6 @@
 ---
 name: ascii-art
-description: Guidelines and procedures for creating, using, and editing ascii art. Use when code changes requires ascii art
+description: UI guiadance and procedures for creating, using, and editing ascii art. Use when code changes requires ascii art
 ---
 IMPORTANT: Use grep patterns to search the documentation for specific keywords so that you don't waste time or tokens reading everything.
 

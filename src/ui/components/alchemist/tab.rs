@@ -6,7 +6,7 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
 
-use super::{brew, menu};
+use super::{brew, lab_stone_art, menu};
 
 pub enum StateChange {
     ToMenu,
@@ -52,7 +52,11 @@ impl AlchemistTab {
 impl MockComponent for AlchemistTab {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         match self.state {
-            AlchemistState::Menu => menu::render(frame, area, &mut self.list_state),
+            AlchemistState::Menu => {
+                // Render background first, then menu on top
+                lab_stone_art::render_lab_stone(frame, area);
+                menu::render(frame, area, &mut self.list_state);
+            }
             AlchemistState::Brew => brew::render(frame, area, &mut self.list_state),
         }
     }
