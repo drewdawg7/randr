@@ -301,10 +301,51 @@ Each state module exports:
 
 ---
 
-## Future Improvements (Deferred)
+## Command Architecture
 
-### Phase 1: Command Architecture
-Decouple game logic from UI by introducing a command layer. Currently, game logic (combat, shopping, mining) executes directly in UI event handlers.
+**Location**: `src/commands/`
+
+The command layer decouples game logic from UI components. Instead of UI directly mutating game state, it dispatches commands that are executed by handlers.
+
+### Usage
+
+```rust
+use crate::commands::{execute, apply_result, GameCommand};
+
+// In a UI event handler:
+match selection {
+    FightSelection::Attack => {
+        let result = execute(GameCommand::PlayerAttack);
+        apply_result(&result);  // Shows toast, changes screen
+    }
+}
+```
+
+### Command Categories
+
+| Module | Commands |
+|--------|----------|
+| `combat.rs` | PlayerAttack, PlayerRun, ReturnFromCombat, StartNewFight |
+| `dungeon.rs` | EnterRoom, MoveDungeon, LeaveDungeon, Rest, AttackBoss |
+| `store.rs` | PurchaseItem, SellItem |
+| `inventory.rs` | EquipItem, UnequipItem, ToggleLock, UseConsumable |
+| `mining.rs` | MineRock |
+
+### CommandResult
+
+Commands return a `CommandResult` with:
+- `success: bool` - Whether the command succeeded
+- `message: Option<CommandMessage>` - Toast to display (Success/Info/Error)
+- `screen_change: Option<Id>` - Screen to navigate to
+
+### Migration Status
+
+The command layer is complete but UI components haven't been migrated yet.
+Migration can be done incrementally - existing direct state mutation still works.
+
+---
+
+## Future Improvements (Deferred)
 
 ### Phase 7: Reorganize File Structure
 Deferred as LOW priority. Current structure is reasonable:
