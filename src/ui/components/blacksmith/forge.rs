@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Line, Span},
-    widgets::{List, ListItem, ListState, Paragraph},
+    widgets::ListState,
     Frame,
 };
 use tuirealm::command::{Cmd, CmdResult};
@@ -33,7 +33,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
         ]),
         Line::from(vec![
             Span::styled(format!("{} ", COIN), Style::default().fg(colors::YELLOW)),
-            Span::raw(format!("{}", player_gold)),
+            Span::styled(format!("{}", player_gold), Style::default().fg(colors::WHITE)),
         ]),
     ];
     let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
@@ -49,16 +49,45 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     let anvil_width = 28u16;
     let h_padding = content_area.width.saturating_sub(anvil_width) / 2;
 
-    // Anvil art
+    // Anvil art - render directly to buffer to preserve background
     let anvil_lines = render_anvil_art(h_padding as usize);
-    frame.render_widget(Paragraph::new(anvil_lines), chunks[0]);
+    let buf = frame.buffer_mut();
+    for (i, line) in anvil_lines.iter().enumerate() {
+        if i < chunks[0].height as usize {
+            let y = chunks[0].y + i as u16;
+            let mut x = chunks[0].x;
+            for span in line.spans.iter() {
+                let has_style = span.style.fg.is_some() || span.style.bg.is_some();
+                for ch in span.content.chars() {
+                    if x < chunks[0].x + chunks[0].width {
+                        // Skip spaces in unstyled spans to preserve background
+                        if ch == ' ' && !has_style {
+                            x += 1;
+                            continue;
+                        }
+                        if let Some(cell) = buf.cell_mut((x, y)) {
+                            cell.set_char(ch);
+                            if let Some(fg) = span.style.fg {
+                                cell.set_fg(fg);
+                            }
+                            if let Some(bg) = span.style.bg {
+                                cell.set_bg(bg);
+                            }
+                        }
+                        x += 1;
+                    }
+                }
+            }
+        }
+    }
 
     // Menu - dynamically generated from forging recipes
     let selected = list_state.selected().unwrap_or(0);
     let menu_padding = " ".repeat(h_padding as usize);
     let recipes = RecipeId::all_forging_recipes();
+    let text_style = Style::default().fg(colors::WHITE);
 
-    let mut menu_items: Vec<ListItem> = recipes.iter().enumerate().map(|(idx, &recipe_id)| {
+    let mut menu_lines: Vec<Line> = recipes.iter().enumerate().map(|(idx, &recipe_id)| {
         let recipe = Recipe::new(recipe_id).expect("Recipe should exist");
         let ingredients_str = recipe.ingredients()
             .iter()
@@ -71,20 +100,49 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
             .collect::<Vec<_>>()
             .join(", ");
 
-        ListItem::new(Line::from(vec![
+        Line::from(vec![
             Span::raw(menu_padding.clone()),
             selection_prefix(selected == idx),
-            Span::raw(format!("{} ({})", recipe.name(), ingredients_str)),
-        ]))
+            Span::styled(format!("{} ({})", recipe.name(), ingredients_str), text_style),
+        ])
     }).collect();
 
-    menu_items.push(ListItem::new(Line::from(vec![
+    menu_lines.push(Line::from(vec![
         Span::raw(menu_padding),
         selection_prefix(selected == recipes.len()),
-        Span::raw(format!("{} Back", RETURN_ARROW)),
-    ])));
+        Span::styled(format!("{} Back", RETURN_ARROW), text_style),
+    ]));
 
-    frame.render_stateful_widget(List::new(menu_items), chunks[1], list_state);
+    // Render menu lines directly to buffer to preserve background
+    let menu_area = chunks[1];
+    for (i, line) in menu_lines.iter().enumerate() {
+        if i < menu_area.height as usize {
+            let y = menu_area.y + i as u16;
+            let mut x = menu_area.x;
+            for span in line.spans.iter() {
+                let has_style = span.style.fg.is_some() || span.style.bg.is_some();
+                for ch in span.content.chars() {
+                    if x < menu_area.x + menu_area.width {
+                        // Skip spaces in unstyled spans to preserve background
+                        if ch == ' ' && !has_style {
+                            x += 1;
+                            continue;
+                        }
+                        if let Some(cell) = buf.cell_mut((x, y)) {
+                            cell.set_char(ch);
+                            if let Some(fg) = span.style.fg {
+                                cell.set_fg(fg);
+                            }
+                            if let Some(bg) = span.style.bg {
+                                cell.set_bg(bg);
+                            }
+                        }
+                        x += 1;
+                    }
+                }
+            }
+        }
+    }
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
