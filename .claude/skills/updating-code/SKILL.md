@@ -3,6 +3,8 @@ name: updating-code
 description: Outlines the necessary steps to make code changes. All steps must be followed. Use when planning or making code changes.
 ---
 
+IMPORTANT: Use grep patterns to search the documentation for specific keywords so that you don't waste time or tokens reading everything.
+
 When refactoring or updating code always do the following:
 
 1. **Checkout a new branch**: Checkout a new branch from main for the changes. Make sure it's named decsriptively.
