@@ -114,7 +114,7 @@ impl FightScreen {
         gs.active_combat = Some(combat);
     }
 
-    fn execute_run(&self) {
+    fn execute_run(&mut self) {
         let gs = game_state();
         // Return to appropriate screen based on combat source
         match gs.combat_source {
@@ -125,6 +125,8 @@ impl FightScreen {
                 gs.current_screen = Id::Town;
             }
         }
+        // Reset fight screen state for next combat
+        self.reset_for_new_combat();
     }
 
     fn process_victory(&mut self, combat: &mut ActiveCombat) {
@@ -176,6 +178,8 @@ impl FightScreen {
         }
         // Reset combat source to default
         gs.combat_source = CombatSource::default();
+        // Reset fight screen state for next combat
+        self.reset_for_new_combat();
     }
 
     fn start_new_fight(&mut self) {
@@ -236,7 +240,8 @@ impl MockComponent for FightScreen {
         // === FOOTER: Actions or Results ===
         match combat.phase {
             CombatPhase::Victory | CombatPhase::Defeat => {
-                render_results(frame, footer_area, combat, self.result_selection);
+                let show_fight_again = game_state().combat_source == CombatSource::Field;
+                render_results(frame, footer_area, combat, self.result_selection, show_fight_again);
             }
             _ => {
                 render_action_menu(frame, footer_area, self.selection);
@@ -607,7 +612,7 @@ fn render_action_menu(frame: &mut Frame, area: Rect, selection: FightSelection) 
     frame.render_widget(Paragraph::new(run_line).alignment(Alignment::Center), chunks[2]);
 }
 
-fn render_results(frame: &mut Frame, area: Rect, combat: &ActiveCombat, selection: ResultSelection) {
+fn render_results(frame: &mut Frame, area: Rect, combat: &ActiveCombat, selection: ResultSelection, show_fight_again: bool) {
     let is_victory = combat.phase == CombatPhase::Victory;
 
     let mut lines = Vec::new();
@@ -630,27 +635,35 @@ fn render_results(frame: &mut Frame, area: Rect, combat: &ActiveCombat, selectio
             ]));
         }
 
-        // Menu options
-        let fight_prefix = if selection == ResultSelection::FightAgain { "> " } else { "  " };
-        let cont_prefix = if selection == ResultSelection::Continue { "> " } else { "  " };
-        let fight_style = if selection == ResultSelection::FightAgain {
-            Style::default().color(colors::YELLOW)
-        } else {
-            Style::default().color(colors::WHITE)
-        };
-        let cont_style = if selection == ResultSelection::Continue {
-            Style::default().color(colors::YELLOW)
-        } else {
-            Style::default().color(colors::WHITE)
-        };
+        // Menu options - only show "Fight Again" if from Field
+        if show_fight_again {
+            let fight_prefix = if selection == ResultSelection::FightAgain { "> " } else { "  " };
+            let cont_prefix = if selection == ResultSelection::Continue { "> " } else { "  " };
+            let fight_style = if selection == ResultSelection::FightAgain {
+                Style::default().color(colors::YELLOW)
+            } else {
+                Style::default().color(colors::WHITE)
+            };
+            let cont_style = if selection == ResultSelection::Continue {
+                Style::default().color(colors::YELLOW)
+            } else {
+                Style::default().color(colors::WHITE)
+            };
 
-        lines.push(Line::from(vec![
-            Span::styled(fight_prefix, fight_style),
-            Span::styled(format!("{} Fight Again", CROSSED_SWORDS), fight_style),
-            Span::raw("    "),
-            Span::styled(cont_prefix, cont_style),
-            Span::styled(format!("{} Continue", RETURN_ARROW), cont_style),
-        ]));
+            lines.push(Line::from(vec![
+                Span::styled(fight_prefix, fight_style),
+                Span::styled(format!("{} Fight Again", CROSSED_SWORDS), fight_style),
+                Span::raw("    "),
+                Span::styled(cont_prefix, cont_style),
+                Span::styled(format!("{} Continue", RETURN_ARROW), cont_style),
+            ]));
+        } else {
+            // Dungeon combat - only show Continue
+            lines.push(Line::from(vec![
+                Span::styled("> ", Style::default().color(colors::YELLOW)),
+                Span::styled(format!("{} Continue", RETURN_ARROW), Style::default().color(colors::YELLOW)),
+            ]));
+        }
     } else {
         lines.push(Line::from(Span::styled("== Defeat ==", Style::default().color(colors::RED))));
         lines.push(Line::from("You have been slain..."));
