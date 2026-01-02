@@ -15,10 +15,10 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
+use crate::commands::{mine_rock, apply_result};
 use crate::location::mine::RockArt;
 use crate::system::game_state;
 use crate::ui::Id;
-use crate::HasInventory;
 use crate::ui::components::utilities::{render_location_header, PICKAXE, RETURN_ARROW};
 use crate::ui::components::widgets::border::BorderTheme;
 
@@ -458,34 +458,23 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
                     game_state().current_screen = Id::Town;
                 } else if self.selected_row == 0 && self.selected_mine == self.active_button {
                     // Active mine button selected - perform mining
-                    let gs = game_state();
-                    let mining_damage = gs.player.effective_mining();
+                    let mining_result = mine_rock();
+                    apply_result(&mining_result.result);
 
-                    if let Some(mut rock) = gs.town.mine.current_rock.take() {
-                        if let Some(drops) = rock.mine(mining_damage) {
-                            // Add loot drops to player inventory
-                            for loot_drop in &drops {
-                                for _ in 0..loot_drop.quantity {
-                                    let _ = gs.player.add_to_inv(loot_drop.item.clone());
-                                }
-                            }
-
-                            // Rock was destroyed - group drops for UI display
-                            let mut counts: std::collections::HashMap<crate::item::ItemId, u32> = std::collections::HashMap::new();
-                            for loot_drop in &drops {
-                                *counts.entry(loot_drop.item.item_id).or_insert(0) += loot_drop.quantity as u32;
-                            }
-                            let mut grouped: Vec<_> = counts.into_iter().collect();
-                            grouped.sort_by_key(|(kind, _)| gs.get_item_name(*kind));
-                            self.recent_drops = grouped;
-
-                            // Spawn a new rock and regenerate art
-                            gs.town.mine.spawn_rock();
-                            self.current_rock_art = None;
-                        } else {
-                            // Rock still alive - put it back
-                            gs.town.mine.current_rock = Some(rock);
+                    // If rock was destroyed, update UI state
+                    if !mining_result.drops.is_empty() {
+                        // Group drops for UI display
+                        let gs = game_state();
+                        let mut counts: std::collections::HashMap<crate::item::ItemId, u32> = std::collections::HashMap::new();
+                        for loot_drop in &mining_result.drops {
+                            *counts.entry(loot_drop.item.item_id).or_insert(0) += loot_drop.quantity as u32;
                         }
+                        let mut grouped: Vec<_> = counts.into_iter().collect();
+                        grouped.sort_by_key(|(kind, _)| gs.get_item_name(*kind));
+                        self.recent_drops = grouped;
+
+                        // Regenerate rock art for new rock
+                        self.current_rock_art = None;
                     }
 
                     // Pick a new random active button

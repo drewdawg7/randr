@@ -111,10 +111,6 @@ pub enum GameCommand {
     /// Start a new fight (from field).
     StartNewFight,
 
-    // === Mining ===
-    /// Mine the current rock.
-    MineRock,
-
     // === Store ===
     /// Purchase an item from the store.
     PurchaseItem { store_idx: usize },
@@ -158,9 +154,6 @@ pub fn execute(cmd: GameCommand) -> CommandResult {
         GameCommand::PlayerRun => combat::player_run(),
         GameCommand::ReturnFromCombat => combat::return_from_combat(),
         GameCommand::StartNewFight => combat::start_new_fight(),
-
-        // Mining
-        GameCommand::MineRock => mining::mine_rock(),
 
         // Store
         GameCommand::PurchaseItem { store_idx } => store::purchase_item(store_idx),
