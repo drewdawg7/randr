@@ -70,6 +70,7 @@ Span::styled(format!("{}", gold), text_style)
 ### Files with explicit colors for backgrounds:
 - `src/ui/components/blacksmith/menu.rs` - Menu item text
 - `src/ui/components/blacksmith/smelt.rs` - Fuel bar, menu items (uses direct buffer rendering)
+- `src/ui/components/blacksmith/forge.rs` - Anvil art, menu items (uses direct buffer rendering)
 - `src/ui/components/utilities.rs` - `blacksmith_header()`, `store_header()` functions
 - `src/ui/components/store/menu.rs` - Menu item text
 - `src/ui/components/alchemist/menu.rs` - Menu item text, header
