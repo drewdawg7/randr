@@ -1,9 +1,16 @@
 use crate::{
     combat::{IsKillable, RockDeathResult},
+    loot::{HasLoot, LootTable},
     stats::{HasStats, StatSheet},
 };
 
 use super::Rock;
+
+impl HasLoot for Rock {
+    fn loot(&self) -> &LootTable {
+        &self.loot
+    }
+}
 
 impl HasStats for Rock {
     fn stats(&self) -> &StatSheet {

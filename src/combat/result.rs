@@ -1,4 +1,3 @@
-use crate::item::Item;
 use crate::loot::LootDrop;
 
 #[derive(Debug, Clone)]
@@ -38,5 +37,5 @@ pub struct PlayerDeathResult {
 /// Result of a rock being destroyed - contains mined items
 #[derive(Debug, Clone, Default)]
 pub struct RockDeathResult {
-    pub drops: Vec<Item>,
+    pub drops: Vec<LootDrop>,
 }

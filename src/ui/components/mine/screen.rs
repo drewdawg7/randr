@@ -18,6 +18,7 @@ use tuirealm::{
 use crate::location::mine::RockArt;
 use crate::system::game_state;
 use crate::ui::Id;
+use crate::HasInventory;
 use crate::ui::components::utilities::{render_location_header, PICKAXE, RETURN_ARROW};
 use crate::ui::components::widgets::border::BorderTheme;
 
@@ -458,13 +459,21 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
                 } else if self.selected_row == 0 && self.selected_mine == self.active_button {
                     // Active mine button selected - perform mining
                     let gs = game_state();
+                    let mining_damage = gs.player.effective_mining();
 
                     if let Some(mut rock) = gs.town.mine.current_rock.take() {
-                        if let Some(drops) = rock.mine(&mut gs.player) {
+                        if let Some(drops) = rock.mine(mining_damage) {
+                            // Add loot drops to player inventory
+                            for loot_drop in &drops {
+                                for _ in 0..loot_drop.quantity {
+                                    let _ = gs.player.add_to_inv(loot_drop.item.clone());
+                                }
+                            }
+
                             // Rock was destroyed - group drops for UI display
                             let mut counts: std::collections::HashMap<crate::item::ItemId, u32> = std::collections::HashMap::new();
-                            for drop in &drops {
-                                *counts.entry(drop.item_id).or_insert(0) += 1;
+                            for loot_drop in &drops {
+                                *counts.entry(loot_drop.item.item_id).or_insert(0) += loot_drop.quantity as u32;
                             }
                             let mut grouped: Vec<_> = counts.into_iter().collect();
                             grouped.sort_by_key(|(kind, _)| gs.get_item_name(*kind));

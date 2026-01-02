@@ -1,10 +1,7 @@
 use crate::{
     combat::IsKillable,
-    entities::Player,
-    item::Item,
-    loot::LootTable,
+    loot::{LootDrop, LootTable},
     stats::StatSheet,
-    HasInventory,
 };
 
 use super::enums::RockId;
@@ -17,26 +14,11 @@ pub struct Rock {
 }
 
 impl Rock {
-    pub fn roll_drops(&self) -> Vec<Item> {
-        let drops = self.loot.roll_drops();
-        drops
-            .iter()
-            .flat_map(|loot_drop| {
-                (0..loot_drop.quantity).map(move |_| loot_drop.item.clone())
-            })
-            .collect()
-    }
-
     /// Mine this rock. Returns drops if rock was destroyed, None otherwise.
-    pub fn mine(&mut self, player: &mut Player) -> Option<Vec<Item>> {
-        let damage = player.effective_mining();
+    pub fn mine(&mut self, damage: i32) -> Option<Vec<LootDrop>> {
         self.take_damage(damage);
         if !self.is_alive() {
-            let result = self.on_death();
-            for drop in &result.drops {
-                let _ = player.add_to_inv(drop.clone());
-            }
-            Some(result.drops)
+            Some(self.on_death().drops)
         } else {
             None
         }
