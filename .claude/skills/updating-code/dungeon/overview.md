@@ -13,6 +13,7 @@ The dungeon system provides procedurally generated dungeon exploration with mons
 | `src/system.rs` | GameState dungeon field and CombatSource enum |
 | `src/ui/components/dungeon/tab.rs` | Town tab entry point (DungeonTab) |
 | `src/ui/components/dungeon/minimap.rs` | Minimap rendering with fog of war |
+| `src/ui/components/dungeon/campfire_art.rs` | Animated campfire ASCII art for rest rooms |
 | `src/ui/components/screens/dungeon.rs` | Main dungeon gameplay screen |
 | `src/ui/components/screens/fight.rs` | Combat integration (CombatSource handling) |
 
@@ -33,6 +34,7 @@ Town (DungeonTab) -> Id::Dungeon (DungeonScreen) -> Id::Fight -> Id::Dungeon
 enum DungeonState {
     RoomEntry,    // Show room type + action (Fight/Open)
     Navigation,   // Show available directions after room cleared
+    RestRoom,     // Rest room UI with heal option
 }
 
 enum CompassPosition {
@@ -43,6 +45,8 @@ enum CompassPosition {
 
 **State transitions:**
 - `RoomEntry` -> `Navigation`: When `room.is_cleared && state == RoomEntry` (checked in `view()`)
+- `RoomEntry` -> `RestRoom`: When entering a Rest room type
+- `RestRoom` -> `Navigation`: After selecting "Continue" option
 - `Navigation` -> `RoomEntry`: After `move_player()` to new room
 
 ### Navigation UI (Compass Layout)
@@ -78,13 +82,26 @@ The navigation screen uses a compass-style grid layout:
 ## Generation Algorithm
 Located in `src/dungeon/generation.rs`:
 1. Start at random edge position
-2. Random walk to create 5-10 contiguous rooms (40% max fill)
-3. Room types: 70% Monster, 30% Chest
+2. Corridor-favoring random walk (70% chance to continue same direction)
+3. Room types: 60% Monster, 25% Chest, 15% Rest
 4. Entry room is always Monster type
+5. Guarantees at least 1 Chest and 1 Rest room per dungeon
+
+### Corridor-Favoring Walk
+- 70% chance to continue in same direction
+- 30% chance to pick random direction
+- When stuck, jumps to random existing room and tries new direction
+- Results in more corridor-like layouts vs clustered rooms
 
 ### Sparsity Constants
-- `MAX_FILL_PERCENT` in `definition.rs`: 0.40 (40% of 5x5 grid = max 10 rooms)
+- `MAX_FILL_PERCENT` in `definition.rs`: 0.50 (50% of 5x5 grid = max 12 rooms)
 - `MIN_ROOMS` in `generation.rs`: 5
+
+### Room Type Guarantees
+`ensure_room_type()` converts Monster rooms if needed:
+- Called after generation for Chest and Rest types
+- Excludes entry room from conversion
+- Rest rooms are pre-cleared by default
 
 ## Key Methods
 
@@ -190,3 +207,58 @@ Located in `src/ui/components/dungeon/minimap.rs`. Renders in bottom-left corner
 
 ### Cell Format
 Each room displayed as `[ X ]` (5 chars wide) for proper icon spacing.
+
+## Rest Room Feature
+
+### Overview
+Rest rooms allow players to heal 50% of max HP. They are pre-cleared (can leave and return to heal again).
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `src/ui/components/dungeon/campfire_art.rs` | Animated campfire ASCII art |
+| `src/ui/components/screens/dungeon.rs` | `render_rest_room()` method |
+
+### Rest Room UI Layout
+```
+[Animated Campfire]
+    Rest Area
+♥ [████████░░░░░░░░░░░░] 81/100
+
+    > Rest (heal 50 HP)
+      Continue
+```
+
+### Campfire Animation
+Located in `src/ui/components/dungeon/campfire_art.rs`:
+- 4-frame animation at 150ms per frame
+- Uses `OnceLock<Instant>` for global animation timing
+- 10 rows: sparks, flames (multiple layers), coals, logs, stone circle
+- Width: 27 characters
+
+**Transparent background rendering:**
+```rust
+// Skip spaces to preserve background
+for span in line.spans {
+    for ch in span.content.chars() {
+        if ch != ' ' {
+            buf.set_string(x, y, ch.to_string(), span.style);
+        }
+        x += 1;
+    }
+}
+```
+
+### HP Bar
+Visual health display with color coding:
+- Green: >60% HP
+- Yellow: 30-60% HP
+- Red: <30% HP
+
+Format: `♥ [████████░░░░░░░░░░░░] current/max`
+
+### State Handling
+- `rest_selection: usize` tracks menu selection (0=Rest, 1=Continue)
+- `handle_rest_submit()` processes selection:
+  - Rest: Heals 50% max HP using `player.heal(amount)`
+  - Continue: Transitions to `DungeonState::Navigation`
