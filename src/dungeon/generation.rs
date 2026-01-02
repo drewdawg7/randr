@@ -70,6 +70,9 @@ impl Dungeon {
             }
         }
 
+        // Reveal rooms adjacent to the starting position
+        self.reveal_adjacent_rooms(start_pos.0, start_pos.1);
+
         self.is_generated = true;
     }
 

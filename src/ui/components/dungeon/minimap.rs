@@ -22,13 +22,12 @@ use crate::{
 // Nerdfont icons for room types
 const ICON_MONSTER: char = '\u{f0787}';   // Crossed swords
 const ICON_BOSS: char = '\u{F0544}';      // Skull
-const ICON_CHEST: char = '\u{F0775}';     // Treasure chest
+const ICON_CHEST: char = '\u{f0726}';     // Treasure chest
 const ICON_REST: char = '\u{F023E}';      // Campfire/bed
 const ICON_TRAP: char = '\u{F0236}';      // Warning/spike
 const ICON_TREASURE: char = '\u{F19D1}';  // Gem/diamond
 const ICON_PLAYER: char = '\u{F415}';     // Person marker
-const ICON_UNKNOWN: char = '?';           // Unknown adjacent room
-const ICON_EMPTY: char = '·';             // Empty space (no room)
+const ICON_UNKNOWN: char = '?';           // Revealed but not visited room
 
 // Colors for different room states
 const COLOR_CURRENT: Color = colors::YELLOW;
@@ -38,8 +37,8 @@ const COLOR_ADJACENT: Color = colors::GRANITE;
 const COLOR_EMPTY: Color = colors::DARK_STONE;
 const COLOR_BORDER: Color = colors::GRANITE;
 
-/// Cell width for each room in the minimap (icon + spacing)
-const CELL_WIDTH: u16 = 3;
+/// Cell width for each room in the minimap (wider for better icon display)
+const CELL_WIDTH: u16 = 5;
 /// Cell height for each room
 const CELL_HEIGHT: u16 = 1;
 
@@ -76,7 +75,6 @@ pub fn render_minimap(frame: &mut Frame, area: Rect, dungeon: &Dungeon) {
 /// Render a single cell of the minimap
 fn render_cell(dungeon: &Dungeon, x: i32, y: i32, player_x: i32, player_y: i32) -> Span<'static> {
     let is_current = x == player_x && y == player_y;
-    let is_adjacent = is_adjacent_to(x, y, player_x, player_y);
 
     match dungeon.get_room(x, y) {
         Some(room) => {
@@ -84,7 +82,7 @@ fn render_cell(dungeon: &Dungeon, x: i32, y: i32, player_x: i32, player_y: i32) 
             if is_current {
                 // Current room - show player icon with highlight
                 Span::styled(
-                    format!("[{}]", ICON_PLAYER),
+                    format!("[ {} ]", ICON_PLAYER),
                     Style::default().fg(COLOR_CURRENT),
                 )
             } else if room.is_visited {
@@ -95,35 +93,35 @@ fn render_cell(dungeon: &Dungeon, x: i32, y: i32, player_x: i32, player_y: i32) 
                     (room_type_icon(room.room_type), COLOR_VISITED)
                 };
                 Span::styled(
-                    format!("[{}]", icon),
+                    format!("[ {} ]", icon),
                     Style::default().fg(color),
                 )
-            } else if is_adjacent {
-                // Adjacent but not visited - show as unknown
+            } else if room.is_revealed {
+                // Revealed but not visited - show as unknown
                 Span::styled(
-                    format!("[{}]", ICON_UNKNOWN),
+                    format!("[ {} ]", ICON_UNKNOWN),
                     Style::default().fg(COLOR_ADJACENT),
                 )
             } else {
-                // Not visible yet - show as empty/fog
+                // Not revealed yet - show as fog
                 Span::styled(
-                    format!(" {} ", ICON_EMPTY),
+                    "  ·  ".to_string(),
                     Style::default().fg(COLOR_EMPTY),
                 )
             }
         }
         None => {
             // No room at this position
-            if is_adjacent || has_adjacent_visited_room(dungeon, x, y) {
-                // Show empty space near visited areas
+            if has_adjacent_revealed_room(dungeon, x, y) {
+                // Show empty space near revealed areas
                 Span::styled(
-                    format!(" {} ", ICON_EMPTY),
+                    "  ·  ".to_string(),
                     Style::default().fg(COLOR_EMPTY),
                 )
             } else {
                 // Fog of war - completely hidden
                 Span::styled(
-                    "   ".to_string(),
+                    "     ".to_string(),
                     Style::default(),
                 )
             }
@@ -131,19 +129,12 @@ fn render_cell(dungeon: &Dungeon, x: i32, y: i32, player_x: i32, player_y: i32) 
     }
 }
 
-/// Check if position (x, y) is adjacent to (px, py)
-fn is_adjacent_to(x: i32, y: i32, px: i32, py: i32) -> bool {
-    let dx = (x - px).abs();
-    let dy = (y - py).abs();
-    (dx == 1 && dy == 0) || (dx == 0 && dy == 1)
-}
-
-/// Check if there's a visited room adjacent to position (x, y)
-fn has_adjacent_visited_room(dungeon: &Dungeon, x: i32, y: i32) -> bool {
+/// Check if there's a revealed room adjacent to position (x, y)
+fn has_adjacent_revealed_room(dungeon: &Dungeon, x: i32, y: i32) -> bool {
     let offsets = [(0, -1), (1, 0), (0, 1), (-1, 0)];
     for (dx, dy) in offsets {
         if let Some(room) = dungeon.get_room(x + dx, y + dy) {
-            if room.is_visited {
+            if room.is_revealed {
                 return true;
             }
         }

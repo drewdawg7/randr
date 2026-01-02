@@ -93,13 +93,24 @@ impl Dungeon {
         // Check if there's a room at the new position
         if self.get_room(new_x, new_y).is_some() {
             self.player_position = (new_x, new_y);
-            // Mark the new room as visited
+            // Mark the new room as visited and reveal adjacent rooms
             if let Some(room) = self.get_room_mut(new_x, new_y) {
                 room.visit();
             }
+            self.reveal_adjacent_rooms(new_x, new_y);
             Ok(())
         } else {
             Err(DungeonError::NoRoomAtPosition)
+        }
+    }
+
+    /// Reveal all rooms adjacent to the given position
+    pub fn reveal_adjacent_rooms(&mut self, x: i32, y: i32) {
+        let offsets = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+        for (dx, dy) in offsets {
+            if let Some(room) = self.get_room_mut(x + dx, y + dy) {
+                room.reveal();
+            }
         }
     }
 
@@ -162,6 +173,7 @@ pub struct DungeonRoom {
     pub room_type: RoomType,
     pub is_cleared: bool,
     pub is_visited: bool,
+    pub is_revealed: bool,
     pub x: i32,
     pub y: i32,
     pub chest: Option<Chest>,
@@ -180,15 +192,22 @@ impl DungeonRoom {
             room_type,
             is_cleared: false,
             is_visited: false,
+            is_revealed: false,
             x,
             y,
             chest,
         }
     }
 
-    /// Mark the room as visited
+    /// Mark the room as visited (also reveals it)
     pub fn visit(&mut self) {
         self.is_visited = true;
+        self.is_revealed = true;
+    }
+
+    /// Mark the room as revealed (visible on map but not visited)
+    pub fn reveal(&mut self) {
+        self.is_revealed = true;
     }
 
     /// Mark the room as cleared
