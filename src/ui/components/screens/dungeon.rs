@@ -17,7 +17,10 @@ use crate::{
     inventory::HasInventory,
     system::{game_state, CombatSource},
     ui::{
-        components::utilities::{list_move_down, list_move_up, selection_prefix, RETURN_ARROW},
+        components::{
+            dungeon::minimap,
+            utilities::{list_move_down, list_move_up, selection_prefix, RETURN_ARROW},
+        },
         theme as colors, Id,
     },
 };
@@ -234,6 +237,9 @@ impl MockComponent for DungeonScreen {
             DungeonState::RoomEntry => self.render_room_entry(frame, chunks[1]),
             DungeonState::Navigation => self.render_navigation(frame, chunks[1]),
         }
+
+        // Render minimap in bottom-left corner
+        self.render_minimap(frame, area);
     }
 
     fn attr(&mut self, attr: Attribute, value: AttrValue) {
@@ -278,6 +284,27 @@ impl MockComponent for DungeonScreen {
 }
 
 impl DungeonScreen {
+    fn render_minimap(&self, frame: &mut Frame, area: Rect) {
+        let gs = game_state();
+        if let Some(dungeon) = gs.dungeon() {
+            let (map_width, map_height) = minimap::minimap_size();
+
+            // Position in bottom-left corner with some padding
+            let padding = 1;
+            let map_area = Rect {
+                x: area.x + padding,
+                y: area.y + area.height.saturating_sub(map_height + padding),
+                width: map_width,
+                height: map_height,
+            };
+
+            // Only render if we have enough space
+            if map_area.width > 0 && map_area.height > 0 {
+                minimap::render_minimap(frame, map_area, dungeon);
+            }
+        }
+    }
+
     fn render_header(&self, frame: &mut Frame, area: Rect) {
         let gs = game_state();
         let text_style = Style::default().fg(colors::WHITE);

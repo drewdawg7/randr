@@ -29,7 +29,8 @@ impl Dungeon {
         let mut room_positions: Vec<(i32, i32)> = vec![start_pos];
 
         // Add entry room (always a monster room for first pass)
-        let entry_room = DungeonRoom::new(RoomType::Monster, start_pos.0, start_pos.1);
+        let mut entry_room = DungeonRoom::new(RoomType::Monster, start_pos.0, start_pos.1);
+        entry_room.visit(); // Mark entry room as visited
         self.rooms[start_pos.1 as usize][start_pos.0 as usize] = Some(entry_room);
 
         // Generate remaining rooms using random walk from existing rooms

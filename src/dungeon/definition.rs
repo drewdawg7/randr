@@ -93,9 +93,21 @@ impl Dungeon {
         // Check if there's a room at the new position
         if self.get_room(new_x, new_y).is_some() {
             self.player_position = (new_x, new_y);
+            // Mark the new room as visited
+            if let Some(room) = self.get_room_mut(new_x, new_y) {
+                room.visit();
+            }
             Ok(())
         } else {
             Err(DungeonError::NoRoomAtPosition)
+        }
+    }
+
+    /// Mark the starting room as visited (call after generation)
+    pub fn mark_start_visited(&mut self) {
+        let (x, y) = self.player_position;
+        if let Some(room) = self.get_room_mut(x, y) {
+            room.visit();
         }
     }
 
@@ -149,6 +161,7 @@ impl Dungeon {
 pub struct DungeonRoom {
     pub room_type: RoomType,
     pub is_cleared: bool,
+    pub is_visited: bool,
     pub x: i32,
     pub y: i32,
     pub chest: Option<Chest>,
@@ -166,10 +179,16 @@ impl DungeonRoom {
         Self {
             room_type,
             is_cleared: false,
+            is_visited: false,
             x,
             y,
             chest,
         }
+    }
+
+    /// Mark the room as visited
+    pub fn visit(&mut self) {
+        self.is_visited = true;
     }
 
     /// Mark the room as cleared
