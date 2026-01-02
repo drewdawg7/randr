@@ -23,6 +23,7 @@ use crate::{
     ui::{
         Id,
         components::mine::screen::MineScreen,
+        components::screens::dungeon::DungeonScreen,
         main_menu::MainMenuScreen,
         fight::FightScreen,
         modal_wrapper::ModalWrapper,
@@ -208,6 +209,8 @@ impl GameState {
         let _ = self.app.mount(Id::Fight, Box::new(fight), vec![]);
         let mine = ModalWrapper::new(MineScreen::new());
         let _ = self.app.mount(Id::Mine, Box::new(mine), vec![]);
+        let dungeon = ModalWrapper::new(DungeonScreen::new());
+        let _ = self.app.mount(Id::Dungeon, Box::new(dungeon), vec![]);
         let profile = ModalWrapper::new(PlayerProfile::new());
         let _ = self.app.mount(Id::Profile, Box::new(profile), vec![]);
     }

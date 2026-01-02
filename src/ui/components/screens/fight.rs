@@ -19,7 +19,7 @@ use crate::combat::{
 };
 use crate::inventory::HasInventory;
 use crate::stats::HasStats;
-use crate::system::game_state;
+use crate::system::{game_state, CombatSource};
 use crate::ui::theme::{self as colors, quality_color, ColorExt};
 use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW};
 use crate::ui::components::widgets::border::BorderTheme;
@@ -115,7 +115,16 @@ impl FightScreen {
     }
 
     fn execute_run(&self) {
-        game_state().current_screen = Id::Town;
+        let gs = game_state();
+        // Return to appropriate screen based on combat source
+        match gs.combat_source {
+            CombatSource::Dungeon => {
+                gs.current_screen = Id::Dungeon;
+            }
+            CombatSource::Field => {
+                gs.current_screen = Id::Town;
+            }
+        }
     }
 
     fn process_victory(&mut self, combat: &mut ActiveCombat) {
@@ -133,6 +142,15 @@ impl FightScreen {
             }
         }
 
+        // If in dungeon, mark the current room as cleared
+        if gs.combat_source == CombatSource::Dungeon {
+            if let Some(dungeon) = gs.dungeon_mut() {
+                if let Some(room) = dungeon.current_room_mut() {
+                    room.clear();
+                }
+            }
+        }
+
         self.victory_processed = true;
     }
 
@@ -145,13 +163,37 @@ impl FightScreen {
         self.defeat_processed = true;
     }
 
+    fn return_from_combat(&mut self) {
+        let gs = game_state();
+        // Return to appropriate screen based on combat source
+        match gs.combat_source {
+            CombatSource::Dungeon => {
+                gs.current_screen = Id::Dungeon;
+            }
+            CombatSource::Field => {
+                gs.current_screen = Id::Town;
+            }
+        }
+        // Reset combat source to default
+        gs.combat_source = CombatSource::default();
+    }
+
     fn start_new_fight(&mut self) {
         let gs = game_state();
+        // Only allow "Fight Again" if from Field
+        if gs.combat_source != CombatSource::Field {
+            self.return_from_combat();
+            return;
+        }
         let field = &gs.town.field;
         if let Ok(mob) = field.spawn_mob() {
             gs.start_combat(mob);
             self.reset_for_new_combat();
         }
+    }
+
+    fn is_from_dungeon(&self) -> bool {
+        game_state().combat_source == CombatSource::Dungeon
     }
 }
 
@@ -292,7 +334,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
                                 self.start_new_fight();
                             }
                             ResultSelection::Continue | ResultSelection::FightAgain => {
-                                game_state().current_screen = Id::Town;
+                                self.return_from_combat();
                             }
                         }
                     }

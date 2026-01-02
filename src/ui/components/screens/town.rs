@@ -12,12 +12,16 @@ use tuirealm::{
 
 use crate::ui::components::alchemist::AlchemistTab;
 use crate::ui::components::blacksmith::BlacksmithTab;
+use crate::ui::components::dungeon::DungeonTab;
 use crate::ui::components::field::FieldTab;
 use crate::ui::components::store::tab::StoreTab;
 use crate::ui::components::widgets::border::BorderTheme;
 use crate::ui::components::wrappers::tabbed_container::{TabEntry, TabbedContainer};
 use crate::ui::components::utilities::{ANVIL, CROSSED_SWORDS, FLASK, STORE};
 use crate::ui::theme::ColorExt;
+
+/// Dungeon entrance icon
+const DUNGEON_ICON: char = '\u{F0509}'; // castle/dungeon icon
 
 pub struct TownScreen {
     props: Props,
@@ -60,6 +64,14 @@ impl TownScreen {
                 ]),
                 FieldTab::new(),
                 BorderTheme::Forest,
+            ),
+            TabEntry::with_border(
+                Line::from(vec![
+                    Span::styled(format!("{}", DUNGEON_ICON), Style::default().color(theme::LIGHT_STONE)),
+                    Span::styled(" Dungeon", Style::default().color(theme::GRANITE)),
+                ]),
+                DungeonTab::new(),
+                BorderTheme::Stone,
             ),
         ]);
         Self {
