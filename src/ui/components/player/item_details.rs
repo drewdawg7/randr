@@ -158,18 +158,40 @@ pub fn render_item_details_beside(frame: &mut Frame, list_area: Rect, item: Opti
 }
 
 /// Renders item details for the inventory modal (always renders if show_item_details is true).
-pub fn render_item_details_for_modal(frame: &mut Frame, list_area: Rect, item: Option<&Item>) {
+pub fn render_item_details_for_modal(frame: &mut Frame, modal_area: Rect, item: Option<&Item>) {
     if !game_state().show_item_details {
         return;
     }
 
-    render_item_details_panel(frame, list_area, item);
+    if let Some(item) = item {
+        let gap = 1u16;
+        let details_width = 40u16;
+        let frame_area = frame.area();
+
+        // Position to the right of the modal
+        let x = modal_area.x + modal_area.width + gap;
+        let y = modal_area.y;
+        let details_height = modal_area.height;
+
+        // Clamp width to fit within screen bounds
+        let available_width = frame_area.width.saturating_sub(x);
+        if available_width < 20 {
+            // Not enough space for a useful panel
+            return;
+        }
+        let width = details_width.min(available_width);
+
+        let details_area = Rect::new(x, y, width, details_height);
+        render_item_details(frame, details_area, Some(item));
+    }
 }
 
-/// Shared rendering logic for item details panel.
+/// Shared rendering logic for item details panel (used by non-modal screens).
 fn render_item_details_panel(frame: &mut Frame, list_area: Rect, item: Option<&Item>) {
     if let Some(item) = item {
         let gap = 2u16;
+        let details_width = 40u16;
+        let frame_area = frame.area();
 
         // Position based on where item text typically ends (~35 chars),
         // not the full list_area width which may be much larger
@@ -178,7 +200,13 @@ fn render_item_details_panel(frame: &mut Frame, list_area: Rect, item: Option<&I
         let y = list_area.y;
         let details_height = list_area.height;
 
-        let details_area = Rect::new(x, y, 40, details_height);
+        // Check if details panel would fit within terminal bounds
+        if x + details_width > frame_area.width {
+            // Not enough space to the right, skip rendering
+            return;
+        }
+
+        let details_area = Rect::new(x, y, details_width, details_height);
         render_item_details(frame, details_area, Some(item));
     }
 }
