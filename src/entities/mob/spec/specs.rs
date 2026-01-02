@@ -11,7 +11,7 @@ use super::definition::MobSpec;
 pub static COW: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     name: "Cow",
     quality: MobQuality::Normal,
-    max_health: 8..=12,
+    max_health: 20..=25,
     attack: 1..=4,
     dropped_gold: 1..=3,
     dropped_xp: 5..=9,
@@ -22,7 +22,7 @@ pub static COW: Lazy<MobSpec> = Lazy::new(|| MobSpec {
 pub static SLIME: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     name: "Slime",
     quality: MobQuality::Normal,
-    max_health: 8..=12,
+    max_health: 15..=22,
     attack: 2..=4,
     dropped_gold: 1..=3,
     dropped_xp: 5..=9,
@@ -35,8 +35,8 @@ pub static GOBLIN: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     name: "Goblin",
     quality: MobQuality::Normal,
     max_health: 33..=41,
-    attack: 4..=6,
-    dropped_gold: 5..=7,
+    attack: 10..=15,
+    dropped_gold: 10..=19,
     dropped_xp: 13..=20,
     loot: LootTable::new()
         .with(ItemId::Sword, 1, 15, 1..=1)

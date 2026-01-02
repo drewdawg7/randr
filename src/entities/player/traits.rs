@@ -19,7 +19,7 @@ impl Default for Player {
             stats: {
                 let stats: HashMap<StatType, StatInstance> = HashMap::new();
                 let mut sheet = StatSheet { stats };
-                sheet.insert(StatType::Attack.instance(12));
+                sheet.insert(StatType::Attack.instance(8));
                 sheet.insert(StatType::Defense.instance(3));
                 sheet.insert(StatType::GoldFind.instance(0));
                 sheet.insert(StatType::Mining.instance(100));
