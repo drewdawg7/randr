@@ -106,6 +106,9 @@ impl Dungeon {
         self.ensure_room_type(&mut rng, &room_positions, RoomType::Chest, start_pos);
         self.ensure_room_type(&mut rng, &room_positions, RoomType::Rest, start_pos);
 
+        // Place exactly 1 Boss room at a dead end (revealed on minimap)
+        self.place_boss_room(&mut rng, &room_positions, start_pos);
+
         // Reveal rooms adjacent to the starting position
         self.reveal_adjacent_rooms(start_pos.0, start_pos.1);
 
@@ -178,6 +181,59 @@ impl Dungeon {
             RoomType::Chest
         } else {
             RoomType::Rest
+        }
+    }
+
+    /// Place exactly 1 Boss room at a dead end (room with only 1 adjacent room)
+    fn place_boss_room(
+        &mut self,
+        rng: &mut impl Rng,
+        room_positions: &[(i32, i32)],
+        start_pos: (i32, i32),
+    ) {
+        let directions: [(i32, i32); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
+
+        // Find all dead ends (rooms with exactly 1 neighbor), excluding start room
+        let dead_ends: Vec<(i32, i32)> = room_positions
+            .iter()
+            .filter(|&&pos| pos != start_pos)
+            .filter(|&&(x, y)| {
+                let neighbor_count = directions
+                    .iter()
+                    .filter(|&&(dx, dy)| self.get_room(x + dx, y + dy).is_some())
+                    .count();
+                neighbor_count == 1
+            })
+            .copied()
+            .collect();
+
+        // Pick a random dead end and convert it to a Boss room
+        if let Some(&(x, y)) = dead_ends.choose(rng) {
+            if let Some(room) = &mut self.rooms[y as usize][x as usize] {
+                room.room_type = RoomType::Boss;
+                // Boss rooms are always revealed on the minimap
+                room.is_revealed = true;
+            }
+        } else {
+            // Fallback: if no dead ends, pick any non-entry Monster room
+            let monster_rooms: Vec<(i32, i32)> = room_positions
+                .iter()
+                .filter(|&&pos| pos != start_pos)
+                .filter(|&&(x, y)| {
+                    self.rooms[y as usize][x as usize]
+                        .as_ref()
+                        .map(|r| r.room_type == RoomType::Monster)
+                        .unwrap_or(false)
+                })
+                .copied()
+                .collect();
+
+            if let Some(&(x, y)) = monster_rooms.choose(rng) {
+                if let Some(room) = &mut self.rooms[y as usize][x as usize] {
+                    room.room_type = RoomType::Boss;
+                    room.is_revealed = true;
+                }
+            }
         }
     }
 

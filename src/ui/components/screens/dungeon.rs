@@ -15,13 +15,14 @@ use tuirealm::{
 use crate::{
     combat::Combatant,
     dungeon::{Direction, RoomType},
+    entities::mob::MobId,
     inventory::HasInventory,
     stats::HasStats,
     system::{game_state, CombatSource},
     ui::{
         components::{
             backgrounds::render_stone_wall,
-            dungeon::{campfire_art::render_campfire_art, minimap},
+            dungeon::{campfire_art::render_campfire_art, dragon_art, minimap},
             utilities::{selection_prefix, HEART, RETURN_ARROW},
             widgets::border::BorderTheme,
         },
@@ -39,6 +40,8 @@ enum DungeonState {
     Navigation,
     /// Player is in a rest room (can heal)
     RestRoom,
+    /// Player is in the boss room (trapped until defeated)
+    BossRoom,
 }
 
 /// Compass position for navigation selection
@@ -93,6 +96,7 @@ impl DungeonScreen {
                 }
             }
             DungeonState::RestRoom => 2, // Rest/Heal + Leave
+            DungeonState::BossRoom => 1, // Attack only (no escape!)
         }
     }
 
@@ -148,6 +152,11 @@ impl DungeonScreen {
                         gs.toasts.error("No enemies to fight!");
                     }
                 }
+            }
+            RoomType::Boss => {
+                // Boss room - transition to BossRoom state (trapped!)
+                self.state = DungeonState::BossRoom;
+                self.reset_selection();
             }
             RoomType::Chest => {
                 // Open the chest and get loot
@@ -320,6 +329,11 @@ impl MockComponent for DungeonScreen {
                     }
                     self.reset_selection();
                 }
+                // Boss room cleared - transition to Navigation
+                if room.is_cleared && self.state == DungeonState::BossRoom {
+                    self.state = DungeonState::Navigation;
+                    self.reset_selection();
+                }
             }
         }
 
@@ -337,6 +351,7 @@ impl MockComponent for DungeonScreen {
             DungeonState::RoomEntry => self.render_room_entry(frame, chunks[1]),
             DungeonState::Navigation => self.render_navigation(frame, chunks[1]),
             DungeonState::RestRoom => self.render_rest_room(frame, chunks[1]),
+            DungeonState::BossRoom => self.render_boss_room(frame, chunks[1]),
         }
 
         // Render minimap in bottom-left corner (inside border)
@@ -404,6 +419,9 @@ impl MockComponent for DungeonScreen {
                             _ => {}
                         }
                     }
+                    DungeonState::BossRoom => {
+                        // BossRoom only has one option (Attack), no movement needed
+                    }
                 }
                 CmdResult::Changed(tuirealm::State::None)
             }
@@ -412,12 +430,15 @@ impl MockComponent for DungeonScreen {
                     DungeonState::RoomEntry => self.handle_room_entry_submit(),
                     DungeonState::Navigation => self.handle_navigation_submit(),
                     DungeonState::RestRoom => self.handle_rest_submit(),
+                    DungeonState::BossRoom => self.handle_boss_submit(),
                 }
                 CmdResult::Submit(tuirealm::State::None)
             }
             Cmd::Cancel => {
-                // ESC to leave dungeon
-                game_state().leave_dungeon();
+                // ESC to leave dungeon (but not from boss room!)
+                if self.state != DungeonState::BossRoom {
+                    game_state().leave_dungeon();
+                }
                 CmdResult::Submit(tuirealm::State::None)
             }
             _ => CmdResult::None,
@@ -884,6 +905,123 @@ impl DungeonScreen {
             }
             _ => {}
         }
+    }
+
+    fn render_boss_room(&self, frame: &mut Frame, area: Rect) {
+        let gs = game_state();
+
+        // Get dragon art
+        let dragon_lines = dragon_art::render_dragon_art();
+        let dragon_height = dragon_art::DRAGON_HEIGHT;
+        let dragon_w = dragon_art::DRAGON_WIDTH;
+
+        // HP bar constants
+        const HP_BAR_WIDTH: u16 = 30;
+
+        // Calculate total content height: dragon + spacing + title + HP bar + spacing + menu
+        let total_height = dragon_height + 1 + 1 + 1 + 1 + 1;
+
+        // Center everything vertically
+        let y_offset = area.y + area.height.saturating_sub(total_height) / 2;
+
+        // Center dragon horizontally
+        let dragon_x = area.x + area.width.saturating_sub(dragon_w) / 2;
+
+        // Render dragon lines directly to buffer, skipping spaces to preserve background
+        let buf = frame.buffer_mut();
+        for (i, line) in dragon_lines.into_iter().enumerate() {
+            let y = y_offset + i as u16;
+            if y >= area.y + area.height {
+                break;
+            }
+            let mut x = dragon_x;
+            for span in line.spans {
+                for ch in span.content.chars() {
+                    if x >= area.x + area.width {
+                        break;
+                    }
+                    if ch != ' ' {
+                        buf.set_string(x, y, ch.to_string(), span.style);
+                    }
+                    x += 1;
+                }
+            }
+        }
+
+        // Title "DRAGON" centered below dragon
+        let title_y = y_offset + dragon_height + 1;
+        let title = Paragraph::new(Line::from(vec![Span::styled(
+            "DRAGON",
+            Style::default().fg(colors::EMBER_RED),
+        )]))
+        .centered();
+        let title_area = Rect {
+            x: area.x,
+            y: title_y,
+            width: area.width,
+            height: 1,
+        };
+        frame.render_widget(title, title_area);
+
+        // Boss HP bar below title (use mob stats for display)
+        // Note: actual boss HP is tracked via combat system
+        let mob = gs.spawn_mob(MobId::Dragon);
+        let max_hp = mob.max_hp();
+        let hp = max_hp; // Boss starts at full HP when first displayed
+
+        let hp_color = colors::EMBER_RED;
+
+        // Create HP bar
+        let filled_chars = HP_BAR_WIDTH;
+        let filled_bar = "█".repeat(filled_chars as usize);
+
+        let hp_bar_line = Line::from(vec![
+            Span::styled(format!("{} ", HEART), Style::default().fg(colors::EMBER_RED)),
+            Span::styled("[", Style::default().fg(colors::WHITE)),
+            Span::styled(filled_bar, Style::default().fg(hp_color)),
+            Span::styled("] ", Style::default().fg(colors::WHITE)),
+            Span::styled(format!("{}/{}", hp, max_hp), Style::default().fg(hp_color)),
+        ]);
+
+        let hp_y = title_y + 1;
+        let hp_area = Rect {
+            x: area.x,
+            y: hp_y,
+            width: area.width,
+            height: 1,
+        };
+        frame.render_widget(Paragraph::new(hp_bar_line).centered(), hp_area);
+
+        // Attack menu below HP bar (no escape option!)
+        let attack_style = Style::default().fg(colors::YELLOW);
+
+        let menu_y = hp_y + 2;
+        let menu_width: u16 = 20;
+        let menu_x = area.x + area.width.saturating_sub(menu_width) / 2;
+
+        let menu_items: Vec<ListItem> = vec![ListItem::new(Line::from(vec![
+            selection_prefix(true),
+            Span::styled("Attack", attack_style),
+        ]))];
+
+        let menu_area = Rect {
+            x: menu_x,
+            y: menu_y,
+            width: menu_width,
+            height: 1,
+        };
+        let menu = List::new(menu_items);
+        frame.render_widget(menu, menu_area);
+    }
+
+    fn handle_boss_submit(&mut self) {
+        let gs = game_state();
+
+        // Spawn the dragon boss and start combat
+        let dragon = gs.spawn_mob(MobId::Dragon);
+        gs.combat_source = CombatSource::Dungeon;
+        gs.start_combat(dragon);
+        gs.current_screen = Id::Fight;
     }
 }
 

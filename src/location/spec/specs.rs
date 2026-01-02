@@ -59,7 +59,6 @@ pub static VILLAGE_FIELD: Lazy<LocationSpec> = Lazy::new(|| LocationSpec {
             (MobId::Slime, 5),
             (MobId::Cow, 5),
             (MobId::Goblin, 3),
-            (MobId::Dragon, 1),
         ]),
     }),
 });

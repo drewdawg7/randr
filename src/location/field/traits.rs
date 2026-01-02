@@ -14,7 +14,6 @@ impl Default for Field {
         mob_weights.insert(MobId::Slime, 5);
         mob_weights.insert(MobId::Cow, 5);
         mob_weights.insert(MobId::Goblin, 3);
-        mob_weights.insert(MobId::Dragon, 1);
         Self {
             location_id: LocationId::VillageField,
             name: "Village Field".to_string(),
