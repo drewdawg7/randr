@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Display};
 
 use crate::{
-    combat::{Combatant, HasGold, IsKillable, Named, PlayerDeathResult},
+    combat::{Attack, Combatant, DealsDamage, HasGold, IsKillable, Named, PlayerDeathResult},
     entities::{progression::HasProgression, Player, Progression},
     inventory::{HasInventory, Inventory},
     item::consumable::{ApplyEffect, ConsumableEffect},
@@ -11,7 +11,6 @@ use crate::{
 
 impl Default for Player {
     fn default() -> Self {
-        
         Self {
             gold: 0,
             name: "Drew",
@@ -86,11 +85,23 @@ impl HasInventory for Player {
 
 
 
-impl Combatant for Player {
-    fn effective_attack(&self) -> i32 {
-        self.get_attack() + self.inventory().sum_equipment_stats(StatType::Attack)
+impl DealsDamage for Player {
+    /// Player attack range is derived from Attack stat with ±15% variance,
+    /// plus equipment bonuses applied to both min and max.
+    fn get_attack(&self) -> Attack {
+        let base = self.attack();
+        let variance = (base as f64 * Self::ATTACK_VARIANCE).round() as i32;
+        let base_attack = Attack::new(
+            (base - variance).max(1),
+            base + variance,
+        );
+        // Add equipment bonuses
+        let equipment_bonus = self.inventory().sum_equipment_stats(StatType::Attack);
+        base_attack.with_bonus(equipment_bonus)
     }
+}
 
+impl Combatant for Player {
     fn effective_defense(&self) -> i32 {
         self.get_defense() + self.inventory().sum_equipment_stats(StatType::Defense)
     }

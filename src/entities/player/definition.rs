@@ -8,7 +8,7 @@ pub struct Player {
     pub gold: i32,
     pub prog: Progression,
     pub inventory: Inventory,
-    pub stats: StatSheet
+    pub stats: StatSheet,
 }
 
 

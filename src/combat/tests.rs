@@ -2,7 +2,7 @@
 use std::collections::HashMap;
 #[cfg(test)]
 use crate::{
-    combat::{attack, enter_combat, Combatant, HasGold, IsKillable},
+    combat::{attack, enter_combat, apply_defense, calculate_damage_reduction, Combatant, DealsDamage, HasGold, IsKillable},
     entities::{
         mob::{Mob, MobId},
         mob::enums::MobQuality,
@@ -43,40 +43,45 @@ fn create_test_player(hp: i32, attack: i32, defense: i32) -> Player {
 // ==================== attack() tests ====================
 
 #[test]
-fn attack_deals_damage_based_on_attack_minus_defense() {
+fn attack_deals_damage_with_variance_and_defense_reduction() {
     let player = create_test_player(100, 20, 5);
     let mut mob = create_test_mob("Goblin", 100, 10, 8);
 
     let result = attack(&player, &mut mob);
 
-    // Damage = player attack (20) - mob defense (8) = 12
-    assert_eq!(result.damage_to_target, 12);
+    // Player attack ~20 with ±15% variance (17-23), mob defense 8
+    // Defense reduction = 8 / (8 + 50) = ~13.8%
+    // Expected damage range: roughly 15-20 (after reduction)
+    assert!(result.damage_to_target > 0);
+    assert!(result.damage_to_target <= 23); // Max raw damage
     assert_eq!(result.target_health_before, 100);
-    assert_eq!(result.target_health_after, 88);
+    assert!(result.target_health_after < 100);
     assert!(!result.target_died);
 }
 
 #[test]
-fn attack_minimum_damage_is_zero() {
-    let player = create_test_player(100, 5, 0);
-    let mut mob = create_test_mob("Tank", 100, 10, 20);
+fn attack_high_defense_reduces_damage_significantly() {
+    let player = create_test_player(100, 10, 0);
+    let mut mob = create_test_mob("Tank", 100, 5, 100);
 
     let result = attack(&player, &mut mob);
 
-    // Defense (20) > Attack (5), so damage should be 0
-    assert_eq!(result.damage_to_target, 0);
-    assert_eq!(result.target_health_after, 100);
+    // Player attack ~10 with variance, mob has 100 defense
+    // Defense reduction = 100 / (100 + 50) = 66.7%
+    // Raw damage ~8-12, reduced to ~3-4
+    assert!(result.damage_to_target >= 0);
+    assert!(result.damage_to_target < 10); // Significantly reduced
 }
 
 #[test]
 fn attack_kills_target_when_damage_exceeds_health() {
-    let player = create_test_player(100, 50, 0);
+    let player = create_test_player(100, 100, 0);
     let mut mob = create_test_mob("Weakling", 10, 5, 0);
 
     let result = attack(&player, &mut mob);
 
-    assert_eq!(result.damage_to_target, 50);
-    assert_eq!(result.target_health_after, 0);
+    // Player has high attack, mob has 0 defense, low HP
+    assert!(result.damage_to_target > 10); // Overkill
     assert!(result.target_died);
 }
 
@@ -98,10 +103,11 @@ fn mob_attacks_player() {
 
     let result = attack(&mob, &mut player);
 
-    // Damage = mob attack (20) - player defense (5) = 15
-    assert_eq!(result.damage_to_target, 15);
-    assert_eq!(result.target_health_before, 100);
-    assert_eq!(result.target_health_after, 85);
+    // Mob attack ~20 with variance, player defense 5
+    // Defense reduction = 5 / (5 + 50) = ~9.1%
+    assert!(result.damage_to_target > 0);
+    assert!(result.target_health_before == 100);
+    assert!(result.target_health_after < 100);
     assert_eq!(result.attacker, "Orc");
     assert_eq!(result.defender, "Drew");
 }
@@ -113,8 +119,10 @@ fn attack_with_zero_defense_takes_full_damage() {
 
     let result = attack(&player, &mut mob);
 
-    assert_eq!(result.damage_to_target, 25);
-    assert_eq!(result.target_health_after, 75);
+    // With 0 defense, no damage reduction occurs
+    // Player attack ~25 with ±15% variance (21-29)
+    assert!(result.damage_to_target >= 21);
+    assert!(result.damage_to_target <= 29);
 }
 
 // ==================== enter_combat() tests ====================
@@ -291,7 +299,8 @@ fn player_dec_gold_floors_at_zero() {
 #[test]
 fn player_effective_attack_without_weapon() {
     let player = create_test_player(100, 15, 5);
-    // Without weapon equipped, effective attack equals base attack
+    // effective_attack returns average of attack range
+    // Base attack 15 with ±15% variance = 13-17, average = 15
     assert_eq!(player.effective_attack(), 15);
 }
 
@@ -302,27 +311,62 @@ fn player_effective_defense_without_shield() {
     assert_eq!(player.effective_defense(), 8);
 }
 
-// ==================== Combat math edge cases ====================
+// ==================== Defense calculation tests ====================
 
 #[test]
-fn combat_high_defense_negates_damage() {
-    let mut player = create_test_player(100, 10, 50);
-    let mob = create_test_mob("Weak Attacker", 50, 5, 0);
+fn defense_reduction_follows_diminishing_returns() {
+    // Test the defense formula: reduction = defense / (defense + 50)
+    let reduction_0 = calculate_damage_reduction(0);
+    let reduction_25 = calculate_damage_reduction(25);
+    let reduction_50 = calculate_damage_reduction(50);
+    let reduction_100 = calculate_damage_reduction(100);
 
-    // Mob attacks player, but player defense (50) > mob attack (5)
-    let result = attack(&mob, &mut player);
-    assert_eq!(result.damage_to_target, 0);
-    assert_eq!(player.hp(), 100);
+    assert!((reduction_0 - 0.0).abs() < 0.01);
+    assert!((reduction_25 - 0.333).abs() < 0.01); // 25/(25+50) = 1/3
+    assert!((reduction_50 - 0.5).abs() < 0.01);   // 50/(50+50) = 1/2
+    assert!((reduction_100 - 0.667).abs() < 0.01); // 100/(100+50) = 2/3
 }
 
 #[test]
-fn combat_equal_attack_and_defense() {
+fn apply_defense_reduces_damage_correctly() {
+    // With 50 defense (50% reduction)
+    assert_eq!(apply_defense(100, 50), 50);
+    assert_eq!(apply_defense(10, 50), 5);
+
+    // With 0 defense (no reduction)
+    assert_eq!(apply_defense(100, 0), 100);
+
+    // With very high defense (approaches but never reaches 100%)
+    let reduced = apply_defense(100, 1000);
+    assert!(reduced > 0); // Never fully blocked
+    assert!(reduced < 10); // But heavily reduced
+}
+
+// ==================== Combat math edge cases ====================
+
+#[test]
+fn combat_high_defense_reduces_but_doesnt_negate_damage() {
+    let mut player = create_test_player(100, 10, 200);
+    let mob = create_test_mob("Weak Attacker", 50, 10, 0);
+
+    // Player has 200 defense = 80% reduction
+    // Mob attack ~10 with variance, reduced to ~2
+    let result = attack(&mob, &mut player);
+    // With percentage-based defense, damage is reduced but not to 0
+    assert!(result.damage_to_target >= 0);
+    assert!(result.damage_to_target < 5); // Heavily reduced
+}
+
+#[test]
+fn combat_equal_attack_and_defense_still_deals_damage() {
     let player = create_test_player(100, 20, 5);
     let mut mob = create_test_mob("Balanced", 50, 10, 20);
 
-    // Player attack (20) == mob defense (20) => 0 damage
+    // Player attack ~20 with variance, mob defense 20
+    // Defense reduction = 20 / (20 + 50) = ~28.6%
     let result = attack(&player, &mut mob);
-    assert_eq!(result.damage_to_target, 0);
+    // With percentage-based defense, equal attack/defense still deals damage
+    assert!(result.damage_to_target > 0);
 }
 
 // ==================== IsKillable trait tests ====================

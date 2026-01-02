@@ -4,12 +4,37 @@ use crate::{
     item::{Item, ItemId},
 };
 
+/// Constant for diminishing returns defense formula.
+/// Higher values = more defense needed for same reduction.
+/// With K=50: 50 defense = 50% reduction, 100 defense = 67% reduction
+const DEFENSE_CONSTANT: f64 = 50.0;
+
+/// Calculate damage reduction percentage with diminishing returns.
+/// Uses formula: reduction = defense / (defense + K)
+/// Returns a value between 0.0 and 1.0 (never reaches 1.0)
+pub fn calculate_damage_reduction(defense: i32) -> f64 {
+    let def = defense.max(0) as f64;
+    def / (def + DEFENSE_CONSTANT)
+}
+
+/// Apply percentage-based defense to raw damage.
+/// Returns final damage after reduction.
+pub fn apply_defense(raw_damage: i32, defense: i32) -> i32 {
+    let reduction = calculate_damage_reduction(defense);
+    let damage_multiplier = 1.0 - reduction;
+    (raw_damage as f64 * damage_multiplier).round() as i32
+}
+
 pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 -> AttackResult {
     let target_health_before = defender.effective_health();
     let target_defense = defender.effective_defense();
 
-    let damage_to_target = (attacker.effective_attack() - target_defense).max(0);
+    // Roll damage from attack range
+    let raw_damage = attacker.get_attack().roll_damage();
+    // Apply percentage-based defense with diminishing returns
+    let damage_to_target = apply_defense(raw_damage, target_defense);
+
     defender.take_damage(damage_to_target);
     let target_health_after = defender.effective_health();
     let target_died = !defender.is_alive();

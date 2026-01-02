@@ -1,3 +1,4 @@
+use crate::combat::Attack;
 use crate::stats::{HasStats, StatType};
 
 /// Trait for entities that can be killed (health reduced to zero)
@@ -24,16 +25,42 @@ pub trait IsKillable: HasStats {
     fn on_death(&mut self) -> Self::DeathResult;
 }
 
-pub trait Combatant: Named + IsKillable {
-    fn effective_attack(&self) -> i32;
-    fn increase_health(&mut self, amount: i32) {
-        self.inc(StatType::Health, amount);
+/// Trait for entities that can deal damage.
+/// Provides attack range derived from stats with configurable variance.
+pub trait DealsDamage: HasStats {
+    /// Variance percentage for attack range (e.g., 0.15 = ±15%)
+    const ATTACK_VARIANCE: f64 = 0.15;
+
+    /// Returns the Attack struct with damage range.
+    /// Default implementation derives range from Attack stat with variance.
+    fn get_attack(&self) -> Attack {
+        let base = self.attack();
+        let variance = (base as f64 * Self::ATTACK_VARIANCE).round() as i32;
+        Attack::new(
+            (base - variance).max(1),
+            base + variance,
+        )
     }
+
+    /// Returns the average attack value (for display purposes)
+    fn effective_attack(&self) -> i32 {
+        self.get_attack().average()
+    }
+}
+
+pub trait Combatant: Named + IsKillable + DealsDamage {
+    /// Returns effective defense value for damage reduction calculation
     fn effective_defense(&self) -> i32 {
         self.def()
     }
+
+    /// Returns current health
     fn effective_health(&self) -> i32 {
         self.health()
+    }
+
+    fn increase_health(&mut self, amount: i32) {
+        self.inc(StatType::Health, amount);
     }
 }
 

@@ -1,5 +1,5 @@
 use crate::{
-    combat::{Combatant, DropsGold, IsKillable, MobDeathResult, Named},
+    combat::{Combatant, DealsDamage, DropsGold, IsKillable, MobDeathResult, Named},
     entities::progression::GivesXP,
     loot::{HasLoot, LootTable}, stats::{HasStats, StatSheet},
 };
@@ -22,11 +22,11 @@ impl GivesXP for Mob {
     }
 }
 
-impl Combatant for Mob {
-    fn effective_attack(&self) -> i32 {
-        self.get_attack()
-    }
+/// Mobs use the default DealsDamage implementation which derives
+/// attack range from their Attack stat with ±15% variance.
+impl DealsDamage for Mob {}
 
+impl Combatant for Mob {
     fn effective_health(&self) -> i32 {
         self.get_health()
     }
