@@ -20,14 +20,51 @@ pub enum RecipeId {
     TinSword,
     CopperSword,
     BasicHPPotion,
+    // Copper Armor Recipes
+    CopperHelmet,
+    CopperChestplate,
+    CopperGauntlets,
+    CopperGreaves,
+    CopperLeggings,
+    // Tin Armor Recipes
+    TinHelmet,
+    TinChestplate,
+    TinGauntlets,
+    TinGreaves,
+    TinLeggings,
+    // Bronze Armor Recipes
+    BronzeHelmet,
+    BronzeChestplate,
+    BronzeGauntlets,
+    BronzeGreaves,
+    BronzeLeggings,
 }
 
 impl RecipeId {
     pub fn all_forging_recipes() -> Vec<RecipeId> {
         vec![
+            // Swords
             RecipeId::BronzeSword,
             RecipeId::TinSword,
             RecipeId::CopperSword,
+            // Copper Armor
+            RecipeId::CopperHelmet,
+            RecipeId::CopperChestplate,
+            RecipeId::CopperGauntlets,
+            RecipeId::CopperGreaves,
+            RecipeId::CopperLeggings,
+            // Tin Armor
+            RecipeId::TinHelmet,
+            RecipeId::TinChestplate,
+            RecipeId::TinGauntlets,
+            RecipeId::TinGreaves,
+            RecipeId::TinLeggings,
+            // Bronze Armor
+            RecipeId::BronzeHelmet,
+            RecipeId::BronzeChestplate,
+            RecipeId::BronzeGauntlets,
+            RecipeId::BronzeGreaves,
+            RecipeId::BronzeLeggings,
         ]
     }
 
