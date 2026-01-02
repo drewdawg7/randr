@@ -10,11 +10,11 @@ use crate::dungeon::{
 const MIN_ROOMS: usize = 5;
 
 impl Dungeon {
-    /// Generate a new dungeon layout with contiguous rooms
+    /// Generate a new dungeon layout with corridor-like structure
     pub fn generate(&mut self) {
         let mut rng = rand::thread_rng();
 
-        // Calculate room count (between MIN_ROOMS and 60% of grid)
+        // Calculate room count (between MIN_ROOMS and max fill)
         let max_rooms = ((DUNGEON_SIZE * DUNGEON_SIZE) as f32 * MAX_FILL_PERCENT) as usize;
         let target_rooms = rng.gen_range(MIN_ROOMS..=max_rooms);
 
@@ -33,19 +33,39 @@ impl Dungeon {
         entry_room.visit(); // Mark entry room as visited
         self.rooms[start_pos.1 as usize][start_pos.0 as usize] = Some(entry_room);
 
-        // Generate remaining rooms using random walk from existing rooms
-        while room_positions.len() < target_rooms {
-            // Pick a random existing room
-            let base_pos = *room_positions.choose(&mut rng).unwrap();
+        // Direction indices: 0=North, 1=East, 2=South, 3=West
+        let directions: [(i32, i32); 4] = [(0, -1), (1, 0), (0, 1), (-1, 0)];
 
-            // Try to expand in a random direction
-            let directions = [(0, -1), (1, 0), (0, 1), (-1, 0)];
-            let mut shuffled_dirs = directions.to_vec();
-            shuffled_dirs.shuffle(&mut rng);
+        // Track current position and direction for corridor generation
+        let mut current_pos = start_pos;
+        let mut current_dir: usize = rng.gen_range(0..4);
+        let mut stuck_count = 0;
 
-            for (dx, dy) in shuffled_dirs {
-                let new_x = base_pos.0 + dx;
-                let new_y = base_pos.1 + dy;
+        // Generate remaining rooms using corridor-favoring random walk
+        while room_positions.len() < target_rooms && stuck_count < 50 {
+            // 70% chance to continue in same direction, 30% to turn
+            let try_same_dir = rng.gen_ratio(7, 10);
+
+            let dir_order: Vec<usize> = if try_same_dir {
+                // Favor current direction, then perpendicular, then reverse
+                let perpendicular = [(current_dir + 1) % 4, (current_dir + 3) % 4];
+                let reverse = (current_dir + 2) % 4;
+                let mut order = vec![current_dir];
+                order.extend(perpendicular.iter().cloned());
+                order.push(reverse);
+                order
+            } else {
+                // Random order but still avoid reverse if possible
+                let mut order: Vec<usize> = (0..4).collect();
+                order.shuffle(&mut rng);
+                order
+            };
+
+            let mut found = false;
+            for &dir_idx in &dir_order {
+                let (dx, dy) = directions[dir_idx];
+                let new_x = current_pos.0 + dx;
+                let new_y = current_pos.1 + dy;
 
                 // Check bounds
                 if new_x < 0
@@ -66,7 +86,19 @@ impl Dungeon {
                 let room = DungeonRoom::new(room_type, new_x, new_y);
                 self.rooms[new_y as usize][new_x as usize] = Some(room);
                 room_positions.push((new_x, new_y));
+
+                current_pos = (new_x, new_y);
+                current_dir = dir_idx;
+                found = true;
+                stuck_count = 0;
                 break;
+            }
+
+            // If stuck, jump to a random existing room and try a new direction
+            if !found {
+                stuck_count += 1;
+                current_pos = *room_positions.choose(&mut rng).unwrap();
+                current_dir = rng.gen_range(0..4);
             }
         }
 
