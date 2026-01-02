@@ -57,9 +57,9 @@ pub trait HasLoot {
 ```
 
 Implementors:
-- `Mob` - drops loot on death in combat
-- `Chest` - has loot table (unused currently)
-- `Rock` - drops items when mined (uses own `roll_drops()` returning `Vec<Item>`)
+- `Mob` - drops loot on death in combat (`src/entities/mob/traits.rs`)
+- `Chest` - has loot table (unused currently) (`src/chest/traits.rs`)
+- `Rock` - drops items when mined (`src/location/mine/rock/traits.rs`)
 
 ## Loot Flow: Combat
 
@@ -74,10 +74,9 @@ Mob.on_death()
 ## Loot Flow: Mining
 
 ```
-Rock.roll_drops()
-  -> self.loot.roll_drops()    [LootTable method]
-  -> map LootDrop -> Item      [expand by quantity]
-  -> RockDeathResult.drops     [Vec<Item>]
+Rock.on_death()
+  -> self.roll_drops()         [HasLoot trait method]
+  -> RockDeathResult.drops     [Vec<LootDrop>]
   -> Mine UI adds to inventory
 ```
 
@@ -95,6 +94,6 @@ let loot = LootTable::new()
 | Type | File | Description |
 |------|------|-------------|
 | `MobDeathResult` | `src/combat/result.rs` | Contains `loot_drops: Vec<LootDrop>` |
-| `RockDeathResult` | `src/combat/result.rs` | Contains `drops: Vec<Item>` |
+| `RockDeathResult` | `src/combat/result.rs` | Contains `drops: Vec<LootDrop>` |
 | `ActiveCombat` | `src/combat/state.rs` | Contains `loot_drops: Vec<LootDrop>` |
 | `CombatRounds` | `src/combat/system.rs` | Contains `loot_drops: Vec<LootDrop>` |
