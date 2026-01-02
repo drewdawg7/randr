@@ -188,9 +188,12 @@ impl DungeonRoom {
             None
         };
 
+        // Rest rooms are always cleared (player can leave and return to heal)
+        let is_cleared = room_type == RoomType::Rest;
+
         Self {
             room_type,
-            is_cleared: false,
+            is_cleared,
             is_visited: false,
             is_revealed: false,
             x,

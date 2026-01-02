@@ -88,12 +88,15 @@ impl Dungeon {
         }
     }
 
-    /// Get a random room type (70% Monster, 30% Chest for first pass)
+    /// Get a random room type (60% Monster, 25% Chest, 15% Rest)
     fn random_room_type(&self, rng: &mut impl Rng) -> RoomType {
-        if rng.gen_ratio(7, 10) {
+        let roll = rng.gen_range(0..100);
+        if roll < 60 {
             RoomType::Monster
-        } else {
+        } else if roll < 85 {
             RoomType::Chest
+        } else {
+            RoomType::Rest
         }
     }
 

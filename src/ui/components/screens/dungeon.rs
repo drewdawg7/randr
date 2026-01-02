@@ -13,14 +13,16 @@ use tuirealm::{
 };
 
 use crate::{
+    combat::Combatant,
     dungeon::{Direction, RoomType},
     inventory::HasInventory,
+    stats::HasStats,
     system::{game_state, CombatSource},
     ui::{
         components::{
             backgrounds::render_stone_wall,
-            dungeon::minimap,
-            utilities::{selection_prefix, RETURN_ARROW},
+            dungeon::{campfire_art::render_campfire_art, minimap},
+            utilities::{selection_prefix, HEART, RETURN_ARROW},
             widgets::border::BorderTheme,
         },
         theme::{self as colors, ColorExt},
@@ -35,6 +37,8 @@ enum DungeonState {
     RoomEntry,
     /// Room is cleared, player can navigate
     Navigation,
+    /// Player is in a rest room (can heal)
+    RestRoom,
 }
 
 /// Compass position for navigation selection
@@ -52,6 +56,7 @@ pub struct DungeonScreen {
     state: DungeonState,
     list_state: ListState,
     compass_selection: CompassPosition,
+    rest_selection: usize, // 0 = Rest/Heal, 1 = Leave
 }
 
 impl DungeonScreen {
@@ -64,12 +69,14 @@ impl DungeonScreen {
             state: DungeonState::RoomEntry,
             list_state,
             compass_selection: CompassPosition::Center,
+            rest_selection: 0,
         }
     }
 
     fn reset_selection(&mut self) {
         self.list_state.select(Some(0));
         self.compass_selection = CompassPosition::Center;
+        self.rest_selection = 0;
     }
 
     /// Get the current menu size based on state
@@ -85,6 +92,7 @@ impl DungeonScreen {
                     1
                 }
             }
+            DungeonState::RestRoom => 2, // Rest/Heal + Leave
         }
     }
 
@@ -105,7 +113,12 @@ impl DungeonScreen {
         };
 
         if is_cleared {
-            self.state = DungeonState::Navigation;
+            // Rest rooms go to RestRoom state, others go to Navigation
+            if room_type == Some(RoomType::Rest) {
+                self.state = DungeonState::RestRoom;
+            } else {
+                self.state = DungeonState::Navigation;
+            }
             self.reset_selection();
             return;
         }
@@ -299,7 +312,12 @@ impl MockComponent for DungeonScreen {
         if let Some(dungeon) = gs.dungeon() {
             if let Some(room) = dungeon.current_room() {
                 if room.is_cleared && self.state == DungeonState::RoomEntry {
-                    self.state = DungeonState::Navigation;
+                    // Rest rooms go to RestRoom state, others to Navigation
+                    if room.room_type == RoomType::Rest {
+                        self.state = DungeonState::RestRoom;
+                    } else {
+                        self.state = DungeonState::Navigation;
+                    }
                     self.reset_selection();
                 }
             }
@@ -318,6 +336,7 @@ impl MockComponent for DungeonScreen {
         match self.state {
             DungeonState::RoomEntry => self.render_room_entry(frame, chunks[1]),
             DungeonState::Navigation => self.render_navigation(frame, chunks[1]),
+            DungeonState::RestRoom => self.render_rest_room(frame, chunks[1]),
         }
 
         // Render minimap in bottom-left corner (inside border)
@@ -369,6 +388,22 @@ impl MockComponent for DungeonScreen {
                     DungeonState::Navigation => {
                         self.compass_move(dir);
                     }
+                    DungeonState::RestRoom => {
+                        // RestRoom has 2 options: Rest/Heal (0) and Leave (1)
+                        match dir {
+                            CmdDirection::Up => {
+                                if self.rest_selection > 0 {
+                                    self.rest_selection -= 1;
+                                }
+                            }
+                            CmdDirection::Down => {
+                                if self.rest_selection < 1 {
+                                    self.rest_selection += 1;
+                                }
+                            }
+                            _ => {}
+                        }
+                    }
                 }
                 CmdResult::Changed(tuirealm::State::None)
             }
@@ -376,6 +411,7 @@ impl MockComponent for DungeonScreen {
                 match self.state {
                     DungeonState::RoomEntry => self.handle_room_entry_submit(),
                     DungeonState::Navigation => self.handle_navigation_submit(),
+                    DungeonState::RestRoom => self.handle_rest_submit(),
                 }
                 CmdResult::Submit(tuirealm::State::None)
             }
@@ -672,6 +708,135 @@ impl DungeonScreen {
         ]);
         let paragraph = Paragraph::new(line).centered();
         frame.render_widget(paragraph, area);
+    }
+
+    fn render_rest_room(&self, frame: &mut Frame, area: Rect) {
+        let gs = game_state();
+        let player = &gs.player;
+
+        // Layout: campfire on left, HP + menu on right
+        let chunks = Layout::default()
+            .direction(LayoutDirection::Horizontal)
+            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
+            .split(area);
+
+        // Left side: campfire art (centered vertically)
+        let campfire_lines = render_campfire_art(2);
+        let campfire_height = campfire_lines.len() as u16;
+        let campfire_y_offset = chunks[0].height.saturating_sub(campfire_height) / 2;
+        let campfire_area = Rect {
+            x: chunks[0].x,
+            y: chunks[0].y + campfire_y_offset,
+            width: chunks[0].width,
+            height: campfire_height,
+        };
+        frame.render_widget(Paragraph::new(campfire_lines), campfire_area);
+
+        // Right side: HP status and menu
+        let right_chunks = Layout::default()
+            .direction(LayoutDirection::Vertical)
+            .constraints([
+                Constraint::Length(3), // Title + HP display
+                Constraint::Length(1), // Spacing
+                Constraint::Min(4),    // Menu
+            ])
+            .split(chunks[1]);
+
+        // Title and HP status
+        let hp = player.hp();
+        let max_hp = player.max_hp();
+        let hp_percent = if max_hp > 0 {
+            (hp as f32 / max_hp as f32 * 100.0) as u16
+        } else {
+            100
+        };
+
+        let hp_color = if hp_percent > 60 {
+            colors::GREEN
+        } else if hp_percent > 30 {
+            colors::YELLOW
+        } else {
+            colors::RED
+        };
+
+        let status_lines = vec![
+            Line::from(vec![Span::styled(
+                "Rest Area",
+                Style::default().fg(colors::CYAN),
+            )]),
+            Line::from(""),
+            Line::from(vec![
+                Span::styled(format!("{} ", HEART), Style::default().fg(colors::RED)),
+                Span::styled(format!("{}/{}", hp, max_hp), Style::default().fg(hp_color)),
+            ]),
+        ];
+        frame.render_widget(Paragraph::new(status_lines), right_chunks[0]);
+
+        // Menu: Rest (heal) and Leave
+        let heal_amount = (max_hp as f32 * 0.5).round() as i32;
+        let can_heal = hp < max_hp;
+
+        let rest_style = if self.rest_selection == 0 {
+            Style::default().fg(colors::YELLOW)
+        } else if can_heal {
+            Style::default().fg(colors::GREEN)
+        } else {
+            Style::default().fg(colors::DARK_STONE)
+        };
+
+        let leave_style = if self.rest_selection == 1 {
+            Style::default().fg(colors::YELLOW)
+        } else {
+            Style::default().fg(colors::WHITE)
+        };
+
+        let rest_text = if can_heal {
+            format!("Rest (+{} HP)", heal_amount.min(max_hp - hp))
+        } else {
+            "Rest (Full HP)".to_string()
+        };
+
+        let menu_items: Vec<ListItem> = vec![
+            ListItem::new(Line::from(vec![
+                selection_prefix(self.rest_selection == 0),
+                Span::styled(rest_text, rest_style),
+            ])),
+            ListItem::new(Line::from(vec![
+                selection_prefix(self.rest_selection == 1),
+                Span::styled(format!("{} Continue", RETURN_ARROW), leave_style),
+            ])),
+        ];
+
+        let menu = List::new(menu_items);
+        frame.render_widget(menu, right_chunks[2]);
+    }
+
+    fn handle_rest_submit(&mut self) {
+        let gs = game_state();
+
+        match self.rest_selection {
+            0 => {
+                // Rest/Heal: restore 50% of max HP
+                let player = &mut gs.player;
+                let max_hp = player.max_hp();
+                let current_hp = player.hp();
+
+                if current_hp < max_hp {
+                    let heal_amount = (max_hp as f32 * 0.5).round() as i32;
+                    let actual_heal = heal_amount.min(max_hp - current_hp);
+                    player.increase_health(actual_heal);
+                    gs.toasts.success(format!("Rested and recovered {} HP!", actual_heal));
+                } else {
+                    gs.toasts.info("Already at full health!");
+                }
+            }
+            1 => {
+                // Continue: go to navigation
+                self.state = DungeonState::Navigation;
+                self.reset_selection();
+            }
+            _ => {}
+        }
     }
 }
 

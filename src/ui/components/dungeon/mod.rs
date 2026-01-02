@@ -1,3 +1,4 @@
+pub mod campfire_art;
 mod menu;
 pub mod minimap;
 pub mod tab;
