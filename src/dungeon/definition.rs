@@ -6,9 +6,9 @@ use crate::{dungeon::enums::RoomType, entities::mob::MobId};
 
 #[derive(Debug)]
 pub struct Dungeon {
-    name: String,
-    rooms: Vec<Vec<DungeonRoom>>,
-    mob_table: HashMap<MobId, i32>,
+    pub name: String,
+    pub rooms: Vec<Vec<DungeonRoom>>,
+    pub mob_table: HashMap<MobId, i32>,
 }
 
 

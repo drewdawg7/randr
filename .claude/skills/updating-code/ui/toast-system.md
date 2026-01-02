@@ -1,4 +1,4 @@
-# Toast Notification System
+i# Toast Notification System
 
 ## Overview
 Displays non-blocking notifications in the top-right corner of the terminal. Toasts auto-dismiss after 3 seconds and stack vertically with most recent on top.
