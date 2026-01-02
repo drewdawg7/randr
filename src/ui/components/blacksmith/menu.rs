@@ -1,5 +1,5 @@
 use ratatui::{
-    layout::Rect,
+    layout::{Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Line, Span},
     widgets::{List, ListItem, ListState},
@@ -32,6 +32,30 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     let header_lines = blacksmith_header(blacksmith, player_gold, stones);
     let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
 
+    // Center the menu vertically and horizontally
+    const MENU_HEIGHT: u16 = 5;
+    const MENU_WIDTH: u16 = 28;
+
+    let vertical_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Fill(2),
+            Constraint::Length(MENU_HEIGHT),
+            Constraint::Fill(3),
+        ])
+        .split(content_area);
+
+    let horizontal_chunks = Layout::default()
+        .direction(Direction::Horizontal)
+        .constraints([
+            Constraint::Fill(1),
+            Constraint::Length(MENU_WIDTH),
+            Constraint::Fill(1),
+        ])
+        .split(vertical_chunks[1]);
+
+    let centered_area = horizontal_chunks[1];
+
     let selected = list_state.selected().unwrap_or(0);
     let text_style = Style::default().fg(colors::WHITE);
     let menu_items: Vec<ListItem> = vec![
@@ -60,7 +84,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     ];
 
     let menu = List::new(menu_items);
-    frame.render_stateful_widget(menu, content_area, list_state);
+    frame.render_stateful_widget(menu, centered_area, list_state);
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
