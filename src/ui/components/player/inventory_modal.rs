@@ -261,8 +261,15 @@ impl InventoryModal {
                 false
             }
             Key::Char('u') | Key::Char('U') => {
-                let _ = self.use_selected_consumable();
-                // TODO: Display message to user
+                if let Some(message) = self.use_selected_consumable() {
+                    let gs = game_state();
+                    // Check if the message indicates an error
+                    if message.contains("Cannot") || message.contains("Already") || message.contains("no effect") {
+                        gs.toasts.error(message);
+                    } else {
+                        gs.toasts.success(message);
+                    }
+                }
                 false
             }
             Key::Esc | Key::Char('i') => true, // Close modal

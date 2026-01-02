@@ -231,15 +231,31 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         Cmd::Submit => {
+            use crate::location::BlacksmithError;
+
             let selected = list_state.selected().unwrap_or(0);
             let gs = game_state();
-            match selected {
-                0 => { let _ = gs.town.blacksmith.add_fuel(&mut gs.player); }
-                1 => { let _ = gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::TinIngot); }
-                2 => { let _ = gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::CopperIngot); }
-                3 => { let _ = gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::BronzeIngot); }
+            let result = match selected {
+                0 => gs.town.blacksmith.add_fuel(&mut gs.player).map(|_| "Added fuel"),
+                1 => gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::TinIngot).map(|_| "Smelted Tin Ingot"),
+                2 => gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::CopperIngot).map(|_| "Smelted Copper Ingot"),
+                3 => gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::BronzeIngot).map(|_| "Smelted Bronze Ingot"),
                 4 => return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu)),
-                _ => {}
+                _ => return (CmdResult::None, None),
+            };
+
+            match result {
+                Ok(msg) => gs.toasts.success(msg),
+                Err(e) => {
+                    let msg = match e {
+                        BlacksmithError::NotEnoughFuel => "Not enough fuel",
+                        BlacksmithError::NoFuel => "No fuel to add",
+                        BlacksmithError::RecipeError(_) => "Missing ingredients",
+                        BlacksmithError::InventoryFull => "Inventory is full",
+                        _ => "Smelting failed",
+                    };
+                    gs.toasts.error(msg);
+                }
             }
             (CmdResult::Submit(tuirealm::State::None), None)
         }

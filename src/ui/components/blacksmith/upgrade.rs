@@ -94,10 +94,27 @@ pub fn handle(
                 )
             } else if let Some(upgrade_item) = item_list.selected_item() {
                 let gs = game_state();
-                let _ = gs
+                let item_name = upgrade_item.inv_item.item.name;
+                match gs
                     .town
                     .blacksmith
-                    .upgrade_player_item(&mut gs.player, upgrade_item.inv_item.item.item_uuid);
+                    .upgrade_player_item(&mut gs.player, upgrade_item.inv_item.item.item_uuid)
+                {
+                    Ok(_) => gs.toasts.success(format!("Upgraded {}!", item_name)),
+                    Err(e) => {
+                        use crate::location::BlacksmithError;
+                        let msg = match e {
+                            BlacksmithError::MaxUpgradesReached => "Max upgrades reached",
+                            BlacksmithError::NotEnoughGold => "Not enough gold",
+                            BlacksmithError::NoUpgradeStones => "No upgrade stones",
+                            BlacksmithError::NotEquipment => "Cannot upgrade this item",
+                            BlacksmithError::ItemNotFound => "Item not found",
+                            BlacksmithError::InventoryFull => "Inventory is full",
+                            _ => "Upgrade failed",
+                        };
+                        gs.toasts.error(msg);
+                    }
+                }
                 (CmdResult::Submit(tuirealm::State::None), None)
             } else {
                 (CmdResult::None, None)

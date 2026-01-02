@@ -18,5 +18,5 @@ pub use spec::{
     AlchemistData, BlacksmithData, FieldData, LocationData, LocationRegistry, LocationSpec,
     MineData, StoreData,
 };
-pub use store::{sell_player_item, Store, StoreItem};
+pub use store::{sell_player_item, Store, StoreError, StoreItem};
 pub use traits::{Location, LocationEntryError};

@@ -139,33 +139,35 @@ impl Store {
     }
 
     /// Attempt to purchase an item at the given index.
-    /// Returns Some(item) on success, None on failure (out of stock, insufficient gold, inventory full).
-    pub fn purchase_item(&mut self, player: &mut Player, index: usize) -> Option<Item> {
+    /// Returns Ok(item) on success, Err on failure.
+    pub fn purchase_item(&mut self, player: &mut Player, index: usize) -> Result<Item, super::StoreError> {
+        use super::StoreError;
+
         if index >= self.inventory.len() {
-            return None;
+            return Err(StoreError::InvalidIndex);
         }
 
         // Take item from store
-        let item = self.inventory[index].take_item()?;
+        let item = self.inventory[index].take_item().ok_or(StoreError::OutOfStock)?;
         let cost = item.purchase_price();
 
         // Check gold
         if player.gold() < cost {
             // Not enough gold - put item back
             self.inventory[index].items.push(item);
-            return None;
+            return Err(StoreError::NotEnoughGold);
         }
 
         // Try to add to inventory
         if player.add_to_inv(item.clone()).is_err() {
             // Inventory full - put item back
             self.inventory[index].items.push(item);
-            return None;
+            return Err(StoreError::InventoryFull);
         }
 
         // Deduct gold
         player.dec_gold(cost);
-        Some(item)
+        Ok(item)
     }
 
     // Location trait accessors

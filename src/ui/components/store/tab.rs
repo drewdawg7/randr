@@ -224,7 +224,19 @@ impl StoreTab {
                     if let Some(idx) = gs.store().inventory.iter().position(|si| si.item_id == item_id) {
                         let store = &mut gs.town.store;
                         let player = &mut gs.player;
-                        let _ = store.purchase_item(player, idx);
+                        match store.purchase_item(player, idx) {
+                            Ok(item) => gs.toasts.success(format!("Purchased {}!", item.name)),
+                            Err(e) => {
+                                use crate::location::StoreError;
+                                let msg = match e {
+                                    StoreError::OutOfStock => "Out of stock",
+                                    StoreError::NotEnoughGold => "Not enough gold",
+                                    StoreError::InventoryFull => "Inventory is full",
+                                    StoreError::InvalidIndex => "Item not found",
+                                };
+                                gs.toasts.error(msg);
+                            }
+                        }
                     }
                 }
                 CmdResult::Submit(self.state())
@@ -255,7 +267,9 @@ impl StoreTab {
                     self.reset_selection();
                 } else if let Some(sell_item) = self.sell_list.selected_item() {
                     let gs = game_state();
+                    let item_name = sell_item.inv_item.item.name;
                     sell_player_item(&mut gs.player, &sell_item.inv_item.item);
+                    gs.toasts.success(format!("Sold {}!", item_name));
                 }
                 CmdResult::Submit(self.state())
             }

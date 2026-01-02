@@ -68,9 +68,14 @@ impl MockComponent for FieldTab {
                 StateChange::ToFight => {
                     let gs = game_state();
                     let field = &gs.town.field;
-                    if let Ok(mob) = field.spawn_mob() {
-                        gs.start_combat(mob);
-                        gs.current_screen = Id::Fight;
+                    match field.spawn_mob() {
+                        Ok(mob) => {
+                            gs.start_combat(mob);
+                            gs.current_screen = Id::Fight;
+                        }
+                        Err(_) => {
+                            gs.toasts.error("No enemies available");
+                        }
                     }
                 }
                 StateChange::ToMine => {

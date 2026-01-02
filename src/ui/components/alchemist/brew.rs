@@ -103,15 +103,30 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         Cmd::Submit => {
+            use crate::item::recipe::RecipeError;
+
             let selected = list_state.selected().unwrap_or(0);
             let gs = game_state();
 
             if selected < recipes.len() {
                 let recipe_id = recipes[selected];
-                if let Ok(recipe) = Recipe::new(recipe_id) {
-                    if let Ok(item) = recipe.craft(&mut gs.player) {
-                        let _ = gs.player.add_to_inv(item);
+                match Recipe::new(recipe_id) {
+                    Ok(recipe) => {
+                        match recipe.craft(&mut gs.player) {
+                            Ok(item) => {
+                                let item_name = item.name;
+                                match gs.player.add_to_inv(item) {
+                                    Ok(_) => gs.toasts.success(format!("Brewed {}!", item_name)),
+                                    Err(_) => gs.toasts.error("Inventory is full"),
+                                }
+                            }
+                            Err(RecipeError::NotEnoughIngredients) => {
+                                gs.toasts.error("Missing ingredients");
+                            }
+                            Err(_) => gs.toasts.error("Brewing failed"),
+                        }
                     }
+                    Err(_) => gs.toasts.error("Invalid recipe"),
                 }
             } else {
                 return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu));
