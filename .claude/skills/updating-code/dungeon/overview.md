@@ -12,6 +12,7 @@ The dungeon system provides procedurally generated dungeon exploration with mons
 | `src/dungeon/enums.rs` | Direction, DungeonError, RoomType enums |
 | `src/system.rs` | GameState dungeon field and CombatSource enum |
 | `src/ui/components/dungeon/tab.rs` | Town tab entry point (DungeonTab) |
+| `src/ui/components/dungeon/minimap.rs` | Minimap rendering with fog of war |
 | `src/ui/components/screens/dungeon.rs` | Main dungeon gameplay screen |
 | `src/ui/components/screens/fight.rs` | Combat integration (CombatSource handling) |
 
@@ -65,6 +66,8 @@ Located in `src/dungeon/generation.rs`:
 - `current_room()` / `current_room_mut()` - Get room at player position
 
 ### DungeonRoom
+- `visit()` - Mark room as visited (also sets revealed)
+- `reveal()` - Mark room as revealed (visible on map but not visited)
 - `clear()` - Mark room as cleared
 - `open_chest()` - Get loot drops (for Chest rooms)
 
@@ -99,3 +102,38 @@ if room.is_cleared && self.state == DungeonState::RoomEntry {
 - Town screen: Added `DungeonTab` with `BorderTheme::Stone`
 - Dungeon icon: `\u{F0509}` (castle icon)
 - Uses `LIGHT_STONE` and `GRANITE` colors for theme
+
+## Minimap System
+
+Located in `src/ui/components/dungeon/minimap.rs`. Renders in bottom-left corner of dungeon screen.
+
+### Room Visibility States
+- **Visited**: Player has entered the room (`is_visited = true`)
+- **Revealed**: Room is adjacent to a visited room (`is_revealed = true`)
+- **Hidden**: Not yet discovered (fog of war)
+
+### Fog of War Behavior
+- Entry room is visited on generation
+- Adjacent rooms are revealed when player visits a room
+- Revealed rooms stay visible permanently (don't re-fog)
+- Empty spaces shown near revealed areas
+
+### Minimap Icons (Nerdfont)
+| Icon Code | Purpose | Display |
+|-----------|---------|---------|
+| `\u{f0787}` | Monster room | Crossed swords |
+| `\u{F0544}` | Boss room | Skull |
+| `\u{f0726}` | Chest room | Treasure chest |
+| `\u{F023E}` | Rest room | Campfire |
+| `\u{F0236}` | Trap room | Warning |
+| `\u{F19D1}` | Treasure room | Gem |
+| `\u{F415}` | Player location | Person |
+
+### Color Coding
+- Yellow: Current room
+- Green: Cleared room
+- Light grey: Visited but not cleared
+- Dark grey: Revealed but not visited (shows `?`)
+
+### Cell Format
+Each room displayed as `[ X ]` (5 chars wide) for proper icon spacing.
