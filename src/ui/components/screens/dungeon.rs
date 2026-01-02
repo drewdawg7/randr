@@ -278,7 +278,11 @@ impl MockComponent for DungeonScreen {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let frame_size = frame.area();
 
-        // Render stone wall background first
+        // Fill background with MINE_BG to match border
+        let bg_fill = Block::default().style(Style::default().bg(colors::MINE_BG));
+        frame.render_widget(bg_fill, area);
+
+        // Render stone wall pattern on top
         render_stone_wall(frame, area);
 
         // Calculate inner area (inside the border - 1px on each side)
