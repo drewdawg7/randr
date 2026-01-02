@@ -4,7 +4,6 @@ mod forge_art;
 mod menu;
 mod quality;
 mod smelt;
-mod stone_wall_art;
 mod tab;
 mod upgrade;
 

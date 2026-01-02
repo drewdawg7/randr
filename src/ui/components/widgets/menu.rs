@@ -1,10 +1,11 @@
 use tuirealm::{command::{Cmd, CmdResult}, props::{AttrValue, Attribute, Props}, Component, Event, Frame, MockComponent, NoUserEvent, State, StateValue};
 use tuirealm::event::{Key, KeyEvent};
-use ratatui::{widgets::{List, ListItem, ListState}};
+use ratatui::{style::Style, widgets::{List, ListItem, ListState}};
 use ratatui::layout::Rect;
 use ratatui::text::{Line, Span};
 
 use crate::ui::components::utilities::{list_move_down, list_move_up, selection_prefix};
+use crate::ui::theme as colors;
 
 pub struct MenuItem {
     pub label: String,
@@ -28,13 +29,14 @@ impl Menu {
 
 impl MockComponent for Menu {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
+        let text_style = Style::default().fg(colors::WHITE);
         let items: Vec<ListItem> = self.items
             .iter()
             .enumerate()
             .map(|(i, item)| {
                 ListItem::new(Line::from(vec![
                     selection_prefix(self.list_state.selected() == Some(i)),
-                    Span::raw(item.label.clone()),
+                    Span::styled(item.label.clone(), text_style),
                 ]))
             })
             .collect();

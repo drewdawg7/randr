@@ -1,3 +1,4 @@
+pub(crate) mod backgrounds;
 pub(crate) mod wrappers;
 pub(crate) mod widgets;
 pub(crate) mod store;
