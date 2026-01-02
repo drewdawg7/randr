@@ -192,7 +192,7 @@ Located in `src/ui/components/dungeon/minimap.rs`. Renders in bottom-left corner
 | Icon Code | Purpose | Display |
 |-----------|---------|---------|
 | `\u{f0787}` | Monster room | Crossed swords |
-| `\u{F0544}` | Boss room | Skull |
+| `\u{eef8}` | Boss room | Dragon head |
 | `\u{f0726}` | Chest room | Treasure chest |
 | `\u{F023E}` | Rest room | Campfire |
 | `\u{F0236}` | Trap room | Warning |
@@ -262,3 +262,99 @@ Format: `♥ [████████░░░░░░░░░░░░] curr
 - `handle_rest_submit()` processes selection:
   - Rest: Heals 50% max HP using `player.heal(amount)`
   - Continue: Transitions to `DungeonState::Navigation`
+
+## Boss Room Feature
+
+### Overview
+Each dungeon contains exactly one boss room with a dragon boss. The boss fight happens in-room (not in the normal FightScreen) and the player cannot escape until the boss is defeated.
+
+### Key Files
+| File | Purpose |
+|------|---------|
+| `src/dungeon/definition.rs` | `boss: Option<Mob>` field on Dungeon |
+| `src/dungeon/generation.rs` | `place_boss_room()` places boss at dead ends |
+| `src/ui/components/dungeon/dragon_art.rs` | Colored ASCII dragon art |
+| `src/ui/components/screens/dungeon.rs` | `BossRoom` state and rendering |
+
+### Boss Placement
+- Spawns at dead ends (rooms with only 1 adjacent room)
+- Excludes the starting room
+- Falls back to any non-start room if no dead ends exist
+- Boss room icon (`\u{eef8}` dragon head) revealed when adjacent (not `?`)
+
+### Boss Storage
+The dragon boss is stored on `Dungeon.boss: Option<Mob>`:
+- Spawned once when first entering boss room via `gs.spawn_mob(MobId::Dragon)`
+- Persists across renders (prevents HP fluctuation bug)
+- Cleared when dungeon resets
+
+### DungeonState::BossRoom
+Added to the state machine:
+```rust
+enum DungeonState {
+    RoomEntry,
+    Navigation,
+    RestRoom,
+    BossRoom,  // In-room boss combat
+}
+```
+
+### Boss Room UI Layout
+```
+[ASCII Dragon Art - 41x19 chars]
+
+♥ [████████░░░░░░░░░░░░] 81/100   Dragon
+
+> Attack
+```
+
+- Dragon art rendered with multiple colors (scales, fire, eyes)
+- HP bar below dragon shows boss health
+- Combat log displays damage messages
+- Single "Attack" option (no escape)
+
+### In-Room Combat
+`handle_boss_submit()` implements boss combat without FightScreen:
+1. Player attacks boss using `CombatSystem::attack()`
+2. Log player damage dealt
+3. If boss dies: mark room cleared, transition to Navigation
+4. If boss alive: boss counterattacks player
+5. If player dies: kick out of dungeon, reset dungeon
+
+### Dragon Removed from Mob Tables
+Dragon is boss-only, removed from:
+- `src/dungeon/traits.rs` - Dungeon mob_table
+- `src/location/field/traits.rs` - Field mob weights
+- `src/location/spec/specs.rs` - VILLAGE_FIELD spec
+
+### Death Handling
+Player death anywhere in dungeon (including boss):
+- `FightScreen` checks for dungeon death: `gs.reset_dungeon()` + `gs.leave_dungeon()`
+- Boss room death handled in `handle_boss_submit()` directly
+- Shows toast: "You were defeated! Retreating from dungeon..."
+
+### Fresh Dungeon Detection
+In `view()`, detects new dungeon entry to reset screen state:
+```rust
+let visited_count = dungeon.rooms.iter().flatten()
+    .filter(|r| r.as_ref().map(|room| room.is_visited).unwrap_or(false))
+    .count();
+let current_room_not_cleared = !current_room.is_cleared;
+
+if visited_count == 1 && current_room_not_cleared && self.state != DungeonState::RoomEntry {
+    self.state = DungeonState::RoomEntry;
+    self.boss_combat_log.clear();
+    self.reset_selection();
+}
+```
+Note: Must check `current_room_not_cleared` to avoid resetting after clearing start room.
+
+### Dragon ASCII Art
+Located in `src/ui/components/dungeon/dragon_art.rs`:
+- Dimensions: 41 wide x 19 tall
+- Multi-colored using theme colors:
+  - `scale_dark` / `scale` / `scale_light`: Forest greens for body
+  - `eye`: Ember red for glowing eyes
+  - `fire` / `fire_hot`: Orange/yellow for fire breath
+  - `claw` / `teeth`: Light stone/white for claws and teeth
+  - `inner`: Deep orange for inner glow
