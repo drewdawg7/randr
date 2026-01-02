@@ -133,6 +133,29 @@ if room.is_cleared && self.state == DungeonState::RoomEntry {
 - Dungeon icon: `\u{F0509}` (castle icon)
 - Uses `LIGHT_STONE` and `GRANITE` colors for theme
 
+### Visual Theme (Stone Background & Border)
+Both `DungeonTab` (entrance screen) and `DungeonScreen` (inside dungeon) use:
+- **Background**: `MINE_BG` fill + `render_stone_wall()` pattern
+- **Border**: `BorderTheme::Stone` ASCII art border
+
+**DungeonTab** (`src/ui/components/dungeon/tab.rs`):
+```rust
+render_stone_wall(frame, area);
+menu::render(frame, area, &mut self.list_state);
+```
+
+**DungeonScreen** (`src/ui/components/screens/dungeon.rs`):
+```rust
+// Fill background to match border
+let bg_fill = Block::default().style(Style::default().bg(colors::MINE_BG));
+frame.render_widget(bg_fill, area);
+render_stone_wall(frame, area);
+// ... content renders in inner_area (1px inset for border)
+// Border rendered last using BorderTheme::Stone
+```
+
+Pattern follows other screens like `FightScreen` and `MineScreen` that render their own borders.
+
 ## Minimap System
 
 Located in `src/ui/components/dungeon/minimap.rs`. Renders in bottom-left corner of dungeon screen.
