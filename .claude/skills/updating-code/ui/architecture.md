@@ -268,17 +268,47 @@ TabbedContainer::new(vec![
 
 ---
 
+## DungeonScreen Module Structure
+
+**Location**: `src/ui/components/screens/dungeon/`
+
+The DungeonScreen was split into focused sub-modules for maintainability:
+
+| File | Purpose |
+|------|---------|
+| `mod.rs` | Main component, DungeonState enum, core methods |
+| `room_entry.rs` | Initial room interaction (Monster, Chest, etc.) |
+| `navigation.rs` | Compass-based movement between rooms |
+| `rest_room.rs` | Rest areas where player can heal |
+| `boss_room.rs` | Boss fight handling (trapped until victory/death) |
+
+### DungeonState Enum
+
+```rust
+pub enum DungeonState {
+    RoomEntry,    // Player just entered a room
+    Navigation,   // Room cleared, can navigate
+    RestRoom,     // In a rest area
+    BossRoom,     // Boss fight (trapped!)
+}
+```
+
+### State Module Pattern
+
+Each state module exports:
+- `render(frame, area, &state_fields)` - Render the state UI
+- `handle_submit(state_fields) -> Option<DungeonState>` - Handle action, return new state
+
+---
+
 ## Future Improvements (Deferred)
 
 ### Phase 1: Command Architecture
 Decouple game logic from UI by introducing a command layer. Currently, game logic (combat, shopping, mining) executes directly in UI event handlers.
 
-### Phase 6: Split DungeonScreen
-DungeonScreen is 1270 lines. Should be split into:
-- `dungeon/room_entry.rs`
-- `dungeon/navigation.rs`
-- `dungeon/rest_room.rs`
-- `dungeon/boss_room.rs`
-
 ### Phase 7: Reorganize File Structure
-Consolidate screens under `src/ui/screens/` for consistent organization.
+Deferred as LOW priority. Current structure is reasonable:
+- Tabs: `components/{store,blacksmith,alchemist,field,dungeon}/`
+- Screens: `components/screens/{main_menu,town,fight,dungeon/}`
+- Wrappers: `components/wrappers/`
+- Widgets: `components/widgets/`
