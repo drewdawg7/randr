@@ -2,27 +2,54 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Line, Span},
-    widgets::ListState,
     Frame,
 };
 use tuirealm::command::{Cmd, CmdResult};
 
 use crate::{
     combat::HasGold,
-    inventory::HasInventory,
     item::recipe::{Recipe, RecipeId},
     system::game_state,
 };
-use crate::ui::components::utilities::{
-    list_move_down, list_move_up, render_location_header, selection_prefix,
-    COIN, RETURN_ARROW,
+use crate::ui::components::utilities::render_location_header;
+use crate::ui::components::widgets::item_list::{
+    ForgeFilter, ItemList, ItemListConfig, RecipeItem,
 };
 use crate::ui::theme as colors;
 
 use super::anvil_art::render_anvil_art;
 use super::StateChange;
 
-pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
+const COIN: &str = "●";
+
+/// Create a new ItemList for the forge screen.
+pub fn create_item_list() -> ItemList<RecipeItem, ForgeFilter> {
+    let config = ItemListConfig {
+        show_filter_button: true,
+        show_scroll_indicators: true,
+        visible_count: 6,
+        show_back_button: true,
+        back_label: "Back",
+        background: None,
+    };
+    ItemList::new(config)
+}
+
+/// Rebuild the list of forge recipes.
+pub fn rebuild_items(item_list: &mut ItemList<RecipeItem, ForgeFilter>) {
+    let recipes = RecipeId::all_forging_recipes();
+    let items: Vec<RecipeItem> = recipes
+        .into_iter()
+        .filter_map(|recipe_id| {
+            Recipe::new(recipe_id).ok().map(|recipe| {
+                RecipeItem::new(recipe_id, recipe.name())
+            })
+        })
+        .collect();
+    item_list.set_items(items);
+}
+
+pub fn render(frame: &mut Frame, area: Rect, item_list: &mut ItemList<RecipeItem, ForgeFilter>) {
     let gs = game_state();
     let player_gold = gs.player.gold();
     let blacksmith = gs.blacksmith();
@@ -81,97 +108,37 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
         }
     }
 
-    // Menu - dynamically generated from forging recipes
-    let selected = list_state.selected().unwrap_or(0);
+    // Rebuild items before rendering (to update ingredient counts)
+    rebuild_items(item_list);
+
+    // Use buffer rendering for menu area
     let menu_padding = " ".repeat(h_padding as usize);
-    let recipes = RecipeId::all_forging_recipes();
-    let text_style = Style::default().fg(colors::WHITE);
-
-    let mut menu_lines: Vec<Line> = recipes.iter().enumerate().map(|(idx, &recipe_id)| {
-        let recipe = Recipe::new(recipe_id).expect("Recipe should exist");
-        let ingredients_str = recipe.ingredients()
-            .iter()
-            .map(|(&item_id, &qty)| {
-                let have = gs.player.find_item_by_id(item_id)
-                    .map(|inv| inv.quantity).unwrap_or(0);
-                let name = gs.get_item_name(item_id);
-                format!("{}: {}/{}", name, have, qty)
-            })
-            .collect::<Vec<_>>()
-            .join(", ");
-
-        Line::from(vec![
-            Span::raw(menu_padding.clone()),
-            selection_prefix(selected == idx),
-            Span::styled(format!("{} ({})", recipe.name(), ingredients_str), text_style),
-        ])
-    }).collect();
-
-    menu_lines.push(Line::from(vec![
-        Span::raw(menu_padding),
-        selection_prefix(selected == recipes.len()),
-        Span::styled(format!("{} Back", RETURN_ARROW), text_style),
-    ]));
-
-    // Render menu lines directly to buffer to preserve background
-    let menu_area = chunks[1];
-    for (i, line) in menu_lines.iter().enumerate() {
-        if i < menu_area.height as usize {
-            let y = menu_area.y + i as u16;
-            let mut x = menu_area.x;
-            for span in line.spans.iter() {
-                let has_style = span.style.fg.is_some() || span.style.bg.is_some();
-                for ch in span.content.chars() {
-                    if x < menu_area.x + menu_area.width {
-                        // Skip spaces in unstyled spans to preserve background
-                        if ch == ' ' && !has_style {
-                            x += 1;
-                            continue;
-                        }
-                        if let Some(cell) = buf.cell_mut((x, y)) {
-                            cell.set_char(ch);
-                            if let Some(fg) = span.style.fg {
-                                cell.set_fg(fg);
-                            }
-                            if let Some(bg) = span.style.bg {
-                                cell.set_bg(bg);
-                            }
-                        }
-                        x += 1;
-                    }
-                }
-            }
-        }
-    }
+    item_list.render_to_buffer(frame, chunks[1], &menu_padding);
 }
 
-pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
-    let recipes = RecipeId::all_forging_recipes();
-    let menu_size = recipes.len() + 1; // +1 for back button
-
+pub fn handle(cmd: Cmd, item_list: &mut ItemList<RecipeItem, ForgeFilter>) -> (CmdResult, Option<StateChange>) {
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {
-            list_move_up(list_state, menu_size);
+            item_list.move_up();
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         Cmd::Move(tuirealm::command::Direction::Down) => {
-            list_move_down(list_state, menu_size);
+            item_list.move_down();
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         Cmd::Submit => {
-            let selected = list_state.selected().unwrap_or(0);
-            let gs = game_state();
+            if item_list.is_back_selected() {
+                return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu));
+            }
 
-            if selected < recipes.len() {
-                let recipe_id = recipes[selected];
-                if let Ok(recipe) = Recipe::new(recipe_id) {
+            if let Some(recipe_item) = item_list.selected_item() {
+                let gs = game_state();
+                if let Ok(recipe) = Recipe::new(recipe_item.recipe_id) {
                     if let Ok(item) = recipe.craft(&mut gs.player) {
+                        use crate::inventory::HasInventory;
                         let _ = gs.player.add_to_inv(item);
                     }
                 }
-            } else {
-                // Back button
-                return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu));
             }
             (CmdResult::Submit(tuirealm::State::None), None)
         }

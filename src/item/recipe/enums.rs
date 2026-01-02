@@ -4,6 +4,16 @@ pub enum RecipeError {
     NotEnoughIngredients,
 }
 
+/// Material type for forge filtering
+#[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
+pub enum ForgeMaterial {
+    Copper,
+    Tin,
+    Bronze,
+    #[default]
+    Other,
+}
+
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum RecipeType {
     Smelting,  // ore to ingot
@@ -70,5 +80,19 @@ impl RecipeId {
 
     pub fn all_alchemy_recipes() -> Vec<RecipeId> {
         vec![RecipeId::BasicHPPotion]
+    }
+
+    /// Get the material type for this recipe (for forge filtering)
+    pub fn material(&self) -> ForgeMaterial {
+        let name = format!("{:?}", self);
+        if name.starts_with("Copper") {
+            ForgeMaterial::Copper
+        } else if name.starts_with("Tin") {
+            ForgeMaterial::Tin
+        } else if name.starts_with("Bronze") {
+            ForgeMaterial::Bronze
+        } else {
+            ForgeMaterial::Other
+        }
     }
 }

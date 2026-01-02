@@ -1,4 +1,5 @@
 use ratatui::{
+    buffer::Buffer,
     layout::Rect,
     style::Style,
     text::{Line, Span},
@@ -301,6 +302,170 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
 
         let list = List::new(list_items).style(list_style);
         frame.render_stateful_widget(list, area, &mut self.list_state);
+    }
+
+    /// Render the item list directly to frame buffer, preserving background.
+    /// Use this when rendering over ASCII art or custom backgrounds.
+    pub fn render_to_buffer(&mut self, frame: &mut Frame, area: Rect, left_padding: &str) {
+        let buf = frame.buffer_mut();
+
+        // If showing filter button, render it at the top
+        let list_area = if self.config.show_filter_button && area.height > 1 {
+            self.render_filter_button_to_buffer(buf, Rect::new(area.x, area.y, area.width, 1), left_padding);
+            Rect::new(area.x, area.y + 1, area.width, area.height.saturating_sub(1))
+        } else {
+            area
+        };
+
+        self.render_items_to_buffer(buf, list_area, left_padding);
+    }
+
+    /// Render filter button directly to buffer.
+    fn render_filter_button_to_buffer(&self, buf: &mut Buffer, area: Rect, left_padding: &str) {
+        let button_text = format!("[ {} ]", self.filter.label());
+        let button_line = Line::from(vec![
+            Span::raw(left_padding.to_string()),
+            Span::styled(
+                button_text,
+                Style::default().fg(colors::CREAM_WOOD),
+            ),
+        ]);
+        Self::render_line_to_buffer(buf, &button_line, area.x, area.y, area.width);
+    }
+
+    /// Render items directly to buffer, preserving background.
+    fn render_items_to_buffer(&mut self, buf: &mut Buffer, area: Rect, left_padding: &str) {
+        let selected = self.selected_index();
+        let visible_count = self.config.visible_count.min(area.height as usize);
+        let end_idx = (self.scroll_offset + visible_count).min(self.filtered_indices.len());
+
+        let mut lines: Vec<Line> = Vec::new();
+
+        // Show scroll indicator if scrolled down
+        if self.config.show_scroll_indicators && self.scroll_offset > 0 {
+            lines.push(Line::from(vec![
+                Span::raw(left_padding.to_string()),
+                Span::styled("  ... more above ...", Style::default().fg(DARK_GRAY)),
+            ]));
+        }
+
+        // Render visible items
+        for (offset, &item_idx) in self.filtered_indices[self.scroll_offset..end_idx]
+            .iter()
+            .enumerate()
+        {
+            let global_idx = self.scroll_offset + offset;
+            let is_selected = global_idx == selected;
+            let item = &self.items[item_idx];
+            lines.push(self.render_item_line(item, is_selected, left_padding));
+        }
+
+        // Render back button if configured
+        if self.config.show_back_button {
+            let back_idx = self.filtered_indices.len();
+            let is_back_in_view = back_idx >= self.scroll_offset
+                && back_idx < self.scroll_offset + visible_count;
+
+            if is_back_in_view || self.filtered_indices.is_empty() {
+                let is_selected = selected == back_idx;
+                lines.push(Line::from(vec![
+                    Span::raw(left_padding.to_string()),
+                    selection_prefix(is_selected),
+                    Span::styled(
+                        format!("{} {}", RETURN_ARROW, self.config.back_label),
+                        Style::default().fg(colors::WHITE),
+                    ),
+                ]));
+            }
+        }
+
+        // Show scroll indicator if more items below
+        let has_more_below = self.config.show_scroll_indicators
+            && end_idx < self.filtered_indices.len();
+        let back_not_visible = self.config.show_back_button
+            && self.filtered_indices.len() >= self.scroll_offset + visible_count;
+        if has_more_below || back_not_visible {
+            lines.push(Line::from(vec![
+                Span::raw(left_padding.to_string()),
+                Span::styled("  ... more below ...", Style::default().fg(DARK_GRAY)),
+            ]));
+        }
+
+        // Show empty message if no items
+        if self.filtered_indices.is_empty() && !self.config.show_back_button {
+            lines.push(Line::from(vec![
+                Span::raw(left_padding.to_string()),
+                Span::styled("  No items", Style::default().fg(DARK_GRAY)),
+            ]));
+        }
+
+        // Render lines to buffer
+        for (i, line) in lines.iter().enumerate() {
+            if i < area.height as usize {
+                let y = area.y + i as u16;
+                Self::render_line_to_buffer(buf, line, area.x, y, area.width);
+            }
+        }
+    }
+
+    /// Render a single item as a Line (for buffer rendering).
+    fn render_item_line(&self, item: &T, is_selected: bool, left_padding: &str) -> Line<'static> {
+        let mut spans = vec![
+            Span::raw(left_padding.to_string()),
+            selection_prefix(is_selected),
+        ];
+
+        // Add lock prefix if applicable
+        if item.show_lock() {
+            if let Some(i) = item.item() {
+                spans.push(lock_prefix(i));
+            }
+        }
+
+        // Add item display (name with quality color and quantity/upgrades)
+        if let Some(i) = item.item() {
+            let quantity = item.quantity();
+            spans.push(item_display(i, quantity));
+        } else {
+            // Non-item entries (like recipes)
+            spans.push(Span::styled(
+                item.display_name().into_owned(),
+                Style::default().fg(colors::WHITE),
+            ));
+        }
+
+        // Add suffix spans (price, cost, etc.)
+        spans.extend(item.suffix_spans());
+
+        Line::from(spans)
+    }
+
+    /// Helper to render a Line to buffer, preserving background for unstyled spaces.
+    fn render_line_to_buffer(buf: &mut Buffer, line: &Line, start_x: u16, y: u16, max_width: u16) {
+        let mut x = start_x;
+        for span in line.spans.iter() {
+            let has_style = span.style.fg.is_some() || span.style.bg.is_some();
+            for ch in span.content.chars() {
+                if x >= start_x + max_width {
+                    break;
+                }
+                // Skip spaces in unstyled spans to preserve background
+                if ch == ' ' && !has_style {
+                    x += 1;
+                    continue;
+                }
+                if let Some(cell) = buf.cell_mut((x, y)) {
+                    cell.set_char(ch);
+                    if let Some(fg) = span.style.fg {
+                        cell.set_fg(fg);
+                    }
+                    if let Some(bg) = span.style.bg {
+                        cell.set_bg(bg);
+                    }
+                }
+                x += 1;
+            }
+        }
     }
 
     /// Render a single item as a ListItem.

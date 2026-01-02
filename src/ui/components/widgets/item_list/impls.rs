@@ -4,7 +4,7 @@ use ratatui::{style::Style, text::Span};
 
 use crate::{
     inventory::{EquipmentSlot, InventoryItem},
-    item::{enums::ItemQuality, recipe::RecipeId, Item},
+    item::{enums::ItemQuality, recipe::{ForgeMaterial, RecipeId}, Item},
     location::store::StoreItem,
     loot::WorthGold,
     system::game_state,
@@ -317,5 +317,9 @@ impl ListItem for RecipeItem {
 
     fn show_lock(&self) -> bool {
         false
+    }
+
+    fn forge_material(&self) -> Option<ForgeMaterial> {
+        Some(self.recipe_id.material())
     }
 }

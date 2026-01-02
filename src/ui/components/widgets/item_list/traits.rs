@@ -2,7 +2,7 @@ use std::borrow::Cow;
 
 use ratatui::text::Span;
 
-use crate::item::{Item, ItemType};
+use crate::item::{recipe::ForgeMaterial, Item, ItemType};
 
 /// Core trait for items that can be displayed in an ItemList.
 /// Implement this for any type that should appear in an item list.
@@ -30,6 +30,11 @@ pub trait ListItem {
     /// Whether to show the lock prefix icon
     fn show_lock(&self) -> bool {
         self.item().map(|i| i.is_locked).unwrap_or(false)
+    }
+
+    /// Material type for forge filtering (only relevant for recipes)
+    fn forge_material(&self) -> Option<ForgeMaterial> {
+        None
     }
 }
 
@@ -111,6 +116,49 @@ impl<T: ListItem> ItemFilter<T> for InventoryFilter {
             InventoryFilter::Equipment => InventoryFilter::Materials,
             InventoryFilter::Materials => InventoryFilter::Consumables,
             InventoryFilter::Consumables => InventoryFilter::All,
+        }
+    }
+}
+
+/// Filter for forge recipes by material type.
+#[derive(Clone, Copy, PartialEq, Default)]
+pub enum ForgeFilter {
+    #[default]
+    All,
+    Copper,
+    Tin,
+    Bronze,
+    Other,
+}
+
+impl<T: ListItem> ItemFilter<T> for ForgeFilter {
+    fn label(&self) -> &'static str {
+        match self {
+            ForgeFilter::All => "All",
+            ForgeFilter::Copper => "Copper",
+            ForgeFilter::Tin => "Tin",
+            ForgeFilter::Bronze => "Bronze",
+            ForgeFilter::Other => "Other",
+        }
+    }
+
+    fn matches(&self, item: &T) -> bool {
+        match self {
+            ForgeFilter::All => true,
+            ForgeFilter::Copper => item.forge_material() == Some(ForgeMaterial::Copper),
+            ForgeFilter::Tin => item.forge_material() == Some(ForgeMaterial::Tin),
+            ForgeFilter::Bronze => item.forge_material() == Some(ForgeMaterial::Bronze),
+            ForgeFilter::Other => item.forge_material() == Some(ForgeMaterial::Other),
+        }
+    }
+
+    fn next(&self) -> Self {
+        match self {
+            ForgeFilter::All => ForgeFilter::Copper,
+            ForgeFilter::Copper => ForgeFilter::Tin,
+            ForgeFilter::Tin => ForgeFilter::Bronze,
+            ForgeFilter::Bronze => ForgeFilter::Other,
+            ForgeFilter::Other => ForgeFilter::All,
         }
     }
 }

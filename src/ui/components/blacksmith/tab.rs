@@ -9,7 +9,9 @@ use tuirealm::{
 use crate::inventory::HasInventory;
 use crate::system::game_state;
 use crate::ui::components::backgrounds::render_stone_wall;
-use crate::ui::components::widgets::item_list::{InventoryFilter, ItemList, QualityItem, UpgradeableItem};
+use crate::ui::components::widgets::item_list::{
+    ForgeFilter, InventoryFilter, ItemList, QualityItem, RecipeItem, UpgradeableItem,
+};
 
 use super::{forge, menu, quality, smelt, upgrade};
 
@@ -35,7 +37,7 @@ pub struct BlacksmithTab {
     state: BlacksmithState,
     menu_list_state: ListState,
     smelt_list_state: ListState,
-    forge_list_state: ListState,
+    forge_list: ItemList<RecipeItem, ForgeFilter>,
     upgrade_list: ItemList<UpgradeableItem, InventoryFilter>,
     quality_list: ItemList<QualityItem, InventoryFilter>,
 }
@@ -46,15 +48,13 @@ impl BlacksmithTab {
         menu_list_state.select(Some(0));
         let mut smelt_list_state = ListState::default();
         smelt_list_state.select(Some(0));
-        let mut forge_list_state = ListState::default();
-        forge_list_state.select(Some(0));
 
         Self {
             props: Props::default(),
             state: BlacksmithState::Menu,
             menu_list_state,
             smelt_list_state,
-            forge_list_state,
+            forge_list: forge::create_item_list(),
             upgrade_list: upgrade::create_item_list(),
             quality_list: quality::create_item_list(),
         }
@@ -63,7 +63,7 @@ impl BlacksmithTab {
     fn reset_selection(&mut self) {
         self.menu_list_state.select(Some(0));
         self.smelt_list_state.select(Some(0));
-        self.forge_list_state.select(Some(0));
+        self.forge_list.reset_selection();
         self.upgrade_list.reset_selection();
         self.quality_list.reset_selection();
     }
@@ -102,7 +102,7 @@ impl MockComponent for BlacksmithTab {
             }
             BlacksmithState::Forge => {
                 render_stone_wall(frame, area);
-                forge::render(frame, area, &mut self.forge_list_state);
+                forge::render(frame, area, &mut self.forge_list);
             }
         }
     }
@@ -117,7 +117,7 @@ impl MockComponent for BlacksmithTab {
             BlacksmithState::Upgrade => self.upgrade_list.selected_index(),
             BlacksmithState::Quality => self.quality_list.selected_index(),
             BlacksmithState::Smelt => self.smelt_list_state.selected().unwrap_or(0),
-            BlacksmithState::Forge => self.forge_list_state.selected().unwrap_or(0),
+            BlacksmithState::Forge => self.forge_list.selected_index(),
         };
         State::One(StateValue::Usize(index))
     }
@@ -132,7 +132,7 @@ impl MockComponent for BlacksmithTab {
             BlacksmithState::Upgrade => upgrade::handle(cmd, &mut self.upgrade_list),
             BlacksmithState::Quality => quality::handle(cmd, &mut self.quality_list),
             BlacksmithState::Smelt => smelt::handle(cmd, &mut self.smelt_list_state),
-            BlacksmithState::Forge => forge::handle(cmd, &mut self.forge_list_state),
+            BlacksmithState::Forge => forge::handle(cmd, &mut self.forge_list),
         };
 
         if let Some(change) = state_change {
@@ -232,11 +232,13 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
                 code: Key::Char('f') | Key::Char('F'),
                 ..
             }) => {
-                // Cycle filter in upgrade/quality mode
+                // Cycle filter in upgrade/quality/forge mode
                 if self.state == BlacksmithState::Upgrade {
                     self.upgrade_list.cycle_filter();
                 } else if self.state == BlacksmithState::Quality {
                     self.quality_list.cycle_filter();
+                } else if self.state == BlacksmithState::Forge {
+                    self.forge_list.cycle_filter();
                 }
                 None
             }
