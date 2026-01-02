@@ -10,6 +10,27 @@ pub enum ItemId {
     // Shields
     BasicShield,
 
+    // Armor - Copper
+    CopperHelmet,
+    CopperChestplate,
+    CopperGauntlets,
+    CopperGreaves,
+    CopperLeggings,
+
+    // Armor - Tin
+    TinHelmet,
+    TinChestplate,
+    TinGauntlets,
+    TinGreaves,
+    TinLeggings,
+
+    // Armor - Bronze
+    BronzeHelmet,
+    BronzeChestplate,
+    BronzeGauntlets,
+    BronzeGreaves,
+    BronzeLeggings,
+
     // Tools
     BronzePickaxe,
 

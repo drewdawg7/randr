@@ -1,6 +1,7 @@
 use once_cell::sync::Lazy;
 
 use crate::{
+    inventory::EquipmentSlot,
     item::enums::{EquipmentType, ItemQuality, ItemType, MaterialType, ToolKind},
     stats::{StatSheet, StatType},
 };
@@ -183,4 +184,166 @@ pub static TIN_ORE: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     max_upgrades: 0,
     max_stack_quantity: 99,
     gold_value: 5,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Copper Armor (same stats as Tin)
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub static COPPER_HELMET: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Copper Helmet",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 36),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 180,
+});
+
+pub static COPPER_CHESTPLATE: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Copper Chestplate",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 60),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 300,
+});
+
+pub static COPPER_GAUNTLETS: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Copper Gauntlets",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 24),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 120,
+});
+
+pub static COPPER_GREAVES: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Copper Greaves",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 30),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 150,
+});
+
+pub static COPPER_LEGGINGS: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Copper Leggings",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 54),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 270,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Tin Armor (same stats as Copper)
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub static TIN_HELMET: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Tin Helmet",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 36),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 180,
+});
+
+pub static TIN_CHESTPLATE: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Tin Chestplate",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 60),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 300,
+});
+
+pub static TIN_GAUNTLETS: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Tin Gauntlets",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 24),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 120,
+});
+
+pub static TIN_GREAVES: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Tin Greaves",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 30),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 150,
+});
+
+pub static TIN_LEGGINGS: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Tin Leggings",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 54),
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 270,
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Bronze Armor (better stats than Copper/Tin)
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub static BRONZE_HELMET: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Bronze Helmet",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 48),
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 270,
+});
+
+pub static BRONZE_CHESTPLATE: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Bronze Chestplate",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 80),
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 450,
+});
+
+pub static BRONZE_GAUNTLETS: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Bronze Gauntlets",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 32),
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 180,
+});
+
+pub static BRONZE_GREAVES: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Bronze Greaves",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 40),
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 225,
+});
+
+pub static BRONZE_LEGGINGS: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Bronze Leggings",
+    item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
+    quality: None,
+    stats: StatSheet::new().with(StatType::Defense, 72),
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 405,
 });

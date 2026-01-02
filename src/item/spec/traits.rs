@@ -10,6 +10,12 @@ use super::definition::ItemSpec;
 use super::specs::{
     BASIC_SHIELD, BRONZE_PICKAXE, COAL, COPPER_ORE, DAGGER, GOLD_RING, QUALITY_UPGRADE_STONE,
     SWORD, TIN_ORE,
+    // Copper Armor
+    COPPER_HELMET, COPPER_CHESTPLATE, COPPER_GAUNTLETS, COPPER_GREAVES, COPPER_LEGGINGS,
+    // Tin Armor
+    TIN_HELMET, TIN_CHESTPLATE, TIN_GAUNTLETS, TIN_GREAVES, TIN_LEGGINGS,
+    // Bronze Armor
+    BRONZE_HELMET, BRONZE_CHESTPLATE, BRONZE_GAUNTLETS, BRONZE_GREAVES, BRONZE_LEGGINGS,
 };
 
 impl SpawnFromSpec<ItemId> for ItemSpec {
@@ -59,6 +65,24 @@ impl RegistryDefaults<ItemId> for ItemSpec {
             (ItemId::CopperSword, COPPER_SWORD.clone()),
             (ItemId::SlimeGel, SLIMEGEL.clone()),
             (ItemId::Cowhide, COWHIDE.clone()),
+            // Copper Armor
+            (ItemId::CopperHelmet, COPPER_HELMET.clone()),
+            (ItemId::CopperChestplate, COPPER_CHESTPLATE.clone()),
+            (ItemId::CopperGauntlets, COPPER_GAUNTLETS.clone()),
+            (ItemId::CopperGreaves, COPPER_GREAVES.clone()),
+            (ItemId::CopperLeggings, COPPER_LEGGINGS.clone()),
+            // Tin Armor
+            (ItemId::TinHelmet, TIN_HELMET.clone()),
+            (ItemId::TinChestplate, TIN_CHESTPLATE.clone()),
+            (ItemId::TinGauntlets, TIN_GAUNTLETS.clone()),
+            (ItemId::TinGreaves, TIN_GREAVES.clone()),
+            (ItemId::TinLeggings, TIN_LEGGINGS.clone()),
+            // Bronze Armor
+            (ItemId::BronzeHelmet, BRONZE_HELMET.clone()),
+            (ItemId::BronzeChestplate, BRONZE_CHESTPLATE.clone()),
+            (ItemId::BronzeGauntlets, BRONZE_GAUNTLETS.clone()),
+            (ItemId::BronzeGreaves, BRONZE_GREAVES.clone()),
+            (ItemId::BronzeLeggings, BRONZE_LEGGINGS.clone()),
         ]
     }
 }
