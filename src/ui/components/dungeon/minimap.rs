@@ -97,9 +97,14 @@ fn render_cell(dungeon: &Dungeon, x: i32, y: i32, player_x: i32, player_y: i32) 
                     Style::default().fg(color),
                 )
             } else if room.is_revealed {
-                // Revealed but not visited - show as unknown
+                // Revealed but not visited - show boss rooms with icon, others as unknown
+                let icon = if room.room_type == RoomType::Boss {
+                    ICON_BOSS
+                } else {
+                    ICON_UNKNOWN
+                };
                 Span::styled(
-                    format!("[ {} ]", ICON_UNKNOWN),
+                    format!("[ {} ]", icon),
                     Style::default().fg(COLOR_ADJACENT),
                 )
             } else {

@@ -211,8 +211,6 @@ impl Dungeon {
         if let Some(&(x, y)) = dead_ends.choose(rng) {
             if let Some(room) = &mut self.rooms[y as usize][x as usize] {
                 room.room_type = RoomType::Boss;
-                // Boss rooms are always revealed on the minimap
-                room.is_revealed = true;
             }
         } else {
             // Fallback: if no dead ends, pick any non-entry Monster room
@@ -231,7 +229,6 @@ impl Dungeon {
             if let Some(&(x, y)) = monster_rooms.choose(rng) {
                 if let Some(room) = &mut self.rooms[y as usize][x as usize] {
                     room.room_type = RoomType::Boss;
-                    room.is_revealed = true;
                 }
             }
         }
