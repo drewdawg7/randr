@@ -18,6 +18,7 @@ use crate::{
     system::{game_state, CombatSource},
     ui::{
         components::{
+            backgrounds::{render_decorative_border, render_stone_wall},
             dungeon::minimap,
             utilities::{selection_prefix, RETURN_ARROW},
         },
@@ -271,8 +272,25 @@ impl Default for DungeonScreen {
     }
 }
 
+// Border dimensions
+const BORDER_WIDTH: u16 = 7; // Width of border patterns on each side
+
 impl MockComponent for DungeonScreen {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
+        // Render stone wall background first
+        render_stone_wall(frame, area);
+
+        // Render decorative border on top
+        render_decorative_border(frame, area);
+
+        // Calculate inner area (inside the border)
+        let inner_area = Rect {
+            x: area.x + BORDER_WIDTH,
+            y: area.y + 2, // Skip top corner and horizontal bar rows
+            width: area.width.saturating_sub(BORDER_WIDTH * 2),
+            height: area.height.saturating_sub(4), // Skip 2 rows top and 2 rows bottom
+        };
+
         let gs = game_state();
 
         // Check if we need to transition state after combat victory
@@ -289,7 +307,7 @@ impl MockComponent for DungeonScreen {
         let chunks = Layout::default()
             .direction(LayoutDirection::Vertical)
             .constraints([Constraint::Length(4), Constraint::Min(10)])
-            .split(area);
+            .split(inner_area);
 
         // Render header
         self.render_header(frame, chunks[0]);
@@ -300,8 +318,8 @@ impl MockComponent for DungeonScreen {
             DungeonState::Navigation => self.render_navigation(frame, chunks[1]),
         }
 
-        // Render minimap in bottom-left corner
-        self.render_minimap(frame, area);
+        // Render minimap in bottom-left corner (use inner_area so it stays inside border)
+        self.render_minimap(frame, inner_area);
     }
 
     fn attr(&mut self, attr: Attribute, value: AttrValue) {
