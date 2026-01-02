@@ -1,7 +1,6 @@
 use ratatui::{
     layout::Rect,
-    text::{Line, Span},
-    widgets::{List, ListItem, ListState},
+    widgets::ListState,
     Frame,
 };
 use tuirealm::{
@@ -18,11 +17,13 @@ use crate::{
     system::game_state,
     ui::components::player::item_details::render_item_details_beside,
     ui::components::utilities::{
-        collect_player_items, render_location_header, selection_prefix, store_header, RETURN_ARROW,
+        collect_player_items, render_location_header, store_header,
     },
     ui::components::widgets::item_list::{InventoryFilter, ItemList, ItemListConfig, SellableItem, StoreBuyItem},
     ui::theme as colors,
 };
+
+use super::{menu, wood_planks_art, StateChange};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum StoreState {
@@ -102,7 +103,11 @@ impl StoreTab {
 impl MockComponent for StoreTab {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         match self.state {
-            StoreState::Menu => self.render_menu(frame, area),
+            StoreState::Menu => {
+                // Render background first, then menu on top
+                wood_planks_art::render_wood_planks(frame, area);
+                menu::render(frame, area, &mut self.menu_list_state);
+            }
             StoreState::Buy => self.render_buy(frame, area),
             StoreState::Sell => self.render_sell(frame, area),
         }
@@ -136,37 +141,6 @@ impl MockComponent for StoreTab {
 }
 
 impl StoreTab {
-    fn render_menu(&mut self, frame: &mut Frame, area: Rect) {
-        let store = game_state().store();
-        let player_gold = game_state().player.gold();
-
-        // Render header with store name and gold, get remaining area
-        let header_lines = store_header(store, player_gold);
-        let content_area =
-            render_location_header(frame, area, header_lines, colors::STORE_BG, colors::WOOD_BROWN);
-
-        // Menu options
-        let selected = self.menu_list_state.selected().unwrap_or(0);
-        let menu_items: Vec<ListItem> = ["Buy", "Sell", "Back"]
-            .iter()
-            .enumerate()
-            .map(|(i, label)| {
-                let icon = if *label == "Back" {
-                    format!("{} ", RETURN_ARROW)
-                } else {
-                    String::new()
-                };
-                ListItem::new(Line::from(vec![
-                    selection_prefix(selected == i),
-                    Span::raw(format!("{}{}", icon, label)),
-                ]))
-            })
-            .collect();
-
-        let menu = List::new(menu_items);
-        frame.render_stateful_widget(menu, content_area, &mut self.menu_list_state);
-    }
-
     fn render_buy(&mut self, frame: &mut Frame, area: Rect) {
         self.rebuild_buy_items();
 
@@ -206,41 +180,26 @@ impl StoreTab {
     }
 
     fn handle_menu_cmd(&mut self, cmd: Cmd) -> CmdResult {
-        use crate::ui::components::utilities::{list_move_down, list_move_up};
-        const MENU_SIZE: usize = 3; // Buy, Sell, Back
+        let (result, state_change) = menu::handle(cmd, &mut self.menu_list_state);
 
-        match cmd {
-            Cmd::Move(tuirealm::command::Direction::Up) => {
-                list_move_up(&mut self.menu_list_state, MENU_SIZE);
-                CmdResult::Changed(self.state())
-            }
-            Cmd::Move(tuirealm::command::Direction::Down) => {
-                list_move_down(&mut self.menu_list_state, MENU_SIZE);
-                CmdResult::Changed(self.state())
-            }
-            Cmd::Submit => {
-                let selected = self.menu_list_state.selected().unwrap_or(0);
-                match selected {
-                    0 => {
-                        // Buy
-                        self.state = StoreState::Buy;
-                        self.buy_list.reset_selection();
-                    }
-                    1 => {
-                        // Sell
-                        self.state = StoreState::Sell;
-                        self.sell_list.reset_selection();
-                    }
-                    2 => {
-                        // Back
-                        game_state().current_screen = crate::ui::Id::Menu;
-                    }
-                    _ => {}
+        if let Some(change) = state_change {
+            match change {
+                StateChange::ToBuy => {
+                    self.state = StoreState::Buy;
+                    self.buy_list.reset_selection();
                 }
-                CmdResult::Submit(self.state())
+                StateChange::ToSell => {
+                    self.state = StoreState::Sell;
+                    self.sell_list.reset_selection();
+                }
+                StateChange::ToMenu => {
+                    self.state = StoreState::Menu;
+                    self.reset_selection();
+                }
             }
-            _ => CmdResult::None,
         }
+
+        result
     }
 
     fn handle_buy_cmd(&mut self, cmd: Cmd) -> CmdResult {

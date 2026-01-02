@@ -98,16 +98,17 @@ pub fn store_header(store: &Store, gold: i32) -> Vec<Line<'static>> {
         format!("{}s", secs_remaining)
     };
 
+    let text_style = Style::default().fg(colors::WHITE);
     vec![
         Line::from(vec![
-            Span::styled(store.name.to_string(), Style::default().color(colors::WHITE)),
+            Span::styled(store.name.to_string(), text_style),
         ]),
         Line::from(vec![
             Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
-            Span::raw(format!("{}", gold)),
-            Span::raw("  |  "),
+            Span::styled(format!("{}", gold), text_style),
+            Span::styled("  |  ", text_style),
             Span::styled(format!("{} ", HOURGLASS), Style::default().color(colors::CYAN)),
-            Span::raw(timer_text),
+            Span::styled(timer_text, text_style),
         ]),
     ]
 }
