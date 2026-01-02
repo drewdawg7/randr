@@ -1,4 +1,5 @@
 pub(crate) mod chest;
+pub(crate) mod commands;
 pub(crate) mod dungeon;
 pub(crate) mod location;
 pub(crate) mod loot;

@@ -1,0 +1,295 @@
+//! Dungeon-related game commands.
+//!
+//! Handles room interactions, navigation, resting, and boss fights.
+
+use crate::combat::{self, Combatant, DealsDamage, HasGold, IsKillable, Named};
+use crate::dungeon::{Direction, RoomType};
+use crate::entities::mob::MobId;
+use crate::entities::progression::HasProgression;
+use crate::inventory::HasInventory;
+use crate::stats::HasStats;
+use crate::system::{game_state, CombatSource};
+use crate::ui::Id;
+
+use super::CommandResult;
+
+/// Possible outcomes when entering a room.
+#[derive(Debug, Clone)]
+pub enum RoomEntryResult {
+    /// Started combat, screen changed to Fight.
+    StartedCombat,
+    /// Opened a chest, collected loot.
+    OpenedChest { items_found: usize },
+    /// Room was already cleared.
+    AlreadyCleared,
+    /// Entered boss room.
+    EnteredBossRoom,
+    /// Generic room cleared.
+    RoomCleared,
+}
+
+/// Enter/interact with the current dungeon room.
+pub fn enter_room() -> CommandResult {
+    let gs = game_state();
+
+    // Get room info
+    let (is_cleared, room_type) = {
+        if let Some(dungeon) = gs.dungeon() {
+            if let Some(room) = dungeon.current_room() {
+                (room.is_cleared, Some(room.room_type))
+            } else {
+                (false, None)
+            }
+        } else {
+            return CommandResult::error("Not in a dungeon");
+        }
+    };
+
+    if is_cleared {
+        return CommandResult::ok();
+    }
+
+    let Some(room_type) = room_type else {
+        return CommandResult::error("Invalid room");
+    };
+
+    match room_type {
+        RoomType::Monster => {
+            // Spawn a mob and start combat
+            let mob_result = gs.dungeon().and_then(|d| d.spawn_mob().ok());
+
+            match mob_result {
+                Some(mob) => {
+                    gs.combat_source = CombatSource::Dungeon;
+                    gs.start_combat(mob);
+                    CommandResult::ok().with_screen(Id::Fight)
+                }
+                None => CommandResult::error("No enemies to fight!"),
+            }
+        }
+        RoomType::Boss => {
+            // Spawn boss if needed
+            let needs_spawn = gs.dungeon().map(|d| d.boss.is_none()).unwrap_or(false);
+            if needs_spawn {
+                let dragon = gs.spawn_mob(MobId::Dragon);
+                if let Some(dungeon) = gs.dungeon_mut() {
+                    dungeon.boss = Some(dragon);
+                }
+            }
+            CommandResult::ok()
+        }
+        RoomType::Chest => {
+            // Open the chest and get loot
+            let loot_drops = {
+                if let Some(dungeon) = gs.dungeon_mut() {
+                    if let Some(room) = dungeon.current_room_mut() {
+                        let drops = room.open_chest();
+                        room.clear();
+                        drops
+                    } else {
+                        vec![]
+                    }
+                } else {
+                    vec![]
+                }
+            };
+
+            // Add items to inventory
+            let mut total = 0;
+            for loot_drop in &loot_drops {
+                for _ in 0..loot_drop.quantity {
+                    let _ = gs.player.add_to_inv(loot_drop.item.clone());
+                }
+                total += loot_drop.quantity;
+                gs.toasts
+                    .success(format!("Found: {} x{}", loot_drop.item.name, loot_drop.quantity));
+            }
+
+            if loot_drops.is_empty() {
+                CommandResult::info("The chest was empty.")
+            } else {
+                CommandResult::success(format!("Found {} items!", total))
+            }
+        }
+        _ => {
+            // Other room types - just clear
+            if let Some(dungeon) = gs.dungeon_mut() {
+                if let Some(room) = dungeon.current_room_mut() {
+                    room.clear();
+                }
+            }
+            CommandResult::ok()
+        }
+    }
+}
+
+/// Move in a direction in the dungeon.
+pub fn move_dungeon(direction: Direction) -> CommandResult {
+    let gs = game_state();
+
+    if let Some(dungeon) = gs.dungeon_mut() {
+        if dungeon.move_player(direction).is_ok() {
+            // Check if entering a boss room
+            let is_boss_room = dungeon
+                .current_room()
+                .map(|r| r.room_type == RoomType::Boss && !r.is_cleared)
+                .unwrap_or(false);
+
+            if is_boss_room {
+                // Spawn boss if needed
+                if dungeon.boss.is_none() {
+                    let dragon = gs.spawn_mob(MobId::Dragon);
+                    if let Some(d) = gs.dungeon_mut() {
+                        d.boss = Some(dragon);
+                    }
+                }
+            }
+
+            CommandResult::ok()
+        } else {
+            CommandResult::error("Cannot move in that direction")
+        }
+    } else {
+        CommandResult::error("Not in a dungeon")
+    }
+}
+
+/// Leave the dungeon and return to town.
+pub fn leave_dungeon() -> CommandResult {
+    let gs = game_state();
+    gs.leave_dungeon();
+    CommandResult::ok().with_screen(Id::Town)
+}
+
+/// Rest at a rest room to heal.
+pub fn rest() -> CommandResult {
+    let gs = game_state();
+
+    let max_hp = gs.player.max_hp();
+    let current_hp = gs.player.hp();
+
+    if current_hp >= max_hp {
+        return CommandResult::info("Already at full health!");
+    }
+
+    let heal_amount = (max_hp as f32 * 0.5).round() as i32;
+    let actual_heal = heal_amount.min(max_hp - current_hp);
+    gs.player.increase_health(actual_heal);
+
+    CommandResult::success(format!("Rested and recovered {} HP!", actual_heal))
+}
+
+/// Attack the boss in a boss room.
+///
+/// Returns combat log messages for display.
+pub fn attack_boss() -> CommandResult {
+    let gs = game_state();
+
+    // Check if boss is alive
+    let boss_alive = gs
+        .dungeon()
+        .and_then(|d| d.boss.as_ref())
+        .map(|b| b.is_alive())
+        .unwrap_or(false);
+
+    if !boss_alive {
+        return CommandResult::ok();
+    }
+
+    // Player attacks boss
+    let player_attack = gs.player.get_attack();
+    let (player_damage, boss_died) = {
+        if let Some(dungeon) = gs.dungeon_mut() {
+            if let Some(boss) = dungeon.boss.as_mut() {
+                let raw_damage = player_attack.roll_damage();
+                let defense = boss.effective_defense();
+                let damage = combat::apply_defense(raw_damage, defense);
+                boss.take_damage(damage);
+                let died = !boss.is_alive();
+                (damage, died)
+            } else {
+                (0, true)
+            }
+        } else {
+            (0, true)
+        }
+    };
+
+    if boss_died {
+        // Victory! Get death rewards
+        let death_result = {
+            if let Some(dungeon) = gs.dungeon_mut() {
+                dungeon.boss.as_mut().map(|boss| boss.on_death())
+            } else {
+                None
+            }
+        };
+
+        if let Some(death_result) = death_result {
+            // Apply gold with goldfind bonus
+            let gf = gs.player.effective_goldfind();
+            let multiplier = 1.0 + (gf as f64 / 100.0);
+            let gold_with_bonus = ((death_result.gold_dropped as f64) * multiplier).round() as i32;
+            gs.player.add_gold(gold_with_bonus);
+
+            // Award XP
+            gs.player.gain_xp(death_result.xp_dropped);
+
+            // Add loot to inventory
+            for loot in &death_result.loot_drops {
+                for _ in 0..loot.quantity {
+                    let _ = gs.player.add_to_inv(loot.item.clone());
+                }
+                gs.toasts
+                    .success(format!("Obtained: {} x{}", loot.item.name, loot.quantity));
+            }
+
+            gs.toasts.success(format!(
+                "Dragon defeated! +{} gold, +{} XP",
+                gold_with_bonus, death_result.xp_dropped
+            ));
+        }
+
+        // Clear the boss room
+        if let Some(dungeon) = gs.dungeon_mut() {
+            if let Some(room) = dungeon.current_room_mut() {
+                room.clear();
+            }
+            dungeon.boss = None;
+        }
+
+        return CommandResult::success("Dragon has been slain!");
+    }
+
+    // Boss counter-attacks
+    let (boss_damage, player_died) = {
+        if let Some(dungeon) = gs.dungeon() {
+            if let Some(boss) = &dungeon.boss {
+                let attack_range = boss.get_attack();
+                let raw_damage = attack_range.roll_damage();
+                let defense = gs.player.effective_defense();
+                let damage = combat::apply_defense(raw_damage, defense);
+                gs.player.take_damage(damage);
+                let died = !gs.player.is_alive();
+                (damage, died)
+            } else {
+                (0, false)
+            }
+        } else {
+            (0, false)
+        }
+    };
+
+    if player_died {
+        gs.player.on_death();
+        gs.reset_dungeon();
+        gs.leave_dungeon();
+        return CommandResult::error("You were slain by the Dragon!");
+    }
+
+    // Combat continues
+    CommandResult::info(format!(
+        "You dealt {} damage. Dragon dealt {} damage.",
+        player_damage, boss_damage
+    ))
+}
