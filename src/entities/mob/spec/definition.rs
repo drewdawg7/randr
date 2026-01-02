@@ -9,6 +9,7 @@ pub struct MobSpec {
     pub name: &'static str,
     pub max_health: RangeInclusive<i32>,
     pub attack: RangeInclusive<i32>,
+    pub defense: RangeInclusive<i32>,
     pub dropped_gold: RangeInclusive<i32>,
     pub dropped_xp: RangeInclusive<i32>,
     pub quality: MobQuality,

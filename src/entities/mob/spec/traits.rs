@@ -21,6 +21,7 @@ impl SpawnFromSpec<MobId> for MobSpec {
         let hp_max = spec.max_health.end();
         let hp_median = (hp_min + hp_max) as f32 / 2.0;
         let attack = rng.gen_range(spec.attack.clone());
+        let defense = rng.gen_range(spec.defense.clone());
         let base_gold = rng.gen_range(spec.dropped_gold.clone());
         let max_hp = rng.gen_range(spec.max_health.clone());
         let hp = max_hp as f32;
@@ -44,6 +45,7 @@ impl SpawnFromSpec<MobId> for MobSpec {
                 let stats: HashMap<StatType, StatInstance> = HashMap::new();
                 let mut sheet = StatSheet { stats };
                 sheet.insert(StatType::Attack.instance(attack));
+                sheet.insert(StatType::Defense.instance(defense));
                 sheet.insert(StatType::Health.instance(max_hp));
                 sheet
             },

@@ -13,6 +13,7 @@ pub static COW: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     quality: MobQuality::Normal,
     max_health: 20..=25,
     attack: 1..=4,
+    defense: 0..=2,
     dropped_gold: 1..=3,
     dropped_xp: 5..=9,
     loot: LootTable::new()
@@ -24,6 +25,7 @@ pub static SLIME: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     quality: MobQuality::Normal,
     max_health: 15..=22,
     attack: 2..=4,
+    defense: 1..=3,
     dropped_gold: 1..=3,
     dropped_xp: 5..=9,
     loot: LootTable::new()
@@ -36,6 +38,7 @@ pub static GOBLIN: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     quality: MobQuality::Normal,
     max_health: 33..=41,
     attack: 10..=15,
+    defense: 5..=10,
     dropped_gold: 10..=19,
     dropped_xp: 13..=20,
     loot: LootTable::new()
@@ -49,6 +52,7 @@ pub static DRAGON: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     quality: MobQuality::Boss,
     max_health: 500..=700,
     attack: 50..=70,
+    defense: 30..=50,
     dropped_gold: 250..=350,
     dropped_xp: 500..=750,
     loot: LootTable::new()
