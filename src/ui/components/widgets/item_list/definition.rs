@@ -264,7 +264,10 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
                 let is_selected = selected == back_idx;
                 list_items.push(RatatuiListItem::new(Line::from(vec![
                     selection_prefix(is_selected),
-                    Span::raw(format!("{} {}", RETURN_ARROW, self.config.back_label)),
+                    Span::styled(
+                        format!("{} {}", RETURN_ARROW, self.config.back_label),
+                        Style::default().fg(colors::WHITE),
+                    ),
                 ])));
             }
         }

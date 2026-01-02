@@ -135,7 +135,7 @@ impl ListItem for SellableItem {
 
     fn suffix_spans(&self) -> Vec<Span<'static>> {
         vec![
-            Span::raw(" - "),
+            Span::styled(" - ", Style::default().fg(colors::WHITE)),
             Span::styled(format!("{}g", self.inv_item.item.sell_price()), Style::default().fg(colors::YELLOW)),
         ]
     }
@@ -175,12 +175,12 @@ impl ListItem for UpgradeableItem {
             ]
         } else {
             let cost_style = if self.can_afford {
-                Style::default()
+                Style::default().fg(colors::YELLOW)
             } else {
                 Style::default().fg(colors::RED)
             };
             vec![
-                Span::raw(" - "),
+                Span::styled(" - ", Style::default().fg(colors::WHITE)),
                 Span::styled(format!("{} gold", self.upgrade_cost), cost_style),
             ]
         }
