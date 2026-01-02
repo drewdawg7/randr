@@ -730,13 +730,28 @@ impl DungeonScreen {
 
         // Center campfire horizontally
         let campfire_x = area.x + area.width.saturating_sub(campfire_w) / 2;
-        let campfire_area = Rect {
-            x: campfire_x,
-            y: y_offset,
-            width: campfire_w,
-            height: campfire_height,
-        };
-        frame.render_widget(Paragraph::new(campfire_lines), campfire_area);
+
+        // Render campfire lines directly to buffer, skipping spaces to preserve background
+        let buf = frame.buffer_mut();
+        for (i, line) in campfire_lines.into_iter().enumerate() {
+            let y = y_offset + i as u16;
+            if y >= area.y + area.height {
+                break;
+            }
+            // Render each span, skipping space characters to preserve background
+            let mut x = campfire_x;
+            for span in line.spans {
+                for ch in span.content.chars() {
+                    if x >= area.x + area.width {
+                        break;
+                    }
+                    if ch != ' ' {
+                        buf.set_string(x, y, ch.to_string(), span.style);
+                    }
+                    x += 1;
+                }
+            }
+        }
 
         // Title "Rest Area" centered below campfire
         let title_y = y_offset + campfire_height + 1;
