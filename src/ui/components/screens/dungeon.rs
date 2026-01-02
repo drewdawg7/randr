@@ -682,8 +682,6 @@ impl DungeonScreen {
 
         let style = if is_selected {
             Style::default().fg(colors::YELLOW)
-        } else if is_cleared {
-            Style::default().fg(colors::DARK_STONE)
         } else {
             Style::default().fg(colors::WHITE)
         };
