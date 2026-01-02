@@ -69,10 +69,46 @@ Span::styled(format!("{}", gold), text_style)
 
 ### Files with explicit colors for backgrounds:
 - `src/ui/components/blacksmith/menu.rs` - Menu item text
+- `src/ui/components/blacksmith/smelt.rs` - Fuel bar, menu items (uses direct buffer rendering)
 - `src/ui/components/utilities.rs` - `blacksmith_header()`, `store_header()` functions
 - `src/ui/components/store/menu.rs` - Menu item text
 - `src/ui/components/alchemist/menu.rs` - Menu item text, header
 - `src/ui/components/field/menu.rs` - Menu item text, header
+
+## Direct Buffer Rendering (Preserving Backgrounds)
+
+Standard `Paragraph` and `List` widgets clear their entire render area, overwriting the background. For screens with custom art (like the forge), render directly to the frame buffer instead:
+
+**Pattern from `src/ui/components/blacksmith/smelt.rs`:**
+```rust
+let buf = frame.buffer_mut();
+for (i, line) in lines.iter().enumerate() {
+    let y = area.y + i as u16;
+    let mut x = area.x;
+    for span in line.spans.iter() {
+        let has_style = span.style.fg.is_some() || span.style.bg.is_some();
+        for ch in span.content.chars() {
+            // Skip spaces in unstyled spans to preserve background
+            if ch == ' ' && !has_style {
+                x += 1;
+                continue;
+            }
+            let cell = buf.cell_mut((x, y)).unwrap();
+            cell.set_char(ch);
+            if let Some(fg) = span.style.fg {
+                cell.set_fg(fg);
+            }
+            x += 1;
+        }
+    }
+}
+```
+
+**Key points:**
+- Use `frame.buffer_mut()` to get direct access to cells
+- Skip space characters in unstyled spans (`Span::raw()`) to let background show through
+- Only set foreground/background colors when the span has explicit styles
+- Use `Span::raw()` for padding that should be transparent to background
 
 ## Color Variation for Depth
 
