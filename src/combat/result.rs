@@ -1,4 +1,5 @@
-use crate::item::{Item, ItemId};
+use crate::item::Item;
+use crate::loot::LootDrop;
 
 #[derive(Debug, Clone)]
 pub struct AttackResult {
@@ -11,11 +12,21 @@ pub struct AttackResult {
 }
 
 /// Result of a mob dying - contains rewards for the killer
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone)]
 pub struct MobDeathResult {
     pub gold_dropped: i32,
     pub xp_dropped: i32,
-    pub loot_drops: Vec<(ItemId, i32)>, // (item_id, quantity)
+    pub loot_drops: Vec<LootDrop>,
+}
+
+impl Default for MobDeathResult {
+    fn default() -> Self {
+        Self {
+            gold_dropped: 0,
+            xp_dropped: 0,
+            loot_drops: Vec::new(),
+        }
+    }
 }
 
 /// Result of player dying

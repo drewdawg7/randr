@@ -1,7 +1,6 @@
 use crate::{
     combat::IsKillable,
     entities::Player,
-    game_state,
     item::Item,
     loot::LootTable,
     stats::StatSheet,
@@ -22,8 +21,8 @@ impl Rock {
         let drops = self.loot.roll_drops();
         drops
             .iter()
-            .flat_map(|(item_kind, quantity)| {
-                (0..*quantity).map(move |_| game_state().spawn_item(*item_kind))
+            .flat_map(|loot_drop| {
+                (0..loot_drop.quantity).map(move |_| loot_drop.item.clone())
             })
             .collect()
     }

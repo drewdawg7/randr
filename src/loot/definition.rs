@@ -2,7 +2,14 @@ use std::ops::RangeInclusive;
 
 use rand::Rng;
 
-use crate::{item::ItemId, loot::enums::LootError};
+use crate::{game_state, item::{Item, ItemId}, loot::enums::LootError};
+
+/// Represents a single loot drop with a spawned item instance and quantity
+#[derive(Debug, Clone)]
+pub struct LootDrop {
+    pub item: Item,
+    pub quantity: i32,
+}
 
 pub struct LootItem {
     item_kind: ItemId,
@@ -53,16 +60,17 @@ impl LootTable {
         })
     }
 
-    /// Roll each item independently, return all items that dropped with their quantity.
-    pub fn roll_drops(&self) -> Vec<(ItemId, i32)> {
+    /// Roll each item independently, spawn items, and return all drops with their quantity.
+    pub fn roll_drops(&self) -> Vec<LootDrop> {
         let mut rng = rand::thread_rng();
         let mut drops = Vec::new();
 
-        for item in &self.loot {
-            let roll = rng.gen_range(1..=item.denominator);
-            if roll <= item.numerator {
-                let quantity = rng.gen_range(item.quantity.clone());
-                drops.push((item.item_kind, quantity));
+        for loot_item in &self.loot {
+            let roll = rng.gen_range(1..=loot_item.denominator);
+            if roll <= loot_item.numerator {
+                let quantity = rng.gen_range(loot_item.quantity.clone());
+                let item = game_state().spawn_item(loot_item.item_kind);
+                drops.push(LootDrop { item, quantity });
             }
         }
 

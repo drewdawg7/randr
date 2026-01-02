@@ -1,7 +1,7 @@
 use crate::{
     combat::{AttackResult, CombatRounds},
     entities::Mob,
-    item::{Item, ItemId},
+    loot::LootDrop,
 };
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -21,8 +21,7 @@ pub struct ActiveCombat {
     pub last_enemy_attack: Option<AttackResult>,
     pub gold_gained: i32,
     pub xp_gained: i32,
-    pub loot_drops: Vec<(ItemId, i32)>,
-    pub dropped_loot: Vec<Item>,
+    pub loot_drops: Vec<LootDrop>,
 }
 
 impl ActiveCombat {
@@ -36,7 +35,6 @@ impl ActiveCombat {
             gold_gained: 0,
             xp_gained: 0,
             loot_drops: Vec::new(),
-            dropped_loot: Vec::new(),
         }
     }
 

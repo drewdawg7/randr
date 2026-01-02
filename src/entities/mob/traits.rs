@@ -56,7 +56,7 @@ impl IsKillable for Mob {
         MobDeathResult {
             gold_dropped: self.drop_gold(),
             xp_dropped: self.give_xp(),
-            loot_drops: self.loot().roll_drops(),
+            loot_drops: self.roll_drops(),
         }
     }
 }

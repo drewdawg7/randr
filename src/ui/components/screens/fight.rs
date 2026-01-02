@@ -126,13 +126,10 @@ impl FightScreen {
         let gs = game_state();
         process_victory(&mut gs.player, combat);
 
-        // Spawn loot items
-        let loot_drops = combat.loot_drops.clone();
-        for (item_kind, quantity) in loot_drops {
-            for _ in 0..quantity {
-                let item = gs.spawn_item(item_kind);
-                combat.dropped_loot.push(item.clone());
-                let _ = gs.player.add_to_inv(item);
+        // Add loot drops to player inventory
+        for loot_drop in &combat.loot_drops {
+            for _ in 0..loot_drop.quantity {
+                let _ = gs.player.add_to_inv(loot_drop.item.clone());
             }
         }
 
@@ -583,11 +580,11 @@ fn render_results(frame: &mut Frame, area: Rect, combat: &ActiveCombat, selectio
         ]));
 
         // Show dropped items
-        for item in &combat.dropped_loot {
-            let color = quality_color(item.quality);
+        for loot_drop in &combat.loot_drops {
+            let color = quality_color(loot_drop.item.quality);
             lines.push(Line::from(vec![
                 Span::raw("+ "),
-                Span::styled(item.name.to_string(), Style::default().color(color)),
+                Span::styled(loot_drop.item.name.to_string(), Style::default().color(color)),
             ]));
         }
 

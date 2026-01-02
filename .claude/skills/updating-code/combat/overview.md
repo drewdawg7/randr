@@ -61,6 +61,7 @@ For entities that can die.
 - `take_damage(amount)` - applies damage
 - `is_alive()` - health > 0
 - `on_death()` - returns death result (gold, xp, loot for mobs)
+  - `MobDeathResult.loot_drops: Vec<LootDrop>` - spawned items with quantities
 
 ## Implementations
 
@@ -88,3 +89,15 @@ For entities that can die.
 |-----------|----------|---------|--------|
 | `DEFENSE_CONSTANT` | `system.rs:10` | 50.0 | Higher = more defense needed for same reduction |
 | `ATTACK_VARIANCE` | `traits.rs:32` | 0.25 | ±25% damage variance |
+
+## Loot System Integration
+
+Loot drops use `Vec<LootDrop>` throughout the combat system:
+
+| Type | Field | Description |
+|------|-------|-------------|
+| `MobDeathResult` | `loot_drops: Vec<LootDrop>` | From `Mob.on_death()` via `HasLoot::roll_drops()` |
+| `ActiveCombat` | `loot_drops: Vec<LootDrop>` | Stored for UI display |
+| `CombatRounds` | `loot_drops: Vec<LootDrop>` | From `enter_combat()` |
+
+See `entities/loot.md` for full loot system documentation.

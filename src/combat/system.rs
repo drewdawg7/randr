@@ -1,7 +1,7 @@
 use crate::{
     combat::{ActiveCombat, AttackResult, Combatant, CombatPhase, HasGold, IsKillable, MobDeathResult},
     entities::{progression::HasProgression, Player},
-    item::{Item, ItemId},
+    loot::LootDrop,
 };
 
 /// Constant for diminishing returns defense formula.
@@ -50,10 +50,8 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 #[derive(Default, Clone)]
 pub struct CombatRounds {
     pub attack_results: Vec<AttackResult>,
-    /// Spawned items with full quality info, for display and inventory
-    pub dropped_loot: Vec<Item>,
-    /// Item drops rolled from loot table (item_id, quantity), used internally before spawning
-    loot_drops: Vec<(ItemId, i32)>,
+    /// Spawned loot drops from the loot table, includes item instances and quantities
+    pub loot_drops: Vec<LootDrop>,
     pub gold_gained: i32,
     pub xp_gained: i32,
     pub player_won: bool,
@@ -63,7 +61,6 @@ impl CombatRounds {
     pub fn new() -> Self {
         Self {
             attack_results: Vec::new(),
-            dropped_loot: Vec::new(),
             loot_drops: Vec::new(),
             gold_gained: 0,
             xp_gained: 0,
@@ -74,7 +71,7 @@ impl CombatRounds {
         self.attack_results.push(round);
     }
 
-    pub fn loot_drops(&self) -> &[(ItemId, i32)] {
+    pub fn loot_drops(&self) -> &[LootDrop] {
         &self.loot_drops
     }
 }

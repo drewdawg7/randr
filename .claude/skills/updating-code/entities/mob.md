@@ -76,8 +76,17 @@ Files that depend on `MobId`:
 3. Add to `RegistryDefaults` impl in `src/entities/mob/spec/traits.rs`
 4. Add to field spawn weights in `src/field/spec/specs.rs` (if spawnable)
 
+## Trait Implementations
+
+| Trait | File | Notes |
+|-------|------|-------|
+| `HasLoot` | `src/entities/mob/traits.rs` | Provides `loot()` and `roll_drops()` for item drops |
+| `IsKillable` | `src/entities/mob/traits.rs` | `on_death()` returns `MobDeathResult` with `loot_drops: Vec<LootDrop>` |
+| `Combatant` | `src/entities/mob/traits.rs` | Combat interface |
+| `DealsDamage` | `src/entities/mob/traits.rs` | Uses default ±15% attack variance |
+
 ## Related Modules
 
 - `src/combat/` - Combat system that uses mobs
 - `src/field/` - Fields spawn mobs based on weighted probabilities
-- `src/loot/` - `LootTable` defines mob drops
+- `src/loot/` - `LootTable` and `HasLoot` trait (see `entities/loot.md`)
