@@ -96,11 +96,11 @@ fn render_item_details_inner(
             // Stats and upgrades only for equipment
             if is_equipment {
                 let attack = item.attack();
-                let defense = item.def();
+                let defense = item.defense();
                 let gold_find = item.goldfind();
                 let mining = item.mining();
                 let compare_attack = compare_to.map(|c| c.attack());
-                let compare_defense = compare_to.map(|c| c.def());
+                let compare_defense = compare_to.map(|c| c.defense());
                 let compare_gold_find = compare_to.map(|c| c.goldfind());
                 let compare_mining = compare_to.map(|c| c.mining());
 

@@ -33,7 +33,7 @@ impl Player {
     }
 
     pub fn get_defense(&self) -> i32 {
-        self.def()
+        self.defense()
     }
 
     pub fn get_health(&self) -> i32 {

@@ -36,7 +36,7 @@ pub trait HasStats {
     fn hp(&self) -> i32 { self.value(StatType::Health) }
     fn max_hp(&self) -> i32 { self.max_value(StatType::Health) }
     fn attack(&self) -> i32 { self.value(StatType::Attack) }
-    fn def(&self) -> i32 { self.value(StatType::Defense) }
+    fn defense(&self) -> i32 { self.value(StatType::Defense) }
 
 
 }

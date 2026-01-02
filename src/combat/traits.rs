@@ -51,7 +51,7 @@ pub trait DealsDamage: HasStats {
 pub trait Combatant: Named + IsKillable + DealsDamage {
     /// Returns effective defense value for damage reduction calculation
     fn effective_defense(&self) -> i32 {
-        self.def()
+        self.defense()
     }
 
     /// Returns current health

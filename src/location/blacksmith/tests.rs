@@ -215,11 +215,11 @@ fn upgrade_item_shield_increases_defense() {
     player.add_gold(100);
     let mut item = create_test_shield(10, 0, 5);
 
-    let initial_defense = item.def();
+    let initial_defense = item.defense();
     let _ = blacksmith.upgrade_item(&mut player, &mut item);
 
     // Upgrade increases defense
-    assert!(item.def() > initial_defense);
+    assert!(item.defense() > initial_defense);
 }
 
 #[test]
@@ -361,7 +361,7 @@ fn item_upgrade_shield_stats() {
 
     assert_eq!(item.num_upgrades, 1);
     // Defense should increase
-    assert!(item.def() >= 11);
+    assert!(item.defense() >= 11);
 }
 
 // ==================== Quality upgrade tests ====================
