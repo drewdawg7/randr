@@ -70,10 +70,59 @@ impl Dungeon {
             }
         }
 
+        // Guarantee at least 1 Chest and 1 Rest room
+        self.ensure_room_type(&mut rng, &room_positions, RoomType::Chest, start_pos);
+        self.ensure_room_type(&mut rng, &room_positions, RoomType::Rest, start_pos);
+
         // Reveal rooms adjacent to the starting position
         self.reveal_adjacent_rooms(start_pos.0, start_pos.1);
 
         self.is_generated = true;
+    }
+
+    /// Ensure at least one room of a given type exists, converting a Monster room if needed
+    fn ensure_room_type(
+        &mut self,
+        rng: &mut impl Rng,
+        room_positions: &[(i32, i32)],
+        room_type: RoomType,
+        start_pos: (i32, i32),
+    ) {
+        // Check if room type already exists
+        let has_type = room_positions.iter().any(|&(x, y)| {
+            self.rooms[y as usize][x as usize]
+                .as_ref()
+                .map(|r| r.room_type == room_type)
+                .unwrap_or(false)
+        });
+
+        if has_type {
+            return;
+        }
+
+        // Find Monster rooms (excluding entry room) to convert
+        let monster_rooms: Vec<(i32, i32)> = room_positions
+            .iter()
+            .filter(|&&pos| pos != start_pos)
+            .filter(|&&(x, y)| {
+                self.rooms[y as usize][x as usize]
+                    .as_ref()
+                    .map(|r| r.room_type == RoomType::Monster)
+                    .unwrap_or(false)
+            })
+            .copied()
+            .collect();
+
+        // Convert a random Monster room to the required type
+        if let Some(&(x, y)) = monster_rooms.choose(rng) {
+            if let Some(room) = &mut self.rooms[y as usize][x as usize] {
+                room.room_type = room_type;
+                // Rest rooms should be pre-cleared
+                if room_type == RoomType::Rest {
+                    room.is_cleared = true;
+                }
+            }
+        }
     }
 
     /// Get a random position on the edge of the grid
