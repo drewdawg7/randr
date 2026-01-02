@@ -14,6 +14,7 @@ use crate::location::spec::specs::{
 use crate::location::{Alchemist, Blacksmith, Field, LocationData, Mine, Store};
 use crate::toast::ToastQueue;
 use crate::ui::components::player::inventory_modal::InventoryModal;
+use crate::ui::screen::ScreenLifecycle;
 use crate::{
     combat::{ActiveCombat, CombatRounds},
     entities::{mob::{MobId, MobRegistry}, Mob, Player},
@@ -65,6 +66,7 @@ pub struct GameState {
     consumable_registry: ConsumableRegistry,
     recipe_registry: RecipeRegistry,
     pub current_screen: Id,
+    screen_lifecycle: ScreenLifecycle,
     app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
     pub player: Player,
@@ -195,6 +197,16 @@ impl GameState {
         &self.town.alchemist
     }
 
+    /// Get the screen lifecycle tracker.
+    pub fn screen_lifecycle(&self) -> &ScreenLifecycle {
+        &self.screen_lifecycle
+    }
+
+    /// Get mutable access to the screen lifecycle tracker.
+    pub fn screen_lifecycle_mut(&mut self) -> &mut ScreenLifecycle {
+        &mut self.screen_lifecycle
+    }
+
     pub fn initialize(&mut self) {
         let _ = terminal::enable_raw_mode();
 
@@ -223,6 +235,10 @@ impl GameState {
         if current == Id::Quit {
             return Ok(());
         }
+
+        // Update screen lifecycle to detect transitions
+        self.screen_lifecycle.update(current);
+
         if current != Id::Fight {
             self.current_combat = None;
             self.active_combat = None;
@@ -296,6 +312,7 @@ impl Default for GameState {
             ),
             terminal: Some(terminal),
             current_screen: Id::Menu,
+            screen_lifecycle: ScreenLifecycle::new(Id::Menu),
             current_combat: None,
             active_combat: None,
             active_modal: ModalType::None,
