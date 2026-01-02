@@ -19,7 +19,7 @@ fn get_animation_frame() -> usize {
     ((elapsed / FRAME_DURATION_MS) % NUM_FRAMES) as usize
 }
 
-pub fn render_campfire_art(padding: usize) -> Vec<Line<'static>> {
+pub fn render_campfire_art() -> Vec<Line<'static>> {
     let frame = get_animation_frame();
 
     // Fire colors
@@ -33,248 +33,307 @@ pub fn render_campfire_art(padding: usize) -> Vec<Line<'static>> {
     let coal_dark = Style::default().fg(colors::COAL_BLACK);
     let wood_brown = Style::default().fg(colors::WOOD_BROWN);
     let wood_dark = Style::default().fg(colors::DARK_WALNUT);
+    let stone = Style::default().fg(colors::GRANITE);
+    let stone_dark = Style::default().fg(colors::DARK_STONE);
 
-    let pad = " ".repeat(padding);
-    let pad2 = " ".repeat(padding + 2);
-    let pad4 = " ".repeat(padding + 4);
-    let pad6 = " ".repeat(padding + 6);
-    let pad8 = " ".repeat(padding + 8);
-
-    // Animated spark patterns
+    // Animated spark patterns (wide spread)
     let spark_row = match frame {
         0 => Line::from(vec![
-            Span::raw(pad8.clone()),
-            Span::styled("*", spark_style),
-            Span::styled("  .", tip_yellow),
-            Span::styled("  '", tip_orange),
+            Span::styled("        *", spark_style),
+            Span::styled("    .", tip_yellow),
+            Span::styled("    '", tip_orange),
+            Span::styled("    .", tip_yellow),
+            Span::styled("    *        ", spark_style),
         ]),
         1 => Line::from(vec![
-            Span::raw(pad8.clone()),
-            Span::styled(".", tip_yellow),
-            Span::styled("  *", spark_style),
-            Span::styled("  .", tip_yellow),
+            Span::styled("        .", tip_yellow),
+            Span::styled("    *", spark_style),
+            Span::styled("    .", tip_yellow),
+            Span::styled("    '", tip_orange),
+            Span::styled("    .        ", tip_yellow),
         ]),
         2 => Line::from(vec![
-            Span::raw(pad8.clone()),
-            Span::styled("'", tip_orange),
-            Span::styled("  .", tip_yellow),
-            Span::styled("  *", spark_style),
+            Span::styled("        '", tip_orange),
+            Span::styled("    .", tip_yellow),
+            Span::styled("    *", spark_style),
+            Span::styled("    .", tip_yellow),
+            Span::styled("    '        ", tip_orange),
         ]),
         _ => Line::from(vec![
-            Span::raw(pad8.clone()),
-            Span::styled(".", tip_yellow),
-            Span::styled("  '", tip_orange),
-            Span::styled("  .", tip_yellow),
+            Span::styled("        .", tip_yellow),
+            Span::styled("    '", tip_orange),
+            Span::styled("    .", tip_yellow),
+            Span::styled("    *", spark_style),
+            Span::styled("    .        ", tip_yellow),
         ]),
     };
 
-    // Flame tips
+    // Flame tips (row 2)
     let flame_tips = match frame {
         0 => Line::from(vec![
-            Span::raw(pad6.clone()),
-            Span::styled("'", tip_yellow),
-            Span::styled(" ^~^", flame_orange),
-            Span::styled("~^", tip_yellow),
-            Span::styled(" '", tip_orange),
+            Span::styled("          '", tip_yellow),
+            Span::styled("  `", tip_orange),
+            Span::styled("~^~^~^~", flame_orange),
+            Span::styled("`", tip_orange),
+            Span::styled("  '          ", tip_yellow),
         ]),
         1 => Line::from(vec![
-            Span::raw(pad6.clone()),
-            Span::styled("`", tip_orange),
-            Span::styled(" ~^~", flame_orange),
-            Span::styled("^~", tip_yellow),
-            Span::styled(" `", tip_yellow),
+            Span::styled("          `", tip_orange),
+            Span::styled("  '", tip_yellow),
+            Span::styled("^~^~^~^", flame_orange),
+            Span::styled("'", tip_yellow),
+            Span::styled("  `          ", tip_orange),
         ]),
         2 => Line::from(vec![
-            Span::raw(pad6.clone()),
-            Span::styled("'", tip_yellow),
-            Span::styled(" ^~^", flame_orange),
-            Span::styled("~'", tip_orange),
-            Span::styled(" '", tip_yellow),
+            Span::styled("          '", tip_yellow),
+            Span::styled("  '", tip_yellow),
+            Span::styled("~^~^~^~", flame_orange),
+            Span::styled("`", tip_orange),
+            Span::styled("  '          ", tip_yellow),
         ]),
         _ => Line::from(vec![
-            Span::raw(pad6.clone()),
-            Span::styled("`", tip_orange),
-            Span::styled(" ~^~", flame_orange),
-            Span::styled("'^", tip_yellow),
-            Span::styled(" `", tip_orange),
+            Span::styled("          `", tip_orange),
+            Span::styled("  `", tip_orange),
+            Span::styled("^~^~^~^", flame_orange),
+            Span::styled("'", tip_yellow),
+            Span::styled("  `          ", tip_orange),
         ]),
     };
 
-    // Upper flames
+    // Upper flames (row 3)
     let upper_flames = match frame {
         0 => Line::from(vec![
-            Span::raw(pad4.clone()),
-            Span::styled("'", tip_yellow),
-            Span::styled(" ~*~", flame_orange),
-            Span::styled("'\"'", flame_deep),
+            Span::styled("        '", tip_yellow),
+            Span::styled("  ~*~", flame_orange),
+            Span::styled("'\"'^\"'", flame_deep),
             Span::styled("~*~", flame_orange),
-            Span::styled(" '", tip_yellow),
+            Span::styled("  '        ", tip_yellow),
         ]),
         1 => Line::from(vec![
-            Span::raw(pad4.clone()),
-            Span::styled("`", tip_orange),
-            Span::styled(" *~*", flame_orange),
-            Span::styled("\"'\"", flame_deep),
+            Span::styled("        `", tip_orange),
+            Span::styled("  *~*", flame_orange),
+            Span::styled("\"'\"'\"'", flame_deep),
             Span::styled("*~*", flame_orange),
-            Span::styled(" `", tip_orange),
+            Span::styled("  `        ", tip_orange),
         ]),
         2 => Line::from(vec![
-            Span::raw(pad4.clone()),
-            Span::styled("'", tip_yellow),
-            Span::styled(" ~o~", flame_orange),
-            Span::styled("'\"'", flame_deep),
+            Span::styled("        '", tip_yellow),
+            Span::styled("  ~o~", flame_orange),
+            Span::styled("'\"'^\"'", flame_deep),
             Span::styled("~o~", flame_orange),
-            Span::styled(" '", tip_yellow),
+            Span::styled("  '        ", tip_yellow),
         ]),
         _ => Line::from(vec![
-            Span::raw(pad4.clone()),
-            Span::styled("`", tip_orange),
-            Span::styled(" o~o", flame_orange),
-            Span::styled("\"'\"", flame_deep),
+            Span::styled("        `", tip_orange),
+            Span::styled("  o~o", flame_orange),
+            Span::styled("\"'\"'\"'", flame_deep),
             Span::styled("o~o", flame_orange),
-            Span::styled(" `", tip_orange),
+            Span::styled("  `        ", tip_orange),
         ]),
     };
 
-    // Mid flames
+    // Mid-upper flames (row 4)
+    let mid_upper_flames = match frame {
+        0 => Line::from(vec![
+            Span::styled("      .", tip_yellow),
+            Span::styled("  '~\"~", flame_deep),
+            Span::styled("*~@#@~*", flame_red),
+            Span::styled("~\"~'", flame_deep),
+            Span::styled("  .      ", tip_yellow),
+        ]),
+        1 => Line::from(vec![
+            Span::styled("      '", tip_orange),
+            Span::styled("  ~\"~'", flame_deep),
+            Span::styled("~@#@#@~", flame_red),
+            Span::styled("'~\"~", flame_deep),
+            Span::styled("  '      ", tip_orange),
+        ]),
+        2 => Line::from(vec![
+            Span::styled("      .", tip_yellow),
+            Span::styled("  \"~'~", flame_deep),
+            Span::styled("*@#@#@*", flame_red),
+            Span::styled("~'~\"", flame_deep),
+            Span::styled("  .      ", tip_yellow),
+        ]),
+        _ => Line::from(vec![
+            Span::styled("      '", tip_orange),
+            Span::styled("  ~'~\"", flame_deep),
+            Span::styled("~#@#@#~", flame_red),
+            Span::styled("\"~'~", flame_deep),
+            Span::styled("  '      ", tip_orange),
+        ]),
+    };
+
+    // Mid flames (row 5)
     let mid_flames = match frame {
         0 => Line::from(vec![
-            Span::raw(pad2.clone()),
-            Span::styled(".", tip_yellow),
-            Span::styled(" '~\"~", flame_deep),
-            Span::styled("@#@", flame_red),
-            Span::styled("~\"~'", flame_deep),
-            Span::styled(" .", tip_yellow),
+            Span::styled("    '", tip_orange),
+            Span::styled("  `~^~", flame_deep),
+            Span::styled("'\"@#@#@\"'", flame_red),
+            Span::styled("~^~`", flame_deep),
+            Span::styled("  '    ", tip_orange),
         ]),
         1 => Line::from(vec![
-            Span::raw(pad2.clone()),
-            Span::styled("'", tip_orange),
-            Span::styled(" ~\"~'", flame_deep),
-            Span::styled("#@#", flame_red),
-            Span::styled("'~\"~", flame_deep),
-            Span::styled(" '", tip_orange),
+            Span::styled("    `", tip_orange),
+            Span::styled("  ~^~`", flame_deep),
+            Span::styled("\"'#@#@#'\"", flame_red),
+            Span::styled("`~^~", flame_deep),
+            Span::styled("  `    ", tip_orange),
         ]),
         2 => Line::from(vec![
-            Span::raw(pad2.clone()),
-            Span::styled(".", tip_yellow),
-            Span::styled(" \"~'~", flame_deep),
-            Span::styled("@#@", flame_red),
-            Span::styled("~'~\"", flame_deep),
-            Span::styled(" .", tip_yellow),
+            Span::styled("    '", tip_orange),
+            Span::styled("  ^~`~", flame_deep),
+            Span::styled("'@#@#@#@'", flame_red),
+            Span::styled("~`~^", flame_deep),
+            Span::styled("  '    ", tip_orange),
         ]),
         _ => Line::from(vec![
-            Span::raw(pad2.clone()),
-            Span::styled("'", tip_orange),
-            Span::styled(" ~'~\"", flame_deep),
-            Span::styled("#@#", flame_red),
-            Span::styled("\"~'~", flame_deep),
-            Span::styled(" '", tip_orange),
+            Span::styled("    `", tip_orange),
+            Span::styled("  ~`~^", flame_deep),
+            Span::styled("\"#@#@#@#\"", flame_red),
+            Span::styled("^~`~", flame_deep),
+            Span::styled("  `    ", tip_orange),
         ]),
     };
 
-    // Lower flames/coals
+    // Lower flames (row 6)
     let lower_flames = match frame {
         0 => Line::from(vec![
-            Span::raw(pad.clone()),
-            Span::styled("'", tip_orange),
-            Span::styled(" `~^~", flame_deep),
-            Span::styled("'\"@#@\"'", flame_red),
-            Span::styled("~^~`", flame_deep),
-            Span::styled(" '", tip_orange),
+            Span::styled("   ", flame_red),
+            Span::styled("'~^~`", flame_deep),
+            Span::styled("'\"@#O#O#@\"'", flame_red),
+            Span::styled("`~^~'", flame_deep),
+            Span::styled("   ", flame_red),
         ]),
         1 => Line::from(vec![
-            Span::raw(pad.clone()),
-            Span::styled("`", tip_orange),
-            Span::styled(" ~^~`", flame_deep),
-            Span::styled("\"'#@#'\"", flame_red),
-            Span::styled("`~^~", flame_deep),
-            Span::styled(" `", tip_orange),
+            Span::styled("   ", flame_red),
+            Span::styled("~^~`'", flame_deep),
+            Span::styled("\"'#O#O#O#'\"", flame_red),
+            Span::styled("'`~^~", flame_deep),
+            Span::styled("   ", flame_red),
         ]),
         2 => Line::from(vec![
-            Span::raw(pad.clone()),
-            Span::styled("'", tip_orange),
-            Span::styled(" ^~`~", flame_deep),
-            Span::styled("'@#@#@'", flame_red),
-            Span::styled("~`~^", flame_deep),
-            Span::styled(" '", tip_orange),
+            Span::styled("   ", flame_red),
+            Span::styled("^~`~'", flame_deep),
+            Span::styled("'O#O#O#O#O'", flame_red),
+            Span::styled("'~`~^", flame_deep),
+            Span::styled("   ", flame_red),
         ]),
         _ => Line::from(vec![
-            Span::raw(pad.clone()),
-            Span::styled("`", tip_orange),
-            Span::styled(" ~`~^", flame_deep),
-            Span::styled("\"#@#@#\"", flame_red),
-            Span::styled("^~`~", flame_deep),
-            Span::styled(" `", tip_orange),
+            Span::styled("   ", flame_red),
+            Span::styled("~`~^'", flame_deep),
+            Span::styled("\"#O#O#O#O#\"", flame_red),
+            Span::styled("'^~`~", flame_deep),
+            Span::styled("   ", flame_red),
         ]),
     };
 
-    // Coals/embers with animated glow
+    // Coals/embers with animated glow (row 7)
     let coals = match frame {
         0 => Line::from(vec![
-            Span::raw(pad.clone()),
+            Span::styled("   ", coal_dark),
             Span::styled("▄", coal_dark),
             Span::styled("░▓", coal_glow),
-            Span::styled("█▄█", coal_dark),
+            Span::styled("█▄██▄█", coal_dark),
             Span::styled("▓░▓", coal_glow),
-            Span::styled("█▄█", coal_dark),
+            Span::styled("██▄██", coal_dark),
             Span::styled("▓░", coal_glow),
             Span::styled("▄", coal_dark),
+            Span::styled("   ", coal_dark),
         ]),
         1 => Line::from(vec![
-            Span::raw(pad.clone()),
+            Span::styled("   ", coal_dark),
             Span::styled("▄", coal_dark),
             Span::styled("▓░", coal_glow),
-            Span::styled("█▄█", coal_dark),
+            Span::styled("██▄██▄", coal_dark),
             Span::styled("░▓░", coal_glow),
-            Span::styled("█▄█", coal_dark),
+            Span::styled("█▄██▄", coal_dark),
             Span::styled("░▓", coal_glow),
             Span::styled("▄", coal_dark),
+            Span::styled("   ", coal_dark),
         ]),
         2 => Line::from(vec![
-            Span::raw(pad.clone()),
+            Span::styled("   ", coal_dark),
             Span::styled("▄", coal_dark),
             Span::styled("░▓", coal_glow),
-            Span::styled("█▄█", coal_dark),
+            Span::styled("█▄██▄█", coal_dark),
             Span::styled("▓░▓", coal_glow),
-            Span::styled("█▄█", coal_dark),
+            Span::styled("██▄██", coal_dark),
             Span::styled("▓░", coal_glow),
             Span::styled("▄", coal_dark),
+            Span::styled("   ", coal_dark),
         ]),
         _ => Line::from(vec![
-            Span::raw(pad.clone()),
+            Span::styled("   ", coal_dark),
             Span::styled("▄", coal_dark),
             Span::styled("▓░", coal_glow),
-            Span::styled("█▄█", coal_dark),
+            Span::styled("██▄██▄", coal_dark),
             Span::styled("░▓░", coal_glow),
-            Span::styled("█▄█", coal_dark),
+            Span::styled("█▄██▄", coal_dark),
             Span::styled("░▓", coal_glow),
             Span::styled("▄", coal_dark),
+            Span::styled("   ", coal_dark),
         ]),
     };
 
-    // Log arrangement (crossing logs)
+    // Log arrangement - crossing logs (row 8)
     let logs_top = Line::from(vec![
-        Span::raw(pad.clone()),
-        Span::styled("\\", wood_dark),
-        Span::styled("▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄", wood_brown),
-        Span::styled("/", wood_dark),
+        Span::styled(" \\", wood_dark),
+        Span::styled("▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄▄", wood_brown),
+        Span::styled("/ ", wood_dark),
     ]);
 
+    // Bottom logs (row 9)
     let logs_bottom = Line::from(vec![
-        Span::raw(pad.clone()),
-        Span::styled(" /", wood_dark),
-        Span::styled("▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀", wood_brown),
-        Span::styled("\\ ", wood_dark),
+        Span::styled("  /", wood_dark),
+        Span::styled("▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀▀", wood_brown),
+        Span::styled("\\  ", wood_dark),
+    ]);
+
+    // Stone circle around fire (row 10)
+    let stones = Line::from(vec![
+        Span::styled(".", stone_dark),
+        Span::styled("o", stone),
+        Span::styled("O", stone_dark),
+        Span::styled("o", stone),
+        Span::styled(".", stone_dark),
+        Span::styled("O", stone),
+        Span::styled("o", stone_dark),
+        Span::styled(".", stone),
+        Span::styled("O", stone_dark),
+        Span::styled("o", stone),
+        Span::styled(".", stone_dark),
+        Span::styled("O", stone),
+        Span::styled("o", stone_dark),
+        Span::styled(".", stone),
+        Span::styled("O", stone_dark),
+        Span::styled("o", stone),
+        Span::styled(".", stone_dark),
+        Span::styled("O", stone),
+        Span::styled("o", stone_dark),
+        Span::styled(".", stone),
+        Span::styled("O", stone_dark),
+        Span::styled("o", stone),
+        Span::styled(".", stone_dark),
+        Span::styled("O", stone),
+        Span::styled("o", stone_dark),
     ]);
 
     vec![
         spark_row,
         flame_tips,
         upper_flames,
+        mid_upper_flames,
         mid_flames,
         lower_flames,
         coals,
         logs_top,
         logs_bottom,
+        stones,
     ]
+}
+
+/// Returns the width of the campfire art
+pub fn campfire_width() -> u16 {
+    27
 }

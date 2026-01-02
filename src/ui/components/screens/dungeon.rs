@@ -709,38 +709,51 @@ impl DungeonScreen {
     }
 
     fn render_rest_room(&self, frame: &mut Frame, area: Rect) {
+        use crate::ui::components::dungeon::campfire_art::campfire_width;
+
         let gs = game_state();
         let player = &gs.player;
 
-        // Layout: campfire on left, HP + menu on right
-        let chunks = Layout::default()
-            .direction(LayoutDirection::Horizontal)
-            .constraints([Constraint::Percentage(50), Constraint::Percentage(50)])
-            .split(area);
-
-        // Left side: campfire art (centered vertically)
-        let campfire_lines = render_campfire_art(2);
+        // Get campfire art
+        let campfire_lines = render_campfire_art();
         let campfire_height = campfire_lines.len() as u16;
-        let campfire_y_offset = chunks[0].height.saturating_sub(campfire_height) / 2;
+        let campfire_w = campfire_width();
+
+        // HP bar constants
+        const HP_BAR_WIDTH: u16 = 20;
+
+        // Calculate total content height: campfire + spacing + title + HP bar + spacing + menu
+        let total_height = campfire_height + 1 + 1 + 1 + 1 + 2; // campfire + gap + title + hp + gap + 2 menu items
+
+        // Center everything vertically
+        let y_offset = area.y + area.height.saturating_sub(total_height) / 2;
+
+        // Center campfire horizontally
+        let campfire_x = area.x + area.width.saturating_sub(campfire_w) / 2;
         let campfire_area = Rect {
-            x: chunks[0].x,
-            y: chunks[0].y + campfire_y_offset,
-            width: chunks[0].width,
+            x: campfire_x,
+            y: y_offset,
+            width: campfire_w,
             height: campfire_height,
         };
         frame.render_widget(Paragraph::new(campfire_lines), campfire_area);
 
-        // Right side: HP status and menu
-        let right_chunks = Layout::default()
-            .direction(LayoutDirection::Vertical)
-            .constraints([
-                Constraint::Length(3), // Title + HP display
-                Constraint::Length(1), // Spacing
-                Constraint::Min(4),    // Menu
-            ])
-            .split(chunks[1]);
+        // Title "Rest Area" centered below campfire
+        let title_y = y_offset + campfire_height + 1;
+        let title = Paragraph::new(Line::from(vec![Span::styled(
+            "Rest Area",
+            Style::default().fg(colors::CYAN),
+        )]))
+        .centered();
+        let title_area = Rect {
+            x: area.x,
+            y: title_y,
+            width: area.width,
+            height: 1,
+        };
+        frame.render_widget(title, title_area);
 
-        // Title and HP status
+        // HP bar below title
         let hp = player.hp();
         let max_hp = player.max_hp();
         let hp_percent = if max_hp > 0 {
@@ -757,20 +770,31 @@ impl DungeonScreen {
             colors::RED
         };
 
-        let status_lines = vec![
-            Line::from(vec![Span::styled(
-                "Rest Area",
-                Style::default().fg(colors::CYAN),
-            )]),
-            Line::from(""),
-            Line::from(vec![
-                Span::styled(format!("{} ", HEART), Style::default().fg(colors::RED)),
-                Span::styled(format!("{}/{}", hp, max_hp), Style::default().fg(hp_color)),
-            ]),
-        ];
-        frame.render_widget(Paragraph::new(status_lines), right_chunks[0]);
+        // Create HP bar: [████████░░░░░░░░░░░░] 81/100
+        let filled_chars = ((HP_BAR_WIDTH as f32) * (hp as f32 / max_hp as f32)).round() as u16;
+        let empty_chars = HP_BAR_WIDTH.saturating_sub(filled_chars);
+        let filled_bar = "█".repeat(filled_chars as usize);
+        let empty_bar = "░".repeat(empty_chars as usize);
 
-        // Menu: Rest (heal) and Leave
+        let hp_bar_line = Line::from(vec![
+            Span::styled(format!("{} ", HEART), Style::default().fg(colors::RED)),
+            Span::styled("[", Style::default().fg(colors::WHITE)),
+            Span::styled(filled_bar, Style::default().fg(hp_color)),
+            Span::styled(empty_bar, Style::default().fg(colors::DARK_STONE)),
+            Span::styled("] ", Style::default().fg(colors::WHITE)),
+            Span::styled(format!("{}/{}", hp, max_hp), Style::default().fg(hp_color)),
+        ]);
+
+        let hp_y = title_y + 1;
+        let hp_area = Rect {
+            x: area.x,
+            y: hp_y,
+            width: area.width,
+            height: 1,
+        };
+        frame.render_widget(Paragraph::new(hp_bar_line).centered(), hp_area);
+
+        // Menu below HP bar
         let heal_amount = (max_hp as f32 * 0.5).round() as i32;
         let can_heal = hp < max_hp;
 
@@ -794,6 +818,10 @@ impl DungeonScreen {
             "Rest (Full HP)".to_string()
         };
 
+        let menu_y = hp_y + 2;
+        let menu_width: u16 = 20;
+        let menu_x = area.x + area.width.saturating_sub(menu_width) / 2;
+
         let menu_items: Vec<ListItem> = vec![
             ListItem::new(Line::from(vec![
                 selection_prefix(self.rest_selection == 0),
@@ -805,8 +833,14 @@ impl DungeonScreen {
             ])),
         ];
 
+        let menu_area = Rect {
+            x: menu_x,
+            y: menu_y,
+            width: menu_width,
+            height: 2,
+        };
         let menu = List::new(menu_items);
-        frame.render_widget(menu, right_chunks[2]);
+        frame.render_widget(menu, menu_area);
     }
 
     fn handle_rest_submit(&mut self) {
