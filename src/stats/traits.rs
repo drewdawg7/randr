@@ -30,6 +30,10 @@ pub trait HasStats {
         self.stats_mut().increase_stat_max(stat, amount);
     }
 
+    fn dec_max(&mut self, stat: StatType, amount: i32) {
+        self.stats_mut().decrease_stat_max(stat, amount);
+    }
+
     // Stat getters
     fn goldfind(&self) -> i32 {self.value(StatType::GoldFind)}
     fn mining(&self) -> i32 {self.value(StatType::Mining)}
