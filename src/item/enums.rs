@@ -22,6 +22,7 @@ pub enum EquipmentType {
     Shield,
     Ring,
     Tool(ToolKind),
+    Armor(crate::inventory::EquipmentSlot),
 }
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
@@ -89,6 +90,7 @@ impl EquipmentType {
             EquipmentType::Shield => EquipmentSlot::OffHand,
             EquipmentType::Ring => EquipmentSlot::Ring,
             EquipmentType::Tool(_) => EquipmentSlot::Tool,
+            EquipmentType::Armor(slot) => *slot,
         }
     }
 }
