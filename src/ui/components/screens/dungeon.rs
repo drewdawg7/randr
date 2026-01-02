@@ -234,7 +234,25 @@ impl DungeonScreen {
         let gs = game_state();
         if let Some(dungeon) = gs.dungeon_mut() {
             if dungeon.move_player(direction).is_ok() {
-                self.state = DungeonState::RoomEntry;
+                // Check if entering a boss room - go directly to boss fight
+                let is_boss_room = dungeon
+                    .current_room()
+                    .map(|r| r.room_type == RoomType::Boss && !r.is_cleared)
+                    .unwrap_or(false);
+
+                if is_boss_room {
+                    // Spawn boss if needed
+                    if dungeon.boss.is_none() {
+                        let dragon = gs.spawn_mob(MobId::Dragon);
+                        if let Some(d) = gs.dungeon_mut() {
+                            d.boss = Some(dragon);
+                        }
+                    }
+                    self.boss_combat_log.clear();
+                    self.state = DungeonState::BossRoom;
+                } else {
+                    self.state = DungeonState::RoomEntry;
+                }
                 self.reset_selection();
             }
         }

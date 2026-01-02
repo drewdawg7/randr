@@ -21,7 +21,7 @@ use crate::{
 
 // Nerdfont icons for room types
 const ICON_MONSTER: char = '\u{f0787}';   // Crossed swords
-const ICON_BOSS: char = '\u{F0544}';      // Skull
+const ICON_BOSS: char = '\u{eef8}';       // Dragon head
 const ICON_CHEST: char = '\u{f0726}';     // Treasure chest
 const ICON_REST: char = '\u{F023E}';      // Campfire/bed
 const ICON_TRAP: char = '\u{F0236}';      // Warning/spike
