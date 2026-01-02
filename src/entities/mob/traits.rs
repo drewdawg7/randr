@@ -28,7 +28,7 @@ impl DealsDamage for Mob {}
 
 impl Combatant for Mob {
     fn effective_health(&self) -> i32 {
-        self.get_health()
+        self.hp()
     }
 }
 

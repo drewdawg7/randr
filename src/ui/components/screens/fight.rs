@@ -18,6 +18,7 @@ use crate::combat::{
     ActiveCombat, CombatPhase,
 };
 use crate::inventory::HasInventory;
+use crate::stats::HasStats;
 use crate::system::game_state;
 use crate::ui::theme::{self as colors, quality_color, ColorExt};
 use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, RETURN_ARROW};

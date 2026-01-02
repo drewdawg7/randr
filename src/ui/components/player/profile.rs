@@ -3,7 +3,7 @@ use ratatui::{layout::{Constraint, Direction, Layout, Rect}, style::{Style, Styl
 use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{command::{Cmd, CmdResult}, event::{Key, KeyEvent}, props::{Attribute, AttrValue, Props}, Component, Event, MockComponent, NoUserEvent, State, StateValue};
 
-use crate::{combat::{Combatant, DealsDamage, HasGold, Named}, ui::Id};
+use crate::{combat::{Combatant, DealsDamage, HasGold, Named}, stats::HasStats, ui::Id};
 use crate::system::game_state;
 use crate::ui::components::utilities::{COIN, CROSSED_SWORDS, HEART, SHIELD, RETURN_ARROW};
 use crate::ui::components::widgets::fitted_box::FittedBox;
