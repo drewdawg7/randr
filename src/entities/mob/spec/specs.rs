@@ -48,7 +48,7 @@ pub static DRAGON: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     name: "Dragon",
     quality: MobQuality::Boss,
     max_health: 500..=700,
-    attack: 25..=30,
+    attack: 50..=70,
     dropped_gold: 250..=350,
     dropped_xp: 500..=750,
     loot: LootTable::new()

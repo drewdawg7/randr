@@ -27,6 +27,7 @@ pub trait ListItem {
     fn quantity(&self) -> Option<u32>;          // None for equipment
     fn suffix_spans(&self) -> Vec<Span<'static>> { vec![] }  // Price, cost, etc.
     fn show_lock(&self) -> bool { ... }
+    fn forge_material(&self) -> Option<ForgeMaterial> { None }  // For forge filtering
 }
 ```
 
@@ -43,6 +44,7 @@ pub trait ItemFilter<T>: Clone + Default {
 ### Built-in Filters
 - `NoFilter` - Matches all items (default)
 - `InventoryFilter` - Cycles: All -> Equipment -> Materials -> Consumables
+- `ForgeFilter` - Cycles: All -> Copper -> Tin -> Bronze -> Other (uses `forge_material()`)
 
 ## ItemList Struct (`definition.rs:62`)
 
@@ -65,7 +67,8 @@ pub struct ItemListConfig {
 - `selected_item() -> Option<&T>` - Get currently selected item
 - `is_back_selected() -> bool` - Check if Back button is selected
 - `reset_selection()` - Reset to first item
-- `render(&mut self, Frame, Rect)` - Render the list
+- `render(&mut self, Frame, Rect)` - Render the list (clears background)
+- `render_to_buffer(&mut self, Frame, Rect, &str)` - Render preserving background (for ASCII art)
 
 ## Wrapper Types (`impls.rs`)
 
@@ -76,7 +79,7 @@ pub struct ItemListConfig {
 | `SellableItem` | StoreTab Sell | Sell value |
 | `UpgradeableItem` | Blacksmith Upgrade | Cost or "MAX" |
 | `QualityItem` | Blacksmith Quality | Next quality tier |
-| `RecipeItem` | Forge/Brew (unused) | Ingredient requirements |
+| `RecipeItem` | Blacksmith Forge | Ingredient requirements (have/need) |
 
 ## Usage Pattern
 
@@ -124,6 +127,7 @@ Key::Enter => {
 | StoreTab (sell) | `store/tab.rs` | SellableItem | InventoryFilter |
 | Blacksmith upgrade | `blacksmith/upgrade.rs` | UpgradeableItem | InventoryFilter |
 | Blacksmith quality | `blacksmith/quality.rs` | QualityItem | InventoryFilter |
+| Blacksmith forge | `blacksmith/forge.rs` | RecipeItem | ForgeFilter |
 
 ## Visual Features
 
@@ -141,6 +145,18 @@ Key::Enter => {
 2. Implement `ListItem` trait
 3. Add to `mod.rs` exports if needed externally
 4. Use with `ItemList<NewWrapper, InventoryFilter>` or `ItemList<NewWrapper, NoFilter>`
+
+## Buffer Rendering (Background Preservation)
+
+When rendering over ASCII art or custom backgrounds (like the forge anvil), use `render_to_buffer()` instead of `render()`. The standard `render()` uses ratatui's `List` widget which clears the background.
+
+```rust
+// In render function:
+let menu_padding = " ".repeat(h_padding as usize);
+item_list.render_to_buffer(frame, menu_area, &menu_padding);
+```
+
+The `left_padding` parameter adds consistent left margin to all lines. The method skips unstyled space characters to preserve the underlying background art.
 
 ## Hotkeys
 
