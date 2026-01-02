@@ -347,6 +347,24 @@ impl MockComponent for DungeonScreen {
 
         let gs = game_state();
 
+        // Reset screen state if entering a fresh dungeon
+        // A fresh dungeon has only 1 visited room (the start) and is at start position
+        if let Some(dungeon) = gs.dungeon() {
+            let visited_count = dungeon.rooms.iter()
+                .flat_map(|row| row.iter())
+                .filter_map(|r| r.as_ref())
+                .filter(|r| r.is_visited)
+                .count();
+
+            // Fresh dungeon: only start room visited, and we're in a non-RoomEntry state
+            // This happens when returning after death with stale screen state
+            if visited_count == 1 && self.state != DungeonState::RoomEntry {
+                self.state = DungeonState::RoomEntry;
+                self.boss_combat_log.clear();
+                self.reset_selection();
+            }
+        }
+
         // Check if we need to transition state after combat victory
         if let Some(dungeon) = gs.dungeon() {
             if let Some(room) = dungeon.current_room() {
