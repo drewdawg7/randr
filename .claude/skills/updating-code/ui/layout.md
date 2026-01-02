@@ -53,4 +53,11 @@ let centered_area = horizontal_chunks[1];
 
 ### Files Using This Pattern
 
-- `src/ui/components/blacksmith/menu.rs` - Blacksmith main menu (centered with upward offset)
+| Location | File | MENU_HEIGHT | MENU_WIDTH | Notes |
+|----------|------|-------------|------------|-------|
+| Blacksmith | `menu.rs` | 5 | 28 | 5 menu items |
+| Store | `menu.rs` | 4 | 16 | 3 menu items |
+| Field | `menu.rs` | 4 | 16 | 3 menu items |
+| Alchemist | `menu.rs` | 3 | 20 | 2 menu items |
+
+All use 2:3 vertical ratio for upward offset and 1:1 horizontal ratio for exact center.

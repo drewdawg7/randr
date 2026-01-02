@@ -67,9 +67,12 @@ let text_style = Style::default().fg(colors::WHITE);
 Span::styled(format!("{}", gold), text_style)
 ```
 
-### Files that needed explicit colors for blacksmith:
+### Files with explicit colors for backgrounds:
 - `src/ui/components/blacksmith/menu.rs` - Menu item text
-- `src/ui/components/utilities.rs` - `blacksmith_header()` function
+- `src/ui/components/utilities.rs` - `blacksmith_header()`, `store_header()` functions
+- `src/ui/components/store/menu.rs` - Menu item text
+- `src/ui/components/alchemist/menu.rs` - Menu item text, header
+- `src/ui/components/field/menu.rs` - Menu item text, header
 
 ## Color Variation for Depth
 
@@ -93,3 +96,14 @@ let style = match ((col / 5) + (row / 2)) % 3 {
 - Background art modules: `src/ui/components/<location>/<name>_art.rs`
 - Theme colors: `src/ui/theme.rs`
 - Tab rendering: `src/ui/components/<location>/tab.rs`
+
+## Implemented Backgrounds
+
+| Location | File | Pattern | Colors |
+|----------|------|---------|--------|
+| Blacksmith | `stone_wall_art.rs` | Stone wall (braille) | DARK_STONE, GRANITE, LIGHT_STONE |
+| Store | `wood_planks_art.rs` | Wood planks (braille + box) | DARK_WALNUT, WOOD_BROWN, OAK_BROWN |
+| Field | `grass_art.rs` | Grass/meadow (braille) | DARK_FOREST, FOREST_GREEN, LIME_GREEN |
+| Alchemist | `lab_stone_art.rs` | Dark lab stone (braille) | DEEP_VIOLET, DARK_PURPLE, MYSTIC_PURPLE |
+
+All patterns use 30x10 character tiles with 3-color depth variation.
