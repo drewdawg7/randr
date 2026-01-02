@@ -251,8 +251,20 @@ impl MockComponent for TabbedContainer {
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for TabbedContainer {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
+        // Children-first event routing: forward to active tab first
+        // If child consumes the event (returns None), we're done
+        // If child doesn't consume it (returns Some), we handle tab switching
+        if let Some(tab) = self.tabs.get_mut(self.active_tab) {
+            // Clone the event since we may need it for tab switching
+            let result = tab.content.on(ev.clone());
+            if result.is_none() {
+                // Child consumed the event
+                return None;
+            }
+        }
+
+        // Child didn't consume the event - check for tab switching
         match ev {
-            // Tab switching with Left/Right - TabbedContainer handles these
             Event::Keyboard(KeyEvent { code: Key::Left, .. }) => {
                 self.switch_tab(-1);
                 None
@@ -261,14 +273,8 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for TabbedContainer {
                 self.switch_tab(1);
                 None
             }
-            // Forward ALL other events to the active tab
-            _ => {
-                if let Some(tab) = self.tabs.get_mut(self.active_tab) {
-                    tab.content.on(ev)
-                } else {
-                    None
-                }
-            }
+            // Pass through unhandled events
+            _ => Some(ev),
         }
     }
 }
