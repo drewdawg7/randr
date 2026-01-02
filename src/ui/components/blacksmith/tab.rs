@@ -87,10 +87,22 @@ impl MockComponent for BlacksmithTab {
                 super::stone_wall_art::render_stone_wall(frame, area);
                 menu::render(frame, area, &mut self.menu_list_state);
             }
-            BlacksmithState::Upgrade => upgrade::render(frame, area, &mut self.upgrade_list),
-            BlacksmithState::Quality => quality::render(frame, area, &mut self.quality_list),
-            BlacksmithState::Smelt => smelt::render(frame, area, &mut self.smelt_list_state),
-            BlacksmithState::Forge => forge::render(frame, area, &mut self.forge_list_state),
+            BlacksmithState::Upgrade => {
+                super::stone_wall_art::render_stone_wall(frame, area);
+                upgrade::render(frame, area, &mut self.upgrade_list);
+            }
+            BlacksmithState::Quality => {
+                super::stone_wall_art::render_stone_wall(frame, area);
+                quality::render(frame, area, &mut self.quality_list);
+            }
+            BlacksmithState::Smelt => {
+                super::stone_wall_art::render_stone_wall(frame, area);
+                smelt::render(frame, area, &mut self.smelt_list_state);
+            }
+            BlacksmithState::Forge => {
+                super::stone_wall_art::render_stone_wall(frame, area);
+                forge::render(frame, area, &mut self.forge_list_state);
+            }
         }
     }
 

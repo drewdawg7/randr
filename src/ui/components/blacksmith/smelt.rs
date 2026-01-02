@@ -2,7 +2,7 @@ use ratatui::{
     layout::{Constraint, Direction, Layout, Rect},
     style::Style,
     text::{Line, Span},
-    widgets::{List, ListItem, ListState, Paragraph},
+    widgets::ListState,
     Frame,
 };
 use tuirealm::command::{Cmd, CmdResult};
@@ -36,85 +36,186 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
         ]),
         Line::from(vec![
             Span::styled(format!("{} ", COIN), Style::default().fg(colors::YELLOW)),
-            Span::raw(format!("{}", player_gold)),
-            Span::raw("  |  "),
+            Span::styled(format!("{}", player_gold), Style::default().fg(colors::WHITE)),
+            Span::styled("  |  ", Style::default().fg(colors::WHITE)),
             Span::styled(format!("{} ", FIRE), Style::default().fg(colors::FLAME_ORANGE)),
-            Span::raw(format!("Fuel: {}/100", fuel)),
-            Span::raw("  |  "),
+            Span::styled(format!("Fuel: {}/100", fuel), Style::default().fg(colors::WHITE)),
+            Span::styled("  |  ", Style::default().fg(colors::WHITE)),
             Span::styled("Coal: ", Style::default().fg(colors::DARK_GRAY)),
-            Span::raw(format!("{}", coal_count)),
+            Span::styled(format!("{}", coal_count), Style::default().fg(colors::WHITE)),
         ]),
     ];
     let content_area = render_location_header(frame, area, header_lines, colors::BLACKSMITH_BG, colors::DEEP_ORANGE);
 
-    let chunks = Layout::default()
+    // Content width based on widest element (menu items ~42 chars)
+    const CONTENT_WIDTH: u16 = 42;
+
+    // Calculate horizontal padding to center content block + 3 extra for better visual centering
+    let h_padding = (content_area.width.saturating_sub(CONTENT_WIDTH) / 2) + 3;
+    let padding_str = " ".repeat(h_padding as usize);
+
+    // Vertical layout: fuel bar (1) + forge art (18) + menu (5) = 24 lines
+    // Center vertically with 2:3 ratio (shifted up)
+    const FUEL_BAR_HEIGHT: u16 = 1;
+    const FORGE_HEIGHT: u16 = 18;
+    const MENU_HEIGHT: u16 = 5;
+    const TOTAL_HEIGHT: u16 = FUEL_BAR_HEIGHT + FORGE_HEIGHT + MENU_HEIGHT;
+
+    let vertical_chunks = Layout::default()
         .direction(Direction::Vertical)
         .constraints([
-            Constraint::Length(1),
-            Constraint::Length(20),
-            Constraint::Min(6),
+            Constraint::Fill(2),
+            Constraint::Length(TOTAL_HEIGHT),
+            Constraint::Fill(3),
         ])
         .split(content_area);
 
-    let forge_width = 42u16;
-    let h_padding = content_area.width.saturating_sub(forge_width) / 2;
+    let inner_chunks = Layout::default()
+        .direction(Direction::Vertical)
+        .constraints([
+            Constraint::Length(FUEL_BAR_HEIGHT),
+            Constraint::Length(FORGE_HEIGHT),
+            Constraint::Length(MENU_HEIGHT),
+        ])
+        .split(vertical_chunks[1]);
 
-    // Fuel bar
+    let text_style = Style::default().fg(colors::WHITE);
+
+    // Fuel bar - render directly to buffer to preserve background
     let fuel_bar_width = 20;
     let filled = ((fuel as f32 / 100.0) * fuel_bar_width as f32) as usize;
     let empty = fuel_bar_width - filled;
     let fuel_bar = Line::from(vec![
-        Span::raw(" ".repeat(h_padding as usize)),
-        Span::raw("Fuel: ["),
+        Span::raw(padding_str.clone()),
+        Span::styled("Fuel: [", text_style),
         Span::styled("█".repeat(filled), Style::default().fg(colors::FLAME_ORANGE)),
         Span::styled("░".repeat(empty), Style::default().fg(colors::DARK_GRAY)),
-        Span::raw(format!("] {}/100", fuel)),
+        Span::styled(format!("] {}/100", fuel), text_style),
     ]);
-    frame.render_widget(Paragraph::new(fuel_bar), chunks[0]);
 
-    // Forge art
+    let fuel_area = inner_chunks[0];
+    let buf = frame.buffer_mut();
+    let y = fuel_area.y;
+    let mut x = fuel_area.x;
+    for span in fuel_bar.spans.iter() {
+        let has_style = span.style.fg.is_some() || span.style.bg.is_some();
+        for ch in span.content.chars() {
+            if x < fuel_area.x + fuel_area.width {
+                if ch == ' ' && !has_style {
+                    x += 1;
+                    continue;
+                }
+                let cell = buf.cell_mut((x, y)).unwrap();
+                cell.set_char(ch);
+                if let Some(fg) = span.style.fg {
+                    cell.set_fg(fg);
+                }
+                if let Some(bg) = span.style.bg {
+                    cell.set_bg(bg);
+                }
+                x += 1;
+            }
+        }
+    }
+
+    // Forge art - render directly to buffer to preserve background
+    // Skip space characters in unstyled spans to let background show through
     let forge_lines = render_forge_art(h_padding as usize);
-    frame.render_widget(Paragraph::new(forge_lines), chunks[1]);
+    let forge_area = inner_chunks[1];
+    for (i, line) in forge_lines.iter().enumerate() {
+        if i < forge_area.height as usize {
+            let y = forge_area.y + i as u16;
+            let mut x = forge_area.x;
+            for span in line.spans.iter() {
+                let has_style = span.style.fg.is_some() || span.style.bg.is_some();
+                for ch in span.content.chars() {
+                    if x < forge_area.x + forge_area.width {
+                        // Skip spaces in unstyled spans to preserve background
+                        if ch == ' ' && !has_style {
+                            x += 1;
+                            continue;
+                        }
+                        let cell = buf.cell_mut((x, y)).unwrap();
+                        cell.set_char(ch);
+                        if let Some(fg) = span.style.fg {
+                            cell.set_fg(fg);
+                        }
+                        if let Some(bg) = span.style.bg {
+                            cell.set_bg(bg);
+                        }
+                        x += 1;
+                    }
+                }
+            }
+        }
+    }
 
-    // Menu
+    // Menu - below the forge art, rendered directly to buffer to preserve background
     let selected = list_state.selected().unwrap_or(0);
     let tin_ore = gs.player.find_item_by_id(ItemId::TinOre).map(|i| i.quantity).unwrap_or(0);
     let copper_ore = gs.player.find_item_by_id(ItemId::CopperOre).map(|i| i.quantity).unwrap_or(0);
-    let menu_padding = " ".repeat(h_padding as usize);
 
-    let menu_items: Vec<ListItem> = vec![
-        ListItem::new(Line::from(vec![
-            Span::raw(menu_padding.clone()),
+    let menu_lines: Vec<Line> = vec![
+        Line::from(vec![
+            Span::raw(padding_str.clone()),
             selection_prefix(selected == 0),
             Span::styled("+", Style::default().fg(colors::GREEN)),
-            Span::raw(format!(" Add Fuel (Coal: {})", coal_count)),
-        ])),
-        ListItem::new(Line::from(vec![
-            Span::raw(menu_padding.clone()),
+            Span::styled(format!(" Add Fuel (Coal: {})", coal_count), text_style),
+        ]),
+        Line::from(vec![
+            Span::raw(padding_str.clone()),
             selection_prefix(selected == 1),
             Span::styled(format!("{}", FIRE), Style::default().fg(colors::BRIGHT_YELLOW)),
-            Span::raw(format!(" Smelt Tin (Tin Ore: {})", tin_ore)),
-        ])),
-        ListItem::new(Line::from(vec![
-            Span::raw(menu_padding.clone()),
+            Span::styled(format!(" Smelt Tin (Tin Ore: {})", tin_ore), text_style),
+        ]),
+        Line::from(vec![
+            Span::raw(padding_str.clone()),
             selection_prefix(selected == 2),
             Span::styled(format!("{}", FIRE), Style::default().fg(colors::DEEP_ORANGE)),
-            Span::raw(format!(" Smelt Copper (Copper Ore: {})", copper_ore)),
-        ])),
-        ListItem::new(Line::from(vec![
-            Span::raw(menu_padding.clone()),
+            Span::styled(format!(" Smelt Copper (Copper Ore: {})", copper_ore), text_style),
+        ]),
+        Line::from(vec![
+            Span::raw(padding_str.clone()),
             selection_prefix(selected == 3),
             Span::styled(format!("{}", FIRE), Style::default().fg(colors::EMBER_RED)),
-            Span::raw(format!(" Smelt Bronze (Copper: {}, Tin: {})", copper_ore, tin_ore)),
-        ])),
-        ListItem::new(Line::from(vec![
-            Span::raw(menu_padding),
+            Span::styled(format!(" Smelt Bronze (Copper: {}, Tin: {})", copper_ore, tin_ore), text_style),
+        ]),
+        Line::from(vec![
+            Span::raw(padding_str),
             selection_prefix(selected == 4),
-            Span::raw(format!("{} Back", RETURN_ARROW)),
-        ])),
+            Span::styled(format!("{} Back", RETURN_ARROW), text_style),
+        ]),
     ];
 
-    frame.render_stateful_widget(List::new(menu_items), chunks[2], list_state);
+    // Render menu lines directly to buffer to preserve background
+    let menu_area = inner_chunks[2];
+    for (i, line) in menu_lines.iter().enumerate() {
+        if i < menu_area.height as usize {
+            let y = menu_area.y + i as u16;
+            let mut x = menu_area.x;
+            for span in line.spans.iter() {
+                let has_style = span.style.fg.is_some() || span.style.bg.is_some();
+                for ch in span.content.chars() {
+                    if x < menu_area.x + menu_area.width {
+                        // Skip spaces in unstyled spans to preserve background
+                        if ch == ' ' && !has_style {
+                            x += 1;
+                            continue;
+                        }
+                        let cell = buf.cell_mut((x, y)).unwrap();
+                        cell.set_char(ch);
+                        if let Some(fg) = span.style.fg {
+                            cell.set_fg(fg);
+                        }
+                        if let Some(bg) = span.style.bg {
+                            cell.set_bg(bg);
+                        }
+                        x += 1;
+                    }
+                }
+            }
+        }
+    }
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
