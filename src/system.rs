@@ -6,6 +6,7 @@ use crossterm::terminal;
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
+use crate::dungeon::Dungeon;
 use crate::item::recipe::RecipeRegistry;
 use crate::location::spec::specs::{
     VILLAGE_ALCHEMIST, VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE, VILLAGE_STORE,
@@ -29,6 +30,14 @@ use crate::{
         town::TownScreen,
     },
 };
+
+/// Tracks where combat was initiated from
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum CombatSource {
+    #[default]
+    Field,
+    Dungeon,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ModalType {
@@ -59,6 +68,8 @@ pub struct GameState {
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
     pub player: Player,
     pub town: Town,
+    pub dungeon: Option<Dungeon>,
+    pub combat_source: CombatSource,
     current_combat: Option<CombatRounds>,
     pub active_combat: Option<ActiveCombat>,
     pub active_modal: ModalType,
@@ -135,6 +146,36 @@ impl GameState {
 
     pub fn end_combat(&mut self) {
         self.active_combat = None;
+    }
+
+    /// Enter the dungeon - generates if not already generated
+    pub fn enter_dungeon(&mut self) {
+        if self.dungeon.is_none() {
+            let mut dungeon = Dungeon::default();
+            dungeon.generate();
+            self.dungeon = Some(dungeon);
+        }
+        self.current_screen = Id::Dungeon;
+    }
+
+    /// Leave the dungeon and return to town
+    pub fn leave_dungeon(&mut self) {
+        self.current_screen = Id::Town;
+    }
+
+    /// Reset the dungeon (for when completed or explicit reset)
+    pub fn reset_dungeon(&mut self) {
+        self.dungeon = None;
+    }
+
+    /// Get reference to the active dungeon
+    pub fn dungeon(&self) -> Option<&Dungeon> {
+        self.dungeon.as_ref()
+    }
+
+    /// Get mutable reference to the active dungeon
+    pub fn dungeon_mut(&mut self) -> Option<&mut Dungeon> {
+        self.dungeon.as_mut()
     }
 
     pub fn blacksmith(&self) -> &crate::location::Blacksmith {
@@ -243,6 +284,8 @@ impl Default for GameState {
             consumable_registry: ConsumableRegistry::new(),
             recipe_registry: RecipeRegistry::new(),
             town,
+            dungeon: None,
+            combat_source: CombatSource::default(),
             app: Application::init(
                 EventListenerCfg::default()
                     .crossterm_input_listener(Duration::from_millis(20), 3)

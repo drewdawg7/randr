@@ -1,10 +1,14 @@
 use std::collections::HashMap;
 
-use crate::{dungeon::definition::{Dungeon, DungeonRoom}, entities::mob::MobId};
+use crate::{
+    dungeon::definition::{Dungeon, DungeonRoom, DUNGEON_SIZE},
+    entities::mob::MobId,
+};
 
 impl Default for Dungeon {
     fn default() -> Self {
-        let rooms = Vec::new();
+        // Create empty 5x5 grid
+        let rooms = vec![vec![None; DUNGEON_SIZE]; DUNGEON_SIZE];
         let mob_table = HashMap::from([
             (MobId::Slime, 5),
             (MobId::Goblin, 5),
@@ -14,7 +18,9 @@ impl Default for Dungeon {
         Self {
             name,
             rooms,
-            mob_table
+            mob_table,
+            player_position: (0, 0),
+            is_generated: false,
         }
     }
 }

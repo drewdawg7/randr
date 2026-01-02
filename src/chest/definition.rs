@@ -1,6 +1,6 @@
 use crate::loot::LootTable;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct Chest {
     pub loot: LootTable,
     pub is_locked: bool,
