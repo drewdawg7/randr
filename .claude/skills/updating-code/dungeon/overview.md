@@ -34,11 +34,37 @@ enum DungeonState {
     RoomEntry,    // Show room type + action (Fight/Open)
     Navigation,   // Show available directions after room cleared
 }
+
+enum CompassPosition {
+    North, East, South, West,
+    Center,  // Leave Dungeon
+}
 ```
 
 **State transitions:**
 - `RoomEntry` -> `Navigation`: When `room.is_cleared && state == RoomEntry` (checked in `view()`)
 - `Navigation` -> `RoomEntry`: After `move_player()` to new room
+
+### Navigation UI (Compass Layout)
+The navigation screen uses a compass-style grid layout:
+```
+         [North]
+[West]   [Leave]   [East]
+         [South]
+```
+
+**Key implementation details:**
+- `compass_selection: CompassPosition` tracks current selection
+- `compass_move(CmdDirection)` handles grid navigation between positions
+- Arrow keys navigate (up/down/left/right), Enter confirms
+- Selection defaults to Center (Leave) after state transitions
+- Only available directions are shown
+- Cleared rooms display checkmark indicator
+
+**Rendering methods:**
+- `render_navigation()` - Main compass layout
+- `render_compass_button()` - Direction buttons with cleared status
+- `render_leave_button()` - Center leave option
 
 ### Combat Integration
 - `CombatSource` enum tracks origin: `Field` or `Dungeon`
@@ -52,9 +78,13 @@ enum DungeonState {
 ## Generation Algorithm
 Located in `src/dungeon/generation.rs`:
 1. Start at random edge position
-2. Random walk to create 9-15 contiguous rooms (60% max fill)
+2. Random walk to create 5-10 contiguous rooms (40% max fill)
 3. Room types: 70% Monster, 30% Chest
 4. Entry room is always Monster type
+
+### Sparsity Constants
+- `MAX_FILL_PERCENT` in `definition.rs`: 0.40 (40% of 5x5 grid = max 10 rooms)
+- `MIN_ROOMS` in `generation.rs`: 5
 
 ## Key Methods
 
