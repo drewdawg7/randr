@@ -11,6 +11,7 @@ use crate::location::spec::specs::{
     VILLAGE_ALCHEMIST, VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE, VILLAGE_STORE,
 };
 use crate::location::{Alchemist, Blacksmith, Field, LocationData, Mine, Store};
+use crate::toast::ToastQueue;
 use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::{
     combat::{ActiveCombat, CombatRounds},
@@ -63,6 +64,7 @@ pub struct GameState {
     pub active_modal: ModalType,
     pub inventory_modal: InventoryModal,
     pub show_item_details: bool,
+    pub toasts: ToastQueue,
 }
 
 impl GameState {
@@ -171,6 +173,7 @@ impl GameState {
 
     pub fn run_current_screen(&mut self) -> std::io::Result<()> {
         self.town.store.check_and_restock();
+        self.toasts.cleanup();
 
         let current = self.current_screen;
         if current == Id::Quit {
@@ -182,16 +185,19 @@ impl GameState {
         }
 
         let mut terminal = self.terminal.take().expect("terminal missing");
+        let toasts = self.toasts.toasts();
         terminal.draw(|frame| {
             use ratatui::widgets::Block;
             use ratatui::style::Style;
             use crate::ui::theme as colors;
+            use crate::toast::render::render_toasts;
 
             frame.render_widget(
                 Block::default().style(Style::default().bg(colors::BACKGROUND)),
                 frame.area()
             );
             self.app.view(&current, frame, frame.area());
+            render_toasts(frame, toasts);
         })?;
         self.terminal = Some(terminal);
         let _ = self.app.active(&current);
@@ -249,6 +255,7 @@ impl Default for GameState {
             active_modal: ModalType::None,
             inventory_modal: InventoryModal::new(),
             show_item_details: false,
+            toasts: ToastQueue::default(),
         }
     }
 }

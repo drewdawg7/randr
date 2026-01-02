@@ -8,6 +8,7 @@ pub(crate) mod registry;
 pub(crate) mod inventory;
 pub(crate) mod utilities;
 pub(crate) mod stats;
+pub(crate) mod toast;
 pub(crate) mod ui;
 pub(crate) mod system;
 // Re-exports for main.rs
