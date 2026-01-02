@@ -20,6 +20,7 @@ impl Default for Dungeon {
             mob_table,
             player_position: (0, 0),
             is_generated: false,
+            boss: None,
         }
     }
 }

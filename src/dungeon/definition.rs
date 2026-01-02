@@ -23,6 +23,8 @@ pub struct Dungeon {
     pub mob_table: HashMap<MobId, i32>,
     pub player_position: (i32, i32),
     pub is_generated: bool,
+    /// The boss mob (spawned once when entering boss room)
+    pub boss: Option<Mob>,
 }
 
 impl Dungeon {

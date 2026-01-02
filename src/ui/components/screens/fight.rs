@@ -170,7 +170,20 @@ impl FightScreen {
         // Return to appropriate screen based on combat source
         match gs.combat_source {
             CombatSource::Dungeon => {
-                gs.current_screen = Id::Dungeon;
+                // Check if player was defeated - kick them out of dungeon
+                if self.defeat_processed {
+                    gs.toasts.error("You were defeated! Retreating from dungeon...");
+                    gs.reset_dungeon();
+                    gs.leave_dungeon();
+                } else {
+                    // Victory - mark room as cleared and stay in dungeon
+                    if let Some(dungeon) = gs.dungeon_mut() {
+                        if let Some(room) = dungeon.current_room_mut() {
+                            room.clear();
+                        }
+                    }
+                    gs.current_screen = Id::Dungeon;
+                }
             }
             CombatSource::Field => {
                 gs.current_screen = Id::Town;

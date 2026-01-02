@@ -11,240 +11,292 @@ pub const DRAGON_WIDTH: u16 = 41;
 /// Height of the dragon ASCII art
 pub const DRAGON_HEIGHT: u16 = 19;
 
-/// Renders the dragon ASCII art with colors
+/// Renders the dragon ASCII art with rich colors and shading
 pub fn render_dragon_art() -> Vec<Line<'static>> {
-    // Dragon colors
-    let scale_dark = Style::default().fg(colors::DARK_FOREST);
-    let scale = Style::default().fg(colors::FOREST_GREEN);
-    let scale_light = Style::default().fg(colors::LIME_GREEN);
-    let eye = Style::default().fg(colors::EMBER_RED);
-    let accent = Style::default().fg(colors::FLAME_ORANGE);
-    let claw = Style::default().fg(colors::LIGHT_STONE);
-    let highlight = Style::default().fg(colors::PALE_GREEN);
+    // Dragon color palette
+    let scale_dark = Style::default().fg(colors::DARK_FOREST);      // Deep shadows
+    let scale = Style::default().fg(colors::FOREST_GREEN);          // Main body
+    let scale_light = Style::default().fg(colors::LIME_GREEN);      // Highlights/edges
+    let scale_pale = Style::default().fg(colors::PALE_GREEN);       // Bright accents
+    let eye = Style::default().fg(colors::EMBER_RED);               // Glowing eyes
+    let fire = Style::default().fg(colors::FLAME_ORANGE);           // Fire breath accents
+    let fire_hot = Style::default().fg(colors::BRIGHT_YELLOW);      // Hot fire
+    let claw = Style::default().fg(colors::LIGHT_STONE);            // Claws/horns
+    let teeth = Style::default().fg(colors::WHITE);                 // Teeth
+    let inner = Style::default().fg(colors::DEEP_ORANGE);           // Inner glow
 
     vec![
-        // Row 1: Wings spread
+        // Row 1: Wings spread wide
         Line::from(vec![
             Span::styled("       ", scale),
             Span::styled("\\", scale_light),
-            Span::styled("(______", scale),
-            Span::styled("     ", scale),
-            Span::styled("______", scale),
-            Span::styled(")", scale_light),
+            Span::styled("(", scale),
+            Span::styled("_", scale_dark),
+            Span::styled("_", scale),
+            Span::styled("_", scale_dark),
+            Span::styled("_", scale),
+            Span::styled("_", scale_dark),
+            Span::styled("_", scale),
+            Span::styled("     ", scale_dark),
+            Span::styled("_", scale),
+            Span::styled("_", scale_dark),
+            Span::styled("_", scale),
+            Span::styled("_", scale_dark),
+            Span::styled("_", scale),
+            Span::styled("_", scale_dark),
+            Span::styled(")", scale),
             Span::styled("/", scale_light),
         ]),
-        // Row 2
+        // Row 2: Wing membranes
         Line::from(vec![
             Span::styled("       /", scale_light),
-            Span::styled("`", highlight),
-            Span::styled(".----.", scale),
+            Span::styled("`", scale_pale),
+            Span::styled(".", scale),
+            Span::styled("-", scale_dark),
+            Span::styled("-", scale),
+            Span::styled("-", scale_dark),
+            Span::styled("-", scale),
+            Span::styled(".", scale),
             Span::styled("\\", scale_light),
-            Span::styled("   ", scale),
+            Span::styled("   ", scale_dark),
             Span::styled("/", scale_light),
-            Span::styled(".----.", scale),
-            Span::styled("`", highlight),
+            Span::styled(".", scale),
+            Span::styled("-", scale_dark),
+            Span::styled("-", scale),
+            Span::styled("-", scale_dark),
+            Span::styled("-", scale),
+            Span::styled(".", scale),
+            Span::styled("`", scale_pale),
             Span::styled("\\", scale_light),
         ]),
-        // Row 3
+        // Row 3: Upper body with spikes
         Line::from(vec![
             Span::styled("      ", scale),
             Span::styled("}", scale_light),
-            Span::styled(" /      ", scale),
-            Span::styled(":", accent),
+            Span::styled(" /", scale),
+            Span::styled("######", scale_dark),
+            Span::styled(":", fire),
             Span::styled("}", scale_light),
             Span::styled(" ", scale),
             Span::styled("{", scale_light),
-            Span::styled(":", accent),
-            Span::styled("      \\ ", scale),
+            Span::styled(":", fire),
+            Span::styled("######", scale_dark),
+            Span::styled("\\ ", scale),
             Span::styled("{", scale_light),
         ]),
-        // Row 4
+        // Row 4: Body bulk
         Line::from(vec![
             Span::styled("     ", scale),
             Span::styled("/ ", scale_light),
-            Span::styled("{        ", scale_dark),
+            Span::styled("{", scale),
+            Span::styled("@@@@@@@@", scale_dark),
             Span::styled("}", scale_light),
             Span::styled(" ", scale),
             Span::styled("{", scale_light),
-            Span::styled("        } ", scale_dark),
+            Span::styled("@@@@@@@@", scale_dark),
+            Span::styled("} ", scale),
             Span::styled("\\", scale_light),
         ]),
-        // Row 5
+        // Row 5: Mid body with detail
         Line::from(vec![
             Span::styled("     ", scale),
             Span::styled("}", scale_light),
-            Span::styled(" }      ", scale_dark),
-            Span::styled(") ", accent),
+            Span::styled(" }", scale),
+            Span::styled("@@@@@@", scale_dark),
+            Span::styled(") ", fire),
             Span::styled("}", scale_light),
             Span::styled(" ", scale),
             Span::styled("{", scale_light),
-            Span::styled(" (", accent),
-            Span::styled("      { ", scale_dark),
+            Span::styled(" (", fire),
+            Span::styled("@@@@@@", scale_dark),
+            Span::styled("{ ", scale),
             Span::styled("{", scale_light),
         ]),
-        // Row 6: Horns
+        // Row 6: Horns with detail
         Line::from(vec![
             Span::styled("    ", scale),
             Span::styled("/ ", scale_light),
-            Span::styled("{      ", scale_dark),
+            Span::styled("{", scale),
+            Span::styled("@@@@@@", scale_dark),
             Span::styled("/|\\", claw),
             Span::styled("}", scale_light),
-            Span::styled("!", accent),
+            Span::styled("!", fire_hot),
             Span::styled("{", scale_light),
             Span::styled("/|\\", claw),
-            Span::styled("      } ", scale_dark),
+            Span::styled("@@@@@@", scale_dark),
+            Span::styled("} ", scale),
             Span::styled("\\", scale_light),
         ]),
-        // Row 7: Face top
+        // Row 7: Face crown
         Line::from(vec![
             Span::styled("    ", scale),
             Span::styled("}", scale_light),
-            Span::styled(" }     ", scale_dark),
+            Span::styled(" }", scale),
+            Span::styled("@@@@@", scale_dark),
             Span::styled("( (", scale),
-            Span::styled(".\"^\".", highlight),
+            Span::styled(".\"", scale_pale),
+            Span::styled("^", fire),
+            Span::styled("\".", scale_pale),
             Span::styled(") )", scale),
-            Span::styled("     { ", scale_dark),
+            Span::styled("@@@@@", scale_dark),
+            Span::styled("{ ", scale),
             Span::styled("{", scale_light),
         ]),
-        // Row 8: Eyes
+        // Row 8: Eyes - the most important row!
         Line::from(vec![
             Span::styled("   ", scale),
             Span::styled("/ ", scale_light),
-            Span::styled("{       ", scale_dark),
+            Span::styled("{", scale),
+            Span::styled("@@@@@@@", scale_dark),
             Span::styled("(", scale),
             Span::styled("d", eye),
-            Span::styled("\\", scale),
-            Span::styled("   ", scale_dark),
-            Span::styled("/", scale),
+            Span::styled("\\", teeth),
+            Span::styled("@@@", inner),
+            Span::styled("/", teeth),
             Span::styled("b", eye),
             Span::styled(")", scale),
-            Span::styled("       } ", scale_dark),
+            Span::styled("@@@@@@@", scale_dark),
+            Span::styled("} ", scale),
             Span::styled("\\", scale_light),
         ]),
-        // Row 9: Snout
+        // Row 9: Snout with fire
         Line::from(vec![
             Span::styled("   ", scale),
             Span::styled("}", scale_light),
-            Span::styled(" }       ", scale_dark),
+            Span::styled(" }", scale),
+            Span::styled("@@@@@@@", scale_dark),
             Span::styled("|\\", scale),
-            Span::styled("~", accent),
-            Span::styled("   ", scale_dark),
-            Span::styled("~", accent),
+            Span::styled("~", fire),
+            Span::styled("@@@", inner),
+            Span::styled("~", fire),
             Span::styled("/|", scale),
-            Span::styled("       { ", scale_dark),
+            Span::styled("@@@@@@@", scale_dark),
+            Span::styled("{ ", scale),
             Span::styled("{", scale_light),
         ]),
-        // Row 10
+        // Row 10: Mouth area
         Line::from(vec![
             Span::styled("  ", scale),
             Span::styled("/ /", scale_light),
-            Span::styled("        ", scale_dark),
+            Span::styled("@@@@@@@@", scale_dark),
             Span::styled("| )", scale),
-            Span::styled("   ", scale_dark),
+            Span::styled("@@@", inner),
             Span::styled("( |", scale),
-            Span::styled("        ", scale_dark),
+            Span::styled("@@@@@@@@", scale_dark),
             Span::styled("\\ \\", scale_light),
         ]),
-        // Row 11
+        // Row 11: Neck
         Line::from(vec![
             Span::styled(" ", scale),
             Span::styled("{ {", scale_light),
-            Span::styled("        ", scale_dark),
+            Span::styled("@@@@@@@@", scale_dark),
             Span::styled("_)(", scale),
-            Span::styled(",   ,", accent),
+            Span::styled(",", fire),
+            Span::styled("@@@", inner),
+            Span::styled(",", fire),
             Span::styled(")(_", scale),
-            Span::styled("        ", scale_dark),
+            Span::styled("@@@@@@@@", scale_dark),
             Span::styled("} }", scale_light),
         ]),
-        // Row 12
+        // Row 12: Upper chest
         Line::from(vec![
             Span::styled("  ", scale),
             Span::styled("}", scale_light),
-            Span::styled(" }      ", scale_dark),
+            Span::styled(" }", scale),
+            Span::styled("@@@@@@", scale_dark),
             Span::styled("//", scale),
-            Span::styled("  `\";\"` ", highlight),
+            Span::styled("  `\";\"` ", scale_pale),
             Span::styled(" \\\\", scale),
-            Span::styled("      { ", scale_dark),
+            Span::styled("@@@@@@", scale_dark),
+            Span::styled("{ ", scale),
             Span::styled("{", scale_light),
         ]),
-        // Row 13
+        // Row 13: Lower chest
         Line::from(vec![
             Span::styled(" ", scale),
             Span::styled("/ /", scale_light),
-            Span::styled("      ", scale_dark),
+            Span::styled("@@@@@@", scale_dark),
             Span::styled("//", scale),
-            Span::styled("     (     ", scale_dark),
+            Span::styled("@@@@@@@@@@@", scale_dark),
             Span::styled("\\\\", scale),
-            Span::styled("      ", scale_dark),
+            Span::styled("@@@@@@", scale_dark),
             Span::styled("\\ \\", scale_light),
         ]),
-        // Row 14
+        // Row 14: Belly
         Line::from(vec![
             Span::styled("{ {", scale_light),
-            Span::styled("      ", scale_dark),
+            Span::styled("@@@@@@", scale_dark),
             Span::styled("{(", scale),
-            Span::styled("     ", scale_dark),
-            Span::styled("-=)", accent),
-            Span::styled("     ", scale_dark),
+            Span::styled("@@@@@", scale_dark),
+            Span::styled("-=)", fire),
+            Span::styled("@@@@@", scale_dark),
             Span::styled(")}", scale),
-            Span::styled("      ", scale_dark),
+            Span::styled("@@@@@@", scale_dark),
             Span::styled("} }", scale_light),
         ]),
-        // Row 15
+        // Row 15: Lower body
         Line::from(vec![
             Span::styled(" ", scale),
             Span::styled("\\ \\", scale_light),
-            Span::styled("     ", scale_dark),
+            Span::styled("@@@@@", scale_dark),
             Span::styled("/)", scale),
-            Span::styled("    ", scale_dark),
-            Span::styled("-=(=-", accent),
-            Span::styled("     ", scale_dark),
+            Span::styled("@@@@", scale_dark),
+            Span::styled("-=(=-", fire),
+            Span::styled("@@@@@", scale_dark),
             Span::styled("(\\", scale),
-            Span::styled("    ", scale_dark),
+            Span::styled("@@@@", scale_dark),
             Span::styled("/ /", scale_light),
         ]),
-        // Row 16
+        // Row 16: Tail base
         Line::from(vec![
             Span::styled("  ", scale),
             Span::styled("`\\\\", scale_light),
-            Span::styled("  ", scale_dark),
+            Span::styled("@@", scale_dark),
             Span::styled("/'/", scale),
-            Span::styled("    ", scale_dark),
-            Span::styled("/-=|\\-\\", accent),
-            Span::styled("    ", scale_dark),
+            Span::styled("@@@@", scale_dark),
+            Span::styled("/-=|\\-\\", fire),
+            Span::styled("@@@@", scale_dark),
             Span::styled("\\`\\", scale),
-            Span::styled("  ", scale_dark),
+            Span::styled("@@", scale_dark),
             Span::styled("//'", scale_light),
         ]),
-        // Row 17
+        // Row 17: Lower tail
         Line::from(vec![
             Span::styled("    ", scale),
             Span::styled("`\\{", scale_light),
-            Span::styled("  |   ", scale_dark),
+            Span::styled("@@", scale_dark),
+            Span::styled("|", scale),
+            Span::styled("@@@", scale_dark),
             Span::styled("( ", scale),
-            Span::styled("-===-", accent),
+            Span::styled("-===-", fire_hot),
             Span::styled(" )", scale),
-            Span::styled("   |  ", scale_dark),
+            Span::styled("@@@", scale_dark),
+            Span::styled("|", scale),
+            Span::styled("@@", scale_dark),
             Span::styled("}/'", scale_light),
         ]),
-        // Row 18
+        // Row 18: Tail tip
         Line::from(vec![
             Span::styled("      ", scale),
             Span::styled("`", scale_light),
-            Span::styled("  _\\   ", scale_dark),
+            Span::styled("@@", scale_dark),
+            Span::styled("_\\", scale),
+            Span::styled("@@@", scale_dark),
             Span::styled("\\", scale),
-            Span::styled("-===-", accent),
+            Span::styled("-===-", fire),
             Span::styled("/", scale),
-            Span::styled("   /_  ", scale_dark),
+            Span::styled("@@@", scale_dark),
+            Span::styled("/_", scale),
+            Span::styled("@@", scale_dark),
             Span::styled("'", scale_light),
         ]),
-        // Row 19: Feet/tail
+        // Row 19: Feet and tail end
         Line::from(vec![
             Span::styled("        ", scale),
             Span::styled("(_(_(_)", claw),
-            Span::styled("'", highlight),
-            Span::styled("-=-", accent),
-            Span::styled("'", highlight),
+            Span::styled("'", scale_pale),
+            Span::styled("-=-", fire_hot),
+            Span::styled("'", scale_pale),
             Span::styled("(_)_)_)", claw),
         ]),
     ]
