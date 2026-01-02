@@ -15,6 +15,7 @@ use crate::location::{Alchemist, Blacksmith, Field, LocationData, Mine, Store};
 use crate::toast::ToastQueue;
 use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::ui::screen::ScreenLifecycle;
+use crate::ui::state::UIState;
 use crate::{
     combat::{ActiveCombat, CombatRounds},
     entities::{mob::{MobId, MobRegistry}, Mob, Player},
@@ -41,13 +42,8 @@ pub enum CombatSource {
     Dungeon,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum ModalType {
-    #[default]
-    None,
-    Keybinds,
-    Inventory,
-}
+// Re-export ModalType from ui::state for backward compatibility
+pub use crate::ui::state::ModalType;
 
 static mut GAME_STATE: Option<GameState> = None;
 
@@ -60,25 +56,37 @@ pub fn game_state() -> &'static mut GameState {
 }
 
 pub struct GameState {
+    // Registries
     item_registry: ItemRegistry,
     mob_registry: MobRegistry,
     rock_registry: RockRegistry,
     consumable_registry: ConsumableRegistry,
     recipe_registry: RecipeRegistry,
+
+    // UI state (grouped for better organization)
+    /// UI-specific state. Prefer using `self.ui` for new code.
+    pub ui: UIState,
+
+    // Legacy UI fields (deprecated - use `ui` field instead)
+    // These are kept for backward compatibility during migration
     pub current_screen: Id,
     screen_lifecycle: ScreenLifecycle,
+    pub active_modal: ModalType,
+    pub inventory_modal: InventoryModal,
+    pub show_item_details: bool,
+    pub toasts: ToastQueue,
+
+    // Framework state
     app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
     terminal: Option<Terminal<CrosstermBackend<Stdout>>>,
+
+    // Game state
     pub player: Player,
     pub town: Town,
     pub dungeon: Option<Dungeon>,
     pub combat_source: CombatSource,
     current_combat: Option<CombatRounds>,
     pub active_combat: Option<ActiveCombat>,
-    pub active_modal: ModalType,
-    pub inventory_modal: InventoryModal,
-    pub show_item_details: bool,
-    pub toasts: ToastQueue,
 }
 
 impl GameState {
@@ -296,29 +304,39 @@ impl Default for GameState {
         let town = Town::new("Village".to_string(), store, blacksmith, alchemist, field, mine);
 
         Self {
-            player: Player::default(),
+            // Registries
             item_registry: ItemRegistry::new(),
             mob_registry: MobRegistry::new(),
             rock_registry: RockRegistry::new(),
             consumable_registry: ConsumableRegistry::new(),
             recipe_registry: RecipeRegistry::new(),
-            town,
-            dungeon: None,
-            combat_source: CombatSource::default(),
+
+            // UI state (new grouped struct)
+            ui: UIState::new(),
+
+            // Legacy UI fields (kept for backward compatibility)
+            current_screen: Id::Menu,
+            screen_lifecycle: ScreenLifecycle::new(Id::Menu),
+            active_modal: ModalType::None,
+            inventory_modal: InventoryModal::new(),
+            show_item_details: false,
+            toasts: ToastQueue::default(),
+
+            // Framework state
             app: Application::init(
                 EventListenerCfg::default()
                     .crossterm_input_listener(Duration::from_millis(20), 3)
                     .poll_timeout(Duration::from_millis(10)),
             ),
             terminal: Some(terminal),
-            current_screen: Id::Menu,
-            screen_lifecycle: ScreenLifecycle::new(Id::Menu),
+
+            // Game state
+            player: Player::default(),
+            town,
+            dungeon: None,
+            combat_source: CombatSource::default(),
             current_combat: None,
             active_combat: None,
-            active_modal: ModalType::None,
-            inventory_modal: InventoryModal::new(),
-            show_item_details: false,
-            toasts: ToastQueue::default(),
         }
     }
 }
