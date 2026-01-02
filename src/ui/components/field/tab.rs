@@ -1,63 +1,36 @@
 use ratatui::{
     layout::Rect,
-    style::Style,
-    text::{Line, Span},
+    widgets::ListState,
     Frame,
 };
 
-use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{
     command::{Cmd, CmdResult},
+    event::{Key, KeyEvent},
     props::{AttrValue, Attribute, Props},
-    Component, Event, MockComponent, NoUserEvent, State,
+    Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
 
 use crate::{
-    combat::HasGold,
-    entities::progression::HasProgression,
-    stats::HasStats,
     system::game_state,
     ui::Id,
 };
-use crate::ui::components::utilities::{render_location_header, COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, PICKAXE, RETURN_ARROW};
-use crate::ui::components::widgets::menu::{Menu, MenuItem};
+
+use super::{grass_art, menu, StateChange};
 
 pub struct FieldTab {
     props: Props,
-    menu: Menu,
+    list_state: ListState,
 }
 
 impl FieldTab {
     pub fn new() -> Self {
-        let items = vec![
-            MenuItem {
-                label: format!("{} Fight", CROSSED_SWORDS),
-                action: Box::new(move || {
-                    let gs = game_state();
-                    let field = &gs.town.field;
-                    if let Ok(mob) = field.spawn_mob() {
-                        gs.start_combat(mob);
-                        gs.current_screen = Id::Fight;
-                    }
-                }),
-            },
-            MenuItem {
-                label: format!("{} Mine", PICKAXE),
-                action: Box::new(|| {
-                    game_state().current_screen = Id::Mine;
-                }),
-            },
-            MenuItem {
-                label: format!("{} Back", RETURN_ARROW),
-                action: Box::new(|| {
-                    game_state().current_screen = Id::Menu;
-                }),
-            },
-        ];
+        let mut list_state = ListState::default();
+        list_state.select(Some(0));
 
         Self {
             props: Props::default(),
-            menu: Menu::new(items),
+            list_state,
         }
     }
 }
@@ -68,50 +41,11 @@ impl Default for FieldTab {
     }
 }
 
-fn field_header() -> Vec<Line<'static>> {
-    use crate::entities::progression::Progression;
-
-    let gs = game_state();
-    let field = &gs.town.field;
-    let player = &gs.player;
-
-    // Get player stats
-    let current_hp = player.hp();
-    let max_hp = player.max_hp();
-    let gold = player.gold();
-    let progression = player.progression();
-    let level = progression.level;
-    let current_xp = progression.xp;
-    let xp_to_next = Progression::xp_to_next_level(level);
-
-    vec![
-        // Line 1: Field name
-        Line::from(vec![
-            Span::styled(field.name.clone(), Style::default().color(colors::FOREST_GREEN)),
-        ]),
-        // Line 2: HP | Level XP | Gold
-        Line::from(vec![
-            Span::styled(format!("{} ", HEART), Style::default().color(colors::RED)),
-            Span::raw(format!("{}/{}", current_hp, max_hp)),
-            Span::raw("  |  "),
-            Span::styled(format!("{} ", DOUBLE_ARROW_UP), Style::default().color(colors::CYAN)),
-            Span::raw(format!("{} ", level)),
-            Span::raw(format!("{}/{}", current_xp, xp_to_next)),
-            Span::raw("  |  "),
-            Span::styled(format!("{} ", COIN), Style::default().color(colors::YELLOW)),
-            Span::raw(format!("{}", gold)),
-        ]),
-    ]
-}
-
 impl MockComponent for FieldTab {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        // Render header with field name and get remaining area
-        let header_lines = field_header();
-        let content_area = render_location_header(frame, area, header_lines, colors::FIELD_BG, colors::FOREST_GREEN);
-
-        // Render the menu in remaining area
-        self.menu.view(frame, content_area);
+        // Render background first, then menu on top
+        grass_art::render_grass_field(frame, area);
+        menu::render(frame, area, &mut self.list_state);
     }
 
     fn attr(&mut self, attr: Attribute, value: AttrValue) {
@@ -119,7 +53,7 @@ impl MockComponent for FieldTab {
     }
 
     fn state(&self) -> State {
-        self.menu.state()
+        State::One(StateValue::Usize(self.list_state.selected().unwrap_or(0)))
     }
 
     fn query(&self, attr: Attribute) -> Option<AttrValue> {
@@ -127,12 +61,48 @@ impl MockComponent for FieldTab {
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
-        self.menu.perform(cmd)
+        let (result, state_change) = menu::handle(cmd, &mut self.list_state);
+
+        if let Some(change) = state_change {
+            match change {
+                StateChange::ToFight => {
+                    let gs = game_state();
+                    let field = &gs.town.field;
+                    if let Ok(mob) = field.spawn_mob() {
+                        gs.start_combat(mob);
+                        gs.current_screen = Id::Fight;
+                    }
+                }
+                StateChange::ToMine => {
+                    game_state().current_screen = Id::Mine;
+                }
+            }
+        }
+
+        result
     }
 }
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for FieldTab {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
-        self.menu.on(ev)
+        match ev {
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                self.perform(Cmd::Move(tuirealm::command::Direction::Up));
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
+                self.perform(Cmd::Move(tuirealm::command::Direction::Down));
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {
+                self.perform(Cmd::Submit);
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+                self.perform(Cmd::Cancel);
+                None
+            }
+            _ => None,
+        }
     }
 }
