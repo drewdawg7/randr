@@ -13,13 +13,13 @@ use tuirealm::{
 };
 
 use crate::{
-    dungeon::RoomType,
+    dungeon::{Direction, RoomType},
     inventory::HasInventory,
     system::{game_state, CombatSource},
     ui::{
         components::{
             dungeon::minimap,
-            utilities::{list_move_down, list_move_up, selection_prefix, RETURN_ARROW},
+            utilities::{selection_prefix, RETURN_ARROW},
         },
         theme as colors, Id,
     },
@@ -34,10 +34,21 @@ enum DungeonState {
     Navigation,
 }
 
+/// Compass position for navigation selection
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum CompassPosition {
+    North,
+    East,
+    South,
+    West,
+    Center, // Leave Dungeon
+}
+
 pub struct DungeonScreen {
     props: Props,
     state: DungeonState,
     list_state: ListState,
+    compass_selection: CompassPosition,
 }
 
 impl DungeonScreen {
@@ -49,11 +60,13 @@ impl DungeonScreen {
             props: Props::default(),
             state: DungeonState::RoomEntry,
             list_state,
+            compass_selection: CompassPosition::Center,
         }
     }
 
     fn reset_selection(&mut self) {
         self.list_state.select(Some(0));
+        self.compass_selection = CompassPosition::Center;
     }
 
     /// Get the current menu size based on state
@@ -168,23 +181,72 @@ impl DungeonScreen {
 
     fn handle_navigation_submit(&mut self) {
         let gs = game_state();
-        let selected = self.list_state.selected().unwrap_or(0);
 
-        if let Some(dungeon) = gs.dungeon_mut() {
-            let directions = dungeon.available_directions();
-
-            if selected < directions.len() {
-                // Move in the selected direction
-                let direction = directions[selected];
-                if dungeon.move_player(direction).is_ok() {
-                    self.state = DungeonState::RoomEntry;
-                    self.reset_selection();
-                }
-            } else {
-                // Leave dungeon
+        match self.compass_selection {
+            CompassPosition::Center => {
                 gs.leave_dungeon();
             }
+            CompassPosition::North => self.try_move(Direction::North),
+            CompassPosition::East => self.try_move(Direction::East),
+            CompassPosition::South => self.try_move(Direction::South),
+            CompassPosition::West => self.try_move(Direction::West),
         }
+    }
+
+    fn try_move(&mut self, direction: Direction) {
+        let gs = game_state();
+        if let Some(dungeon) = gs.dungeon_mut() {
+            if dungeon.move_player(direction).is_ok() {
+                self.state = DungeonState::RoomEntry;
+                self.reset_selection();
+            }
+        }
+    }
+
+    /// Navigate compass selection based on arrow key
+    fn compass_move(&mut self, cmd_dir: CmdDirection) {
+        let gs = game_state();
+        let available = if let Some(dungeon) = gs.dungeon() {
+            dungeon.available_directions()
+        } else {
+            vec![]
+        };
+
+        let has_north = available.contains(&Direction::North);
+        let has_south = available.contains(&Direction::South);
+        let has_east = available.contains(&Direction::East);
+        let has_west = available.contains(&Direction::West);
+
+        self.compass_selection = match (self.compass_selection, cmd_dir) {
+            // From Center
+            (CompassPosition::Center, CmdDirection::Up) if has_north => CompassPosition::North,
+            (CompassPosition::Center, CmdDirection::Down) if has_south => CompassPosition::South,
+            (CompassPosition::Center, CmdDirection::Left) if has_west => CompassPosition::West,
+            (CompassPosition::Center, CmdDirection::Right) if has_east => CompassPosition::East,
+
+            // From North
+            (CompassPosition::North, CmdDirection::Down) => CompassPosition::Center,
+            (CompassPosition::North, CmdDirection::Left) if has_west => CompassPosition::West,
+            (CompassPosition::North, CmdDirection::Right) if has_east => CompassPosition::East,
+
+            // From South
+            (CompassPosition::South, CmdDirection::Up) => CompassPosition::Center,
+            (CompassPosition::South, CmdDirection::Left) if has_west => CompassPosition::West,
+            (CompassPosition::South, CmdDirection::Right) if has_east => CompassPosition::East,
+
+            // From West
+            (CompassPosition::West, CmdDirection::Right) => CompassPosition::Center,
+            (CompassPosition::West, CmdDirection::Up) if has_north => CompassPosition::North,
+            (CompassPosition::West, CmdDirection::Down) if has_south => CompassPosition::South,
+
+            // From East
+            (CompassPosition::East, CmdDirection::Left) => CompassPosition::Center,
+            (CompassPosition::East, CmdDirection::Up) if has_north => CompassPosition::North,
+            (CompassPosition::East, CmdDirection::Down) if has_south => CompassPosition::South,
+
+            // No change for invalid moves
+            (current, _) => current,
+        };
     }
 
     /// Called when returning from combat
@@ -255,15 +317,16 @@ impl MockComponent for DungeonScreen {
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
-        let menu_size = self.menu_size();
-
         match cmd {
-            Cmd::Move(CmdDirection::Up) => {
-                list_move_up(&mut self.list_state, menu_size);
-                CmdResult::Changed(tuirealm::State::None)
-            }
-            Cmd::Move(CmdDirection::Down) => {
-                list_move_down(&mut self.list_state, menu_size);
+            Cmd::Move(dir) => {
+                match self.state {
+                    DungeonState::RoomEntry => {
+                        // RoomEntry only has one option, no movement needed
+                    }
+                    DungeonState::Navigation => {
+                        self.compass_move(dir);
+                    }
+                }
                 CmdResult::Changed(tuirealm::State::None)
             }
             Cmd::Submit => {
@@ -410,77 +473,162 @@ impl DungeonScreen {
 
     fn render_navigation(&mut self, frame: &mut Frame, area: Rect) {
         let gs = game_state();
-        let text_style = Style::default().fg(colors::WHITE);
 
-        let directions = if let Some(dungeon) = gs.dungeon() {
+        let available = if let Some(dungeon) = gs.dungeon() {
             dungeon.available_directions()
         } else {
             vec![]
         };
 
-        // Center the content
-        let content_area = centered_rect(30, 10, area);
+        let has_north = available.contains(&Direction::North);
+        let has_south = available.contains(&Direction::South);
+        let has_east = available.contains(&Direction::East);
+        let has_west = available.contains(&Direction::West);
+
+        // Compass layout dimensions
+        const BUTTON_WIDTH: u16 = 16;
+        const BUTTON_HEIGHT: u16 = 1;
+        const COMPASS_WIDTH: u16 = BUTTON_WIDTH * 3 + 4; // 3 columns + spacing
+        const COMPASS_HEIGHT: u16 = 7; // title + north + middle row + south + padding
+
+        // Center the compass
+        let content_area = centered_rect(COMPASS_WIDTH, COMPASS_HEIGHT, area);
 
         // Navigation title
-        let title = Paragraph::new(vec![
-            Line::from(vec![Span::styled(
-                "Choose Direction",
-                Style::default().fg(colors::CYAN),
-            )]),
-            Line::from(""),
-        ])
+        let title = Paragraph::new(Line::from(vec![Span::styled(
+            "Choose Direction",
+            Style::default().fg(colors::CYAN),
+        )]))
         .centered();
 
         let title_area = Rect {
-            height: 2,
+            height: 1,
             ..content_area
         };
         frame.render_widget(title, title_area);
 
-        // Direction menu
-        let selected = self.list_state.selected().unwrap_or(0);
-        let mut menu_items: Vec<ListItem> = directions
-            .iter()
-            .enumerate()
-            .map(|(i, dir)| {
-                // Check if the room in that direction is cleared
-                let room_status = if let Some(dungeon) = gs.dungeon() {
-                    let (dx, dy) = dir.offset();
-                    let (px, py) = dungeon.player_position;
-                    if let Some(room) = dungeon.get_room(px + dx, py + dy) {
-                        if room.is_cleared {
-                            " (cleared)"
-                        } else {
-                            ""
-                        }
-                    } else {
-                        ""
-                    }
-                } else {
-                    ""
-                };
+        // Compass grid: 3 rows (North, West-Center-East, South)
+        let compass_y = content_area.y + 2;
 
-                ListItem::new(Line::from(vec![
-                    selection_prefix(selected == i),
-                    Span::styled(dir.name(), text_style),
-                    Span::styled(room_status, Style::default().fg(colors::DARK_STONE)),
-                ]))
-            })
-            .collect();
+        // Row 1: North (centered)
+        if has_north {
+            let north_area = Rect {
+                x: content_area.x + BUTTON_WIDTH + 2,
+                y: compass_y,
+                width: BUTTON_WIDTH,
+                height: BUTTON_HEIGHT,
+            };
+            self.render_compass_button(frame, north_area, "North", CompassPosition::North, &gs);
+        }
 
-        // Add "Leave Dungeon" option
-        menu_items.push(ListItem::new(Line::from(vec![
-            selection_prefix(selected == directions.len()),
-            Span::styled(format!("{} Leave Dungeon", RETURN_ARROW), text_style),
-        ])));
+        // Row 2: West - Center - East
+        let middle_y = compass_y + 2;
 
-        let menu = List::new(menu_items);
-        let menu_area = Rect {
-            y: content_area.y + 3,
-            height: (directions.len() + 2) as u16,
-            ..content_area
+        if has_west {
+            let west_area = Rect {
+                x: content_area.x,
+                y: middle_y,
+                width: BUTTON_WIDTH,
+                height: BUTTON_HEIGHT,
+            };
+            self.render_compass_button(frame, west_area, "West", CompassPosition::West, &gs);
+        }
+
+        // Center (Leave Dungeon) - always available
+        let center_area = Rect {
+            x: content_area.x + BUTTON_WIDTH + 2,
+            y: middle_y,
+            width: BUTTON_WIDTH,
+            height: BUTTON_HEIGHT,
         };
-        frame.render_stateful_widget(menu, menu_area, &mut self.list_state);
+        self.render_leave_button(frame, center_area);
+
+        if has_east {
+            let east_area = Rect {
+                x: content_area.x + (BUTTON_WIDTH + 2) * 2,
+                y: middle_y,
+                width: BUTTON_WIDTH,
+                height: BUTTON_HEIGHT,
+            };
+            self.render_compass_button(frame, east_area, "East", CompassPosition::East, &gs);
+        }
+
+        // Row 3: South (centered)
+        if has_south {
+            let south_area = Rect {
+                x: content_area.x + BUTTON_WIDTH + 2,
+                y: middle_y + 2,
+                width: BUTTON_WIDTH,
+                height: BUTTON_HEIGHT,
+            };
+            self.render_compass_button(frame, south_area, "South", CompassPosition::South, &gs);
+        }
+    }
+
+    fn render_compass_button(
+        &self,
+        frame: &mut Frame,
+        area: Rect,
+        label: &str,
+        position: CompassPosition,
+        gs: &crate::system::GameState,
+    ) {
+        let is_selected = self.compass_selection == position;
+
+        // Check if room is cleared
+        let direction = match position {
+            CompassPosition::North => Direction::North,
+            CompassPosition::East => Direction::East,
+            CompassPosition::South => Direction::South,
+            CompassPosition::West => Direction::West,
+            CompassPosition::Center => return, // Should not happen
+        };
+
+        let is_cleared = if let Some(dungeon) = gs.dungeon() {
+            let (dx, dy) = direction.offset();
+            let (px, py) = dungeon.player_position;
+            dungeon
+                .get_room(px + dx, py + dy)
+                .map(|r| r.is_cleared)
+                .unwrap_or(false)
+        } else {
+            false
+        };
+
+        let text = if is_cleared {
+            format!("{} ✓", label)
+        } else {
+            label.to_string()
+        };
+
+        let style = if is_selected {
+            Style::default().fg(colors::YELLOW)
+        } else if is_cleared {
+            Style::default().fg(colors::DARK_STONE)
+        } else {
+            Style::default().fg(colors::WHITE)
+        };
+
+        let line = Line::from(vec![selection_prefix(is_selected), Span::styled(text, style)]);
+        let paragraph = Paragraph::new(line).centered();
+        frame.render_widget(paragraph, area);
+    }
+
+    fn render_leave_button(&self, frame: &mut Frame, area: Rect) {
+        let is_selected = self.compass_selection == CompassPosition::Center;
+
+        let style = if is_selected {
+            Style::default().fg(colors::YELLOW)
+        } else {
+            Style::default().fg(colors::WHITE)
+        };
+
+        let line = Line::from(vec![
+            selection_prefix(is_selected),
+            Span::styled(format!("{} Leave", RETURN_ARROW), style),
+        ]);
+        let paragraph = Paragraph::new(line).centered();
+        frame.render_widget(paragraph, area);
     }
 }
 
@@ -493,6 +641,14 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for DungeonScreen {
             }
             Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
                 self.perform(Cmd::Move(CmdDirection::Down));
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Left, .. }) => {
+                self.perform(Cmd::Move(CmdDirection::Left));
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Right, .. }) => {
+                self.perform(Cmd::Move(CmdDirection::Right));
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {
