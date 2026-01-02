@@ -31,8 +31,8 @@ impl MockComponent for PlayerProfile {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
         let player = &game_state().player;
         let name = player.name();
-        let health = player.get_health();
-        let max_health = player.get_max_health();
+        let health = player.hp();
+        let max_health = player.max_hp();
         let gold = player.gold();
         let attack = player.effective_attack();
         let defense = player.effective_defense();

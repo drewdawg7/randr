@@ -32,7 +32,7 @@ impl Default for Player {
 
 impl Display for Player {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({}/{})", self.name, self.get_health(), self.get_max_health())
+        write!(f, "{} ({}/{})", self.name, self.hp(), self.max_hp())
     }
 }
 
@@ -100,7 +100,7 @@ impl DealsDamage for Player {
 
 impl Combatant for Player {
     fn effective_defense(&self) -> i32 {
-        self.get_defense() + self.inventory().sum_equipment_stats(StatType::Defense)
+        self.defense() + self.inventory().sum_equipment_stats(StatType::Defense)
     }
 } 
 

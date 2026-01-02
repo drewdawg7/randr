@@ -101,7 +101,7 @@ where
         let death_result = mob.on_death();
 
         // Apply gold with goldfind bonus
-        let gf = player.get_effective_goldfind();
+        let gf = player.effective_goldfind();
         let multiplier = 1.0 + (gf as f64 / 100.0);
         let gold_with_bonus = ((death_result.gold_dropped as f64) * multiplier).round() as i32;
         player.add_gold(gold_with_bonus);

@@ -327,8 +327,8 @@ fn render_combatants(frame: &mut Frame, area: Rect, player: &crate::entities::Pl
         right_area,
         combat.mob.name,
         ENEMY_ART,
-        combat.mob.get_health(),
-        combat.mob.get_max_health(),
+        combat.mob.hp(),
+        combat.mob.max_hp(),
     );
 }
 
@@ -374,8 +374,8 @@ fn render_player_panel(frame: &mut Frame, area: Rect, player: &crate::entities::
     frame.render_widget(Paragraph::new(name_line), chunks[1]);
 
     // HP text
-    let hp = player.get_health();
-    let max_hp = player.get_max_health();
+    let hp = player.hp();
+    let max_hp = player.max_hp();
     let hp_pct = (hp as f64 / max_hp as f64 * 100.0).max(0.0) as u16;
     let hp_text = Line::from(vec![
         Span::raw("  "),

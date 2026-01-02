@@ -97,7 +97,7 @@ impl Default for MineScreen {
 
 fn mine_header() -> Vec<Line<'static>> {
     let gs = game_state();
-    let effective_mining = gs.player.get_effective_mining();
+    let effective_mining = gs.player.effective_mining();
 
     vec![
         Line::from(vec![
