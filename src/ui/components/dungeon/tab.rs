@@ -8,6 +8,7 @@ use tuirealm::{
 };
 
 use crate::{system::game_state, ui::Id};
+use crate::ui::components::backgrounds::render_stone_wall;
 
 use super::{menu, StateChange};
 
@@ -36,7 +37,9 @@ impl Default for DungeonTab {
 
 impl MockComponent for DungeonTab {
     fn view(&mut self, frame: &mut Frame, area: Rect) {
-        // Render the dungeon entrance menu
+        // Render stone wall background first
+        render_stone_wall(frame, area);
+        // Then render the dungeon entrance menu on top
         menu::render(frame, area, &mut self.list_state);
     }
 
