@@ -86,18 +86,15 @@ impl HasInventory for Player {
 
 
 impl DealsDamage for Player {
-    /// Player attack range is derived from Attack stat with ±15% variance,
-    /// plus equipment bonuses applied to both min and max.
+    /// Player attack range is derived from total Attack (base + equipment)
+    /// with ±25% variance applied.
     fn get_attack(&self) -> Attack {
-        let base = self.attack();
-        let variance = (base as f64 * Self::ATTACK_VARIANCE).round() as i32;
-        let base_attack = Attack::new(
-            (base - variance).max(1),
-            base + variance,
-        );
-        // Add equipment bonuses
-        let equipment_bonus = self.inventory().sum_equipment_stats(StatType::Attack);
-        base_attack.with_bonus(equipment_bonus)
+        let total_attack = self.attack() + self.inventory().sum_equipment_stats(StatType::Attack);
+        let variance = (total_attack as f64 * Self::ATTACK_VARIANCE).round() as i32;
+        Attack::new(
+            (total_attack - variance).max(1),
+            total_attack + variance,
+        )
     }
 }
 

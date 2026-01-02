@@ -28,8 +28,8 @@ pub trait IsKillable: HasStats {
 /// Trait for entities that can deal damage.
 /// Provides attack range derived from stats with configurable variance.
 pub trait DealsDamage: HasStats {
-    /// Variance percentage for attack range (e.g., 0.15 = ±15%)
-    const ATTACK_VARIANCE: f64 = 0.15;
+    /// Variance percentage for attack range (e.g., 0.25 = ±25%)
+    const ATTACK_VARIANCE: f64 = 0.25;
 
     /// Returns the Attack struct with damage range.
     /// Default implementation derives range from Attack stat with variance.

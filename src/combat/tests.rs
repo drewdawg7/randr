@@ -49,11 +49,10 @@ fn attack_deals_damage_with_variance_and_defense_reduction() {
 
     let result = attack(&player, &mut mob);
 
-    // Player attack ~20 with ±15% variance (17-23), mob defense 8
+    // Player attack ~20 with ±25% variance (15-25), mob defense 8
     // Defense reduction = 8 / (8 + 50) = ~13.8%
-    // Expected damage range: roughly 15-20 (after reduction)
     assert!(result.damage_to_target > 0);
-    assert!(result.damage_to_target <= 23); // Max raw damage
+    assert!(result.damage_to_target <= 25); // Max raw damage
     assert_eq!(result.target_health_before, 100);
     assert!(result.target_health_after < 100);
     assert!(!result.target_died);
@@ -114,15 +113,15 @@ fn mob_attacks_player() {
 
 #[test]
 fn attack_with_zero_defense_takes_full_damage() {
-    let player = create_test_player(100, 25, 0);
+    let player = create_test_player(100, 20, 0);
     let mut mob = create_test_mob("Unarmored", 100, 10, 0);
 
     let result = attack(&player, &mut mob);
 
     // With 0 defense, no damage reduction occurs
-    // Player attack ~25 with ±15% variance (21-29)
-    assert!(result.damage_to_target >= 21);
-    assert!(result.damage_to_target <= 29);
+    // Player attack ~20 with ±25% variance (15-25)
+    assert!(result.damage_to_target >= 15);
+    assert!(result.damage_to_target <= 25);
 }
 
 // ==================== enter_combat() tests ====================
@@ -298,10 +297,10 @@ fn player_dec_gold_floors_at_zero() {
 
 #[test]
 fn player_effective_attack_without_weapon() {
-    let player = create_test_player(100, 15, 5);
+    let player = create_test_player(100, 20, 5);
     // effective_attack returns average of attack range
-    // Base attack 15 with ±15% variance = 13-17, average = 15
-    assert_eq!(player.effective_attack(), 15);
+    // Base attack 20 with ±25% variance = 15-25, average = 20
+    assert_eq!(player.effective_attack(), 20);
 }
 
 #[test]
