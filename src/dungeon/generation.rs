@@ -7,7 +7,7 @@ use crate::dungeon::{
 };
 
 /// Minimum number of rooms to generate
-const MIN_ROOMS: usize = 9;
+const MIN_ROOMS: usize = 5;
 
 impl Dungeon {
     /// Generate a new dungeon layout with contiguous rooms

@@ -12,8 +12,8 @@ use crate::{
 
 /// Grid size for the dungeon (5x5)
 pub const DUNGEON_SIZE: usize = 5;
-/// Maximum percentage of grid that can have rooms (60%)
-pub const MAX_FILL_PERCENT: f32 = 0.60;
+/// Maximum percentage of grid that can have rooms (40%)
+pub const MAX_FILL_PERCENT: f32 = 0.40;
 
 #[derive(Debug)]
 pub struct Dungeon {
