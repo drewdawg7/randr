@@ -15,8 +15,21 @@ This skill is aimed to help provide context to issues in the github repo. This s
 2. Pick an issue to research
 3. Remove the 'fresh' label and add a new 'under research' label
 4. Look through the codebase to provide more context to the issue. Add file names, function names, struct names, etc. Attempt to explain why the issue is happening
-5. Once context has been added to the issue, remove the 'fresh' label and add the 'researched' label
-6. Do not ask for user intervention.
+5. **If multiple solution options exist**, format them in the issue body as checkboxes and add `needs-decision` label (see Options Format below)
+6. Once context has been added to the issue, remove the 'fresh' label and add the 'researched' label
+7. Do not ask for user intervention.
+
+## Options Format
+
+When multiple valid solutions exist, add them to the **issue body** (not comments) using this format:
+
+```markdown
+## Suggested Options
+- [ ] **Option A**: Brief description of first approach
+- [ ] **Option B**: Brief description of second approach
+```
+
+Then add the `needs-decision` label. The user will check one option, then run `option_selector.py` to process the selection.
 
 ## Helper Scripts
 
@@ -43,3 +56,14 @@ Transitions labels (fresh → under research), outputs full issue context includ
 python3 .claude/skills/research-issues/scripts/research_complete.py <issue_number> "<findings_markdown>"
 ```
 Posts formatted findings comment, transitions labels (under research → researched).
+
+### option_selector.py - Process Selected Option
+```bash
+python3 .claude/skills/research-issues/scripts/option_selector.py <issue_number>
+```
+After user checks an option checkbox in the issue body:
+1. Identifies the selected option (checked `- [x]`)
+2. Rewrites issue body: selected stays visible, others collapse into `<details>`
+3. Removes `needs-decision` label
+
+Output JSON includes: `success`, `selected`, `collapsed`, `label_removed`

@@ -8,10 +8,14 @@ description: Identifies researched issues in the github repo and fixes them base
 
 ## Overview
 1. Pull down a list of issues that have the label 'researched' and are not marked as complete
-2. Pick an issue based on percieved severity
-3. Given the context from the ticket, work to resolve the issue. Use updating-code.
-4. Once the issue is resolved, add the label 'fix-attempted' and merge the branch into main
-5. Add a follow up to the issue stating how the issue was resolved.
+2. Pick an issue based on perceived severity
+3. **Check for `needs-decision` label** - if present, a solution option must be selected before fixing:
+   - Review the options in the issue body
+   - Check one option (`- [x]`)
+   - Run `option_selector.py` to process the selection (collapses other options)
+4. Given the context from the ticket, work to resolve the issue. Use updating-code.
+5. Once the issue is resolved, add the label 'fix-attempted' and merge the branch into main
+6. Add a follow up to the issue stating how the issue was resolved.
 
 ## Helper Scripts
 
