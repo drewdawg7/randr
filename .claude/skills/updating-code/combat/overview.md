@@ -25,8 +25,11 @@ final_damage = raw_damage * (1 - reduction)
 ```
 
 ### Attack Variance
-- Attack range derived from Attack stat with ±25% variance
-- Example: 20 Attack = 15-25 damage range
+- All entities use the same ±25% variance for consistent game balance
+- Formula: `min = base - (base * 0.25)`, `max = base + (base * 0.25)`
+- Example: 20 Attack = 15-25 damage range (20 ± 5)
+- Variance is a trait constant (`ATTACK_VARIANCE = 0.25`), same for Player and Mob
+- Equipment bonuses are added before variance is applied
 
 ### Defense (Diminishing Returns)
 | Defense | Reduction |
@@ -41,14 +44,16 @@ Defense constant `K=50` in `src/combat/system.rs:10`
 
 ## Traits
 
-### DealsDamage (`src/combat/traits.rs:28-48`)
+### DealsDamage (`src/combat/traits.rs:28-54`)
 ```rust
 pub trait DealsDamage: HasStats {
-    const ATTACK_VARIANCE: f64 = 0.25;
+    const ATTACK_VARIANCE: f64 = 0.25;    // ±25% variance for all entities
+    fn equipment_attack_bonus(&self) -> i32 { 0 }  // Override for gear
     fn get_attack(&self) -> Attack;       // Returns damage range
     fn effective_attack(&self) -> i32;    // Average for display
 }
 ```
+Player overrides `equipment_attack_bonus()` to add weapon stats.
 
 ### Combatant (`src/combat/traits.rs:50-64`)
 Extends `Named + IsKillable + DealsDamage`. Required for entities in combat.

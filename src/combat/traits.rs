@@ -28,7 +28,12 @@ pub trait IsKillable: HasStats {
 /// Trait for entities that can deal damage.
 /// Provides attack range derived from stats with configurable variance.
 pub trait DealsDamage: HasStats {
-    /// Variance percentage for attack range (e.g., 0.25 = ±25%)
+    /// Attack variance as a fraction of base attack (0.25 = ±25%).
+    ///
+    /// All combat entities use the same variance for consistent game balance.
+    /// With 25% variance, a base attack of 20 produces damage range 15-25.
+    ///
+    /// Formula: `min = base - (base * variance)`, `max = base + (base * variance)`
     const ATTACK_VARIANCE: f64 = 0.25;
 
     /// Returns bonus attack from equipment. Override for entities with gear.
