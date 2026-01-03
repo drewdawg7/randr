@@ -22,3 +22,5 @@ description: Logs an issue against the github repo to be looked at later.
 ## Labels
 * Tag issues with relevant labels. If none exist, create one yourself to add. 
 * Tag any fresh issues with a label called 'fresh'
+* Labels should not just be about the status of the ticket, but areas the bug is relevant to. i.e., 'dungeon', 'ui', etc.
+* An issue can have mutliple labels.
