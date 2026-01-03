@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Edit(skills/**)"
+      "Edit(.claude/skills/**)",
+      "Write(.claude/skills/**)"
     ]
   }
 }
