@@ -8,7 +8,6 @@ use tuirealm::{
 };
 
 use crate::system::{game_state, ModalType};
-use crate::ui::components::player::profile_modal::ProfileModal;
 use crate::ui::components::widgets::modal::Modal;
 
 /// A wrapper that adds modal overlay capability to any component.
@@ -54,7 +53,7 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
                 game_state().inventory_modal.render(frame);
             }
             ModalType::Profile => {
-                ProfileModal::new().render(frame);
+                game_state().profile_modal.render(frame);
             }
             ModalType::SpellTest => {
                 game_state().spell_test_modal.render(frame);
@@ -127,6 +126,7 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
                 gs.active_modal = ModalType::None;
             } else {
                 gs.active_modal = ModalType::Profile;
+                gs.profile_modal.reset();
             }
             return None;
         }
@@ -146,7 +146,7 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
         // If profile modal is open, handle its input
         if game_state().active_modal == ModalType::Profile {
             if let Event::Keyboard(KeyEvent { code, .. }) = ev {
-                let should_close = ProfileModal::new().handle_input(code);
+                let should_close = game_state().profile_modal.handle_input(code);
                 if should_close {
                     game_state().active_modal = ModalType::None;
                 }

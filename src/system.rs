@@ -17,6 +17,7 @@ use crate::magic::word::WordRegistry;
 use crate::toast::ToastQueue;
 use crate::ui::components::magic::SpellTestModal;
 use crate::ui::components::player::inventory_modal::InventoryModal;
+use crate::ui::components::player::profile_modal::ProfileModal;
 use crate::ui::screen::ScreenLifecycle;
 use crate::ui::state::UIState;
 use crate::{
@@ -78,6 +79,7 @@ pub struct GameState {
     pub active_modal: ModalType,
     pub inventory_modal: InventoryModal,
     pub spell_test_modal: SpellTestModal,
+    pub profile_modal: ProfileModal,
     pub show_item_details: bool,
     pub toasts: ToastQueue,
 
@@ -346,6 +348,7 @@ impl Default for GameState {
             active_modal: ModalType::None,
             inventory_modal: InventoryModal::new(),
             spell_test_modal: SpellTestModal::new(),
+            profile_modal: ProfileModal::new(),
             show_item_details: false,
             toasts: ToastQueue::default(),
 
