@@ -48,14 +48,23 @@ Multiple issues to work on?
 
 Use git worktrees for complete isolation when working on multiple issues simultaneously.
 
-### Setup
+### Parent Agent Role: Orchestration Only
+
+| Parent Does | Parent Does NOT |
+|-------------|-----------------|
+| Create worktrees (one command) | Research issues in detail |
+| Spawn background sessions | Run tests or verification |
+| Periodic status check-ins | Merge branches |
+| Report final status to user | Close issues |
+| | Cleanup worktrees |
+
+### Setup (combine into one command)
 ```bash
-git worktree add .worktrees/issue-1 -b fix/issue-1
+git worktree add .worktrees/issue-1 -b fix/issue-1 && \
 git worktree add .worktrees/issue-2 -b feat/issue-2
-# Run separate Claude sessions in each directory
 ```
 
-**Delegation**: Each worktree session handles its own full research independently. Main agent's role is coordination (setup/cleanup), not investigation.
+Spawn Task agents with `run_in_background: true`. Each session follows `updating-code` skill phases 1b-5 independently.
 
 ### Hierarchy
 Within each worktree, if the issue needs parallel work, use **Single-Issue Mode**:
@@ -67,16 +76,20 @@ Multi-Issue (worktrees for isolation)
     └── Single-Issue Mode (if parallelizing)
 ```
 
-### Merge Back
-```bash
-# After completing work in worktrees
-cd .worktrees/issue-1 && git push -u origin fix/issue-1
-cd .worktrees/issue-2 && git push -u origin feat/issue-2
+### Worktree Session Responsibilities
 
-# Clean up worktrees when done
-git worktree remove .worktrees/issue-1
-git worktree remove .worktrees/issue-2
-```
+Each session is fully autonomous and completes its own lifecycle:
+1. Follow `updating-code` skill (phases 1b-5)
+2. After merge to main: cleanup own worktree
+   ```bash
+   git worktree remove /absolute/path/.worktrees/issue-N && git branch -d fix/issue-N
+   ```
+3. Close issue via helper scripts
+4. Return completion status to parent
+
+### Parent Check-ins
+
+Check status every 2-3 minutes using `TaskOutput` with `block=false`. When all sessions complete, parent reports final status and is done.
 
 ---
 
@@ -166,18 +179,50 @@ git reset --soft HEAD~N  # N = number of WIP commits
 | Scenario | Prevention |
 |----------|------------|
 | Same file edited by multiple agents | Strict file assignment upfront |
-| Verification during incomplete edits | Only parent runs cargo check/build/test |
-| Endless loops | 5 turn hard limit |
+| Endless loops | 5 turn hard limit (subagents) |
 | Lost work on exit | Commit before return |
 | Partial edits | WIP commit with clear message |
 
 ---
 
+## Command Optimization
+
+Minimize tool calls by combining operations:
+
+```bash
+# BAD: 3 separate commands
+git worktree add .worktrees/issue-1 -b fix/issue-1
+git worktree add .worktrees/issue-2 -b fix/issue-2
+git worktree list
+
+# GOOD: 1 combined command
+git worktree add .worktrees/issue-1 -b fix/issue-1 && \
+git worktree add .worktrees/issue-2 -b fix/issue-2 && \
+git worktree list
+```
+
+```bash
+# BAD: separate cleanup commands
+git worktree remove .worktrees/issue-1
+git worktree remove .worktrees/issue-2
+git branch -d fix/issue-1
+git branch -d fix/issue-2
+
+# GOOD: combined cleanup
+git worktree remove .worktrees/issue-1 && \
+git worktree remove .worktrees/issue-2 && \
+git branch -d fix/issue-1 fix/issue-2
+```
+
+**Parallel tool calls**: When checking multiple independent things, use parallel Bash/Read calls in a single message.
+
+---
+
 ## Anti-Patterns (Avoid)
 
-❌ Subagent runs `cargo check` while other subagents still editing
 ❌ Multiple subagents edit same file
 ❌ Subagent exceeds 5 turns without returning
 ❌ Subagent returns without committing changes
-❌ Parent runs verification before all subagents complete
-❌ No explicit file assignment before launch
+❌ No explicit file assignment before launch (subagents)
+❌ Parent doing work that sessions should handle (merge, test, cleanup)
+❌ Running commands separately when they can be combined with `&&`
