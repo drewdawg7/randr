@@ -108,12 +108,13 @@ pub enum StatType {
     Attack,
     Defense,
     GoldFind,
-    Mining
+    Mining,
+    MagicFind,
 }
 
 impl StatType {
     pub fn all() -> &'static [StatType] {
-        &[StatType::Health, StatType::Attack, StatType::Defense, StatType::GoldFind, StatType::Mining]
+        &[StatType::Health, StatType::Attack, StatType::Defense, StatType::GoldFind, StatType::Mining, StatType::MagicFind]
     }
 
     /// Creates a StatInstance with both current and max set to base_value.

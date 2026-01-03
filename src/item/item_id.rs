@@ -6,6 +6,7 @@ pub enum ItemId {
     TinSword,
     CopperSword,
     BronzeSword,
+    BonkStick,
 
     // Shields
     BasicShield,
@@ -36,6 +37,7 @@ pub enum ItemId {
 
     // Accessories
     GoldRing,
+    ImbaRing,
 
     // Ores
     Coal,

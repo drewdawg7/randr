@@ -2,6 +2,7 @@ pub(crate) mod consumable;
 pub(crate) mod definition;
 pub(crate) mod enums;
 mod item_id;
+pub mod modifier;
 pub(crate) mod recipe;
 pub mod spec;
 mod traits;

@@ -13,6 +13,10 @@ pub struct Player {
 
 
 impl Player {
+    pub fn effective_magicfind(&self) -> i32 {
+        let magicfind = self.inventory().sum_equipment_stats(StatType::MagicFind);
+        self.magicfind() + magicfind
+    }
     pub fn effective_mining(&self) -> i32 {
         let mining = self.inventory().sum_equipment_stats(StatType::Mining);
         self.mining() + mining

@@ -9,6 +9,27 @@ use crate::{
 use super::definition::ItemSpec;
 
 
+pub static IMBA_RING: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "IMBA RING",
+    item_type: ItemType::Equipment(EquipmentType::Ring),
+    quality: Some(ItemQuality::Normal),
+    stats: StatSheet::new()
+        .with(StatType::GoldFind, 200)
+        .with(StatType::MagicFind, 200),
+    max_upgrades: 99,
+    max_stack_quantity: 1,
+    gold_value: 25000,
+});
+
+pub static BONK_STICK: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "BONK STICK",
+    item_type: ItemType::Equipment(EquipmentType::Weapon),
+    quality: Some(ItemQuality::Mythic),
+    stats: StatSheet::new().with(StatType::Attack, 100),
+    max_upgrades: 99,
+    max_stack_quantity: 1,
+    gold_value: 25000,
+});
 pub static BRONZE_SWORD: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     name: "Bronze Sword",
     item_type: ItemType::Equipment(EquipmentType::Weapon),

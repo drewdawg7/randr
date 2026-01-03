@@ -1,7 +1,7 @@
 use uuid::Uuid;
 
 use crate::{
-    item::{enums::ItemQuality, spec::specs::{BASIC_HP_POTION, BRONZE_INGOT, BRONZE_SWORD, COPPER_INGOT, COPPER_SWORD, COWHIDE, SLIMEGEL, TIN_INGOT, TIN_SWORD}},
+    item::{enums::ItemQuality, spec::specs::{BASIC_HP_POTION, BONK_STICK, BRONZE_INGOT, BRONZE_SWORD, COPPER_INGOT, COPPER_SWORD, COWHIDE, IMBA_RING, SLIMEGEL, TIN_INGOT, TIN_SWORD}},
     registry::{RegistryDefaults, SpawnFromSpec},
 };
 
@@ -48,6 +48,8 @@ impl RegistryDefaults<ItemId> for ItemSpec {
     fn defaults() -> impl IntoIterator<Item = (ItemId, Self)> {
         [
             (ItemId::BasicHPPotion, BASIC_HP_POTION.clone()),
+            (ItemId::ImbaRing, IMBA_RING.clone()),
+            (ItemId::BonkStick, BONK_STICK.clone()),
             (ItemId::Sword, SWORD.clone()),
             (ItemId::BronzePickaxe, BRONZE_PICKAXE.clone()),
             (ItemId::Dagger, DAGGER.clone()),
