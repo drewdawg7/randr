@@ -349,36 +349,17 @@ impl DungeonScreen {
 
     fn render_header(&self, frame: &mut Frame, area: Rect) {
         let gs = game_state();
-        let text_style = Style::default().fg(colors::WHITE);
 
-        let (dungeon_name, progress) = if let Some(dungeon) = gs.dungeon() {
-            let cleared = dungeon.cleared_count();
-            let total = dungeon.room_count();
-            (
-                dungeon.name.clone(),
-                format!("Rooms: {}/{}", cleared, total),
-            )
+        let dungeon_name = if let Some(dungeon) = gs.dungeon() {
+            dungeon.name.clone()
         } else {
-            ("Unknown".to_string(), "".to_string())
+            "Unknown".to_string()
         };
 
-        let position = if let Some(dungeon) = gs.dungeon() {
-            let (x, y) = dungeon.player_position;
-            format!("Position: ({}, {})", x, y)
-        } else {
-            "".to_string()
-        };
-
-        let header = Paragraph::new(vec![
-            Line::from(vec![
-                Span::styled(dungeon_name, Style::default().fg(colors::LIGHT_STONE)),
-            ]),
-            Line::from(vec![
-                Span::styled(progress, text_style),
-                Span::styled("  |  ", text_style),
-                Span::styled(position, text_style),
-            ]),
-        ])
+        let header = Paragraph::new(vec![Line::from(vec![Span::styled(
+            dungeon_name,
+            Style::default().fg(colors::LIGHT_STONE),
+        )])])
         .block(
             Block::default()
                 .borders(Borders::BOTTOM)
