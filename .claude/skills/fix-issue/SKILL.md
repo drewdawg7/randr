@@ -11,4 +11,5 @@ description: Identifies researched issues in the github repo and fixes them base
 2. Pick an issue based on percieved severity
 3. Given the context from the ticket, work to resolve the issue. Use updating-code.
 4. Once the issue is resolved, add the label 'fix-attempted' and merge the branch into main
+5. Add a follow up to the issue stating how the issue was resolved.
 
