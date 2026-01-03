@@ -433,9 +433,9 @@ impl SpellTestModal {
         // Footer
         let footer_y = area.y + area.height - 2;
         let footer = if self.result.is_some() && !matches!(&self.result, Some(SpellTestResult::ParseError { .. })) {
-            "[Tab] Inscribe  [a] Activate  [←→] Page  [Esc] Close"
+            "[Tab] Inscribe  [A] Activate  [←→] Page  [Esc] Close"
         } else {
-            "[Enter] Test  [←→] Page  [a] Activate  [Esc] Close"
+            "[Enter] Test  [←→] Page  [A] Activate  [Esc] Close"
         };
         let footer_x = inner_x + (inner_width.saturating_sub(footer.len() as u16)) / 2;
         for (i, ch) in footer.chars().enumerate() {
@@ -450,8 +450,8 @@ impl SpellTestModal {
     pub fn handle_input(&mut self, key: Key) -> bool {
         match key {
             Key::Esc => true,
-            Key::Char('a') => {
-                // Activate the selected page
+            Key::Char('A') => {
+                // Activate the selected page (Shift+A)
                 self.activate_page();
                 false
             }
