@@ -4,6 +4,15 @@
 
 Recipes define how items are crafted from ingredients. They follow the registry pattern.
 
+## Crafting Pattern
+
+`Recipe::craft()` returns `ItemId` (not `Item`). Callers must spawn the item separately:
+```rust
+let item_id = recipe.craft(&mut player)?;
+let item = game_state().item_registry().spawn(item_id);
+```
+This keeps the Recipe system decoupled from global state for testability.
+
 ## Key Files
 
 | File | Purpose |
