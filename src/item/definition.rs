@@ -1,10 +1,10 @@
 use uuid::Uuid;
 
-use crate::{item::enums::{ItemError, ItemQuality}, stats::{StatSheet, StatType}};
+use crate::{item::enums::{ItemError, ItemQuality}, magic::tome::Tome, stats::{StatSheet, StatType}};
 
 pub use super::enums::{ItemId, ItemType};
 
-#[derive(Debug, Clone, Eq, PartialEq)]
+#[derive(Debug, Clone)]
 pub struct Item {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
@@ -19,6 +19,8 @@ pub struct Item {
     pub stats: StatSheet,
     pub gold_value: i32,
     pub quality: ItemQuality,
+    /// Tome-specific data (pages with inscribed words). Only used for tome items.
+    pub tome_data: Option<Tome>,
 }
 
 impl Item {

@@ -20,6 +20,7 @@ pub enum ItemType {
 pub enum EquipmentType {
     Weapon,
     Shield,
+    Tome,
     Ring,
     Tool(ToolKind),
     Armor(crate::inventory::EquipmentSlot),
@@ -88,10 +89,16 @@ impl EquipmentType {
         match self {
             EquipmentType::Weapon => EquipmentSlot::Weapon,
             EquipmentType::Shield => EquipmentSlot::OffHand,
+            EquipmentType::Tome => EquipmentSlot::OffHand,
             EquipmentType::Ring => EquipmentSlot::Ring,
             EquipmentType::Tool(_) => EquipmentSlot::Tool,
             EquipmentType::Armor(slot) => *slot,
         }
+    }
+
+    /// Check if this equipment type is a tome
+    pub fn is_tome(&self) -> bool {
+        matches!(self, EquipmentType::Tome)
     }
 }
 

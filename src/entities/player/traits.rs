@@ -87,13 +87,13 @@ impl HasInventory for Player {
 
 impl DealsDamage for Player {
     fn equipment_attack_bonus(&self) -> i32 {
-        self.inventory().sum_equipment_stats(StatType::Attack)
+        self.inventory().sum_equipment_stats(StatType::Attack) + self.tome_attack_bonus()
     }
 }
 
 impl Combatant for Player {
     fn effective_defense(&self) -> i32 {
-        self.defense() + self.inventory().sum_equipment_stats(StatType::Defense)
+        self.defense() + self.inventory().sum_equipment_stats(StatType::Defense) + self.tome_defense_bonus()
     }
 } 
 

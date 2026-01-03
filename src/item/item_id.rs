@@ -11,6 +11,9 @@ pub enum ItemId {
     // Shields
     BasicShield,
 
+    // Tomes
+    ApprenticeTome,
+
     // Armor - Copper
     CopperHelmet,
     CopperChestplate,

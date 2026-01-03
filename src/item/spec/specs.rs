@@ -138,6 +138,20 @@ pub static BASIC_SHIELD: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     gold_value: 15,
 });
 
+// ─────────────────────────────────────────────────────────────────────────────
+// Tomes
+// ─────────────────────────────────────────────────────────────────────────────
+
+pub static APPRENTICE_TOME: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+    name: "Apprentice Tome",
+    item_type: ItemType::Equipment(EquipmentType::Tome),
+    quality: Some(ItemQuality::Normal),
+    stats: StatSheet::new(),  // No stats, effects come from inscribed spells
+    max_upgrades: 0,
+    max_stack_quantity: 1,
+    gold_value: 50,
+});
+
 pub static GOLD_RING: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     name: "Midas' Touch",
     item_type: ItemType::Equipment(EquipmentType::Ring),

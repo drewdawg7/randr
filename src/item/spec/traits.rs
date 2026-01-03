@@ -1,7 +1,8 @@
 use uuid::Uuid;
 
 use crate::{
-    item::{enums::ItemQuality, spec::specs::{BASIC_HP_POTION, BONK_STICK, BRONZE_INGOT, BRONZE_SWORD, COPPER_INGOT, COPPER_SWORD, COWHIDE, IMBA_RING, SLIMEGEL, TIN_INGOT, TIN_SWORD}},
+    item::{enums::{EquipmentType, ItemQuality, ItemType}, spec::specs::{BASIC_HP_POTION, BONK_STICK, BRONZE_INGOT, BRONZE_SWORD, COPPER_INGOT, COPPER_SWORD, COWHIDE, IMBA_RING, SLIMEGEL, TIN_INGOT, TIN_SWORD}},
+    magic::tome::Tome,
     registry::{RegistryDefaults, SpawnFromSpec},
 };
 
@@ -9,7 +10,7 @@ use super::super::{definition::Item, enums::ItemId};
 use super::definition::ItemSpec;
 use super::specs::{
     BASIC_SHIELD, BRONZE_PICKAXE, COAL, COPPER_ORE, DAGGER, GOLD_RING, QUALITY_UPGRADE_STONE,
-    SWORD, TIN_ORE,
+    SWORD, TIN_ORE, APPRENTICE_TOME,
     // Copper Armor
     COPPER_HELMET, COPPER_CHESTPLATE, COPPER_GAUNTLETS, COPPER_GREAVES, COPPER_LEGGINGS,
     // Tin Armor
@@ -26,6 +27,13 @@ impl SpawnFromSpec<ItemId> for ItemSpec {
         let quality = spec.quality.unwrap_or_else(ItemQuality::roll);
         let base_stats = spec.stats.clone();
         let stats = quality.multiply_stats(base_stats.clone());
+
+        // Initialize tome_data if this is a tome item
+        let tome_data = match spec.item_type {
+            ItemType::Equipment(EquipmentType::Tome) => Some(Tome::standard()),
+            _ => None,
+        };
+
         Item {
             item_uuid: Uuid::new_v4(),
             item_id,
@@ -40,6 +48,7 @@ impl SpawnFromSpec<ItemId> for ItemSpec {
             base_stats,
             stats,
             quality,
+            tome_data,
         }
     }
 }
@@ -54,6 +63,7 @@ impl RegistryDefaults<ItemId> for ItemSpec {
             (ItemId::BronzePickaxe, BRONZE_PICKAXE.clone()),
             (ItemId::Dagger, DAGGER.clone()),
             (ItemId::BasicShield, BASIC_SHIELD.clone()),
+            (ItemId::ApprenticeTome, APPRENTICE_TOME.clone()),
             (ItemId::GoldRing, GOLD_RING.clone()),
             (ItemId::QualityUpgradeStone, QUALITY_UPGRADE_STONE.clone()),
             (ItemId::Coal, COAL.clone()),
