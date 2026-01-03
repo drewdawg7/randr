@@ -32,6 +32,13 @@ impl Player {
             .unwrap_or_default()
     }
 
+    /// Get all passive effects with their spell names from the equipped tome
+    pub fn tome_passive_effects_with_names(&self) -> Vec<(&str, &PassiveEffect)> {
+        self.equipped_tome()
+            .map(|tome| tome.passive_effects_with_names())
+            .unwrap_or_default()
+    }
+
     /// Calculate passive bonus to attack from tome
     pub fn tome_attack_bonus(&self) -> i32 {
         self.tome_passive_effects()

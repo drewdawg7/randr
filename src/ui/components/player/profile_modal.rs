@@ -435,7 +435,7 @@ impl ProfileModal {
 
     /// Render the passive effects column (right side)
     fn render_passive_column(&mut self, frame: &mut Frame, area: Rect, player: &Player) {
-        let passive_effects: Vec<&PassiveEffect> = player.tome_passive_effects();
+        let passive_effects: Vec<(&str, &PassiveEffect)> = player.tome_passive_effects_with_names();
 
         // Update selection count
         self.selection.set_count(passive_effects.len());
@@ -467,7 +467,7 @@ impl ProfileModal {
             let start_idx = Self::calculate_scroll_offset(selected, passive_effects.len(), max_visible);
 
             // Render visible effects
-            for (i, effect) in passive_effects.iter().enumerate().skip(start_idx).take(max_visible) {
+            for (i, (name, _effect)) in passive_effects.iter().enumerate().skip(start_idx).take(max_visible) {
                 let is_selected = i == selected;
                 let prefix = if is_selected { "> " } else { "  " };
                 let style = if is_selected {
@@ -476,11 +476,8 @@ impl ProfileModal {
                     Style::default().fg(WHITE)
                 };
 
-                // Short name for the effect
-                let effect_name = Self::effect_short_name(effect);
-
                 Self::render_line_to_buffer(buf, area.x, y, area.width,
-                    &[Span::styled(format!("{}{}", prefix, effect_name), style)]);
+                    &[Span::styled(format!("{}{}", prefix, name), style)]);
                 y += 1;
             }
 
@@ -488,7 +485,7 @@ impl ProfileModal {
             y += 1;
 
             // Inline description for selected effect
-            if let Some(effect) = passive_effects.get(selected) {
+            if let Some((_name, effect)) = passive_effects.get(selected) {
                 let description = effect.describe();
                 // Word-wrap description if needed
                 let desc_lines = Self::wrap_text(&description, area.width as usize);
@@ -549,26 +546,6 @@ impl Default for ProfileModal {
 }
 
 impl ProfileModal {
-    /// Get a short display name for a passive effect (for the list)
-    fn effect_short_name(effect: &PassiveEffect) -> String {
-        match effect {
-            PassiveEffect::BonusAttack(n) => format!("+{} Attack", n),
-            PassiveEffect::BonusDefense(n) => format!("+{} Defense", n),
-            PassiveEffect::Regeneration(n) => format!("Regen {}/turn", n),
-            PassiveEffect::BonusGoldFind(n) => format!("+{}% Gold Find", n),
-            PassiveEffect::BonusMagicFind(n) => format!("+{}% Magic Find", n),
-            PassiveEffect::XPMultiplier(n) => format!("+{}% XP", n),
-            PassiveEffect::Reveal => "Reveal".to_string(),
-            PassiveEffect::FurnaceFuelRegen(n) => format!("+{} Fuel/min", n),
-            PassiveEffect::MobSpawnWeight(id, _) => format!("{:?} Spawn", id),
-            PassiveEffect::RockSpawnWeight(id, _) => format!("{:?} Spawn", id),
-            PassiveEffect::BonusMining(n) => format!("+{} Mining", n),
-            PassiveEffect::StoreDiscount(n) => format!("{}% Discount", n),
-            PassiveEffect::DungeonBypass => "Dungeon Bypass".to_string(),
-            PassiveEffect::DungeonReveal => "Dungeon Sight".to_string(),
-        }
-    }
-
     /// Simple word wrap for description text
     fn wrap_text(text: &str, max_width: usize) -> Vec<String> {
         let mut lines = Vec::new();

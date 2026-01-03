@@ -125,6 +125,21 @@ impl Tome {
             .collect()
     }
 
+    /// Get all passive effects with their spell names
+    pub fn passive_effects_with_names(&self) -> Vec<(&str, &PassiveEffect)> {
+        self.pages
+            .iter()
+            .filter_map(|p| p.as_ref())
+            .filter_map(|page| {
+                page.spell().and_then(|spell| match spell {
+                    ComputedSpell::Passive { name, effect, .. } => Some((name.as_str(), effect)),
+                    ComputedSpell::Hybrid { name, passive, .. } => Some((name.as_str(), passive)),
+                    _ => None,
+                })
+            })
+            .collect()
+    }
+
     /// Count how many pages are inscribed
     pub fn inscribed_count(&self) -> usize {
         self.pages.iter().filter(|p| p.is_some()).count()
