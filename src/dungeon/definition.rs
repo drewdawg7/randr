@@ -80,7 +80,9 @@ impl Dungeon {
         for (mob_kind, weight) in &self.mob_table {
             roll -= weight;
             if roll < 0 {
-                return Ok(game_state().spawn_mob(*mob_kind));
+                return game_state()
+                    .spawn_mob(*mob_kind)
+                    .ok_or(DungeonError::MobSpawnError);
             }
         }
         Err(DungeonError::MobSpawnError)

@@ -97,7 +97,10 @@ impl Dungeon {
             // If stuck, jump to a random existing room and try a new direction
             if !found {
                 stuck_count += 1;
-                current_pos = *room_positions.choose(&mut rng).unwrap();
+                current_pos = room_positions
+                    .choose(&mut rng)
+                    .copied()
+                    .unwrap_or(start_pos); // fallback to start (should never happen)
                 current_dir = rng.gen_range(0..4);
             }
         }

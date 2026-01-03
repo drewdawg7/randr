@@ -114,11 +114,14 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
                     Ok(recipe) => {
                         match recipe.craft(&mut gs.player) {
                             Ok(item_id) => {
-                                let item = gs.item_registry().spawn(item_id);
-                                let item_name = item.name;
-                                match gs.player.add_to_inv(item) {
-                                    Ok(_) => gs.toasts.success(format!("Brewed {}!", item_name)),
-                                    Err(_) => gs.toasts.error("Inventory is full"),
+                                if let Some(item) = gs.item_registry().spawn(item_id) {
+                                    let item_name = item.name;
+                                    match gs.player.add_to_inv(item) {
+                                        Ok(_) => gs.toasts.success(format!("Brewed {}!", item_name)),
+                                        Err(_) => gs.toasts.error("Inventory is full"),
+                                    }
+                                } else {
+                                    gs.toasts.error("Failed to create item");
                                 }
                             }
                             Err(RecipeError::NotEnoughIngredients) => {

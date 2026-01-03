@@ -43,8 +43,9 @@ impl StoreItem {
             self.max_quantity
         };
         for _ in 0..quantity {
-            let item = game_state().spawn_item(self.item_id);
-            self.items.push(item);
+            if let Some(item) = game_state().spawn_item(self.item_id) {
+                self.items.push(item);
+            }
         }
     }
 

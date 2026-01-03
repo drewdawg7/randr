@@ -1,8 +1,36 @@
 #![allow(static_mut_refs)]
 use std::io::{self, Stdout};
+use std::panic;
 use std::time::Duration;
 
 use crossterm::terminal;
+
+/// RAII guard that ensures terminal is restored to normal mode on drop.
+/// This handles both normal exit and panic scenarios.
+pub struct TerminalGuard;
+
+impl TerminalGuard {
+    /// Creates a new TerminalGuard, enabling raw mode and setting up a panic hook.
+    pub fn new() -> io::Result<Self> {
+        // Set up panic hook to restore terminal before printing panic info
+        let original_hook = panic::take_hook();
+        panic::set_hook(Box::new(move |panic_info| {
+            // Restore terminal first
+            let _ = terminal::disable_raw_mode();
+            // Then call original panic handler to print the error
+            original_hook(panic_info);
+        }));
+
+        terminal::enable_raw_mode()?;
+        Ok(Self)
+    }
+}
+
+impl Drop for TerminalGuard {
+    fn drop(&mut self) {
+        let _ = terminal::disable_raw_mode();
+    }
+}
 use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
@@ -56,7 +84,11 @@ pub fn init_game_state(gs: GameState) {
 }
 
 pub fn game_state() -> &'static mut GameState {
-    unsafe { GAME_STATE.as_mut().unwrap() }
+    unsafe {
+        GAME_STATE
+            .as_mut()
+            .expect("game_state() called before init_game_state() - ensure initialization in main()")
+    }
 }
 
 pub struct GameState {
@@ -97,15 +129,15 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn spawn_mob(&self, mob: MobId) -> Mob {
+    pub fn spawn_mob(&self, mob: MobId) -> Option<Mob> {
         self.mob_registry.spawn(mob)
     }
 
-    pub fn spawn_item(&self, item: ItemId) -> crate::item::Item {
+    pub fn spawn_item(&self, item: ItemId) -> Option<crate::item::Item> {
         self.item_registry.spawn(item)
     }
 
-    pub fn spawn_rock(&self, rock: RockId) -> Rock {
+    pub fn spawn_rock(&self, rock: RockId) -> Option<Rock> {
         self.rock_registry.spawn(rock)
     }
 

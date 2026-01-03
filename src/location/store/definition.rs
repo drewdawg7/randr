@@ -31,7 +31,7 @@ impl Clone for Store {
             name: self.name.clone(),
             description: self.description.clone(),
             inventory: self.inventory.clone(),
-            last_refresh: Instant::now(),
+            last_refresh: self.last_refresh,
             refresh_interval: self.refresh_interval,
         }
     }
@@ -108,8 +108,9 @@ impl Store {
             Some(store_item) => {
                 // Add more stock to existing slot
                 for _ in 0..quantity {
-                    let item = game_state().spawn_item(item_id);
-                    store_item.items.push(item);
+                    if let Some(item) = game_state().spawn_item(item_id) {
+                        store_item.items.push(item);
+                    }
                 }
                 store_item.max_quantity += quantity;
             }

@@ -174,7 +174,12 @@ impl Blacksmith {
             Ok(id) => id,
             Err(e) => return Err(BlacksmithError::RecipeError(e)),
         };
-        let item = game_state().item_registry().spawn(item_id);
+        let item = game_state()
+            .item_registry()
+            .spawn(item_id)
+            .ok_or(BlacksmithError::RecipeError(
+                crate::item::recipe::RecipeError::NoMatchingRecipe,
+            ))?;
         self.dec_fuel(1);
         Ok(item)
     }

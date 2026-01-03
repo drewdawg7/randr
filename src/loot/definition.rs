@@ -89,14 +89,15 @@ impl LootTable {
             for _ in 0..total_rolls {
                 let roll = rng.gen_range(1..=loot_item.denominator);
                 if roll <= loot_item.numerator {
-                    let quantity = rng.gen_range(loot_item.quantity.clone());
-                    let item = game_state().spawn_item(loot_item.item_kind);
-                    let drop = LootDrop { item, quantity };
+                    if let Some(item) = game_state().spawn_item(loot_item.item_kind) {
+                        let quantity = rng.gen_range(loot_item.quantity.clone());
+                        let drop = LootDrop { item, quantity };
 
-                    best_drop = Some(match best_drop {
-                        None => drop,
-                        Some(existing) => Self::pick_better_drop(existing, drop),
-                    });
+                        best_drop = Some(match best_drop {
+                            None => drop,
+                            Some(existing) => Self::pick_better_drop(existing, drop),
+                        });
+                    }
                 }
             }
 

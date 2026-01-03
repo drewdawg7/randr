@@ -35,13 +35,14 @@ where
 }
 
 impl<K, V> Registry<K, V>
-where 
+where
     K: Eq + Hash + Copy,
     V: SpawnFromSpec<K>
 {
-    pub fn spawn(&self, kind: K) -> V::Output {
-        let spec = self.specs.get(&kind).expect("missing spec");
-        V::spawn_from_spec(kind, spec)
+    /// Spawn an entity from its spec, returning None if the spec doesn't exist.
+    pub fn spawn(&self, kind: K) -> Option<V::Output> {
+        let spec = self.specs.get(&kind)?;
+        Some(V::spawn_from_spec(kind, spec))
     }
 }
 

@@ -70,7 +70,7 @@ impl Mine {
         for (rock_id, weight) in &adjusted_weights {
             roll -= weight;
             if roll < 0 {
-                self.current_rock = Some(game_state().spawn_rock(*rock_id));
+                self.current_rock = game_state().spawn_rock(*rock_id);
                 break;
             }
         }

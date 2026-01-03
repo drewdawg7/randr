@@ -71,9 +71,10 @@ pub fn enter_room() -> CommandResult {
             // Spawn boss if needed
             let needs_spawn = gs.dungeon().map(|d| d.boss.is_none()).unwrap_or(false);
             if needs_spawn {
-                let dragon = gs.spawn_mob(MobId::Dragon);
-                if let Some(dungeon) = gs.dungeon_mut() {
-                    dungeon.boss = Some(dragon);
+                if let Some(dragon) = gs.spawn_mob(MobId::Dragon) {
+                    if let Some(dungeon) = gs.dungeon_mut() {
+                        dungeon.boss = Some(dragon);
+                    }
                 }
             }
             CommandResult::ok()
@@ -139,9 +140,10 @@ pub fn move_dungeon(direction: Direction) -> CommandResult {
             if is_boss_room {
                 // Spawn boss if needed
                 if dungeon.boss.is_none() {
-                    let dragon = gs.spawn_mob(MobId::Dragon);
-                    if let Some(d) = gs.dungeon_mut() {
-                        d.boss = Some(dragon);
+                    if let Some(dragon) = gs.spawn_mob(MobId::Dragon) {
+                        if let Some(d) = gs.dungeon_mut() {
+                            d.boss = Some(dragon);
+                        }
                     }
                 }
             }

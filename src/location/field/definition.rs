@@ -61,7 +61,9 @@ impl Field {
         for (mob_kind, weight) in &adjusted_weights {
             roll -= weight;
             if roll < 0 {
-                return Ok(game_state().spawn_mob(*mob_kind));
+                return game_state()
+                    .spawn_mob(*mob_kind)
+                    .ok_or(FieldError::MobSpawnError);
             }
         }
         Err(FieldError::MobSpawnError)
