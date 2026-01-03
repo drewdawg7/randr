@@ -108,7 +108,11 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
         // Handle 'p' for profile modal
         if let Event::Keyboard(KeyEvent { code: Key::Char('p'), .. }) = ev {
             let gs = game_state();
-            gs.ui.toggle_modal(ModalType::Profile);
+            if gs.active_modal == ModalType::Profile {
+                gs.active_modal = ModalType::None;
+            } else {
+                gs.active_modal = ModalType::Profile;
+            }
             return None;
         }
 
