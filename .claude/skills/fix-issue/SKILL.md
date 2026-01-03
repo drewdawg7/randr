@@ -4,18 +4,21 @@ description: Identifies researched issues in the github repo and fixes them base
 ---
 
 **IMPORTANT**: You do not need to ask permission to make edits.
-**IMPORTANT**: ONLY WORK ON ONE ISSUE AT A TIME
+**IMPORTANT**: Reference `parallel-dev` skill when handling multiple issues - use git worktrees if issues touch different files.
 
 ## Overview
 1. Pull down a list of issues that have the label 'researched' and are not marked as complete
-2. Pick an issue based on perceived severity
-3. **Check for `needs-decision` label** - if present, a solution option must be selected before fixing:
+2. **Evaluate for parallel work** (see `parallel-dev` skill):
+   - If multiple issues touch different files → use git worktrees
+   - If issues overlap or single issue → work one at a time
+3. Pick issue(s) based on perceived severity
+4. **Check for `needs-decision` label** - if present, a solution option must be selected before fixing:
    - Review the options in the issue body
    - Check one option (`- [x]`)
    - Run `option_selector.py` to process the selection (collapses other options)
-4. Given the context from the ticket, work to resolve the issue. Use updating-code.
-5. Once the issue is resolved, add the label 'fix-attempted' and merge the branch into main
-6. Add a follow up to the issue stating how the issue was resolved.
+5. Given the context from the ticket, work to resolve the issue. Use updating-code.
+6. Once the issue is resolved, add the label 'fix-attempted' and merge the branch into main
+7. Add a follow up to the issue stating how the issue was resolved.
 
 ## Helper Scripts
 

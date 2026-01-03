@@ -3,12 +3,28 @@ name: parallel-dev
 description: Safe parallel development patterns. Use for multi-issue or single-issue parallelization.
 ---
 
+## Decision Tree (MUST FOLLOW)
+
+```
+Multiple issues to work on?
+├── YES → Do they touch different files?
+│   ├── YES → USE GIT WORKTREES (Multi-Issue Mode)
+│   └── NO  → Work sequentially (one at a time)
+└── NO (single issue) → Can work be split into non-overlapping files?
+    ├── YES → USE SUBAGENTS (Single-Issue Mode)
+    └── NO  → Work sequentially
+```
+
+**Key Rule**: If issues touch different parts of the codebase with no file overlap, you MUST use git worktrees for parallel development. Do NOT work sequentially.
+
+---
+
 ## Mode Selection
 
 | Mode | Use When | Isolation |
 |------|----------|-----------|
-| **Multi-Issue** | Working on multiple separate issues | Git worktrees (complete) |
-| **Single-Issue** | Parallelizing work within one issue | Subagents (file-level) |
+| **Multi-Issue** | Multiple issues, different files | Git worktrees (complete) |
+| **Single-Issue** | One issue, parallelizable subtasks | Subagents (file-level) |
 
 ---
 
