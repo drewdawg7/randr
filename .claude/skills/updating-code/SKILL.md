@@ -3,6 +3,8 @@ name: updating-code
 description: Outlines the necessary steps to make code changes. All steps must be followed. Use when planning or making code changes.
 ---
 
+**IMPORTANT:** Read [SKILL.index.md](SKILL.index.md) first to find relevant documentation before diving into specific files.
+
 IMPORTANT: Use grep patterns to search documentation for specific keywords.
 IMPORTANT: **Use Rust LSP (rust-analyzer) instead of grep for Rust code navigation.**
 IMPORTANT: Reference `ascii-art` skill when making UI changes.
