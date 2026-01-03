@@ -30,13 +30,13 @@ Python scripts in `scripts/` directory automate common tasks. All output JSON.
 
 ### list_issues.py - Fetch All Issues
 ```bash
-python .claude/skills/clean-duplicates/scripts/list_issues.py [--state open|closed|all]
+python3 .claude/skills/clean-duplicates/scripts/list_issues.py [--state open|closed|all]
 ```
 Fetches all issues with number, title, body, labels, and creation date.
 
 ### find_duplicates.py - Identify Potential Duplicates
 ```bash
-python .claude/skills/clean-duplicates/scripts/find_duplicates.py [--threshold 0.4]
+python3 .claude/skills/clean-duplicates/scripts/find_duplicates.py [--threshold 0.4]
 ```
 Compares all open issues and identifies potential duplicates based on:
 - Title similarity (keyword overlap, 50% weight)
@@ -45,7 +45,7 @@ Compares all open issues and identifies potential duplicates based on:
 
 ### close_duplicate.py - Close as Duplicate
 ```bash
-python .claude/skills/clean-duplicates/scripts/close_duplicate.py <duplicate_number> <original_number>
+python3 .claude/skills/clean-duplicates/scripts/close_duplicate.py <duplicate_number> <original_number>
 ```
 Marks issue as duplicate of another:
 - Adds 'duplicate' label (creates if needed)

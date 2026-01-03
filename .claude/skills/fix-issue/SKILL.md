@@ -19,24 +19,24 @@ Python scripts in `scripts/` directory automate common tasks. All output JSON.
 
 ### issue_selector.py - List & Prioritize Issues
 ```bash
-python .claude/skills/fix-issue/scripts/issue_selector.py
+python3 .claude/skills/fix-issue/scripts/issue_selector.py
 ```
 Lists all 'researched' issues sorted by priority (critical > high > medium > low > age).
 
 ### issue_context.py - Get Full Issue Context
 ```bash
-python .claude/skills/fix-issue/scripts/issue_context.py <issue_number>
+python3 .claude/skills/fix-issue/scripts/issue_context.py <issue_number>
 ```
 Extracts issue body, comments, labels, and file references mentioned.
 
 ### fix_setup.py - Setup Branch for Issue
 ```bash
-python .claude/skills/fix-issue/scripts/fix_setup.py <issue_number>
+python3 .claude/skills/fix-issue/scripts/fix_setup.py <issue_number>
 ```
 Creates branch `fix/issue-{number}-{slug}`, outputs full issue context.
 
 ### fix_complete.py - Complete Fix & Merge
 ```bash
-python .claude/skills/fix-issue/scripts/fix_complete.py <issue_number> "<resolution_summary>"
+python3 .claude/skills/fix-issue/scripts/fix_complete.py <issue_number> "<resolution_summary>"
 ```
 Adds label, posts comment, commits, merges to main, cleans up branch.

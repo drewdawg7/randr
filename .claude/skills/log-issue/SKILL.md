@@ -31,7 +31,7 @@ Python scripts in `scripts/` directory automate common tasks. All output JSON.
 
 ### create_issue.py - Create New Issue
 ```bash
-python .claude/skills/log-issue/scripts/create_issue.py \
+python3 .claude/skills/log-issue/scripts/create_issue.py \
     --title "Issue title" \
     --body "Issue description" \
     --domain "ui" \
@@ -49,8 +49,8 @@ Options:
 ### label_manager.py - Manage Labels
 ```bash
 # List all labels by category
-python .claude/skills/log-issue/scripts/label_manager.py --list
+python3 .claude/skills/log-issue/scripts/label_manager.py --list
 
 # Create new label
-python .claude/skills/log-issue/scripts/label_manager.py --create "mining" --description "Mining system"
+python3 .claude/skills/log-issue/scripts/label_manager.py --create "mining" --description "Mining system"
 ```

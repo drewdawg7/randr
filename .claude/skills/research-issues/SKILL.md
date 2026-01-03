@@ -24,13 +24,13 @@ Python scripts in `scripts/` directory automate common tasks. All output JSON.
 
 ### fresh_issue_selector.py - List Fresh Issues
 ```bash
-python .claude/skills/research-issues/scripts/fresh_issue_selector.py
+python3 .claude/skills/research-issues/scripts/fresh_issue_selector.py
 ```
 Lists all 'fresh' issues sorted by priority (critical > high > medium > low) then age (oldest first).
 
 ### research_setup.py - Start Research
 ```bash
-python .claude/skills/research-issues/scripts/research_setup.py <issue_number>
+python3 .claude/skills/research-issues/scripts/research_setup.py <issue_number>
 ```
 Transitions labels (fresh → under research), outputs full issue context including:
 - Issue title, body, comments
@@ -40,6 +40,6 @@ Transitions labels (fresh → under research), outputs full issue context includ
 
 ### research_complete.py - Complete Research
 ```bash
-python .claude/skills/research-issues/scripts/research_complete.py <issue_number> "<findings_markdown>"
+python3 .claude/skills/research-issues/scripts/research_complete.py <issue_number> "<findings_markdown>"
 ```
 Posts formatted findings comment, transitions labels (under research → researched).
