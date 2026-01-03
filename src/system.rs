@@ -131,6 +131,10 @@ impl GameState {
         &self.recipe_registry
     }
 
+    pub fn item_registry(&self) -> &ItemRegistry {
+        &self.item_registry
+    }
+
     pub fn current_combat(&self) -> Option<&CombatRounds> {
         self.current_combat.as_ref()
     }

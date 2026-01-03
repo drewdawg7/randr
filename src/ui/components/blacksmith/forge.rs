@@ -134,7 +134,8 @@ pub fn handle(cmd: Cmd, item_list: &mut ItemList<RecipeItem, ForgeFilter>) -> (C
             if let Some(recipe_item) = item_list.selected_item() {
                 let gs = game_state();
                 if let Ok(recipe) = Recipe::new(recipe_item.recipe_id) {
-                    if let Ok(item) = recipe.craft(&mut gs.player) {
+                    if let Ok(item_id) = recipe.craft(&mut gs.player) {
+                        let item = gs.item_registry().spawn(item_id);
                         use crate::inventory::HasInventory;
                         let _ = gs.player.add_to_inv(item);
                     }

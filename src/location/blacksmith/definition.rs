@@ -3,6 +3,7 @@ use uuid::Uuid;
 use crate::{
     combat::HasGold,
     entities::Player,
+    game_state,
     inventory::EquipmentSlot,
     item::{
         recipe::{Recipe, RecipeId},
@@ -124,10 +125,11 @@ impl Blacksmith {
             Ok(recipe) => recipe,
             Err(e) => return Err(BlacksmithError::RecipeError(e)),
         };
-        let item = match recipe.craft(player) {
-            Ok(item) => item,
+        let item_id = match recipe.craft(player) {
+            Ok(id) => id,
             Err(e) => return Err(BlacksmithError::RecipeError(e)),
         };
+        let item = game_state().item_registry().spawn(item_id);
         self.dec_fuel(1);
         Ok(item)
     }

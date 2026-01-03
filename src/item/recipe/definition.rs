@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     entities::Player,
     game_state,
-    item::{ItemId, Item},
+    item::ItemId,
     HasInventory,
 };
 
@@ -46,7 +46,9 @@ impl Recipe {
         })
     }
 
-    pub fn craft(&self, player: &mut Player) -> Result<Item, RecipeError> {
+    /// Consumes ingredients from player inventory and returns the ItemId to spawn.
+    /// The caller is responsible for spawning the item using an ItemRegistry.
+    pub fn craft(&self, player: &mut Player) -> Result<ItemId, RecipeError> {
         if !self.can_craft(player) {
             return Err(RecipeError::NotEnoughIngredients);
         }
@@ -57,6 +59,6 @@ impl Recipe {
             }
         }
 
-        Ok(game_state().spawn_item(self.spec.output))
+        Ok(self.spec.output)
     }
 }

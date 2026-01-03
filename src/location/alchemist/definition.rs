@@ -1,5 +1,6 @@
 use crate::{
     entities::Player,
+    game_state,
     item::recipe::{Recipe, RecipeId},
     location::{AlchemistData, LocationId, LocationSpec},
     HasInventory,
@@ -36,7 +37,8 @@ impl Alchemist {
         recipe_id: &RecipeId,
     ) -> Result<(), AlchemistError> {
         let recipe = Recipe::new(*recipe_id).map_err(AlchemistError::RecipeError)?;
-        let item = recipe.craft(player).map_err(AlchemistError::RecipeError)?;
+        let item_id = recipe.craft(player).map_err(AlchemistError::RecipeError)?;
+        let item = game_state().item_registry().spawn(item_id);
         player
             .add_to_inv(item)
             .map_err(|_| AlchemistError::InventoryFull)?;
