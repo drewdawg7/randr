@@ -113,18 +113,34 @@ WordProperties::combine(&[&fire_props, &bolt_props])
 
 | Category | Words |
 |----------|-------|
-| Elements | fire, ice, lightning |
+| Elements | fire, ice, lightning, earth |
 | Actions | bolt, shield, burst, drain |
-| Modifiers | power, swift, stable, chaos |
-| Utility | sight, gold, mend |
+| Modifiers | power, swift, stable, chaos, luck |
+| Utility | sight, gold, mend, find |
+| Environment | rock, time, heat, field, dungeon |
+| Concepts | pass, safe |
+| Creatures | cow, slime |
 
 ## Example Recipes
 
+### Active Spells (Combat)
 - fire + bolt = "Firebolt" (15 fire damage)
 - ice + bolt = "Frostbolt" (10 ice damage + slow)
 - lightning + burst = "Thunder Nova" (12 lightning AoE)
 - drain + power = "Life Siphon" (10 damage, 50% lifesteal)
 - mend + power = "Greater Heal" (20 HP)
+
+### Passive Spells (System-Tied)
+- heat + rock + time = "Eternal Ember" (+1 furnace fuel/min)
+- field + cow + luck = "Bovine Blessing" (+5 cow spawn weight)
+- field + slime + luck = "Slime Magnet" (+5 slime spawn weight)
+- dungeon + pass + safe = "Shadow Step" (bypass dungeon rooms)
+- dungeon + sight = "Dungeon Sight" (reveal all rooms)
+- gold + find + power = "Midas Touch" (+15% gold find)
+- gold + find = "Lucky Coin" (+5% gold find)
+- sight + gold = "Golden Eye" (+10% gold find)
+- earth + stable = "Stone Skin" (+3 defense)
+- power + swift = "Battle Fury" (+3 attack)
 
 ## Invalid Combos (Backfire)
 
@@ -150,6 +166,24 @@ WordProperties::combine(&[&fire_props, &bolt_props])
 - `Player::equipped_tome_mut()` -> `Option<&mut Tome>`
 
 ## Passive Effect Integration
+
+### PassiveEffect Enum (`src/magic/effect/passive.rs`)
+| Effect | Target System | Description |
+|--------|---------------|-------------|
+| `BonusAttack(i32)` | Combat | Add to attack stat |
+| `BonusDefense(i32)` | Combat | Add to defense stat |
+| `Regeneration(i32)` | Combat | HP per turn |
+| `BonusGoldFind(i32)` | Loot | % gold find bonus |
+| `BonusMagicFind(i32)` | Loot | % magic find bonus |
+| `XPMultiplier(i32)` | Progression | % XP gain bonus |
+| `Reveal` | World | Reveals hidden things |
+| `FurnaceFuelRegen(i32)` | Blacksmith | Fuel per minute |
+| `MobSpawnWeight(MobId, i32)` | Field | Modify mob spawn weights |
+| `RockSpawnWeight(RockId, i32)` | Mine | Modify rock spawn weights |
+| `BonusMining(i32)` | Mine | Mining efficiency |
+| `StoreDiscount(i32)` | Store | % purchase discount |
+| `DungeonBypass` | Dungeon | Skip rooms without combat |
+| `DungeonReveal` | Dungeon | Reveal all rooms |
 
 ### Player Bonus Methods
 - Location: `src/entities/player/definition.rs`
