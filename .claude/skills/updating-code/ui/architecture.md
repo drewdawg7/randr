@@ -329,6 +329,22 @@ match selection {
 | `dungeon.rs` | EnterRoom, MoveDungeon, LeaveDungeon, Rest, AttackBoss |
 | `store.rs` | PurchaseItem, SellItem |
 | `inventory.rs` | EquipItem, UnequipItem, ToggleLock, UseConsumable |
+
+### Inventory Keybinds
+
+The following keybinds are available when the inventory modal is open:
+
+| Key | Action | Location |
+|-----|--------|----------|
+| `i` | Open/close inventory | `modal_wrapper.rs` |
+| `Shift+I` | Toggle keybinds help | `modal_wrapper.rs` |
+| `e` | Equip/unequip item | `inventory_modal.rs`, `store/tab.rs` |
+| `l` | Lock/unlock item | `inventory_modal.rs`, `store/tab.rs` |
+| `d` | Toggle item details | `inventory_modal.rs` |
+| `u` | Use consumable | `inventory_modal.rs` |
+| `f` | Cycle filter | `inventory_modal.rs` |
+| `Up/Down` | Navigate list | `inventory_modal.rs` |
+
 | `mining.rs` | MineRock |
 
 ### CommandResult

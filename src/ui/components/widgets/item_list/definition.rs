@@ -415,16 +415,12 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
             selection_prefix(is_selected),
         ];
 
-        // Add lock and equip prefixes if applicable
-        if item.show_lock() {
-            if let Some(i) = item.item() {
-                spans.push(lock_prefix(i));
-                spans.push(equip_prefix(i));
-            }
-        }
-
-        // Add item display (name with quality color and quantity/upgrades)
+        // Add lock and equip prefixes, then item display
         if let Some(i) = item.item() {
+            if item.show_lock() {
+                spans.push(lock_prefix(i));
+            }
+            spans.push(equip_prefix(i));
             let quantity = item.quantity();
             spans.push(item_display(i, quantity));
         } else {
@@ -473,16 +469,12 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
     fn render_item(&self, item: &T, is_selected: bool) -> RatatuiListItem<'static> {
         let mut spans = vec![selection_prefix(is_selected)];
 
-        // Add lock and equip prefixes if applicable
-        if item.show_lock() {
-            if let Some(i) = item.item() {
-                spans.push(lock_prefix(i));
-                spans.push(equip_prefix(i));
-            }
-        }
-
-        // Add item display (name with quality color and quantity/upgrades)
+        // Add lock and equip prefixes, then item display
         if let Some(i) = item.item() {
+            if item.show_lock() {
+                spans.push(lock_prefix(i));
+            }
+            spans.push(equip_prefix(i));
             let quantity = item.quantity();
             spans.push(item_display(i, quantity));
         } else {

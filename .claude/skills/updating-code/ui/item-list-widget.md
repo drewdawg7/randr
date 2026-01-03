@@ -132,7 +132,8 @@ Key::Enter => {
 ## Visual Features
 
 - **Selection prefix**: `> ` (yellow) for selected, `  ` for unselected
-- **Lock icon**: Shown before name if item is locked
+- **Lock icon**: LOCK (\u{F023}) shown in bronze before name if item is locked
+- **Equip icon**: SHIRT (\u{EE1C}) shown in cyan before name if item is equipped
 - **Quality coloring**: Item names colored by ItemQuality
 - **Scroll indicators**: "... more above/below ..." when scrolled
 - **Filter button**: `[F: All]` or similar at top when enabled
