@@ -31,14 +31,19 @@ pub trait DealsDamage: HasStats {
     /// Variance percentage for attack range (e.g., 0.25 = ±25%)
     const ATTACK_VARIANCE: f64 = 0.25;
 
+    /// Returns bonus attack from equipment. Override for entities with gear.
+    fn equipment_attack_bonus(&self) -> i32 {
+        0
+    }
+
     /// Returns the Attack struct with damage range.
-    /// Default implementation derives range from Attack stat with variance.
+    /// Derives range from (base Attack + equipment bonus) with variance.
     fn get_attack(&self) -> Attack {
-        let base = self.attack();
-        let variance = (base as f64 * Self::ATTACK_VARIANCE).round() as i32;
+        let total = self.attack() + self.equipment_attack_bonus();
+        let variance = (total as f64 * Self::ATTACK_VARIANCE).round() as i32;
         Attack::new(
-            (base - variance).max(1),
-            base + variance,
+            (total - variance).max(1),
+            total + variance,
         )
     }
 

@@ -1,7 +1,7 @@
 use std::{collections::HashMap, fmt::Display};
 
 use crate::{
-    combat::{Attack, Combatant, DealsDamage, HasGold, IsKillable, Named, PlayerDeathResult},
+    combat::{Combatant, DealsDamage, HasGold, IsKillable, Named, PlayerDeathResult},
     entities::{progression::HasProgression, Player, Progression},
     inventory::{HasInventory, Inventory},
     item::consumable::{ApplyEffect, ConsumableEffect},
@@ -86,15 +86,8 @@ impl HasInventory for Player {
 
 
 impl DealsDamage for Player {
-    /// Player attack range is derived from total Attack (base + equipment)
-    /// with ±25% variance applied.
-    fn get_attack(&self) -> Attack {
-        let total_attack = self.attack() + self.inventory().sum_equipment_stats(StatType::Attack);
-        let variance = (total_attack as f64 * Self::ATTACK_VARIANCE).round() as i32;
-        Attack::new(
-            (total_attack - variance).max(1),
-            total_attack + variance,
-        )
+    fn equipment_attack_bonus(&self) -> i32 {
+        self.inventory().sum_equipment_stats(StatType::Attack)
     }
 }
 
