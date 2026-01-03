@@ -137,6 +137,117 @@ impl RegistryDefaults<WordId> for WordSpec {
                     properties: WordProperties::new().healing(8),
                 },
             ),
+            (
+                WordId::Find,
+                WordSpec {
+                    name: "Find",
+                    description: "Enhances discovery and finding",
+                    properties: WordProperties::new().passive().gold_find(5),
+                },
+            ),
+            // ─────────────────────────────────────────────────────────────────
+            // Elements (additional)
+            // ─────────────────────────────────────────────────────────────────
+            (
+                WordId::Earth,
+                WordSpec {
+                    name: "Earth",
+                    description: "Grounding element, stability",
+                    properties: WordProperties::new()
+                        .stability(2)
+                        .defense(2),
+                },
+            ),
+            // ─────────────────────────────────────────────────────────────────
+            // Environment/Location Words
+            // ─────────────────────────────────────────────────────────────────
+            (
+                WordId::Rock,
+                WordSpec {
+                    name: "Rock",
+                    description: "Stone and mineral essence",
+                    properties: WordProperties::new().stability(1),
+                },
+            ),
+            (
+                WordId::Time,
+                WordSpec {
+                    name: "Time",
+                    description: "Temporal manipulation",
+                    properties: WordProperties::new().passive(),
+                },
+            ),
+            (
+                WordId::Heat,
+                WordSpec {
+                    name: "Heat",
+                    description: "Thermal energy, warmth",
+                    properties: WordProperties::new()
+                        .element(Element::Fire),
+                },
+            ),
+            (
+                WordId::Field,
+                WordSpec {
+                    name: "Field",
+                    description: "Open grassland, hunting grounds",
+                    properties: WordProperties::new().passive(),
+                },
+            ),
+            (
+                WordId::Dungeon,
+                WordSpec {
+                    name: "Dungeon",
+                    description: "Dark depths, exploration",
+                    properties: WordProperties::new().passive(),
+                },
+            ),
+            // ─────────────────────────────────────────────────────────────────
+            // Concept Words
+            // ─────────────────────────────────────────────────────────────────
+            (
+                WordId::Pass,
+                WordSpec {
+                    name: "Pass",
+                    description: "Movement, bypassing obstacles",
+                    properties: WordProperties::new().passive(),
+                },
+            ),
+            (
+                WordId::Safe,
+                WordSpec {
+                    name: "Safe",
+                    description: "Protection, security",
+                    properties: WordProperties::new().passive().defense(1),
+                },
+            ),
+            (
+                WordId::Luck,
+                WordSpec {
+                    name: "Luck",
+                    description: "Fortune and chance",
+                    properties: WordProperties::new().passive(),
+                },
+            ),
+            // ─────────────────────────────────────────────────────────────────
+            // Creature Words (for spawn weight modifiers)
+            // ─────────────────────────────────────────────────────────────────
+            (
+                WordId::Cow,
+                WordSpec {
+                    name: "Cow",
+                    description: "Bovine essence, grazing creature",
+                    properties: WordProperties::new().passive(),
+                },
+            ),
+            (
+                WordId::Slime,
+                WordSpec {
+                    name: "Slime",
+                    description: "Gelatinous creature essence",
+                    properties: WordProperties::new().passive(),
+                },
+            ),
         ]
     }
 }

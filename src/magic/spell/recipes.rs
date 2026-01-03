@@ -2,7 +2,8 @@ use std::collections::HashSet;
 
 use once_cell::sync::Lazy;
 
-use crate::magic::effect::ActiveEffect;
+use crate::entities::mob::MobId;
+use crate::magic::effect::{ActiveEffect, PassiveEffect};
 use crate::magic::word::{Element, WordId};
 
 use super::definition::{BackfireEffect, ComputedSpell};
@@ -121,6 +122,99 @@ pub static RECIPES: Lazy<Vec<Recipe>> = Lazy::new(|| {
                         duration: 2,
                     }),
                 },
+            },
+        },
+        // ─────────────────────────────────────────────────────────────────────────
+        // Passive Recipes (System-Tied Effects)
+        // ─────────────────────────────────────────────────────────────────────────
+        // Heat + Rock + Time = Furnace Fuel Regen (+1 per minute)
+        Recipe {
+            required_words: HashSet::from([WordId::Heat, WordId::Rock, WordId::Time]),
+            effect: ComputedSpell::Passive {
+                name: "Eternal Ember".to_string(),
+                description: "The furnace slowly regenerates fuel over time".to_string(),
+                effect: PassiveEffect::FurnaceFuelRegen(1),
+            },
+        },
+        // Field + Cow + Luck = Increase Cow spawn weight
+        Recipe {
+            required_words: HashSet::from([WordId::Field, WordId::Cow, WordId::Luck]),
+            effect: ComputedSpell::Passive {
+                name: "Bovine Blessing".to_string(),
+                description: "Cows appear more frequently in the field".to_string(),
+                effect: PassiveEffect::MobSpawnWeight(MobId::Cow, 5),
+            },
+        },
+        // Field + Slime + Luck = Increase Slime spawn weight
+        Recipe {
+            required_words: HashSet::from([WordId::Field, WordId::Slime, WordId::Luck]),
+            effect: ComputedSpell::Passive {
+                name: "Slime Magnet".to_string(),
+                description: "Slimes appear more frequently in the field".to_string(),
+                effect: PassiveEffect::MobSpawnWeight(MobId::Slime, 5),
+            },
+        },
+        // Dungeon + Pass + Safe = Dungeon Bypass
+        Recipe {
+            required_words: HashSet::from([WordId::Dungeon, WordId::Pass, WordId::Safe]),
+            effect: ComputedSpell::Passive {
+                name: "Shadow Step".to_string(),
+                description: "You can bypass dungeon rooms without combat".to_string(),
+                effect: PassiveEffect::DungeonBypass,
+            },
+        },
+        // Dungeon + Sight = Dungeon Reveal
+        Recipe {
+            required_words: HashSet::from([WordId::Dungeon, WordId::Sight]),
+            effect: ComputedSpell::Passive {
+                name: "Dungeon Sight".to_string(),
+                description: "All rooms in dungeons are revealed".to_string(),
+                effect: PassiveEffect::DungeonReveal,
+            },
+        },
+        // Gold + Find + Power = Bonus Gold Find (+15%)
+        Recipe {
+            required_words: HashSet::from([WordId::Gold, WordId::Find, WordId::Power]),
+            effect: ComputedSpell::Passive {
+                name: "Midas Touch".to_string(),
+                description: "Significantly increased gold find".to_string(),
+                effect: PassiveEffect::BonusGoldFind(15),
+            },
+        },
+        // Gold + Find = Bonus Gold Find (+5%)
+        Recipe {
+            required_words: HashSet::from([WordId::Gold, WordId::Find]),
+            effect: ComputedSpell::Passive {
+                name: "Lucky Coin".to_string(),
+                description: "Increased gold find".to_string(),
+                effect: PassiveEffect::BonusGoldFind(5),
+            },
+        },
+        // Sight + Gold = Reveals gold and bonus gold find
+        Recipe {
+            required_words: HashSet::from([WordId::Sight, WordId::Gold]),
+            effect: ComputedSpell::Passive {
+                name: "Golden Eye".to_string(),
+                description: "Reveals hidden treasures and increases gold find".to_string(),
+                effect: PassiveEffect::BonusGoldFind(10),
+            },
+        },
+        // Earth + Stable = Bonus Defense
+        Recipe {
+            required_words: HashSet::from([WordId::Earth, WordId::Stable]),
+            effect: ComputedSpell::Passive {
+                name: "Stone Skin".to_string(),
+                description: "Your skin hardens like stone".to_string(),
+                effect: PassiveEffect::BonusDefense(3),
+            },
+        },
+        // Power + Swift = Bonus Attack
+        Recipe {
+            required_words: HashSet::from([WordId::Power, WordId::Swift]),
+            effect: ComputedSpell::Passive {
+                name: "Battle Fury".to_string(),
+                description: "Your attacks are more powerful".to_string(),
+                effect: PassiveEffect::BonusAttack(3),
             },
         },
     ]

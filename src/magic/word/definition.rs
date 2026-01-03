@@ -10,6 +10,7 @@ pub enum WordId {
     Fire,
     Ice,
     Lightning,
+    Earth,
 
     // Actions
     Bolt,
@@ -22,11 +23,28 @@ pub enum WordId {
     Swift,
     Stable,
     Chaos,
+    Luck,
 
     // Utility
     Sight,
     Gold,
     Mend,
+    Find,
+
+    // Environment/Location
+    Rock,
+    Time,
+    Heat,
+    Field,
+    Dungeon,
+
+    // Concepts
+    Pass,
+    Safe,
+
+    // Creatures (for spawn weight modifiers)
+    Cow,
+    Slime,
 }
 
 impl WordId {
@@ -36,6 +54,7 @@ impl WordId {
             WordId::Fire => "fire",
             WordId::Ice => "ice",
             WordId::Lightning => "lightning",
+            WordId::Earth => "earth",
             WordId::Bolt => "bolt",
             WordId::Shield => "shield",
             WordId::Burst => "burst",
@@ -44,9 +63,20 @@ impl WordId {
             WordId::Swift => "swift",
             WordId::Stable => "stable",
             WordId::Chaos => "chaos",
+            WordId::Luck => "luck",
             WordId::Sight => "sight",
             WordId::Gold => "gold",
             WordId::Mend => "mend",
+            WordId::Find => "find",
+            WordId::Rock => "rock",
+            WordId::Time => "time",
+            WordId::Heat => "heat",
+            WordId::Field => "field",
+            WordId::Dungeon => "dungeon",
+            WordId::Pass => "pass",
+            WordId::Safe => "safe",
+            WordId::Cow => "cow",
+            WordId::Slime => "slime",
         }
     }
 
@@ -56,6 +86,7 @@ impl WordId {
             "fire" => Some(WordId::Fire),
             "ice" => Some(WordId::Ice),
             "lightning" => Some(WordId::Lightning),
+            "earth" => Some(WordId::Earth),
             "bolt" => Some(WordId::Bolt),
             "shield" => Some(WordId::Shield),
             "burst" => Some(WordId::Burst),
@@ -64,9 +95,20 @@ impl WordId {
             "swift" => Some(WordId::Swift),
             "stable" => Some(WordId::Stable),
             "chaos" => Some(WordId::Chaos),
+            "luck" => Some(WordId::Luck),
             "sight" => Some(WordId::Sight),
             "gold" => Some(WordId::Gold),
             "mend" => Some(WordId::Mend),
+            "find" => Some(WordId::Find),
+            "rock" => Some(WordId::Rock),
+            "time" => Some(WordId::Time),
+            "heat" => Some(WordId::Heat),
+            "field" => Some(WordId::Field),
+            "dungeon" => Some(WordId::Dungeon),
+            "pass" => Some(WordId::Pass),
+            "safe" => Some(WordId::Safe),
+            "cow" => Some(WordId::Cow),
+            "slime" => Some(WordId::Slime),
             _ => None,
         }
     }
@@ -77,6 +119,7 @@ impl WordId {
             WordId::Fire,
             WordId::Ice,
             WordId::Lightning,
+            WordId::Earth,
             WordId::Bolt,
             WordId::Shield,
             WordId::Burst,
@@ -85,9 +128,20 @@ impl WordId {
             WordId::Swift,
             WordId::Stable,
             WordId::Chaos,
+            WordId::Luck,
             WordId::Sight,
             WordId::Gold,
             WordId::Mend,
+            WordId::Find,
+            WordId::Rock,
+            WordId::Time,
+            WordId::Heat,
+            WordId::Field,
+            WordId::Dungeon,
+            WordId::Pass,
+            WordId::Safe,
+            WordId::Cow,
+            WordId::Slime,
         ]
     }
 }
