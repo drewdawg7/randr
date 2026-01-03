@@ -53,6 +53,12 @@ impl IsKillable for Mob {
     type DeathResult = MobDeathResult;
 
     fn on_death(&mut self) -> MobDeathResult {
+        // Guard against double on_death() calls - return empty result if already processed
+        if self.death_processed {
+            return MobDeathResult::default();
+        }
+        self.death_processed = true;
+
         MobDeathResult {
             gold_dropped: self.drop_gold(),
             xp_dropped: self.give_xp(),

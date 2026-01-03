@@ -36,7 +36,7 @@ impl Alchemist {
         recipe_id: &RecipeId,
     ) -> Result<(), AlchemistError> {
         let recipe = Recipe::new(*recipe_id).map_err(AlchemistError::RecipeError)?;
-        let item = recipe.craft(player, |id| crate::game_state().spawn_item(id)).map_err(AlchemistError::RecipeError)?;
+        let item = recipe.craft(player).map_err(AlchemistError::RecipeError)?;
         player
             .add_to_inv(item)
             .map_err(|_| AlchemistError::InventoryFull)?;

@@ -27,6 +27,7 @@ fn create_test_mob(name: &'static str, hp: i32, attack: i32, defense: i32) -> Mo
         gold: 5,
         dropped_xp: 15,
         loot_table: LootTable::default(),
+        death_processed: false,
     }
 }
 
@@ -379,6 +380,23 @@ fn mob_on_death_returns_death_result() {
 
     assert_eq!(result.gold_dropped, 5);
     assert_eq!(result.xp_dropped, 15);
+}
+
+#[test]
+fn mob_on_death_returns_empty_on_second_call() {
+    let mut mob = create_test_mob("Dying Mob", 10, 5, 0);
+    mob.take_damage(100);
+
+    // First call returns rewards
+    let first_result = mob.on_death();
+    assert_eq!(first_result.gold_dropped, 5);
+    assert_eq!(first_result.xp_dropped, 15);
+
+    // Second call returns empty result (guard prevents double rewards)
+    let second_result = mob.on_death();
+    assert_eq!(second_result.gold_dropped, 0);
+    assert_eq!(second_result.xp_dropped, 0);
+    assert!(second_result.loot_drops.is_empty());
 }
 
 #[test]

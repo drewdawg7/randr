@@ -124,7 +124,7 @@ impl Blacksmith {
             Ok(recipe) => recipe,
             Err(e) => return Err(BlacksmithError::RecipeError(e)),
         };
-        let item = match recipe.craft(player, |id| crate::game_state().spawn_item(id)) {
+        let item = match recipe.craft(player) {
             Ok(item) => item,
             Err(e) => return Err(BlacksmithError::RecipeError(e)),
         };

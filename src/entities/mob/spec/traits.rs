@@ -51,6 +51,7 @@ impl SpawnFromSpec<MobId> for MobSpec {
             },
             loot_table: spec.loot.clone(),
             dropped_xp,
+            death_processed: false,
         }
     }
 }
