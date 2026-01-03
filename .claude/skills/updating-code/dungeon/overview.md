@@ -325,10 +325,10 @@ enum DungeonState {
 - Single "Attack" option (no escape)
 
 ### In-Room Combat
-`handle_boss_submit()` implements boss combat without FightScreen:
+`handle_submit()` in `boss_room.rs` implements boss combat without FightScreen:
 1. Player attacks boss using `CombatSystem::attack()`
 2. Log player damage dealt
-3. If boss dies: mark room cleared, transition to Navigation
+3. If boss dies: reset dungeon and return to town (`gs.reset_dungeon()`, `gs.leave_dungeon()`)
 4. If boss alive: boss counterattacks player
 5. If player dies: kick out of dungeon, reset dungeon
 
