@@ -5,7 +5,6 @@ use ratatui::{
     layout::Rect,
     style::{Color, Style},
     text::{Line, Span},
-    widgets::Paragraph,
     Frame,
 };
 use tuirealm::event::Key;
@@ -20,7 +19,7 @@ use crate::{
     ui::theme::{CREAM_WOOD, DARK_WALNUT, GREEN, LIGHT_BEIGE, OAK_BROWN, TAN_WOOD, WHITE, WOOD_BROWN},
 };
 
-// Parchment background (warm tan/beige tint)
+// Parchment background color (warm tan/beige tint)
 const PARCHMENT_BG: Color = Color::Rgb(58, 52, 46);
 
 // Border patterns for parchment/book aesthetic
@@ -42,6 +41,24 @@ const PARCHMENT_COLORS: [Color; 9] = [
     OAK_BROWN,
 ];
 
+/// Parchment texture pattern - sparse dots suggesting aged paper
+/// Uses very light braille for subtle weathered texture
+const PARCHMENT_PATTERN: &[&str] = &[
+    "⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀",
+    "⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂",
+    "⠁⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀",
+    "⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁",
+    "⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀",
+    "⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠂⠀",
+];
+
+const PARCHMENT_PATTERN_WIDTH: usize = 30;
+const PARCHMENT_PATTERN_HEIGHT: usize = 10;
+
 /// A non-interactive modal displaying the player's profile.
 /// Shows effective stats, gold, progression in a parchment-styled frame.
 pub struct ProfileModal;
@@ -52,6 +69,7 @@ impl ProfileModal {
     }
 
     /// Reset state when modal opens (no-op for stateless modal)
+    #[allow(dead_code)]
     pub fn reset(&mut self) {}
 
     /// Render the profile modal
@@ -67,7 +85,10 @@ impl ProfileModal {
 
         let border_area = Rect::new(x, y, modal_width, modal_height);
 
-        // Render the ASCII border
+        // Render parchment background first
+        self.render_parchment_background(frame, border_area);
+
+        // Render the ASCII border on top
         self.render_ascii_border(frame, border_area);
 
         // Calculate inner area for content
@@ -78,83 +99,123 @@ impl ProfileModal {
             modal_height.saturating_sub(2),
         );
 
-        // Render content
-        self.render_content(frame, inner_area);
+        // Render content directly to buffer (preserves background)
+        self.render_content_to_buffer(frame, inner_area);
     }
 
+    /// Render parchment texture background
+    fn render_parchment_background(&self, frame: &mut Frame, area: Rect) {
+        let buf = frame.buffer_mut();
+
+        // Colors for the parchment texture dots
+        let dot_colors = [
+            Color::Rgb(90, 75, 60),   // Dark spots
+            Color::Rgb(100, 85, 70),  // Medium spots
+            Color::Rgb(80, 70, 55),   // Darker spots
+        ];
+
+        for row in 0..area.height {
+            let pattern_row = (row as usize) % PARCHMENT_PATTERN_HEIGHT;
+            let pattern_chars: Vec<char> = PARCHMENT_PATTERN[pattern_row].chars().collect();
+
+            for col in 0..area.width {
+                let pattern_col = (col as usize) % PARCHMENT_PATTERN_WIDTH;
+                let ch = pattern_chars.get(pattern_col).copied().unwrap_or(' ');
+
+                let cell_x = area.x + col;
+                let cell_y = area.y + row;
+
+                if let Some(cell) = buf.cell_mut((cell_x, cell_y)) {
+                    // Set background color
+                    cell.set_bg(PARCHMENT_BG);
+
+                    // Only set character if it's not empty braille
+                    if ch != '⠀' && ch != ' ' {
+                        cell.set_char(ch);
+                        // Vary dot color for subtle texture
+                        let color_idx = ((col as usize / 7) + (row as usize / 3)) % dot_colors.len();
+                        cell.set_fg(dot_colors[color_idx]);
+                    } else {
+                        cell.set_char(' ');
+                    }
+                }
+            }
+        }
+    }
+
+    /// Render border directly to buffer (preserves parchment background in middle)
     fn render_ascii_border(&self, frame: &mut Frame, area: Rect) {
+        let buf = frame.buffer_mut();
         let width = area.width as usize;
         let height = area.height;
-
-        let mut lines: Vec<Line> = Vec::new();
 
         // Top border with title
         let title = " Character Profile ";
         let title_start = (width.saturating_sub(title.len())) / 2;
-        let top_spans: Vec<Span> = (0..width)
-            .map(|i| {
-                if i >= title_start && i < title_start + title.len() {
-                    let ch = title.chars().nth(i - title_start).unwrap_or(' ');
-                    Span::styled(
-                        ch.to_string(),
-                        Style::default().fg(CREAM_WOOD).bg(PARCHMENT_BG),
-                    )
-                } else {
-                    let pattern_ch = TOP_PATTERN
-                        .chars()
-                        .nth(i % TOP_PATTERN.chars().count())
-                        .unwrap_or(' ');
-                    let color = PARCHMENT_COLORS[i % PARCHMENT_COLORS.len()];
-                    Span::styled(
-                        pattern_ch.to_string(),
-                        Style::default().fg(color).bg(PARCHMENT_BG),
-                    )
-                }
-            })
-            .collect();
-        lines.push(Line::from(top_spans));
+        let title_chars: Vec<char> = title.chars().collect();
+        let top_pattern_chars: Vec<char> = TOP_PATTERN.chars().collect();
 
-        // Middle rows with side borders and background
+        for col in 0..width {
+            let x = area.x + col as u16;
+            let y = area.y;
+
+            if let Some(cell) = buf.cell_mut((x, y)) {
+                if col >= title_start && col < title_start + title.len() {
+                    let ch = title_chars.get(col - title_start).copied().unwrap_or(' ');
+                    cell.set_char(ch);
+                    cell.set_fg(CREAM_WOOD);
+                } else {
+                    let ch = top_pattern_chars.get(col % top_pattern_chars.len()).copied().unwrap_or(' ');
+                    cell.set_char(ch);
+                    cell.set_fg(PARCHMENT_COLORS[col % PARCHMENT_COLORS.len()]);
+                }
+                cell.set_bg(PARCHMENT_BG);
+            }
+        }
+
+        // Side borders only (don't fill middle - preserve parchment)
         for row in 1..height.saturating_sub(1) {
             let left_ch = LEFT_PATTERN[row as usize % LEFT_PATTERN.len()];
             let right_ch = RIGHT_PATTERN[row as usize % RIGHT_PATTERN.len()];
             let left_color = PARCHMENT_COLORS[row as usize % PARCHMENT_COLORS.len()];
             let right_color = PARCHMENT_COLORS[(row as usize + 3) % PARCHMENT_COLORS.len()];
 
-            let left = Span::styled(
-                left_ch.to_string(),
-                Style::default().fg(left_color).bg(PARCHMENT_BG),
-            );
-            let right = Span::styled(
-                right_ch.to_string(),
-                Style::default().fg(right_color).bg(PARCHMENT_BG),
-            );
-            let middle = Span::styled(
-                " ".repeat(width.saturating_sub(2)),
-                Style::default().bg(PARCHMENT_BG),
-            );
+            let y = area.y + row;
 
-            lines.push(Line::from(vec![left, middle, right]));
+            // Left border
+            if let Some(cell) = buf.cell_mut((area.x, y)) {
+                cell.set_char(left_ch);
+                cell.set_fg(left_color);
+                cell.set_bg(PARCHMENT_BG);
+            }
+
+            // Right border
+            let right_x = area.x + area.width - 1;
+            if let Some(cell) = buf.cell_mut((right_x, y)) {
+                cell.set_char(right_ch);
+                cell.set_fg(right_color);
+                cell.set_bg(PARCHMENT_BG);
+            }
         }
 
         // Bottom border
-        let bottom_spans: Vec<Span> = BOTTOM_PATTERN
-            .chars()
-            .cycle()
-            .take(width)
-            .enumerate()
-            .map(|(i, ch)| {
-                let color = PARCHMENT_COLORS[i % PARCHMENT_COLORS.len()];
-                Span::styled(ch.to_string(), Style::default().fg(color).bg(PARCHMENT_BG))
-            })
-            .collect();
-        lines.push(Line::from(bottom_spans));
+        let bottom_pattern_chars: Vec<char> = BOTTOM_PATTERN.chars().collect();
+        let bottom_y = area.y + height - 1;
 
-        let paragraph = Paragraph::new(lines);
-        frame.render_widget(paragraph, area);
+        for col in 0..width {
+            let x = area.x + col as u16;
+
+            if let Some(cell) = buf.cell_mut((x, bottom_y)) {
+                let ch = bottom_pattern_chars.get(col % bottom_pattern_chars.len()).copied().unwrap_or(' ');
+                cell.set_char(ch);
+                cell.set_fg(PARCHMENT_COLORS[col % PARCHMENT_COLORS.len()]);
+                cell.set_bg(PARCHMENT_BG);
+            }
+        }
     }
 
-    fn render_content(&self, frame: &mut Frame, area: Rect) {
+    /// Render content directly to buffer to preserve parchment background
+    fn render_content_to_buffer(&self, frame: &mut Frame, area: Rect) {
         let player = &game_state().player;
 
         // Gather player data
@@ -180,51 +241,42 @@ impl ProfileModal {
         let xp = progression.xp;
         let xp_needed = Progression::xp_to_next_level(level);
 
-        // Build content lines with explicit styles for readability on parchment background
-        let text_style = Style::default().fg(WHITE).bg(PARCHMENT_BG);
-        let label_style = Style::default().fg(CREAM_WOOD).bg(PARCHMENT_BG);
-        let bonus_style = Style::default().fg(GREEN).bg(PARCHMENT_BG);
-
+        // Build content lines
         let mut lines: Vec<Line> = Vec::new();
 
         // Name and Level
         lines.push(Line::from(vec![
-            Span::styled(format!("{}", name), label_style),
-            Span::styled("  ", text_style),
-            Span::styled(format!("Lv. {}", level), text_style),
+            Span::styled(format!("{}", name), Style::default().fg(CREAM_WOOD)),
+            Span::styled("  ", Style::default().fg(WHITE)),
+            Span::styled(format!("Lv. {}", level), Style::default().fg(WHITE)),
         ]));
 
         // Separator
         lines.push(Line::from(Span::styled(
             "─".repeat(area.width as usize),
-            Style::default().fg(TAN_WOOD).bg(PARCHMENT_BG),
+            Style::default().fg(TAN_WOOD),
         )));
 
         // Health
         lines.push(Line::from(vec![
-            Span::styled(
-                format!("{} ", HEART),
-                Style::default()
-                    .fg(Color::Rgb(244, 67, 54))
-                    .bg(PARCHMENT_BG),
-            ),
-            Span::styled("Health:  ", label_style),
-            Span::styled(format!("{}/{}", health, max_health), text_style),
+            Span::styled(format!("{} ", HEART), Style::default().fg(Color::Rgb(244, 67, 54))),
+            Span::styled("Health:  ", Style::default().fg(CREAM_WOOD)),
+            Span::styled(format!("{}/{}", health, max_health), Style::default().fg(WHITE)),
         ]));
 
         // Attack with equipment bonus
         let attack_line = if attack_bonus > 0 {
             Line::from(vec![
-                Span::styled(format!("{} ", CROSSED_SWORDS), text_style),
-                Span::styled("Attack:  ", label_style),
-                Span::styled(format!("{}", attack), text_style),
-                Span::styled(format!(" (+{})", attack_bonus), bonus_style),
+                Span::styled(format!("{} ", CROSSED_SWORDS), Style::default().fg(WHITE)),
+                Span::styled("Attack:  ", Style::default().fg(CREAM_WOOD)),
+                Span::styled(format!("{}", attack), Style::default().fg(WHITE)),
+                Span::styled(format!(" (+{})", attack_bonus), Style::default().fg(GREEN)),
             ])
         } else {
             Line::from(vec![
-                Span::styled(format!("{} ", CROSSED_SWORDS), text_style),
-                Span::styled("Attack:  ", label_style),
-                Span::styled(format!("{}", attack), text_style),
+                Span::styled(format!("{} ", CROSSED_SWORDS), Style::default().fg(WHITE)),
+                Span::styled("Attack:  ", Style::default().fg(CREAM_WOOD)),
+                Span::styled(format!("{}", attack), Style::default().fg(WHITE)),
             ])
         };
         lines.push(attack_line);
@@ -232,16 +284,16 @@ impl ProfileModal {
         // Defense with equipment bonus
         let defense_line = if defense_bonus > 0 {
             Line::from(vec![
-                Span::styled(format!("{} ", SHIELD), text_style),
-                Span::styled("Defense: ", label_style),
-                Span::styled(format!("{}", defense), text_style),
-                Span::styled(format!(" (+{})", defense_bonus), bonus_style),
+                Span::styled(format!("{} ", SHIELD), Style::default().fg(WHITE)),
+                Span::styled("Defense: ", Style::default().fg(CREAM_WOOD)),
+                Span::styled(format!("{}", defense), Style::default().fg(WHITE)),
+                Span::styled(format!(" (+{})", defense_bonus), Style::default().fg(GREEN)),
             ])
         } else {
             Line::from(vec![
-                Span::styled(format!("{} ", SHIELD), text_style),
-                Span::styled("Defense: ", label_style),
-                Span::styled(format!("{}", defense), text_style),
+                Span::styled(format!("{} ", SHIELD), Style::default().fg(WHITE)),
+                Span::styled("Defense: ", Style::default().fg(CREAM_WOOD)),
+                Span::styled(format!("{}", defense), Style::default().fg(WHITE)),
             ])
         };
         lines.push(defense_line);
@@ -249,46 +301,41 @@ impl ProfileModal {
         // Separator
         lines.push(Line::from(Span::styled(
             "─".repeat(area.width as usize),
-            Style::default().fg(TAN_WOOD).bg(PARCHMENT_BG),
+            Style::default().fg(TAN_WOOD),
         )));
 
         // Gold
         lines.push(Line::from(vec![
-            Span::styled(
-                format!("{} ", COIN),
-                Style::default()
-                    .fg(Color::Rgb(255, 204, 0))
-                    .bg(PARCHMENT_BG),
-            ),
-            Span::styled("Gold:      ", label_style),
-            Span::styled(format!("{}", gold), text_style),
+            Span::styled(format!("{} ", COIN), Style::default().fg(Color::Rgb(255, 204, 0))),
+            Span::styled("Gold:      ", Style::default().fg(CREAM_WOOD)),
+            Span::styled(format!("{}", gold), Style::default().fg(WHITE)),
         ]));
 
         // GoldFind
         lines.push(Line::from(vec![
-            Span::styled("✧ ", Style::default().fg(Color::Rgb(255, 204, 0)).bg(PARCHMENT_BG)),
-            Span::styled("GoldFind:  ", label_style),
-            Span::styled(format!("+{}%", goldfind), text_style),
+            Span::styled("✧ ", Style::default().fg(Color::Rgb(255, 204, 0))),
+            Span::styled("GoldFind:  ", Style::default().fg(CREAM_WOOD)),
+            Span::styled(format!("+{}%", goldfind), Style::default().fg(WHITE)),
         ]));
 
         // MagicFind
         lines.push(Line::from(vec![
-            Span::styled("✦ ", Style::default().fg(Color::Rgb(180, 100, 255)).bg(PARCHMENT_BG)),
-            Span::styled("MagicFind: ", label_style),
-            Span::styled(format!("+{}%", magicfind), text_style),
+            Span::styled("✦ ", Style::default().fg(Color::Rgb(180, 100, 255))),
+            Span::styled("MagicFind: ", Style::default().fg(CREAM_WOOD)),
+            Span::styled(format!("+{}%", magicfind), Style::default().fg(WHITE)),
         ]));
 
         // Mining
         lines.push(Line::from(vec![
-            Span::styled(format!("{} ", PICKAXE), text_style),
-            Span::styled("Mining:    ", label_style),
-            Span::styled(format!("{}", mining), text_style),
+            Span::styled(format!("{} ", PICKAXE), Style::default().fg(WHITE)),
+            Span::styled("Mining:    ", Style::default().fg(CREAM_WOOD)),
+            Span::styled(format!("{}", mining), Style::default().fg(WHITE)),
         ]));
 
         // Separator
         lines.push(Line::from(Span::styled(
             "─".repeat(area.width as usize),
-            Style::default().fg(TAN_WOOD).bg(PARCHMENT_BG),
+            Style::default().fg(TAN_WOOD),
         )));
 
         // XP Bar
@@ -301,23 +348,53 @@ impl ProfileModal {
         let empty = xp_bar_width.saturating_sub(filled);
 
         lines.push(Line::from(vec![
-            Span::styled("XP: ", label_style),
-            Span::styled("[", text_style),
-            Span::styled("█".repeat(filled), Style::default().fg(GREEN).bg(PARCHMENT_BG)),
-            Span::styled("░".repeat(empty), Style::default().fg(TAN_WOOD).bg(PARCHMENT_BG)),
-            Span::styled("] ", text_style),
-            Span::styled(format!("{}/{}", xp, xp_needed), text_style),
+            Span::styled("XP: ", Style::default().fg(CREAM_WOOD)),
+            Span::styled("[", Style::default().fg(WHITE)),
+            Span::styled("█".repeat(filled), Style::default().fg(GREEN)),
+            Span::styled("░".repeat(empty), Style::default().fg(TAN_WOOD)),
+            Span::styled("] ", Style::default().fg(WHITE)),
+            Span::styled(format!("{}/{}", xp, xp_needed), Style::default().fg(WHITE)),
         ]));
 
         // Empty line and close hint
-        lines.push(Line::from(Span::styled("", text_style)));
+        lines.push(Line::from(Span::raw("")));
         lines.push(Line::from(Span::styled(
             "Press [p] or [Esc] to close",
-            Style::default().fg(TAN_WOOD).bg(PARCHMENT_BG),
+            Style::default().fg(TAN_WOOD),
         )));
 
-        let paragraph = Paragraph::new(lines);
-        frame.render_widget(paragraph, area);
+        // Render directly to buffer, skipping spaces to preserve background
+        let buf = frame.buffer_mut();
+        for (i, line) in lines.iter().enumerate() {
+            let y = area.y + i as u16;
+            if y >= area.y + area.height {
+                break;
+            }
+
+            let mut x = area.x;
+            for span in line.spans.iter() {
+                let has_style = span.style.fg.is_some();
+                for ch in span.content.chars() {
+                    if x >= area.x + area.width {
+                        break;
+                    }
+
+                    if let Some(cell) = buf.cell_mut((x, y)) {
+                        // Skip spaces in unstyled spans to preserve background
+                        if ch == ' ' && !has_style {
+                            x += 1;
+                            continue;
+                        }
+                        cell.set_char(ch);
+                        if let Some(fg) = span.style.fg {
+                            cell.set_fg(fg);
+                        }
+                        // Don't set background - preserve parchment
+                    }
+                    x += 1;
+                }
+            }
+        }
     }
 
     /// Handle keyboard input, returns true if modal should close
