@@ -16,6 +16,7 @@ pub enum ModalType {
     None,
     Keybinds,
     Inventory,
+    Profile,
 }
 
 /// UI-specific state, separate from game logic state.
