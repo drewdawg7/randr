@@ -117,19 +117,23 @@ fn generate_spell_name(words: &HashSet<WordId>) -> String {
         format!("{} {}", capitalize(names[0]), capitalize(names[1]))
     } else {
         // For 3+ words, use "X of Y and Z" style
-        let last = names.pop().unwrap();
-        let second_last = names.pop().unwrap();
-        let prefix: Vec<&str> = names.iter().copied().collect();
+        // Use pattern matching to safely handle edge cases
+        if let (Some(last), Some(second_last)) = (names.pop(), names.pop()) {
+            let prefix: Vec<&str> = names.iter().copied().collect();
 
-        if prefix.is_empty() {
-            format!("{} and {}", capitalize(second_last), capitalize(last))
+            if prefix.is_empty() {
+                format!("{} and {}", capitalize(second_last), capitalize(last))
+            } else {
+                format!(
+                    "{} of {} and {}",
+                    prefix.iter().map(|s| capitalize(s)).collect::<Vec<_>>().join(" "),
+                    capitalize(second_last),
+                    capitalize(last)
+                )
+            }
         } else {
-            format!(
-                "{} of {} and {}",
-                prefix.iter().map(|s| capitalize(s)).collect::<Vec<_>>().join(" "),
-                capitalize(second_last),
-                capitalize(last)
-            )
+            // Fallback if somehow we don't have enough elements
+            "Unknown Spell".to_string()
         }
     }
 }
