@@ -69,10 +69,18 @@ impl StatSheet {
     }
 }
 
+/// A single stat with current and max values.
+///
+/// Note: `max_value` is only meaningful for `Health`. For other stats
+/// (Attack, Defense, Mining, GoldFind), `max_value` equals `current_value`
+/// and is not used for capping. This design keeps the struct uniform
+/// across all stat types.
 #[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
 pub struct StatInstance {
     pub stat_type: StatType,
     pub current_value: i32,
+    /// Only meaningful for Health (used to cap healing). For other stats,
+    /// this mirrors current_value.
     pub max_value: i32,
 }
 
@@ -108,6 +116,9 @@ impl StatType {
         &[StatType::Health, StatType::Attack, StatType::Defense, StatType::GoldFind, StatType::Mining]
     }
 
+    /// Creates a StatInstance with both current and max set to base_value.
+    /// For Health, max_value is used for capping heals. For other stats,
+    /// max_value is unused but set for uniformity.
     pub fn instance(self, base_value: i32) -> StatInstance {
         StatInstance { stat_type: self, current_value: base_value, max_value: base_value }
     }

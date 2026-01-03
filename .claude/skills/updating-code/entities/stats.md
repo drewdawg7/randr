@@ -45,11 +45,13 @@ Stores a single stat with both current and max values:
 pub struct StatInstance {
     pub stat_type: StatType,
     pub current_value: i32,
-    pub max_value: i32,
+    pub max_value: i32,  // Only meaningful for Health
 }
 ```
 
 Created via `StatType::instance(base_value)` which sets both current and max to base_value.
+
+**Design Note**: `max_value` is only meaningful for `Health` (used to cap healing). For other stats (Attack, Defense, Mining, GoldFind), `max_value` mirrors `current_value` and is unused. This uniform struct design avoids the complexity of separate stat types while accepting minor memory overhead.
 
 ## HasStats Trait
 
