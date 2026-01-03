@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
-use rand::Rng;
-
 use crate::{
     entities::{mob::MobId, Mob, Player},
     game_state,
     location::{FieldData, LocationId, LocationSpec},
     magic::effect::PassiveEffect,
+    utils::weighted_select,
 };
 
 use super::enums::FieldError;
@@ -50,23 +49,9 @@ impl Field {
             }
         }
 
-        let total_weight: i32 = adjusted_weights.values().sum();
-        if total_weight == 0 {
-            return Err(FieldError::MobSpawnError);
-        }
-
-        let mut rng = rand::thread_rng();
-        let mut roll = rng.gen_range(0..total_weight);
-
-        for (mob_kind, weight) in &adjusted_weights {
-            roll -= weight;
-            if roll < 0 {
-                return game_state()
-                    .spawn_mob(*mob_kind)
-                    .ok_or(FieldError::MobSpawnError);
-            }
-        }
-        Err(FieldError::MobSpawnError)
+        weighted_select(&adjusted_weights)
+            .and_then(|mob_id| game_state().spawn_mob(mob_id))
+            .ok_or(FieldError::MobSpawnError)
     }
 
     // Location trait accessors

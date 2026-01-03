@@ -1,13 +1,12 @@
 use std::collections::HashMap;
 
-use rand::Rng;
-
 use crate::{
     chest::Chest,
     dungeon::enums::{Direction, DungeonError, RoomType},
     entities::mob::{Mob, MobId},
     loot::{HasLoot, LootDrop},
     system::game_state,
+    utils::weighted_select,
 };
 
 /// Grid size for the dungeon (5x5)
@@ -69,23 +68,9 @@ impl Dungeon {
 
     /// Spawn a random mob from the dungeon's mob table
     pub fn spawn_mob(&self) -> Result<Mob, DungeonError> {
-        let total_weight: i32 = self.mob_table.values().sum();
-        if total_weight == 0 {
-            return Err(DungeonError::MobSpawnError);
-        }
-
-        let mut rng = rand::thread_rng();
-        let mut roll = rng.gen_range(0..total_weight);
-
-        for (mob_kind, weight) in &self.mob_table {
-            roll -= weight;
-            if roll < 0 {
-                return game_state()
-                    .spawn_mob(*mob_kind)
-                    .ok_or(DungeonError::MobSpawnError);
-            }
-        }
-        Err(DungeonError::MobSpawnError)
+        weighted_select(&self.mob_table)
+            .and_then(|mob_id| game_state().spawn_mob(mob_id))
+            .ok_or(DungeonError::MobSpawnError)
     }
 
     /// Move the player in the given direction

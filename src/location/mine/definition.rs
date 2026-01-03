@@ -1,12 +1,11 @@
 use std::collections::HashMap;
 
-use rand::Rng;
-
 use crate::{
     entities::Player,
     game_state,
     location::{LocationId, LocationSpec, MineData},
     magic::effect::PassiveEffect,
+    utils::weighted_select,
 };
 
 use super::rock::{Rock, RockId};
@@ -59,20 +58,8 @@ impl Mine {
             }
         }
 
-        let total_weight: i32 = adjusted_weights.values().sum();
-        if total_weight == 0 {
-            return;
-        }
-
-        let mut rng = rand::thread_rng();
-        let mut roll = rng.gen_range(0..total_weight);
-
-        for (rock_id, weight) in &adjusted_weights {
-            roll -= weight;
-            if roll < 0 {
-                self.current_rock = game_state().spawn_rock(*rock_id);
-                break;
-            }
+        if let Some(rock_id) = weighted_select(&adjusted_weights) {
+            self.current_rock = game_state().spawn_rock(rock_id);
         }
     }
 
