@@ -239,7 +239,30 @@ Decorator that adds modal overlay capability to any screen:
 let menu = ModalWrapper::new(MainMenuScreen::default());
 ```
 
-Modals (Inventory, Keybinds) are rendered on top of the wrapped screen. Event handling is blocked for the wrapped screen when a modal is open.
+Modals (Inventory, Keybinds, Profile) are rendered on top of the wrapped screen. Event handling is blocked for the wrapped screen when a modal is open.
+
+Modal instances are stored in `GameState`:
+- `inventory_modal: InventoryModal`
+- `profile_modal: ProfileModal`
+- `spell_test_modal: SpellTestModal`
+
+### ProfileModal
+
+**Location**: `src/ui/components/player/profile_modal.rs`
+
+Displays player stats and passive effects in a two-column parchment-styled layout:
+- **Left column**: Player stats (name, level, HP, attack, defense, gold, XP bar)
+- **Right column**: Scrollable list of passive effects from equipped tome
+
+**Key features**:
+- Uses `ListSelection` for navigating passive effects
+- Displays spell name as label, effect description below selected item
+- Uses `player.tome_passive_effects_with_names()` to get spell names with effects
+- Parchment background with fiber texture pattern
+
+**Input handling**:
+- `p` / `Esc`: Close modal
+- `Up` / `Down`: Navigate passive effects list
 
 ### TabbedContainer
 

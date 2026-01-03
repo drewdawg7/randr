@@ -188,6 +188,7 @@ WordProperties::combine(&[&fire_props, &bolt_props])
 ### Player Bonus Methods
 - Location: `src/entities/player/definition.rs`
 - `tome_passive_effects()` -> `Vec<&PassiveEffect>`
+- `tome_passive_effects_with_names()` -> `Vec<(&str, &PassiveEffect)>` (spell name + effect)
 - `tome_attack_bonus()` -> `i32`
 - `tome_defense_bonus()` -> `i32`
 - `tome_goldfind_bonus()` -> `i32`
