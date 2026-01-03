@@ -41,19 +41,19 @@ const PARCHMENT_COLORS: [Color; 9] = [
     OAK_BROWN,
 ];
 
-/// Parchment texture pattern - sparse dots suggesting aged paper
-/// Uses very light braille for subtle weathered texture
+/// Dense parchment texture pattern - fibrous paper texture
+/// Uses dense braille to create visible aged parchment look
 const PARCHMENT_PATTERN: &[&str] = &[
-    "⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠈⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀",
-    "⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀",
-    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂",
-    "⠁⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀",
-    "⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀",
-    "⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀",
-    "⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀",
-    "⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁",
-    "⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠂⠀⠀⠀⠀⠀⠀⠀⠀⠀",
-    "⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠁⠀⠀⠀⠀⠂⠀",
+    "⣤⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⠤⣤⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⠤⣤⣤⠤⣤⠤⠤",
+    "⠒⣒⣒⠒⠒⣒⣒⠒⣒⣒⠒⣒⠒⣒⣒⠒⠒⣒⣒⠒⣒⣒⠒⣒⠒⣒⣒⠒⣒⣒",
+    "⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⣤⠤⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⣤⠤⣤⠤⣤⣤⠤⣤",
+    "⣒⣒⠒⣒⣒⣒⠒⣒⣒⠒⠒⣒⣒⣒⠒⣒⣒⣒⠒⣒⣒⠒⠒⣒⣒⣒⠒⣒⣒⠒",
+    "⠤⣤⣤⠤⣤⠤⣤⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⠤⣤⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⣤",
+    "⣒⠒⠒⣒⣒⣒⠒⣒⣒⠒⣒⣒⣒⠒⣒⣒⣒⣒⠒⣒⣒⠒⣒⣒⣒⠒⣒⣒⣒⠒",
+    "⣤⣤⠤⠤⣤⣤⠤⣤⠤⣤⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⠤⣤⣤⠤⣤⣤⠤⠤⣤⠤",
+    "⠒⣒⣒⣒⠒⣒⣒⠒⣒⠒⣒⣒⠒⠒⣒⣒⠒⣒⣒⠒⣒⠒⣒⣒⠒⠒⣒⣒⠒⣒",
+    "⣤⠤⣤⠤⣤⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⠤⣤⣤⠤⣤⣤⠤⠤⣤⣤⠤⣤⠤⣤⣤",
+    "⣒⣒⠒⣒⠒⣒⣒⠒⠒⣒⣒⠒⣒⣒⠒⣒⠒⣒⣒⠒⠒⣒⣒⠒⣒⣒⠒⣒⠒⣒",
 ];
 
 const PARCHMENT_PATTERN_WIDTH: usize = 30;
@@ -107,11 +107,11 @@ impl ProfileModal {
     fn render_parchment_background(&self, frame: &mut Frame, area: Rect) {
         let buf = frame.buffer_mut();
 
-        // Colors for the parchment texture dots
-        let dot_colors = [
-            Color::Rgb(90, 75, 60),   // Dark spots
-            Color::Rgb(100, 85, 70),  // Medium spots
-            Color::Rgb(80, 70, 55),   // Darker spots
+        // Parchment fiber colors - warm tans and creams
+        let fiber_colors = [
+            Color::Rgb(70, 60, 50),   // Dark fibers
+            Color::Rgb(85, 72, 58),   // Medium fibers
+            Color::Rgb(95, 80, 65),   // Light fibers
         ];
 
         for row in 0..area.height {
@@ -126,18 +126,11 @@ impl ProfileModal {
                 let cell_y = area.y + row;
 
                 if let Some(cell) = buf.cell_mut((cell_x, cell_y)) {
-                    // Set background color
                     cell.set_bg(PARCHMENT_BG);
-
-                    // Only set character if it's not empty braille
-                    if ch != '⠀' && ch != ' ' {
-                        cell.set_char(ch);
-                        // Vary dot color for subtle texture
-                        let color_idx = ((col as usize / 7) + (row as usize / 3)) % dot_colors.len();
-                        cell.set_fg(dot_colors[color_idx]);
-                    } else {
-                        cell.set_char(' ');
-                    }
+                    cell.set_char(ch);
+                    // Vary color based on position for depth
+                    let color_idx = ((col as usize / 4) + (row as usize / 2)) % fiber_colors.len();
+                    cell.set_fg(fiber_colors[color_idx]);
                 }
             }
         }
