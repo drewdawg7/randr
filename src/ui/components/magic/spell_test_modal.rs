@@ -347,7 +347,7 @@ impl SpellTestModal {
 
         // Footer
         let footer_y = area.y + area.height - 2;
-        let footer = "[Enter] Test  [Backspace] Clear  [T/Esc] Close";
+        let footer = "[Enter] Test  [Backspace] Clear  [Esc] Close";
         let footer_x = inner_x + (inner_width.saturating_sub(footer.len() as u16)) / 2;
         for (i, ch) in footer.chars().enumerate() {
             if let Some(cell) = buf.cell_mut((footer_x + i as u16, footer_y)) {
@@ -360,7 +360,7 @@ impl SpellTestModal {
     /// Handle keyboard input, returns true if modal should close
     pub fn handle_input(&mut self, key: Key) -> bool {
         match key {
-            Key::Esc | Key::Char('t') | Key::Char('T') => true,
+            Key::Esc => true,
             Key::Char(c) if c.is_alphanumeric() || c == ' ' => {
                 if self.input.len() < 50 {
                     self.input.push(c);
