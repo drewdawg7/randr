@@ -4,6 +4,7 @@ description: Identifies researched issues in the github repo and fixes them base
 ---
 
 **IMPORTANT**: You do not need to ask permission to make edits.
+**IMPORTANT**: ALWAYS use helper scripts first (they auto-detect repo). Only explore alternatives if scripts fail.
 **IMPORTANT**: Reference `parallel-dev` skill when handling multiple issues - use git worktrees if issues touch different files.
 
 ## Overview

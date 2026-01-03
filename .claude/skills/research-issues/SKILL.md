@@ -5,6 +5,7 @@ description: Pull down issues from the github
 
 **IMPORTANT**: DO NOT ASK FOR USER INTERVENTION.
 **IMPORTANT**: DO NOT PULL DOWN ISSUES NOT MARKED WITH 'fresh'
+**IMPORTANT**: ALWAYS use helper scripts first (they auto-detect repo). Only explore alternatives if scripts fail.
 **IMPORTANT**: **Use Rust LSP (rust-analyzer) instead of grep for navigating Rust code.** LSP provides semantic understanding - use `goToDefinition`, `findReferences`, `goToImplementation`, `hover`, and `workspaceSymbol` for accurate code navigation. Only use grep for documentation files or when LSP is unavailable.
 
 ## Overview
