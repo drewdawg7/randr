@@ -61,7 +61,13 @@ pub trait HasInventory {
     }
     
     fn find_item_by_id_mut(&mut self, item_id: ItemId) -> Option<&mut InventoryItem> {
-        self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.item_id == item_id)
+        // Check if in inventory items first
+        let in_inventory = self.inventory().items.iter().any(|inv_item| inv_item.item.item_id == item_id);
+        if in_inventory {
+            return self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.item_id == item_id);
+        }
+        // Check equipment
+        self.inventory_mut().equipment_mut().values_mut().find(|inv_item| inv_item.item.item_id == item_id)
     }
 
     fn find_item_by_uuid_mut(&mut self, uuid: Uuid) -> Option<&mut InventoryItem> {
