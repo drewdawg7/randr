@@ -11,7 +11,7 @@ IMPORTANT: Reference test when creating tests.
 When refactoring or updating code always do the following:
 
 1. **Checkout a new branch**: Checkout a new branch from main for the changes. Make sure it's named decsriptively.
-2. **Reference Docs**: Check for any documention in .claude/skills/updating-code that are relevant to the changes you're being asked to make. This needs to be done before checking the codebase.
+2. **Reference Docs**: Check for any documention in .claude/skills/updating-code that are relevant to the changes you're being asked to make. This needs to be done before checking the codebase. If the change is related to a github issue make sure all comments from the issue are read.
 3. **Activate Skills**: Be sure to also activate any necessary skills. i.e. if you need to make ascii art, use the ascii-art skill.
 4. **Ask Questions**: Once you've reviewed relevant documentation, make sure to ask questions to clarify any amibiguity
 5. **Evaluate Parallel Development**: When looking at plans, evaluate if its feasible to make development changes in parallel. If it is, use subagents to increase development speed. All agents should still work off the same branch.
