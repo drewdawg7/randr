@@ -136,8 +136,54 @@ pub fn render(
     };
     frame.render_widget(Paragraph::new(hp_bar_line).centered(), hp_area);
 
+    // Player HP bar below boss HP
+    let player = &gs.player;
+    let player_hp = player.hp();
+    let player_max_hp = player.max_hp();
+    let player_hp_percent = if player_max_hp > 0 {
+        (player_hp as f32 / player_max_hp as f32 * 100.0) as u16
+    } else {
+        100
+    };
+
+    let player_hp_color = if player_hp_percent > 60 {
+        colors::GREEN
+    } else if player_hp_percent > 30 {
+        colors::YELLOW
+    } else {
+        colors::RED
+    };
+
+    let player_filled_chars =
+        ((HP_BAR_WIDTH as f32) * (player_hp as f32 / player_max_hp as f32)).round() as u16;
+    let player_empty_chars = HP_BAR_WIDTH.saturating_sub(player_filled_chars);
+    let player_filled_bar = "█".repeat(player_filled_chars as usize);
+    let player_empty_bar = "░".repeat(player_empty_chars as usize);
+
+    let player_hp_line = Line::from(vec![
+        Span::styled(format!("{} ", HEART), Style::default().fg(colors::RED)),
+        Span::styled("[", Style::default().fg(colors::WHITE)),
+        Span::styled(player_filled_bar, Style::default().fg(player_hp_color)),
+        Span::styled(player_empty_bar, Style::default().fg(colors::DARK_STONE)),
+        Span::styled("] ", Style::default().fg(colors::WHITE)),
+        Span::styled(
+            format!("{}/{}", player_hp, player_max_hp),
+            Style::default().fg(player_hp_color),
+        ),
+        Span::styled("  YOU", Style::default().fg(colors::CYAN)),
+    ]);
+
+    let player_hp_y = hp_y + 1;
+    let player_hp_area = Rect {
+        x: area.x,
+        y: player_hp_y,
+        width: area.width,
+        height: 1,
+    };
+    frame.render_widget(Paragraph::new(player_hp_line).centered(), player_hp_area);
+
     // Combat log (last few messages)
-    let log_y = hp_y + 2;
+    let log_y = player_hp_y + 2;
     for (i, msg) in boss_combat_log.iter().rev().take(3).rev().enumerate() {
         let log_line = Paragraph::new(Line::from(vec![Span::styled(
             msg.clone(),
