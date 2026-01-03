@@ -551,7 +551,22 @@ impl Default for ProfileModal {
 impl ProfileModal {
     /// Get a short display name for a passive effect (for the list)
     fn effect_short_name(effect: &PassiveEffect) -> String {
-        effect.describe()
+        match effect {
+            PassiveEffect::BonusAttack(n) => format!("+{} Attack", n),
+            PassiveEffect::BonusDefense(n) => format!("+{} Defense", n),
+            PassiveEffect::Regeneration(n) => format!("Regen {}/turn", n),
+            PassiveEffect::BonusGoldFind(n) => format!("+{}% Gold Find", n),
+            PassiveEffect::BonusMagicFind(n) => format!("+{}% Magic Find", n),
+            PassiveEffect::XPMultiplier(n) => format!("+{}% XP", n),
+            PassiveEffect::Reveal => "Reveal".to_string(),
+            PassiveEffect::FurnaceFuelRegen(n) => format!("+{} Fuel/min", n),
+            PassiveEffect::MobSpawnWeight(id, _) => format!("{:?} Spawn", id),
+            PassiveEffect::RockSpawnWeight(id, _) => format!("{:?} Spawn", id),
+            PassiveEffect::BonusMining(n) => format!("+{} Mining", n),
+            PassiveEffect::StoreDiscount(n) => format!("{}% Discount", n),
+            PassiveEffect::DungeonBypass => "Dungeon Bypass".to_string(),
+            PassiveEffect::DungeonReveal => "Dungeon Sight".to_string(),
+        }
     }
 
     /// Simple word wrap for description text
