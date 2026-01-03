@@ -68,7 +68,7 @@ impl MockComponent for FieldTab {
                 StateChange::ToFight => {
                     let gs = game_state();
                     let field = &gs.town.field;
-                    match field.spawn_mob() {
+                    match field.spawn_mob(&gs.player) {
                         Ok(mob) => {
                             gs.start_combat(mob);
                             gs.current_screen = Id::Fight;

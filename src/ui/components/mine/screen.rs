@@ -154,7 +154,8 @@ fn render_hp_text(current: i32, max: i32) -> Line<'static> {
 impl MockComponent for MineScreen {
     fn view(&mut self, frame: &mut Frame, _area: Rect) {
         // Ensure a rock exists when viewing the mine
-        game_state().town.mine.ensure_rock_exists();
+        let gs = game_state();
+        gs.town.mine.ensure_rock_exists(&gs.player);
 
         // Generate/update rock art if needed
         self.ensure_rock_art();

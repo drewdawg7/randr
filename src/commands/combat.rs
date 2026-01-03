@@ -128,7 +128,7 @@ pub fn start_new_fight() -> CommandResult {
     }
 
     let field = &gs.town.field;
-    match field.spawn_mob() {
+    match field.spawn_mob(&gs.player) {
         Ok(mob) => {
             gs.start_combat(mob);
             CommandResult::ok()

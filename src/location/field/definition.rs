@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use rand::Rng;
 
 use crate::{
-    entities::{mob::MobId, Mob},
+    entities::{mob::MobId, Mob, Player},
     game_state,
     location::{FieldData, LocationId, LocationSpec},
+    magic::effect::PassiveEffect,
 };
 
 use super::enums::FieldError;
@@ -37,8 +38,19 @@ impl Field {
         }
     }
 
-    pub fn spawn_mob(&self) -> Result<Mob, FieldError> {
-        let total_weight: i32 = self.mob_weights.values().sum();
+    pub fn spawn_mob(&self, player: &Player) -> Result<Mob, FieldError> {
+        // Start with base weights
+        let mut adjusted_weights = self.mob_weights.clone();
+
+        // Apply MobSpawnWeight passive effects
+        for effect in player.tome_passive_effects() {
+            if let PassiveEffect::MobSpawnWeight(mob_id, weight_mod) = effect {
+                let entry = adjusted_weights.entry(*mob_id).or_insert(0);
+                *entry = (*entry + weight_mod).max(0); // Don't go negative
+            }
+        }
+
+        let total_weight: i32 = adjusted_weights.values().sum();
         if total_weight == 0 {
             return Err(FieldError::MobSpawnError);
         }
@@ -46,7 +58,7 @@ impl Field {
         let mut rng = rand::thread_rng();
         let mut roll = rng.gen_range(0..total_weight);
 
-        for (mob_kind, weight) in &self.mob_weights {
+        for (mob_kind, weight) in &adjusted_weights {
             roll -= weight;
             if roll < 0 {
                 return Ok(game_state().spawn_mob(*mob_kind));

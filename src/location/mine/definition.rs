@@ -3,8 +3,10 @@ use std::collections::HashMap;
 use rand::Rng;
 
 use crate::{
+    entities::Player,
     game_state,
     location::{LocationId, LocationSpec, MineData},
+    magic::effect::PassiveEffect,
 };
 
 use super::rock::{Rock, RockId};
@@ -45,8 +47,19 @@ impl Mine {
     }
 
     /// Spawn a new rock based on weighted random selection
-    pub fn spawn_rock(&mut self) {
-        let total_weight: i32 = self.rock_weights.values().sum();
+    pub fn spawn_rock(&mut self, player: &Player) {
+        // Start with base weights
+        let mut adjusted_weights = self.rock_weights.clone();
+
+        // Apply RockSpawnWeight passive effects
+        for effect in player.tome_passive_effects() {
+            if let PassiveEffect::RockSpawnWeight(rock_id, weight_mod) = effect {
+                let entry = adjusted_weights.entry(*rock_id).or_insert(0);
+                *entry = (*entry + weight_mod).max(0); // Don't go negative
+            }
+        }
+
+        let total_weight: i32 = adjusted_weights.values().sum();
         if total_weight == 0 {
             return;
         }
@@ -54,7 +67,7 @@ impl Mine {
         let mut rng = rand::thread_rng();
         let mut roll = rng.gen_range(0..total_weight);
 
-        for (rock_id, weight) in &self.rock_weights {
+        for (rock_id, weight) in &adjusted_weights {
             roll -= weight;
             if roll < 0 {
                 self.current_rock = Some(game_state().spawn_rock(*rock_id));
@@ -64,9 +77,9 @@ impl Mine {
     }
 
     /// Ensure a rock exists, spawning one if needed
-    pub fn ensure_rock_exists(&mut self) {
+    pub fn ensure_rock_exists(&mut self, player: &Player) {
         if self.current_rock.is_none() {
-            self.spawn_rock();
+            self.spawn_rock(player);
         }
     }
 

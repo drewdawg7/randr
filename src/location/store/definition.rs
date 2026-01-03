@@ -8,6 +8,7 @@ use crate::{
     inventory::HasInventory,
     item::{Item, ItemId},
     location::{LocationId, LocationSpec, StoreData},
+    magic::effect::PassiveEffect,
     system::game_state,
 };
 
@@ -149,7 +150,22 @@ impl Store {
 
         // Take item from store
         let item = self.inventory[index].take_item().ok_or(StoreError::OutOfStock)?;
-        let cost = item.purchase_price();
+        let base_cost = item.purchase_price();
+
+        // Apply store discount from passive effects
+        let discount_pct: i32 = player
+            .tome_passive_effects()
+            .iter()
+            .filter_map(|e| {
+                if let PassiveEffect::StoreDiscount(pct) = e {
+                    Some(*pct)
+                } else {
+                    None
+                }
+            })
+            .sum();
+        let discount_mult = 1.0 - (discount_pct.min(100) as f64 / 100.0);
+        let cost = (base_cost as f64 * discount_mult).round() as i32;
 
         // Check gold
         if player.gold() < cost {

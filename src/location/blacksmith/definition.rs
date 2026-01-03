@@ -1,3 +1,5 @@
+use std::time::Instant;
+
 use uuid::Uuid;
 
 use crate::{
@@ -10,6 +12,7 @@ use crate::{
         Item, ItemId,
     },
     location::{BlacksmithData, LocationId, LocationSpec},
+    magic::effect::PassiveEffect,
     HasInventory,
 };
 
@@ -22,6 +25,8 @@ pub struct Blacksmith {
     pub max_upgrades: i32,
     pub base_upgrade_cost: i32,
     pub fuel_amount: i32,
+    /// Last time fuel regeneration was applied
+    pub(crate) last_fuel_regen: Option<Instant>,
 }
 
 impl Blacksmith {
@@ -34,6 +39,7 @@ impl Blacksmith {
             max_upgrades: data.max_upgrades,
             base_upgrade_cost: data.base_upgrade_cost,
             fuel_amount: 0,
+            last_fuel_regen: None,
         }
     }
 
@@ -45,6 +51,45 @@ impl Blacksmith {
             max_upgrades,
             base_upgrade_cost,
             fuel_amount: 0,
+            last_fuel_regen: None,
+        }
+    }
+
+    /// Apply fuel regeneration based on passive effects and elapsed time
+    pub fn apply_fuel_regen(&mut self, player: &Player) {
+        // Calculate total fuel regen per minute from passive effects
+        let fuel_regen_per_min: i32 = player
+            .tome_passive_effects()
+            .iter()
+            .filter_map(|e| {
+                if let PassiveEffect::FurnaceFuelRegen(amt) = e {
+                    Some(*amt)
+                } else {
+                    None
+                }
+            })
+            .sum();
+
+        if fuel_regen_per_min <= 0 {
+            return;
+        }
+
+        let now = Instant::now();
+        let elapsed_secs = match self.last_fuel_regen {
+            Some(last) => now.duration_since(last).as_secs(),
+            None => {
+                // First time - just set the timestamp, no retroactive regen
+                self.last_fuel_regen = Some(now);
+                return;
+            }
+        };
+
+        // Calculate fuel to add (1 per minute = 1 per 60 seconds)
+        let minutes_elapsed = elapsed_secs / 60;
+        if minutes_elapsed > 0 {
+            let fuel_to_add = (minutes_elapsed as i32 * fuel_regen_per_min).min(100);
+            self.inc_fuel(fuel_to_add);
+            self.last_fuel_regen = Some(now);
         }
     }
 

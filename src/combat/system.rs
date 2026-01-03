@@ -2,7 +2,7 @@ use crate::{
     combat::{ActiveCombat, AttackResult, Combatant, CombatPhase, HasGold, IsKillable, MobDeathResult, SpellCastResult},
     entities::{progression::HasProgression, Player},
     loot::LootDrop,
-    magic::{effect::ActiveEffect, spell::ComputedSpell},
+    magic::{effect::{ActiveEffect, PassiveEffect}, spell::ComputedSpell},
     stats::HasStats,
 };
 
@@ -160,8 +160,21 @@ pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
     player.add_gold(gold_with_bonus);
     combat.gold_gained = gold_with_bonus;
 
-    // Award XP
-    combat.xp_gained = death_result.xp_dropped;
+    // Award XP (with XP multiplier passive bonus)
+    let base_xp = death_result.xp_dropped;
+    let xp_bonus_pct: i32 = player
+        .tome_passive_effects()
+        .iter()
+        .filter_map(|e| {
+            if let PassiveEffect::XPMultiplier(pct) = e {
+                Some(*pct)
+            } else {
+                None
+            }
+        })
+        .sum();
+    let xp_multiplier = 1.0 + (xp_bonus_pct as f64 / 100.0);
+    combat.xp_gained = (base_xp as f64 * xp_multiplier).round() as i32;
     player.gain_xp(combat.xp_gained);
 
     // Store loot drops for spawning

@@ -4,6 +4,7 @@
 
 use crate::inventory::HasInventory;
 use crate::loot::LootDrop;
+use crate::magic::effect::PassiveEffect;
 use crate::system::game_state;
 
 use super::CommandResult;
@@ -22,7 +23,23 @@ pub struct MiningResult {
 /// Returns mining result with drop information for UI display.
 pub fn mine_rock() -> MiningResult {
     let gs = game_state();
-    let mining_damage = gs.player.effective_mining();
+    let base_mining = gs.player.effective_mining();
+
+    // Apply BonusMining passive effects
+    let mining_bonus: i32 = gs
+        .player
+        .tome_passive_effects()
+        .iter()
+        .filter_map(|e| {
+            if let PassiveEffect::BonusMining(amt) = e {
+                Some(*amt)
+            } else {
+                None
+            }
+        })
+        .sum();
+
+    let mining_damage = base_mining + mining_bonus;
     let magic_find = gs.player.effective_magicfind();
 
     let Some(mut rock) = gs.town.mine.current_rock.take() else {
@@ -41,7 +58,7 @@ pub fn mine_rock() -> MiningResult {
         }
 
         // Spawn a new rock
-        gs.town.mine.spawn_rock();
+        gs.town.mine.spawn_rock(&gs.player);
 
         MiningResult {
             result: CommandResult::ok(),

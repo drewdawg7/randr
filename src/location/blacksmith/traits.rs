@@ -16,6 +16,7 @@ impl Default for Blacksmith {
             max_upgrades: 4,
             base_upgrade_cost: 5,
             fuel_amount: 0,
+            last_fuel_regen: None,
         }
     }
 }
@@ -49,8 +50,9 @@ impl Location for Blacksmith {
         Ok(())
     }
 
-    fn on_enter(&mut self, _player: &mut Player) {
-        // No special action on enter
+    fn on_enter(&mut self, player: &mut Player) {
+        // Apply fuel regeneration from passive effects
+        self.apply_fuel_regen(player);
     }
 
     fn on_exit(&mut self, _player: &mut Player) {
