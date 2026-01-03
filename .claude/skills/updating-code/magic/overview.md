@@ -131,10 +131,62 @@ WordProperties::combine(&[&fire_props, &bolt_props])
 - fire + ice = Elemental conflict (10 self-damage)
 - lightning + drain = Energy feedback (2 turn stun)
 
+## Tome Equipment System
+
+### EquipmentType::Tome
+- Location: `src/item/enums.rs`
+- Maps to `OffHand` slot (shared with shields)
+- Check with `EquipmentType::is_tome()`
+
+### Item.tome_data
+- Location: `src/item/definition.rs`
+- Field: `pub tome_data: Option<Tome>`
+- Initialized automatically when spawning tome items (see `spawn_from_spec` in `src/item/spec/traits.rs`)
+
+### Equipped Tome Access
+- `Inventory::equipped_tome()` -> `Option<&Tome>`
+- `Inventory::equipped_tome_mut()` -> `Option<&mut Tome>`
+- `Player::equipped_tome()` -> `Option<&Tome>`
+- `Player::equipped_tome_mut()` -> `Option<&mut Tome>`
+
+## Passive Effect Integration
+
+### Player Bonus Methods
+- Location: `src/entities/player/definition.rs`
+- `tome_passive_effects()` -> `Vec<&PassiveEffect>`
+- `tome_attack_bonus()` -> `i32`
+- `tome_defense_bonus()` -> `i32`
+- `tome_goldfind_bonus()` -> `i32`
+- `tome_magicfind_bonus()` -> `i32`
+
+### Effective Stats (include tome bonuses)
+- `effective_attack()` includes `tome_attack_bonus()`
+- `effective_defense()` includes `tome_defense_bonus()`
+- `effective_goldfind()` includes `tome_goldfind_bonus()`
+- `effective_magicfind()` includes `tome_magicfind_bonus()`
+
+## Combat Integration
+
+### Spell Casting Functions
+- Location: `src/combat/system.rs`
+- `player_cast_spell_step(player, combat)` -> `SpellCastResult`
+- `player_has_castable_spell(player)` -> `bool`
+- `get_active_spell_name(player)` -> `Option<String>`
+
+### SpellCastResult Enum
+- Location: `src/combat/result.rs`
+- Variants: `Damage`, `Heal`, `LifeDrain`, `NoSpell`, `Fizzle`
+
+### Supported Active Effects
+- `Damage { amount, element }` - Direct damage with defense reduction
+- `Heal { amount }` - Restore caster HP
+- `LifeDrain { damage, heal_percent }` - Damage + percentage healing
+- `AreaDamage { amount, element }` - Treated as single-target in 1v1
+- `DamageWithEffect` - Recursive effect application
+
 ## Future Work
 
-1. **Combat Integration**: Add spell casting as combat action
-2. **Tome Equipment**: Add EquipmentType::Tome to item system
-3. **Player Integration**: Add tome field to Player struct
-4. **Mana System**: Resource cost for casting
-5. **World Effects**: Non-combat spell effects
+1. **Mana System**: Resource cost for casting
+2. **Defense/Slow Buffs**: Implement buff tracking in combat state
+3. **World Effects**: Non-combat spell effects (dungeon bypass, etc.)
+4. **Inscription UI**: Allow players to inscribe words onto pages
