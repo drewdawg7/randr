@@ -256,7 +256,7 @@ impl InventoryModal {
                 gs.show_item_details = !gs.show_item_details;
                 false
             }
-            Key::Char('L') => {
+            Key::Char('l') => {
                 self.toggle_lock();
                 false
             }

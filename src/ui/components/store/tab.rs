@@ -5,7 +5,7 @@ use ratatui::{
 };
 use tuirealm::{
     command::{Cmd, CmdResult},
-    event::{Key, KeyEvent, KeyModifiers},
+    event::{Key, KeyEvent},
     props::{AttrValue, Attribute, Props},
     Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
@@ -288,10 +288,10 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                 None
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Char('E'),
+                code: Key::Char('e'),
                 ..
             }) => {
-                // Shift+E to equip/unequip in sell mode
+                // e to equip/unequip in sell mode
                 if self.state == StoreState::Sell {
                     if let Some(sell_item) = self.sell_list.selected_item() {
                         let item = &sell_item.inv_item.item;
@@ -309,10 +309,10 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                 None
             }
             Event::Keyboard(KeyEvent {
-                code: Key::Char('L'),
-                modifiers: KeyModifiers::SHIFT,
+                code: Key::Char('l'),
+                ..
             }) => {
-                // Shift+L to toggle lock in sell mode
+                // l to toggle lock in sell mode
                 if self.state == StoreState::Sell {
                     if let Some(sell_item) = self.sell_list.selected_item() {
                         let item_uuid = sell_item.inv_item.item.item_uuid;

@@ -42,8 +42,8 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
                     "i        Open inventory".to_string(),
                     "d        Toggle item details".to_string(),
                     "Shift+I  Show/hide this guide".to_string(),
-                    "Shift+E  Equip/unequip item".to_string(),
-                    "Shift+L  Lock/unlock item".to_string(),
+                    "e        Equip/unequip item".to_string(),
+                    "l        Lock/unlock item".to_string(),
                 ];
                 let modal = Modal::new(lines);
                 modal.render(frame);

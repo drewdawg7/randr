@@ -7,7 +7,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::ui::components::utilities::{item_display, list_move_down, list_move_up, lock_prefix, selection_prefix, RETURN_ARROW};
+use crate::ui::components::utilities::{equip_prefix, item_display, list_move_down, list_move_up, lock_prefix, selection_prefix, RETURN_ARROW};
 use crate::ui::theme::{self as colors, DARK_GRAY};
 
 use super::traits::{ItemFilter, ListItem, NoFilter};
@@ -415,10 +415,11 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
             selection_prefix(is_selected),
         ];
 
-        // Add lock prefix if applicable
+        // Add lock and equip prefixes if applicable
         if item.show_lock() {
             if let Some(i) = item.item() {
                 spans.push(lock_prefix(i));
+                spans.push(equip_prefix(i));
             }
         }
 
@@ -472,10 +473,11 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
     fn render_item(&self, item: &T, is_selected: bool) -> RatatuiListItem<'static> {
         let mut spans = vec![selection_prefix(is_selected)];
 
-        // Add lock prefix if applicable
+        // Add lock and equip prefixes if applicable
         if item.show_lock() {
             if let Some(i) = item.item() {
                 spans.push(lock_prefix(i));
+                spans.push(equip_prefix(i));
             }
         }
 

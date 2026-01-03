@@ -53,6 +53,15 @@ pub fn lock_prefix(item: &Item) -> Span<'static> {
     }
 }
 
+/// Returns an equip icon Span if the item is equipped, otherwise an empty span.
+pub fn equip_prefix(item: &Item) -> Span<'static> {
+    if item.is_equipped {
+        Span::styled(format!("{} ", SHIRT), Style::default().color(colors::CYAN))
+    } else {
+        Span::raw("")
+    }
+}
+
 /// Returns a styled Span for an item, colored by quality.
 /// - Equipment: "{name} (+{num_upgrades})"
 /// - Materials: "{name} (x{quantity})"
