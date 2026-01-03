@@ -10,8 +10,10 @@ description: Identifies researched issues in the github repo and fixes them base
 ## Overview
 1. Pull down a list of issues that have the label 'researched' and are not marked as complete
 2. **Evaluate for parallel work** (see `parallel-dev` skill):
-   - If multiple issues touch different files -> use git worktrees
+   - Skim issue titles/bodies ONLY to determine file overlap
+   - If multiple issues touch different files -> IMMEDIATELY set up git worktrees and delegate
    - If issues overlap or single issue -> work one at a time
+   - **Do NOT read issue details beyond what's needed to determine file overlap**
 3. Pick issue(s) based on perceived severity
 4. **Check for `needs-decision` label** - if present, a solution option must be selected before fixing:
    - Review the options in the issue body
@@ -57,3 +59,11 @@ python3 .claude/scripts/issue/option_selector.py <issue_number>
 After user checks an option checkbox in the issue body, processes the selection:
 - Rewrites issue body: selected stays visible, others collapse into `<details>`
 - Removes `needs-decision` label
+
+---
+
+## Anti-Pattern Warning
+
+**Do NOT**: Read full issue details, explore the codebase, then spawn worktrees that re-do the same research.
+
+**Do**: Skim issue titles/bodies -> determine file overlap -> immediately spawn worktrees -> each worktree session reads its own issue context fully.

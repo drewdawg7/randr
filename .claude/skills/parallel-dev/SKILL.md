@@ -19,6 +19,22 @@ Multiple issues to work on?
 
 ---
 
+## Immediate Delegation Rule
+
+**CRITICAL**: Once you determine the parallelization mode, STOP researching and START delegating.
+
+| Mode | Research Limit (Main Agent) | Delegate To |
+|------|----------------------------|-------------|
+| Multi-Issue | Skim issue titles/bodies to check file overlap | Worktree sessions |
+| Single-Issue | Identify file boundaries for assignment | Subagents |
+| Sequential | N/A (no delegation) | N/A |
+
+**Anti-Pattern**: Main agent reads code in detail, then spawns subagents that re-read the same code.
+
+**Correct Pattern**: Main agent does minimal assessment, subagents/worktree sessions do full research independently.
+
+---
+
 ## Mode Selection
 
 | Mode | Use When | Isolation |
@@ -38,6 +54,8 @@ git worktree add .worktrees/issue-1 -b fix/issue-1
 git worktree add .worktrees/issue-2 -b feat/issue-2
 # Run separate Claude sessions in each directory
 ```
+
+**Delegation**: Each worktree session handles its own full research independently. Main agent's role is coordination (setup/cleanup), not investigation.
 
 ### Hierarchy
 Within each worktree, if the issue needs parallel work, use **Single-Issue Mode**:
@@ -67,9 +85,12 @@ git worktree remove .worktrees/issue-2
 Use subagents for parallel work on non-overlapping files within a single issue.
 
 ### Pre-Launch Checklist
+- [ ] Files identified (no detailed code analysis yet - subagents do that)
 - [ ] Files are independent (no shared edits)
 - [ ] Each subagent has explicit file assignment
 - [ ] Task is large enough to benefit from parallelization
+
+**Research Scope**: Main agent identifies file boundaries only. Subagents do detailed research within their assigned files.
 
 ### Subagent Contract
 
