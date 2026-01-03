@@ -12,26 +12,50 @@ IMPORTANT: Use `ast-grep` for refactoring (see `refactoring.md`).
 
 ---
 
-## Phase 1: Setup
-**Skill**: `git-workflow`
-
-Checkout a new descriptive branch from main.
-
----
-
-## Phase 2: Research
+## Phase 1: Research & Planning
+**Skills**: `parallel-dev`, `git-workflow`
 
 1. **Reference Docs**: Check `.claude/skills/updating-code/` for relevant documentation before checking the codebase. For GitHub issues, read all comments.
 2. **Activate Skills**: Invoke any necessary skills (ascii-art, log-issue, tests, etc.)
 3. **Ask Questions**: Clarify any ambiguity before proceeding.
+4. **Decide Parallelization Mode**: Evaluate before git setup (affects branch strategy).
+
+### Parallelization Decision
+
+**Multi-Issue Mode (Git Worktrees)** - Use when:
+- User requests work on multiple unrelated issues/features simultaneously
+- Issues touch overlapping files and need complete isolation
+- Long-running tasks where context switching between issues is needed
+- Each issue needs its own branch and independent testing
+
+**Single-Issue Mode (Subagents)** - Use when:
+- A single issue involves 3+ files that can be edited independently
+- Work is clearly partitionable (e.g., separate modules, tests vs implementation)
+- Task would take significantly longer sequentially
+- Files have no cross-dependencies that require coordinated edits
+
+**Sequential (no parallelization)** - Use when:
+- Only 1-2 files need changes
+- Files have tight coupling requiring coordinated edits
+- Changes are simple enough that overhead outweighs benefit
+- You need to see intermediate results before proceeding
+
+---
+
+## Phase 2: Setup
+**Skill**: `git-workflow`
+
+Based on parallelization decision:
+- **Multi-Issue Mode**: Create git worktrees (see `parallel-dev` skill)
+- **Single-Issue / Sequential**: Checkout a new descriptive branch from main
 
 ---
 
 ## Phase 3: Development
-**Skill**: `parallel-dev`
 
-1. **Evaluate Parallelization**: Assess if changes can be made in parallel with subagents.
-2. **Make Changes**: Proceed with changes. Use `ast-grep` for renames/refactoring (see `refactoring.md`). Commit logical chunks for easy rollback.
+1. **Make Changes**: Use subagents if Single-Issue Mode, otherwise work sequentially.
+2. **Refactoring**: Use `ast-grep` for renames/refactoring (see `refactoring.md`).
+3. **Commit**: Commit logical chunks for easy rollback.
 
 ---
 
