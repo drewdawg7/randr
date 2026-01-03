@@ -11,6 +11,28 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 THE DOCUMENTAITON WITHIN .claude/skills SHOULD BE READ BEFORE LOOKING AT THE CODE IF THERE IS ANY RELEVANT DOCUMENTATION
 USE GREP PATTERNS to search the documentation for specific keywords so that you don't waste time or tokens reading everything.
 
+## Rust LSP (rust-analyzer)
+
+**PREFER LSP over grep for Rust code navigation.** The LSP tool provides semantic code intelligence that is more accurate than text-based grep searches:
+
+- `goToDefinition` - Jump to where a symbol is defined
+- `findReferences` - Find all usages of a symbol across the codebase
+- `goToImplementation` - Find trait implementations
+- `hover` - Get type information and documentation
+- `documentSymbol` - List all symbols in a file
+- `workspaceSymbol` - Search for symbols across the workspace
+
+Use LSP when you need to:
+- Find where a function/struct/trait is defined
+- Find all places that call a function or use a type
+- Understand type signatures and trait implementations
+- Navigate trait hierarchies
+
+Fall back to grep only when:
+- Searching documentation files (.md)
+- Searching for string literals or comments
+- LSP is unavailable or returns no results
+
 ## Build Commands
 
 ```bash

@@ -4,6 +4,7 @@ description: Outlines the necessary steps to make code changes. All steps must b
 ---
 
 IMPORTANT: Use grep patterns to search the documentation for specific keywords so that you don't waste time or tokens reading everything.
+IMPORTANT: **Use Rust LSP (rust-analyzer) instead of grep for navigating Rust code.** LSP provides semantic understanding - use `goToDefinition`, `findReferences`, `goToImplementation`, `hover`, and `workspaceSymbol` for accurate code navigation. Only use grep for documentation files or when LSP is unavailable.
 IMPORTANT: Reference ascii-art when making UI changes.
 IMPORTANT: Reference log-issue when issues are found.
 IMPORTANT: Reference test when creating tests.

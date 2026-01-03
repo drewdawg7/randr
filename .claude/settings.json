@@ -4,5 +4,6 @@
       "Edit(.claude/skills/**)",
       "Write(.claude/skills/**)"
     ]
-  }
+  },
+  "enabledPlugins": {}
 }
