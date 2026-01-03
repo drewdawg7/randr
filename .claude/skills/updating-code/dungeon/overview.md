@@ -173,6 +173,9 @@ render_stone_wall(frame, area);
 
 Pattern follows other screens like `FightScreen` and `MineScreen` that render their own borders.
 
+### Dungeon Header
+The `render_header()` method in `DungeonScreen` displays only the dungeon name at the top of the screen. Located in `src/ui/components/screens/dungeon/mod.rs:350-370`.
+
 ## Minimap System
 
 Located in `src/ui/components/dungeon/minimap.rs`. Renders in bottom-left corner of dungeon screen.
@@ -211,7 +214,7 @@ Each room displayed as `[ X ]` (5 chars wide) for proper icon spacing.
 ## Rest Room Feature
 
 ### Overview
-Rest rooms allow players to heal 50% of max HP. They are pre-cleared (can leave and return to heal again).
+Rest rooms allow players to heal 50% of max HP once per room. They are pre-cleared (can leave and return, but cannot heal again).
 
 ### Key Files
 | File | Purpose |
@@ -259,9 +262,11 @@ Format: `♥ [████████░░░░░░░░░░░░] curr
 
 ### State Handling
 - `rest_selection: usize` tracks menu selection (0=Rest, 1=Continue)
+- `DungeonRoom.has_healed: bool` tracks whether healing was used in this room
 - `handle_rest_submit()` processes selection:
-  - Rest: Heals 50% max HP using `player.heal(amount)`
+  - Rest: Heals 50% max HP using `player.heal(amount)`, sets `has_healed = true`
   - Continue: Transitions to `DungeonState::Navigation`
+- When `has_healed` is true, shows "Already Rested" and disables healing option
 
 ## Boss Room Feature
 
@@ -303,13 +308,18 @@ enum DungeonState {
 ```
 [ASCII Dragon Art - 41x19 chars]
 
-♥ [████████░░░░░░░░░░░░] 81/100   Dragon
+               DRAGON
+♥ [████████░░░░░░░░░░░░] 81/100      (Boss HP - red/orange/yellow)
+♥ [████████████████░░░░] 80/100  YOU (Player HP - green/yellow/red)
 
-> Attack
+        [Combat Log]
+
+         > Attack
 ```
 
 - Dragon art rendered with multiple colors (scales, fire, eyes)
-- HP bar below dragon shows boss health
+- Boss HP bar below dragon (ember red > flame orange > bright yellow color scheme)
+- Player HP bar below boss HP (green > yellow > red color scheme)
 - Combat log displays damage messages
 - Single "Attack" option (no escape)
 
