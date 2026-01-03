@@ -10,6 +10,7 @@ The dungeon system provides procedurally generated dungeon exploration with mons
 | `src/dungeon/definition.rs` | Dungeon and DungeonRoom structs, core methods |
 | `src/dungeon/generation.rs` | Procedural generation algorithm |
 | `src/dungeon/enums.rs` | Direction, DungeonError, RoomType enums |
+| `src/dungeon/tests.rs` | Comprehensive unit and integration tests |
 | `src/system.rs` | GameState dungeon field and CombatSource enum |
 | `src/ui/components/dungeon/tab.rs` | Town tab entry point (DungeonTab) |
 | `src/ui/components/dungeon/minimap.rs` | Minimap rendering with fog of war |
@@ -368,3 +369,23 @@ Located in `src/ui/components/dungeon/dragon_art.rs`:
   - `fire` / `fire_hot`: Orange/yellow for fire breath
   - `claw` / `teeth`: Light stone/white for claws and teeth
   - `inner`: Deep orange for inner glow
+
+## Testing
+
+Located in `src/dungeon/tests.rs`. Run with `cargo test dungeon::`.
+
+### Test Categories (55 tests total)
+
+| Category | Count | Description |
+|----------|-------|-------------|
+| DungeonRoom | 12 | Room creation, types, cleared states, visit/reveal |
+| Direction | 6 | Offsets, names, `all()` method |
+| Dungeon core | 20 | get_room, move_player, available_directions, counts |
+| Generation | 12 | Room counts, required types, player start, connectivity |
+| Integration | 5 | Player exploration, navigation walkthrough |
+
+### Testing Notes
+
+- **Global state dependency**: `open_chest()` calls `roll_drops()` which uses `game_state()`. Tests use `chest.take()` instead to avoid this.
+- **Helper function**: `create_test_dungeon_with_rooms()` creates a simple 3-room L-shaped dungeon for testing.
+- Generation tests verify guarantees: Chest room, Rest room, exactly 1 Boss room, Monster entry room.
