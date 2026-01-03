@@ -102,7 +102,7 @@ where
         let multiplier = 1.0 + (gf as f64 / 100.0);
         let gold_with_bonus = ((death_result.gold_dropped as f64) * multiplier).round() as i32;
         player.add_gold(gold_with_bonus);
-        cr.gold_gained = death_result.gold_dropped;
+        cr.gold_gained = gold_with_bonus;
 
         // Award XP
         cr.xp_gained = death_result.xp_dropped;
@@ -156,7 +156,7 @@ pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
     let multiplier = 1.0 + (gf as f64 / 100.0);
     let gold_with_bonus = ((death_result.gold_dropped as f64) * multiplier).round() as i32;
     player.add_gold(gold_with_bonus);
-    combat.gold_gained = death_result.gold_dropped;
+    combat.gold_gained = gold_with_bonus;
 
     // Award XP
     combat.xp_gained = death_result.xp_dropped;
