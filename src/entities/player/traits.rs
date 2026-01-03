@@ -3,7 +3,7 @@ use std::{collections::HashMap, fmt::Display};
 use crate::{
     combat::{Combatant, DealsDamage, HasGold, IsKillable, Named, PlayerDeathResult},
     entities::{progression::HasProgression, Player, Progression},
-    inventory::{HasInventory, Inventory},
+    inventory::{HasEquipment, HasInventory, Inventory},
     stats::{HasStats, StatInstance, StatSheet, StatType},
 };
 
@@ -82,17 +82,17 @@ impl HasInventory for Player {
     }
 }
 
-
+impl HasEquipment for Player {}
 
 impl DealsDamage for Player {
     fn equipment_attack_bonus(&self) -> i32 {
-        self.inventory().sum_equipment_stats(StatType::Attack) + self.tome_attack_bonus()
+        self.equipment_attack() + self.tome_attack_bonus()
     }
 }
 
 impl Combatant for Player {
     fn effective_defense(&self) -> i32 {
-        self.defense() + self.inventory().sum_equipment_stats(StatType::Defense) + self.tome_defense_bonus()
+        self.defense() + self.equipment_defense() + self.tome_defense_bonus()
     }
 } 
 
