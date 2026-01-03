@@ -3,10 +3,10 @@ use std::borrow::Cow;
 use ratatui::{style::Style, text::Span};
 
 use crate::{
+    economy::WorthGold,
     inventory::{EquipmentSlot, InventoryItem},
     item::{enums::ItemQuality, recipe::{ForgeMaterial, RecipeId}, Item},
     location::store::StoreItem,
-    loot::WorthGold,
     system::game_state,
     ui::theme as colors,
 };

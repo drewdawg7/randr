@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{item::{Item, ItemId}, loot::traits::WorthGold, system::game_state};
+use crate::{economy::WorthGold, item::{Item, ItemId}, system::game_state};
 
 #[derive(Debug, Clone)]
 pub struct StoreItem {

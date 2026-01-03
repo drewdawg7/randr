@@ -3,11 +3,11 @@ use std::time::{Duration, Instant};
 
 use crate::{
     combat::HasGold,
+    economy::WorthGold,
     entities::Player,
     inventory::HasInventory,
     item::{Item, ItemId},
     location::{LocationId, LocationSpec, StoreData},
-    loot::traits::WorthGold,
     system::game_state,
 };
 

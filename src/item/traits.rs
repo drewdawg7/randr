@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{loot::traits::WorthGold, stats::HasStats, stats::StatSheet};
+use crate::{economy::WorthGold, stats::HasStats, stats::StatSheet};
 
 use super::Item;
 
