@@ -259,7 +259,10 @@ pub fn handle_submit(boss_combat_log: &mut Vec<String>) -> Option<DungeonState> 
         .unwrap_or(false);
 
     if boss_defeated {
-        return Some(DungeonState::Navigation);
+        // Reset dungeon and return to town
+        gs.reset_dungeon();
+        gs.leave_dungeon();
+        return None;
     }
 
     None // Stay in BossRoom state

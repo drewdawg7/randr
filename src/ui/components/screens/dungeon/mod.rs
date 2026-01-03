@@ -183,11 +183,6 @@ impl MockComponent for DungeonScreen {
                     }
                     self.reset_selection();
                 }
-                // Boss room cleared - transition to Navigation
-                if room.is_cleared && self.state == DungeonState::BossRoom {
-                    self.state = DungeonState::Navigation;
-                    self.reset_selection();
-                }
             }
         }
 
