@@ -1,5 +1,5 @@
 #[cfg(test)]
-use crate::stats::{HasStats, StatInstance, StatSheet, StatType};
+use crate::stats::{HasStats, StatSheet, StatType};
 
 // ==================== StatType enum tests ====================
 
