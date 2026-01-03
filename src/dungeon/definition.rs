@@ -116,6 +116,17 @@ impl Dungeon {
         }
     }
 
+    /// Reveal all rooms in the dungeon (for DungeonReveal passive effect)
+    pub fn reveal_all_rooms(&mut self) {
+        for row in &mut self.rooms {
+            for room_opt in row {
+                if let Some(room) = room_opt {
+                    room.reveal();
+                }
+            }
+        }
+    }
+
     /// Mark the starting room as visited (call after generation)
     pub fn mark_start_visited(&mut self) {
         let (x, y) = self.player_position;

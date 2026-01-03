@@ -8,6 +8,7 @@ use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
 use crate::dungeon::Dungeon;
 use crate::item::recipe::RecipeRegistry;
+use crate::magic::effect::PassiveEffect;
 use crate::location::spec::specs::{
     VILLAGE_ALCHEMIST, VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE, VILLAGE_STORE,
 };
@@ -176,6 +177,18 @@ impl GameState {
         if self.dungeon.is_none() {
             let mut dungeon = Dungeon::default();
             dungeon.generate();
+
+            // Check for DungeonReveal passive effect
+            let has_reveal = self
+                .player
+                .tome_passive_effects()
+                .iter()
+                .any(|e| matches!(e, PassiveEffect::DungeonReveal));
+
+            if has_reveal {
+                dungeon.reveal_all_rooms();
+            }
+
             self.dungeon = Some(dungeon);
         }
         self.current_screen = Id::Dungeon;

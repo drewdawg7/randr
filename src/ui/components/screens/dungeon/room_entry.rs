@@ -13,6 +13,7 @@ use ratatui::{
 use crate::{
     commands::{apply_result, execute, GameCommand},
     dungeon::RoomType,
+    magic::effect::PassiveEffect,
     system::game_state,
     ui::{
         components::utilities::selection_prefix,
@@ -21,6 +22,15 @@ use crate::{
 };
 
 use super::{centered_rect, DungeonState};
+
+/// Check if player has DungeonBypass passive effect
+fn has_dungeon_bypass() -> bool {
+    let gs = game_state();
+    gs.player
+        .tome_passive_effects()
+        .iter()
+        .any(|e| matches!(e, PassiveEffect::DungeonBypass))
+}
 
 /// Render the room entry UI.
 pub fn render(
@@ -31,7 +41,7 @@ pub fn render(
     let gs = game_state();
     let text_style = Style::default().fg(colors::WHITE);
 
-    let (room_type_name, action_text) = if let Some(dungeon) = gs.dungeon() {
+    let (room_type_name, room_type, action_text) = if let Some(dungeon) = gs.dungeon() {
         if let Some(room) = dungeon.current_room() {
             let type_name = match room.room_type {
                 RoomType::Monster => "Monster Room",
@@ -46,16 +56,20 @@ pub fn render(
                 RoomType::Chest | RoomType::Treasure => "Open",
                 _ => "Proceed",
             };
-            (type_name, action)
+            (type_name, Some(room.room_type), action)
         } else {
-            ("Unknown", "Proceed")
+            ("Unknown", None, "Proceed")
         }
     } else {
-        ("Unknown", "Proceed")
+        ("Unknown", None, "Proceed")
     };
 
+    // Check if bypass is available (Monster room + has DungeonBypass)
+    let can_bypass = matches!(room_type, Some(RoomType::Monster)) && has_dungeon_bypass();
+
     // Center the content
-    let content_area = centered_rect(30, 8, area);
+    let menu_height = if can_bypass { 10 } else { 8 };
+    let content_area = centered_rect(30, menu_height, area);
 
     // Room type display
     let room_info = Paragraph::new(vec![
@@ -75,15 +89,23 @@ pub fn render(
 
     // Action menu
     let selected = list_state.selected().unwrap_or(0);
-    let menu_items: Vec<ListItem> = vec![ListItem::new(Line::from(vec![
+    let mut menu_items: Vec<ListItem> = vec![ListItem::new(Line::from(vec![
         selection_prefix(selected == 0),
         Span::styled(action_text, text_style),
     ]))];
 
+    // Add bypass option if available
+    if can_bypass {
+        menu_items.push(ListItem::new(Line::from(vec![
+            selection_prefix(selected == 1),
+            Span::styled("Bypass (Shadow Step)", Style::default().fg(colors::MYSTIC_PURPLE)),
+        ])));
+    }
+
     let menu = List::new(menu_items);
     let menu_area = Rect {
         y: content_area.y + 3,
-        height: 1,
+        height: if can_bypass { 2 } else { 1 },
         ..content_area
     };
     frame.render_stateful_widget(menu, menu_area, list_state);
@@ -91,7 +113,8 @@ pub fn render(
 
 /// Handle room entry submit action.
 /// Returns the new state to transition to, or None if screen changed.
-pub fn handle_submit() -> Option<DungeonState> {
+/// `selected` is the menu option selected (0 = primary action, 1 = bypass if available)
+pub fn handle_submit(selected: usize) -> Option<DungeonState> {
     let gs = game_state();
 
     // First, check if room is cleared and get room type
@@ -119,6 +142,18 @@ pub fn handle_submit() -> Option<DungeonState> {
     let Some(room_type) = room_type else {
         return None;
     };
+
+    // Check if bypass was selected (option 1) and is available
+    let can_bypass = matches!(room_type, RoomType::Monster) && has_dungeon_bypass();
+    if selected == 1 && can_bypass {
+        // Bypass the room - mark it as cleared without combat
+        if let Some(dungeon) = gs.dungeon_mut() {
+            if let Some(room) = dungeon.current_room_mut() {
+                room.clear();
+            }
+        }
+        return Some(DungeonState::Navigation);
+    }
 
     // Execute the enter room command (handles combat, chest, etc.)
     let result = execute(GameCommand::EnterRoom);

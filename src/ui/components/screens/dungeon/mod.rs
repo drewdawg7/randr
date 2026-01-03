@@ -285,7 +285,8 @@ impl MockComponent for DungeonScreen {
             Cmd::Submit => {
                 match self.state {
                     DungeonState::RoomEntry => {
-                        if let Some(new_state) = room_entry::handle_submit() {
+                        let selected = self.list_state.selected().unwrap_or(0);
+                        if let Some(new_state) = room_entry::handle_submit(selected) {
                             self.transition_to(new_state);
                         }
                     }
