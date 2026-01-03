@@ -131,7 +131,12 @@ pub fn render(
 
     // Menu below HP bar
     let heal_amount = (max_hp as f32 * 0.5).round() as i32;
-    let can_heal = hp < max_hp;
+    let has_healed = gs
+        .dungeon()
+        .and_then(|d| d.current_room())
+        .map(|r| r.has_healed)
+        .unwrap_or(true);
+    let can_heal = hp < max_hp && !has_healed;
 
     let rest_style = if rest_selection == 0 {
         Style::default().fg(colors::YELLOW)
@@ -147,7 +152,9 @@ pub fn render(
         Style::default().fg(colors::WHITE)
     };
 
-    let rest_text = if can_heal {
+    let rest_text = if has_healed {
+        "Already Rested".to_string()
+    } else if hp < max_hp {
         format!("Rest (+{} HP)", heal_amount.min(max_hp - hp))
     } else {
         "Rest (Full HP)".to_string()
@@ -183,9 +190,31 @@ pub fn render(
 pub fn handle_submit(rest_selection: usize) -> Option<DungeonState> {
     match rest_selection {
         0 => {
+            // Check if already healed in this room
+            let gs = game_state();
+            let has_healed = gs
+                .dungeon()
+                .and_then(|d| d.current_room())
+                .map(|r| r.has_healed)
+                .unwrap_or(true);
+
+            if has_healed {
+                return None; // Already healed, do nothing
+            }
+
             // Rest/Heal: use command
             let result = execute(GameCommand::Rest);
             apply_result(&result);
+
+            // Mark room as healed
+            if result.success {
+                if let Some(dungeon) = gs.dungeon_mut() {
+                    if let Some(room) = dungeon.current_room_mut() {
+                        room.has_healed = true;
+                    }
+                }
+            }
+
             None // Stay in RestRoom state
         }
         1 => {

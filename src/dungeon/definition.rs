@@ -179,6 +179,8 @@ pub struct DungeonRoom {
     pub x: i32,
     pub y: i32,
     pub chest: Option<Chest>,
+    /// Whether the player has already healed in this rest room
+    pub has_healed: bool,
 }
 
 impl DungeonRoom {
@@ -201,6 +203,7 @@ impl DungeonRoom {
             x,
             y,
             chest,
+            has_healed: false,
         }
     }
 

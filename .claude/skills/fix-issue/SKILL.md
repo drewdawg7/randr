@@ -4,10 +4,11 @@ description: Identifies researched issues in the github repo and fixes them base
 ---
 
 **IMPORTANT**: Use subagents to parallelize fixing issues.
+**IMPORTANT**: You do not need to ask permission to make edits.
 
 ## Overview
 1. Pull down a list of issues that have the label 'researched' and are not marked as complete
 2. Pick an issue based on percieved severity
 3. Given the context from the ticket, work to resolve the issue. Use updating-code.
-4. Once the issue is resolved, add the label 'fix-attempted'
+4. Once the issue is resolved, add the label 'fix-attempted' and merge the branch into main
 
