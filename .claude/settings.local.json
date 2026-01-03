@@ -65,11 +65,10 @@
       "Bash(tree:*)",
       "Bash(sort:*)",
       "Skill(parallel-dev)",
-      "Bash(git check-ignore:*)"
-    ],
-    "additionalDirectories": [
-      "../game-*",
-      "../*-issue-*"
+      "Bash(git check-ignore:*)",
+      "Read(.worktrees/**)",
+      "Edit(.worktrees/**)",
+      "Write(.worktrees/**)"
     ]
   },
   "enabledMcpjsonServers": [
