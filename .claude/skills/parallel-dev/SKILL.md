@@ -34,8 +34,8 @@ Use git worktrees for complete isolation when working on multiple issues simulta
 
 ### Setup
 ```bash
-git worktree add ../project-issue-1 -b fix/issue-1
-git worktree add ../project-issue-2 -b feat/issue-2
+git worktree add .worktrees/issue-1 -b fix/issue-1
+git worktree add .worktrees/issue-2 -b feat/issue-2
 # Run separate Claude sessions in each directory
 ```
 
@@ -52,12 +52,12 @@ Multi-Issue (worktrees for isolation)
 ### Merge Back
 ```bash
 # After completing work in worktrees
-cd ../project-issue-1 && git push -u origin fix/issue-1
-cd ../project-issue-2 && git push -u origin feat/issue-2
+cd .worktrees/issue-1 && git push -u origin fix/issue-1
+cd .worktrees/issue-2 && git push -u origin feat/issue-2
 
 # Clean up worktrees when done
-git worktree remove ../project-issue-1
-git worktree remove ../project-issue-2
+git worktree remove .worktrees/issue-1
+git worktree remove .worktrees/issue-2
 ```
 
 ---
