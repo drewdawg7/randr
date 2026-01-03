@@ -44,3 +44,4 @@ When completing code changes:
 3. Document UI patterns if applicable
 4. Include file/module/function references
 5. Extract repeated information to shared docs
+6. Update skill.index.md if necessary
