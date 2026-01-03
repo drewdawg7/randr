@@ -7,6 +7,17 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 1. updating-code: The skill must be used for any changes to code, this includes while planning changes. Plans should include information from this skill.
 2. ascii-art: The skill must be used whenever ascii art needs to be made or edited.
 
+## Helper Scripts
+
+**For any GitHub issue operations**, check `.claude/scripts/SCRIPTS.index.md` for available automation scripts. The index is organized by task:
+- "I need to... list/query issues" → scripts for fetching/filtering issues
+- "I need to... modify issue state" → scripts for closing, labeling, etc.
+- "I need to... create issues" → scripts for issue creation with proper labels
+- "I need to... work on fixes" → scripts for branch setup and completion
+- "I need to... research issues" → scripts for research workflow
+
+All scripts use a shared library (`gh_utils.py`) and output JSON.
+
 ## IMPORTANT
 THE DOCUMENTAITON WITHIN .claude/skills SHOULD BE READ BEFORE LOOKING AT THE CODE IF THERE IS ANY RELEVANT DOCUMENTATION
 USE GREP PATTERNS to search the documentation for specific keywords so that you don't waste time or tokens reading everything.

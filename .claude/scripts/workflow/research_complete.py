@@ -12,58 +12,14 @@ Output: JSON with status of each action
 """
 
 import json
-import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
-
-def run_cmd(cmd: list[str], check: bool = True) -> tuple[bool, str]:
-    """Run a command and return (success, output)."""
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=check)
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, e.stderr.strip()
-
-
-def get_issue_labels(issue_number: int) -> list[str]:
-    """Fetch current labels for an issue."""
-    success, output = run_cmd([
-        "gh", "issue", "view", str(issue_number), "--json", "labels"
-    ])
-
-    if not success or not output:
-        return []
-
-    data = json.loads(output)
-    return [label.get("name", "") for label in data.get("labels", [])]
-
-
-def remove_label(issue_number: int, label: str) -> bool:
-    """Remove a label from an issue."""
-    success, _ = run_cmd([
-        "gh", "issue", "edit", str(issue_number), "--remove-label", label
-    ], check=False)
-    return success
-
-
-def add_label(issue_number: int, label: str) -> bool:
-    """Add a label to an issue."""
-    # First ensure the label exists
-    run_cmd(["gh", "label", "create", label, "--force"], check=False)
-
-    success, _ = run_cmd([
-        "gh", "issue", "edit", str(issue_number), "--add-label", label
-    ])
-    return success
-
-
-def post_comment(issue_number: int, comment: str) -> bool:
-    """Post a comment on an issue."""
-    success, _ = run_cmd([
-        "gh", "issue", "comment", str(issue_number), "--body", comment
-    ])
-    return success
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from gh_utils import (
+    get_issue_labels, add_label, remove_label, post_comment
+)
 
 
 def format_research_comment(findings: str) -> str:

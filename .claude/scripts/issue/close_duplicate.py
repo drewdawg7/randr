@@ -14,55 +14,15 @@ Output: JSON with status of each action
 """
 
 import json
-import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
-
-def run_cmd(cmd: list[str], check: bool = True) -> tuple[bool, str]:
-    """Run a command and return (success, output)."""
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=check)
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, e.stderr.strip()
-
-
-def issue_exists(number: int) -> tuple[bool, str]:
-    """Check if issue exists and return its title."""
-    success, output = run_cmd([
-        "gh", "issue", "view", str(number),
-        "--json", "number,title,state"
-    ], check=False)
-
-    if success:
-        data = json.loads(output)
-        return True, data.get("title", "")
-    return False, ""
-
-
-def add_label(issue_number: int, label: str) -> bool:
-    """Add a label to an issue, creating it if needed."""
-    # Try to add the label
-    success, _ = run_cmd([
-        "gh", "issue", "edit", str(issue_number),
-        "--add-label", label
-    ], check=False)
-
-    if not success:
-        # Label might not exist, try to create it
-        run_cmd([
-            "gh", "label", "create", label,
-            "--description", "Duplicate of another issue",
-            "--color", "cfd3d7"
-        ], check=False)
-        # Try again
-        success, _ = run_cmd([
-            "gh", "issue", "edit", str(issue_number),
-            "--add-label", label
-        ], check=False)
-
-    return success
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from gh_utils import (
+    issue_exists, add_label, post_comment, close_issue,
+    ensure_label_exists
+)
 
 
 def post_duplicate_comment(duplicate_number: int, original_number: int,
@@ -79,20 +39,7 @@ Please follow the original issue for updates. Any additional context from this i
 ---
 *Closed via clean-duplicates skill*"""
 
-    success, _ = run_cmd([
-        "gh", "issue", "comment", str(duplicate_number),
-        "--body", comment
-    ])
-    return success
-
-
-def close_issue(issue_number: int) -> bool:
-    """Close the issue as not planned."""
-    success, _ = run_cmd([
-        "gh", "issue", "close", str(issue_number),
-        "--reason", "not planned"
-    ])
-    return success
+    return post_comment(duplicate_number, comment)
 
 
 def main():
@@ -142,8 +89,11 @@ def main():
         print(json.dumps(result, indent=2))
         sys.exit(1)
 
+    # Ensure duplicate label exists with proper styling
+    ensure_label_exists("duplicate", "cfd3d7", "Duplicate of another issue")
+
     # Add duplicate label
-    result["label_added"] = add_label(duplicate_number, "duplicate")
+    result["label_added"] = add_label(duplicate_number, "duplicate", create_if_missing=False)
 
     # Post linking comment
     result["comment_posted"] = post_duplicate_comment(
@@ -151,7 +101,7 @@ def main():
     )
 
     # Close the duplicate
-    result["closed"] = close_issue(duplicate_number)
+    result["closed"] = close_issue(duplicate_number, "not planned")
 
     result["success"] = all([
         result["label_added"],

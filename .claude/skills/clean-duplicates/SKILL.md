@@ -26,17 +26,18 @@ Identifies duplicate GitHub issues, marks them as duplicates, and closes them wi
 
 ## Helper Scripts
 
-Python scripts in `scripts/` directory automate common tasks. All output JSON.
+Python scripts in `.claude/scripts/` directory automate common tasks. All output JSON.
+See [SCRIPTS.index.md](../../scripts/SCRIPTS.index.md) for complete reference.
 
 ### list_issues.py - Fetch All Issues
 ```bash
-python3 .claude/skills/clean-duplicates/scripts/list_issues.py [--state open|closed|all]
+python3 .claude/scripts/issue/list_issues.py [--state open|closed|all]
 ```
 Fetches all issues with number, title, body, labels, and creation date.
 
 ### find_duplicates.py - Identify Potential Duplicates
 ```bash
-python3 .claude/skills/clean-duplicates/scripts/find_duplicates.py [--threshold 0.4]
+python3 .claude/scripts/issue/find_duplicates.py [--threshold 0.4]
 ```
 Compares all open issues and identifies potential duplicates based on:
 - Title similarity (keyword overlap, 50% weight)
@@ -45,7 +46,7 @@ Compares all open issues and identifies potential duplicates based on:
 
 ### close_duplicate.py - Close as Duplicate
 ```bash
-python3 .claude/skills/clean-duplicates/scripts/close_duplicate.py <duplicate_number> <original_number>
+python3 .claude/scripts/issue/close_duplicate.py <duplicate_number> <original_number>
 ```
 Marks issue as duplicate of another:
 - Adds 'duplicate' label (creates if needed)

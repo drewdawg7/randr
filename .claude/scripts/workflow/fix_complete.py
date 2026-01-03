@@ -17,51 +17,19 @@ Output: JSON with status of each action
 """
 
 import json
-import re
-import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
-
-def run_cmd(cmd: list[str], check: bool = True) -> tuple[bool, str]:
-    """Run a command and return (success, output)."""
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=check)
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, e.stderr.strip()
-
-
-def get_issue_title(issue_number: int) -> str:
-    """Fetch issue title from GitHub."""
-    success, output = run_cmd(["gh", "issue", "view", str(issue_number), "--json", "title"])
-    if success:
-        data = json.loads(output)
-        return data.get("title", "")
-    return ""
-
-
-def get_current_branch() -> str:
-    """Get current git branch name."""
-    success, output = run_cmd(["git", "branch", "--show-current"])
-    return output if success else ""
-
-
-def add_label(issue_number: int, label: str) -> bool:
-    """Add a label to an issue."""
-    success, _ = run_cmd(["gh", "issue", "edit", str(issue_number), "--add-label", label])
-    return success
-
-
-def post_comment(issue_number: int, comment: str) -> bool:
-    """Post a comment on an issue."""
-    success, _ = run_cmd(["gh", "issue", "comment", str(issue_number), "--body", comment])
-    return success
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from gh_utils import (
+    run_cmd, get_issue_details, add_label, post_comment,
+    get_current_branch, push_branch, merge_to_main, delete_branch
+)
 
 
 def commit_changes(issue_number: int, title: str) -> tuple[bool, str]:
     """Commit staged changes with proper message format."""
-    # Build commit message
     commit_msg = f"""fix: {title}
 
 Closes #{issue_number}
@@ -76,39 +44,6 @@ Co-Authored-By: Claude Opus 4.5 <noreply@anthropic.com>"""
         _, sha = run_cmd(["git", "rev-parse", "HEAD"])
         return True, sha[:7]
     return False, output
-
-
-def push_branch(branch: str) -> bool:
-    """Push branch to origin."""
-    success, _ = run_cmd(["git", "push", "-u", "origin", branch])
-    return success
-
-
-def merge_to_main(branch: str) -> bool:
-    """Checkout main, merge branch, push."""
-    # Checkout main
-    success, _ = run_cmd(["git", "checkout", "main"])
-    if not success:
-        return False
-
-    # Merge branch
-    success, _ = run_cmd(["git", "merge", branch])
-    if not success:
-        return False
-
-    # Push main
-    success, _ = run_cmd(["git", "push", "origin", "main"])
-    return success
-
-
-def delete_branch(branch: str) -> bool:
-    """Delete branch locally and remotely."""
-    # Delete local
-    run_cmd(["git", "branch", "-d", branch], check=False)
-
-    # Delete remote
-    success, _ = run_cmd(["git", "push", "origin", "--delete", branch], check=False)
-    return success
 
 
 def format_resolution_comment(summary: str) -> str:
@@ -152,11 +87,12 @@ def main():
     result["branch"] = current_branch
 
     # Get issue title
-    title = get_issue_title(issue_number)
-    if not title:
+    issue = get_issue_details(issue_number, "title")
+    if not issue:
         print(json.dumps({"error": f"Could not fetch issue #{issue_number}"}))
         sys.exit(1)
 
+    title = issue.get("title", "")
     result["title"] = title
 
     # 1. Add label
@@ -167,7 +103,7 @@ def main():
     result["comment_posted"] = post_comment(issue_number, comment)
 
     # 3. Commit changes (if there are staged changes)
-    success, output = run_cmd(["git", "diff", "--cached", "--quiet"], check=False)
+    success, _ = run_cmd(["git", "diff", "--cached", "--quiet"], check=False)
     if not success:  # There are staged changes
         commit_success, sha = commit_changes(issue_number, title)
         result["commit_sha"] = sha if commit_success else None

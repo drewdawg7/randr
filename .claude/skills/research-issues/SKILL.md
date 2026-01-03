@@ -1,6 +1,6 @@
 ---
 name: research-issues
-description: Pull down issues from the github 
+description: Pull down issues from the github
 ---
 
 **IMPORTANT**: DO NOT ASK FOR USER INTERVENTION.
@@ -34,19 +34,20 @@ Then add the `needs-decision` label. The user will check one option, then run `o
 
 ## Helper Scripts
 
-Python scripts in `scripts/` directory automate common tasks. All output JSON.
+Python scripts in `.claude/scripts/` directory automate common tasks. All output JSON.
+See [SCRIPTS.index.md](../../scripts/SCRIPTS.index.md) for complete reference.
 
 ### fresh_issue_selector.py - List Fresh Issues
 ```bash
-python3 .claude/skills/research-issues/scripts/fresh_issue_selector.py
+python3 .claude/scripts/issue/fresh_issue_selector.py
 ```
 Lists all 'fresh' issues sorted by priority (critical > high > medium > low) then age (oldest first).
 
 ### research_setup.py - Start Research
 ```bash
-python3 .claude/skills/research-issues/scripts/research_setup.py <issue_number>
+python3 .claude/scripts/workflow/research_setup.py <issue_number>
 ```
-Transitions labels (fresh → under research), outputs full issue context including:
+Transitions labels (fresh -> under research), outputs full issue context including:
 - Issue title, body, comments
 - Domain hints from labels
 - Keywords extracted from text
@@ -54,13 +55,13 @@ Transitions labels (fresh → under research), outputs full issue context includ
 
 ### research_complete.py - Complete Research
 ```bash
-python3 .claude/skills/research-issues/scripts/research_complete.py <issue_number> "<findings_markdown>"
+python3 .claude/scripts/workflow/research_complete.py <issue_number> "<findings_markdown>"
 ```
-Posts formatted findings comment, transitions labels (under research → researched).
+Posts formatted findings comment, transitions labels (under research -> researched).
 
 ### option_selector.py - Process Selected Option
 ```bash
-python3 .claude/skills/research-issues/scripts/option_selector.py <issue_number>
+python3 .claude/scripts/issue/option_selector.py <issue_number>
 ```
 After user checks an option checkbox in the issue body:
 1. Identifies the selected option (checked `- [x]`)

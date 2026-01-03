@@ -12,38 +12,18 @@ Usage: python3 option_selector.py <issue_number>
 
 import json
 import re
-import subprocess
 import sys
+from pathlib import Path
 
-
-def run_gh(args: list[str]) -> str:
-    """Run gh CLI command and return output."""
-    result = subprocess.run(["gh"] + args, capture_output=True, text=True)
-    if result.returncode != 0:
-        print(f"Error: {result.stderr}", file=sys.stderr)
-        sys.exit(1)
-    return result.stdout.strip()
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from gh_utils import (
+    run_gh, get_issue_labels, remove_label, update_issue_body
+)
 
 
 def get_issue_body(issue_number: str) -> str:
     """Fetch issue body."""
     return run_gh(["issue", "view", issue_number, "--json", "body", "-q", ".body"])
-
-
-def get_issue_labels(issue_number: str) -> list[str]:
-    """Fetch issue labels."""
-    output = run_gh(["issue", "view", issue_number, "--json", "labels", "-q", ".labels[].name"])
-    return output.split("\n") if output else []
-
-
-def update_issue_body(issue_number: str, new_body: str) -> None:
-    """Update issue body."""
-    run_gh(["issue", "edit", issue_number, "--body", new_body])
-
-
-def remove_label(issue_number: str, label: str) -> None:
-    """Remove label from issue."""
-    run_gh(["issue", "edit", issue_number, "--remove-label", label])
 
 
 def parse_options(body: str) -> tuple[str | None, list[dict], str, str]:
@@ -57,7 +37,6 @@ def parse_options(body: str) -> tuple[str | None, list[dict], str, str]:
         - after: Text after options section
     """
     # Pattern to match options section
-    # Looks for header followed by checkbox items
     options_pattern = r'(## (?:Suggested )?Options?\s*\n)((?:- \[[ x]\] .+\n?)+)'
 
     match = re.search(options_pattern, body, re.IGNORECASE)
@@ -143,12 +122,12 @@ def main():
     new_body = before.rstrip() + "\n\n" + formatted + "\n" + after.lstrip()
 
     # Update issue
-    update_issue_body(issue_number, new_body)
+    update_issue_body(int(issue_number), new_body)
 
     # Remove needs-decision label if present
-    labels = get_issue_labels(issue_number)
+    labels = get_issue_labels(int(issue_number))
     if "needs-decision" in labels:
-        remove_label(issue_number, "needs-decision")
+        remove_label(int(issue_number), "needs-decision")
 
     print(json.dumps({
         "success": True,

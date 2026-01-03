@@ -19,54 +19,12 @@ Output: JSON with issue number, URL, and applied labels
 
 import argparse
 import json
-import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
-
-def run_cmd(cmd: list[str], check: bool = True) -> tuple[bool, str]:
-    """Run a command and return (success, output)."""
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=check)
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, e.stderr.strip()
-
-
-def get_existing_labels() -> set[str]:
-    """Fetch all existing labels in the repository."""
-    success, output = run_cmd([
-        "gh", "label", "list", "--json", "name", "--limit", "200"
-    ])
-    if not success or not output:
-        return set()
-
-    labels = json.loads(output)
-    return {label.get("name", "") for label in labels}
-
-
-def ensure_label_exists(label: str, existing_labels: set[str]) -> tuple[bool, bool]:
-    """
-    Ensure a label exists, creating it if necessary.
-    Returns (success, was_created).
-    """
-    if label in existing_labels:
-        return True, False
-
-    # Default colors for different label types
-    color = "ededed"  # Default gray
-    if label.startswith("priority:"):
-        priority = label.split(":")[1]
-        colors = {"critical": "b60205", "high": "d93f0b", "medium": "fbca04", "low": "0e8a16"}
-        color = colors.get(priority, "ededed")
-    elif label == "fresh":
-        color = "1d76db"  # Blue
-
-    success, _ = run_cmd([
-        "gh", "label", "create", label, "--color", color, "--force"
-    ], check=False)
-
-    return success, True
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from gh_utils import run_cmd, get_existing_labels, ensure_label_exists
 
 
 def create_issue(title: str, body: str, labels: list[str]) -> dict[str, Any] | None:
@@ -131,13 +89,22 @@ def main():
     # Get existing labels
     existing_labels = get_existing_labels()
 
-    # Ensure all labels exist
+    # Ensure all labels exist with proper colors
     labels_created = []
     for label in labels:
-        success, was_created = ensure_label_exists(label, existing_labels)
-        if was_created and success:
-            labels_created.append(label)
-            existing_labels.add(label)
+        if label not in existing_labels:
+            # Determine color based on label type
+            color = "ededed"  # Default gray
+            if label.startswith("priority:"):
+                priority = label.split(":")[1]
+                colors = {"critical": "b60205", "high": "d93f0b", "medium": "fbca04", "low": "0e8a16"}
+                color = colors.get(priority, "ededed")
+            elif label == "fresh":
+                color = "1d76db"  # Blue
+
+            if ensure_label_exists(label, color):
+                labels_created.append(label)
+                existing_labels.add(label)
 
     # Create the issue
     result = create_issue(args.title, args.body, labels)

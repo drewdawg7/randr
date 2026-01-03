@@ -9,32 +9,11 @@ Output: JSON with issue list including title, body, labels
 
 import argparse
 import json
-import subprocess
-from typing import Any
+import sys
+from pathlib import Path
 
-
-def run_cmd(cmd: list[str]) -> tuple[bool, str]:
-    """Run a command and return (success, output)."""
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, e.stderr.strip()
-
-
-def get_issues(state: str = "open") -> list[dict[str, Any]]:
-    """Fetch issues with specified state."""
-    success, output = run_cmd([
-        "gh", "issue", "list",
-        "--state", state,
-        "--json", "number,title,body,labels,createdAt,comments",
-        "--limit", "500"
-    ])
-
-    if not success or not output:
-        return []
-
-    return json.loads(output)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from gh_utils import list_issues
 
 
 def main():
@@ -43,7 +22,11 @@ def main():
                         help="Issue state to fetch (default: open)")
     args = parser.parse_args()
 
-    issues = get_issues(args.state)
+    issues = list_issues(
+        state=args.state,
+        fields="number,title,body,labels,createdAt,comments",
+        limit=500
+    )
 
     # Simplify output
     simplified = []

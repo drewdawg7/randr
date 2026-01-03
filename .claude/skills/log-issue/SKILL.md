@@ -20,18 +20,19 @@ description: Logs an issue against the github repo to be looked at later.
 * Give issues a priority based on percieved severity
 
 ## Labels
-* Tag issues with relevant labels. If none exist, create one yourself to add. 
+* Tag issues with relevant labels. If none exist, create one yourself to add.
 * Tag any fresh issues with a label called 'fresh'
 * Labels should not just be about the status of the ticket, but areas the bug is relevant to. i.e., 'dungeon', 'ui', etc.
 * An issue can have mutliple labels.
 
 ## Helper Scripts
 
-Python scripts in `scripts/` directory automate common tasks. All output JSON.
+Python scripts in `.claude/scripts/` directory automate common tasks. All output JSON.
+See [SCRIPTS.index.md](../../scripts/SCRIPTS.index.md) for complete reference.
 
 ### create_issue.py - Create New Issue
 ```bash
-python3 .claude/skills/log-issue/scripts/create_issue.py \
+python3 .claude/scripts/workflow/create_issue.py \
     --title "Issue title" \
     --body "Issue description" \
     --domain "ui" \
@@ -49,8 +50,8 @@ Options:
 ### label_manager.py - Manage Labels
 ```bash
 # List all labels by category
-python3 .claude/skills/log-issue/scripts/label_manager.py --list
+python3 .claude/scripts/workflow/label_manager.py --list
 
 # Create new label
-python3 .claude/skills/log-issue/scripts/label_manager.py --create "mining" --description "Mining system"
+python3 .claude/scripts/workflow/label_manager.py --create "mining" --description "Mining system"
 ```

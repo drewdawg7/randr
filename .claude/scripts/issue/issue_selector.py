@@ -18,35 +18,21 @@ Output: JSON with prioritized issue list
 """
 
 import json
-import subprocess
 import sys
-from datetime import datetime, timezone
-from typing import Any
+from pathlib import Path
+
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from gh_utils import list_issues, get_priority, calculate_age_days
 
 
-def run_cmd(cmd: list[str]) -> tuple[bool, str]:
-    """Run a command and return (success, output)."""
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=True)
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, e.stderr.strip()
-
-
-def get_researched_issues() -> list[dict[str, Any]]:
+def get_researched_issues() -> list[dict]:
     """Fetch all issues with 'researched' label, excluding 'fix-attempted'."""
-    success, output = run_cmd([
-        "gh", "issue", "list",
-        "--label", "researched",
-        "--state", "open",
-        "--json", "number,title,labels,createdAt",
-        "--limit", "100"
-    ])
-
-    if not success or not output:
-        return []
-
-    issues = json.loads(output)
+    issues = list_issues(
+        label="researched",
+        state="open",
+        fields="number,title,labels,createdAt",
+        limit=100
+    )
 
     # Filter out issues with 'fix-attempted' label
     filtered = []
@@ -56,37 +42,6 @@ def get_researched_issues() -> list[dict[str, Any]]:
             filtered.append(issue)
 
     return filtered
-
-
-def get_priority(labels: list[str]) -> tuple[int, str]:
-    """
-    Determine priority from labels.
-    Returns (priority_rank, priority_name).
-    Lower rank = higher priority.
-    """
-    labels_lower = [label.lower() for label in labels]
-
-    for label in labels_lower:
-        if "critical" in label:
-            return (0, "critical")
-        if "high" in label:
-            return (1, "high")
-        if "medium" in label:
-            return (2, "medium")
-        if "low" in label:
-            return (3, "low")
-
-    return (4, "none")
-
-
-def calculate_age_days(created_at: str) -> int:
-    """Calculate age in days from ISO timestamp."""
-    try:
-        created = datetime.fromisoformat(created_at.replace("Z", "+00:00"))
-        now = datetime.now(timezone.utc)
-        return (now - created).days
-    except (ValueError, TypeError):
-        return 0
 
 
 def main():

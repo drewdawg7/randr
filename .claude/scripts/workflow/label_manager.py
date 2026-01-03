@@ -18,29 +18,12 @@ Output: JSON with label information
 
 import argparse
 import json
-import subprocess
 import sys
+from pathlib import Path
 from typing import Any
 
-
-def run_cmd(cmd: list[str], check: bool = True) -> tuple[bool, str]:
-    """Run a command and return (success, output)."""
-    try:
-        result = subprocess.run(cmd, capture_output=True, text=True, check=check)
-        return True, result.stdout.strip()
-    except subprocess.CalledProcessError as e:
-        return False, e.stderr.strip()
-
-
-def get_all_labels() -> list[dict[str, str]]:
-    """Fetch all labels from the repository."""
-    success, output = run_cmd([
-        "gh", "label", "list", "--json", "name,description,color", "--limit", "200"
-    ])
-    if not success or not output:
-        return []
-
-    return json.loads(output)
+sys.path.insert(0, str(Path(__file__).parent.parent))
+from gh_utils import get_all_labels, ensure_label_exists
 
 
 def categorize_labels(labels: list[dict[str, str]]) -> dict[str, list[str]]:
@@ -48,7 +31,6 @@ def categorize_labels(labels: list[dict[str, str]]) -> dict[str, list[str]]:
     # Known status labels
     status_labels = {"fresh", "under research", "researched", "fix-attempted"}
 
-    # Priority labels start with 'priority:'
     priority_labels = []
     domain_labels = []
     other_labels = []
@@ -82,31 +64,22 @@ def categorize_labels(labels: list[dict[str, str]]) -> dict[str, list[str]]:
 
 def create_label(name: str, description: str = "", color: str = "") -> dict[str, Any]:
     """Create a new label."""
-    cmd = ["gh", "label", "create", name]
+    # Remove # if present
+    color = color.lstrip("#") if color else "ededed"
 
-    if description:
-        cmd.extend(["--description", description])
-
-    if color:
-        # Remove # if present
-        color = color.lstrip("#")
-        cmd.extend(["--color", color])
-
-    cmd.append("--force")  # Update if exists
-
-    success, output = run_cmd(cmd, check=False)
+    success = ensure_label_exists(name, color, description)
 
     if success:
         return {
             "success": True,
             "label": name,
             "description": description,
-            "color": color or "default",
+            "color": color,
         }
     else:
         return {
             "success": False,
-            "error": output,
+            "error": "Failed to create label",
             "label": name,
         }
 
