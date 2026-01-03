@@ -4,6 +4,7 @@ pub(crate) mod dungeon;
 pub(crate) mod economy;
 pub(crate) mod location;
 pub(crate) mod loot;
+pub(crate) mod magic;
 pub(crate) mod town;
 pub(crate) mod entities;
 pub(crate) mod combat;
