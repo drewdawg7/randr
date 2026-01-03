@@ -1,20 +1,41 @@
 # CLAUDE.md
 
-
-
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
+## CRITICAL: Check for Helper Scripts FIRST
+
+**Before running CLI commands for common operations, ALWAYS check `.claude/scripts/SCRIPTS.index.md` first.**
+
+This project has helper scripts that handle authentication, error handling, and project-specific workflows. Using raw CLI commands (like `gh issue`, `gh label`, etc.) will be blocked by a pre-tool-use hook.
+
+**Workflow:**
+1. Identify what you need to do (e.g., "get issue details", "create an issue")
+2. Check `.claude/scripts/SCRIPTS.index.md` for the appropriate script
+3. Use the helper script, NOT raw CLI commands
+
+**Example - Getting issue context:**
+```bash
+# WRONG - will be blocked
+gh issue view 37 --json title,body
+
+# CORRECT - use the helper script
+python3 .claude/scripts/issue/issue_context.py 37
+```
+
 ## Skills
 1. updating-code: The skill must be used for any changes to code, this includes while planning changes. Plans should include information from this skill.
 2. ascii-art: The skill must be used whenever ascii art needs to be made or edited.
 
-## Helper Scripts
+## Helper Scripts Index
 
-**For any GitHub issue operations**, check `.claude/scripts/SCRIPTS.index.md` for available automation scripts. The index is organized by task:
-- "I need to... list/query issues" → scripts for fetching/filtering issues
-- "I need to... modify issue state" → scripts for closing, labeling, etc.
-- "I need to... create issues" → scripts for issue creation with proper labels
-- "I need to... work on fixes" → scripts for branch setup and completion
-- "I need to... research issues" → scripts for research workflow
+Check `.claude/scripts/SCRIPTS.index.md` for the full index. Quick reference:
+- **List/query issues** → `list_issues.py`, `issue_selector.py`, `fresh_issue_selector.py`
+- **Get issue details** → `issue_context.py`
+- **Modify issue state** → `close_duplicate.py`, `option_selector.py`
+- **Manage labels** → `label_manager.py`
+- **Create issues** → `create_issue.py`
+- **Work on fixes** → `fix_setup.py`, `fix_complete.py`
+- **Research issues** → `research_setup.py`, `research_complete.py`
 
 All scripts use a shared library (`gh_utils.py`) and output JSON.
 

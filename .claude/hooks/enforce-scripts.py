@@ -1,13 +1,21 @@
 #!/usr/bin/env python3
 """
-PreToolUse hook to enforce use of helper scripts instead of raw gh commands.
+PreToolUse hook to enforce checking helper scripts before running CLI commands.
 
-Blocks raw `gh issue` and `gh api` commands and directs Claude to use
-the helper scripts documented in .claude/scripts/SCRIPTS.index.md
+For certain command categories, this hook blocks execution and reminds Claude
+to check .claude/scripts/SCRIPTS.index.md for available helper scripts first.
 """
 import json
 import sys
 import re
+
+# Command categories that likely have helper scripts
+# Pattern -> category name for the reminder message
+SCRIPT_CHECK_PATTERNS = [
+    (r'^gh\s+issue\b', "GitHub issue operations"),
+    (r'^gh\s+label\b', "GitHub label operations"),
+    (r'^gh\s+api\b.*issues', "GitHub API issue operations"),
+]
 
 def main():
     try:
@@ -23,23 +31,19 @@ def main():
     if tool_name != "Bash":
         sys.exit(0)
 
-    # Patterns for raw gh commands that should use scripts instead
-    blocked_patterns = [
-        (r'^gh\s+issue\s+view\b', "Use `python3 .claude/scripts/issue/issue_context.py <issue_number>` instead"),
-        (r'^gh\s+issue\s+list\b', "Use `python3 .claude/scripts/issue/list_issues.py` or `issue_selector.py` instead"),
-        (r'^gh\s+issue\s+create\b', "Use `python3 .claude/scripts/workflow/create_issue.py` instead"),
-        (r'^gh\s+issue\s+close\b', "Use `python3 .claude/scripts/issue/close_duplicate.py` or handle via workflow scripts"),
-        (r'^gh\s+issue\s+edit\b', "Use the appropriate workflow script from .claude/scripts/"),
-        (r'^gh\s+issue\s+comment\b', "Use workflow scripts that handle comments (fix_complete.py, research_complete.py)"),
-    ]
-
-    for pattern, suggestion in blocked_patterns:
+    for pattern, category in SCRIPT_CHECK_PATTERNS:
         if re.match(pattern, command):
             output = {
                 "hookSpecificOutput": {
                     "hookEventName": "PreToolUse",
                     "permissionDecision": "deny",
-                    "permissionDecisionReason": f"Raw gh commands are not allowed. {suggestion}\n\nSee .claude/scripts/SCRIPTS.index.md for all available scripts."
+                    "permissionDecisionReason": (
+                        f"STOP: Before running {category} commands, you MUST check for helper scripts.\n\n"
+                        f"1. Read .claude/scripts/SCRIPTS.index.md\n"
+                        f"2. Find the appropriate script for your task\n"
+                        f"3. Use the helper script instead of raw commands\n\n"
+                        f"Helper scripts handle auth, error handling, and project-specific workflows."
+                    )
                 }
             }
             print(json.dumps(output))
