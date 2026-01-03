@@ -255,7 +255,23 @@ impl MockComponent for DungeonScreen {
             Cmd::Move(dir) => {
                 match self.state {
                     DungeonState::RoomEntry => {
-                        // RoomEntry only has one option, no movement needed
+                        // RoomEntry can have 2 options if bypass is available
+                        let max_options = if room_entry::can_bypass_current_room() { 2 } else { 1 };
+                        match dir {
+                            CmdDirection::Up => {
+                                let current = self.list_state.selected().unwrap_or(0);
+                                if current > 0 {
+                                    self.list_state.select(Some(current - 1));
+                                }
+                            }
+                            CmdDirection::Down => {
+                                let current = self.list_state.selected().unwrap_or(0);
+                                if current < max_options - 1 {
+                                    self.list_state.select(Some(current + 1));
+                                }
+                            }
+                            _ => {}
+                        }
                     }
                     DungeonState::Navigation => {
                         self.compass_selection = navigation::compass_move(self.compass_selection, dir);

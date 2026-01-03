@@ -380,11 +380,18 @@ impl SpellTestModal {
                 }
             }
 
-            // Draw page slots [1] [2] [3]
+            // Get active page index from tome
+            let active_page_idx = {
+                let gs = game_state();
+                gs.player.equipped_tome().map(|t| t.active_page_index()).unwrap_or(0)
+            };
+
+            // Draw page slots [1] [2] [3] with active indicator
             for i in 0..3 {
                 let is_selected = i == self.selected_page;
+                let is_active = i == active_page_idx;
                 let bracket_color = if is_selected { CYAN } else { DARK_WALNUT };
-                let num_color = if is_selected { WHITE } else { TAN_WOOD };
+                let num_color = if is_active { GREEN } else if is_selected { WHITE } else { TAN_WOOD };
 
                 if col < inner_width {
                     if let Some(cell) = buf.cell_mut((inner_x + col, page_y)) {
@@ -399,6 +406,16 @@ impl SpellTestModal {
                         cell.set_fg(num_color);
                     }
                     col += 1;
+                }
+                // Show * for active page
+                if is_active {
+                    if col < inner_width {
+                        if let Some(cell) = buf.cell_mut((inner_x + col, page_y)) {
+                            cell.set_char('*');
+                            cell.set_fg(GREEN);
+                        }
+                        col += 1;
+                    }
                 }
                 if col < inner_width {
                     if let Some(cell) = buf.cell_mut((inner_x + col, page_y)) {
@@ -416,9 +433,9 @@ impl SpellTestModal {
         // Footer
         let footer_y = area.y + area.height - 2;
         let footer = if self.result.is_some() && !matches!(&self.result, Some(SpellTestResult::ParseError { .. })) {
-            "[Enter] Test  [Tab] Inscribe  [←→] Page  [Esc] Close"
+            "[Tab] Inscribe  [a] Activate  [←→] Page  [Esc] Close"
         } else {
-            "[Enter] Test  [Backspace] Clear  [Esc] Close"
+            "[Enter] Test  [←→] Page  [a] Activate  [Esc] Close"
         };
         let footer_x = inner_x + (inner_width.saturating_sub(footer.len() as u16)) / 2;
         for (i, ch) in footer.chars().enumerate() {
@@ -433,6 +450,11 @@ impl SpellTestModal {
     pub fn handle_input(&mut self, key: Key) -> bool {
         match key {
             Key::Esc => true,
+            Key::Char('a') => {
+                // Activate the selected page
+                self.activate_page();
+                false
+            }
             Key::Char(c) if c.is_alphanumeric() || c == ' ' => {
                 if self.input.len() < 50 {
                     self.input.push(c);
@@ -469,6 +491,25 @@ impl SpellTestModal {
             }
             _ => false,
         }
+    }
+
+    /// Activate the selected page (set it as the active spell page)
+    fn activate_page(&mut self) {
+        let gs = game_state();
+        let Some(tome) = gs.player.equipped_tome_mut() else {
+            self.inscribe_message = Some(("No tome equipped!".to_string(), false));
+            return;
+        };
+
+        if let Err(_) = tome.set_active_page(self.selected_page) {
+            self.inscribe_message = Some(("Invalid page!".to_string(), false));
+            return;
+        }
+
+        self.inscribe_message = Some((
+            format!("Page {} is now active!", self.selected_page + 1),
+            true,
+        ));
     }
 
     /// Inscribe the current spell onto the selected page in the player's tome

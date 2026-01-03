@@ -32,6 +32,17 @@ fn has_dungeon_bypass() -> bool {
         .any(|e| matches!(e, PassiveEffect::DungeonBypass))
 }
 
+/// Check if the current room can be bypassed (Monster room + has DungeonBypass)
+pub fn can_bypass_current_room() -> bool {
+    let gs = game_state();
+    if let Some(dungeon) = gs.dungeon() {
+        if let Some(room) = dungeon.current_room() {
+            return matches!(room.room_type, RoomType::Monster) && has_dungeon_bypass();
+        }
+    }
+    false
+}
+
 /// Render the room entry UI.
 pub fn render(
     frame: &mut Frame,
