@@ -62,6 +62,7 @@ For entities that can die.
 - `is_alive()` - health > 0
 - `on_death()` - returns death result (gold, xp, loot for mobs)
   - `MobDeathResult.loot_drops: Vec<LootDrop>` - spawned items with quantities
+  - **Idempotent for Mob**: `Mob.on_death()` uses `death_processed` guard - second call returns `MobDeathResult::default()`
 
 ## Implementations
 

@@ -81,9 +81,18 @@ Files that depend on `MobId`:
 | Trait | File | Notes |
 |-------|------|-------|
 | `HasLoot` | `src/entities/mob/traits.rs` | Provides `loot()` and `roll_drops()` for item drops |
-| `IsKillable` | `src/entities/mob/traits.rs` | `on_death()` returns `MobDeathResult` with `loot_drops: Vec<LootDrop>` |
+| `IsKillable` | `src/entities/mob/traits.rs` | `on_death()` returns `MobDeathResult` with `loot_drops: Vec<LootDrop>`. **Idempotent**: uses `death_processed` guard, second call returns empty result |
 | `Combatant` | `src/entities/mob/traits.rs` | Combat interface |
 | `DealsDamage` | `src/entities/mob/traits.rs` | Uses default ±15% attack variance |
+
+## Death Processing Guard
+
+The `Mob` struct has a `death_processed: bool` field that guards against double `on_death()` calls:
+- Initialized to `false` when spawned
+- Set to `true` on first `on_death()` call
+- Subsequent calls return `MobDeathResult::default()` (empty: 0 gold, 0 xp, no loot)
+
+This prevents issues if combat flows accidentally call `on_death()` multiple times.
 
 ## Related Modules
 
