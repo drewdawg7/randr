@@ -12,7 +12,9 @@ use crate::location::spec::specs::{
     VILLAGE_ALCHEMIST, VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE, VILLAGE_STORE,
 };
 use crate::location::{Alchemist, Blacksmith, Field, LocationData, Mine, Store};
+use crate::magic::word::WordRegistry;
 use crate::toast::ToastQueue;
+use crate::ui::components::magic::SpellTestModal;
 use crate::ui::components::player::inventory_modal::InventoryModal;
 use crate::ui::screen::ScreenLifecycle;
 use crate::ui::state::UIState;
@@ -62,6 +64,7 @@ pub struct GameState {
     rock_registry: RockRegistry,
     consumable_registry: ConsumableRegistry,
     recipe_registry: RecipeRegistry,
+    word_registry: WordRegistry,
 
     // UI state (grouped for better organization)
     /// UI-specific state. Prefer using `self.ui` for new code.
@@ -73,6 +76,7 @@ pub struct GameState {
     screen_lifecycle: ScreenLifecycle,
     pub active_modal: ModalType,
     pub inventory_modal: InventoryModal,
+    pub spell_test_modal: SpellTestModal,
     pub show_item_details: bool,
     pub toasts: ToastQueue,
 
@@ -133,6 +137,10 @@ impl GameState {
 
     pub fn item_registry(&self) -> &ItemRegistry {
         &self.item_registry
+    }
+
+    pub fn word_registry(&self) -> &WordRegistry {
+        &self.word_registry
     }
 
     pub fn current_combat(&self) -> Option<&CombatRounds> {
@@ -314,6 +322,7 @@ impl Default for GameState {
             rock_registry: RockRegistry::new(),
             consumable_registry: ConsumableRegistry::new(),
             recipe_registry: RecipeRegistry::new(),
+            word_registry: WordRegistry::new(),
 
             // UI state (new grouped struct)
             ui: UIState::new(),
@@ -323,6 +332,7 @@ impl Default for GameState {
             screen_lifecycle: ScreenLifecycle::new(Id::Menu),
             active_modal: ModalType::None,
             inventory_modal: InventoryModal::new(),
+            spell_test_modal: SpellTestModal::new(),
             show_item_details: false,
             toasts: ToastQueue::default(),
 

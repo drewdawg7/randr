@@ -17,6 +17,7 @@ pub enum ModalType {
     Keybinds,
     Inventory,
     Profile,
+    SpellTest,
 }
 
 /// UI-specific state, separate from game logic state.

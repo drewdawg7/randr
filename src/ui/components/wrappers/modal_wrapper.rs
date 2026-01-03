@@ -8,6 +8,7 @@ use tuirealm::{
 };
 
 use crate::system::{game_state, ModalType};
+use crate::ui::components::magic::SpellTestModal;
 use crate::ui::components::player::profile_modal::ProfileModal;
 use crate::ui::components::widgets::modal::Modal;
 
@@ -55,6 +56,9 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
             }
             ModalType::Profile => {
                 ProfileModal::new().render(frame);
+            }
+            ModalType::SpellTest => {
+                game_state().spell_test_modal.render(frame);
             }
         }
     }
@@ -112,6 +116,29 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
                 gs.active_modal = ModalType::None;
             } else {
                 gs.active_modal = ModalType::Profile;
+            }
+            return None;
+        }
+
+        // Handle 't' for spell test modal (god mode)
+        if let Event::Keyboard(KeyEvent { code: Key::Char('t'), .. }) = ev {
+            let gs = game_state();
+            if gs.active_modal == ModalType::SpellTest {
+                gs.active_modal = ModalType::None;
+            } else {
+                gs.active_modal = ModalType::SpellTest;
+                gs.spell_test_modal.reset();
+            }
+            return None;
+        }
+
+        // If spell test modal is open, handle its input
+        if game_state().active_modal == ModalType::SpellTest {
+            if let Event::Keyboard(KeyEvent { code, .. }) = ev {
+                let should_close = game_state().spell_test_modal.handle_input(code);
+                if should_close {
+                    game_state().active_modal = ModalType::None;
+                }
             }
             return None;
         }

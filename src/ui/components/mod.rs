@@ -5,6 +5,7 @@ pub(crate) mod store;
 pub(crate) mod blacksmith;
 pub(crate) mod alchemist;
 pub(crate) mod dungeon;
+pub(crate) mod magic;
 pub(crate) mod player;
 pub(crate) mod screens;
 pub(crate) mod utilities;
