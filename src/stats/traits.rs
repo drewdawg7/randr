@@ -1,6 +1,33 @@
 use crate::stats::{StatInstance, StatSheet, StatType};
 
+/// Trait for entities that can be healed.
+/// Provides default implementations for healing by fixed amount or percentage.
+pub trait Healable: HasStats {
+    /// Heal the entity by a fixed amount, clamped to max HP.
+    /// Returns the actual amount healed.
+    fn heal(&mut self, amount: i32) -> i32 {
+        let hp_before = self.hp();
+        let max_hp = self.max_hp();
+        let actual_heal = amount.min(max_hp - hp_before);
+        self.inc(StatType::Health, actual_heal);
+        actual_heal
+    }
 
+    /// Heal the entity by a percentage of max HP.
+    /// Returns the actual amount healed.
+    fn heal_percent(&mut self, percent: f32) -> i32 {
+        let heal_amount = ((self.max_hp() as f32) * percent).round() as i32;
+        self.heal(heal_amount)
+    }
+
+    /// Check if entity can be healed (not at full health).
+    fn can_heal(&self) -> bool {
+        self.hp() < self.max_hp()
+    }
+}
+
+/// Blanket implementation of Healable for all entities with stats
+impl<T: HasStats> Healable for T {}
 
 pub trait HasStats {
     fn stats(&self) -> &StatSheet;

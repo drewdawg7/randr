@@ -72,6 +72,32 @@ Trait for entities with stats. Provides convenience methods:
 | `goldfind()` | GoldFind shortcut |
 | `mining()` | Mining shortcut |
 
+## Healable Trait
+
+Trait for entities that can be healed. Has a blanket implementation for all `HasStats` types.
+
+**Location**: `src/stats/traits.rs`
+
+| Method | Description |
+|--------|-------------|
+| `heal(amount)` | Heal by fixed amount, clamped to max HP. Returns actual healed. |
+| `heal_percent(percent)` | Heal by percentage of max HP. Returns actual healed. |
+| `can_heal()` | Returns true if HP < max HP |
+
+**Blanket Implementation**: `impl<T: HasStats> Healable for T {}`
+
+This means any entity implementing `HasStats` automatically gets healing capabilities.
+
+### Integration with Consumables
+
+The `ApplyEffect` trait (for consumable items) has a blanket implementation for all `Healable` types:
+
+```rust
+impl<T: Healable> ApplyEffect for T { ... }
+```
+
+This allows any healable entity to receive consumable effects without manual implementation.
+
 ## Implementations
 
 | Entity | Stats Used | Notes |
