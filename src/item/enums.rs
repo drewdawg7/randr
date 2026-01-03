@@ -103,7 +103,7 @@ pub enum ItemError {
     NotAConsumable,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub enum ItemQuality {
     Poor,
     Normal,

@@ -62,19 +62,92 @@ impl LootTable {
 
     /// Roll each item independently, spawn items, and return all drops with their quantity.
     pub fn roll_drops(&self) -> Vec<LootDrop> {
+        self.roll_drops_with_mf(0)
+    }
+
+    /// Roll drops with Magic Find bonus rolls.
+    ///
+    /// Magic Find grants bonus roll attempts:
+    /// - 20 MF = 20% chance for 1 bonus roll
+    /// - 120 MF = 100% for 1 bonus roll + 20% for 2nd
+    ///
+    /// Each loot item is rolled (1 + bonus_rolls) times.
+    /// If ANY roll succeeds, the item drops.
+    /// For equipment: keeps highest quality roll.
+    /// For other items: keeps highest quantity roll.
+    pub fn roll_drops_with_mf(&self, magic_find: i32) -> Vec<LootDrop> {
         let mut rng = rand::thread_rng();
         let mut drops = Vec::new();
 
+        // Calculate bonus rolls from magic find
+        let bonus_rolls = Self::calculate_bonus_rolls(&mut rng, magic_find);
+        let total_rolls = 1 + bonus_rolls;
+
         for loot_item in &self.loot {
-            let roll = rng.gen_range(1..=loot_item.denominator);
-            if roll <= loot_item.numerator {
-                let quantity = rng.gen_range(loot_item.quantity.clone());
-                let item = game_state().spawn_item(loot_item.item_kind);
-                drops.push(LootDrop { item, quantity });
+            let mut best_drop: Option<LootDrop> = None;
+
+            for _ in 0..total_rolls {
+                let roll = rng.gen_range(1..=loot_item.denominator);
+                if roll <= loot_item.numerator {
+                    let quantity = rng.gen_range(loot_item.quantity.clone());
+                    let item = game_state().spawn_item(loot_item.item_kind);
+                    let drop = LootDrop { item, quantity };
+
+                    best_drop = Some(match best_drop {
+                        None => drop,
+                        Some(existing) => Self::pick_better_drop(existing, drop),
+                    });
+                }
+            }
+
+            if let Some(drop) = best_drop {
+                drops.push(drop);
             }
         }
 
         drops
+    }
+
+    /// Calculate number of bonus rolls from magic find value.
+    /// Each 100 MF = 1 guaranteed bonus roll.
+    /// Remainder gives percentage chance for one additional roll.
+    fn calculate_bonus_rolls<R: Rng>(rng: &mut R, magic_find: i32) -> i32 {
+        if magic_find <= 0 {
+            return 0;
+        }
+
+        let guaranteed_rolls = magic_find / 100;
+        let chance_for_extra = magic_find % 100;
+
+        let extra_roll = if chance_for_extra > 0 {
+            let roll = rng.gen_range(1..=100);
+            if roll <= chance_for_extra { 1 } else { 0 }
+        } else {
+            0
+        };
+
+        guaranteed_rolls + extra_roll
+    }
+
+    /// Pick the better of two drops.
+    /// For equipment: higher quality wins.
+    /// For other items: higher quantity wins.
+    fn pick_better_drop(a: LootDrop, b: LootDrop) -> LootDrop {
+        if a.item.item_type.is_equipment() {
+            // Equipment: compare quality
+            if b.item.quality > a.item.quality {
+                b
+            } else {
+                a
+            }
+        } else {
+            // Non-equipment: compare quantity
+            if b.quantity > a.quantity {
+                b
+            } else {
+                a
+            }
+        }
     }
 }
 

@@ -23,6 +23,7 @@ pub struct MiningResult {
 pub fn mine_rock() -> MiningResult {
     let gs = game_state();
     let mining_damage = gs.player.effective_mining();
+    let magic_find = gs.player.effective_magicfind();
 
     let Some(mut rock) = gs.town.mine.current_rock.take() else {
         return MiningResult {
@@ -31,7 +32,7 @@ pub fn mine_rock() -> MiningResult {
         };
     };
 
-    if let Some(drops) = rock.mine(mining_damage) {
+    if let Some(drops) = rock.mine(mining_damage, magic_find) {
         // Rock was destroyed - add loot to inventory
         for loot_drop in &drops {
             for _ in 0..loot_drop.quantity {

@@ -376,7 +376,7 @@ fn mob_on_death_returns_death_result() {
     let mut mob = create_test_mob("Dying Mob", 10, 5, 0);
     mob.take_damage(100);
 
-    let result = mob.on_death();
+    let result = mob.on_death(0);
 
     assert_eq!(result.gold_dropped, 5);
     assert_eq!(result.xp_dropped, 15);
@@ -388,12 +388,12 @@ fn mob_on_death_returns_empty_on_second_call() {
     mob.take_damage(100);
 
     // First call returns rewards
-    let first_result = mob.on_death();
+    let first_result = mob.on_death(0);
     assert_eq!(first_result.gold_dropped, 5);
     assert_eq!(first_result.xp_dropped, 15);
 
     // Second call returns empty result (guard prevents double rewards)
-    let second_result = mob.on_death();
+    let second_result = mob.on_death(0);
     assert_eq!(second_result.gold_dropped, 0);
     assert_eq!(second_result.xp_dropped, 0);
     assert!(second_result.loot_drops.is_empty());
@@ -405,7 +405,7 @@ fn player_on_death_loses_gold_percentage() {
     player.add_gold(100);
     player.take_damage(player.hp()); // Kill player
 
-    let result = player.on_death();
+    let result = player.on_death(0);
 
     // Player loses 5% of gold
     assert_eq!(result.gold_lost, 5);
@@ -418,7 +418,7 @@ fn player_on_death_restores_health() {
     player.take_damage(100); // Kill the player (hp = 0)
     assert_eq!(player.hp(), 0);
 
-    let _ = player.on_death();
+    let _ = player.on_death(0);
 
     // on_death adds max_hp to current hp, restoring from 0 to full
     assert_eq!(player.hp(), player.max_hp());

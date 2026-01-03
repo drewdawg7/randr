@@ -224,9 +224,9 @@ impl DungeonRoom {
     }
 
     /// Open the chest and get loot drops (only for chest rooms)
-    pub fn open_chest(&mut self) -> Vec<LootDrop> {
+    pub fn open_chest(&mut self, magic_find: i32) -> Vec<LootDrop> {
         if let Some(chest) = self.chest.take() {
-            chest.roll_drops()
+            chest.roll_drops_with_mf(magic_find)
         } else {
             Vec::new()
         }

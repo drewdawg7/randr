@@ -25,9 +25,9 @@ impl HasStats for Rock {
 impl IsKillable for Rock {
     type DeathResult = RockDeathResult;
 
-    fn on_death(&mut self) -> RockDeathResult {
+    fn on_death(&mut self, magic_find: i32) -> RockDeathResult {
         RockDeathResult {
-            drops: self.roll_drops(),
+            drops: self.roll_drops_with_mf(magic_find),
         }
     }
 }

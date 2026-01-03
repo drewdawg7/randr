@@ -22,7 +22,8 @@ pub trait IsKillable: HasStats {
     }
 
     /// Called when health reaches zero. Returns implementation-specific result.
-    fn on_death(&mut self) -> Self::DeathResult;
+    /// Magic find value is used for bonus loot rolls.
+    fn on_death(&mut self, magic_find: i32) -> Self::DeathResult;
 }
 
 /// Trait for entities that can deal damage.

@@ -49,7 +49,7 @@ impl HasStats for Player {
 impl IsKillable for Player {
     type DeathResult = PlayerDeathResult;
 
-    fn on_death(&mut self) -> PlayerDeathResult {
+    fn on_death(&mut self, _magic_find: i32) -> PlayerDeathResult {
         let gold_lost = ((self.gold() as f64) * 0.05).round() as i32;
         self.dec_gold(gold_lost);
         // Restore health to full
