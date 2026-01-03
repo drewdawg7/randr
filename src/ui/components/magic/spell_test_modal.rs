@@ -11,11 +11,12 @@ use tuirealm::event::Key;
 
 use crate::{
     magic::{
+        page::Page,
         spell::compute_spell,
         word::WordId,
     },
     system::game_state,
-    ui::theme::{CREAM_WOOD, DARK_WALNUT, GREEN, LIGHT_BEIGE, OAK_BROWN, RED, TAN_WOOD, WHITE, WOOD_BROWN, YELLOW},
+    ui::theme::{CREAM_WOOD, CYAN, DARK_WALNUT, GREEN, LIGHT_BEIGE, OAK_BROWN, RED, TAN_WOOD, WHITE, WOOD_BROWN, YELLOW},
 };
 
 // Modal styling
@@ -33,6 +34,10 @@ pub struct SpellTestModal {
     unknown_words: Vec<String>,
     /// Result message
     result: Option<SpellTestResult>,
+    /// Selected page slot (0, 1, or 2)
+    selected_page: usize,
+    /// Message after inscription attempt
+    inscribe_message: Option<(String, bool)>, // (message, is_success)
 }
 
 #[derive(Clone)]
@@ -61,6 +66,8 @@ impl SpellTestModal {
         self.parsed_words.clear();
         self.unknown_words.clear();
         self.result = None;
+        self.selected_page = 0;
+        self.inscribe_message = None;
     }
 
     /// Render the modal
@@ -345,9 +352,74 @@ impl SpellTestModal {
             }
         }
 
+        // Page selection and inscribe message (above footer)
+        let page_y = area.y + area.height - 4;
+
+        // Show inscribe message if any
+        if let Some((msg, is_success)) = &self.inscribe_message {
+            let msg_color = if *is_success { GREEN } else { RED };
+            for (i, ch) in msg.chars().enumerate() {
+                if (i as u16) < inner_width {
+                    if let Some(cell) = buf.cell_mut((inner_x + i as u16, page_y)) {
+                        cell.set_char(ch);
+                        cell.set_fg(msg_color);
+                    }
+                }
+            }
+        } else if self.result.is_some() {
+            // Show page selection when a valid spell is tested
+            let page_label = "Inscribe to page: ";
+            let mut col = 0u16;
+            for ch in page_label.chars() {
+                if col < inner_width {
+                    if let Some(cell) = buf.cell_mut((inner_x + col, page_y)) {
+                        cell.set_char(ch);
+                        cell.set_fg(TAN_WOOD);
+                    }
+                    col += 1;
+                }
+            }
+
+            // Draw page slots [1] [2] [3]
+            for i in 0..3 {
+                let is_selected = i == self.selected_page;
+                let bracket_color = if is_selected { CYAN } else { DARK_WALNUT };
+                let num_color = if is_selected { WHITE } else { TAN_WOOD };
+
+                if col < inner_width {
+                    if let Some(cell) = buf.cell_mut((inner_x + col, page_y)) {
+                        cell.set_char('[');
+                        cell.set_fg(bracket_color);
+                    }
+                    col += 1;
+                }
+                if col < inner_width {
+                    if let Some(cell) = buf.cell_mut((inner_x + col, page_y)) {
+                        cell.set_char(char::from_digit((i + 1) as u32, 10).unwrap_or('?'));
+                        cell.set_fg(num_color);
+                    }
+                    col += 1;
+                }
+                if col < inner_width {
+                    if let Some(cell) = buf.cell_mut((inner_x + col, page_y)) {
+                        cell.set_char(']');
+                        cell.set_fg(bracket_color);
+                    }
+                    col += 1;
+                }
+                if col < inner_width {
+                    col += 1; // space between
+                }
+            }
+        }
+
         // Footer
         let footer_y = area.y + area.height - 2;
-        let footer = "[Enter] Test  [Backspace] Clear  [Esc] Close";
+        let footer = if self.result.is_some() && !matches!(&self.result, Some(SpellTestResult::ParseError { .. })) {
+            "[Enter] Test  [Tab] Inscribe  [←→] Page  [Esc] Close"
+        } else {
+            "[Enter] Test  [Backspace] Clear  [Esc] Close"
+        };
         let footer_x = inner_x + (inner_width.saturating_sub(footer.len() as u16)) / 2;
         for (i, ch) in footer.chars().enumerate() {
             if let Some(cell) = buf.cell_mut((footer_x + i as u16, footer_y)) {
@@ -364,20 +436,104 @@ impl SpellTestModal {
             Key::Char(c) if c.is_alphanumeric() || c == ' ' => {
                 if self.input.len() < 50 {
                     self.input.push(c);
+                    self.inscribe_message = None;
                 }
                 false
             }
             Key::Backspace => {
                 self.input.pop();
                 self.result = None;
+                self.inscribe_message = None;
                 false
             }
             Key::Enter => {
                 self.test_spell();
+                self.inscribe_message = None;
+                false
+            }
+            Key::Tab => {
+                self.inscribe_spell();
+                false
+            }
+            Key::Left => {
+                if self.selected_page > 0 {
+                    self.selected_page -= 1;
+                }
+                false
+            }
+            Key::Right => {
+                if self.selected_page < 2 {
+                    self.selected_page += 1;
+                }
                 false
             }
             _ => false,
         }
+    }
+
+    /// Inscribe the current spell onto the selected page in the player's tome
+    fn inscribe_spell(&mut self) {
+        // Must have a valid spell result (not parse error)
+        let is_valid = matches!(
+            &self.result,
+            Some(SpellTestResult::Success { .. }) | Some(SpellTestResult::Fizzle { .. })
+        );
+
+        if !is_valid {
+            self.inscribe_message = Some(("Test a spell first!".to_string(), false));
+            return;
+        }
+
+        // Get parsed words
+        if self.parsed_words.is_empty() {
+            // Re-parse from input
+            let words: Vec<&str> = self.input.split_whitespace().collect();
+            self.parsed_words.clear();
+            for word in words {
+                if let Some(word_id) = WordId::from_str(word) {
+                    self.parsed_words.push(word_id);
+                }
+            }
+        }
+
+        if self.parsed_words.is_empty() {
+            self.inscribe_message = Some(("No valid words to inscribe!".to_string(), false));
+            return;
+        }
+
+        // Create and inscribe the page (scoped to drop registry borrow)
+        let page = {
+            let gs = game_state();
+            let registry = gs.word_registry();
+            let mut page = Page::new();
+            let _result = page.inscribe(self.parsed_words.clone(), registry);
+            page
+        };
+
+        // Now get the mutable tome reference
+        let gs = game_state();
+        let Some(tome) = gs.player.equipped_tome_mut() else {
+            self.inscribe_message = Some(("No tome equipped!".to_string(), false));
+            return;
+        };
+
+        // Add the page to the tome
+        if let Err(_) = tome.set_page(self.selected_page, page) {
+            self.inscribe_message = Some(("Failed to set page!".to_string(), false));
+            return;
+        }
+
+        // Show success message
+        let spell_name = match &self.result {
+            Some(SpellTestResult::Success { spell_name, .. }) => spell_name.clone(),
+            Some(SpellTestResult::Fizzle { .. }) => "Fizzle".to_string(),
+            _ => "Unknown".to_string(),
+        };
+
+        self.inscribe_message = Some((
+            format!("Inscribed '{}' to page {}!", spell_name, self.selected_page + 1),
+            true,
+        ));
     }
 
     /// Test the current input as a spell
@@ -399,6 +555,7 @@ impl SpellTestModal {
         }
 
         if !unknown.is_empty() {
+            self.parsed_words.clear();
             self.result = Some(SpellTestResult::ParseError { unknown });
             return;
         }
@@ -406,6 +563,9 @@ impl SpellTestModal {
         if parsed.is_empty() {
             return;
         }
+
+        // Save parsed words for inscribing
+        self.parsed_words = parsed.clone();
 
         // Compute the spell
         let registry = game_state().word_registry();
