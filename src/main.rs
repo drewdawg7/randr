@@ -10,9 +10,11 @@ fn main() -> std::io::Result<()> {
     let sword = game_state.spawn_item(ItemId::BonkStick);
     let upgrade_stone = game_state.spawn_item(ItemId::QualityUpgradeStone);
     let ring = game_state.spawn_item(ItemId::ImbaRing);
+    let tome = game_state.spawn_item(ItemId::ApprenticeTome);
     let _ = game_state.player.add_to_inv(sword);
     let _ = game_state.player.add_to_inv(ring);
     let _ = game_state.player.add_to_inv(upgrade_stone);
+    let _ = game_state.player.add_to_inv(tome);
 
 
 
