@@ -8,6 +8,7 @@ IMPORTANT: **Use Rust LSP (rust-analyzer) instead of grep for navigating Rust co
 IMPORTANT: Reference ascii-art when making UI changes.
 IMPORTANT: Reference log-issue when issues are found.
 IMPORTANT: Reference test when creating tests.
+IMPORTANT: **Use ast-grep for refactoring** (renames, call site updates). See `refactoring.md` for patterns.
 
 When refactoring or updating code always do the following:
 
@@ -16,7 +17,7 @@ When refactoring or updating code always do the following:
 3. **Activate Skills**: Be sure to also activate any necessary skills. i.e. if you need to make ascii art, use the ascii-art skill.
 4. **Ask Questions**: Once you've reviewed relevant documentation, make sure to ask questions to clarify any amibiguity
 5. **Evaluate Parallel Development**: When looking at plans, evaluate if its feasible to make development changes in parallel. If it is, use subagents to increase development speed. All agents should still work off the same branch.
-6. **Make changes**: Proceed with the changes. For any large, logical chunk of changes, add a commit to easily rollback if needed.
+6. **Make changes**: Proceed with the changes. For renames/refactoring, use `ast-grep` (see `refactoring.md`). For any large, logical chunk of changes, add a commit to easily rollback if needed.
 7. **Test**: Check if a tests.rs file exists in the relevant modules and run them. If a test fails, do not update the test itself unless the failure was due to a structural change. (i.e., a new field is added to a struct and so now the test errors)
 8. **Cargo Check**: Run cargo check to verify compilation
 9. **User Check**: Ask the user to review the changes and verify they work.
