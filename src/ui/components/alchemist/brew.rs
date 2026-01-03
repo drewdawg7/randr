@@ -112,7 +112,7 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
                 let recipe_id = recipes[selected];
                 match Recipe::new(recipe_id) {
                     Ok(recipe) => {
-                        match recipe.craft(&mut gs.player) {
+                        match recipe.craft(&mut gs.player, |id| game_state().spawn_item(id)) {
                             Ok(item) => {
                                 let item_name = item.name;
                                 match gs.player.add_to_inv(item) {

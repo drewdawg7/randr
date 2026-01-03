@@ -3,8 +3,8 @@ name: fix-issue
 description: Identifies researched issues in the github repo and fixes them based on releative severity
 ---
 
-**IMPORTANT**: Use subagents to parallelize fixing issues.
 **IMPORTANT**: You do not need to ask permission to make edits.
+**IMPORTANT**: ONLY WORK ON ONE ISSUE AT A TIME
 
 ## Overview
 1. Pull down a list of issues that have the label 'researched' and are not marked as complete
