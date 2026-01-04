@@ -28,6 +28,14 @@ pub fn apply_defense(raw_damage: i32, defense: i32) -> i32 {
     (raw_damage as f64 * damage_multiplier).round() as i32
 }
 
+/// Apply goldfind bonus to base gold amount.
+/// Formula: final = base * (1 + goldfind/100)
+/// Example: 100 goldfind = 2x gold multiplier
+pub fn apply_goldfind(base_gold: i32, goldfind: i32) -> i32 {
+    let multiplier = 1.0 + (goldfind as f64 / 100.0);
+    ((base_gold as f64) * multiplier).round() as i32
+}
+
 pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 -> AttackResult {
     let target_health_before = defender.effective_health();
@@ -101,9 +109,7 @@ where
         let death_result = mob.on_death(player.effective_magicfind(), |id| game_state().spawn_item(id));
 
         // Apply gold with goldfind bonus
-        let gf = player.effective_goldfind();
-        let multiplier = 1.0 + (gf as f64 / 100.0);
-        let gold_with_bonus = ((death_result.gold_dropped as f64) * multiplier).round() as i32;
+        let gold_with_bonus = apply_goldfind(death_result.gold_dropped, player.effective_goldfind());
         player.add_gold(gold_with_bonus);
         cr.gold_gained = gold_with_bonus;
 
@@ -155,9 +161,7 @@ pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
     let death_result = combat.mob.on_death(player.effective_magicfind(), |id| game_state().spawn_item(id));
 
     // Apply gold with goldfind bonus
-    let gf = player.effective_goldfind();
-    let multiplier = 1.0 + (gf as f64 / 100.0);
-    let gold_with_bonus = ((death_result.gold_dropped as f64) * multiplier).round() as i32;
+    let gold_with_bonus = apply_goldfind(death_result.gold_dropped, player.effective_goldfind());
     player.add_gold(gold_with_bonus);
     combat.gold_gained = gold_with_bonus;
 

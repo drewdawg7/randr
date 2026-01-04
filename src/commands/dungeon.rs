@@ -223,9 +223,7 @@ pub fn attack_boss() -> CommandResult {
 
         if let Some(death_result) = death_result {
             // Apply gold with goldfind bonus
-            let gf = gs.player.effective_goldfind();
-            let multiplier = 1.0 + (gf as f64 / 100.0);
-            let gold_with_bonus = ((death_result.gold_dropped as f64) * multiplier).round() as i32;
+            let gold_with_bonus = combat::apply_goldfind(death_result.gold_dropped, gs.player.effective_goldfind());
             gs.player.add_gold(gold_with_bonus);
 
             // Award XP
