@@ -169,3 +169,17 @@ The `left_padding` parameter adds consistent left margin to all lines. The metho
 - `f/F` - Cycle filter (when enabled)
 - `Enter` - Select item or Back button
 - `Esc` - Usually bound externally to go back
+
+## Internal Scroll Mechanics
+
+The widget manages its own scrolling via `scroll_offset` and `actual_visible_count`:
+
+- **`scroll_offset`**: Index of the first visible item in the filtered list
+- **`actual_visible_count`**: Number of items that can actually be displayed, accounting for:
+  - Available render area height
+  - Filter button row (if enabled)
+  - Scroll indicators ("... more above/below ...") which take space from item display
+
+**Important**: The widget uses `render_widget` (not `render_stateful_widget`) because it handles selection highlighting manually via the `> ` prefix. Using stateful rendering can cause ratatui's internal state to conflict with our custom scroll logic.
+
+The `adjust_scroll()` method keeps the selected item visible by adjusting `scroll_offset` when the selection moves outside the visible range.
