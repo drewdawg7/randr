@@ -25,6 +25,7 @@ python3 .claude/scripts/issue/issue_context.py 37
 ## Skills
 1. updating-code: The skill must be used for any changes to code, this includes while planning changes. Plans should include information from this skill.
 2. ascii-art: The skill must be used whenever ascii art needs to be made or edited.
+3. **Code Navigation**: Use LSP and ast-grep instead of grep for Rust code (see "Rust LSP" section below).
 
 ## Helper Scripts Index
 

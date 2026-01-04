@@ -3,6 +3,19 @@
 > Codebase documentation for a Rust TUI RPG game using ratatui/tuirealm.
 > Use LSP for code navigation. Use ast-grep for refactoring. Always branch first.
 
+## Code Navigation Tools (USE INSTEAD OF GREP)
+
+| Task | Tool | NOT |
+|------|------|-----|
+| Find definition | `LSP goToDefinition` | grep |
+| Find all usages | `LSP findReferences` | grep |
+| Find implementations | `LSP goToImplementation` | grep |
+| Get type info | `LSP hover` | - |
+| Rename/refactor | `ast-grep` (see [refactoring.md](refactoring.md)) | sed/manual |
+| Search .md/.toml | grep/Grep tool | - |
+
+**Decision:** For Rust code, try LSP first. Use ast-grep for refactoring. Only fall back to grep for non-Rust files or when LSP returns nothing.
+
 ## Quick Reference
 
 - [SKILL.md](SKILL.md): Step-by-step code change procedure, parallelization decision tree
