@@ -57,6 +57,12 @@ pub const BLACKSMITH_BG: Color = Color::Rgb(40, 38, 54); // Very subtle warm tin
 pub const FIELD_BG: Color = Color::Rgb(34, 42, 56); // Very subtle green tint
 pub const FIGHT_BG: Color = Color::Rgb(34, 42, 56); // Same as Field
 pub const MINE_BG: Color = Color::Rgb(32, 32, 38); // Very subtle grey tint
+// Cave interior colors (greyscale for top-down mine view)
+pub const CAVE_WALL_DARK: Color = Color::Rgb(60, 60, 65);    // Dense wall rock (#)
+pub const CAVE_WALL_MID: Color = Color::Rgb(90, 90, 95);     // Wall texture (@)
+pub const CAVE_WALL_LIGHT: Color = Color::Rgb(120, 120, 125); // Wall edge (%)
+pub const CAVE_FLOOR_EDGE: Color = Color::Rgb(150, 150, 155); // Floor edge transition (;)
+pub const CAVE_FLOOR_BG: Color = Color::Rgb(25, 25, 28);     // Open floor background (darker)
 pub const ALCHEMIST_BG: Color = Color::Rgb(38, 32, 48); // Very subtle purple tint
 pub const ORANGE: Color = Color::Rgb(255, 152, 0);
 pub const PURPLE: Color = Color::Rgb(171, 71, 188);
@@ -67,6 +73,7 @@ pub const SOFT_RED: Color = Color::Rgb(200, 100, 100);
 // Rock type colors
 pub const COPPER_ORE: Color = Color::Rgb(184, 115, 51);  // Copper orange
 pub const TIN_ORE: Color = Color::Rgb(180, 180, 190);    // Silver-ish
+pub const COAL_ORE: Color = Color::Rgb(40, 40, 45);      // Dark coal
 
 /// Returns a color based on upgrade count (0=white, 1=green, 2=blue, 3=purple, 4+=orange)
 pub fn upgrade_color(num_upgrades: i32) -> Color {

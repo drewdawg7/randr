@@ -1,13 +1,10 @@
 use ratatui::{
-    layout::{Constraint, Direction, Layout, Rect},
+    layout::Rect,
     style::Style,
-    text::{Line, Span},
-    widgets::{Block, Paragraph},
+    widgets::Block,
     Frame,
 };
-use rand::Rng;
 
-use crate::ui::theme::{self as colors, ColorExt};
 use tuirealm::{
     command::{Cmd, CmdResult},
     event::{Key, KeyEvent},
@@ -15,75 +12,23 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State,
 };
 
-use crate::commands::{mine_rock, apply_result};
-use crate::location::mine::RockArt;
+use crate::loot::collect_loot_drops;
 use crate::system::game_state;
 use crate::ui::Id;
-use crate::ui::components::utilities::{render_location_header, PICKAXE};
-use crate::ui::components::widgets::border::BorderTheme;
+use crate::ui::theme as colors;
 
-// HP bar block characters
-const BLOCK_FULL: char = '█';
-const BLOCK_DARK: char = '▓';
-const BLOCK_MED: char = '▒';
-const BLOCK_LIGHT: char = '░';
+use super::cave_art::{self, CaveLayout};
 
 pub struct MineScreen {
     props: Props,
-    selected_mine: usize,   // 0, 1, or 2 for which mine option
-    active_button: usize,   // Which mine button is currently active (0, 1, or 2)
-    recent_drops: Vec<(crate::item::ItemId, u32)>, // Pre-grouped drops (item, count)
-    current_rock_art: Option<RockArt>, // Generated art for current rock
-    last_rock_max_hp: i32,  // Track when rock changes (new rock = full hp)
+    cave: Option<CaveLayout>,
 }
 
 impl MineScreen {
     pub fn new() -> Self {
         Self {
             props: Props::default(),
-            selected_mine: 0,
-            active_button: 0,
-            recent_drops: Vec::new(),
-            current_rock_art: None,
-            last_rock_max_hp: 0,
-        }
-    }
-
-    /// Pick a new random active button (different from current)
-    fn pick_new_active_button(&mut self) {
-        let mut rng = rand::thread_rng();
-        let mut new_button = rng.gen_range(0..3);
-        while new_button == self.active_button {
-            new_button = rng.gen_range(0..3);
-        }
-        self.active_button = new_button;
-    }
-
-    /// Ensure we have rock art for the current rock, regenerate if rock changed
-    fn ensure_rock_art(&mut self) {
-        let gs = game_state();
-        if let Some(rock) = &gs.town.mine.current_rock {
-            let current_max = rock.stats.max_value(crate::stats::StatType::Health);
-            let current_hp = rock.stats.value(crate::stats::StatType::Health);
-
-            // Regenerate if: no art, or rock respawned (hp == max and max changed)
-            let needs_regen = self.current_rock_art.is_none()
-                || (current_hp == current_max && current_max != self.last_rock_max_hp);
-
-            if needs_regen {
-                self.current_rock_art = Some(RockArt::generate(&rock.loot));
-                self.last_rock_max_hp = current_max;
-            }
-        } else {
-            self.current_rock_art = None;
-        }
-    }
-
-    /// Render the rock art to Lines for display
-    fn render_rock_lines(&self) -> Vec<Line<'static>> {
-        match &self.current_rock_art {
-            Some(art) => art.to_lines(),
-            None => vec![],
+            cave: None,
         }
     }
 }
@@ -94,292 +39,29 @@ impl Default for MineScreen {
     }
 }
 
-fn mine_header() -> Vec<Line<'static>> {
-    let gs = game_state();
-    let effective_mining = gs.player.effective_mining();
-
-    vec![
-        Line::from(vec![
-            Span::styled("The Village Mine", Style::default().color(colors::GRANITE)),
-        ]),
-        Line::from(vec![
-            Span::styled(format!("{} ", PICKAXE), Style::default().color(colors::LIGHT_STONE)),
-            Span::raw(format!("{}", effective_mining)),
-        ]),
-    ]
-}
-
-fn render_hp_bar(current: i32, max: i32) -> Line<'static> {
-    let segments: i32 = 10;
-    let filled = if max > 0 { ((current * segments) / max).max(0) as usize } else { 0 };
-    let hp_percent = if max > 0 { (current * 100) / max } else { 0 };
-
-    let color = if hp_percent > 60 {
-        colors::GREEN
-    } else if hp_percent > 30 {
-        colors::YELLOW
-    } else {
-        colors::RED
-    };
-
-    let mut spans = vec![Span::raw("[")];
-    for i in 0..segments as usize {
-        let ch = if filled == 0 {
-            ' '
-        } else if i < filled.saturating_sub(3) {
-            BLOCK_FULL
-        } else if i == filled.saturating_sub(3) {
-            BLOCK_DARK
-        } else if i == filled.saturating_sub(2) {
-            BLOCK_MED
-        } else if i == filled.saturating_sub(1) {
-            BLOCK_LIGHT
-        } else {
-            ' '
-        };
-        spans.push(Span::styled(ch.to_string(), Style::default().color(color)));
-    }
-    spans.push(Span::raw("]"));
-    Line::from(spans)
-}
-
-fn render_hp_text(current: i32, max: i32) -> Line<'static> {
-    Line::from(vec![
-        Span::styled(format!("{}/{}", current, max), Style::default().color(colors::LIGHT_STONE)),
-    ])
-}
-
 impl MockComponent for MineScreen {
     fn view(&mut self, frame: &mut Frame, _area: Rect) {
-        // Ensure a rock exists when viewing the mine
         let gs = game_state();
-        gs.town.mine.ensure_rock_exists(&gs.player);
 
-        // Generate/update rock art if needed
-        self.ensure_rock_art();
+        // Generate new cave when entering the screen
+        if gs.screen_lifecycle().just_entered() {
+            self.cave = Some(CaveLayout::generate());
+        }
+
+        // Ensure we have a cave (fallback)
+        if self.cave.is_none() {
+            self.cave = Some(CaveLayout::generate());
+        }
 
         let frame_size = frame.area();
 
-        // Border offsets
-        let y_offset: u16 = 1;
-        let x_offset: u16 = 1;
+        // Fill entire screen with cave floor background
+        let bg_fill = Block::default().style(Style::default().bg(colors::CAVE_FLOOR_BG));
+        frame.render_widget(bg_fill, frame_size);
 
-        // Reserve space for top border (1) and bottom border (1)
-        let content_height = frame_size.height.saturating_sub(2);
-        let content_area = Rect {
-            x: x_offset,
-            y: y_offset,
-            width: frame_size.width.saturating_sub(x_offset * 2),
-            height: content_height,
-        };
-
-        // Fill background with MINE_BG
-        let bg_fill = Block::default().style(Style::default().on_color(colors::MINE_BG));
-        frame.render_widget(bg_fill, content_area);
-
-        // Render header and get content area
-        let header_lines = mine_header();
-        let remaining_area = render_location_header(
-            frame,
-            content_area,
-            header_lines,
-            colors::MINE_BG,
-            colors::GRANITE,
-        );
-
-        // Render recent drops on the left side below header
-        if !self.recent_drops.is_empty() {
-            let gs = game_state();
-            let mut drop_lines: Vec<Line> = vec![
-                Line::from(Span::styled("Drops:", Style::default().color(colors::YELLOW))),
-            ];
-
-            for (item_kind, count) in &self.recent_drops {
-                let item_name = gs.get_item_name(*item_kind);
-                let display = if *count > 1 {
-                    format!("  {} (x{})", item_name, count)
-                } else {
-                    format!("  {}", item_name)
-                };
-                drop_lines.push(Line::from(Span::styled(
-                    display,
-                    Style::default().color(colors::WHITE),
-                )));
-            }
-
-            let drops_area = Rect {
-                x: remaining_area.x + 1,
-                y: remaining_area.y,
-                width: 25,
-                height: drop_lines.len() as u16,
-            };
-            frame.render_widget(Paragraph::new(drop_lines), drops_area);
-        }
-
-        // Get rock art dimensions
-        let (rock_width, rock_height) = self.current_rock_art
-            .as_ref()
-            .map(|art| (art.width as u16, art.height as u16))
-            .unwrap_or((22, 8));
-
-        // Split remaining area: rock art, HP bar, HP text, horizontal mine options
-        let chunks = Layout::default()
-            .direction(Direction::Vertical)
-            .constraints([
-                Constraint::Length(rock_height + 2), // Rock + padding
-                Constraint::Length(1),               // HP bar
-                Constraint::Length(1),               // HP text
-                Constraint::Length(1),               // Horizontal mine options
-                Constraint::Min(1),                  // Spacing
-            ])
-            .split(remaining_area);
-
-        let rock_area = chunks[0];
-        let hp_bar_area = chunks[1];
-        let hp_text_area = chunks[2];
-        let mine_options_area = chunks[3];
-
-        // Render rock name centered above rock art
-        let rock_name = game_state()
-            .town
-            .mine
-            .current_rock
-            .as_ref()
-            .map(|r| game_state().get_rock_name(r.rock_id))
-            .unwrap_or("Rock");
-        let rock_name_width = rock_name.len() as u16;
-        let rock_name_x = rock_area.x + rock_area.width.saturating_sub(rock_name_width) / 2;
-        let rock_name_area = Rect {
-            x: rock_name_x,
-            y: rock_area.y,
-            width: rock_name_width,
-            height: 1,
-        };
-        frame.render_widget(
-            Paragraph::new(Line::from(Span::styled(rock_name, Style::default().color(colors::LIGHT_STONE)))),
-            rock_name_area,
-        );
-
-        // Render rock art centered below name
-        let rock_x = rock_area.x + rock_area.width.saturating_sub(rock_width) / 2;
-        let rock_y = rock_area.y + 1; // 1 line below name
-
-        let rock_lines = self.render_rock_lines();
-
-        let rock_render_area = Rect {
-            x: rock_x,
-            y: rock_y,
-            width: rock_width,
-            height: rock_height,
-        };
-        frame.render_widget(Paragraph::new(rock_lines), rock_render_area);
-
-        // Render HP bar centered below rock
-        let gs = game_state();
-        let (hp_bar, hp_text, current_hp, max_hp) = if let Some(rock) = &gs.town.mine.current_rock {
-            let current = rock.stats.value(crate::stats::StatType::Health);
-            let max = rock.stats.max_value(crate::stats::StatType::Health);
-            (render_hp_bar(current, max), render_hp_text(current, max), current, max)
-        } else {
-            (render_hp_bar(0, 1), render_hp_text(0, 1), 0, 1) // Fallback if no rock
-        };
-        let hp_bar_width = 12u16; // Width: "[██████████]"
-        let hp_bar_x = hp_bar_area.x + hp_bar_area.width.saturating_sub(hp_bar_width) / 2;
-        let centered_hp_bar_area = Rect {
-            x: hp_bar_x,
-            y: hp_bar_area.y,
-            width: hp_bar_width,
-            height: 1,
-        };
-        frame.render_widget(Paragraph::new(hp_bar), centered_hp_bar_area);
-
-        // Render HP text centered below HP bar
-        let hp_text_str = format!("{}/{}", current_hp, max_hp);
-        let hp_text_width = hp_text_str.len() as u16;
-        let hp_text_x = hp_text_area.x + hp_text_area.width.saturating_sub(hp_text_width) / 2;
-        let centered_hp_text_area = Rect {
-            x: hp_text_x,
-            y: hp_text_area.y,
-            width: hp_text_width,
-            height: 1,
-        };
-        frame.render_widget(Paragraph::new(hp_text), centered_hp_text_area);
-
-        // Render 3 horizontal "Mine" options centered below the rock
-        let active_text = format!("{} Mine", PICKAXE);
-        let inactive_text = "  X  ";
-        let spacing = "  "; // Space between options
-
-        // Build spans with selection indicators
-        let mut spans = Vec::new();
-        for i in 0..3 {
-            let is_selected = self.selected_mine == i;
-            let is_active = i == self.active_button;
-            let prefix = if is_selected { "> " } else { "  " };
-            let prefix_style = Style::default().color(colors::YELLOW);
-
-            let (option_text, option_style) = if is_active {
-                let style = if is_selected {
-                    Style::default().color(colors::WHITE)
-                } else {
-                    Style::default().color(colors::LIGHT_STONE)
-                };
-                (active_text.as_str(), style)
-            } else {
-                let style = if is_selected {
-                    Style::default().color(colors::DARK_GRAY)
-                } else {
-                    Style::default().color(colors::DARK_GRAY)
-                };
-                (inactive_text, style)
-            };
-
-            if i > 0 {
-                spans.push(Span::raw(spacing));
-            }
-            spans.push(Span::styled(prefix, prefix_style));
-            spans.push(Span::styled(option_text.to_string(), option_style));
-        }
-        let horizontal_menu = Line::from(spans);
-
-        // Calculate width for centering (approximate)
-        let single_option_width = 2 + active_text.chars().count(); // prefix + option
-        let menu_text_width = (single_option_width * 3 + spacing.len() * 2) as u16;
-        let menu_x = mine_options_area.x + mine_options_area.width.saturating_sub(menu_text_width) / 2;
-        let centered_menu_area = Rect {
-            x: menu_x,
-            y: mine_options_area.y,
-            width: menu_text_width,
-            height: 1,
-        };
-        frame.render_widget(Paragraph::new(horizontal_menu), centered_menu_area);
-
-        // Render stone borders
-        let total_border_width = content_area.width + 2;
-        let bottom_y = frame_size.height.saturating_sub(1);
-        let border_height = content_height;
-
-        // Border style with themed background
-        let border_style = Style::default().on_color(colors::MINE_BG);
-
-        // Top and bottom borders
-        let border_area_top = Rect { x: 0, y: 0, width: total_border_width, height: 1 };
-        let border_area_bottom = Rect { x: 0, y: bottom_y, width: total_border_width, height: 1 };
-
-        let border = BorderTheme::Stone;
-        let top_border = border.generate_top_border(total_border_width);
-        let bottom_border = border.generate_bottom_border(total_border_width);
-        frame.render_widget(Paragraph::new(top_border).style(border_style), border_area_top);
-        frame.render_widget(Paragraph::new(bottom_border).style(border_style), border_area_bottom);
-
-        // Left and right borders
-        for row in 0..border_height {
-            let left_char = border.generate_left_border_char(row);
-            let right_char = border.generate_right_border_char(row);
-            let left_area = Rect { x: 0, y: y_offset + row, width: 1, height: 1 };
-            let right_area = Rect { x: x_offset + content_area.width, y: y_offset + row, width: 1, height: 1 };
-            frame.render_widget(Paragraph::new(Line::from(left_char)).style(border_style), left_area);
-            frame.render_widget(Paragraph::new(Line::from(right_char)).style(border_style), right_area);
+        // Render the cave art centered
+        if let Some(cave) = &self.cave {
+            cave_art::render_cave(frame, frame_size, cave);
         }
     }
 
@@ -403,47 +85,61 @@ impl MockComponent for MineScreen {
 impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Left, .. }) => {
-                if self.selected_mine > 0 {
-                    self.selected_mine -= 1;
-                }
-                None
-            }
-            Event::Keyboard(KeyEvent { code: Key::Right, .. }) => {
-                if self.selected_mine < 2 {
-                    self.selected_mine += 1;
-                }
-                None
-            }
             Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
                 // Backspace goes back to Town
                 game_state().current_screen = Id::Town;
                 None
             }
-            Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {
-                if self.selected_mine == self.active_button {
-                    // Active mine button selected - perform mining
-                    let mining_result = mine_rock();
-                    apply_result(&mining_result.result);
-
-                    // If rock was destroyed, update UI state
-                    if !mining_result.drops.is_empty() {
-                        // Group drops for UI display
-                        let gs = game_state();
-                        let mut counts: std::collections::HashMap<crate::item::ItemId, u32> = std::collections::HashMap::new();
-                        for loot_drop in &mining_result.drops {
-                            *counts.entry(loot_drop.item.item_id).or_insert(0) += loot_drop.quantity as u32;
-                        }
-                        let mut grouped: Vec<_> = counts.into_iter().collect();
-                        grouped.sort_by_key(|(kind, _)| gs.get_item_name(*kind));
-                        self.recent_drops = grouped;
-
-                        // Regenerate rock art for new rock
-                        self.current_rock_art = None;
+            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
+                if let Some(cave) = &mut self.cave {
+                    cave.move_player(0, -1);
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
+                if let Some(cave) = &mut self.cave {
+                    cave.move_player(0, 1);
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Left, .. }) => {
+                if let Some(cave) = &mut self.cave {
+                    cave.move_player(-1, 0);
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Right, .. }) => {
+                if let Some(cave) = &mut self.cave {
+                    cave.move_player(1, 0);
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent { code: Key::Char(' '), .. }) => {
+                if let Some(cave) = &mut self.cave {
+                    // Check if on exit first
+                    if cave.is_on_exit() {
+                        // Exit the mine
+                        game_state().current_screen = Id::Town;
+                        return None;
                     }
 
-                    // Pick a new random active button
-                    self.pick_new_active_button();
+                    // Otherwise, try to mine adjacent rock
+                    if let Some(rock_type) = cave.mine_adjacent_rock() {
+                        let gs = game_state();
+                        let loot_table = rock_type.loot_table();
+
+                        // Roll drops (0 magic find, spawn items from game state)
+                        let drops = loot_table.roll_drops_with_spawner(0, |item_id| {
+                            gs.spawn_item(item_id)
+                        });
+
+                        // Collect drops into player inventory with toast notifications
+                        collect_loot_drops(
+                            &mut gs.player,
+                            &drops,
+                            Some(&mut gs.toasts),
+                        );
+                    }
                 }
                 None
             }
