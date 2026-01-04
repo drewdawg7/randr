@@ -4,7 +4,7 @@ use super::{ApplyEffect, ConsumableEffect, ConsumableError};
 
 #[derive(Debug, Clone)]
 pub struct ConsumableResult {
-    pub item_name: &'static str,
+    pub item_name: String,
     pub effect_applied: ConsumableEffect,
     pub actual_value: i32,
 }
@@ -30,7 +30,7 @@ pub fn use_consumable<T: ApplyEffect>(
     inv_item: &InventoryItem,
 ) -> Result<ConsumableResult, ConsumableError> {
     let item = &inv_item.item;
-    let item_id = item.item_id;
+    let item_id = item.item_id.ok_or(ConsumableError::NotConsumable)?;
 
     // Verify item is a consumable
     if !item.item_type.is_consumable() {
@@ -53,7 +53,7 @@ pub fn use_consumable<T: ApplyEffect>(
     let actual_value = target.apply_effect(effect);
 
     Ok(ConsumableResult {
-        item_name: item.name,
+        item_name: item.name.clone(),
         effect_applied: effect.clone(),
         actual_value,
     })

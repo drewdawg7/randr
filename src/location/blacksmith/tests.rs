@@ -12,7 +12,7 @@ use uuid::Uuid;
 
 #[cfg(test)]
 fn create_test_item(
-    name: &'static str,
+    name: &str,
     item_type: ItemType,
     attack: i32,
     defense: i32,
@@ -27,9 +27,9 @@ fn create_test_item(
 
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: ItemId::Sword,
+        item_id: Some(ItemId::Sword),
         item_type,
-        name,
+        name: name.to_string(),
         is_equipped: false,
         is_locked: false,
         num_upgrades,
@@ -73,9 +73,9 @@ fn create_test_shield(defense: i32, num_upgrades: i32, max_upgrades: i32) -> Ite
 fn create_material_item() -> Item {
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: ItemId::CopperOre,
+        item_id: Some(ItemId::CopperOre),
         item_type: ItemType::Material(MaterialType::Ore),
-        name: "Copper Ore",
+        name: "Copper Ore".to_string(),
         is_equipped: false,
         is_locked: false,
         num_upgrades: 0,

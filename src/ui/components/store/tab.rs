@@ -88,7 +88,7 @@ impl StoreTab {
             .iter()
             .map(|si| StoreBuyItem {
                 store_item: si.clone(),
-                item_name: si.item_id.spec().name,
+                item_name: si.item_id.spec().name.clone(),
             })
             .collect();
         self.buy_list.set_items(items);

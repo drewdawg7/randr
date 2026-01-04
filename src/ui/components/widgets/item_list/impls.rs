@@ -25,7 +25,7 @@ impl ListItem for InventoryItem {
     }
 
     fn display_name(&self) -> Cow<'static, str> {
-        Cow::Borrowed(self.item.name)
+        Cow::Owned(self.item.name.clone())
     }
 
     fn quantity(&self) -> Option<u32> {
@@ -55,7 +55,7 @@ impl ListItem for InventoryListItem {
     }
 
     fn display_name(&self) -> Cow<'static, str> {
-        Cow::Borrowed(self.inv_item.item.name)
+        Cow::Owned(self.inv_item.item.name.clone())
     }
 
     fn quantity(&self) -> Option<u32> {
@@ -76,7 +76,7 @@ impl ListItem for InventoryListItem {
 #[derive(Clone)]
 pub struct StoreBuyItem {
     pub store_item: StoreItem,
-    pub item_name: &'static str,
+    pub item_name: String,
 }
 
 impl ListItem for StoreBuyItem {
@@ -85,7 +85,7 @@ impl ListItem for StoreBuyItem {
     }
 
     fn display_name(&self) -> Cow<'static, str> {
-        Cow::Borrowed(self.item_name)
+        Cow::Owned(self.item_name.clone())
     }
 
     fn quantity(&self) -> Option<u32> {
@@ -126,7 +126,7 @@ impl ListItem for SellableItem {
     }
 
     fn display_name(&self) -> Cow<'static, str> {
-        Cow::Borrowed(self.inv_item.item.name)
+        Cow::Owned(self.inv_item.item.name.clone())
     }
 
     fn quantity(&self) -> Option<u32> {
@@ -161,7 +161,7 @@ impl ListItem for UpgradeableItem {
     }
 
     fn display_name(&self) -> Cow<'static, str> {
-        Cow::Borrowed(self.inv_item.item.name)
+        Cow::Owned(self.inv_item.item.name.clone())
     }
 
     fn quantity(&self) -> Option<u32> {
@@ -202,7 +202,7 @@ impl ListItem for QualityItem {
     }
 
     fn display_name(&self) -> Cow<'static, str> {
-        Cow::Borrowed(self.inv_item.item.name)
+        Cow::Owned(self.inv_item.item.name.clone())
     }
 
     fn quantity(&self) -> Option<u32> {
@@ -274,7 +274,7 @@ impl RecipeItem {
                     if have < needed {
                         can_craft = false;
                     }
-                    let item_name = item_id.spec().name;
+                    let item_name = &item_id.spec().name;
                     format!("{}: {}/{}", item_name, have, needed)
                 })
                 .collect::<Vec<_>>()
@@ -341,7 +341,7 @@ impl ListItem for DepositableItem {
     }
 
     fn display_name(&self) -> Cow<'static, str> {
-        Cow::Borrowed(self.inv_item.item.name)
+        Cow::Owned(self.inv_item.item.name.clone())
     }
 
     fn quantity(&self) -> Option<u32> {
@@ -370,7 +370,7 @@ impl ListItem for StoredItem {
     }
 
     fn display_name(&self) -> Cow<'static, str> {
-        Cow::Borrowed(self.inv_item.item.name)
+        Cow::Owned(self.inv_item.item.name.clone())
     }
 
     fn quantity(&self) -> Option<u32> {

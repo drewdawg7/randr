@@ -122,14 +122,15 @@ impl Store {
 
     /// Add a specific item to the store (e.g., when player sells)
     pub fn add_item(&mut self, item: Item) {
-        match self.get_store_item_by_id_mut(item.item_id) {
+        let item_id = item.item_id.expect("Store items must have an ItemId");
+        match self.get_store_item_by_id_mut(item_id) {
             Some(store_item) => {
                 store_item.items.push(item);
             }
             None => {
                 // Create new slot for this item type
                 let store_item = StoreItem {
-                    item_id: item.item_id,
+                    item_id,
                     items: vec![item],
                     max_quantity: 1,
                 };
@@ -213,9 +214,11 @@ pub fn sell_player_item(player: &mut Player, item: &Item) -> i32 {
     }
     let sell_price = item.sell_price();
     player.add_gold(sell_price);
-    if let Some(inv_item) = player.find_item_by_id(item.item_id) {
-        let inv_item = inv_item.clone();
-        player.decrease_item_quantity(&inv_item, 1);
+    if let Some(item_id) = item.item_id {
+        if let Some(inv_item) = player.find_item_by_id(item_id) {
+            let inv_item = inv_item.clone();
+            player.decrease_item_quantity(&inv_item, 1);
+        }
     }
     sell_price
 }

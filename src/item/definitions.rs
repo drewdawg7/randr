@@ -16,7 +16,7 @@ pub use super::enums::{
 
 entity_macros::define_entity! {
     spec ItemSpec {
-        pub name: &'static str,
+        pub name: String,
         pub item_type: ItemType,
         pub quality: Option<ItemQuality>,
         pub max_upgrades: i32,
@@ -32,7 +32,7 @@ entity_macros::define_entity! {
         // Weapons
         // ─────────────────────────────────────────────────────────────────────
         Sword {
-            name: "Sword",
+            name: String::from("Sword"),
             item_type: ItemType::Equipment(EquipmentType::Weapon),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 10),
@@ -41,7 +41,7 @@ entity_macros::define_entity! {
             gold_value: 15,
         }
         Dagger {
-            name: "Dagger",
+            name: String::from("Dagger"),
             item_type: ItemType::Equipment(EquipmentType::Weapon),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 6),
@@ -50,7 +50,7 @@ entity_macros::define_entity! {
             gold_value: 10,
         }
         TinSword {
-            name: "Tin Sword",
+            name: String::from("Tin Sword"),
             item_type: ItemType::Equipment(EquipmentType::Weapon),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 12),
@@ -59,7 +59,7 @@ entity_macros::define_entity! {
             gold_value: 15,
         }
         CopperSword {
-            name: "Copper Sword",
+            name: String::from("Copper Sword"),
             item_type: ItemType::Equipment(EquipmentType::Weapon),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 12),
@@ -68,7 +68,7 @@ entity_macros::define_entity! {
             gold_value: 15,
         }
         BronzeSword {
-            name: "Bronze Sword",
+            name: String::from("Bronze Sword"),
             item_type: ItemType::Equipment(EquipmentType::Weapon),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 16),
@@ -77,7 +77,7 @@ entity_macros::define_entity! {
             gold_value: 25,
         }
         BonkStick {
-            name: "BONK STICK",
+            name: String::from("BONK STICK"),
             item_type: ItemType::Equipment(EquipmentType::Weapon),
             quality: Some(ItemQuality::Mythic),
             stats: StatSheet::new().with(StatType::Attack, 100),
@@ -90,7 +90,7 @@ entity_macros::define_entity! {
         // Shields
         // ─────────────────────────────────────────────────────────────────────
         BasicShield {
-            name: "Basic Shield",
+            name: String::from("Basic Shield"),
             item_type: ItemType::Equipment(EquipmentType::Shield),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 4),
@@ -103,7 +103,7 @@ entity_macros::define_entity! {
         // Tomes
         // ─────────────────────────────────────────────────────────────────────
         ApprenticeTome {
-            name: "Apprentice Tome",
+            name: String::from("Apprentice Tome"),
             item_type: ItemType::Equipment(EquipmentType::Tome),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -116,7 +116,7 @@ entity_macros::define_entity! {
         // Copper Armor
         // ─────────────────────────────────────────────────────────────────────
         CopperHelmet {
-            name: "Copper Helmet",
+            name: String::from("Copper Helmet"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 36),
@@ -125,7 +125,7 @@ entity_macros::define_entity! {
             gold_value: 180,
         }
         CopperChestplate {
-            name: "Copper Chestplate",
+            name: String::from("Copper Chestplate"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 60),
@@ -134,7 +134,7 @@ entity_macros::define_entity! {
             gold_value: 300,
         }
         CopperGauntlets {
-            name: "Copper Gauntlets",
+            name: String::from("Copper Gauntlets"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 24),
@@ -143,7 +143,7 @@ entity_macros::define_entity! {
             gold_value: 120,
         }
         CopperGreaves {
-            name: "Copper Greaves",
+            name: String::from("Copper Greaves"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 30),
@@ -152,7 +152,7 @@ entity_macros::define_entity! {
             gold_value: 150,
         }
         CopperLeggings {
-            name: "Copper Leggings",
+            name: String::from("Copper Leggings"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 54),
@@ -165,7 +165,7 @@ entity_macros::define_entity! {
         // Tin Armor
         // ─────────────────────────────────────────────────────────────────────
         TinHelmet {
-            name: "Tin Helmet",
+            name: String::from("Tin Helmet"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 36),
@@ -174,7 +174,7 @@ entity_macros::define_entity! {
             gold_value: 180,
         }
         TinChestplate {
-            name: "Tin Chestplate",
+            name: String::from("Tin Chestplate"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 60),
@@ -183,7 +183,7 @@ entity_macros::define_entity! {
             gold_value: 300,
         }
         TinGauntlets {
-            name: "Tin Gauntlets",
+            name: String::from("Tin Gauntlets"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 24),
@@ -192,7 +192,7 @@ entity_macros::define_entity! {
             gold_value: 120,
         }
         TinGreaves {
-            name: "Tin Greaves",
+            name: String::from("Tin Greaves"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 30),
@@ -201,7 +201,7 @@ entity_macros::define_entity! {
             gold_value: 150,
         }
         TinLeggings {
-            name: "Tin Leggings",
+            name: String::from("Tin Leggings"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 54),
@@ -214,7 +214,7 @@ entity_macros::define_entity! {
         // Bronze Armor
         // ─────────────────────────────────────────────────────────────────────
         BronzeHelmet {
-            name: "Bronze Helmet",
+            name: String::from("Bronze Helmet"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 48),
@@ -223,7 +223,7 @@ entity_macros::define_entity! {
             gold_value: 270,
         }
         BronzeChestplate {
-            name: "Bronze Chestplate",
+            name: String::from("Bronze Chestplate"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 80),
@@ -232,7 +232,7 @@ entity_macros::define_entity! {
             gold_value: 450,
         }
         BronzeGauntlets {
-            name: "Bronze Gauntlets",
+            name: String::from("Bronze Gauntlets"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 32),
@@ -241,7 +241,7 @@ entity_macros::define_entity! {
             gold_value: 180,
         }
         BronzeGreaves {
-            name: "Bronze Greaves",
+            name: String::from("Bronze Greaves"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 40),
@@ -250,7 +250,7 @@ entity_macros::define_entity! {
             gold_value: 225,
         }
         BronzeLeggings {
-            name: "Bronze Leggings",
+            name: String::from("Bronze Leggings"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 72),
@@ -263,7 +263,7 @@ entity_macros::define_entity! {
         // Tools
         // ─────────────────────────────────────────────────────────────────────
         BronzePickaxe {
-            name: "Bronze Pickaxe",
+            name: String::from("Bronze Pickaxe"),
             item_type: ItemType::Equipment(EquipmentType::Tool(ToolKind::Pickaxe)),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 10).with(StatType::Mining, 10),
@@ -276,7 +276,7 @@ entity_macros::define_entity! {
         // Accessories
         // ─────────────────────────────────────────────────────────────────────
         GoldRing {
-            name: "Midas' Touch",
+            name: String::from("Midas' Touch"),
             item_type: ItemType::Equipment(EquipmentType::Ring),
             quality: None,
             stats: StatSheet::new().with(StatType::GoldFind, 10),
@@ -285,7 +285,7 @@ entity_macros::define_entity! {
             gold_value: 50,
         }
         ImbaRing {
-            name: "IMBA RING",
+            name: String::from("IMBA RING"),
             item_type: ItemType::Equipment(EquipmentType::Ring),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new().with(StatType::GoldFind, 200).with(StatType::MagicFind, 200),
@@ -298,7 +298,7 @@ entity_macros::define_entity! {
         // Ores
         // ─────────────────────────────────────────────────────────────────────
         Coal {
-            name: "Coal",
+            name: String::from("Coal"),
             item_type: ItemType::Material(MaterialType::Ore),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -307,7 +307,7 @@ entity_macros::define_entity! {
             gold_value: 4,
         }
         CopperOre {
-            name: "Copper Ore",
+            name: String::from("Copper Ore"),
             item_type: ItemType::Material(MaterialType::Ore),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -316,7 +316,7 @@ entity_macros::define_entity! {
             gold_value: 5,
         }
         TinOre {
-            name: "Tin Ore",
+            name: String::from("Tin Ore"),
             item_type: ItemType::Material(MaterialType::Ore),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -329,7 +329,7 @@ entity_macros::define_entity! {
         // Ingots
         // ─────────────────────────────────────────────────────────────────────
         TinIngot {
-            name: "Tin Ingot",
+            name: String::from("Tin Ingot"),
             item_type: ItemType::Material(MaterialType::CraftingMaterial),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -338,7 +338,7 @@ entity_macros::define_entity! {
             gold_value: 10,
         }
         CopperIngot {
-            name: "Copper Ingot",
+            name: String::from("Copper Ingot"),
             item_type: ItemType::Material(MaterialType::CraftingMaterial),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -347,7 +347,7 @@ entity_macros::define_entity! {
             gold_value: 10,
         }
         BronzeIngot {
-            name: "Bronze Ingot",
+            name: String::from("Bronze Ingot"),
             item_type: ItemType::Material(MaterialType::CraftingMaterial),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -360,7 +360,7 @@ entity_macros::define_entity! {
         // Materials
         // ─────────────────────────────────────────────────────────────────────
         Cowhide {
-            name: "Cowhide",
+            name: String::from("Cowhide"),
             item_type: ItemType::Material(MaterialType::CraftingMaterial),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -369,7 +369,7 @@ entity_macros::define_entity! {
             gold_value: 4,
         }
         SlimeGel {
-            name: "Slime Gel",
+            name: String::from("Slime Gel"),
             item_type: ItemType::Material(MaterialType::CraftingMaterial),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -382,7 +382,7 @@ entity_macros::define_entity! {
         // Consumables
         // ─────────────────────────────────────────────────────────────────────
         BasicHPPotion {
-            name: "Basic HP Potion",
+            name: String::from("Basic HP Potion"),
             item_type: ItemType::Consumable(ConsumableType::Potion),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -395,7 +395,7 @@ entity_macros::define_entity! {
         // Upgrade Materials
         // ─────────────────────────────────────────────────────────────────────
         QualityUpgradeStone {
-            name: "Magic Rock",
+            name: String::from("Magic Rock"),
             item_type: ItemType::Material(MaterialType::UpgradeStone),
             quality: Some(ItemQuality::Mythic),
             stats: StatSheet::new(),
@@ -422,32 +422,94 @@ impl SpawnFromSpec<ItemId> for ItemSpec {
     type Output = Item;
 
     fn spawn_from_spec(item_id: ItemId, spec: &Self) -> Self::Output {
+        spec.spawn_with_id(Some(item_id))
+    }
+}
+
+impl ItemSpec {
+    /// Spawn an Item from this spec with an optional ItemId reference.
+    /// Use None for procedurally generated items not tied to a base ItemId.
+    pub fn spawn_with_id(&self, id: Option<ItemId>) -> Item {
         // Use fixed quality from spec, or roll if None
-        let quality = spec.quality.unwrap_or_else(ItemQuality::roll);
-        let base_stats = spec.stats.clone();
+        let quality = self.quality.unwrap_or_else(ItemQuality::roll);
+        let base_stats = self.stats.clone();
         let stats = quality.multiply_stats(base_stats.clone());
 
         // Initialize tome_data if this is a tome item
-        let tome_data = match spec.item_type {
+        let tome_data = match self.item_type {
             ItemType::Equipment(EquipmentType::Tome) => Some(Tome::standard()),
             _ => None,
         };
 
         Item {
             item_uuid: Uuid::new_v4(),
-            item_id,
-            item_type: spec.item_type,
-            name: spec.name,
+            item_id: id,
+            item_type: self.item_type,
+            name: self.name.clone(),
             is_equipped: false,
             is_locked: false,
             num_upgrades: 0,
-            max_upgrades: spec.max_upgrades,
-            max_stack_quantity: spec.max_stack_quantity,
-            gold_value: spec.gold_value,
+            max_upgrades: self.max_upgrades,
+            max_stack_quantity: self.max_stack_quantity,
+            gold_value: self.gold_value,
             base_stats,
             stats,
             quality,
             tome_data,
+        }
+    }
+
+    /// Spawn an Item from this spec (for procedural generation).
+    pub fn spawn(&self) -> Item {
+        self.spawn_with_id(None)
+    }
+
+    /// Create a scaled copy of this spec with stats multiplied by the given factor.
+    /// Useful for dungeon scaling, elite variants, etc.
+    pub fn with_multiplier(&self, multiplier: f32) -> ItemSpec {
+        let mut scaled_stats = crate::stats::StatSheet::new();
+        for stat_type in crate::stats::StatType::all() {
+            let value = self.stats.value(*stat_type);
+            if value > 0 {
+                let new_value = (value as f32 * multiplier).round() as i32;
+                scaled_stats.insert(stat_type.instance(new_value));
+            }
+        }
+
+        ItemSpec {
+            name: self.name.clone(),
+            item_type: self.item_type,
+            quality: self.quality,
+            max_upgrades: self.max_upgrades,
+            max_stack_quantity: self.max_stack_quantity,
+            stats: scaled_stats,
+            gold_value: (self.gold_value as f32 * multiplier).round() as i32,
+        }
+    }
+
+    /// Create a copy with a new name (e.g., for "Enchanted Sword").
+    pub fn with_name(&self, name: impl Into<String>) -> ItemSpec {
+        ItemSpec {
+            name: name.into(),
+            item_type: self.item_type,
+            quality: self.quality,
+            max_upgrades: self.max_upgrades,
+            max_stack_quantity: self.max_stack_quantity,
+            stats: self.stats.clone(),
+            gold_value: self.gold_value,
+        }
+    }
+
+    /// Create a copy with a fixed quality.
+    pub fn with_quality(&self, quality: ItemQuality) -> ItemSpec {
+        ItemSpec {
+            name: self.name.clone(),
+            item_type: self.item_type,
+            quality: Some(quality),
+            max_upgrades: self.max_upgrades,
+            max_stack_quantity: self.max_stack_quantity,
+            stats: self.stats.clone(),
+            gold_value: self.gold_value,
         }
     }
 }

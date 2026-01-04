@@ -16,7 +16,7 @@ pub fn brew_recipe(recipe_id: RecipeId) -> CommandResult {
         Ok(recipe) => match recipe.craft(&mut gs.player) {
             Ok(item_id) => {
                 let item = item_id.spawn();
-                let item_name = item.name;
+                let item_name = item.name.clone();
                 match gs.player.add_to_inv(item) {
                     Ok(_) => CommandResult::success(format!("Brewed {}!", item_name)),
                     Err(_) => CommandResult::error("Inventory is full"),

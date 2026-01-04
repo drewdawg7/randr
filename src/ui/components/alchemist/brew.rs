@@ -68,7 +68,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
             .map(|(&item_id, &qty)| {
                 let have = gs.player.find_item_by_id(item_id)
                     .map(|inv| inv.quantity).unwrap_or(0);
-                let name = item_id.spec().name;
+                let name = &item_id.spec().name;
                 format!("{}: {}/{}", name, have, qty)
             })
             .collect::<Vec<_>>()

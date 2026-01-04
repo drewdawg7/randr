@@ -17,9 +17,9 @@ use super::{EquipmentSlot, HasInventory, Inventory, InventoryError, InventoryIte
 fn create_test_weapon(id: ItemId, attack: i32) -> Item {
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: id,
+        item_id: Some(id),
         item_type: ItemType::Equipment(EquipmentType::Weapon),
-        name: "Test Weapon",
+        name: "Test Weapon".to_string(),
         is_equipped: false,
         is_locked: false,
         num_upgrades: 0,
@@ -37,9 +37,9 @@ fn create_test_weapon(id: ItemId, attack: i32) -> Item {
 fn create_test_shield(id: ItemId, defense: i32) -> Item {
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: id,
+        item_id: Some(id),
         item_type: ItemType::Equipment(EquipmentType::Shield),
-        name: "Test Shield",
+        name: "Test Shield".to_string(),
         is_equipped: false,
         is_locked: false,
         num_upgrades: 0,
@@ -57,9 +57,9 @@ fn create_test_shield(id: ItemId, defense: i32) -> Item {
 fn create_test_material(id: ItemId) -> Item {
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: id,
+        item_id: Some(id),
         item_type: ItemType::Material(MaterialType::Ore),
-        name: "Test Material",
+        name: "Test Material".to_string(),
         is_equipped: false,
         is_locked: false,
         num_upgrades: 0,
@@ -114,7 +114,7 @@ fn inventory_item_new_preserves_item_data() {
     let original_uuid = weapon.item_uuid;
     let inv_item = InventoryItem::new(weapon);
 
-    assert_eq!(inv_item.item.item_id, ItemId::Sword);
+    assert_eq!(inv_item.item.item_id, Some(ItemId::Sword));
     assert_eq!(inv_item.item.item_uuid, original_uuid);
     assert_eq!(inv_item.item.stats.value(StatType::Attack), 25);
 }
@@ -387,7 +387,7 @@ fn find_item_by_id_finds_item_in_inventory() {
 
     let found = holder.find_item_by_id(ItemId::Sword);
     assert!(found.is_some());
-    assert_eq!(found.unwrap().item.item_id, ItemId::Sword);
+    assert_eq!(found.unwrap().item.item_id, Some(ItemId::Sword));
 }
 
 #[test]
@@ -398,7 +398,7 @@ fn find_item_by_id_finds_item_in_equipment() {
 
     let found = holder.find_item_by_id(ItemId::Sword);
     assert!(found.is_some());
-    assert_eq!(found.unwrap().item.item_id, ItemId::Sword);
+    assert_eq!(found.unwrap().item.item_id, Some(ItemId::Sword));
 }
 
 #[test]
@@ -483,7 +483,7 @@ fn remove_item_from_inventory_only_removes_matching_item() {
     holder.remove_item_from_inventory(&inv_item);
 
     assert_eq!(holder.inventory().items.len(), 1);
-    assert_eq!(holder.inventory().items[0].item.item_id, ItemId::Dagger);
+    assert_eq!(holder.inventory().items[0].item.item_id, Some(ItemId::Dagger));
 }
 
 // ==================== HasInventory::equip_item() tests ====================
@@ -519,7 +519,7 @@ fn equip_item_replaces_existing_equipped_item() {
     holder.equip_item(&mut weapon2, EquipmentSlot::Weapon);
 
     let equipped = holder.get_equipped_item(EquipmentSlot::Weapon).unwrap();
-    assert_eq!(equipped.item.item_id, ItemId::Dagger);
+    assert_eq!(equipped.item.item_id, Some(ItemId::Dagger));
 
     // Old weapon should be in inventory
     assert!(holder.find_item_by_id(ItemId::Sword).is_some());
@@ -630,7 +630,7 @@ fn equip_from_inventory_swaps_with_existing_equipment() {
     holder.equip_from_inventory(weapon2_uuid, EquipmentSlot::Weapon);
 
     let equipped = holder.get_equipped_item(EquipmentSlot::Weapon).unwrap();
-    assert_eq!(equipped.item.item_id, ItemId::Dagger);
+    assert_eq!(equipped.item.item_id, Some(ItemId::Dagger));
 
     // First weapon should be back in inventory
     let sword = holder.find_item_by_id(ItemId::Sword);
@@ -657,7 +657,7 @@ fn get_equipped_item_returns_item_in_slot() {
 
     let equipped = holder.get_equipped_item(EquipmentSlot::Weapon);
     assert!(equipped.is_some());
-    assert_eq!(equipped.unwrap().item.item_id, ItemId::Sword);
+    assert_eq!(equipped.unwrap().item.item_id, Some(ItemId::Sword));
 }
 
 #[test]
@@ -717,7 +717,7 @@ fn remove_item_returns_removed_item() {
     assert!(removed.is_some());
     let removed_item = removed.unwrap();
     assert_eq!(removed_item.uuid(), weapon_uuid);
-    assert_eq!(removed_item.item.item_id, ItemId::Sword);
+    assert_eq!(removed_item.item.item_id, Some(ItemId::Sword));
 }
 
 // ==================== EquipmentSlot::all() tests ====================
