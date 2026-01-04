@@ -89,11 +89,28 @@ For entities that can die.
 | `process_victory()` | `system.rs:150` | Award gold (with goldfind), XP, loot |
 | `process_defeat()` | `system.rs:170` | Player loses 5% gold, health restored |
 
+## Gold & Goldfind
+
+### Goldfind Formula
+```
+final_gold = base_gold * (1 + goldfind/100)
+```
+
+Example: 100 goldfind = 2x gold multiplier
+
+### Helper Function
+`apply_goldfind(base_gold, goldfind)` in `system.rs:34` - single source of truth for gold bonus calculation
+
+Used in:
+- `enter_combat()` - legacy auto-combat
+- `process_victory()` - step-based combat victory
+- `attack_boss()` in `commands/dungeon.rs` - boss fight victory
+
 ## Tuning Parameters
 
 | Parameter | Location | Default | Effect |
 |-----------|----------|---------|--------|
-| `DEFENSE_CONSTANT` | `system.rs:10` | 50.0 | Higher = more defense needed for same reduction |
+| `DEFENSE_CONSTANT` | `system.rs:13` | 50.0 | Higher = more defense needed for same reduction |
 | `ATTACK_VARIANCE` | `traits.rs:32` | 0.25 | ±25% damage variance |
 
 ## Loot System Integration
