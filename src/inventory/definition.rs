@@ -25,7 +25,7 @@ impl InventoryItem {
     }
 
     pub fn decrease_quantity(&mut self, amount: u32) {
-        self.quantity = (self.quantity - amount).max(0);
+        self.quantity = self.quantity.saturating_sub(amount);
     }
 
     pub fn increase_quantity(&mut self, amount: u32) {

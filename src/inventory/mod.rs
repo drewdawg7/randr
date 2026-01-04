@@ -1,6 +1,8 @@
 mod definition;
 mod enums;
 mod equipment;
+#[cfg(test)]
+mod tests;
 mod traits;
 
 pub use definition::{Inventory, InventoryItem};

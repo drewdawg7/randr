@@ -16,6 +16,7 @@
 
 ## Entities
 
+- [entities/inventory.md](entities/inventory.md): Inventory/InventoryItem structs, HasInventory trait, equipment slots, stacking behavior, add/equip/unequip flows
 - [entities/items.md](entities/items.md): ItemId registry, ItemSpec, EquipmentType/EquipmentSlot enums, ItemQuality multipliers (0.8-1.8x), armor crafting costs
 - [entities/mob.md](entities/mob.md): MobId registry, MobSpec with stat ranges, MobRegistry, spawn weights, IsKillable death_processed guard, HasLoot trait integration
 - [entities/loot.md](entities/loot.md): LootTable probability system, LootDrop struct, HasLoot trait, roll_drops() flow for combat and mining

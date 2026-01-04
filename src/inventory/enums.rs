@@ -27,6 +27,7 @@ impl EquipmentSlot {
     }
 }
 
+#[derive(Debug)]
 pub enum InventoryError {
     Full
 }
