@@ -22,6 +22,7 @@
 - [entities/loot.md](entities/loot.md): LootTable probability system, LootDrop struct, HasLoot trait, roll_drops() flow for combat and mining
 - [entities/recipes.md](entities/recipes.md): RecipeId/RecipeType enums, Recipe::craft() returns ItemId, RecipeSpec, forging/smelting/alchemy recipes
 - [entities/stats.md](entities/stats.md): StatSheet HashMap wrapper, StatType (Health/Attack/Defense/GoldFind/Mining), StatInstance, HasStats trait, Healable trait with blanket impl
+- [entities/procedural-generation.md](entities/procedural-generation.md): Runtime entity generation, with_multiplier()/with_name()/with_quality() spec modifiers, dungeon scaling, elite variants, Option<MobId>/Option<ItemId> for procedural entities
 
 ## Locations
 
