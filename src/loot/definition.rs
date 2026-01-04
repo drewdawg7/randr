@@ -67,6 +67,16 @@ impl LootTable {
 
     /// Roll drops with Magic Find bonus rolls.
     ///
+    /// Convenience wrapper that uses `game_state().spawn_item()` for item spawning.
+    /// For testability, use `roll_drops_with_spawner` instead.
+    pub fn roll_drops_with_mf(&self, magic_find: i32) -> Vec<LootDrop> {
+        self.roll_drops_with_spawner(magic_find, |id| game_state().spawn_item(id))
+    }
+
+    /// Roll drops with Magic Find bonus and custom spawn function.
+    ///
+    /// This is the core implementation that allows dependency injection for testing.
+    ///
     /// Magic Find grants bonus roll attempts:
     /// - 20 MF = 20% chance for 1 bonus roll
     /// - 120 MF = 100% for 1 bonus roll + 20% for 2nd
@@ -75,7 +85,10 @@ impl LootTable {
     /// If ANY roll succeeds, the item drops.
     /// For equipment: keeps highest quality roll.
     /// For other items: keeps highest quantity roll.
-    pub fn roll_drops_with_mf(&self, magic_find: i32) -> Vec<LootDrop> {
+    pub fn roll_drops_with_spawner<F>(&self, magic_find: i32, spawn_item: F) -> Vec<LootDrop>
+    where
+        F: Fn(ItemId) -> Option<Item>,
+    {
         let mut rng = rand::thread_rng();
         let mut drops = Vec::new();
 
@@ -89,7 +102,7 @@ impl LootTable {
             for _ in 0..total_rolls {
                 let roll = rng.gen_range(1..=loot_item.denominator);
                 if roll <= loot_item.numerator {
-                    if let Some(item) = game_state().spawn_item(loot_item.item_kind) {
+                    if let Some(item) = spawn_item(loot_item.item_kind) {
                         let quantity = rng.gen_range(loot_item.quantity.clone());
                         let drop = LootDrop { item, quantity };
 
