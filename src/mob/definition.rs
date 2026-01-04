@@ -3,7 +3,9 @@ use crate::{
     stats::StatSheet,
 };
 
-use super::enums::{MobId, MobQuality};
+// MobId now comes from definitions (macro-generated)
+use super::definitions::MobId;
+use super::enums::MobQuality;
 
 #[derive(Debug, Clone)]
 pub struct Mob {

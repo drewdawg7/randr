@@ -2,7 +2,7 @@ use rand::Rng;
 use std::collections::HashSet;
 
 use crate::loot::LootTable;
-use crate::location::mine::rock::spec::specs::{COAL_ROCK, COPPER_ROCK, TIN_ROCK};
+use super::rock::RockId;
 
 pub const CAVE_WIDTH: usize = 60;
 pub const CAVE_HEIGHT: usize = 20;
@@ -18,11 +18,11 @@ pub enum RockType {
 
 impl RockType {
     /// Get the loot table for this rock type
-    pub fn loot_table(&self) -> &LootTable {
+    pub fn loot_table(&self) -> LootTable {
         match self {
-            RockType::Copper => &COPPER_ROCK.loot,
-            RockType::Coal => &COAL_ROCK.loot,
-            RockType::Tin => &TIN_ROCK.loot,
+            RockType::Copper => RockId::Copper.spec().loot.clone(),
+            RockType::Coal => RockId::Coal.spec().loot.clone(),
+            RockType::Tin => RockId::Tin.spec().loot.clone(),
         }
     }
 

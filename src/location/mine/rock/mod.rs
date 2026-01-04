@@ -1,10 +1,10 @@
 pub mod art;
 mod definition;
-pub mod enums;
-pub mod spec;
+pub mod definitions;
 mod traits;
 
 pub use art::RockArt;
 pub use definition::Rock;
-pub use enums::RockId;
-pub use spec::RockRegistry;
+// RockId now comes from definitions (macro-generated)
+pub use definitions::RockId;
+pub use definitions::RockRegistry;

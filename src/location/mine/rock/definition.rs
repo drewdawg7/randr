@@ -5,7 +5,8 @@ use crate::{
     stats::StatSheet,
 };
 
-use super::enums::RockId;
+// RockId now comes from definitions (macro-generated)
+use super::definitions::RockId;
 
 #[derive(Clone)]
 pub struct Rock {

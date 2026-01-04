@@ -1,12 +1,13 @@
 mod combat;
 mod definition;
+pub mod definitions;
 mod loot;
 mod progression;
 mod stats;
 
 pub mod enums;
-pub mod spec;
 
 pub(crate) use definition::Mob;
-pub(crate) use enums::MobId;
-pub(crate) use spec::MobRegistry;
+// MobId now comes from definitions (macro-generated)
+pub(crate) use definitions::MobId;
+pub(crate) use definitions::MobRegistry;

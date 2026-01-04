@@ -198,7 +198,7 @@ pub fn define_entity(input: TokenStream) -> TokenStream {
 
     let expanded = quote! {
         /// Spec struct defining static entity properties
-        #[derive(Debug, Clone, PartialEq, Eq)]
+        #[derive(Debug, Clone)]
         pub struct #spec_name {
             #(#field_defs),*
         }
