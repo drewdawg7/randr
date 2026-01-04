@@ -41,6 +41,7 @@
 
 - [location/overview.md](location/overview.md): Location trait (identity, timer, entry/exit), LocationId, LocationSpec, LocationData enum, Town integration with location fields
 - [location/adding-locations.md](location/adding-locations.md): Step-by-step checklist for new location types, key files to modify, submodule structure
+- [location/blacksmith.md](location/blacksmith.md): Blacksmith upgrade system, UpgradeResult/BlacksmithUpgradeResult structs, cost formulas, quality upgrades, smelting, error types
 - [location/mine.md](location/mine.md): Mine system with CaveLayout, rock respawn (2 min), mine regeneration (10 min), timer display, procedural cave generation
 
 ## UI Framework
