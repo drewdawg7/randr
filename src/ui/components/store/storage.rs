@@ -46,8 +46,8 @@ impl StorageScreen {
             show_filter_button: true,
             show_scroll_indicators: true,
             visible_count: 10,
-            show_back_button: true,
-            back_label: "Back",
+            show_back_button: false,
+            back_label: "",
             background: None,
         };
 
@@ -143,7 +143,7 @@ impl StorageScreen {
         }
 
         // Instructions
-        let hint = "[Tab] Switch Panel  [Enter] Transfer  [Esc] Back";
+        let hint = "[Tab] Switch Panel  [Enter] Transfer  [Backspace] Back";
         let y = area.y + 1;
         for (i, ch) in hint.chars().enumerate() {
             if let Some(cell) = buf.cell_mut((area.x + i as u16 + 2, y)) {

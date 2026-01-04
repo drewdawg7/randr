@@ -16,7 +16,7 @@ use crate::{
 };
 use crate::ui::components::utilities::{
     list_move_down, list_move_up, render_location_header, selection_prefix,
-    COIN, FIRE, RETURN_ARROW,
+    COIN, FIRE,
 };
 use crate::ui::theme as colors;
 
@@ -59,7 +59,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     // Center vertically with 2:3 ratio (shifted up)
     const FUEL_BAR_HEIGHT: u16 = 1;
     const FORGE_HEIGHT: u16 = 18;
-    const MENU_HEIGHT: u16 = 5;
+    const MENU_HEIGHT: u16 = 4;
     const TOTAL_HEIGHT: u16 = FUEL_BAR_HEIGHT + FORGE_HEIGHT + MENU_HEIGHT;
 
     let vertical_chunks = Layout::default()
@@ -176,15 +176,10 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
             Span::styled(format!(" Smelt Copper (Copper Ore: {})", copper_ore), text_style),
         ]),
         Line::from(vec![
-            Span::raw(padding_str.clone()),
+            Span::raw(padding_str),
             selection_prefix(selected == 3),
             Span::styled(format!("{}", FIRE), Style::default().fg(colors::EMBER_RED)),
             Span::styled(format!(" Smelt Bronze (Copper: {}, Tin: {})", copper_ore, tin_ore), text_style),
-        ]),
-        Line::from(vec![
-            Span::raw(padding_str),
-            selection_prefix(selected == 4),
-            Span::styled(format!("{} Back", RETURN_ARROW), text_style),
         ]),
     ];
 
@@ -220,7 +215,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
-    const MENU_SIZE: usize = 5;
+    const MENU_SIZE: usize = 4;
 
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {
@@ -238,7 +233,6 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
                 1 => execute(GameCommand::SmeltRecipe { recipe_id: RecipeId::TinIngot }),
                 2 => execute(GameCommand::SmeltRecipe { recipe_id: RecipeId::CopperIngot }),
                 3 => execute(GameCommand::SmeltRecipe { recipe_id: RecipeId::BronzeIngot }),
-                4 => return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu)),
                 _ => return (CmdResult::None, None),
             };
             apply_result(&result);

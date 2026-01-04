@@ -402,7 +402,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for DungeonScreen {
                 self.perform(Cmd::Submit);
                 None
             }
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+            Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
                 self.perform(Cmd::Cancel);
                 None
             }

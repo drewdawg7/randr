@@ -16,7 +16,7 @@ use crate::{
 };
 use crate::ui::components::utilities::{
     list_move_down, list_move_up, render_location_header, selection_prefix,
-    COIN, RETURN_ARROW,
+    COIN,
 };
 use crate::ui::theme as colors;
 
@@ -61,7 +61,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     let menu_padding = " ".repeat(h_padding as usize);
     let recipes = RecipeId::all_alchemy_recipes();
 
-    let mut menu_items: Vec<ListItem> = recipes.iter().enumerate().map(|(idx, &recipe_id)| {
+    let menu_items: Vec<ListItem> = recipes.iter().enumerate().map(|(idx, &recipe_id)| {
         let recipe = Recipe::new(recipe_id).expect("Recipe should exist");
         let ingredients_str = recipe.ingredients()
             .iter()
@@ -81,18 +81,12 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
         ]))
     }).collect();
 
-    menu_items.push(ListItem::new(Line::from(vec![
-        Span::raw(menu_padding),
-        selection_prefix(selected == recipes.len()),
-        Span::raw(format!("{} Back", RETURN_ARROW)),
-    ])));
-
     frame.render_stateful_widget(List::new(menu_items), chunks[1], list_state);
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
     let recipes = RecipeId::all_alchemy_recipes();
-    let menu_size = recipes.len() + 1;
+    let menu_size = recipes.len();
 
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {
@@ -110,8 +104,6 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
                 let recipe_id = recipes[selected];
                 let result = execute(GameCommand::BrewRecipe { recipe_id });
                 apply_result(&result);
-            } else {
-                return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu));
             }
             (CmdResult::Submit(tuirealm::State::None), None)
         }

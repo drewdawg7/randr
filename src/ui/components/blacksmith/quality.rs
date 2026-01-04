@@ -23,8 +23,8 @@ pub fn create_item_list() -> ItemList<QualityItem, InventoryFilter> {
         show_filter_button: true,
         show_scroll_indicators: true,
         visible_count: 10,
-        show_back_button: true,
-        back_label: "Back",
+        show_back_button: false,
+        back_label: "",
         background: None,
     };
     ItemList::new(config)
@@ -96,12 +96,7 @@ pub fn handle(
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         Cmd::Submit => {
-            if item_list.is_back_selected() {
-                (
-                    CmdResult::Submit(tuirealm::State::None),
-                    Some(StateChange::ToMenu),
-                )
-            } else if let Some(quality_item) = item_list.selected_item() {
+            if let Some(quality_item) = item_list.selected_item() {
                 let result = execute(GameCommand::UpgradeQuality {
                     item_uuid: quality_item.inv_item.item.item_uuid,
                 });

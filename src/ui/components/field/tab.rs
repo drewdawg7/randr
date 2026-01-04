@@ -95,7 +95,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for FieldTab {
                 self.perform(Cmd::Submit);
                 None
             }
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+            Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
                 self.perform(Cmd::Cancel);
                 None
             }

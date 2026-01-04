@@ -56,19 +56,22 @@ impl MockComponent for DungeonTab {
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
-        let (result, state_change) = menu::handle(cmd.clone(), &mut self.list_state);
+        match cmd {
+            Cmd::Cancel => {
+                // Backspace goes back to main menu
+                game_state().current_screen = Id::Menu;
+                return CmdResult::Changed(tuirealm::State::None);
+            }
+            _ => {}
+        }
+
+        let (result, state_change) = menu::handle(cmd, &mut self.list_state);
 
         if let Some(change) = state_change {
             match change {
                 StateChange::EnterDungeon => {
                     game_state().enter_dungeon();
                 }
-            }
-        } else if matches!(cmd, Cmd::Submit) {
-            // Handle "Back" selection (index 1)
-            let selected = self.list_state.selected().unwrap_or(0);
-            if selected == 1 {
-                game_state().current_screen = Id::Menu;
             }
         }
 
@@ -91,7 +94,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for DungeonTab {
                 self.perform(Cmd::Submit);
                 None
             }
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+            Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
                 self.perform(Cmd::Cancel);
                 None
             }

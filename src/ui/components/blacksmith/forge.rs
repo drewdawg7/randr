@@ -29,8 +29,8 @@ pub fn create_item_list() -> ItemList<RecipeItem, ForgeFilter> {
         show_filter_button: true,
         show_scroll_indicators: true,
         visible_count: 6,
-        show_back_button: true,
-        back_label: "Back",
+        show_back_button: false,
+        back_label: "",
         background: None,
     };
     ItemList::new(config)
@@ -128,10 +128,6 @@ pub fn handle(cmd: Cmd, item_list: &mut ItemList<RecipeItem, ForgeFilter>) -> (C
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         Cmd::Submit => {
-            if item_list.is_back_selected() {
-                return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu));
-            }
-
             if let Some(recipe_item) = item_list.selected_item() {
                 let result = execute(GameCommand::ForgeRecipe {
                     recipe_id: recipe_item.recipe_id,

@@ -241,6 +241,10 @@ let menu = ModalWrapper::new(MainMenuScreen::default());
 
 Modals (Inventory, Keybinds, Profile) are rendered on top of the wrapped screen. Event handling is blocked for the wrapped screen when a modal is open.
 
+**Key handling**:
+- **Esc**: Closes any open modal (global handler at top of `on()`)
+- Modal toggle keys (`i`, `p`, `t`, `Shift+I`) open/close their respective modals
+
 Modal instances are stored in `GameState`:
 - `inventory_modal: InventoryModal`
 - `profile_modal: ProfileModal`
@@ -382,6 +386,53 @@ Commands return a `CommandResult` with:
 
 The command layer is complete but UI components haven't been migrated yet.
 Migration can be done incrementally - existing direct state mutation still works.
+
+---
+
+## Navigation Pattern
+
+### Go-Back Navigation
+
+All go-back navigation uses **Backspace** exclusively. There are no visual "Back" buttons in the UI.
+
+**Key bindings**:
+- **Backspace** (`Key::Backspace`): Go back/cancel (triggers `Cmd::Cancel`)
+- **Esc** (`Key::Esc`): Close any open modal (does NOT navigate)
+
+**Implementation pattern** in tab/screen `on()` handlers:
+
+```rust
+Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
+    self.perform(Cmd::Cancel);
+    None
+}
+```
+
+**Go-back handling** in `perform()`:
+
+```rust
+Cmd::Cancel => {
+    // Return to previous state/screen
+    self.state = PreviousState;
+    CmdResult::Changed(tuirealm::State::None)
+}
+```
+
+### Exception: Dungeon Leave Button
+
+The "Leave" button in the dungeon navigation compass (at center position) is the only visible navigation button. This is intentional for gameplay clarity. The keyboard shortcut is also Backspace.
+
+### Files affected by navigation pattern
+
+| File | Handles |
+|------|---------|
+| `store/tab.rs` | Buy/Sell/Storage → Menu |
+| `blacksmith/tab.rs` | Upgrade/Forge/Quality/Smelt → Menu |
+| `alchemist/tab.rs` | Brew → Menu |
+| `field/tab.rs` | Goes back to main menu |
+| `dungeon/tab.rs` | Goes back to main menu |
+| `screens/dungeon/mod.rs` | Leaves dungeon via Backspace |
+| `wrappers/modal_wrapper.rs` | Esc closes any modal |
 
 ---
 

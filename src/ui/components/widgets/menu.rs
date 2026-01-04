@@ -95,9 +95,6 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for Menu {
                 action();
                 None
             }
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
-                None
-            }
             _ => None
         }
     }

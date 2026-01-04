@@ -50,8 +50,8 @@ impl StoreTab {
             show_filter_button: true,
             show_scroll_indicators: true,
             visible_count: 10,
-            show_back_button: true,
-            back_label: "Back",
+            show_back_button: false,
+            back_label: "",
             background: None,
         };
 
@@ -59,8 +59,8 @@ impl StoreTab {
             show_filter_button: true,
             show_scroll_indicators: true,
             visible_count: 10,
-            show_back_button: true,
-            back_label: "Back",
+            show_back_button: false,
+            back_label: "",
             background: None,
         };
 
@@ -223,11 +223,7 @@ impl StoreTab {
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {
-                if self.buy_list.is_back_selected() {
-                    // Back
-                    self.state = StoreState::Menu;
-                    self.reset_selection();
-                } else if let Some(buy_item) = self.buy_list.selected_item() {
+                if let Some(buy_item) = self.buy_list.selected_item() {
                     // Find the index of this item in the store inventory
                     let item_id = buy_item.store_item.item_id;
                     let gs = game_state();
@@ -258,11 +254,7 @@ impl StoreTab {
                 CmdResult::Changed(self.state())
             }
             Cmd::Submit => {
-                if self.sell_list.is_back_selected() {
-                    // Back
-                    self.state = StoreState::Menu;
-                    self.reset_selection();
-                } else if let Some(sell_item) = self.sell_list.selected_item() {
+                if let Some(sell_item) = self.sell_list.selected_item() {
                     let item_uuid = sell_item.inv_item.item.item_uuid;
                     let result = execute(GameCommand::SellItem { item_uuid });
                     apply_result(&result);
@@ -281,11 +273,6 @@ impl StoreTab {
     fn handle_storage_cmd(&mut self, cmd: Cmd) -> CmdResult {
         match cmd {
             Cmd::Submit => {
-                if self.storage_screen.is_back_selected() {
-                    self.state = StoreState::Menu;
-                    self.reset_selection();
-                    return CmdResult::Changed(self.state());
-                }
                 self.storage_screen.handle_cmd(cmd)
             }
             Cmd::Cancel => {
@@ -313,7 +300,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                 self.perform(Cmd::Submit);
                 None
             }
-            Event::Keyboard(KeyEvent { code: Key::Esc, .. }) => {
+            Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
                 self.perform(Cmd::Cancel);
                 None
             }

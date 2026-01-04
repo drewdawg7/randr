@@ -96,6 +96,16 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
             return None;
         }
 
+        // Global Esc handler: close any open modal
+        if let Event::Keyboard(KeyEvent { code: Key::Esc, .. }) = ev {
+            if game_state().active_modal != ModalType::None {
+                game_state().active_modal = ModalType::None;
+                return None;
+            }
+            // If no modal is open, Esc does nothing (not used for navigation)
+            return None;
+        }
+
         // Handle Shift+I for keybinds modal toggle
         if let Event::Keyboard(KeyEvent { code: Key::Char('I'), .. }) = ev {
             let gs = game_state();
@@ -165,7 +175,7 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
             return None;
         }
 
-        // If keybinds modal is open, block all events
+        // If keybinds modal is open, block all events (except Esc, handled above)
         if game_state().active_modal == ModalType::Keybinds {
             return None;
         }
