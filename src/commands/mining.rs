@@ -2,8 +2,7 @@
 //!
 //! Handles rock mining and loot collection.
 
-use crate::inventory::HasInventory;
-use crate::loot::LootDrop;
+use crate::loot::{collect_loot_drops, LootDrop};
 use crate::magic::effect::PassiveEffect;
 use crate::system::game_state;
 
@@ -51,11 +50,7 @@ pub fn mine_rock() -> MiningResult {
 
     if let Some(drops) = rock.mine(mining_damage, magic_find) {
         // Rock was destroyed - add loot to inventory
-        for loot_drop in &drops {
-            for _ in 0..loot_drop.quantity {
-                let _ = gs.player.add_to_inv(loot_drop.item.clone());
-            }
-        }
+        collect_loot_drops(&mut gs.player, &drops, None);
 
         // Spawn a new rock
         gs.town.mine.spawn_rock(&gs.player);

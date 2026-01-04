@@ -5,7 +5,7 @@
 use crate::combat::{
     enemy_attack_step, player_attack_step, process_defeat, process_victory, CombatPhase,
 };
-use crate::inventory::HasInventory;
+use crate::loot::collect_loot_drops;
 use crate::system::{game_state, CombatSource};
 use crate::ui::Id;
 
@@ -35,11 +35,7 @@ pub fn player_attack() -> CommandResult {
         process_victory(&mut gs.player, &mut combat);
 
         // Add loot drops to player inventory
-        for loot_drop in &combat.loot_drops {
-            for _ in 0..loot_drop.quantity {
-                let _ = gs.player.add_to_inv(loot_drop.item.clone());
-            }
-        }
+        collect_loot_drops(&mut gs.player, &combat.loot_drops, None);
 
         // If in dungeon, mark the current room as cleared
         if gs.combat_source == CombatSource::Dungeon {

@@ -6,7 +6,7 @@ use crate::combat::{self, Combatant, DealsDamage, HasGold, IsKillable, Named};
 use crate::dungeon::{Direction, RoomType};
 use crate::entities::mob::MobId;
 use crate::entities::progression::HasProgression;
-use crate::inventory::HasInventory;
+use crate::loot::collect_loot_drops;
 use crate::stats::HasStats;
 use crate::system::{game_state, CombatSource};
 use crate::ui::Id;
@@ -97,15 +97,7 @@ pub fn enter_room() -> CommandResult {
             };
 
             // Add items to inventory
-            let mut total = 0;
-            for loot_drop in &loot_drops {
-                for _ in 0..loot_drop.quantity {
-                    let _ = gs.player.add_to_inv(loot_drop.item.clone());
-                }
-                total += loot_drop.quantity;
-                gs.toasts
-                    .success(format!("Found: {} x{}", loot_drop.item.name, loot_drop.quantity));
-            }
+            let total = collect_loot_drops(&mut gs.player, &loot_drops, Some(&mut gs.toasts));
 
             if loot_drops.is_empty() {
                 CommandResult::info("The chest was empty.")
@@ -240,13 +232,7 @@ pub fn attack_boss() -> CommandResult {
             gs.player.gain_xp(death_result.xp_dropped);
 
             // Add loot to inventory
-            for loot in &death_result.loot_drops {
-                for _ in 0..loot.quantity {
-                    let _ = gs.player.add_to_inv(loot.item.clone());
-                }
-                gs.toasts
-                    .success(format!("Obtained: {} x{}", loot.item.name, loot.quantity));
-            }
+            collect_loot_drops(&mut gs.player, &death_result.loot_drops, Some(&mut gs.toasts));
 
             gs.toasts.success(format!(
                 "Dragon defeated! +{} gold, +{} XP",
