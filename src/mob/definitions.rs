@@ -23,7 +23,7 @@ pub use super::enums::MobQuality;
 
 entity_macros::define_entity! {
     spec MobSpec {
-        pub name: &'static str,
+        pub name: String,
         pub max_health: RangeInclusive<i32>,
         pub attack: RangeInclusive<i32>,
         pub defense: RangeInclusive<i32>,
@@ -37,7 +37,7 @@ entity_macros::define_entity! {
 
     variants {
         Slime {
-            name: "Slime",
+            name: String::from("Slime"),
             quality: MobQuality::Normal,
             max_health: 15..=22,
             attack: 2..=4,
@@ -49,7 +49,7 @@ entity_macros::define_entity! {
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
         }
         Cow {
-            name: "Cow",
+            name: String::from("Cow"),
             quality: MobQuality::Normal,
             max_health: 20..=25,
             attack: 1..=4,
@@ -61,7 +61,7 @@ entity_macros::define_entity! {
                 .with(ItemId::GoldRing, 1, 1000, 1..=1),
         }
         Goblin {
-            name: "Goblin",
+            name: String::from("Goblin"),
             quality: MobQuality::Normal,
             max_health: 33..=41,
             attack: 10..=15,
@@ -74,7 +74,7 @@ entity_macros::define_entity! {
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
         }
         Dragon {
-            name: "Dragon",
+            name: String::from("Dragon"),
             quality: MobQuality::Boss,
             max_health: 500..=700,
             attack: 50..=70,
@@ -99,14 +99,22 @@ impl SpawnFromSpec<MobId> for MobSpec {
     type Output = Mob;
 
     fn spawn_from_spec(kind: MobId, spec: &Self) -> Self::Output {
+        spec.spawn_with_id(Some(kind))
+    }
+}
+
+impl MobSpec {
+    /// Spawn a Mob from this spec with an optional MobId reference.
+    /// Use None for procedurally generated mobs not tied to a base MobId.
+    pub fn spawn_with_id(&self, id: Option<MobId>) -> Mob {
         let mut rng = rand::thread_rng();
-        let hp_min = spec.max_health.start();
-        let hp_max = spec.max_health.end();
+        let hp_min = self.max_health.start();
+        let hp_max = self.max_health.end();
         let hp_median = (hp_min + hp_max) as f32 / 2.0;
-        let attack = rng.gen_range(spec.attack.clone());
-        let defense = rng.gen_range(spec.defense.clone());
-        let base_gold = rng.gen_range(spec.dropped_gold.clone());
-        let max_hp = rng.gen_range(spec.max_health.clone());
+        let attack = rng.gen_range(self.attack.clone());
+        let defense = rng.gen_range(self.defense.clone());
+        let base_gold = rng.gen_range(self.dropped_gold.clone());
+        let max_hp = rng.gen_range(self.max_health.clone());
         let hp = max_hp as f32;
 
         let excess_ratio = if hp > hp_median {
@@ -114,15 +122,15 @@ impl SpawnFromSpec<MobId> for MobSpec {
         } else {
             0.0
         };
-        let base_xp = rng.gen_range(spec.dropped_xp.clone());
+        let base_xp = rng.gen_range(self.dropped_xp.clone());
         let bonus_multiplier = 1.0 + excess_ratio * 0.5;
         let dropped_xp = (base_xp as f32 * bonus_multiplier).round() as i32;
         let gold = (base_gold as f32 * bonus_multiplier).round() as i32;
 
         Mob {
-            spec: kind,
-            name: spec.name,
-            quality: spec.quality.clone(),
+            spec: id,
+            name: self.name.clone(),
+            quality: self.quality.clone(),
             gold,
             stats: {
                 let stats: HashMap<StatType, StatInstance> = HashMap::new();
@@ -132,9 +140,63 @@ impl SpawnFromSpec<MobId> for MobSpec {
                 sheet.insert(StatType::Health.instance(max_hp));
                 sheet
             },
-            loot_table: spec.loot.clone(),
+            loot_table: self.loot.clone(),
             dropped_xp,
             death_processed: false,
+        }
+    }
+
+    /// Spawn a Mob from this spec (for procedural generation).
+    pub fn spawn(&self) -> Mob {
+        self.spawn_with_id(None)
+    }
+
+    /// Create a scaled copy of this spec with stats multiplied by the given factor.
+    /// Useful for dungeon scaling, elite variants, etc.
+    pub fn with_multiplier(&self, multiplier: f32) -> MobSpec {
+        let scale_range = |r: &RangeInclusive<i32>| {
+            let start = (*r.start() as f32 * multiplier).round() as i32;
+            let end = (*r.end() as f32 * multiplier).round() as i32;
+            start..=end
+        };
+
+        MobSpec {
+            name: self.name.clone(),
+            max_health: scale_range(&self.max_health),
+            attack: scale_range(&self.attack),
+            defense: scale_range(&self.defense),
+            dropped_gold: scale_range(&self.dropped_gold),
+            dropped_xp: scale_range(&self.dropped_xp),
+            quality: self.quality.clone(),
+            loot: self.loot.clone(),
+        }
+    }
+
+    /// Create a copy with a new name (e.g., for "Elite Slime").
+    pub fn with_name(&self, name: impl Into<String>) -> MobSpec {
+        MobSpec {
+            name: name.into(),
+            max_health: self.max_health.clone(),
+            attack: self.attack.clone(),
+            defense: self.defense.clone(),
+            dropped_gold: self.dropped_gold.clone(),
+            dropped_xp: self.dropped_xp.clone(),
+            quality: self.quality.clone(),
+            loot: self.loot.clone(),
+        }
+    }
+
+    /// Create a copy with a different quality.
+    pub fn with_quality(&self, quality: MobQuality) -> MobSpec {
+        MobSpec {
+            name: self.name.clone(),
+            max_health: self.max_health.clone(),
+            attack: self.attack.clone(),
+            defense: self.defense.clone(),
+            dropped_gold: self.dropped_gold.clone(),
+            dropped_xp: self.dropped_xp.clone(),
+            quality,
+            loot: self.loot.clone(),
         }
     }
 }

@@ -11,15 +11,15 @@ use crate::{
 };
 
 #[cfg(test)]
-fn create_test_mob(name: &'static str, hp: i32, attack: i32, defense: i32) -> Mob {
+fn create_test_mob(name: &str, hp: i32, attack: i32, defense: i32) -> Mob {
     let mut stats = HashMap::new();
     stats.insert(StatType::Health, StatType::Health.instance(hp));
     stats.insert(StatType::Attack, StatType::Attack.instance(attack));
     stats.insert(StatType::Defense, StatType::Defense.instance(defense));
     Mob {
-        spec: MobId::Slime,
+        spec: Some(MobId::Slime),
         quality: MobQuality::Normal,
-        name,
+        name: name.to_string(),
         stats: StatSheet { stats },
         gold: 5,
         dropped_xp: 15,

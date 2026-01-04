@@ -11,7 +11,7 @@ use super::Mob;
 
 impl Named for Mob {
     fn name(&self) -> &str {
-        self.name
+        &self.name
     }
 }
 

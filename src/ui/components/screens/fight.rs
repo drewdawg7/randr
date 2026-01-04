@@ -293,7 +293,7 @@ fn render_combatants(frame: &mut Frame, area: Rect, player: &crate::player::Play
     render_combatant_right(
         frame,
         right_area,
-        combat.mob.name,
+        &combat.mob.name,
         ENEMY_ART,
         combat.mob.hp(),
         combat.mob.max_hp(),

@@ -240,7 +240,7 @@ fn field_spawn_mob_respects_weight_distribution_single_mob() {
 
     for _ in 0..iterations {
         if let Ok(mob) = field.spawn_mob(&player) {
-            if mob.spec == MobId::Slime {
+            if mob.spec == Some(MobId::Slime) {
                 slime_count += 1;
             }
         }
@@ -268,8 +268,8 @@ fn field_spawn_mob_respects_weight_distribution_equal_weights() {
     for _ in 0..iterations {
         if let Ok(mob) = field.spawn_mob(&player) {
             match mob.spec {
-                MobId::Slime => slime_count += 1,
-                MobId::Goblin => goblin_count += 1,
+                Some(MobId::Slime) => slime_count += 1,
+                Some(MobId::Goblin) => goblin_count += 1,
                 _ => {}
             }
         }
@@ -319,8 +319,8 @@ fn field_spawn_mob_respects_weight_distribution_unequal_weights() {
     for _ in 0..iterations {
         if let Ok(mob) = field.spawn_mob(&player) {
             match mob.spec {
-                MobId::Slime => slime_count += 1,
-                MobId::Goblin => goblin_count += 1,
+                Some(MobId::Slime) => slime_count += 1,
+                Some(MobId::Goblin) => goblin_count += 1,
                 _ => {}
             }
         }
@@ -376,9 +376,9 @@ fn field_spawn_mob_respects_weight_distribution_three_mobs() {
     for _ in 0..iterations {
         if let Ok(mob) = field.spawn_mob(&player) {
             match mob.spec {
-                MobId::Slime => slime_count += 1,
-                MobId::Goblin => goblin_count += 1,
-                MobId::Cow => cow_count += 1,
+                Some(MobId::Slime) => slime_count += 1,
+                Some(MobId::Goblin) => goblin_count += 1,
+                Some(MobId::Cow) => cow_count += 1,
                 _ => {}
             }
         }

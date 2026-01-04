@@ -68,7 +68,8 @@
       "Bash(git check-ignore:*)",
       "Read(.worktrees/**)",
       "Edit(.worktrees/**)",
-      "Write(.worktrees/**)"
+      "Write(.worktrees/**)",
+      "Skill(documentation)"
     ]
   },
   "enabledMcpjsonServers": [

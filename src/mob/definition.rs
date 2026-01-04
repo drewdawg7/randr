@@ -9,9 +9,9 @@ use super::enums::MobQuality;
 
 #[derive(Debug, Clone)]
 pub struct Mob {
-    pub spec: MobId,
+    pub spec: Option<MobId>,
     pub quality: MobQuality,
-    pub name: &'static str,
+    pub name: String,
     pub stats: StatSheet,
     pub gold: i32,
     pub dropped_xp: i32,
