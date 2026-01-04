@@ -2,7 +2,7 @@ use rand::Rng;
 
 use crate::stats::StatSheet;
 
-pub use super::item_id::ItemId;
+// ItemId is now defined in definitions.rs via macro
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Item Type Hierarchy

@@ -1,13 +1,13 @@
 pub(crate) mod consumable;
 pub(crate) mod definition;
+pub mod definitions;
 pub(crate) mod enums;
-mod item_id;
 pub mod modifier;
 pub(crate) mod recipe;
-pub mod spec;
 mod traits;
 
 pub(crate) use definition::Item;
-pub use enums::ItemId;
+// ItemId, ItemSpec, ItemRegistry now come from definitions (macro-generated)
+pub use definitions::ItemId;
 pub(crate) use enums::ItemType;
-pub(crate) use spec::ItemRegistry;
+pub(crate) use definitions::{ItemRegistry, ItemSpec};

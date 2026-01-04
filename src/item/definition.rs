@@ -2,7 +2,9 @@ use uuid::Uuid;
 
 use crate::{item::enums::{ItemError, ItemQuality}, magic::tome::Tome, stats::{StatSheet, StatType}};
 
-pub use super::enums::{ItemId, ItemType};
+// ItemId now comes from definitions (macro-generated)
+pub use super::definitions::ItemId;
+pub use super::enums::ItemType;
 
 #[derive(Debug, Clone)]
 pub struct Item {
