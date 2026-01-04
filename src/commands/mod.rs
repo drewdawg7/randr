@@ -20,6 +20,7 @@ mod combat;
 mod dungeon;
 mod inventory;
 mod mining;
+mod storage;
 mod store;
 
 use crate::inventory::EquipmentSlot;
@@ -141,6 +142,12 @@ pub enum GameCommand {
     ToggleLock { item_uuid: Uuid },
     /// Use a consumable item.
     UseConsumable { item_uuid: Uuid },
+
+    // === Storage ===
+    /// Deposit an item from player inventory to storage.
+    DepositItem { item_uuid: Uuid },
+    /// Withdraw an item from storage to player inventory.
+    WithdrawItem { item_uuid: Uuid },
 }
 
 /// Execute a game command and return the result.
@@ -171,6 +178,10 @@ pub fn execute(cmd: GameCommand) -> CommandResult {
         GameCommand::UnequipItem { slot } => inventory::unequip_item(slot),
         GameCommand::ToggleLock { item_uuid } => inventory::toggle_lock(item_uuid),
         GameCommand::UseConsumable { item_uuid } => inventory::consume_item(item_uuid),
+
+        // Storage
+        GameCommand::DepositItem { item_uuid } => storage::deposit_item(item_uuid),
+        GameCommand::WithdrawItem { item_uuid } => storage::withdraw_item(item_uuid),
     }
 }
 

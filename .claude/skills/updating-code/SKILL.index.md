@@ -38,3 +38,7 @@
 ## Economy
 
 - [economy.md](economy.md): WorthGold trait, gold_value/purchase_price/sell_price methods, quality multipliers
+
+## Storage
+
+- [storage.md](storage.md): Storage system for depositing/withdrawing items, accessible from Store screen, DepositItem/WithdrawItem commands, dual-panel UI

@@ -46,7 +46,16 @@ impl Inventory {
         Inventory {
             items: Vec::new(),
             max_slots: 15,
-            equipment: HashMap::new()
+            equipment: HashMap::new(),
+        }
+    }
+
+    /// Create an inventory with unlimited slots (for storage).
+    pub fn new_unlimited() -> Self {
+        Inventory {
+            items: Vec::new(),
+            max_slots: usize::MAX,
+            equipment: HashMap::new(),
         }
     }
 

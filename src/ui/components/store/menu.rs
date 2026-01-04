@@ -21,6 +21,7 @@ use crate::ui::theme as colors;
 pub enum StateChange {
     ToBuy,
     ToSell,
+    ToStorage,
     ToMenu,
 }
 
@@ -34,7 +35,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
         render_location_header(frame, area, header_lines, colors::STORE_BG, colors::WOOD_BROWN);
 
     // Center the menu vertically and horizontally
-    const MENU_HEIGHT: u16 = 4;
+    const MENU_HEIGHT: u16 = 5;
     const MENU_WIDTH: u16 = 16;
 
     let vertical_chunks = Layout::default()
@@ -71,6 +72,10 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
         ])),
         ListItem::new(Line::from(vec![
             selection_prefix(selected == 2),
+            Span::styled("Storage", text_style),
+        ])),
+        ListItem::new(Line::from(vec![
+            selection_prefix(selected == 3),
             Span::styled(format!("{} Back", RETURN_ARROW), text_style),
         ])),
     ];
@@ -80,7 +85,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
-    const MENU_SIZE: usize = 3; // Buy, Sell, Back
+    const MENU_SIZE: usize = 4; // Buy, Sell, Storage, Back
 
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {
@@ -96,7 +101,8 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
             let state_change = match selected {
                 0 => Some(StateChange::ToBuy),
                 1 => Some(StateChange::ToSell),
-                2 => {
+                2 => Some(StateChange::ToStorage),
+                3 => {
                     game_state().current_screen = Id::Menu;
                     None
                 }

@@ -28,3 +28,4 @@ pub fn weighted_select<K: Copy>(weights: &HashMap<K, i32>) -> Option<K> {
     }
     None
 }
+

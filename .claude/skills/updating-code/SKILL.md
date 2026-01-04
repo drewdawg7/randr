@@ -17,15 +17,20 @@ IMPORTANT: Use `ast-grep` for refactoring (see `refactoring.md`).
 ## Phase 1: Research & Planning
 **Skills**: `git-workflow`
 
-1. **Reference Docs**: Read through docs within this skill. Use `.claude/skills/updating-code/SKILL.index.md` to find relevant sections.
-2. **Activate Skills**: Invoke any necessary skills (ascii-art, log-issue, tests, etc.)
-3. **Ask Questions**: Clarify any ambiguity before proceeding.
-4. **Code Exploration**: Use LSP/grep to understand implementation details.
+1. **Read Documentation First** (before touching code):
+   - Read `SKILL.index.md` to find relevant documentation
+   - Identify which doc files relate to your task
+   - Read those documentation files completely
+2. **Code Exploration** (after reading docs):
+   - Use LSP for code navigation (goToDefinition, findReferences, hover)
+   - Use grep only for searching documentation and comments
+3. **Activate Skills**: Invoke any necessary skills (ascii-art, log-issue, tests, etc.)
+4. **Ask Questions**: Clarify any ambiguity before proceeding.
 
 ## Phase 2: Development
 
 1. **Make Changes**: Make the necessary changes.
-2. **Refactoring**: Use `ast-grep` for renames/refactoring (see `refactoring.md`).
+2. **Refactoring**: Use `ast-grep` for any renames or refactoring - see [refactoring.md](refactoring.md) for patterns. Prefer ast-grep over manual find-replace.
 3. **Commit**: Commit logical chunks for easy rollback.
 
 ## Phase 3: Verification

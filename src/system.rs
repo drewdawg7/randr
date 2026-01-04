@@ -264,6 +264,14 @@ impl GameState {
         &self.town.alchemist
     }
 
+    pub fn storage(&self) -> &crate::storage::Storage {
+        &self.town.storage
+    }
+
+    pub fn storage_mut(&mut self) -> &mut crate::storage::Storage {
+        &mut self.town.storage
+    }
+
     /// Get the screen lifecycle tracker.
     pub fn screen_lifecycle(&self) -> &ScreenLifecycle {
         &self.screen_lifecycle

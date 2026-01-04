@@ -10,7 +10,7 @@ use crate::{
 };
 
 /// Grid size for the dungeon (5x5)
-pub const DUNGEON_SIZE: usize = 5;
+pub const DUNGEON_SIZE: usize = 7;
 /// Maximum percentage of grid that can have rooms (50%)
 pub const MAX_FILL_PERCENT: f32 = 0.50;
 

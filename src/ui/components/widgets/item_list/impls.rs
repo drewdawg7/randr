@@ -323,3 +323,65 @@ impl ListItem for RecipeItem {
         Some(self.recipe_id.material())
     }
 }
+
+// =============================================================================
+// Storage wrappers
+// =============================================================================
+
+/// Wrapper for items in player inventory when viewing storage.
+/// Items that are locked or equipped cannot be deposited.
+#[derive(Clone)]
+pub struct DepositableItem {
+    pub inv_item: InventoryItem,
+}
+
+impl ListItem for DepositableItem {
+    fn item(&self) -> Option<&Item> {
+        Some(&self.inv_item.item)
+    }
+
+    fn display_name(&self) -> Cow<'static, str> {
+        Cow::Borrowed(self.inv_item.item.name)
+    }
+
+    fn quantity(&self) -> Option<u32> {
+        if self.inv_item.item.item_type.is_equipment() {
+            None
+        } else {
+            Some(self.inv_item.quantity)
+        }
+    }
+
+    fn is_selectable(&self) -> bool {
+        // Can't deposit locked or equipped items
+        !self.inv_item.item.is_locked && !self.inv_item.item.is_equipped
+    }
+}
+
+/// Wrapper for items in storage inventory.
+#[derive(Clone)]
+pub struct StoredItem {
+    pub inv_item: InventoryItem,
+}
+
+impl ListItem for StoredItem {
+    fn item(&self) -> Option<&Item> {
+        Some(&self.inv_item.item)
+    }
+
+    fn display_name(&self) -> Cow<'static, str> {
+        Cow::Borrowed(self.inv_item.item.name)
+    }
+
+    fn quantity(&self) -> Option<u32> {
+        if self.inv_item.item.item_type.is_equipment() {
+            None
+        } else {
+            Some(self.inv_item.quantity)
+        }
+    }
+
+    fn show_lock(&self) -> bool {
+        false // Storage items are never locked
+    }
+}

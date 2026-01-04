@@ -351,6 +351,7 @@ match selection {
 | `combat.rs` | PlayerAttack, PlayerRun, ReturnFromCombat, StartNewFight |
 | `dungeon.rs` | EnterRoom, MoveDungeon, LeaveDungeon, Rest, AttackBoss |
 | `store.rs` | PurchaseItem, SellItem |
+| `storage.rs` | DepositItem, WithdrawItem |
 | `inventory.rs` | EquipItem, UnequipItem, ToggleLock, UseConsumable |
 
 ### Inventory Keybinds

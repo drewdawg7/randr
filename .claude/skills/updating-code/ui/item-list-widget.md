@@ -80,6 +80,8 @@ pub struct ItemListConfig {
 | `UpgradeableItem` | Blacksmith Upgrade | Cost or "MAX" |
 | `QualityItem` | Blacksmith Quality | Next quality tier |
 | `RecipeItem` | Blacksmith Forge | Ingredient requirements (have/need) |
+| `DepositableItem` | StorageScreen (player panel) | None (not selectable if locked/equipped) |
+| `StoredItem` | StorageScreen (storage panel) | None |
 
 ## Usage Pattern
 
@@ -125,6 +127,8 @@ Key::Enter => {
 | InventoryModal | `player/inventory_modal.rs` | InventoryListItem | InventoryFilter |
 | StoreTab (buy) | `store/tab.rs` | StoreBuyItem | InventoryFilter |
 | StoreTab (sell) | `store/tab.rs` | SellableItem | InventoryFilter |
+| StorageScreen (player) | `store/storage.rs` | DepositableItem | InventoryFilter |
+| StorageScreen (storage) | `store/storage.rs` | StoredItem | InventoryFilter |
 | Blacksmith upgrade | `blacksmith/upgrade.rs` | UpgradeableItem | InventoryFilter |
 | Blacksmith quality | `blacksmith/quality.rs` | QualityItem | InventoryFilter |
 | Blacksmith forge | `blacksmith/forge.rs` | RecipeItem | ForgeFilter |

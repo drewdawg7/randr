@@ -1,6 +1,7 @@
 use std::time::Duration;
 
 use crate::location::{Alchemist, Blacksmith, Field, Location, LocationId, Mine, Store};
+use crate::storage::Storage;
 
 pub struct Town {
     pub name: String,
@@ -9,6 +10,7 @@ pub struct Town {
     pub alchemist: Alchemist,
     pub field: Field,
     pub mine: Mine,
+    pub storage: Storage,
 }
 
 impl Town {
@@ -27,6 +29,7 @@ impl Town {
             alchemist,
             field,
             mine,
+            storage: Storage::new(),
         }
     }
 

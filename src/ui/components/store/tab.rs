@@ -22,13 +22,14 @@ use crate::{
     ui::theme as colors,
 };
 
-use super::{menu, wood_planks_art, StateChange};
+use super::{menu, storage::StorageScreen, wood_planks_art, StateChange};
 
 #[derive(Debug, Clone, Copy, PartialEq)]
 enum StoreState {
     Menu,
     Buy,
     Sell,
+    Storage,
 }
 
 pub struct StoreTab {
@@ -37,6 +38,7 @@ pub struct StoreTab {
     menu_list_state: ListState,
     buy_list: ItemList<StoreBuyItem, InventoryFilter>,
     sell_list: ItemList<SellableItem, InventoryFilter>,
+    storage_screen: StorageScreen,
 }
 
 impl StoreTab {
@@ -68,6 +70,7 @@ impl StoreTab {
             menu_list_state,
             buy_list: ItemList::new(buy_config),
             sell_list: ItemList::new(sell_config),
+            storage_screen: StorageScreen::new(),
         }
     }
 
@@ -75,6 +78,7 @@ impl StoreTab {
         self.menu_list_state.select(Some(0));
         self.buy_list.reset_selection();
         self.sell_list.reset_selection();
+        self.storage_screen.reset();
     }
 
     fn rebuild_buy_items(&mut self) {
@@ -109,6 +113,7 @@ impl MockComponent for StoreTab {
             }
             StoreState::Buy => self.render_buy(frame, area),
             StoreState::Sell => self.render_sell(frame, area),
+            StoreState::Storage => self.storage_screen.render(frame, area),
         }
     }
 
@@ -122,6 +127,7 @@ impl MockComponent for StoreTab {
                 StoreState::Menu => self.menu_list_state.selected().unwrap_or(0),
                 StoreState::Buy => self.buy_list.selected_index(),
                 StoreState::Sell => self.sell_list.selected_index(),
+                StoreState::Storage => 0,
             }
         ))
     }
@@ -135,6 +141,7 @@ impl MockComponent for StoreTab {
             StoreState::Menu => self.handle_menu_cmd(cmd),
             StoreState::Buy => self.handle_buy_cmd(cmd),
             StoreState::Sell => self.handle_sell_cmd(cmd),
+            StoreState::Storage => self.handle_storage_cmd(cmd),
         }
     }
 }
@@ -190,6 +197,10 @@ impl StoreTab {
                 StateChange::ToSell => {
                     self.state = StoreState::Sell;
                     self.sell_list.reset_selection();
+                }
+                StateChange::ToStorage => {
+                    self.state = StoreState::Storage;
+                    self.storage_screen.reset();
                 }
                 StateChange::ToMenu => {
                     self.state = StoreState::Menu;
@@ -266,6 +277,25 @@ impl StoreTab {
             _ => CmdResult::None,
         }
     }
+
+    fn handle_storage_cmd(&mut self, cmd: Cmd) -> CmdResult {
+        match cmd {
+            Cmd::Submit => {
+                if self.storage_screen.is_back_selected() {
+                    self.state = StoreState::Menu;
+                    self.reset_selection();
+                    return CmdResult::Changed(self.state());
+                }
+                self.storage_screen.handle_cmd(cmd)
+            }
+            Cmd::Cancel => {
+                self.state = StoreState::Menu;
+                self.reset_selection();
+                CmdResult::Changed(self.state())
+            }
+            _ => self.storage_screen.handle_cmd(cmd),
+        }
+    }
 }
 
 impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
@@ -337,11 +367,23 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
                 code: Key::Char('f') | Key::Char('F'),
                 ..
             }) => {
-                // Cycle filter in buy/sell mode
-                if self.state == StoreState::Buy {
-                    self.buy_list.cycle_filter();
-                } else if self.state == StoreState::Sell {
-                    self.sell_list.cycle_filter();
+                // Cycle filter in buy/sell/storage mode
+                match self.state {
+                    StoreState::Buy => self.buy_list.cycle_filter(),
+                    StoreState::Sell => self.sell_list.cycle_filter(),
+                    StoreState::Storage => {
+                        self.storage_screen.handle_key(Key::Char('f'));
+                    }
+                    _ => {}
+                }
+                None
+            }
+            Event::Keyboard(KeyEvent {
+                code: Key::Tab, ..
+            }) => {
+                // Tab switches panels in storage mode
+                if self.state == StoreState::Storage {
+                    self.storage_screen.handle_key(Key::Tab);
                 }
                 None
             }
