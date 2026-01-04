@@ -9,7 +9,7 @@ pub mod traits;
 
 pub use alchemist::{Alchemist, AlchemistError};
 pub use blacksmith::{Blacksmith, BlacksmithError};
-pub use enums::{
+pub use spec::{
     CombatSubtype, CommerceSubtype, CraftingSubtype, LocationId, LocationType, ResourceSubtype,
 };
 pub use field::{Field, FieldError, FieldId};

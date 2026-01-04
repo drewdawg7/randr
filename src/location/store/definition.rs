@@ -39,9 +39,9 @@ impl Clone for Store {
 
 impl Store {
     /// Create a Store from a LocationSpec
-    pub fn from_spec(spec: &LocationSpec, data: &StoreData) -> Self {
+    pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &StoreData) -> Self {
         let mut store = Store {
-            location_id: spec.location_id,
+            location_id,
             name: spec.name.to_string(),
             description: spec.description.to_string(),
             inventory: Vec::new(),

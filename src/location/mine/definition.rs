@@ -34,10 +34,10 @@ pub struct Mine {
 
 impl Mine {
     /// Create a Mine from a LocationSpec
-    pub fn from_spec(spec: &LocationSpec, data: &MineData) -> Self {
+    pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &MineData) -> Self {
         let now = Instant::now();
         Mine {
-            location_id: spec.location_id,
+            location_id,
             name: spec.name.to_string(),
             description: spec.description.to_string(),
             rock_weights: data.rock_weights.clone(),

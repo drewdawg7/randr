@@ -15,9 +15,9 @@ pub struct Alchemist {
 }
 
 impl Alchemist {
-    pub fn from_spec(spec: &LocationSpec, _data: &AlchemistData) -> Self {
+    pub fn from_spec(location_id: LocationId, spec: &LocationSpec, _data: &AlchemistData) -> Self {
         Alchemist {
-            location_id: spec.location_id,
+            location_id,
             name: spec.name.to_string(),
             description: spec.description.to_string(),
         }

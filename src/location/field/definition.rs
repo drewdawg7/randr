@@ -20,9 +20,9 @@ pub struct Field {
 
 impl Field {
     /// Create a Field from a LocationSpec
-    pub fn from_spec(spec: &LocationSpec, data: &FieldData) -> Self {
+    pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &FieldData) -> Self {
         Field {
-            location_id: spec.location_id,
+            location_id,
             name: spec.name.to_string(),
             description: spec.description.to_string(),
             mob_weights: data.mob_weights.clone(),

@@ -37,10 +37,7 @@ use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 use crate::dungeon::Dungeon;
 use crate::item::recipe::RecipeRegistry;
 use crate::magic::effect::PassiveEffect;
-use crate::location::spec::specs::{
-    VILLAGE_ALCHEMIST, VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE, VILLAGE_STORE,
-};
-use crate::location::{Alchemist, Blacksmith, Field, LocationData, Mine, Store};
+use crate::location::{Alchemist, Blacksmith, Field, LocationData, LocationId, Mine, Store};
 use crate::magic::word::WordRegistry;
 use crate::toast::ToastQueue;
 use crate::ui::components::magic::SpellTestModal;
@@ -351,25 +348,45 @@ impl Default for GameState {
         let mut terminal: Terminal<CrosstermBackend<io::Stdout>> = Terminal::new(backend).unwrap();
         terminal.clear().unwrap();
 
-        let store = match &VILLAGE_STORE.data {
-            LocationData::Store(data) => Store::from_spec(&VILLAGE_STORE, data),
-            _ => unreachable!(),
+        let store = {
+            let id = LocationId::VillageStore;
+            let spec = id.spec();
+            match &spec.data {
+                LocationData::Store(data) => Store::from_spec(id, spec, data),
+                _ => unreachable!(),
+            }
         };
-        let blacksmith = match &VILLAGE_BLACKSMITH.data {
-            LocationData::Blacksmith(data) => Blacksmith::from_spec(&VILLAGE_BLACKSMITH, data),
-            _ => unreachable!(),
+        let blacksmith = {
+            let id = LocationId::VillageBlacksmith;
+            let spec = id.spec();
+            match &spec.data {
+                LocationData::Blacksmith(data) => Blacksmith::from_spec(id, spec, data),
+                _ => unreachable!(),
+            }
         };
-        let alchemist = match &VILLAGE_ALCHEMIST.data {
-            LocationData::Alchemist(data) => Alchemist::from_spec(&VILLAGE_ALCHEMIST, data),
-            _ => unreachable!(),
+        let alchemist = {
+            let id = LocationId::VillageAlchemist;
+            let spec = id.spec();
+            match &spec.data {
+                LocationData::Alchemist(data) => Alchemist::from_spec(id, spec, data),
+                _ => unreachable!(),
+            }
         };
-        let field = match &VILLAGE_FIELD.data {
-            LocationData::Field(data) => Field::from_spec(&VILLAGE_FIELD, data),
-            _ => unreachable!(),
+        let field = {
+            let id = LocationId::VillageField;
+            let spec = id.spec();
+            match &spec.data {
+                LocationData::Field(data) => Field::from_spec(id, spec, data),
+                _ => unreachable!(),
+            }
         };
-        let mine = match &VILLAGE_MINE.data {
-            LocationData::Mine(data) => Mine::from_spec(&VILLAGE_MINE, data),
-            _ => unreachable!(),
+        let mine = {
+            let id = LocationId::VillageMine;
+            let spec = id.spec();
+            match &spec.data {
+                LocationData::Mine(data) => Mine::from_spec(id, spec, data),
+                _ => unreachable!(),
+            }
         };
         let town = Town::new("Village".to_string(), store, blacksmith, alchemist, field, mine);
 

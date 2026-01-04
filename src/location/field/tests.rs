@@ -77,7 +77,6 @@ fn field_from_spec_creates_from_location_spec() {
     };
 
     let spec = LocationSpec {
-        location_id: LocationId::VillageField,
         name: "Village Field",
         description: "A peaceful field near the village",
         refresh_interval: None,
@@ -85,7 +84,7 @@ fn field_from_spec_creates_from_location_spec() {
         data: crate::location::LocationData::Field(data.clone()),
     };
 
-    let field = Field::from_spec(&spec, &data);
+    let field = Field::from_spec(LocationId::VillageField, &spec, &data);
 
     assert_eq!(field.location_id, LocationId::VillageField);
     assert_eq!(field.name, "Village Field");
@@ -117,7 +116,6 @@ fn field_description_returns_description() {
     };
 
     let spec = LocationSpec {
-        location_id: LocationId::VillageField,
         name: "Test Field",
         description: "A test description",
         refresh_interval: None,
@@ -125,7 +123,7 @@ fn field_description_returns_description() {
         data: crate::location::LocationData::Field(data.clone()),
     };
 
-    let field = Field::from_spec(&spec, &data);
+    let field = Field::from_spec(LocationId::VillageField, &spec, &data);
 
     assert_eq!(field.description(), "A test description");
 }
