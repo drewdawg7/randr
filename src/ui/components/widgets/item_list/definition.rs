@@ -58,6 +58,8 @@ where
     scroll_offset: usize,
     filter: F,
     config: ItemListConfig,
+    /// Actual visible count from last render (may be less than config.visible_count)
+    actual_visible_count: usize,
 }
 
 impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
@@ -65,6 +67,7 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
     pub fn new(config: ItemListConfig) -> Self {
         let mut list_state = ListState::default();
         list_state.select(Some(0));
+        let visible_count = config.visible_count;
         Self {
             items: Vec::new(),
             filtered_indices: Vec::new(),
@@ -72,6 +75,7 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
             scroll_offset: 0,
             filter: F::default(),
             config,
+            actual_visible_count: visible_count,
         }
     }
 
@@ -185,10 +189,11 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
     /// Adjust scroll offset to keep selection visible.
     fn adjust_scroll(&mut self) {
         let selected = self.selected_index();
+        let visible = self.actual_visible_count;
         if selected < self.scroll_offset {
             self.scroll_offset = selected;
-        } else if selected >= self.scroll_offset + self.config.visible_count {
-            self.scroll_offset = selected - self.config.visible_count + 1;
+        } else if selected >= self.scroll_offset + visible {
+            self.scroll_offset = selected - visible + 1;
         }
     }
 
@@ -202,6 +207,19 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
         } else {
             area
         };
+
+        // Calculate actual visible count, accounting for scroll indicators.
+        // The "... more above/below ..." indicators take space from item display.
+        let base_visible = self.config.visible_count.min(list_area.height as usize);
+        let total_items = self.total_count();
+
+        // Reserve space for indicators if needed
+        let needs_more_above = self.config.show_scroll_indicators && self.scroll_offset > 0;
+        let needs_more_below = self.config.show_scroll_indicators
+            && total_items > self.scroll_offset + base_visible;
+
+        let indicator_space = (needs_more_above as usize) + (needs_more_below as usize);
+        self.actual_visible_count = base_visible.saturating_sub(indicator_space);
 
         self.render_items(frame, list_area);
     }
@@ -228,8 +246,8 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
     fn render_items(&mut self, frame: &mut Frame, area: Rect) {
         let selected = self.selected_index();
 
-        // Calculate visible range
-        let visible_count = self.config.visible_count.min(area.height as usize);
+        // Use actual_visible_count (set by render()) which accounts for indicator space
+        let visible_count = self.actual_visible_count;
         let end_idx = (self.scroll_offset + visible_count).min(self.filtered_indices.len());
 
         let mut list_items: Vec<RatatuiListItem> = Vec::new();
@@ -301,7 +319,11 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
         };
 
         let list = List::new(list_items).style(list_style);
-        frame.render_stateful_widget(list, area, &mut self.list_state);
+        // Use render_widget instead of render_stateful_widget since we handle
+        // selection highlighting ourselves (with `> ` prefix) and scrolling
+        // with scroll_offset. Using stateful widget can cause ratatui to
+        // modify list_state in ways that conflict with our scroll logic.
+        frame.render_widget(list, area);
     }
 
     /// Render the item list directly to frame buffer, preserving background.
@@ -316,6 +338,17 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
         } else {
             area
         };
+
+        // Calculate actual visible count, accounting for scroll indicators.
+        let base_visible = self.config.visible_count.min(list_area.height as usize);
+        let total_items = self.total_count();
+
+        let needs_more_above = self.config.show_scroll_indicators && self.scroll_offset > 0;
+        let needs_more_below = self.config.show_scroll_indicators
+            && total_items > self.scroll_offset + base_visible;
+
+        let indicator_space = (needs_more_above as usize) + (needs_more_below as usize);
+        self.actual_visible_count = base_visible.saturating_sub(indicator_space);
 
         self.render_items_to_buffer(buf, list_area, left_padding);
     }
@@ -336,7 +369,8 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
     /// Render items directly to buffer, preserving background.
     fn render_items_to_buffer(&mut self, buf: &mut Buffer, area: Rect, left_padding: &str) {
         let selected = self.selected_index();
-        let visible_count = self.config.visible_count.min(area.height as usize);
+        // Use actual_visible_count (set by render_to_buffer()) which accounts for indicator space
+        let visible_count = self.actual_visible_count;
         let end_idx = (self.scroll_offset + visible_count).min(self.filtered_indices.len());
 
         let mut lines: Vec<Line> = Vec::new();
