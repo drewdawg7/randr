@@ -304,6 +304,8 @@ impl GameState {
 
     pub fn run_current_screen(&mut self) -> std::io::Result<()> {
         self.town.store.check_and_restock();
+        self.town.mine.check_and_regenerate();
+        self.town.mine.check_and_respawn_rock();
         self.toasts.cleanup();
 
         let current = self.current_screen;

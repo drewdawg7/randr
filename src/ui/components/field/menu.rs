@@ -61,13 +61,15 @@ fn field_header() -> Vec<Line<'static>> {
 }
 
 pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
+    let gs = game_state();
+
     // Render header with field name and get remaining area
     let header_lines = field_header();
     let content_area = render_location_header(frame, area, header_lines, colors::FIELD_BG, colors::FOREST_GREEN);
 
     // Center the menu vertically and horizontally
     const MENU_HEIGHT: u16 = 3;
-    const MENU_WIDTH: u16 = 16;
+    const MENU_WIDTH: u16 = 24; // Wider to fit mine timer (X:XX)
 
     let vertical_chunks = Layout::default()
         .direction(Direction::Vertical)
@@ -92,6 +94,15 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     // Menu options with explicit foreground colors
     let selected = list_state.selected().unwrap_or(0);
     let text_style = Style::default().fg(colors::WHITE);
+    let dim_style = Style::default().fg(colors::GRANITE);
+
+    // Get mine regeneration timer
+    let mine = &gs.town.mine;
+    let regen_secs = mine.time_until_regeneration();
+    let regen_mins = regen_secs / 60;
+    let regen_secs_remainder = regen_secs % 60;
+    let timer_text = format!(" ({}:{:02})", regen_mins, regen_secs_remainder);
+
     let menu_items: Vec<ListItem> = vec![
         ListItem::new(Line::from(vec![
             selection_prefix(selected == 0),
@@ -102,6 +113,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
             selection_prefix(selected == 1),
             Span::styled(format!("{}", PICKAXE), Style::default().fg(colors::GRANITE)),
             Span::styled(" Mine", text_style),
+            Span::styled(timer_text, dim_style),
         ])),
     ];
 

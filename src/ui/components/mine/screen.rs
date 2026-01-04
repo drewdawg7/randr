@@ -17,18 +17,16 @@ use crate::system::game_state;
 use crate::ui::Id;
 use crate::ui::theme as colors;
 
-use super::cave_art::{self, CaveLayout};
+use super::cave_art;
 
 pub struct MineScreen {
     props: Props,
-    cave: Option<CaveLayout>,
 }
 
 impl MineScreen {
     pub fn new() -> Self {
         Self {
             props: Props::default(),
-            cave: None,
         }
     }
 }
@@ -43,15 +41,8 @@ impl MockComponent for MineScreen {
     fn view(&mut self, frame: &mut Frame, _area: Rect) {
         let gs = game_state();
 
-        // Generate new cave when entering the screen
-        if gs.screen_lifecycle().just_entered() {
-            self.cave = Some(CaveLayout::generate());
-        }
-
-        // Ensure we have a cave (fallback)
-        if self.cave.is_none() {
-            self.cave = Some(CaveLayout::generate());
-        }
+        // Ensure the mine has a cave
+        gs.town.mine.ensure_cave_exists();
 
         let frame_size = frame.area();
 
@@ -60,7 +51,7 @@ impl MockComponent for MineScreen {
         frame.render_widget(bg_fill, frame_size);
 
         // Render the cave art centered
-        if let Some(cave) = &self.cave {
+        if let Some(cave) = gs.town.mine.cave() {
             cave_art::render_cave(frame, frame_size, cave);
         }
     }
@@ -91,41 +82,43 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                if let Some(cave) = &mut self.cave {
+                if let Some(cave) = game_state().town.mine.cave_mut() {
                     cave.move_player(0, -1);
                 }
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
-                if let Some(cave) = &mut self.cave {
+                if let Some(cave) = game_state().town.mine.cave_mut() {
                     cave.move_player(0, 1);
                 }
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Left, .. }) => {
-                if let Some(cave) = &mut self.cave {
+                if let Some(cave) = game_state().town.mine.cave_mut() {
                     cave.move_player(-1, 0);
                 }
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Right, .. }) => {
-                if let Some(cave) = &mut self.cave {
+                if let Some(cave) = game_state().town.mine.cave_mut() {
                     cave.move_player(1, 0);
                 }
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Char(' '), .. }) => {
-                if let Some(cave) = &mut self.cave {
-                    // Check if on exit first
+                let gs = game_state();
+
+                // Check if on exit first
+                if let Some(cave) = gs.town.mine.cave() {
                     if cave.is_on_exit() {
-                        // Exit the mine
-                        game_state().current_screen = Id::Town;
+                        gs.current_screen = Id::Town;
                         return None;
                     }
+                }
 
-                    // Otherwise, try to mine adjacent rock
+                // Otherwise, try to mine adjacent rock
+                if let Some(cave) = gs.town.mine.cave_mut() {
                     if let Some(rock_type) = cave.mine_adjacent_rock() {
-                        let gs = game_state();
                         let loot_table = rock_type.loot_table();
 
                         // Roll drops (0 magic find, spawn items from game state)
