@@ -9,6 +9,17 @@ use crate::stats::StatType;
 
 use super::EquipmentSlot;
 
+/// Result of adding an item to inventory.
+#[derive(Debug, Clone)]
+pub struct AddItemResult {
+    /// Whether the item was stacked with an existing item.
+    pub was_stacked: bool,
+    /// The total quantity after adding (for stacked items).
+    pub total_quantity: u32,
+    /// The index of the slot where the item was placed.
+    pub slot_index: usize,
+}
+
 #[derive(Debug, Clone)]
 pub struct InventoryItem {
     pub item: Item,

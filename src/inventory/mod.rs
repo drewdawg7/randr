@@ -5,7 +5,7 @@ mod equipment;
 mod tests;
 mod traits;
 
-pub use definition::{Inventory, InventoryItem};
+pub use definition::{AddItemResult, Inventory, InventoryItem};
 pub use enums::{EquipmentSlot, InventoryError};
 pub use equipment::HasEquipment;
 pub use traits::HasInventory;

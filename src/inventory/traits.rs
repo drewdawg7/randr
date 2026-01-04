@@ -2,7 +2,7 @@ use uuid::Uuid;
 
 use crate::{item::Item, ItemId};
 
-use super::{EquipmentSlot, Inventory, InventoryError, InventoryItem};
+use super::{AddItemResult, EquipmentSlot, Inventory, InventoryError, InventoryItem};
 
 pub trait HasInventory {
     fn inventory(&self) -> &Inventory;
@@ -83,16 +83,21 @@ pub trait HasInventory {
         self.inventory().items.iter().position(|inv_item| inv_item.uuid() == uuid)
     }
 
-    fn add_to_inv(&mut self, item: Item) -> Result<(), InventoryError> {
+    fn add_to_inv(&mut self, item: Item) -> Result<AddItemResult, InventoryError> {
         let inv = self.inventory_mut();
 
         // Try to stack with existing item of same kind (only for non-equipment)
         if !item.item_type.is_equipment() {
-            if let Some(existing) = inv.items.iter_mut()
-                .find(|i| i.item.item_id == item.item_id && i.quantity < i.item.max_stack_quantity)
+            if let Some((index, existing)) = inv.items.iter_mut()
+                .enumerate()
+                .find(|(_, i)| i.item.item_id == item.item_id && i.quantity < i.item.max_stack_quantity)
             {
                 existing.quantity += 1;
-                return Ok(());
+                return Ok(AddItemResult {
+                    was_stacked: true,
+                    total_quantity: existing.quantity,
+                    slot_index: index,
+                });
             }
         }
 
@@ -100,15 +105,20 @@ pub trait HasInventory {
         if inv.items.len() >= inv.max_slots() {
             return Err(InventoryError::Full);
         }
+        let slot_index = inv.items.len();
         inv.items.push(InventoryItem::new(item));
-        Ok(())
+        Ok(AddItemResult {
+            was_stacked: false,
+            total_quantity: 1,
+            slot_index,
+        })
     }
 
     fn get_equipped_item(&self, slot: EquipmentSlot) -> Option<&InventoryItem> {
         self.inventory().equipment().get(&slot)
     }
 
-    fn unequip_item(&mut self, slot: EquipmentSlot) -> Result<(), InventoryError> {
+    fn unequip_item(&mut self, slot: EquipmentSlot) -> Result<Option<Item>, InventoryError> {
         // Check if inventory has room before removing from equipment
         if self.inventory().equipment().contains_key(&slot)
             && self.inventory().items.len() >= self.inventory().max_slots()
@@ -121,9 +131,11 @@ pub trait HasInventory {
         match inv_item {
             Some(mut inv_item) => {
                 inv_item.item.set_is_equipped(false);
-                self.add_to_inv(inv_item.item)
+                let item_clone = inv_item.item.clone();
+                self.add_to_inv(inv_item.item)?;
+                Ok(Some(item_clone))
             }
-            None => Ok(())
+            None => Ok(None)
         }
     }
 
