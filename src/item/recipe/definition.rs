@@ -2,14 +2,12 @@ use std::collections::HashMap;
 
 use crate::{
     player::Player,
-    game_state,
     item::ItemId,
     HasInventory,
 };
 
-use super::enums::{RecipeError, RecipeId};
-
-use super::spec::RecipeSpec;
+use super::definitions::{RecipeId, RecipeSpec};
+use super::enums::RecipeError;
 
 pub struct Recipe {
     spec: RecipeSpec,
@@ -17,11 +15,7 @@ pub struct Recipe {
 
 impl Recipe {
     pub fn new(recipe_id: RecipeId) -> Result<Self, RecipeError> {
-        let spec = game_state()
-            .recipe_registry()
-            .get(&recipe_id)
-            .cloned()
-            .ok_or(RecipeError::NoMatchingRecipe)?;
+        let spec = recipe_id.spec().clone();
         Ok(Self { spec })
     }
 

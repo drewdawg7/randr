@@ -1,7 +1,7 @@
 pub mod definition;
+pub mod definitions;
 pub mod enums;
-pub mod spec;
 
 pub use definition::Recipe;
-pub use enums::{ForgeMaterial, RecipeError, RecipeId};
-pub use spec::{RecipeRegistry, RecipeSpec};
+pub use definitions::{RecipeId, RecipeRegistry, RecipeSpec};
+pub use enums::{ForgeMaterial, RecipeError, RecipeType};
