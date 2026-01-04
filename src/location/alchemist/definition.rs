@@ -1,7 +1,6 @@
 use crate::{
     player::Player,
-    game_state,
-    item::recipe::{Recipe, RecipeId},
+    item::{Item, recipe::{Recipe, RecipeId}},
     location::{AlchemistData, LocationId, LocationSpec},
     HasInventory,
 };
@@ -35,14 +34,14 @@ impl Alchemist {
         &self,
         player: &mut Player,
         recipe_id: &RecipeId,
-    ) -> Result<(), AlchemistError> {
+    ) -> Result<Item, AlchemistError> {
         let recipe = Recipe::new(*recipe_id).map_err(AlchemistError::RecipeError)?;
         let item_id = recipe.craft(player).map_err(AlchemistError::RecipeError)?;
         let item = item_id.spawn();
         player
-            .add_to_inv(item)
+            .add_to_inv(item.clone())
             .map_err(|_| AlchemistError::InventoryFull)?;
-        Ok(())
+        Ok(item)
     }
 
     pub fn location_id(&self) -> LocationId {
