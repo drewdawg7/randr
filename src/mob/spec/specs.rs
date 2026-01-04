@@ -1,11 +1,11 @@
 use once_cell::sync::Lazy;
 
 use crate::{
-    entities::mob::enums::MobQuality,
     item::ItemId,
     loot::LootTable,
 };
 
+use super::super::enums::MobQuality;
 use super::definition::MobSpec;
 
 pub static COW: Lazy<MobSpec> = Lazy::new(|| MobSpec {
@@ -20,6 +20,7 @@ pub static COW: Lazy<MobSpec> = Lazy::new(|| MobSpec {
         .with(ItemId::Cowhide, 3, 4, 1..=3)
         .with(ItemId::GoldRing, 1, 1000, 1..=1),
 });
+
 pub static SLIME: Lazy<MobSpec> = Lazy::new(|| MobSpec {
     name: "Slime",
     quality: MobQuality::Normal,

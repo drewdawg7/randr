@@ -4,7 +4,7 @@
 
 use crate::combat::{self, Combatant, DealsDamage, HasGold, IsKillable, Named};
 use crate::dungeon::{Direction, RoomType};
-use crate::entities::mob::MobId;
+use crate::mob::MobId;
 use crate::entities::progression::HasProgression;
 use crate::loot::collect_loot_drops;
 use crate::stats::HasStats;

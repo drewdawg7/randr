@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 use std::time::Duration;
 
-use crate::entities::mob::MobId;
+use crate::mob::MobId;
 use crate::item::ItemId;
 use crate::location::mine::RockId;
 use crate::registry::Registry;

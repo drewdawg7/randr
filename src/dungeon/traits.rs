@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     dungeon::definition::{Dungeon, DungeonRoom, DUNGEON_SIZE},
-    entities::mob::MobId,
+    mob::MobId,
 };
 
 impl Default for Dungeon {

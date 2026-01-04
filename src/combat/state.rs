@@ -1,6 +1,6 @@
 use crate::{
     combat::{AttackResult, CombatRounds},
-    entities::Mob,
+    mob::Mob,
     loot::LootDrop,
 };
 

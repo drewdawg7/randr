@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     chest::Chest,
     dungeon::enums::{Direction, DungeonError, RoomType},
-    entities::mob::{Mob, MobId},
+    mob::{Mob, MobId},
     item::{Item, ItemId},
     loot::{HasLoot, LootDrop},
     system::game_state,

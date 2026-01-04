@@ -1,16 +1,16 @@
-use std::{collections::HashMap};
+use std::collections::HashMap;
 
 use rand::Rng;
 
 use crate::{
-    entities::mob::{enums::MobId, spec::specs::COW},
     registry::{RegistryDefaults, SpawnFromSpec},
     stats::{StatInstance, StatSheet, StatType},
 };
 
+use super::super::enums::MobId;
 use super::super::definition::Mob;
 use super::definition::MobSpec;
-use super::specs::{DRAGON, GOBLIN, SLIME};
+use super::specs::{COW, DRAGON, GOBLIN, SLIME};
 
 impl SpawnFromSpec<MobId> for MobSpec {
     type Output = Mob;
@@ -60,7 +60,6 @@ impl RegistryDefaults<MobId> for MobSpec {
     fn defaults() -> impl IntoIterator<Item = (MobId, Self)> {
         [
             (MobId::Slime, SLIME.clone()),
-
             (MobId::Cow, COW.clone()),
             (MobId::Goblin, GOBLIN.clone()),
             (MobId::Dragon, DRAGON.clone()),

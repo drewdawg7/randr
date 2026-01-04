@@ -3,12 +3,9 @@ use std::collections::HashMap;
 #[cfg(test)]
 use crate::{
     combat::{attack, enter_combat, apply_defense, calculate_damage_reduction, Combatant, DealsDamage, HasGold, IsKillable},
-    entities::{
-        mob::{Mob, MobId},
-        mob::enums::MobQuality,
-        progression::HasProgression,
-    },
+    entities::progression::HasProgression,
     loot::LootTable,
+    mob::{Mob, MobId, enums::MobQuality},
     player::Player,
     stats::{HasStats, StatSheet, StatType},
 };

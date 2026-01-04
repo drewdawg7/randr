@@ -1,8 +1,9 @@
 use crate::{
-    entities::mob::enums::{MobId, MobQuality},
     loot::LootTable,
-    stats::{HasStats, StatSheet},
+    stats::StatSheet,
 };
+
+use super::enums::{MobId, MobQuality};
 
 #[derive(Debug, Clone)]
 pub struct Mob {
@@ -16,4 +17,3 @@ pub struct Mob {
     /// Guards against double on_death() calls - set to true after first call
     pub death_processed: bool,
 }
-

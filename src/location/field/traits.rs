@@ -2,7 +2,7 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::{
-    entities::mob::MobId,
+    mob::MobId,
     location::{Location, LocationEntryError, LocationId},
     player::Player,
 };

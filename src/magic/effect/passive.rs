@@ -1,4 +1,4 @@
-use crate::entities::mob::MobId;
+use crate::mob::MobId;
 use crate::location::mine::rock::RockId;
 
 // ─────────────────────────────────────────────────────────────────────────────

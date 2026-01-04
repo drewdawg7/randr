@@ -2,7 +2,7 @@ use std::collections::HashSet;
 
 use once_cell::sync::Lazy;
 
-use crate::entities::mob::MobId;
+use crate::mob::MobId;
 use crate::magic::effect::{ActiveEffect, PassiveEffect};
 use crate::magic::word::{Element, WordId};
 
