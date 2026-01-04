@@ -27,7 +27,7 @@ fn create_test_item(
 ) -> Item {
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: Some(item_id),
+        item_id,
         item_type,
         name: name.to_string(),
         is_equipped: false,
@@ -213,7 +213,7 @@ fn purchase_item_adds_correct_item_to_inventory() {
 
     assert!(result.is_ok());
     let purchased = result.unwrap();
-    assert_eq!(purchased.item_id, Some(ItemId::Sword));
+    assert_eq!(purchased.item_id, ItemId::Sword);
     assert_eq!(purchased.name, "Test Sword");
 }
 
@@ -429,7 +429,7 @@ fn take_item_removes_and_returns_item() {
 
     assert!(result.is_some());
     let taken = result.unwrap();
-    assert_eq!(taken.item_id, Some(ItemId::Sword));
+    assert_eq!(taken.item_id, ItemId::Sword);
     assert_eq!(store_item.quantity(), 0);
 }
 

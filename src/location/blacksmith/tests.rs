@@ -27,7 +27,7 @@ fn create_test_item(
 
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: Some(ItemId::Sword),
+        item_id: ItemId::Sword,
         item_type,
         name: name.to_string(),
         is_equipped: false,
@@ -73,7 +73,7 @@ fn create_test_shield(defense: i32, num_upgrades: i32, max_upgrades: i32) -> Ite
 fn create_material_item() -> Item {
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: Some(ItemId::CopperOre),
+        item_id: ItemId::CopperOre,
         item_type: ItemType::Material(MaterialType::Ore),
         name: "Copper Ore".to_string(),
         is_equipped: false,

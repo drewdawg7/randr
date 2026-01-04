@@ -30,7 +30,6 @@ pub fn use_consumable<T: ApplyEffect>(
     inv_item: &InventoryItem,
 ) -> Result<ConsumableResult, ConsumableError> {
     let item = &inv_item.item;
-    let item_id = item.item_id.ok_or(ConsumableError::NotConsumable)?;
 
     // Verify item is a consumable
     if !item.item_type.is_consumable() {
@@ -41,7 +40,7 @@ pub fn use_consumable<T: ApplyEffect>(
     let gs = game_state();
     let effect = gs
         .consumable_registry()
-        .get(&item_id)
+        .get(&item.item_id)
         .ok_or(ConsumableError::NoEffectRegistered)?;
 
     // Check if effect can be applied

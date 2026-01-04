@@ -3,13 +3,10 @@ use crate::{
     stats::StatSheet,
 };
 
-// MobId now comes from definitions (macro-generated)
-use super::definitions::MobId;
 use super::enums::MobQuality;
 
 #[derive(Debug, Clone)]
 pub struct Mob {
-    pub spec: Option<MobId>,
     pub quality: MobQuality,
     pub name: String,
     pub stats: StatSheet,

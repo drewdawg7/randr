@@ -2,11 +2,12 @@
 
 ## Overview
 
-The procedural generation system allows creating modified or entirely custom entities at runtime. Both `MobSpec` and `ItemSpec` support:
+The procedural generation system allows creating modified variants of entities at runtime. Both `MobSpec` and `ItemSpec` support:
 - **Scaling**: Multiply stats by a factor for elite/dungeon variants
 - **Naming**: Custom names for unique entities
 - **Quality**: Fixed quality levels instead of random rolls
-- **Spawning**: Create instances without a base `MobId`/`ItemId`
+
+All spawned entities are tied to a base registry ID (`MobId`, `ItemId`).
 
 ## Key Concepts
 
@@ -14,8 +15,7 @@ The procedural generation system allows creating modified or entirely custom ent
 |------|-------------|
 | Spec | Template defining entity properties (ranges, base stats) |
 | Instance | Spawned entity with rolled/computed values |
-| `Option<MobId>` | `None` for procedural mobs, `Some(id)` for registry mobs |
-| `Option<ItemId>` | `None` for procedural items, `Some(id)` for registry items |
+| ID | Required identifier linking entity to registry (`MobId`, `ItemId`) |
 
 ## MobSpec Procedural Generation
 
@@ -23,8 +23,7 @@ The procedural generation system allows creating modified or entirely custom ent
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `spawn()` | `&self -> Mob` | Spawn with `spec: None` |
-| `spawn_with_id()` | `&self, Option<MobId> -> Mob` | Spawn with explicit id |
+| `spawn()` | `&self -> Mob` | Spawn a mob from this spec |
 | `with_multiplier()` | `&self, f32 -> MobSpec` | Scale all stat ranges |
 | `with_name()` | `&self, impl Into<String> -> MobSpec` | Change display name |
 | `with_quality()` | `&self, MobQuality -> MobSpec` | Set quality (Normal/Boss) |
@@ -32,6 +31,9 @@ The procedural generation system allows creating modified or entirely custom ent
 ### Examples
 
 ```rust
+// Normal spawn
+let slime = MobId::Slime.spawn();
+
 // Elite variant: 1.5x stats with custom name
 let elite_slime = MobId::Slime.spec()
     .with_multiplier(1.5)
@@ -42,7 +44,7 @@ let elite_slime = MobId::Slime.spec()
 let depth_multiplier = 1.0 + (floor as f32 * 0.2);
 let scaled_goblin = MobId::Goblin.spec()
     .with_multiplier(depth_multiplier)
-    .spawn_with_id(Some(MobId::Goblin));
+    .spawn();
 
 // Boss variant of a normal mob
 let mini_boss = MobId::Cow.spec()
@@ -69,8 +71,7 @@ let mini_boss = MobId::Cow.spec()
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `spawn()` | `&self -> Item` | Spawn with `item_id: None` |
-| `spawn_with_id()` | `&self, Option<ItemId> -> Item` | Spawn with explicit id |
+| `spawn()` | `&self, ItemId -> Item` | Spawn an item with the given ID |
 | `with_multiplier()` | `&self, f32 -> ItemSpec` | Scale stats and gold value |
 | `with_name()` | `&self, impl Into<String> -> ItemSpec` | Change display name |
 | `with_quality()` | `&self, ItemQuality -> ItemSpec` | Set fixed quality |
@@ -78,30 +79,21 @@ let mini_boss = MobId::Cow.spec()
 ### Examples
 
 ```rust
+// Normal spawn
+let sword = ItemId::Sword.spawn();
+
 // Enchanted version of a base item
 let enchanted_sword = ItemId::Sword.spec()
     .with_multiplier(1.5)
     .with_name("Enchanted Sword")
     .with_quality(ItemQuality::Masterworked)
-    .spawn();
+    .spawn(ItemId::Sword);
 
 // Dungeon loot scaling
 let loot_multiplier = 1.0 + (floor as f32 * 0.1);
 let dungeon_drop = ItemId::BronzeSword.spec()
     .with_multiplier(loot_multiplier)
-    .spawn_with_id(Some(ItemId::BronzeSword));
-
-// Fully custom item (no base ItemId)
-let custom_spec = ItemSpec {
-    name: String::from("Ancient Blade"),
-    item_type: ItemType::Equipment(EquipmentType::Weapon),
-    quality: Some(ItemQuality::Mythic),
-    stats: StatSheet::new().with(StatType::Attack, 50),
-    max_upgrades: 10,
-    max_stack_quantity: 1,
-    gold_value: 1000,
-};
-let ancient_blade = custom_spec.spawn();
+    .spawn(ItemId::BronzeSword);
 ```
 
 ### What Gets Scaled
@@ -154,30 +146,14 @@ fn generate_treasure(tier: u32) -> Item {
 }
 ```
 
-## Checking Procedural vs Registry Entities
-
-```rust
-// Check if mob is from registry or procedural
-match mob.spec {
-    Some(mob_id) => println!("Registry mob: {:?}", mob_id),
-    None => println!("Procedural mob: {}", mob.name),
-}
-
-// Check if item is from registry or procedural
-match item.item_id {
-    Some(item_id) => println!("Registry item: {:?}", item_id),
-    None => println!("Procedural item: {}", item.name),
-}
-```
-
 ## Key Files
 
 | File | Purpose |
 |------|---------|
 | `src/mob/definitions.rs` | `MobSpec` proc-gen methods |
 | `src/item/definitions.rs` | `ItemSpec` proc-gen methods |
-| `src/mob/definition.rs` | `Mob` struct with `spec: Option<MobId>` |
-| `src/item/definition.rs` | `Item` struct with `item_id: Option<ItemId>` |
+| `src/mob/definition.rs` | `Mob` struct |
+| `src/item/definition.rs` | `Item` struct with `item_id: ItemId` |
 
 ## Related Documentation
 

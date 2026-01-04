@@ -422,14 +422,13 @@ impl SpawnFromSpec<ItemId> for ItemSpec {
     type Output = Item;
 
     fn spawn_from_spec(item_id: ItemId, spec: &Self) -> Self::Output {
-        spec.spawn_with_id(Some(item_id))
+        spec.spawn(item_id)
     }
 }
 
 impl ItemSpec {
-    /// Spawn an Item from this spec with an optional ItemId reference.
-    /// Use None for procedurally generated items not tied to a base ItemId.
-    pub fn spawn_with_id(&self, id: Option<ItemId>) -> Item {
+    /// Spawn an Item from this spec with the given ItemId.
+    pub fn spawn(&self, id: ItemId) -> Item {
         // Use fixed quality from spec, or roll if None
         let quality = self.quality.unwrap_or_else(ItemQuality::roll);
         let base_stats = self.stats.clone();
@@ -457,11 +456,6 @@ impl ItemSpec {
             quality,
             tome_data,
         }
-    }
-
-    /// Spawn an Item from this spec (for procedural generation).
-    pub fn spawn(&self) -> Item {
-        self.spawn_with_id(None)
     }
 
     /// Create a scaled copy of this spec with stats multiplied by the given factor.
@@ -525,8 +519,8 @@ impl RegistryDefaults<ItemId> for ItemSpec {
 // ─────────────────────────────────────────────────────────────────────────────
 
 impl ItemId {
-    /// Spawn an Item instance from this ItemId
+    /// Spawn an Item instance from this ItemId.
     pub fn spawn(&self) -> Item {
-        ItemSpec::spawn_from_spec(*self, self.spec())
+        self.spec().spawn(*self)
     }
 }

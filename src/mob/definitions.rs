@@ -98,15 +98,14 @@ pub type MobRegistry = Registry<MobId, MobSpec>;
 impl SpawnFromSpec<MobId> for MobSpec {
     type Output = Mob;
 
-    fn spawn_from_spec(kind: MobId, spec: &Self) -> Self::Output {
-        spec.spawn_with_id(Some(kind))
+    fn spawn_from_spec(_kind: MobId, spec: &Self) -> Self::Output {
+        spec.spawn()
     }
 }
 
 impl MobSpec {
-    /// Spawn a Mob from this spec with an optional MobId reference.
-    /// Use None for procedurally generated mobs not tied to a base MobId.
-    pub fn spawn_with_id(&self, id: Option<MobId>) -> Mob {
+    /// Spawn a Mob from this spec.
+    pub fn spawn(&self) -> Mob {
         let mut rng = rand::thread_rng();
         let hp_min = self.max_health.start();
         let hp_max = self.max_health.end();
@@ -128,7 +127,6 @@ impl MobSpec {
         let gold = (base_gold as f32 * bonus_multiplier).round() as i32;
 
         Mob {
-            spec: id,
             name: self.name.clone(),
             quality: self.quality.clone(),
             gold,
@@ -144,11 +142,6 @@ impl MobSpec {
             dropped_xp,
             death_processed: false,
         }
-    }
-
-    /// Spawn a Mob from this spec (for procedural generation).
-    pub fn spawn(&self) -> Mob {
-        self.spawn_with_id(None)
     }
 
     /// Create a scaled copy of this spec with stats multiplied by the given factor.
@@ -214,6 +207,6 @@ impl RegistryDefaults<MobId> for MobSpec {
 impl MobId {
     /// Spawn a Mob instance from this MobId
     pub fn spawn(&self) -> Mob {
-        MobSpec::spawn_from_spec(*self, self.spec())
+        self.spec().spawn()
     }
 }

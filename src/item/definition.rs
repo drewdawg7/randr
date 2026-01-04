@@ -9,7 +9,7 @@ pub use super::enums::ItemType;
 #[derive(Debug, Clone)]
 pub struct Item {
     pub item_uuid: Uuid,
-    pub item_id: Option<ItemId>,
+    pub item_id: ItemId,
     pub item_type: ItemType,
     pub name: String,
     pub is_equipped: bool,

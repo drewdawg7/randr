@@ -21,7 +21,7 @@ use super::enums::LootError;
 fn create_test_material(id: ItemId, gold_value: i32) -> Item {
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: Some(id),
+        item_id: id,
         item_type: ItemType::Material(MaterialType::Ore),
         name: "Test Material".to_string(),
         is_equipped: false,
@@ -232,7 +232,7 @@ fn loot_table_roll_drops_100_percent_always_drops() {
     for _ in 0..100 {
         let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
         assert_eq!(drops.len(), 1);
-        assert_eq!(drops[0].item.item_id, Some(ItemId::CopperOre));
+        assert_eq!(drops[0].item.item_id, ItemId::CopperOre);
     }
 }
 
@@ -330,7 +330,7 @@ fn loot_drop_contains_spawned_item_with_quantity() {
     let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
 
     assert_eq!(drops.len(), 1);
-    assert_eq!(drops[0].item.item_id, Some(ItemId::CopperOre));
+    assert_eq!(drops[0].item.item_id, ItemId::CopperOre);
     assert_eq!(drops[0].quantity, 2);
 }
 

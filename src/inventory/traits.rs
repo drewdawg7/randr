@@ -18,11 +18,11 @@ pub trait HasInventory {
 
     fn find_item_by_id(&self, item_id: ItemId) -> Option<&InventoryItem> {
         // Check inventory items first
-        if let Some(inv_item) = self.inventory().items.iter().find(|inv_item| inv_item.item.item_id == Some(item_id)) {
+        if let Some(inv_item) = self.inventory().items.iter().find(|inv_item| inv_item.item.item_id == item_id) {
             return Some(inv_item);
         }
         // Check equipment
-        self.inventory().equipment().values().find(|inv_item| inv_item.item.item_id == Some(item_id))
+        self.inventory().equipment().values().find(|inv_item| inv_item.item.item_id == item_id)
     }
 
     fn decrease_item_quantity(&mut self, inv_item: &InventoryItem, amount: u32) {
@@ -62,12 +62,12 @@ pub trait HasInventory {
     
     fn find_item_by_id_mut(&mut self, item_id: ItemId) -> Option<&mut InventoryItem> {
         // Check if in inventory items first
-        let in_inventory = self.inventory().items.iter().any(|inv_item| inv_item.item.item_id == Some(item_id));
+        let in_inventory = self.inventory().items.iter().any(|inv_item| inv_item.item.item_id == item_id);
         if in_inventory {
-            return self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.item_id == Some(item_id));
+            return self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.item_id == item_id);
         }
         // Check equipment
-        self.inventory_mut().equipment_mut().values_mut().find(|inv_item| inv_item.item.item_id == Some(item_id))
+        self.inventory_mut().equipment_mut().values_mut().find(|inv_item| inv_item.item.item_id == item_id)
     }
 
     fn find_item_by_uuid_mut(&mut self, uuid: Uuid) -> Option<&mut InventoryItem> {
