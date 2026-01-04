@@ -54,6 +54,16 @@ pub enum InventoryError {
 }
 ```
 
+### AddItemResult (`definition.rs:12-21`)
+Returned by `add_to_inv` with details about the operation:
+```rust
+pub struct AddItemResult {
+    pub was_stacked: bool,     // Whether item was stacked with existing
+    pub total_quantity: u32,   // Total quantity after adding
+    pub slot_index: usize,     // Index where item was placed
+}
+```
+
 ## HasInventory Trait (`traits.rs`)
 
 Core trait for inventory management. Requires:
@@ -62,18 +72,18 @@ Core trait for inventory management. Requires:
 
 ### Key Methods
 
-| Method | Description |
-|--------|-------------|
-| `add_to_inv(item)` | Adds item, stacks non-equipment (up to `max_stack_quantity`) |
-| `find_item_by_uuid(uuid)` | Find in inventory items only |
-| `find_item_by_id(item_id)` | Find in inventory OR equipment |
-| `decrease_item_quantity(item, amount)` | Decrease, remove if quantity=0 |
-| `remove_item_from_inventory(item)` | Remove from items vec by UUID |
-| `equip_item(item, slot)` | Equip item (unequips existing, sets `is_equipped`) |
-| `unequip_item(slot)` | Move to inventory (fails if inventory full) |
-| `equip_from_inventory(uuid, slot)` | Move from inventory to equipment |
-| `get_equipped_item(slot)` | Get reference to equipped item |
-| `remove_item(uuid)` | Remove from equipment or inventory |
+| Method | Returns | Description |
+|--------|---------|-------------|
+| `add_to_inv(item)` | `Result<AddItemResult, InventoryError>` | Adds item, stacks non-equipment (up to `max_stack_quantity`) |
+| `find_item_by_uuid(uuid)` | `Option<&InventoryItem>` | Find in inventory items only |
+| `find_item_by_id(item_id)` | `Option<&InventoryItem>` | Find in inventory OR equipment |
+| `decrease_item_quantity(item, amount)` | `()` | Decrease, remove if quantity=0 |
+| `remove_item_from_inventory(item)` | `()` | Remove from items vec by UUID |
+| `equip_item(item, slot)` | `()` | Equip item (unequips existing, sets `is_equipped`) |
+| `unequip_item(slot)` | `Result<Option<Item>, InventoryError>` | Move to inventory, returns unequipped item |
+| `equip_from_inventory(uuid, slot)` | `()` | Move from inventory to equipment |
+| `get_equipped_item(slot)` | `Option<&InventoryItem>` | Get reference to equipped item |
+| `remove_item(uuid)` | `Option<InventoryItem>` | Remove from equipment or inventory |
 
 ### Stacking Behavior
 - Only non-equipment items stack (`!item.item_type.is_equipment()`)
