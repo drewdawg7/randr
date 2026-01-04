@@ -36,12 +36,12 @@ impl LootTable {
         self
     }
 
-    pub fn add_loot_item(&mut self, item: LootItem) -> Result<(), LootError> {
+    pub fn add_loot_item(&mut self, item: LootItem) -> Result<usize, LootError> {
         if self.check_item_kind(&item.item_kind) {
             return Err(LootError::ItemAlreadyInTable);
         };
         self.loot.push(item);
-        Ok(())
+        Ok(self.loot.len() - 1)
     }
 
     pub fn get_loot_item_from_kind(&self, kind: &ItemId) -> Option<&LootItem> {

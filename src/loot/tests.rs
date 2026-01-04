@@ -124,8 +124,14 @@ fn loot_table_add_loot_item_adds_items_correctly() {
     let item = LootItem::new(ItemId::CopperOre, 1, 4, 1..=1).unwrap();
 
     let result = table.add_loot_item(item);
-    assert!(result.is_ok());
+    assert_eq!(result, Ok(0));
     assert_eq!(table.ore_proportions().count(), 1);
+
+    // Adding a second item returns the next index
+    let item2 = LootItem::new(ItemId::TinOre, 1, 4, 1..=1).unwrap();
+    let result2 = table.add_loot_item(item2);
+    assert_eq!(result2, Ok(1));
+    assert_eq!(table.ore_proportions().count(), 2);
 }
 
 #[test]
