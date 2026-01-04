@@ -17,13 +17,19 @@ All spawned entities are tied to a base registry ID (`MobId`, `ItemId`).
 | Instance | Spawned entity with rolled/computed values |
 | ID | Required identifier linking entity to registry (`MobId`, `ItemId`) |
 
-## MobSpec Procedural Generation
+## MobId Spawning
 
 ### Methods
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `spawn()` | `&self -> Mob` | Spawn a mob from this spec |
+| `spawn()` | `&self -> Mob` | Spawn a mob |
+| `spawn_modified()` | `&self, FnOnce(&MobSpec) -> MobSpec -> Mob` | Spawn with modifications |
+
+### Spec Modifiers
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
 | `with_multiplier()` | `&self, f32 -> MobSpec` | Scale all stat ranges |
 | `with_name()` | `&self, impl Into<String> -> MobSpec` | Change display name |
 | `with_quality()` | `&self, MobQuality -> MobSpec` | Set quality (Normal/Boss) |
@@ -35,23 +41,22 @@ All spawned entities are tied to a base registry ID (`MobId`, `ItemId`).
 let slime = MobId::Slime.spawn();
 
 // Elite variant: 1.5x stats with custom name
-let elite_slime = MobId::Slime.spec()
-    .with_multiplier(1.5)
-    .with_name("Elite Slime")
-    .spawn();
+let elite_slime = MobId::Slime.spawn_modified(|spec| {
+    spec.with_multiplier(1.5).with_name("Elite Slime")
+});
 
 // Dungeon scaling: deeper floors = stronger mobs
 let depth_multiplier = 1.0 + (floor as f32 * 0.2);
-let scaled_goblin = MobId::Goblin.spec()
-    .with_multiplier(depth_multiplier)
-    .spawn();
+let scaled_goblin = MobId::Goblin.spawn_modified(|spec| {
+    spec.with_multiplier(depth_multiplier)
+});
 
 // Boss variant of a normal mob
-let mini_boss = MobId::Cow.spec()
-    .with_multiplier(3.0)
-    .with_name("Dire Cow")
-    .with_quality(MobQuality::Boss)
-    .spawn();
+let mini_boss = MobId::Cow.spawn_modified(|spec| {
+    spec.with_multiplier(3.0)
+        .with_name("Dire Cow")
+        .with_quality(MobQuality::Boss)
+});
 ```
 
 ### What Gets Scaled
@@ -65,13 +70,19 @@ let mini_boss = MobId::Cow.spec()
 
 **Not scaled**: `name`, `quality`, `loot` (loot tables are cloned as-is).
 
-## ItemSpec Procedural Generation
+## ItemId Spawning
 
 ### Methods
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `spawn()` | `&self, ItemId -> Item` | Spawn an item with the given ID |
+| `spawn()` | `&self -> Item` | Spawn an item |
+| `spawn_modified()` | `&self, FnOnce(&ItemSpec) -> ItemSpec -> Item` | Spawn with modifications |
+
+### Spec Modifiers
+
+| Method | Signature | Description |
+|--------|-----------|-------------|
 | `with_multiplier()` | `&self, f32 -> ItemSpec` | Scale stats and gold value |
 | `with_name()` | `&self, impl Into<String> -> ItemSpec` | Change display name |
 | `with_quality()` | `&self, ItemQuality -> ItemSpec` | Set fixed quality |
@@ -83,17 +94,17 @@ let mini_boss = MobId::Cow.spec()
 let sword = ItemId::Sword.spawn();
 
 // Enchanted version of a base item
-let enchanted_sword = ItemId::Sword.spec()
-    .with_multiplier(1.5)
-    .with_name("Enchanted Sword")
-    .with_quality(ItemQuality::Masterworked)
-    .spawn(ItemId::Sword);
+let enchanted_sword = ItemId::Sword.spawn_modified(|spec| {
+    spec.with_multiplier(1.5)
+        .with_name("Enchanted Sword")
+        .with_quality(ItemQuality::Masterworked)
+});
 
 // Dungeon loot scaling
 let loot_multiplier = 1.0 + (floor as f32 * 0.1);
-let dungeon_drop = ItemId::BronzeSword.spec()
-    .with_multiplier(loot_multiplier)
-    .spawn(ItemId::BronzeSword);
+let dungeon_drop = ItemId::BronzeSword.spawn_modified(|spec| {
+    spec.with_multiplier(loot_multiplier)
+});
 ```
 
 ### What Gets Scaled

@@ -17,6 +17,7 @@ fn create_test_mob(name: &str, hp: i32, attack: i32, defense: i32) -> Mob {
     stats.insert(StatType::Attack, StatType::Attack.instance(attack));
     stats.insert(StatType::Defense, StatType::Defense.instance(defense));
     Mob {
+        mob_id: MobId::Slime,
         quality: MobQuality::Normal,
         name: name.to_string(),
         stats: StatSheet { stats },

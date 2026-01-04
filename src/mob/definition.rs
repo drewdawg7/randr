@@ -3,10 +3,12 @@ use crate::{
     stats::StatSheet,
 };
 
+use super::definitions::MobId;
 use super::enums::MobQuality;
 
 #[derive(Debug, Clone)]
 pub struct Mob {
+    pub mob_id: MobId,
     pub quality: MobQuality,
     pub name: String,
     pub stats: StatSheet,

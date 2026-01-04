@@ -98,14 +98,14 @@ pub type MobRegistry = Registry<MobId, MobSpec>;
 impl SpawnFromSpec<MobId> for MobSpec {
     type Output = Mob;
 
-    fn spawn_from_spec(_kind: MobId, spec: &Self) -> Self::Output {
-        spec.spawn()
+    fn spawn_from_spec(id: MobId, spec: &Self) -> Self::Output {
+        spec.spawn(id)
     }
 }
 
 impl MobSpec {
-    /// Spawn a Mob from this spec.
-    pub fn spawn(&self) -> Mob {
+    /// Spawn a Mob from this spec with the given MobId. Internal use only.
+    fn spawn(&self, id: MobId) -> Mob {
         let mut rng = rand::thread_rng();
         let hp_min = self.max_health.start();
         let hp_max = self.max_health.end();
@@ -127,6 +127,7 @@ impl MobSpec {
         let gold = (base_gold as f32 * bonus_multiplier).round() as i32;
 
         Mob {
+            mob_id: id,
             name: self.name.clone(),
             quality: self.quality.clone(),
             gold,
@@ -207,6 +208,22 @@ impl RegistryDefaults<MobId> for MobSpec {
 impl MobId {
     /// Spawn a Mob instance from this MobId
     pub fn spawn(&self) -> Mob {
-        self.spec().spawn()
+        self.spec().spawn(*self)
+    }
+
+    /// Spawn a Mob with modifications applied to the spec.
+    /// Useful for elite variants, dungeon scaling, etc.
+    ///
+    /// # Example
+    /// ```ignore
+    /// let elite = MobId::Slime.spawn_modified(|spec| {
+    ///     spec.with_multiplier(1.5).with_name("Elite Slime")
+    /// });
+    /// ```
+    pub fn spawn_modified<F>(&self, modify: F) -> Mob
+    where
+        F: FnOnce(&MobSpec) -> MobSpec,
+    {
+        modify(self.spec()).spawn(*self)
     }
 }

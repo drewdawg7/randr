@@ -427,8 +427,8 @@ impl SpawnFromSpec<ItemId> for ItemSpec {
 }
 
 impl ItemSpec {
-    /// Spawn an Item from this spec with the given ItemId.
-    pub fn spawn(&self, id: ItemId) -> Item {
+    /// Spawn an Item from this spec with the given ItemId. Internal use only.
+    fn spawn(&self, id: ItemId) -> Item {
         // Use fixed quality from spec, or roll if None
         let quality = self.quality.unwrap_or_else(ItemQuality::roll);
         let base_stats = self.stats.clone();
@@ -522,5 +522,21 @@ impl ItemId {
     /// Spawn an Item instance from this ItemId.
     pub fn spawn(&self) -> Item {
         self.spec().spawn(*self)
+    }
+
+    /// Spawn an Item with modifications applied to the spec.
+    /// Useful for enchanted variants, dungeon loot scaling, etc.
+    ///
+    /// # Example
+    /// ```ignore
+    /// let enchanted = ItemId::Sword.spawn_modified(|spec| {
+    ///     spec.with_multiplier(1.5).with_name("Enchanted Sword")
+    /// });
+    /// ```
+    pub fn spawn_modified<F>(&self, modify: F) -> Item
+    where
+        F: FnOnce(&ItemSpec) -> ItemSpec,
+    {
+        modify(self.spec()).spawn(*self)
     }
 }
