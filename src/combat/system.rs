@@ -4,6 +4,7 @@ use crate::{
     loot::LootDrop,
     magic::{effect::{ActiveEffect, PassiveEffect}, spell::ComputedSpell},
     stats::HasStats,
+    system::game_state,
 };
 
 /// Constant for diminishing returns defense formula.
@@ -94,10 +95,10 @@ where
     }
     if !player.is_alive() {
         cr.player_won = false;
-        let _death_result = player.on_death(0);
+        let _death_result = player.on_death(0, |id| game_state().spawn_item(id));
     } else if !mob.is_alive() {
         cr.player_won = true;
-        let death_result = mob.on_death(player.effective_magicfind());
+        let death_result = mob.on_death(player.effective_magicfind(), |id| game_state().spawn_item(id));
 
         // Apply gold with goldfind bonus
         let gf = player.effective_goldfind();
@@ -151,7 +152,7 @@ pub fn enemy_attack_step(combat: &mut ActiveCombat, player: &mut Player) -> Atta
 /// Process victory rewards: gold (with goldfind), XP, and loot drops.
 /// Call this when combat.phase == CombatPhase::Victory.
 pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
-    let death_result = combat.mob.on_death(player.effective_magicfind());
+    let death_result = combat.mob.on_death(player.effective_magicfind(), |id| game_state().spawn_item(id));
 
     // Apply gold with goldfind bonus
     let gf = player.effective_goldfind();
@@ -184,7 +185,7 @@ pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
 /// Process player defeat: gold penalty and health restore.
 /// Call this when combat.phase == CombatPhase::Defeat.
 pub fn process_defeat(player: &mut Player) {
-    let _death_result = player.on_death(0);
+    let _death_result = player.on_death(0, |id| game_state().spawn_item(id));
 }
 
 /// Execute a spell cast step. Returns the SpellCastResult.

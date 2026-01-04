@@ -1,7 +1,9 @@
 use crate::{
     combat::{Combatant, DealsDamage, DropsGold, IsKillable, MobDeathResult, Named},
     entities::progression::GivesXP,
-    loot::{HasLoot, LootTable}, stats::{HasStats, StatSheet},
+    item::{Item, ItemId},
+    loot::{HasLoot, LootTable},
+    stats::{HasStats, StatSheet},
 };
 
 use super::Mob;
@@ -52,7 +54,10 @@ impl HasStats for Mob {
 impl IsKillable for Mob {
     type DeathResult = MobDeathResult;
 
-    fn on_death(&mut self, magic_find: i32) -> MobDeathResult {
+    fn on_death<F>(&mut self, magic_find: i32, spawn_item: F) -> MobDeathResult
+    where
+        F: Fn(ItemId) -> Option<Item>,
+    {
         // Guard against double on_death() calls - return empty result if already processed
         if self.death_processed {
             return MobDeathResult::default();
@@ -62,7 +67,7 @@ impl IsKillable for Mob {
         MobDeathResult {
             gold_dropped: self.drop_gold(),
             xp_dropped: self.give_xp(),
-            loot_drops: self.roll_drops_with_mf(magic_find),
+            loot_drops: self.roll_drops(magic_find, spawn_item),
         }
     }
 }

@@ -1,4 +1,5 @@
 use crate::combat::Attack;
+use crate::item::{Item, ItemId};
 use crate::stats::{HasStats, StatType};
 
 /// Trait for entities that can be killed (health reduced to zero)
@@ -22,8 +23,13 @@ pub trait IsKillable: HasStats {
     }
 
     /// Called when health reaches zero. Returns implementation-specific result.
-    /// Magic find value is used for bonus loot rolls.
-    fn on_death(&mut self, magic_find: i32) -> Self::DeathResult;
+    ///
+    /// # Arguments
+    /// * `magic_find` - Magic find value for bonus loot rolls
+    /// * `spawn_item` - Function to spawn items by ID (use `|id| game_state().spawn_item(id)`)
+    fn on_death<F>(&mut self, magic_find: i32, spawn_item: F) -> Self::DeathResult
+    where
+        F: Fn(ItemId) -> Option<Item>;
 }
 
 /// Trait for entities that can deal damage.

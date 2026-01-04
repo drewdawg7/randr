@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use rand::Rng;
 
-use crate::{game_state, item::{Item, ItemId}, loot::enums::LootError};
+use crate::{item::{Item, ItemId}, loot::enums::LootError};
 
 /// Represents a single loot drop with a spawned item instance and quantity
 #[derive(Debug, Clone)]
@@ -58,19 +58,6 @@ impl LootTable {
             let chance = item.numerator as f32 / item.denominator as f32;
             (item.item_kind, chance)
         })
-    }
-
-    /// Roll each item independently, spawn items, and return all drops with their quantity.
-    pub fn roll_drops(&self) -> Vec<LootDrop> {
-        self.roll_drops_with_mf(0)
-    }
-
-    /// Roll drops with Magic Find bonus rolls.
-    ///
-    /// Convenience wrapper that uses `game_state().spawn_item()` for item spawning.
-    /// For testability, use `roll_drops_with_spawner` instead.
-    pub fn roll_drops_with_mf(&self, magic_find: i32) -> Vec<LootDrop> {
-        self.roll_drops_with_spawner(magic_find, |id| game_state().spawn_item(id))
     }
 
     /// Roll drops with Magic Find bonus and custom spawn function.

@@ -85,7 +85,7 @@ pub fn enter_room() -> CommandResult {
             let loot_drops = {
                 if let Some(dungeon) = gs.dungeon_mut() {
                     if let Some(room) = dungeon.current_room_mut() {
-                        let drops = room.open_chest(magic_find);
+                        let drops = room.open_chest(magic_find, |id| game_state().spawn_item(id));
                         room.clear();
                         drops
                     } else {
@@ -215,7 +215,7 @@ pub fn attack_boss() -> CommandResult {
         let magic_find = gs.player.effective_magicfind();
         let death_result = {
             if let Some(dungeon) = gs.dungeon_mut() {
-                dungeon.boss.as_mut().map(|boss| boss.on_death(magic_find))
+                dungeon.boss.as_mut().map(|boss| boss.on_death(magic_find, |id| game_state().spawn_item(id)))
             } else {
                 None
             }
@@ -271,7 +271,7 @@ pub fn attack_boss() -> CommandResult {
     };
 
     if player_died {
-        gs.player.on_death(0);
+        gs.player.on_death(0, |id| game_state().spawn_item(id));
         gs.reset_dungeon();
         gs.leave_dungeon();
         return CommandResult::error("You were slain by the Dragon!");

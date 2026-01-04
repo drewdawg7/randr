@@ -4,6 +4,7 @@ use crate::{
     combat::{Combatant, DealsDamage, HasGold, IsKillable, Named, PlayerDeathResult},
     entities::{progression::HasProgression, Player, Progression},
     inventory::{HasEquipment, HasInventory, Inventory},
+    item::{Item, ItemId},
     stats::{HasStats, StatInstance, StatSheet, StatType},
 };
 
@@ -48,7 +49,10 @@ impl HasStats for Player {
 impl IsKillable for Player {
     type DeathResult = PlayerDeathResult;
 
-    fn on_death(&mut self, _magic_find: i32) -> PlayerDeathResult {
+    fn on_death<F>(&mut self, _magic_find: i32, _spawn_item: F) -> PlayerDeathResult
+    where
+        F: Fn(ItemId) -> Option<Item>,
+    {
         let gold_lost = ((self.gold() as f64) * 0.05).round() as i32;
         self.dec_gold(gold_lost);
         // Restore health to full

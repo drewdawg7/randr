@@ -104,7 +104,7 @@ fn dungeon_room_chest_take_twice_returns_none() {
 fn dungeon_room_open_chest_on_non_chest_room_returns_empty() {
     let mut room = DungeonRoom::new(RoomType::Monster, 0, 0);
 
-    let loot = room.open_chest(0);
+    let loot = room.open_chest(0, |_| None);
 
     assert!(loot.is_empty());
 }

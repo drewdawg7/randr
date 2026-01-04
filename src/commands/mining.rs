@@ -48,7 +48,7 @@ pub fn mine_rock() -> MiningResult {
         };
     };
 
-    if let Some(drops) = rock.mine(mining_damage, magic_find) {
+    if let Some(drops) = rock.mine(mining_damage, magic_find, |id| gs.spawn_item(id)) {
         // Rock was destroyed - add loot to inventory
         collect_loot_drops(&mut gs.player, &drops, None);
 

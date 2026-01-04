@@ -4,6 +4,7 @@ use crate::{
     chest::Chest,
     dungeon::enums::{Direction, DungeonError, RoomType},
     entities::mob::{Mob, MobId},
+    item::{Item, ItemId},
     loot::{HasLoot, LootDrop},
     system::game_state,
     utils::weighted_select,
@@ -222,9 +223,12 @@ impl DungeonRoom {
     }
 
     /// Open the chest and get loot drops (only for chest rooms)
-    pub fn open_chest(&mut self, magic_find: i32) -> Vec<LootDrop> {
+    pub fn open_chest<F>(&mut self, magic_find: i32, spawn_item: F) -> Vec<LootDrop>
+    where
+        F: Fn(ItemId) -> Option<Item>,
+    {
         if let Some(chest) = self.chest.take() {
-            chest.roll_drops_with_mf(magic_find)
+            chest.roll_drops(magic_find, spawn_item)
         } else {
             Vec::new()
         }
