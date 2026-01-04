@@ -8,6 +8,7 @@ use rand::Rng;
 ///
 /// # Example
 /// ```
+/// use game::utils::weighted_select;
 /// use std::collections::HashMap;
 /// let mut weights = HashMap::new();
 /// weights.insert("common", 50);

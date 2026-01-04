@@ -20,6 +20,10 @@ pub(crate) mod toast;
 pub mod ui;
 pub(crate) mod system;
 pub mod utils;
+
+#[cfg(test)]
+mod entity_test;
+
 // Re-exports for main.rs
 pub use inventory::{EquipmentSlot, HasInventory};
 pub use item::ItemId;

@@ -1,4 +1,4 @@
-pub(crate) mod components;
+pub mod components;
 pub(crate) mod screen;
 pub(crate) mod state;
 pub(crate) mod theme;

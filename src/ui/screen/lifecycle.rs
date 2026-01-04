@@ -9,7 +9,7 @@
 //!
 //! Screens can check for transitions in their `view()` or `on()` methods:
 //!
-//! ```rust
+//! ```ignore
 //! fn view(&mut self, frame: &mut Frame, area: Rect) {
 //!     let gs = game_state();
 //!     if gs.screen_lifecycle().just_entered() {

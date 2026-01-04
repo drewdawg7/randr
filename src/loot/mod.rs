@@ -1,6 +1,8 @@
 pub(crate) mod definition;
 pub(crate) mod enums;
 pub(crate) mod traits;
+#[cfg(test)]
+mod tests;
 
 pub(crate) use definition::{LootDrop, LootItem, LootTable};
 pub(crate) use traits::HasLoot;

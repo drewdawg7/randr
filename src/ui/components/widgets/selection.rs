@@ -42,6 +42,7 @@ impl NavDirection {
 ///
 /// # Example
 /// ```
+/// use game::ui::components::widgets::selection::ListSelection;
 /// let mut sel = ListSelection::new(5); // 5 items
 /// sel.move_down(); // 0 -> 1
 /// sel.move_up();   // 1 -> 0
@@ -159,6 +160,7 @@ impl ListSelection {
 ///
 /// # Example
 /// ```
+/// use game::ui::components::widgets::selection::BinaryToggle;
 /// let mut toggle = BinaryToggle::new("Attack", "Run");
 /// assert_eq!(toggle.selected(), &"Attack");
 /// toggle.toggle();
@@ -245,6 +247,7 @@ impl<T: PartialEq> BinaryToggle<T> {
 ///
 /// # Example
 /// ```
+/// use game::ui::components::widgets::selection::BoundedSelection;
 /// let mut sel = BoundedSelection::new(3); // 0, 1, 2
 /// sel.move_right(); // 0 -> 1
 /// sel.move_right(); // 1 -> 2
@@ -336,6 +339,7 @@ impl BoundedSelection {
 ///
 /// # Example
 /// ```
+/// use game::ui::components::widgets::selection::GridSelection;
 /// let mut grid = GridSelection::new(2, 3); // 2 rows, 3 columns
 /// grid.move_right(); // (0,0) -> (0,1)
 /// grid.move_down();  // (0,1) -> (1,1)
@@ -433,6 +437,7 @@ impl GridSelection {
 ///
 /// # Example
 /// ```
+/// use game::ui::components::widgets::selection::{DirectionalSelection, NavDirection};
 /// let mut compass = DirectionalSelection::new();
 /// compass.set_available(NavDirection::Up, true);   // North available
 /// compass.set_available(NavDirection::Right, true); // East available
