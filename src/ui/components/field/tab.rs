@@ -12,6 +12,7 @@ use tuirealm::{
 };
 
 use crate::{
+    commands::{apply_result, execute, GameCommand},
     system::game_state,
     ui::Id,
 };
@@ -66,17 +67,8 @@ impl MockComponent for FieldTab {
         if let Some(change) = state_change {
             match change {
                 StateChange::ToFight => {
-                    let gs = game_state();
-                    let field = &gs.town.field;
-                    match field.spawn_mob(&gs.player) {
-                        Ok(mob) => {
-                            gs.start_combat(mob);
-                            gs.current_screen = Id::Fight;
-                        }
-                        Err(_) => {
-                            gs.toasts.error("No enemies available");
-                        }
-                    }
+                    let cmd_result = execute(GameCommand::StartNewFight);
+                    apply_result(&cmd_result);
                 }
                 StateChange::ToMine => {
                     game_state().current_screen = Id::Mine;

@@ -131,7 +131,7 @@ pub fn start_new_fight() -> CommandResult {
     match field.spawn_mob(&gs.player) {
         Ok(mob) => {
             gs.start_combat(mob);
-            CommandResult::ok()
+            CommandResult::ok().with_screen(Id::Fight)
         }
         Err(_) => CommandResult::error("No enemies to fight"),
     }

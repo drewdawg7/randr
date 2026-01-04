@@ -93,15 +93,12 @@ impl DungeonScreen {
         self.rest_selection = 0;
     }
 
-    /// Called when returning from combat
+    /// Called when returning from combat.
+    /// Note: Room clearing is handled by the command layer (ReturnFromCombat/PlayerAttack),
+    /// so this method only needs to update UI state.
     pub fn on_combat_return(&mut self, victory: bool) {
         if victory {
-            let gs = game_state();
-            if let Some(dungeon) = gs.dungeon_mut() {
-                if let Some(room) = dungeon.current_room_mut() {
-                    room.clear();
-                }
-            }
+            // Room is already cleared by command layer
             self.state = DungeonState::Navigation;
         }
         // On defeat, stay in RoomEntry state to retry

@@ -6,7 +6,7 @@ use tuirealm::{
     Component, Event, MockComponent, NoUserEvent, State, StateValue,
 };
 
-use crate::inventory::HasInventory;
+use crate::commands::{apply_result, execute, GameCommand};
 use crate::system::game_state;
 use crate::ui::components::backgrounds::render_stone_wall;
 use crate::ui::components::widgets::item_list::{
@@ -170,26 +170,30 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
                     if let Some(item) = self.upgrade_list.selected_item() {
                         let inv_item = &item.inv_item;
                         if let Some(slot) = inv_item.item.item_type.equipment_slot() {
-                            if inv_item.item.is_equipped {
-                                let _ = game_state().player.unequip_item(slot);
+                            let result = if inv_item.item.is_equipped {
+                                execute(GameCommand::UnequipItem { slot })
                             } else {
-                                game_state()
-                                    .player
-                                    .equip_from_inventory(inv_item.item.item_uuid, slot);
-                            }
+                                execute(GameCommand::EquipItem {
+                                    item_uuid: inv_item.item.item_uuid,
+                                    slot,
+                                })
+                            };
+                            apply_result(&result);
                         }
                     }
                 } else if self.state == BlacksmithState::Quality {
                     if let Some(item) = self.quality_list.selected_item() {
                         let inv_item = &item.inv_item;
                         if let Some(slot) = inv_item.item.item_type.equipment_slot() {
-                            if inv_item.item.is_equipped {
-                                let _ = game_state().player.unequip_item(slot);
+                            let result = if inv_item.item.is_equipped {
+                                execute(GameCommand::UnequipItem { slot })
                             } else {
-                                game_state()
-                                    .player
-                                    .equip_from_inventory(inv_item.item.item_uuid, slot);
-                            }
+                                execute(GameCommand::EquipItem {
+                                    item_uuid: inv_item.item.item_uuid,
+                                    slot,
+                                })
+                            };
+                            apply_result(&result);
                         }
                     }
                 }
@@ -201,19 +205,17 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
             }) => {
                 if self.state == BlacksmithState::Upgrade {
                     if let Some(item) = self.upgrade_list.selected_item() {
-                        if let Some(player_inv_item) =
-                            game_state().player.find_item_by_uuid_mut(item.inv_item.item.item_uuid)
-                        {
-                            player_inv_item.item.toggle_lock();
-                        }
+                        let result = execute(GameCommand::ToggleLock {
+                            item_uuid: item.inv_item.item.item_uuid,
+                        });
+                        apply_result(&result);
                     }
                 } else if self.state == BlacksmithState::Quality {
                     if let Some(item) = self.quality_list.selected_item() {
-                        if let Some(player_inv_item) =
-                            game_state().player.find_item_by_uuid_mut(item.inv_item.item.item_uuid)
-                        {
-                            player_inv_item.item.toggle_lock();
-                        }
+                        let result = execute(GameCommand::ToggleLock {
+                            item_uuid: item.inv_item.item.item_uuid,
+                        });
+                        apply_result(&result);
                     }
                 }
                 None

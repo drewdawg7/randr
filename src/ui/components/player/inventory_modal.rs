@@ -8,11 +8,9 @@ use ratatui::{
 use tuirealm::event::Key;
 
 use crate::{
+    commands::{apply_result, execute, GameCommand},
     inventory::{EquipmentSlot, HasInventory},
-    item::{
-        consumable::{use_consumable, ConsumableError},
-        Item,
-    },
+    item::Item,
     system::game_state,
     ui::components::widgets::item_list::{InventoryFilter, InventoryListItem, ItemList, ItemListConfig},
     ui::theme::{CREAM_WOOD, DARK_WALNUT, LIGHT_BEIGE, OAK_BROWN, TAN_WOOD, WOOD_BROWN},
@@ -77,11 +75,12 @@ impl InventoryModal {
             let item_uuid = item.item_uuid;
 
             if let Some(slot) = list_item.slot {
-                if item.is_equipped {
-                    let _ = game_state().player.unequip_item(slot);
+                let result = if item.is_equipped {
+                    execute(GameCommand::UnequipItem { slot })
                 } else {
-                    game_state().player.equip_from_inventory(item_uuid, slot);
-                }
+                    execute(GameCommand::EquipItem { item_uuid, slot })
+                };
+                apply_result(&result);
             }
         }
     }
@@ -89,41 +88,25 @@ impl InventoryModal {
     fn toggle_lock(&mut self) {
         if let Some(list_item) = self.item_list.selected_item() {
             let item_uuid = list_item.inv_item.item.item_uuid;
-            if let Some(inv_item) = game_state().player.find_item_by_uuid_mut(item_uuid) {
-                inv_item.item.toggle_lock();
-            }
+            let result = execute(GameCommand::ToggleLock { item_uuid });
+            apply_result(&result);
         }
     }
 
-    fn use_selected_consumable(&mut self) -> Option<String> {
-        let list_item = self.item_list.selected_item()?;
-        let inv_item = &list_item.inv_item;
+    fn use_selected_consumable(&mut self) {
+        if let Some(list_item) = self.item_list.selected_item() {
+            let inv_item = &list_item.inv_item;
 
-        // Only allow using consumables
-        if !inv_item.item.item_type.is_consumable() {
-            return Some("Cannot use this item".to_string());
-        }
-
-        let gs = game_state();
-
-        // Attempt to use the consumable
-        match use_consumable(&mut gs.player, inv_item) {
-            Ok(result) => {
-                let description = result.describe();
-                // Decrease quantity after successful use
-                let item_uuid = inv_item.item.item_uuid;
-                if let Some(inv_item) = gs.player.find_item_by_uuid_mut(item_uuid) {
-                    if inv_item.quantity > 1 {
-                        inv_item.quantity -= 1;
-                    } else {
-                        gs.player.remove_item(item_uuid);
-                    }
-                }
-                Some(format!("Used {}! {}", result.item_name, description))
+            // Only allow using consumables
+            if !inv_item.item.item_type.is_consumable() {
+                game_state().toasts.error("Cannot use this item");
+                return;
             }
-            Err(ConsumableError::AlreadyAtFullHealth) => Some("Already at full health!".to_string()),
-            Err(ConsumableError::NoEffectRegistered) => Some("This item has no effect".to_string()),
-            Err(_) => Some("Cannot use this item".to_string()),
+
+            let result = execute(GameCommand::UseConsumable {
+                item_uuid: inv_item.item.item_uuid,
+            });
+            apply_result(&result);
         }
     }
 
@@ -261,15 +244,7 @@ impl InventoryModal {
                 false
             }
             Key::Char('u') | Key::Char('U') => {
-                if let Some(message) = self.use_selected_consumable() {
-                    let gs = game_state();
-                    // Check if the message indicates an error
-                    if message.contains("Cannot") || message.contains("Already") || message.contains("no effect") {
-                        gs.toasts.error(message);
-                    } else {
-                        gs.toasts.success(message);
-                    }
-                }
+                self.use_selected_consumable();
                 false
             }
             Key::Esc | Key::Char('i') => true, // Close modal
