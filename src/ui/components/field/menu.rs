@@ -16,7 +16,7 @@ use crate::{
 };
 use crate::ui::components::utilities::{
     list_move_down, list_move_up, render_location_header,
-    selection_prefix, COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, PICKAXE, RETURN_ARROW,
+    selection_prefix, COIN, CROSSED_SWORDS, DOUBLE_ARROW_UP, HEART, PICKAXE,
 };
 use crate::ui::theme as colors;
 
@@ -66,7 +66,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     let content_area = render_location_header(frame, area, header_lines, colors::FIELD_BG, colors::FOREST_GREEN);
 
     // Center the menu vertically and horizontally
-    const MENU_HEIGHT: u16 = 4;
+    const MENU_HEIGHT: u16 = 3;
     const MENU_WIDTH: u16 = 16;
 
     let vertical_chunks = Layout::default()
@@ -103,10 +103,6 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
             Span::styled(format!("{}", PICKAXE), Style::default().fg(colors::GRANITE)),
             Span::styled(" Mine", text_style),
         ])),
-        ListItem::new(Line::from(vec![
-            selection_prefix(selected == 2),
-            Span::styled(format!("{} Back", RETURN_ARROW), text_style),
-        ])),
     ];
 
     let menu = List::new(menu_items);
@@ -114,7 +110,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
-    const MENU_SIZE: usize = 3; // Fight, Mine, Back
+    const MENU_SIZE: usize = 2; // Fight, Mine
 
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {
@@ -130,13 +126,14 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
             let state_change = match selected {
                 0 => Some(StateChange::ToFight),
                 1 => Some(StateChange::ToMine),
-                2 => {
-                    game_state().current_screen = Id::Menu;
-                    None
-                }
                 _ => None,
             };
             (CmdResult::Submit(tuirealm::State::None), state_change)
+        }
+        Cmd::Cancel => {
+            // Backspace goes back to main menu
+            game_state().current_screen = Id::Menu;
+            (CmdResult::Changed(tuirealm::State::None), None)
         }
         _ => (CmdResult::None, None),
     }

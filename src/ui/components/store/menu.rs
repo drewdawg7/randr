@@ -14,7 +14,7 @@ use crate::{
 };
 use crate::ui::components::utilities::{
     list_move_down, list_move_up, render_location_header,
-    selection_prefix, store_header, RETURN_ARROW,
+    selection_prefix, store_header,
 };
 use crate::ui::theme as colors;
 
@@ -35,7 +35,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
         render_location_header(frame, area, header_lines, colors::STORE_BG, colors::WOOD_BROWN);
 
     // Center the menu vertically and horizontally
-    const MENU_HEIGHT: u16 = 5;
+    const MENU_HEIGHT: u16 = 4;
     const MENU_WIDTH: u16 = 16;
 
     let vertical_chunks = Layout::default()
@@ -74,10 +74,6 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
             selection_prefix(selected == 2),
             Span::styled("Storage", text_style),
         ])),
-        ListItem::new(Line::from(vec![
-            selection_prefix(selected == 3),
-            Span::styled(format!("{} Back", RETURN_ARROW), text_style),
-        ])),
     ];
 
     let menu = List::new(menu_items);
@@ -85,7 +81,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
-    const MENU_SIZE: usize = 4; // Buy, Sell, Storage, Back
+    const MENU_SIZE: usize = 3; // Buy, Sell, Storage
 
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {
@@ -102,13 +98,14 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
                 0 => Some(StateChange::ToBuy),
                 1 => Some(StateChange::ToSell),
                 2 => Some(StateChange::ToStorage),
-                3 => {
-                    game_state().current_screen = Id::Menu;
-                    None
-                }
                 _ => None,
             };
             (CmdResult::Submit(tuirealm::State::None), state_change)
+        }
+        Cmd::Cancel => {
+            // Backspace goes back to main menu
+            game_state().current_screen = Id::Menu;
+            (CmdResult::Changed(tuirealm::State::None), None)
         }
         _ => (CmdResult::None, None),
     }

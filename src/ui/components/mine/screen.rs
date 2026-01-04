@@ -19,7 +19,7 @@ use crate::commands::{mine_rock, apply_result};
 use crate::location::mine::RockArt;
 use crate::system::game_state;
 use crate::ui::Id;
-use crate::ui::components::utilities::{render_location_header, PICKAXE, RETURN_ARROW};
+use crate::ui::components::utilities::{render_location_header, PICKAXE};
 use crate::ui::components::widgets::border::BorderTheme;
 
 // HP bar block characters
@@ -30,7 +30,6 @@ const BLOCK_LIGHT: char = '░';
 
 pub struct MineScreen {
     props: Props,
-    selected_row: usize,    // 0 = mine options, 1 = back button
     selected_mine: usize,   // 0, 1, or 2 for which mine option
     active_button: usize,   // Which mine button is currently active (0, 1, or 2)
     recent_drops: Vec<(crate::item::ItemId, u32)>, // Pre-grouped drops (item, count)
@@ -42,7 +41,6 @@ impl MineScreen {
     pub fn new() -> Self {
         Self {
             props: Props::default(),
-            selected_row: 0,
             selected_mine: 0,
             active_button: 0,
             recent_drops: Vec::new(),
@@ -224,7 +222,7 @@ impl MockComponent for MineScreen {
             .map(|art| (art.width as u16, art.height as u16))
             .unwrap_or((22, 8));
 
-        // Split remaining area: rock art, HP bar, HP text, horizontal mine options, and back button
+        // Split remaining area: rock art, HP bar, HP text, horizontal mine options
         let chunks = Layout::default()
             .direction(Direction::Vertical)
             .constraints([
@@ -232,7 +230,7 @@ impl MockComponent for MineScreen {
                 Constraint::Length(1),               // HP bar
                 Constraint::Length(1),               // HP text
                 Constraint::Length(1),               // Horizontal mine options
-                Constraint::Min(1),                  // Back button
+                Constraint::Min(1),                  // Spacing
             ])
             .split(remaining_area);
 
@@ -240,7 +238,6 @@ impl MockComponent for MineScreen {
         let hp_bar_area = chunks[1];
         let hp_text_area = chunks[2];
         let mine_options_area = chunks[3];
-        let back_button_area = chunks[4];
 
         // Render rock name centered above rock art
         let rock_name = game_state()
@@ -316,7 +313,7 @@ impl MockComponent for MineScreen {
         // Build spans with selection indicators
         let mut spans = Vec::new();
         for i in 0..3 {
-            let is_selected = self.selected_row == 0 && self.selected_mine == i;
+            let is_selected = self.selected_mine == i;
             let is_active = i == self.active_button;
             let prefix = if is_selected { "> " } else { "  " };
             let prefix_style = Style::default().color(colors::YELLOW);
@@ -356,29 +353,6 @@ impl MockComponent for MineScreen {
             height: 1,
         };
         frame.render_widget(Paragraph::new(horizontal_menu), centered_menu_area);
-
-        // Render the back button centered below
-        let back_selected = self.selected_row == 1;
-        let back_prefix = if back_selected { "> " } else { "  " };
-        let back_text = format!("{} Back", RETURN_ARROW);
-        let back_line = Line::from(vec![
-            Span::styled(back_prefix, Style::default().color(colors::YELLOW)),
-            Span::styled(&back_text, if back_selected {
-                Style::default().color(colors::WHITE)
-            } else {
-                Style::default().color(colors::LIGHT_STONE)
-            }),
-        ]);
-
-        let back_width = (back_prefix.len() + back_text.chars().count()) as u16;
-        let back_x = back_button_area.x + back_button_area.width.saturating_sub(back_width) / 2;
-        let centered_back_area = Rect {
-            x: back_x,
-            y: back_button_area.y,
-            width: back_width,
-            height: 1,
-        };
-        frame.render_widget(Paragraph::new(back_line), centered_back_area);
 
         // Render stone borders
         let total_border_width = content_area.width + 2;
@@ -429,35 +403,25 @@ impl MockComponent for MineScreen {
 impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         match ev {
-            Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
-                if self.selected_row > 0 {
-                    self.selected_row -= 1;
-                }
-                None
-            }
-            Event::Keyboard(KeyEvent { code: Key::Down, .. }) => {
-                if self.selected_row < 1 {
-                    self.selected_row += 1;
-                }
-                None
-            }
             Event::Keyboard(KeyEvent { code: Key::Left, .. }) => {
-                if self.selected_row == 0 && self.selected_mine > 0 {
+                if self.selected_mine > 0 {
                     self.selected_mine -= 1;
                 }
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Right, .. }) => {
-                if self.selected_row == 0 && self.selected_mine < 2 {
+                if self.selected_mine < 2 {
                     self.selected_mine += 1;
                 }
                 None
             }
+            Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
+                // Backspace goes back to Town
+                game_state().current_screen = Id::Town;
+                None
+            }
             Event::Keyboard(KeyEvent { code: Key::Enter, .. }) => {
-                if self.selected_row == 1 {
-                    // Back button selected
-                    game_state().current_screen = Id::Town;
-                } else if self.selected_row == 0 && self.selected_mine == self.active_button {
+                if self.selected_mine == self.active_button {
                     // Active mine button selected - perform mining
                     let mining_result = mine_rock();
                     apply_result(&mining_result.result);

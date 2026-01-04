@@ -14,7 +14,7 @@ use crate::{
 };
 use crate::ui::components::utilities::{
     list_move_down, list_move_up, render_location_header,
-    selection_prefix, COIN, RETURN_ARROW,
+    selection_prefix, COIN,
 };
 use crate::ui::theme as colors;
 
@@ -45,7 +45,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
     );
 
     // Center the menu vertically and horizontally
-    const MENU_HEIGHT: u16 = 3;
+    const MENU_HEIGHT: u16 = 2;
     const MENU_WIDTH: u16 = 20;
 
     let vertical_chunks = Layout::default()
@@ -76,10 +76,6 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
             Span::styled(format!("{}", FLASK), Style::default().fg(colors::MYSTIC_GLOW)),
             Span::styled(" Brew Potions", text_style),
         ])),
-        ListItem::new(Line::from(vec![
-            selection_prefix(selected == 1),
-            Span::styled(format!("{} Back", RETURN_ARROW), text_style),
-        ])),
     ];
 
     let menu = List::new(menu_items);
@@ -87,7 +83,7 @@ pub fn render(frame: &mut Frame, area: Rect, list_state: &mut ListState) {
 }
 
 pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateChange>) {
-    const MENU_SIZE: usize = 2;
+    const MENU_SIZE: usize = 1;
     match cmd {
         Cmd::Move(tuirealm::command::Direction::Up) => {
             list_move_up(list_state, MENU_SIZE);
@@ -101,13 +97,14 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
             let selected = list_state.selected().unwrap_or(0);
             let state_change = match selected {
                 0 => Some(StateChange::ToBrew),
-                1 => {
-                    game_state().current_screen = Id::Menu;
-                    None
-                }
                 _ => None,
             };
             (CmdResult::Submit(tuirealm::State::None), state_change)
+        }
+        Cmd::Cancel => {
+            // Backspace goes back to main menu
+            game_state().current_screen = Id::Menu;
+            (CmdResult::Changed(tuirealm::State::None), None)
         }
         _ => (CmdResult::None, None),
     }
