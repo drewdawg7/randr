@@ -4,7 +4,7 @@ use crate::{
     item::enums::{EquipmentType, ItemQuality, MaterialType},
     stats::{StatType, StatSheet, HasStats},
     location::blacksmith::{Blacksmith, BlacksmithError},
-    entities::Player,
+    player::Player,
     combat::HasGold,
 };
 #[cfg(test)]

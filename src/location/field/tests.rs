@@ -5,8 +5,9 @@ use std::sync::Once;
 
 #[cfg(test)]
 use crate::{
-    entities::{mob::MobId, Player},
+    entities::mob::MobId,
     location::{Field, FieldData, FieldError, LocationId, LocationSpec},
+    player::Player,
     init_game_state, GameState,
 };
 

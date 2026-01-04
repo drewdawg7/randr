@@ -2,8 +2,9 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::{
-    entities::{mob::MobId, Player},
+    entities::mob::MobId,
     location::{Location, LocationEntryError, LocationId},
+    player::Player,
 };
 
 use super::definition::Field;

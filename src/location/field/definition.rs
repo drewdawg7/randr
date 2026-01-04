@@ -1,10 +1,11 @@
 use std::collections::HashMap;
 
 use crate::{
-    entities::{mob::MobId, Mob, Player},
+    entities::{mob::MobId, Mob},
     game_state,
     location::{FieldData, LocationId, LocationSpec},
     magic::effect::PassiveEffect,
+    player::Player,
     utils::weighted_select,
 };
 

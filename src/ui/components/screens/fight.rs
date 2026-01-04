@@ -276,7 +276,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
     }
 }
 
-fn render_combatants(frame: &mut Frame, area: Rect, player: &crate::entities::Player, combat: &ActiveCombat) {
+fn render_combatants(frame: &mut Frame, area: Rect, player: &crate::player::Player, combat: &ActiveCombat) {
     // Split into left (player) and right (enemy) halves
     let chunks = Layout::default()
         .direction(Direction::Horizontal)
@@ -300,7 +300,7 @@ fn render_combatants(frame: &mut Frame, area: Rect, player: &crate::entities::Pl
     );
 }
 
-fn render_player_panel(frame: &mut Frame, area: Rect, player: &crate::entities::Player) {
+fn render_player_panel(frame: &mut Frame, area: Rect, player: &crate::player::Player) {
     use crate::entities::progression::{HasProgression, Progression};
     use crate::combat::HasGold;
 

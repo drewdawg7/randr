@@ -1,7 +1,7 @@
 use std::time::Duration;
 
 use crate::{
-    entities::Player,
+    player::Player,
     item::ItemId,
     location::{Location, LocationEntryError, LocationId},
 };

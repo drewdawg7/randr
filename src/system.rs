@@ -50,9 +50,10 @@ use crate::ui::screen::ScreenLifecycle;
 use crate::ui::state::UIState;
 use crate::{
     combat::{ActiveCombat, CombatRounds},
-    entities::{mob::{MobId, MobRegistry}, Mob, Player},
+    entities::mob::{MobId, MobRegistry, Mob},
     item::{consumable::ConsumableRegistry, ItemId, ItemRegistry},
     location::mine::{Rock, RockId, RockRegistry},
+    player::Player,
     town::definition::Town,
     ui::{
         Id,

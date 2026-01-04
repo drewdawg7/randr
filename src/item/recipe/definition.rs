@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use crate::{
-    entities::Player,
+    player::Player,
     game_state,
     item::ItemId,
     HasInventory,

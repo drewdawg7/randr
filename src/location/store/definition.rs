@@ -4,7 +4,7 @@ use std::time::{Duration, Instant};
 use crate::{
     combat::HasGold,
     economy::WorthGold,
-    entities::Player,
+    player::Player,
     inventory::HasInventory,
     item::{Item, ItemId},
     location::{LocationId, LocationSpec, StoreData},

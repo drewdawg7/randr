@@ -1,8 +1,10 @@
-use crate::HasInventory;
-use crate::{entities::Progression, inventory::Inventory, stats::StatSheet};
+use std::{collections::HashMap, fmt::Display};
+
+use crate::inventory::{HasInventory, Inventory};
+use crate::entities::Progression;
 use crate::magic::effect::PassiveEffect;
 use crate::magic::tome::Tome;
-use crate::stats::{HasStats, StatType};
+use crate::stats::{HasStats, StatInstance, StatSheet, StatType};
 
 #[derive(Debug, Clone)]
 pub struct Player {
@@ -13,6 +15,32 @@ pub struct Player {
     pub stats: StatSheet,
 }
 
+impl Default for Player {
+    fn default() -> Self {
+        Self {
+            gold: 0,
+            name: "Drew",
+            prog: Progression::new(),
+            inventory: Inventory::new(),
+            stats: {
+                let stats: HashMap<StatType, StatInstance> = HashMap::new();
+                let mut sheet = StatSheet { stats };
+                sheet.insert(StatType::Attack.instance(8));
+                sheet.insert(StatType::Defense.instance(3));
+                sheet.insert(StatType::GoldFind.instance(0));
+                sheet.insert(StatType::Mining.instance(100));
+                sheet.insert(StatType::Health.instance(100));
+                sheet
+            },
+        }
+    }
+}
+
+impl Display for Player {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{} ({}/{})", self.name, self.hp(), self.max_hp())
+    }
+}
 
 impl Player {
     /// Get the equipped tome, if any

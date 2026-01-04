@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::entities::Player;
+use crate::player::Player;
 use crate::item::ItemId;
 
 use super::enums::{LocationId, LocationType};

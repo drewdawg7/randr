@@ -1,8 +1,9 @@
 use crate::{
     combat::{ActiveCombat, AttackResult, Combatant, CombatPhase, HasGold, IsKillable, MobDeathResult, SpellCastResult},
-    entities::{progression::HasProgression, Player},
+    entities::progression::HasProgression,
     loot::LootDrop,
     magic::{effect::{ActiveEffect, PassiveEffect}, spell::ComputedSpell},
+    player::Player,
     stats::HasStats,
     system::game_state,
 };

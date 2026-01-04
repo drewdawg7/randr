@@ -1,5 +1,5 @@
 use crate::{
-    entities::Player,
+    player::Player,
     game_state,
     item::recipe::{Recipe, RecipeId},
     location::{AlchemistData, LocationId, LocationSpec},

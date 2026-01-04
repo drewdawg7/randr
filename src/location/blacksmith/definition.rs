@@ -4,7 +4,7 @@ use uuid::Uuid;
 
 use crate::{
     combat::HasGold,
-    entities::Player,
+    player::Player,
     game_state,
     inventory::EquipmentSlot,
     item::{

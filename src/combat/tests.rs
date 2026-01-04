@@ -6,10 +6,10 @@ use crate::{
     entities::{
         mob::{Mob, MobId},
         mob::enums::MobQuality,
-        player::Player,
         progression::HasProgression,
     },
     loot::LootTable,
+    player::Player,
     stats::{HasStats, StatSheet, StatType},
 };
 

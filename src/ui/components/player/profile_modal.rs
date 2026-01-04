@@ -11,9 +11,10 @@ use tuirealm::event::Key;
 
 use crate::{
     combat::{Combatant, DealsDamage, HasGold, Named},
-    entities::{player::Player, progression::{HasProgression, Progression}},
+    entities::progression::{HasProgression, Progression},
     inventory::HasInventory,
     magic::effect::PassiveEffect,
+    player::Player,
     stats::{HasStats, StatType},
     system::game_state,
     ui::components::utilities::{COIN, CROSSED_SWORDS, HEART, PICKAXE, SHIELD},

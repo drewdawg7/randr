@@ -1,7 +1,7 @@
 #[cfg(test)]
 use crate::{
     combat::HasGold,
-    entities::Player,
+    player::Player,
     inventory::HasInventory,
     item::{Item, ItemId, ItemType},
     item::enums::{EquipmentType, ItemQuality, MaterialType},
