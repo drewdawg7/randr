@@ -2,15 +2,15 @@
 
 ## Overview
 
-The loot system handles item drops from entities (mobs, rocks, chests). It uses a probability-based `LootTable` and the `HasLoot` trait to provide a unified interface for rolling drops.
+The loot system handles item drops from entities (mobs, rocks, chests). It uses a probability-based `LootTable` and the `HasLoot` trait with direct item spawning.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/loot/definition.rs` | Defines `LootTable`, `LootItem`, and `LootDrop` structs |
-| `src/loot/traits.rs` | Defines `HasLoot` trait with `loot()` and `roll_drops()` methods |
-| `src/loot/mod.rs` | Re-exports `LootDrop`, `LootTable`, `HasLoot` |
+| `src/loot/definition.rs` | `LootTable`, `LootItem`, `LootDrop` structs |
+| `src/loot/traits.rs` | `HasLoot` trait |
+| `src/loot/mod.rs` | Re-exports |
 
 ## LootDrop Struct
 
@@ -32,9 +32,8 @@ Container for loot items with drop probabilities.
 | Method | Returns | Description |
 |--------|---------|-------------|
 | `new()` | `LootTable` | Create empty loot table |
-| `with(item, num, denom, qty)` | `Self` | Builder: add item with `num/denom` chance, `qty` range |
-| `roll_drops()` | `Vec<LootDrop>` | Roll all items, spawn dropped items |
-| `ore_proportions()` | `Iterator<(ItemId, f32)>` | Get drop chances as floats (for UI display) |
+| `with(item, num, denom, qty)` | `Self` | Builder: add item with `num/denom` chance |
+| `roll_drops(magic_find)` | `Vec<LootDrop>` | Roll and spawn items directly |
 
 ### Roll Logic
 
@@ -42,7 +41,7 @@ Each item rolls independently:
 1. Roll `1..=denominator`
 2. If roll `<= numerator`, item drops
 3. Roll quantity from range
-4. Spawn item via `game_state().spawn_item()`
+4. Spawn item via `ItemId::spawn()` directly
 
 ## HasLoot Trait
 
@@ -50,33 +49,32 @@ Each item rolls independently:
 pub trait HasLoot {
     fn loot(&self) -> &LootTable;
 
-    fn roll_drops(&self) -> Vec<LootDrop> {
-        self.loot().roll_drops()
+    fn roll_drops(&self, magic_find: i32) -> Vec<LootDrop> {
+        self.loot().roll_drops(magic_find)
     }
 }
 ```
 
 Implementors:
-- `Mob` - drops loot on death in combat (`src/entities/mob/traits.rs`)
-- `Chest` - has loot table (unused currently) (`src/chest/traits.rs`)
-- `Rock` - drops items when mined (`src/location/mine/rock/traits.rs`)
+- `Mob` - drops loot on death (`src/mob/combat.rs`)
+- `Chest` - chest loot table (`src/chest/traits.rs`)
+- `Rock` - drops when mined (`src/location/mine/rock/traits.rs`)
 
 ## Loot Flow: Combat
 
 ```
-Mob.on_death()
-  -> self.roll_drops()         [HasLoot trait method]
-  -> MobDeathResult.loot_drops [Vec<LootDrop>]
-  -> ActiveCombat.loot_drops   [Vec<LootDrop>]
+Mob.on_death(magic_find)
+  -> self.roll_drops(magic_find)   [HasLoot trait]
+  -> MobDeathResult.loot_drops     [Vec<LootDrop>]
   -> Fight UI adds to inventory
 ```
 
 ## Loot Flow: Mining
 
 ```
-Rock.on_death()
-  -> self.roll_drops()         [HasLoot trait method]
-  -> RockDeathResult.drops     [Vec<LootDrop>]
+Rock.on_death(magic_find)
+  -> self.roll_drops(magic_find)   [HasLoot trait]
+  -> RockDeathResult.drops         [Vec<LootDrop>]
   -> Mine UI adds to inventory
 ```
 
@@ -89,11 +87,15 @@ let loot = LootTable::new()
     .with(ItemId::GoldOre, 1, 20, 1..=1);      // 5% chance, 1 item
 ```
 
+## Magic Find
+
+The `magic_find` parameter increases drop chances:
+- Passed to `roll_drops(magic_find)` and `on_death(magic_find)`
+- Higher values increase probability of drops
+
 ## Related Types
 
 | Type | File | Description |
 |------|------|-------------|
 | `MobDeathResult` | `src/combat/result.rs` | Contains `loot_drops: Vec<LootDrop>` |
 | `RockDeathResult` | `src/combat/result.rs` | Contains `drops: Vec<LootDrop>` |
-| `ActiveCombat` | `src/combat/state.rs` | Contains `loot_drops: Vec<LootDrop>` |
-| `CombatRounds` | `src/combat/system.rs` | Contains `loot_drops: Vec<LootDrop>` |

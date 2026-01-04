@@ -7,11 +7,8 @@ src/location/
 ├── mod.rs              # Main exports
 ├── enums.rs            # LocationId, LocationType, subtypes
 ├── traits.rs           # Location trait, LocationEntryError
-├── spec/
-│   ├── mod.rs
-│   ├── definition.rs   # LocationSpec, LocationData, StoreData, etc.
-│   ├── traits.rs       # SpawnFromSpec, RegistryDefaults
-│   └── specs.rs        # VILLAGE_STORE, VILLAGE_BLACKSMITH, etc.
+├── definitions.rs      # All locations via define_data! macro
+├── definition.rs       # LocationSpec, LocationData, StoreData, etc.
 ├── store/
 │   ├── mod.rs
 │   ├── definition.rs   # Store struct
@@ -104,20 +101,17 @@ Helper methods:
 
 ## Spawning Locations
 
-Locations are created using the spec system via `from_spec()`:
+Locations use the `define_data!` macro for static specs, accessed via `LocationId::spec()`:
 ```rust
-use crate::location::spec::specs::{VILLAGE_STORE, VILLAGE_BLACKSMITH, VILLAGE_FIELD, VILLAGE_MINE};
-use crate::location::{Store, Blacksmith, Field, Mine, LocationData};
+// Access spec directly
+let spec = LocationId::VillageStore.spec();
+println!("Location: {}", spec.name);
 
-let store = match &VILLAGE_STORE.data {
-    LocationData::Store(data) => Store::from_spec(&VILLAGE_STORE, data),
+// Create location from spec
+let store = match &spec.data {
+    LocationData::Store(data) => Store::from_spec(spec, data),
     _ => unreachable!(),
 };
-let blacksmith = match &VILLAGE_BLACKSMITH.data {
-    LocationData::Blacksmith(data) => Blacksmith::from_spec(&VILLAGE_BLACKSMITH, data),
-    _ => unreachable!(),
-};
-// etc.
 ```
 
 See `src/system.rs` for the canonical example of location creation.

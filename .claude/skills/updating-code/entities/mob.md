@@ -2,18 +2,35 @@
 
 ## Overview
 
-The mob module defines enemy entities that the player can fight. It follows the same registry pattern as `Item`, `Rock`, and `Field`.
+Mobs use the `define_entity!` macro for declarative definitions with direct spawning via `MobId::spawn()`.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/entities/mob/enums.rs` | Defines `MobId` enum (variants: Slime, Goblin, Cow, Dragon) and `MobQuality` |
-| `src/entities/mob/definition.rs` | Defines `Mob` struct with fields: `spec: MobId`, `quality`, `name`, `stats`, `gold`, `dropped_xp`, `loot_table` |
-| `src/entities/mob/mod.rs` | Re-exports `Mob`, `MobId`, `MobRegistry` |
-| `src/entities/mob/spec/definition.rs` | Defines `MobSpec` struct (with defense field) and `MobRegistry` type alias |
-| `src/entities/mob/spec/traits.rs` | Implements `SpawnFromSpec<MobId>` and `RegistryDefaults<MobId>` for `MobSpec` |
-| `src/entities/mob/spec/specs.rs` | Defines static specs: `SLIME`, `GOBLIN`, `COW`, `DRAGON` |
+| `src/mob/definitions.rs` | All mobs defined via `define_entity!` macro |
+| `src/mob/enums.rs` | `MobQuality` enum |
+| `src/mob/definition.rs` | `Mob` struct - spawned mob instances |
+| `src/mob/combat.rs` | Combat trait implementations |
+
+## Entity Macro System
+
+Mobs are defined using the `define_entity!` macro which generates:
+- `MobId` enum with all variants
+- `MobId::spec(&self) -> &'static MobSpec` method
+- `MobId::spawn(&self) -> Mob` convenience method
+- `MobId::ALL: &[MobId]` for iteration
+
+## Spawning Mobs
+
+```rust
+// Direct spawning (preferred)
+let dragon = MobId::Dragon.spawn();
+
+// Spec lookup
+let spec = MobId::Dragon.spec();
+println!("Name: {}", spec.name);
+```
 
 ## Naming Convention
 
@@ -21,31 +38,7 @@ Entity identifier enums follow the pattern `{Entity}Id`:
 - `ItemId` (items)
 - `MobId` (mobs)
 - `RockId` (mineable rocks)
-- `FieldId` (combat areas)
-
-## Registry Pattern
-
-Mobs use the generic `Registry<K, V>` pattern from `src/registry.rs`:
-
-```rust
-pub type MobRegistry = Registry<MobId, MobSpec>;
-```
-
-Required trait implementations:
-- `SpawnFromSpec<MobId>` - Creates `Mob` instance from `MobSpec`
-- `RegistryDefaults<MobId>` - Provides default specs for each `MobId` variant
-
-## Consumers
-
-Files that depend on `MobId`:
-
-| File | Usage |
-|------|-------|
-| `src/system.rs` | `spawn_mob(mob: MobId) -> Mob` method |
-| `src/field/definition.rs` | `mob_weights: HashMap<MobId, i32>` field |
-| `src/field/spec/definition.rs` | `mob_weights: HashMap<MobId, i32>` in `FieldSpec` |
-| `src/field/spec/specs.rs` | Mob spawn weights per field |
-| `src/combat/tests.rs` | Test helper creates mobs with `spec: MobId::Slime` |
+- `LocationId` (locations)
 
 ## MobSpec Fields
 
@@ -71,31 +64,46 @@ Files that depend on `MobId`:
 
 ## Adding a New Mob
 
-1. Add variant to `MobId` enum in `src/entities/mob/enums.rs`
-2. Create static spec in `src/entities/mob/spec/specs.rs` (include defense field)
-3. Add to `RegistryDefaults` impl in `src/entities/mob/spec/traits.rs`
-4. Add to field spawn weights in `src/field/spec/specs.rs` (if spawnable)
+Add to `src/mob/definitions.rs` inside the `define_entity!` block:
+
+```rust
+Orc => MobSpec {
+    name: "Orc",
+    max_health: 40..=60,
+    attack: 12..=18,
+    defense: 8..=12,
+    dropped_gold: 15..=25,
+    dropped_xp: 20..=30,
+    quality: MobQuality::Normal,
+    loot: LootTable::new()
+        .with(ItemId::IronOre, 1, 4, 1..=2),
+},
+```
+
+Then add to field spawn weights if spawnable:
+```rust
+// In src/location/field/definition.rs or field specs
+mob_weights.insert(MobId::Orc, 30);
+```
 
 ## Trait Implementations
 
 | Trait | File | Notes |
 |-------|------|-------|
-| `HasLoot` | `src/entities/mob/traits.rs` | Provides `loot()` and `roll_drops()` for item drops |
-| `IsKillable` | `src/entities/mob/traits.rs` | `on_death()` returns `MobDeathResult` with `loot_drops: Vec<LootDrop>`. **Idempotent**: uses `death_processed` guard, second call returns empty result |
-| `Combatant` | `src/entities/mob/traits.rs` | Combat interface |
-| `DealsDamage` | `src/entities/mob/traits.rs` | Uses default ±15% attack variance |
+| `HasLoot` | `src/mob/combat.rs` | Provides `loot()` and `roll_drops()` |
+| `IsKillable` | `src/mob/combat.rs` | `on_death(magic_find)` returns `MobDeathResult` |
+| `Combatant` | `src/mob/combat.rs` | Combat interface |
+| `DealsDamage` | `src/mob/combat.rs` | Uses default ±25% attack variance |
 
 ## Death Processing Guard
 
-The `Mob` struct has a `death_processed: bool` field that guards against double `on_death()` calls:
+The `Mob` struct has a `death_processed: bool` field:
 - Initialized to `false` when spawned
 - Set to `true` on first `on_death()` call
-- Subsequent calls return `MobDeathResult::default()` (empty: 0 gold, 0 xp, no loot)
-
-This prevents issues if combat flows accidentally call `on_death()` multiple times.
+- Subsequent calls return `MobDeathResult::default()` (empty)
 
 ## Related Modules
 
 - `src/combat/` - Combat system that uses mobs
-- `src/field/` - Fields spawn mobs based on weighted probabilities
-- `src/loot/` - `LootTable` and `HasLoot` trait (see `entities/loot.md`)
+- `src/location/field/` - Fields spawn mobs based on weighted probabilities
+- `src/loot/` - `LootTable` and `HasLoot` trait

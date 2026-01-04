@@ -2,26 +2,30 @@
 
 ## Overview
 
-Recipes define how items are crafted from ingredients. They follow the registry pattern.
+Recipes use the `define_data!` macro for declarative definitions with direct spec lookup via `RecipeId::spec()`.
 
 ## Crafting Pattern
 
-`Recipe::craft()` returns `ItemId` (not `Item`). Callers must spawn the item separately:
+`Recipe::craft()` returns `ItemId`. Spawn the item directly:
 ```rust
 let item_id = recipe.craft(&mut player)?;
-let item = game_state().item_registry().spawn(item_id);
+let item = item_id.spawn();
 ```
-This keeps the Recipe system decoupled from global state for testability.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/item/recipe/enums.rs` | `RecipeId`, `RecipeType`, `RecipeError` enums |
+| `src/item/recipe/definitions.rs` | All recipes defined via `define_data!` macro |
+| `src/item/recipe/enums.rs` | `RecipeType`, `ForgeMaterial`, `RecipeError` enums |
 | `src/item/recipe/definition.rs` | `Recipe` struct - runtime recipe with crafting logic |
-| `src/item/recipe/spec/definition.rs` | `RecipeSpec` struct - static recipe definitions |
-| `src/item/recipe/spec/specs.rs` | Static `Lazy<RecipeSpec>` definitions |
-| `src/item/recipe/spec/traits.rs` | `RegistryDefaults` impl |
+
+## Recipe Macro System
+
+Recipes use `define_data!` (for static data, not spawnable):
+- `RecipeId` enum with all variants
+- `RecipeId::spec(&self) -> &'static RecipeSpec` method
+- `RecipeId::ALL: &[RecipeId]` for iteration
 
 ## Recipe Types
 
@@ -35,24 +39,19 @@ pub enum RecipeType {
 
 ## Adding a New Recipe
 
-1. Add variant to `RecipeId` in `src/item/recipe/enums.rs`
-2. Update `all_forging_recipes()` or `all_alchemy_recipes()` if applicable
-3. Create static spec in `src/item/recipe/spec/specs.rs`:
-   ```rust
-   pub static MY_RECIPE: Lazy<RecipeSpec> = Lazy::new(|| RecipeSpec {
-       name: "My Item",
-       ingredients: HashMap::from([
-           (ItemId::BronzeIngot, 4),
-       ]),
-       output: ItemId::MyItem,
-       output_quantity: 1,
-       recipe_type: RecipeType::Forging,
-   });
-   ```
-4. Import and register in `src/item/recipe/spec/traits.rs`:
-   ```rust
-   (RecipeId::MyRecipe, MY_RECIPE.clone()),
-   ```
+Add to `src/item/recipe/definitions.rs` inside the `define_data!` block:
+
+```rust
+MyRecipe => RecipeSpec {
+    name: "My Item",
+    ingredients: HashMap::from([
+        (ItemId::BronzeIngot, 4),
+    ]),
+    output: ItemId::MyItem,
+    output_quantity: 1,
+    recipe_type: RecipeType::Forging,
+},
+```
 
 ## Current Forging Recipes
 

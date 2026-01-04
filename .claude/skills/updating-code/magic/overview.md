@@ -24,8 +24,9 @@ src/magic/
 │   └── definition.rs   # Tome struct (holds 3 pages)
 └── word/
     ├── mod.rs
-    ├── definition.rs   # WordId enum, WordSpec, WordProperties
-    └── specs.rs        # RegistryDefaults for all words
+    ├── definition.rs   # Word struct (instance)
+    ├── definitions.rs  # All words via define_data! macro
+    └── enums.rs        # WordId enum (generated)
 ```
 
 ## Core Concepts
@@ -34,7 +35,7 @@ src/magic/
 - `WordId`: Enum of all available magic words (Fire, Ice, Bolt, etc.)
 - `WordSpec`: Static definition with name, description, and properties
 - `WordProperties`: Numeric properties (damage, defense, healing, etc.) and flags
-- `WordRegistry`: Registry pattern for word lookup, stored in `GameState`
+- Access via `WordId::spec()` - direct static lookup, no registry needed
 
 ### Page System
 - `Page`: Holds 1-5 `WordId` values
@@ -69,14 +70,21 @@ The `compute_spell()` function uses a hybrid approach:
 
 ## Key Patterns
 
-### Registry Pattern
-Words use the standard registry pattern:
+### Data Macro Pattern
+Words use the `define_data!` macro for static definitions:
 ```rust
-// In GameState
-word_registry: WordRegistry,  // Registry<WordId, WordSpec>
+// In src/magic/word/definitions.rs
+define_data!(WordId, WordSpec {
+    Fire => WordSpec {
+        name: "fire",
+        description: "Elemental fire magic",
+        properties: WordProperties::new().damage(5).element(Element::Fire),
+    },
+    // ...
+});
 
-// Access
-game_state().word_registry().get(&WordId::Fire)
+// Access via direct lookup
+let spec = WordId::Fire.spec();
 ```
 
 ### Property Builder

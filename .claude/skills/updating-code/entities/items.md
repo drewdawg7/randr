@@ -2,19 +2,36 @@
 
 ## Overview
 
-Items follow the registry pattern with specs and spawned instances. Equipment items can be equipped to slots and provide stat bonuses.
+Items use the `define_entity!` macro system for declarative definitions with direct spawning via `ItemId::spawn()`.
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/item/item_id.rs` | `ItemId` enum - all item identifiers |
+| `src/item/definitions.rs` | All items defined via `define_entity!` macro |
 | `src/item/enums.rs` | `ItemType`, `EquipmentType`, `ItemQuality` enums |
 | `src/item/definition.rs` | `Item` struct - spawned item instances |
-| `src/item/spec/definition.rs` | `ItemSpec` struct - static item definitions |
-| `src/item/spec/specs.rs` | Static `Lazy<ItemSpec>` definitions |
-| `src/item/spec/traits.rs` | `SpawnFromSpec` and `RegistryDefaults` impls |
 | `src/inventory/enums.rs` | `EquipmentSlot` enum |
+| `entity_macros/src/lib.rs` | Proc macro implementation |
+
+## Entity Macro System
+
+Items are defined using the `define_entity!` macro which generates:
+- `ItemId` enum with all variants
+- `ItemId::spec(&self) -> &'static ItemSpec` method
+- `ItemId::spawn(&self) -> Item` convenience method
+- `ItemId::ALL: &[ItemId]` for iteration
+
+## Spawning Items
+
+```rust
+// Direct spawning (preferred)
+let sword = ItemId::BonkStick.spawn();
+
+// Spec lookup
+let spec = ItemId::BonkStick.spec();
+println!("Name: {}", spec.name);
+```
 
 ## Equipment Slots
 
@@ -48,14 +65,11 @@ pub enum EquipmentType {
 }
 ```
 
-The `slot()` method maps `EquipmentType` to `EquipmentSlot`.
-
 ## Adding a New Item
 
-1. Add variant to `ItemId` in `src/item/item_id.rs`
-2. Create static spec in `src/item/spec/specs.rs`:
+1. Add to `src/item/definitions.rs` inside the `define_entity!` block:
    ```rust
-   pub static MY_ITEM: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+   MyItem => ItemSpec {
        name: "My Item",
        item_type: ItemType::Equipment(EquipmentType::Weapon),
        quality: None,  // None = random roll, Some(x) = fixed
@@ -63,11 +77,12 @@ The `slot()` method maps `EquipmentType` to `EquipmentSlot`.
        max_upgrades: 5,
        max_stack_quantity: 1,
        gold_value: 15,
-   });
+   },
    ```
-3. Import and register in `src/item/spec/traits.rs`:
+
+2. Use the new item:
    ```rust
-   (ItemId::MyItem, MY_ITEM.clone()),
+   let item = ItemId::MyItem.spawn();
    ```
 
 ## Adding New Armor
@@ -75,7 +90,7 @@ The `slot()` method maps `EquipmentType` to `EquipmentSlot`.
 For armor, use `EquipmentType::Armor(EquipmentSlot::X)`:
 
 ```rust
-pub static COPPER_HELMET: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
+CopperHelmet => ItemSpec {
     name: "Copper Helmet",
     item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
     quality: None,
@@ -83,7 +98,7 @@ pub static COPPER_HELMET: Lazy<ItemSpec> = Lazy::new(|| ItemSpec {
     max_upgrades: 5,
     max_stack_quantity: 1,
     gold_value: 180,
-});
+},
 ```
 
 ## Current Armor Items
