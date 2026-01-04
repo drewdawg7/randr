@@ -238,6 +238,10 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for FightScreen {
                             }
                         }
                     }
+                    Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
+                        // Backspace is a shortcut to run
+                        self.execute_run();
+                    }
                     _ => {}
                 }
             }
