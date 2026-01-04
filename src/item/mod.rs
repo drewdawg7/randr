@@ -10,4 +10,5 @@ pub(crate) use definition::Item;
 // ItemId, ItemSpec, ItemRegistry now come from definitions (macro-generated)
 pub use definitions::ItemId;
 pub(crate) use enums::ItemType;
+pub(crate) use enums::UpgradeResult;
 pub(crate) use definitions::{ItemRegistry, ItemSpec};

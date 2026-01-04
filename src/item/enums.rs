@@ -110,6 +110,15 @@ pub enum ItemError {
     NotAConsumable,
 }
 
+/// Result of an item upgrade, containing the new level and stat increases
+#[derive(Debug, Clone)]
+pub struct UpgradeResult {
+    /// The new upgrade level after the upgrade
+    pub new_level: i32,
+    /// The delta of stats that were increased
+    pub stat_increases: StatSheet,
+}
+
 #[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash)]
 pub enum ItemQuality {
     Poor,
