@@ -33,6 +33,7 @@ Container for loot items with drop probabilities.
 |--------|---------|-------------|
 | `new()` | `LootTable` | Create empty loot table |
 | `with(item, num, denom, qty)` | `Self` | Builder: add item with `num/denom` chance |
+| `add_loot_item(item)` | `Result<usize, LootError>` | Add item, returns index on success |
 | `roll_drops(magic_find)` | `Vec<LootDrop>` | Roll and spawn items directly |
 
 ### Roll Logic
