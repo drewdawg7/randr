@@ -109,7 +109,7 @@ Located in `src/dungeon/generation.rs`:
 ### Dungeon
 - `generate()` - Creates room layout
 - `spawn_mob()` - Weighted random mob from `mob_table`
-- `move_player(Direction)` - Update player position
+- `move_player(Direction) -> Result<&DungeonRoom, DungeonError>` - Move player and return destination room
 - `available_directions()` - Get valid movement options
 - `current_room()` / `current_room_mut()` - Get room at player position
 
