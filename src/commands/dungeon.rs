@@ -121,12 +121,9 @@ pub fn move_dungeon(direction: Direction) -> CommandResult {
     let gs = game_state();
 
     if let Some(dungeon) = gs.dungeon_mut() {
-        if dungeon.move_player(direction).is_ok() {
+        if let Ok(room) = dungeon.move_player(direction) {
             // Check if entering a boss room
-            let is_boss_room = dungeon
-                .current_room()
-                .map(|r| r.room_type == RoomType::Boss && !r.is_cleared)
-                .unwrap_or(false);
+            let is_boss_room = room.room_type == RoomType::Boss && !room.is_cleared;
 
             if is_boss_room {
                 // Spawn boss if needed

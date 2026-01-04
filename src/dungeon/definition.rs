@@ -3,9 +3,8 @@ use std::collections::HashMap;
 use crate::{
     chest::Chest,
     dungeon::enums::{Direction, DungeonError, RoomType},
-    mob::{Mob, MobId},
     loot::{HasLoot, LootDrop},
-    system::game_state,
+    mob::{Mob, MobId},
     utils::weighted_select,
 };
 
@@ -74,23 +73,30 @@ impl Dungeon {
     }
 
     /// Move the player in the given direction
-    pub fn move_player(&mut self, direction: Direction) -> Result<(), DungeonError> {
+    ///
+    /// Returns a reference to the room the player moved into on success,
+    /// allowing the caller to check room type for events (combat, chest, etc.)
+    /// without a follow-up call to `current_room()`.
+    pub fn move_player(&mut self, direction: Direction) -> Result<&DungeonRoom, DungeonError> {
         let (dx, dy) = direction.offset();
         let new_x = self.player_position.0 + dx;
         let new_y = self.player_position.1 + dy;
 
         // Check if there's a room at the new position
-        if self.get_room(new_x, new_y).is_some() {
-            self.player_position = (new_x, new_y);
-            // Mark the new room as visited and reveal adjacent rooms
-            if let Some(room) = self.get_room_mut(new_x, new_y) {
-                room.visit();
-            }
-            self.reveal_adjacent_rooms(new_x, new_y);
-            Ok(())
-        } else {
-            Err(DungeonError::NoRoomAtPosition)
+        if self.get_room(new_x, new_y).is_none() {
+            return Err(DungeonError::NoRoomAtPosition);
         }
+
+        self.player_position = (new_x, new_y);
+        // Mark the new room as visited and reveal adjacent rooms
+        if let Some(room) = self.get_room_mut(new_x, new_y) {
+            room.visit();
+        }
+        self.reveal_adjacent_rooms(new_x, new_y);
+
+        // Return immutable reference to the room (all mutations complete)
+        self.get_room(new_x, new_y)
+            .ok_or(DungeonError::NoRoomAtPosition)
     }
 
     /// Reveal all rooms adjacent to the given position
