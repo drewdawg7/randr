@@ -8,6 +8,7 @@ use tuirealm::command::{Cmd, CmdResult};
 
 use crate::{
     combat::HasGold,
+    commands::{apply_result, execute, GameCommand},
     item::recipe::{Recipe, RecipeId},
     system::game_state,
 };
@@ -132,15 +133,10 @@ pub fn handle(cmd: Cmd, item_list: &mut ItemList<RecipeItem, ForgeFilter>) -> (C
             }
 
             if let Some(recipe_item) = item_list.selected_item() {
-                let gs = game_state();
-                if let Ok(recipe) = Recipe::new(recipe_item.recipe_id) {
-                    if let Ok(item_id) = recipe.craft(&mut gs.player) {
-                        if let Some(item) = gs.item_registry().spawn(item_id) {
-                            use crate::inventory::HasInventory;
-                            let _ = gs.player.add_to_inv(item);
-                        }
-                    }
-                }
+                let result = execute(GameCommand::ForgeRecipe {
+                    recipe_id: recipe_item.recipe_id,
+                });
+                apply_result(&result);
             }
             (CmdResult::Submit(tuirealm::State::None), None)
         }

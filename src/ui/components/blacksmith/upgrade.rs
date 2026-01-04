@@ -3,6 +3,7 @@ use tuirealm::command::{Cmd, CmdResult};
 
 use crate::{
     combat::HasGold,
+    commands::{apply_result, execute, GameCommand},
     inventory::HasInventory,
     item::ItemId,
     system::game_state,
@@ -93,28 +94,10 @@ pub fn handle(
                     Some(StateChange::ToMenu),
                 )
             } else if let Some(upgrade_item) = item_list.selected_item() {
-                let gs = game_state();
-                let item_name = upgrade_item.inv_item.item.name;
-                match gs
-                    .town
-                    .blacksmith
-                    .upgrade_player_item(&mut gs.player, upgrade_item.inv_item.item.item_uuid)
-                {
-                    Ok(_) => gs.toasts.success(format!("Upgraded {}!", item_name)),
-                    Err(e) => {
-                        use crate::location::BlacksmithError;
-                        let msg = match e {
-                            BlacksmithError::MaxUpgradesReached => "Max upgrades reached",
-                            BlacksmithError::NotEnoughGold => "Not enough gold",
-                            BlacksmithError::NoUpgradeStones => "No upgrade stones",
-                            BlacksmithError::NotEquipment => "Cannot upgrade this item",
-                            BlacksmithError::ItemNotFound => "Item not found",
-                            BlacksmithError::InventoryFull => "Inventory is full",
-                            _ => "Upgrade failed",
-                        };
-                        gs.toasts.error(msg);
-                    }
-                }
+                let result = execute(GameCommand::UpgradeItem {
+                    item_uuid: upgrade_item.inv_item.item.item_uuid,
+                });
+                apply_result(&result);
                 (CmdResult::Submit(tuirealm::State::None), None)
             } else {
                 (CmdResult::None, None)

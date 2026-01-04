@@ -9,6 +9,7 @@ use tuirealm::command::{Cmd, CmdResult};
 
 use crate::{
     combat::HasGold,
+    commands::{apply_result, execute, GameCommand},
     inventory::HasInventory,
     item::{ItemId, recipe::RecipeId},
     system::game_state,
@@ -231,32 +232,16 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         Cmd::Submit => {
-            use crate::location::BlacksmithError;
-
             let selected = list_state.selected().unwrap_or(0);
-            let gs = game_state();
             let result = match selected {
-                0 => gs.town.blacksmith.add_fuel(&mut gs.player).map(|_| "Added fuel"),
-                1 => gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::TinIngot).map(|_| "Smelted Tin Ingot"),
-                2 => gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::CopperIngot).map(|_| "Smelted Copper Ingot"),
-                3 => gs.town.blacksmith.smelt_and_give(&mut gs.player, &RecipeId::BronzeIngot).map(|_| "Smelted Bronze Ingot"),
+                0 => execute(GameCommand::AddFuel),
+                1 => execute(GameCommand::SmeltRecipe { recipe_id: RecipeId::TinIngot }),
+                2 => execute(GameCommand::SmeltRecipe { recipe_id: RecipeId::CopperIngot }),
+                3 => execute(GameCommand::SmeltRecipe { recipe_id: RecipeId::BronzeIngot }),
                 4 => return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu)),
                 _ => return (CmdResult::None, None),
             };
-
-            match result {
-                Ok(msg) => gs.toasts.success(msg),
-                Err(e) => {
-                    let msg = match e {
-                        BlacksmithError::NotEnoughFuel => "Not enough fuel",
-                        BlacksmithError::NoFuel => "No fuel to add",
-                        BlacksmithError::RecipeError(_) => "Missing ingredients",
-                        BlacksmithError::InventoryFull => "Inventory is full",
-                        _ => "Smelting failed",
-                    };
-                    gs.toasts.error(msg);
-                }
-            }
+            apply_result(&result);
             (CmdResult::Submit(tuirealm::State::None), None)
         }
         Cmd::Cancel => {

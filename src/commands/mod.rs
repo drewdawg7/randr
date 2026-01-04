@@ -16,6 +16,8 @@
 //! }
 //! ```
 
+mod alchemy;
+mod blacksmith;
 mod combat;
 mod dungeon;
 mod inventory;
@@ -24,6 +26,7 @@ mod storage;
 mod store;
 
 use crate::inventory::EquipmentSlot;
+use crate::item::recipe::RecipeId;
 use crate::ui::Id;
 use uuid::Uuid;
 
@@ -148,6 +151,22 @@ pub enum GameCommand {
     DepositItem { item_uuid: Uuid },
     /// Withdraw an item from storage to player inventory.
     WithdrawItem { item_uuid: Uuid },
+
+    // === Blacksmith ===
+    /// Upgrade an item's stats at the blacksmith.
+    UpgradeItem { item_uuid: Uuid },
+    /// Upgrade an item's quality at the blacksmith.
+    UpgradeQuality { item_uuid: Uuid },
+    /// Add fuel to the blacksmith forge.
+    AddFuel,
+    /// Smelt a recipe at the blacksmith forge.
+    SmeltRecipe { recipe_id: RecipeId },
+    /// Forge an item from a recipe.
+    ForgeRecipe { recipe_id: RecipeId },
+
+    // === Alchemy ===
+    /// Brew a recipe at the alchemist.
+    BrewRecipe { recipe_id: RecipeId },
 }
 
 /// Execute a game command and return the result.
@@ -182,6 +201,16 @@ pub fn execute(cmd: GameCommand) -> CommandResult {
         // Storage
         GameCommand::DepositItem { item_uuid } => storage::deposit_item(item_uuid),
         GameCommand::WithdrawItem { item_uuid } => storage::withdraw_item(item_uuid),
+
+        // Blacksmith
+        GameCommand::UpgradeItem { item_uuid } => blacksmith::upgrade_item(item_uuid),
+        GameCommand::UpgradeQuality { item_uuid } => blacksmith::upgrade_quality(item_uuid),
+        GameCommand::AddFuel => blacksmith::add_fuel(),
+        GameCommand::SmeltRecipe { recipe_id } => blacksmith::smelt_recipe(recipe_id),
+        GameCommand::ForgeRecipe { recipe_id } => blacksmith::forge_recipe(recipe_id),
+
+        // Alchemy
+        GameCommand::BrewRecipe { recipe_id } => alchemy::brew_recipe(recipe_id),
     }
 }
 

@@ -9,6 +9,7 @@ use tuirealm::command::{Cmd, CmdResult};
 
 use crate::{
     combat::HasGold,
+    commands::{apply_result, execute, GameCommand},
     inventory::HasInventory,
     item::recipe::{Recipe, RecipeId},
     system::game_state,
@@ -103,35 +104,12 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         Cmd::Submit => {
-            use crate::item::recipe::RecipeError;
-
             let selected = list_state.selected().unwrap_or(0);
-            let gs = game_state();
 
             if selected < recipes.len() {
                 let recipe_id = recipes[selected];
-                match Recipe::new(recipe_id) {
-                    Ok(recipe) => {
-                        match recipe.craft(&mut gs.player) {
-                            Ok(item_id) => {
-                                if let Some(item) = gs.item_registry().spawn(item_id) {
-                                    let item_name = item.name;
-                                    match gs.player.add_to_inv(item) {
-                                        Ok(_) => gs.toasts.success(format!("Brewed {}!", item_name)),
-                                        Err(_) => gs.toasts.error("Inventory is full"),
-                                    }
-                                } else {
-                                    gs.toasts.error("Failed to create item");
-                                }
-                            }
-                            Err(RecipeError::NotEnoughIngredients) => {
-                                gs.toasts.error("Missing ingredients");
-                            }
-                            Err(_) => gs.toasts.error("Brewing failed"),
-                        }
-                    }
-                    Err(_) => gs.toasts.error("Invalid recipe"),
-                }
+                let result = execute(GameCommand::BrewRecipe { recipe_id });
+                apply_result(&result);
             } else {
                 return (CmdResult::Submit(tuirealm::State::None), Some(StateChange::ToMenu));
             }
