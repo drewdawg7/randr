@@ -1,5 +1,3 @@
-mod definition;
-mod specs;
+mod definitions;
 
-pub use definition::{Element, WordId, WordProperties, WordSpec};
-pub type WordRegistry = crate::registry::Registry<WordId, WordSpec>;
+pub use definitions::{Element, WordId, WordProperties, WordRegistry, WordSpec};
