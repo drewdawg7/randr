@@ -202,28 +202,67 @@ impl RegistryDefaults<MobId> for MobSpec {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Convenience Methods
+// Spawning
 // ─────────────────────────────────────────────────────────────────────────────
 
+/// Builder for spawning modified mobs.
+pub struct MobSpawner {
+    id: MobId,
+    spec: MobSpec,
+}
+
+impl MobSpawner {
+    /// Spawn the mob with all modifications applied.
+    pub fn spawn(self) -> Mob {
+        self.spec.spawn(self.id)
+    }
+
+    /// Scale all stat ranges by a multiplier.
+    pub fn with_multiplier(mut self, multiplier: f32) -> Self {
+        self.spec = self.spec.with_multiplier(multiplier);
+        self
+    }
+
+    /// Change the mob's display name.
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.spec = self.spec.with_name(name);
+        self
+    }
+
+    /// Set the mob's quality.
+    pub fn with_quality(mut self, quality: MobQuality) -> Self {
+        self.spec = self.spec.with_quality(quality);
+        self
+    }
+}
+
 impl MobId {
-    /// Spawn a Mob instance from this MobId
+    /// Spawn a Mob instance from this MobId.
     pub fn spawn(&self) -> Mob {
         self.spec().spawn(*self)
     }
 
-    /// Spawn a Mob with modifications applied to the spec.
-    /// Useful for elite variants, dungeon scaling, etc.
-    ///
-    /// # Example
-    /// ```ignore
-    /// let elite = MobId::Slime.spawn_modified(|spec| {
-    ///     spec.with_multiplier(1.5).with_name("Elite Slime")
-    /// });
-    /// ```
-    pub fn spawn_modified<F>(&self, modify: F) -> Mob
-    where
-        F: FnOnce(&MobSpec) -> MobSpec,
-    {
-        modify(self.spec()).spawn(*self)
+    /// Scale all stat ranges by a multiplier.
+    pub fn with_multiplier(&self, multiplier: f32) -> MobSpawner {
+        MobSpawner {
+            id: *self,
+            spec: self.spec().with_multiplier(multiplier),
+        }
+    }
+
+    /// Change the mob's display name.
+    pub fn with_name(&self, name: impl Into<String>) -> MobSpawner {
+        MobSpawner {
+            id: *self,
+            spec: self.spec().with_name(name),
+        }
+    }
+
+    /// Set the mob's quality.
+    pub fn with_quality(&self, quality: MobQuality) -> MobSpawner {
+        MobSpawner {
+            id: *self,
+            spec: self.spec().with_quality(quality),
+        }
     }
 }

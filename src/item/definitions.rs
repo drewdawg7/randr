@@ -515,8 +515,39 @@ impl RegistryDefaults<ItemId> for ItemSpec {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
-// Convenience Methods
+// Spawning
 // ─────────────────────────────────────────────────────────────────────────────
+
+/// Builder for spawning modified items.
+pub struct ItemSpawner {
+    id: ItemId,
+    spec: ItemSpec,
+}
+
+impl ItemSpawner {
+    /// Spawn the item with all modifications applied.
+    pub fn spawn(self) -> Item {
+        self.spec.spawn(self.id)
+    }
+
+    /// Scale all stat values and gold by a multiplier.
+    pub fn with_multiplier(mut self, multiplier: f32) -> Self {
+        self.spec = self.spec.with_multiplier(multiplier);
+        self
+    }
+
+    /// Change the item's display name.
+    pub fn with_name(mut self, name: impl Into<String>) -> Self {
+        self.spec = self.spec.with_name(name);
+        self
+    }
+
+    /// Set the item's quality.
+    pub fn with_quality(mut self, quality: ItemQuality) -> Self {
+        self.spec = self.spec.with_quality(quality);
+        self
+    }
+}
 
 impl ItemId {
     /// Spawn an Item instance from this ItemId.
@@ -524,19 +555,27 @@ impl ItemId {
         self.spec().spawn(*self)
     }
 
-    /// Spawn an Item with modifications applied to the spec.
-    /// Useful for enchanted variants, dungeon loot scaling, etc.
-    ///
-    /// # Example
-    /// ```ignore
-    /// let enchanted = ItemId::Sword.spawn_modified(|spec| {
-    ///     spec.with_multiplier(1.5).with_name("Enchanted Sword")
-    /// });
-    /// ```
-    pub fn spawn_modified<F>(&self, modify: F) -> Item
-    where
-        F: FnOnce(&ItemSpec) -> ItemSpec,
-    {
-        modify(self.spec()).spawn(*self)
+    /// Scale all stat values and gold by a multiplier.
+    pub fn with_multiplier(&self, multiplier: f32) -> ItemSpawner {
+        ItemSpawner {
+            id: *self,
+            spec: self.spec().with_multiplier(multiplier),
+        }
+    }
+
+    /// Change the item's display name.
+    pub fn with_name(&self, name: impl Into<String>) -> ItemSpawner {
+        ItemSpawner {
+            id: *self,
+            spec: self.spec().with_name(name),
+        }
+    }
+
+    /// Set the item's quality.
+    pub fn with_quality(&self, quality: ItemQuality) -> ItemSpawner {
+        ItemSpawner {
+            id: *self,
+            spec: self.spec().with_quality(quality),
+        }
     }
 }

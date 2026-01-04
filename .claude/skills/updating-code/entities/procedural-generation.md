@@ -24,15 +24,18 @@ All spawned entities are tied to a base registry ID (`MobId`, `ItemId`).
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `spawn()` | `&self -> Mob` | Spawn a mob |
-| `spawn_modified()` | `&self, FnOnce(&MobSpec) -> MobSpec -> Mob` | Spawn with modifications |
+| `with_multiplier()` | `&self, f32 -> MobSpawner` | Start builder with scaled stats |
+| `with_name()` | `&self, impl Into<String> -> MobSpawner` | Start builder with custom name |
+| `with_quality()` | `&self, MobQuality -> MobSpawner` | Start builder with fixed quality |
 
-### Spec Modifiers
+### MobSpawner (Builder)
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `with_multiplier()` | `&self, f32 -> MobSpec` | Scale all stat ranges |
-| `with_name()` | `&self, impl Into<String> -> MobSpec` | Change display name |
-| `with_quality()` | `&self, MobQuality -> MobSpec` | Set quality (Normal/Boss) |
+| `spawn()` | `self -> Mob` | Spawn with all modifications |
+| `with_multiplier()` | `self, f32 -> Self` | Chain: scale all stat ranges |
+| `with_name()` | `self, impl Into<String> -> Self` | Chain: change display name |
+| `with_quality()` | `self, MobQuality -> Self` | Chain: set quality |
 
 ### Examples
 
@@ -41,22 +44,23 @@ All spawned entities are tied to a base registry ID (`MobId`, `ItemId`).
 let slime = MobId::Slime.spawn();
 
 // Elite variant: 1.5x stats with custom name
-let elite_slime = MobId::Slime.spawn_modified(|spec| {
-    spec.with_multiplier(1.5).with_name("Elite Slime")
-});
+let elite_slime = MobId::Slime
+    .with_multiplier(1.5)
+    .with_name("Elite Slime")
+    .spawn();
 
 // Dungeon scaling: deeper floors = stronger mobs
 let depth_multiplier = 1.0 + (floor as f32 * 0.2);
-let scaled_goblin = MobId::Goblin.spawn_modified(|spec| {
-    spec.with_multiplier(depth_multiplier)
-});
+let scaled_goblin = MobId::Goblin
+    .with_multiplier(depth_multiplier)
+    .spawn();
 
 // Boss variant of a normal mob
-let mini_boss = MobId::Cow.spawn_modified(|spec| {
-    spec.with_multiplier(3.0)
-        .with_name("Dire Cow")
-        .with_quality(MobQuality::Boss)
-});
+let mini_boss = MobId::Cow
+    .with_multiplier(3.0)
+    .with_name("Dire Cow")
+    .with_quality(MobQuality::Boss)
+    .spawn();
 ```
 
 ### What Gets Scaled
@@ -77,15 +81,18 @@ let mini_boss = MobId::Cow.spawn_modified(|spec| {
 | Method | Signature | Description |
 |--------|-----------|-------------|
 | `spawn()` | `&self -> Item` | Spawn an item |
-| `spawn_modified()` | `&self, FnOnce(&ItemSpec) -> ItemSpec -> Item` | Spawn with modifications |
+| `with_multiplier()` | `&self, f32 -> ItemSpawner` | Start builder with scaled stats |
+| `with_name()` | `&self, impl Into<String> -> ItemSpawner` | Start builder with custom name |
+| `with_quality()` | `&self, ItemQuality -> ItemSpawner` | Start builder with fixed quality |
 
-### Spec Modifiers
+### ItemSpawner (Builder)
 
 | Method | Signature | Description |
 |--------|-----------|-------------|
-| `with_multiplier()` | `&self, f32 -> ItemSpec` | Scale stats and gold value |
-| `with_name()` | `&self, impl Into<String> -> ItemSpec` | Change display name |
-| `with_quality()` | `&self, ItemQuality -> ItemSpec` | Set fixed quality |
+| `spawn()` | `self -> Item` | Spawn with all modifications |
+| `with_multiplier()` | `self, f32 -> Self` | Chain: scale stats and gold |
+| `with_name()` | `self, impl Into<String> -> Self` | Chain: change display name |
+| `with_quality()` | `self, ItemQuality -> Self` | Chain: set quality |
 
 ### Examples
 
@@ -94,17 +101,17 @@ let mini_boss = MobId::Cow.spawn_modified(|spec| {
 let sword = ItemId::Sword.spawn();
 
 // Enchanted version of a base item
-let enchanted_sword = ItemId::Sword.spawn_modified(|spec| {
-    spec.with_multiplier(1.5)
-        .with_name("Enchanted Sword")
-        .with_quality(ItemQuality::Masterworked)
-});
+let enchanted_sword = ItemId::Sword
+    .with_multiplier(1.5)
+    .with_name("Enchanted Sword")
+    .with_quality(ItemQuality::Masterworked)
+    .spawn();
 
 // Dungeon loot scaling
 let loot_multiplier = 1.0 + (floor as f32 * 0.1);
-let dungeon_drop = ItemId::BronzeSword.spawn_modified(|spec| {
-    spec.with_multiplier(loot_multiplier)
-});
+let dungeon_drop = ItemId::BronzeSword
+    .with_multiplier(loot_multiplier)
+    .spawn();
 ```
 
 ### What Gets Scaled
@@ -122,21 +129,21 @@ let dungeon_drop = ItemId::BronzeSword.spawn_modified(|spec| {
 ```rust
 fn spawn_dungeon_mob(base: MobId, floor: u32) -> Mob {
     let multiplier = 1.0 + (floor as f32 * 0.15);
-    base.spec()
-        .with_multiplier(multiplier)
-        .spawn_with_id(Some(base))
+    base.with_multiplier(multiplier).spawn()
 }
 ```
 
 ### Elite/Rare Variants
 
 ```rust
-fn maybe_make_elite(mob: &MobSpec) -> MobSpec {
+fn maybe_spawn_elite(base: MobId) -> Mob {
     if rand::random::<f32>() < 0.1 {
-        mob.with_multiplier(2.0)
-           .with_name(format!("Elite {}", mob.name))
+        let spec = base.spec();
+        base.with_multiplier(2.0)
+            .with_name(format!("Elite {}", spec.name))
+            .spawn()
     } else {
-        mob.clone()
+        base.spawn()
     }
 }
 ```
@@ -146,9 +153,9 @@ fn maybe_make_elite(mob: &MobSpec) -> MobSpec {
 ```rust
 fn generate_treasure(tier: u32) -> Item {
     let base = match tier {
-        0..=2 => ItemId::Dagger.spec(),
-        3..=5 => ItemId::Sword.spec(),
-        _ => ItemId::BronzeSword.spec(),
+        0..=2 => ItemId::Dagger,
+        3..=5 => ItemId::Sword,
+        _ => ItemId::BronzeSword,
     };
 
     base.with_multiplier(1.0 + tier as f32 * 0.1)
