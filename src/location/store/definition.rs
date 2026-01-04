@@ -108,9 +108,7 @@ impl Store {
             Some(store_item) => {
                 // Add more stock to existing slot
                 for _ in 0..quantity {
-                    if let Some(item) = game_state().spawn_item(item_id) {
-                        store_item.items.push(item);
-                    }
+                    store_item.items.push(item_id.spawn());
                 }
                 store_item.max_quantity += quantity;
             }

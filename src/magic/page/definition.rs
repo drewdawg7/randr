@@ -1,5 +1,5 @@
 use crate::magic::spell::{compute_spell, ComputedSpell};
-use crate::magic::word::{WordId, WordRegistry, WordSpec};
+use crate::magic::word::WordId;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Page (spell slot that holds words)
@@ -65,7 +65,7 @@ impl Page {
     }
 
     /// Inscribe words onto the page, computing the resulting spell
-    pub fn inscribe(&mut self, words: Vec<WordId>, registry: &WordRegistry) -> InscriptionResult {
+    pub fn inscribe(&mut self, words: Vec<WordId>) -> InscriptionResult {
         if words.is_empty() {
             return InscriptionResult::Empty;
         }
@@ -81,7 +81,7 @@ impl Page {
         self.words = words;
 
         // Compute the spell
-        let spell = compute_spell(&self.words, registry);
+        let spell = compute_spell(&self.words);
         let result = match &spell {
             ComputedSpell::Active { name, .. } => InscriptionResult::Success {
                 spell_name: name.clone(),
@@ -117,7 +117,6 @@ impl Page {
     pub fn inscribe_from_strings(
         &mut self,
         word_strings: &[&str],
-        registry: &WordRegistry,
     ) -> Result<InscriptionResult, Vec<String>> {
         let mut words = Vec::new();
         let mut unknown = Vec::new();
@@ -134,7 +133,7 @@ impl Page {
             return Err(unknown);
         }
 
-        Ok(self.inscribe(words, registry))
+        Ok(self.inscribe(words))
     }
 }
 

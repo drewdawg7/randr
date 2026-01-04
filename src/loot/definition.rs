@@ -60,9 +60,7 @@ impl LootTable {
         })
     }
 
-    /// Roll drops with Magic Find bonus and custom spawn function.
-    ///
-    /// This is the core implementation that allows dependency injection for testing.
+    /// Roll drops with Magic Find bonus using direct item spawning.
     ///
     /// Magic Find grants bonus roll attempts:
     /// - 20 MF = 20% chance for 1 bonus roll
@@ -72,6 +70,14 @@ impl LootTable {
     /// If ANY roll succeeds, the item drops.
     /// For equipment: keeps highest quality roll.
     /// For other items: keeps highest quantity roll.
+    pub fn roll_drops(&self, magic_find: i32) -> Vec<LootDrop> {
+        self.roll_drops_with_spawner(magic_find, |id| Some(id.spawn()))
+    }
+
+    /// Roll drops with Magic Find bonus and custom spawn function.
+    ///
+    /// This variant allows dependency injection for testing.
+    /// For production code, prefer `roll_drops()` which uses `ItemId::spawn()` directly.
     pub fn roll_drops_with_spawner<F>(&self, magic_find: i32, spawn_item: F) -> Vec<LootDrop>
     where
         F: Fn(ItemId) -> Option<Item>,

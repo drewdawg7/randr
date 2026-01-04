@@ -35,10 +35,8 @@ use ratatui::{prelude::CrosstermBackend, Terminal};
 use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 
 use crate::dungeon::Dungeon;
-use crate::item::recipe::RecipeRegistry;
 use crate::magic::effect::PassiveEffect;
 use crate::location::{Alchemist, Blacksmith, Field, LocationData, LocationId, Mine, Store};
-use crate::magic::word::WordRegistry;
 use crate::toast::ToastQueue;
 use crate::ui::components::magic::SpellTestModal;
 use crate::ui::components::player::inventory_modal::InventoryModal;
@@ -47,9 +45,8 @@ use crate::ui::screen::ScreenLifecycle;
 use crate::ui::state::UIState;
 use crate::{
     combat::{ActiveCombat, CombatRounds},
-    mob::{MobId, MobRegistry, Mob},
-    item::{consumable::ConsumableRegistry, ItemId, ItemRegistry},
-    location::mine::{Rock, RockId, RockRegistry},
+    mob::Mob,
+    item::consumable::ConsumableRegistry,
     player::Player,
     town::definition::Town,
     ui::{
@@ -90,13 +87,8 @@ pub fn game_state() -> &'static mut GameState {
 }
 
 pub struct GameState {
-    // Registries
-    item_registry: ItemRegistry,
-    mob_registry: MobRegistry,
-    rock_registry: RockRegistry,
+    // Registries (only consumable_registry remains - others replaced by direct spawning)
     consumable_registry: ConsumableRegistry,
-    recipe_registry: RecipeRegistry,
-    word_registry: WordRegistry,
 
     // UI state (grouped for better organization)
     /// UI-specific state. Prefer using `self.ui` for new code.
@@ -127,53 +119,8 @@ pub struct GameState {
 }
 
 impl GameState {
-    pub fn spawn_mob(&self, mob: MobId) -> Option<Mob> {
-        self.mob_registry.spawn(mob)
-    }
-
-    pub fn spawn_item(&self, item: ItemId) -> Option<crate::item::Item> {
-        self.item_registry.spawn(item)
-    }
-
-    pub fn spawn_rock(&self, rock: RockId) -> Option<Rock> {
-        self.rock_registry.spawn(rock)
-    }
-
-    pub fn get_item_name(&self, kind: ItemId) -> &'static str {
-        self.item_registry
-            .get(&kind)
-            .map(|spec| spec.name)
-            .unwrap_or("Unknown")
-    }
-
-    pub fn is_item_equipment(&self, kind: ItemId) -> bool {
-        self.item_registry
-            .get(&kind)
-            .map(|spec| spec.item_type.is_equipment())
-            .unwrap_or(false)
-    }
-
-    pub fn get_rock_name(&self, kind: RockId) -> &'static str {
-        self.rock_registry
-            .get(&kind)
-            .map(|spec| spec.name)
-            .unwrap_or("Unknown")
-    }
-
     pub fn consumable_registry(&self) -> &ConsumableRegistry {
         &self.consumable_registry
-    }
-
-    pub fn recipe_registry(&self) -> &RecipeRegistry {
-        &self.recipe_registry
-    }
-
-    pub fn item_registry(&self) -> &ItemRegistry {
-        &self.item_registry
-    }
-
-    pub fn word_registry(&self) -> &WordRegistry {
-        &self.word_registry
     }
 
     pub fn current_combat(&self) -> Option<&CombatRounds> {
@@ -391,13 +338,8 @@ impl Default for GameState {
         let town = Town::new("Village".to_string(), store, blacksmith, alchemist, field, mine);
 
         Self {
-            // Registries
-            item_registry: ItemRegistry::new(),
-            mob_registry: MobRegistry::new(),
-            rock_registry: RockRegistry::new(),
+            // Registries (only consumable_registry remains)
             consumable_registry: ConsumableRegistry::new(),
-            recipe_registry: RecipeRegistry::new(),
-            word_registry: WordRegistry::new(),
 
             // UI state (new grouped struct)
             ui: UIState::new(),

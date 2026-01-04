@@ -1,8 +1,7 @@
 use std::collections::HashSet;
 
 use crate::magic::effect::{ActiveEffect, PassiveEffect};
-use crate::magic::word::{Element, WordId, WordProperties, WordSpec};
-use crate::registry::Registry;
+use crate::magic::word::{Element, WordId, WordProperties};
 
 use super::definition::ComputedSpell;
 use super::recipes::{find_invalid_combo, find_recipe};
@@ -12,7 +11,7 @@ use super::recipes::{find_invalid_combo, find_recipe};
 // ─────────────────────────────────────────────────────────────────────────────
 
 /// Compute the spell effect from a set of words
-pub fn compute_spell(words: &[WordId], registry: &Registry<WordId, WordSpec>) -> ComputedSpell {
+pub fn compute_spell(words: &[WordId]) -> ComputedSpell {
     if words.is_empty() {
         return ComputedSpell::Fizzle {
             reason: "No words inscribed".to_string(),
@@ -43,14 +42,8 @@ pub fn compute_spell(words: &[WordId], registry: &Registry<WordId, WordSpec>) ->
     // 3. Compute emergent effect from combined properties
     let props: Vec<&WordProperties> = words
         .iter()
-        .filter_map(|w| registry.get(w).map(|spec| &spec.properties))
+        .map(|w| &w.spec().properties)
         .collect();
-
-    if props.is_empty() {
-        return ComputedSpell::Fizzle {
-            reason: "Unknown words".to_string(),
-        };
-    }
 
     let combined = WordProperties::combine(&props);
 

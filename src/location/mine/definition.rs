@@ -81,7 +81,7 @@ impl Mine {
         }
 
         if let Some(rock_id) = weighted_select(&adjusted_weights) {
-            self.current_rock = game_state().spawn_rock(rock_id);
+            self.current_rock = Some(rock_id.spawn());
         }
     }
 

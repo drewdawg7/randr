@@ -88,7 +88,7 @@ impl StoreTab {
             .iter()
             .map(|si| StoreBuyItem {
                 store_item: si.clone(),
-                item_name: game_state().get_item_name(si.item_id),
+                item_name: si.item_id.spec().name,
             })
             .collect();
         self.buy_list.set_items(items);

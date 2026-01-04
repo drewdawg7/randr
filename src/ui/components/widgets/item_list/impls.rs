@@ -274,7 +274,7 @@ impl RecipeItem {
                     if have < needed {
                         can_craft = false;
                     }
-                    let item_name = gs.get_item_name(item_id);
+                    let item_name = item_id.spec().name;
                     format!("{}: {}/{}", item_name, have, needed)
                 })
                 .collect::<Vec<_>>()

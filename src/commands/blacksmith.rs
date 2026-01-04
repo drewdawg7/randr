@@ -124,14 +124,11 @@ pub fn forge_recipe(recipe_id: RecipeId) -> CommandResult {
     match Recipe::new(recipe_id) {
         Ok(recipe) => match recipe.craft(&mut gs.player) {
             Ok(item_id) => {
-                if let Some(item) = gs.item_registry().spawn(item_id) {
-                    let item_name = item.name;
-                    match gs.player.add_to_inv(item) {
-                        Ok(_) => CommandResult::success(format!("Forged {}!", item_name)),
-                        Err(_) => CommandResult::error("Inventory is full"),
-                    }
-                } else {
-                    CommandResult::error("Failed to create item")
+                let item = item_id.spawn();
+                let item_name = item.name;
+                match gs.player.add_to_inv(item) {
+                    Ok(_) => CommandResult::success(format!("Forged {}!", item_name)),
+                    Err(_) => CommandResult::error("Inventory is full"),
                 }
             }
             Err(_) => CommandResult::error("Missing ingredients"),

@@ -542,14 +542,9 @@ impl SpellTestModal {
             return;
         }
 
-        // Create and inscribe the page (scoped to drop registry borrow)
-        let page = {
-            let gs = game_state();
-            let registry = gs.word_registry();
-            let mut page = Page::new();
-            let _result = page.inscribe(self.parsed_words.clone(), registry);
-            page
-        };
+        // Create and inscribe the page
+        let mut page = Page::new();
+        let _result = page.inscribe(self.parsed_words.clone());
 
         // Now get the mutable tome reference
         let gs = game_state();
@@ -609,8 +604,7 @@ impl SpellTestModal {
         self.parsed_words = parsed.clone();
 
         // Compute the spell
-        let registry = game_state().word_registry();
-        let spell = compute_spell(&parsed, registry);
+        let spell = compute_spell(&parsed);
 
         self.result = Some(match spell {
             crate::magic::spell::ComputedSpell::Active { name, description, .. } => {

@@ -121,10 +121,8 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
                     if let Some(rock_type) = cave.mine_adjacent_rock() {
                         let loot_table = rock_type.loot_table();
 
-                        // Roll drops (0 magic find, spawn items from game state)
-                        let drops = loot_table.roll_drops_with_spawner(0, |item_id| {
-                            gs.spawn_item(item_id)
-                        });
+                        // Roll drops with 0 magic find
+                        let drops = loot_table.roll_drops(0);
 
                         // Collect drops into player inventory with toast notifications
                         collect_loot_drops(

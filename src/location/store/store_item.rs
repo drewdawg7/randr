@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{economy::WorthGold, item::{Item, ItemId}, system::game_state};
+use crate::{economy::WorthGold, item::{Item, ItemId}};
 
 #[derive(Debug, Clone)]
 pub struct StoreItem {
@@ -37,15 +37,13 @@ impl StoreItem {
     pub fn restock(&mut self) {
         self.items.clear();
         // Equipment only stocks 1 at a time
-        let quantity = if game_state().is_item_equipment(self.item_id) {
+        let quantity = if self.item_id.spec().item_type.is_equipment() {
             1
         } else {
             self.max_quantity
         };
         for _ in 0..quantity {
-            if let Some(item) = game_state().spawn_item(self.item_id) {
-                self.items.push(item);
-            }
+            self.items.push(self.item_id.spawn());
         }
     }
 

@@ -51,7 +51,7 @@ impl Field {
         }
 
         weighted_select(&adjusted_weights)
-            .and_then(|mob_id| game_state().spawn_mob(mob_id))
+            .map(|mob_id| mob_id.spawn())
             .ok_or(FieldError::MobSpawnError)
     }
 

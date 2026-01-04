@@ -71,10 +71,9 @@ pub fn enter_room() -> CommandResult {
             // Spawn boss if needed
             let needs_spawn = gs.dungeon().map(|d| d.boss.is_none()).unwrap_or(false);
             if needs_spawn {
-                if let Some(dragon) = gs.spawn_mob(MobId::Dragon) {
-                    if let Some(dungeon) = gs.dungeon_mut() {
-                        dungeon.boss = Some(dragon);
-                    }
+                let dragon = MobId::Dragon.spawn();
+                if let Some(dungeon) = gs.dungeon_mut() {
+                    dungeon.boss = Some(dragon);
                 }
             }
             CommandResult::ok()
@@ -85,7 +84,7 @@ pub fn enter_room() -> CommandResult {
             let loot_drops = {
                 if let Some(dungeon) = gs.dungeon_mut() {
                     if let Some(room) = dungeon.current_room_mut() {
-                        let drops = room.open_chest(magic_find, |id| game_state().spawn_item(id));
+                        let drops = room.open_chest(magic_find);
                         room.clear();
                         drops
                     } else {
@@ -132,10 +131,9 @@ pub fn move_dungeon(direction: Direction) -> CommandResult {
             if is_boss_room {
                 // Spawn boss if needed
                 if dungeon.boss.is_none() {
-                    if let Some(dragon) = gs.spawn_mob(MobId::Dragon) {
-                        if let Some(d) = gs.dungeon_mut() {
-                            d.boss = Some(dragon);
-                        }
+                    let dragon = MobId::Dragon.spawn();
+                    if let Some(d) = gs.dungeon_mut() {
+                        d.boss = Some(dragon);
                     }
                 }
             }
@@ -215,7 +213,7 @@ pub fn attack_boss() -> CommandResult {
         let magic_find = gs.player.effective_magicfind();
         let death_result = {
             if let Some(dungeon) = gs.dungeon_mut() {
-                dungeon.boss.as_mut().map(|boss| boss.on_death(magic_find, |id| game_state().spawn_item(id)))
+                dungeon.boss.as_mut().map(|boss| boss.on_death(magic_find))
             } else {
                 None
             }
@@ -269,7 +267,7 @@ pub fn attack_boss() -> CommandResult {
     };
 
     if player_died {
-        gs.player.on_death(0, |id| game_state().spawn_item(id));
+        gs.player.on_death(0);
         gs.reset_dungeon();
         gs.leave_dungeon();
         return CommandResult::error("You were slain by the Dragon!");
