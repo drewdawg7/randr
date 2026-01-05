@@ -1,5 +1,5 @@
 use crate::{
-    combat::{AttackResult, CombatRounds},
+    combat::{AttackResult, CombatEntityInfo, CombatRounds, get_combat_entity_info},
     mob::Mob,
     loot::LootDrop,
 };
@@ -40,5 +40,10 @@ impl ActiveCombat {
 
     pub fn is_combat_over(&self) -> bool {
         matches!(self.phase, CombatPhase::Victory | CombatPhase::Defeat)
+    }
+
+    /// Get summary info about the enemy using the CombatEntity trait.
+    pub fn enemy_info(&self) -> CombatEntityInfo {
+        get_combat_entity_info(&self.mob)
     }
 }

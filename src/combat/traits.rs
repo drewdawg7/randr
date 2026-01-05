@@ -1,4 +1,6 @@
 use crate::combat::Attack;
+use crate::entities::progression::GivesXP;
+use crate::loot::HasLoot;
 use crate::stats::{HasStats, StatType};
 
 /// Trait for entities that can be killed (health reduced to zero)
@@ -97,3 +99,25 @@ pub trait HasGold {
         *self.gold_mut() = (self.gold() - amount).max(0);
     }
 }
+
+/// Composite trait for entities that can be fought for rewards.
+///
+/// Combines all traits needed for a complete combat encounter:
+/// - `Combatant`: Can attack and be attacked (includes Named, IsKillable, DealsDamage)
+/// - `DropsGold`: Drops gold on death
+/// - `GivesXP`: Awards experience on death
+/// - `HasLoot`: Has a loot table for item drops
+///
+/// Use this trait for generic combat code instead of verbose trait bounds.
+///
+/// # Example
+/// ```ignore
+/// fn process_enemy<E: CombatEntity>(enemy: &mut E) {
+///     // All combat-related functionality available
+/// }
+/// ```
+pub trait CombatEntity: Combatant + DropsGold + GivesXP + HasLoot {}
+
+/// Blanket implementation: any type implementing the required traits
+/// automatically implements CombatEntity.
+impl<T> CombatEntity for T where T: Combatant + DropsGold + GivesXP + HasLoot {}

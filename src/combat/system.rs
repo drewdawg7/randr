@@ -1,5 +1,5 @@
 use crate::{
-    combat::{ActiveCombat, AttackResult, Combatant, CombatPhase, HasGold, IsKillable},
+    combat::{ActiveCombat, AttackResult, CombatEntity, Combatant, CombatPhase, HasGold, IsKillable},
     entities::progression::HasProgression,
     loot::LootDrop,
     magic::effect::PassiveEffect,
@@ -153,5 +153,31 @@ pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
 /// Call this when combat.phase == CombatPhase::Defeat.
 pub fn process_defeat(player: &mut Player) {
     let _death_result = player.on_death(0);
+}
+
+/// Summary of a combat entity's stats and potential rewards.
+#[derive(Debug, Clone)]
+pub struct CombatEntityInfo {
+    pub name: String,
+    pub health: i32,
+    pub attack: i32,
+    pub defense: i32,
+    pub gold_reward: i32,
+    pub xp_reward: i32,
+}
+
+/// Extract combat info from any entity implementing CombatEntity.
+///
+/// Uses the composite CombatEntity trait to access all relevant data
+/// with a single trait bound instead of `Combatant + DropsGold + GivesXP + HasLoot`.
+pub fn get_combat_entity_info<E: CombatEntity>(entity: &E) -> CombatEntityInfo {
+    CombatEntityInfo {
+        name: entity.name().to_string(),
+        health: entity.effective_health(),
+        attack: entity.effective_attack(),
+        defense: entity.effective_defense(),
+        gold_reward: entity.drop_gold(),
+        xp_reward: entity.give_xp(),
+    }
 }
 
