@@ -2,7 +2,7 @@
 use crate::{
     combat::HasGold,
     player::Player,
-    inventory::HasInventory,
+    inventory::{HasInventory, ManagesItems},
     item::{Item, ItemId, ItemType},
     item::enums::{EquipmentType, ItemQuality, MaterialType},
     location::store::{sell_player_item, Store, StoreError, StoreItem},

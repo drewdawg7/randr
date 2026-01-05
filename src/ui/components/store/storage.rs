@@ -9,7 +9,7 @@ use tuirealm::event::Key;
 
 use crate::{
     commands::{apply_result, execute, GameCommand},
-    inventory::HasInventory,
+    inventory::ManagesItems,
     system::game_state,
     ui::components::utilities::collect_player_items,
     ui::components::widgets::item_list::{

@@ -8,4 +8,4 @@ mod traits;
 pub use definition::{AddItemResult, Inventory, InventoryItem};
 pub use enums::{EquipmentSlot, InventoryError};
 pub use equipment::HasEquipment;
-pub use traits::HasInventory;
+pub use traits::{FindsItems, HasInventory, ManagesEquipment, ManagesItems};

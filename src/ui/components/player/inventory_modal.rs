@@ -9,7 +9,7 @@ use tuirealm::event::Key;
 
 use crate::{
     commands::{apply_result, execute, GameCommand},
-    inventory::{EquipmentSlot, HasInventory},
+    inventory::{EquipmentSlot, ManagesEquipment, ManagesItems},
     item::Item,
     system::game_state,
     ui::components::widgets::item_list::{InventoryFilter, InventoryListItem, ItemList, ItemListConfig},

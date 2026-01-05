@@ -9,7 +9,7 @@ use tuirealm::command::{Cmd, CmdResult};
 
 use crate::{
     combat::HasGold,
-    inventory::HasInventory,
+    inventory::FindsItems,
     item::ItemId,
     system::game_state,
     ui::Id,

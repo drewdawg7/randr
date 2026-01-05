@@ -4,83 +4,26 @@ use crate::{item::Item, ItemId};
 
 use super::{AddItemResult, EquipmentSlot, Inventory, InventoryError, InventoryItem};
 
+// =============================================================================
+// Core Trait - Required methods only
+// =============================================================================
+
+/// Core trait for entities that have an inventory.
+/// Only requires implementing the accessor methods.
 pub trait HasInventory {
     fn inventory(&self) -> &Inventory;
     fn inventory_mut(&mut self) -> &mut Inventory;
+}
 
+// =============================================================================
+// ManagesItems - Item vector management
+// =============================================================================
+
+/// Extension trait for managing inventory items (the items vec).
+/// All methods have default implementations.
+pub trait ManagesItems: HasInventory {
     fn get_inventory_items(&self) -> &[InventoryItem] {
         &self.inventory().items
-    }
-
-    fn find_item_by_uuid(&self, uuid: Uuid) -> Option<&InventoryItem> {
-        self.inventory().items.iter().find(|inv_item| inv_item.uuid() == uuid)
-    }
-
-    fn find_item_by_id(&self, item_id: ItemId) -> Option<&InventoryItem> {
-        // Check inventory items first
-        if let Some(inv_item) = self.inventory().items.iter().find(|inv_item| inv_item.item.item_id == item_id) {
-            return Some(inv_item);
-        }
-        // Check equipment
-        self.inventory().equipment().values().find(|inv_item| inv_item.item.item_id == item_id)
-    }
-
-    fn decrease_item_quantity(&mut self, inv_item: &InventoryItem, amount: u32) {
-        let item_id = inv_item.item.item_id;
-
-        // Check inventory items
-        if let Some(index) = self.inventory().items.iter().position(|i| i.item.item_id == item_id) {
-            self.inventory_mut().items[index].decrease_quantity(amount);
-            if self.inventory().items[index].quantity == 0 {
-                self.inventory_mut().items.remove(index);
-            }
-            return;
-        }
-
-        // Check equipment
-        let slot_to_remove = self.inventory().equipment().iter()
-            .find(|(_, inv)| inv.item.item_id == item_id)
-            .map(|(slot, _)| *slot);
-
-        if let Some(slot) = slot_to_remove {
-            let equipment = self.inventory_mut().equipment_mut();
-            if let Some(inv) = equipment.get_mut(&slot) {
-                inv.decrease_quantity(amount);
-                if inv.quantity == 0 {
-                    equipment.remove(&slot);
-                }
-            }
-        }
-    }
-    fn remove_item_from_inventory(&mut self, item: &InventoryItem) {
-        let uuid = item.uuid();
-
-        self.inventory_mut()
-            .items
-            .retain(|inv_item| inv_item.uuid() != uuid);
-    }
-    
-    fn find_item_by_id_mut(&mut self, item_id: ItemId) -> Option<&mut InventoryItem> {
-        // Check if in inventory items first
-        let in_inventory = self.inventory().items.iter().any(|inv_item| inv_item.item.item_id == item_id);
-        if in_inventory {
-            return self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.item_id == item_id);
-        }
-        // Check equipment
-        self.inventory_mut().equipment_mut().values_mut().find(|inv_item| inv_item.item.item_id == item_id)
-    }
-
-    fn find_item_by_uuid_mut(&mut self, uuid: Uuid) -> Option<&mut InventoryItem> {
-        // Check if in inventory items first
-        let in_inventory = self.inventory().items.iter().any(|inv_item| inv_item.uuid() == uuid);
-        if in_inventory {
-            return self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.uuid() == uuid);
-        }
-        // Check equipment
-        self.inventory_mut().equipment_mut().values_mut().find(|inv_item| inv_item.uuid() == uuid)
-    }
-    fn find_item_index_by_uuid(&self, uuid: Uuid) -> Option<usize> {
-        self.inventory().items.iter().position(|inv_item| inv_item.uuid() == uuid)
     }
 
     fn add_to_inv(&mut self, item: Item) -> Result<AddItemResult, InventoryError> {
@@ -114,6 +57,60 @@ pub trait HasInventory {
         })
     }
 
+    /// Remove an item from inventory items only (not equipment).
+    fn remove_item_from_inventory(&mut self, item: &InventoryItem) {
+        let uuid = item.uuid();
+        self.inventory_mut()
+            .items
+            .retain(|inv_item| inv_item.uuid() != uuid);
+    }
+
+    /// Find an item's index in the inventory items vec by UUID.
+    fn find_item_index_by_uuid(&self, uuid: Uuid) -> Option<usize> {
+        self.inventory().items.iter().position(|inv_item| inv_item.uuid() == uuid)
+    }
+
+    /// Decrease item quantity, removing if it reaches zero.
+    /// Searches both inventory items and equipment.
+    fn decrease_item_quantity(&mut self, inv_item: &InventoryItem, amount: u32) {
+        let item_id = inv_item.item.item_id;
+
+        // Check inventory items
+        if let Some(index) = self.inventory().items.iter().position(|i| i.item.item_id == item_id) {
+            self.inventory_mut().items[index].decrease_quantity(amount);
+            if self.inventory().items[index].quantity == 0 {
+                self.inventory_mut().items.remove(index);
+            }
+            return;
+        }
+
+        // Check equipment
+        let slot_to_remove = self.inventory().equipment().iter()
+            .find(|(_, inv)| inv.item.item_id == item_id)
+            .map(|(slot, _)| *slot);
+
+        if let Some(slot) = slot_to_remove {
+            let equipment = self.inventory_mut().equipment_mut();
+            if let Some(inv) = equipment.get_mut(&slot) {
+                inv.decrease_quantity(amount);
+                if inv.quantity == 0 {
+                    equipment.remove(&slot);
+                }
+            }
+        }
+    }
+}
+
+// Blanket implementation for all types with HasInventory
+impl<T: HasInventory> ManagesItems for T {}
+
+// =============================================================================
+// ManagesEquipment - Equipment hashmap management
+// =============================================================================
+
+/// Extension trait for managing equipped items.
+/// All methods have default implementations.
+pub trait ManagesEquipment: HasInventory + ManagesItems {
     fn get_equipped_item(&self, slot: EquipmentSlot) -> Option<&InventoryItem> {
         self.inventory().equipment().get(&slot)
     }
@@ -154,7 +151,56 @@ pub trait HasInventory {
             self.inventory_mut().equipment_mut().insert(slot, inv_item);
         }
     }
+}
 
+// Blanket implementation for all types with HasInventory + ManagesItems
+impl<T: HasInventory + ManagesItems> ManagesEquipment for T {}
+
+// =============================================================================
+// FindsItems - Search operations across both storages
+// =============================================================================
+
+/// Extension trait for finding items in both inventory and equipment.
+/// All methods have default implementations.
+pub trait FindsItems: HasInventory {
+    /// Find item by UUID in inventory items only.
+    fn find_item_by_uuid(&self, uuid: Uuid) -> Option<&InventoryItem> {
+        self.inventory().items.iter().find(|inv_item| inv_item.uuid() == uuid)
+    }
+
+    /// Find item by ItemId, searching inventory items first, then equipment.
+    fn find_item_by_id(&self, item_id: ItemId) -> Option<&InventoryItem> {
+        // Check inventory items first
+        if let Some(inv_item) = self.inventory().items.iter().find(|inv_item| inv_item.item.item_id == item_id) {
+            return Some(inv_item);
+        }
+        // Check equipment
+        self.inventory().equipment().values().find(|inv_item| inv_item.item.item_id == item_id)
+    }
+
+    /// Find mutable item by ItemId, searching inventory items first, then equipment.
+    fn find_item_by_id_mut(&mut self, item_id: ItemId) -> Option<&mut InventoryItem> {
+        // Check if in inventory items first
+        let in_inventory = self.inventory().items.iter().any(|inv_item| inv_item.item.item_id == item_id);
+        if in_inventory {
+            return self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.item.item_id == item_id);
+        }
+        // Check equipment
+        self.inventory_mut().equipment_mut().values_mut().find(|inv_item| inv_item.item.item_id == item_id)
+    }
+
+    /// Find mutable item by UUID, searching inventory items first, then equipment.
+    fn find_item_by_uuid_mut(&mut self, uuid: Uuid) -> Option<&mut InventoryItem> {
+        // Check if in inventory items first
+        let in_inventory = self.inventory().items.iter().any(|inv_item| inv_item.uuid() == uuid);
+        if in_inventory {
+            return self.inventory_mut().items.iter_mut().find(|inv_item| inv_item.uuid() == uuid);
+        }
+        // Check equipment
+        self.inventory_mut().equipment_mut().values_mut().find(|inv_item| inv_item.uuid() == uuid)
+    }
+
+    /// Remove item by UUID from either inventory or equipment.
     fn remove_item(&mut self, item_uuid: Uuid) -> Option<InventoryItem> {
         // Check equipment slots first
         let equipment = self.inventory_mut().equipment_mut();
@@ -165,10 +211,13 @@ pub trait HasInventory {
         }
 
         // Check inventory items
-        if let Some(index) = self.find_item_index_by_uuid(item_uuid) {
+        if let Some(index) = self.inventory().items.iter().position(|inv_item| inv_item.uuid() == item_uuid) {
             return Some(self.inventory_mut().items.remove(index));
         }
 
         None
     }
 }
+
+// Blanket implementation for all types with HasInventory
+impl<T: HasInventory> FindsItems for T {}

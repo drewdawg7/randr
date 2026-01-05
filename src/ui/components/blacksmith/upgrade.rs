@@ -4,7 +4,7 @@ use tuirealm::command::{Cmd, CmdResult};
 use crate::{
     combat::HasGold,
     commands::{apply_result, execute, GameCommand},
-    inventory::HasInventory,
+    inventory::FindsItems,
     item::ItemId,
     system::game_state,
     ui::components::player::item_details::render_item_details_beside,

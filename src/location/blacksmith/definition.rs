@@ -5,7 +5,7 @@ use uuid::Uuid;
 use crate::{
     combat::HasGold,
     player::Player,
-    inventory::EquipmentSlot,
+    inventory::{EquipmentSlot, FindsItems, HasInventory, ManagesEquipment, ManagesItems},
     item::{
         enums::ItemQuality,
         recipe::{Recipe, RecipeId},
@@ -13,7 +13,6 @@ use crate::{
     },
     location::{BlacksmithData, LocationId, LocationSpec},
     magic::effect::PassiveEffect,
-    HasInventory,
 };
 
 use super::enums::{BlacksmithError, BlacksmithUpgradeResult};

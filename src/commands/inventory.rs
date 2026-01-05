@@ -4,7 +4,7 @@
 
 use uuid::Uuid;
 
-use crate::inventory::{EquipmentSlot, HasInventory};
+use crate::inventory::{EquipmentSlot, FindsItems, ManagesEquipment};
 use crate::item::consumable::use_consumable;
 use crate::system::game_state;
 

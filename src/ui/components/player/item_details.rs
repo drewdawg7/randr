@@ -11,7 +11,7 @@ use crate::ui::utilities::HAMMER;
 use crate::ui::theme::{quality_color, SOFT_GREEN, SOFT_RED};
 
 use crate::{
-    inventory::HasInventory,
+    inventory::ManagesEquipment,
     item::Item,
     stats::HasStats,
     system::game_state,

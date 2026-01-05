@@ -7,7 +7,7 @@ mod tests;
 pub(crate) use definition::{LootDrop, LootItem, LootTable};
 pub(crate) use traits::HasLoot;
 
-use crate::inventory::HasInventory;
+use crate::inventory::{HasInventory, ManagesItems};
 use crate::toast::ToastQueue;
 
 /// Collect loot drops into a player's inventory.

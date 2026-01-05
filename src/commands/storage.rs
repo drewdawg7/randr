@@ -4,7 +4,7 @@
 
 use uuid::Uuid;
 
-use crate::inventory::HasInventory;
+use crate::inventory::{FindsItems, HasInventory, ManagesItems};
 use crate::system::game_state;
 
 use super::CommandResult;

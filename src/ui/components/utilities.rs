@@ -7,7 +7,7 @@ use ratatui::{
     Frame,
 };
 
-use crate::inventory::{EquipmentSlot, HasInventory, InventoryItem};
+use crate::inventory::{EquipmentSlot, InventoryItem, ManagesEquipment, ManagesItems};
 use crate::item::Item;
 use crate::ui::theme::{self as colors, quality_color, ColorExt};
 

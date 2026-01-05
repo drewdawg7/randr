@@ -2,7 +2,7 @@ use crate::{
     player::Player,
     item::{Item, recipe::{Recipe, RecipeId}},
     location::{AlchemistData, LocationId, LocationSpec},
-    HasInventory,
+    inventory::ManagesItems,
 };
 
 use super::enums::AlchemistError;
