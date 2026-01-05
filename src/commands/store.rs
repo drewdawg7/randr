@@ -4,7 +4,7 @@
 
 use uuid::Uuid;
 
-use crate::inventory::HasInventory;
+use crate::inventory::FindsItems;
 use crate::location::{sell_player_item, StoreError};
 use crate::system::game_state;
 

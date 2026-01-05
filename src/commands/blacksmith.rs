@@ -4,7 +4,7 @@
 
 use uuid::Uuid;
 
-use crate::inventory::HasInventory;
+use crate::inventory::{FindsItems, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::location::BlacksmithError;
 use crate::system::game_state;

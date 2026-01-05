@@ -10,7 +10,7 @@ use tuirealm::command::{Cmd, CmdResult};
 use crate::{
     combat::HasGold,
     commands::{apply_result, execute, GameCommand},
-    inventory::HasInventory,
+    inventory::FindsItems,
     item::recipe::{Recipe, RecipeId},
     system::game_state,
 };

@@ -1,5 +1,5 @@
 use crossterm::terminal;
-use game::{game_state, init_game_state, GameState, HasInventory, ItemId};
+use game::{game_state, init_game_state, GameState, ItemId, ManagesItems};
 use game::Id;
 
 fn main() -> std::io::Result<()> {

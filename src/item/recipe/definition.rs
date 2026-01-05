@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use crate::{
     player::Player,
     item::ItemId,
-    HasInventory,
+    inventory::{FindsItems, ManagesItems},
 };
 
 use super::definitions::{RecipeId, RecipeSpec};

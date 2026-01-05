@@ -9,7 +9,7 @@ use crate::item::{Item, ItemId};
 use crate::stats::{StatSheet, StatType};
 
 #[cfg(test)]
-use super::{EquipmentSlot, HasInventory, Inventory, InventoryError, InventoryItem};
+use super::{EquipmentSlot, FindsItems, HasInventory, Inventory, InventoryError, InventoryItem, ManagesEquipment, ManagesItems};
 
 // ==================== Test Helpers ====================
 

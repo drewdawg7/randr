@@ -2,7 +2,7 @@
 //!
 //! Handles brewing potions and other alchemical items.
 
-use crate::inventory::HasInventory;
+use crate::inventory::ManagesItems;
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::system::game_state;
 

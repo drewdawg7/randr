@@ -5,7 +5,7 @@ use crate::{
     combat::HasGold,
     economy::WorthGold,
     player::Player,
-    inventory::HasInventory,
+    inventory::{FindsItems, ManagesItems},
     item::{Item, ItemId},
     location::{LocationId, LocationSpec, StoreData},
     magic::effect::PassiveEffect,

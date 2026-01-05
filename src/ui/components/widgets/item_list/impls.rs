@@ -256,7 +256,7 @@ pub struct RecipeItem {
 impl RecipeItem {
     /// Create a new RecipeItem with calculated ingredient display.
     pub fn new(recipe_id: RecipeId, name: &'static str) -> Self {
-        use crate::inventory::HasInventory;
+        use crate::inventory::FindsItems;
         use crate::item::recipe::Recipe;
 
         let gs = game_state();
