@@ -32,19 +32,6 @@ pub trait Location {
         self.id().location_type()
     }
 
-    // === Timer/Refresh ===
-
-    /// Called each game tick. Default: no-op
-    fn tick(&mut self, _elapsed: Duration) {}
-
-    /// Force a refresh/restock. Default: no-op
-    fn refresh(&mut self) {}
-
-    /// Time until next automatic refresh. None = no auto-refresh
-    fn time_until_refresh(&self) -> Option<Duration> {
-        None
-    }
-
     // === Entry/Exit Hooks ===
 
     /// Check if player can enter this location
@@ -57,4 +44,17 @@ pub trait Location {
 
     /// Called when player exits the location
     fn on_exit(&mut self, _player: &mut Player) {}
+}
+
+/// Trait for locations that have time-based refresh mechanics.
+/// Only locations with actual refresh behavior should implement this.
+pub trait Refreshable: Location {
+    /// Called each game tick with elapsed time
+    fn tick(&mut self, elapsed: Duration);
+
+    /// Force an immediate refresh/restock
+    fn refresh(&mut self);
+
+    /// Time until next automatic refresh
+    fn time_until_refresh(&self) -> Duration;
 }

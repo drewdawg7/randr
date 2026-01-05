@@ -19,4 +19,4 @@ pub use spec::{
     MineData, StoreData,
 };
 pub use store::{sell_player_item, Store, StoreError, StoreItem};
-pub use traits::{Location, LocationEntryError};
+pub use traits::{Location, LocationEntryError, Refreshable};

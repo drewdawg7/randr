@@ -1,6 +1,6 @@
 use std::time::Duration;
 
-use crate::location::{Alchemist, Blacksmith, Field, Location, LocationId, Mine, Store};
+use crate::location::{Alchemist, Blacksmith, Field, Location, LocationId, Mine, Refreshable, Store};
 use crate::storage::Storage;
 
 pub struct Town {
@@ -55,12 +55,9 @@ impl Town {
         }
     }
 
-    /// Tick all locations with elapsed time
+    /// Tick all refreshable locations with elapsed time
     pub fn tick_all(&mut self, elapsed: Duration) {
         self.store.tick(elapsed);
-        self.blacksmith.tick(elapsed);
-        self.alchemist.tick(elapsed);
-        self.field.tick(elapsed);
         self.mine.tick(elapsed);
     }
 }

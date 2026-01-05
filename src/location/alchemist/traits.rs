@@ -1,5 +1,3 @@
-use std::time::Duration;
-
 use crate::{
     player::Player,
     location::{Location, LocationEntryError, LocationId},
@@ -28,18 +26,6 @@ impl Location for Alchemist {
 
     fn description(&self) -> &str {
         Alchemist::description(self)
-    }
-
-    fn tick(&mut self, _elapsed: Duration) {
-        // No time-based updates for alchemist
-    }
-
-    fn refresh(&mut self) {
-        // No refresh mechanic for alchemist
-    }
-
-    fn time_until_refresh(&self) -> Option<Duration> {
-        None
     }
 
     fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
