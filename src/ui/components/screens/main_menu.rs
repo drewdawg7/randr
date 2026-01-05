@@ -18,15 +18,15 @@ impl Default for MainMenuScreen {
         let items = vec![
             MenuItem {
                 label: format!("{} Town", HOUSE).to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Town; })
+                action: Box::new(|| { game_state().ui.current_screen = Id::Town; })
             },
             MenuItem {
                 label: format!("{} Profile", PERSON).to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Profile; })
+                action: Box::new(|| { game_state().ui.current_screen = Id::Profile; })
             },
             MenuItem {
                 label: format!("{} Quit", OPEN_DOOR).to_string(),
-                action: Box::new(|| { game_state().current_screen = Id::Quit; })
+                action: Box::new(|| { game_state().ui.current_screen = Id::Quit; })
             },
         ];
         Self {

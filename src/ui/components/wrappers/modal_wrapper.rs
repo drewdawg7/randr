@@ -33,7 +33,7 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
         self.content.view(frame, area);
 
         // Render active modal
-        match game_state().active_modal {
+        match game_state().ui.active_modal {
             ModalType::None => {}
             ModalType::Keybinds => {
                 let lines = vec![
@@ -50,13 +50,13 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
                 modal.render(frame);
             }
             ModalType::Inventory => {
-                game_state().inventory_modal.render(frame);
+                game_state().ui.inventory_modal.render(frame);
             }
             ModalType::Profile => {
-                game_state().profile_modal.render(frame);
+                game_state().ui.profile_modal.render(frame);
             }
             ModalType::SpellTest => {
-                game_state().spell_test_modal.render(frame);
+                game_state().ui.spell_test_modal.render(frame);
             }
         }
     }
@@ -74,7 +74,7 @@ impl<C: MockComponent> MockComponent for ModalWrapper<C> {
     }
 
     fn perform(&mut self, cmd: Cmd) -> CmdResult {
-        if game_state().active_modal != ModalType::None {
+        if game_state().ui.active_modal != ModalType::None {
             CmdResult::None // Block commands when any modal is open
         } else {
             self.content.perform(cmd)
@@ -86,11 +86,11 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         // IMPORTANT: SpellTest modal captures ALL keyboard input (for text entry)
         // Must be checked FIRST before any other keybinds
-        if game_state().active_modal == ModalType::SpellTest {
+        if game_state().ui.active_modal == ModalType::SpellTest {
             if let Event::Keyboard(KeyEvent { code, .. }) = ev {
-                let should_close = game_state().spell_test_modal.handle_input(code);
+                let should_close = game_state().ui.spell_test_modal.handle_input(code);
                 if should_close {
-                    game_state().active_modal = ModalType::None;
+                    game_state().ui.active_modal = ModalType::None;
                 }
             }
             return None;
@@ -98,8 +98,8 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
 
         // Global Esc handler: close any open modal
         if let Event::Keyboard(KeyEvent { code: Key::Esc, .. }) = ev {
-            if game_state().active_modal != ModalType::None {
-                game_state().active_modal = ModalType::None;
+            if game_state().ui.active_modal != ModalType::None {
+                game_state().ui.active_modal = ModalType::None;
                 return None;
             }
             // If no modal is open, Esc does nothing (not used for navigation)
@@ -108,8 +108,8 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
 
         // Handle Shift+I for keybinds modal toggle
         if let Event::Keyboard(KeyEvent { code: Key::Char('I'), .. }) = ev {
-            let gs = game_state();
-            gs.active_modal = if gs.active_modal == ModalType::Keybinds {
+            let ui = &mut game_state().ui;
+            ui.active_modal = if ui.active_modal == ModalType::Keybinds {
                 ModalType::None
             } else {
                 ModalType::Keybinds
@@ -119,64 +119,64 @@ impl<C: MockComponent + Component<Event<NoUserEvent>, NoUserEvent>> Component<Ev
 
         // Handle lowercase 'i' for inventory modal
         if let Event::Keyboard(KeyEvent { code: Key::Char('i'), .. }) = ev {
-            let gs = game_state();
-            if gs.active_modal == ModalType::Inventory {
-                gs.active_modal = ModalType::None;
+            let ui = &mut game_state().ui;
+            if ui.active_modal == ModalType::Inventory {
+                ui.active_modal = ModalType::None;
             } else {
-                gs.active_modal = ModalType::Inventory;
-                gs.inventory_modal.reset();
+                ui.active_modal = ModalType::Inventory;
+                ui.inventory_modal.reset();
             }
             return None;
         }
 
         // Handle 'p' for profile modal
         if let Event::Keyboard(KeyEvent { code: Key::Char('p'), .. }) = ev {
-            let gs = game_state();
-            if gs.active_modal == ModalType::Profile {
-                gs.active_modal = ModalType::None;
+            let ui = &mut game_state().ui;
+            if ui.active_modal == ModalType::Profile {
+                ui.active_modal = ModalType::None;
             } else {
-                gs.active_modal = ModalType::Profile;
-                gs.profile_modal.reset();
+                ui.active_modal = ModalType::Profile;
+                ui.profile_modal.reset();
             }
             return None;
         }
 
         // Handle 't' for spell test modal (god mode)
         if let Event::Keyboard(KeyEvent { code: Key::Char('t'), .. }) = ev {
-            let gs = game_state();
-            if gs.active_modal == ModalType::SpellTest {
-                gs.active_modal = ModalType::None;
+            let ui = &mut game_state().ui;
+            if ui.active_modal == ModalType::SpellTest {
+                ui.active_modal = ModalType::None;
             } else {
-                gs.active_modal = ModalType::SpellTest;
-                gs.spell_test_modal.reset();
+                ui.active_modal = ModalType::SpellTest;
+                ui.spell_test_modal.reset();
             }
             return None;
         }
 
         // If profile modal is open, handle its input
-        if game_state().active_modal == ModalType::Profile {
+        if game_state().ui.active_modal == ModalType::Profile {
             if let Event::Keyboard(KeyEvent { code, .. }) = ev {
-                let should_close = game_state().profile_modal.handle_input(code);
+                let should_close = game_state().ui.profile_modal.handle_input(code);
                 if should_close {
-                    game_state().active_modal = ModalType::None;
+                    game_state().ui.active_modal = ModalType::None;
                 }
             }
             return None;
         }
 
         // If inventory modal is open, forward events to it
-        if game_state().active_modal == ModalType::Inventory {
+        if game_state().ui.active_modal == ModalType::Inventory {
             if let Event::Keyboard(KeyEvent { code, .. }) = ev {
-                let should_close = game_state().inventory_modal.handle_input(code);
+                let should_close = game_state().ui.inventory_modal.handle_input(code);
                 if should_close {
-                    game_state().active_modal = ModalType::None;
+                    game_state().ui.active_modal = ModalType::None;
                 }
             }
             return None;
         }
 
         // If keybinds modal is open, block all events (except Esc, handled above)
-        if game_state().active_modal == ModalType::Keybinds {
+        if game_state().ui.active_modal == ModalType::Keybinds {
             return None;
         }
 

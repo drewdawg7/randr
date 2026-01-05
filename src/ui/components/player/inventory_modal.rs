@@ -99,7 +99,7 @@ impl InventoryModal {
 
             // Only allow using consumables
             if !inv_item.item.item_type.is_consumable() {
-                game_state().toasts.error("Cannot use this item");
+                game_state().ui.toasts.error("Cannot use this item");
                 return;
             }
 
@@ -235,8 +235,8 @@ impl InventoryModal {
                 false
             }
             Key::Char('d') => {
-                let gs = game_state();
-                gs.show_item_details = !gs.show_item_details;
+                let ui = &mut game_state().ui;
+                ui.show_item_details = !ui.show_item_details;
                 false
             }
             Key::Char('l') => {

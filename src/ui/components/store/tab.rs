@@ -345,8 +345,8 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for StoreTab {
             }) => {
                 // Toggle item details in buy/sell mode
                 if self.state == StoreState::Buy || self.state == StoreState::Sell {
-                    let gs = game_state();
-                    gs.show_item_details = !gs.show_item_details;
+                    let ui = &mut game_state().ui;
+                    ui.show_item_details = !ui.show_item_details;
                 }
                 None
             }

@@ -81,7 +81,7 @@ pub fn enter_room() -> CommandResult {
             };
 
             // Add items to inventory
-            let total = collect_loot_drops(&mut gs.player, &loot_drops, Some(&mut gs.toasts));
+            let total = collect_loot_drops(&mut gs.player, &loot_drops, Some(&mut gs.ui.toasts));
 
             if loot_drops.is_empty() {
                 CommandResult::info("The chest was empty.")
@@ -210,9 +210,9 @@ pub fn attack_boss() -> CommandResult {
             gs.player.gain_xp(death_result.xp_dropped);
 
             // Add loot to inventory
-            collect_loot_drops(&mut gs.player, &death_result.loot_drops, Some(&mut gs.toasts));
+            collect_loot_drops(&mut gs.player, &death_result.loot_drops, Some(&mut gs.ui.toasts));
 
-            gs.toasts.success(format!(
+            gs.ui.toasts.success(format!(
                 "Dragon defeated! +{} gold, +{} XP",
                 gold_with_bonus, death_result.xp_dropped
             ));
