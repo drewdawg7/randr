@@ -63,17 +63,17 @@ def get_session_tokens(session_id=None, project_path=None):
             except json.JSONDecodeError:
                 continue
 
-    total = (totals['input_tokens'] + totals['output_tokens'] +
-             totals['cache_read_input_tokens'] + totals['cache_creation_input_tokens'])
+    # Message tokens = input + output (matches /context "Messages" display)
+    message_tokens = totals['input_tokens'] + totals['output_tokens']
 
     return {
         "success": True,
         "session_id": session_id,
+        "message_tokens": message_tokens,  # This matches /context "Messages"
         "input_tokens": totals['input_tokens'],
         "output_tokens": totals['output_tokens'],
-        "cache_read_input_tokens": totals['cache_read_input_tokens'],
-        "cache_creation_input_tokens": totals['cache_creation_input_tokens'],
-        "total_tokens": total,
+        "cache_read_tokens": totals['cache_read_input_tokens'],
+        "cache_creation_tokens": totals['cache_creation_input_tokens'],
         "message_count": message_count
     }
 

@@ -19,6 +19,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
+# Import token usage module
+from token_usage import get_session_tokens
+
 # Paths
 SCRIPT_DIR = Path(__file__).parent
 CLAUDE_DIR = SCRIPT_DIR.parent.parent
@@ -122,7 +125,7 @@ def get_default_template() -> str:
 
 
 def fill_template(template: str, identifier: str, title: str, issue_type: str,
-                  complexity: str, state: dict, is_branch: bool = False) -> str:
+                  complexity: str, state: dict, token_usage: dict, is_branch: bool = False) -> str:
     """Fill in template with available data."""
     content = template
 
@@ -160,6 +163,21 @@ def fill_template(template: str, identifier: str, title: str, issue_type: str,
     content = content.replace("| ast-grep operations | X |", f"| ast-grep operations | {ast_grep_calls} |")
     content = content.replace("| Manual edit ratio | X% |", f"| Manual edit ratio | {manual_ratio:.0f}% |")
 
+    # Fill in token usage from session data
+    if token_usage.get("success"):
+        msg_tokens = token_usage.get("message_tokens", 0)
+        input_tokens = token_usage.get("input_tokens", 0)
+        output_tokens = token_usage.get("output_tokens", 0)
+        cache_read = token_usage.get("cache_read_tokens", 0)
+        cache_write = token_usage.get("cache_creation_tokens", 0)
+
+        # Format with commas for readability
+        content = content.replace("| Session tokens used | X |", f"| Session tokens used | {msg_tokens:,} |")
+        content = content.replace("| Input tokens | X |", f"| Input tokens | {input_tokens:,} |")
+        content = content.replace("| Output tokens | X |", f"| Output tokens | {output_tokens:,} |")
+        content = content.replace("| Cache read tokens | X |", f"| Cache read tokens | {cache_read:,} |")
+        content = content.replace("| Cache creation tokens | X |", f"| Cache creation tokens | {cache_write:,} |")
+
     # Fill in P3: Speed
     content = content.replace("| LSP operations | X |", f"| LSP operations | {lsp_calls} |", 1)
 
@@ -191,6 +209,7 @@ def generate_feedback(issue: int = None, branch: str = None, title: str = "",
     # Load data
     state = load_session_state()
     template = load_template()
+    token_usage = get_session_tokens()
 
     # Determine identifier and filename
     is_branch = branch is not None
@@ -208,7 +227,7 @@ def generate_feedback(issue: int = None, branch: str = None, title: str = "",
             title = f"Issue #{issue}"
 
     # Fill template
-    content = fill_template(template, identifier, title, issue_type, complexity, state, is_branch)
+    content = fill_template(template, identifier, title, issue_type, complexity, state, token_usage, is_branch)
 
     # Check if file already exists
     if output_path.exists():
@@ -231,8 +250,14 @@ def generate_feedback(issue: int = None, branch: str = None, title: str = "",
             "ast_grep_calls": state.get("ast_grep_calls", 0),
             "files_edited": len(state.get("files_edited", []))
         },
+        "token_usage": {
+            "message_tokens": token_usage.get("message_tokens", 0),
+            "input_tokens": token_usage.get("input_tokens", 0),
+            "output_tokens": token_usage.get("output_tokens", 0),
+            "cache_read_tokens": token_usage.get("cache_read_tokens", 0),
+            "cache_creation_tokens": token_usage.get("cache_creation_tokens", 0)
+        } if token_usage.get("success") else None,
         "next_steps": [
-            "Run /context to capture token usage metrics",
             "Review generated file and fill in remaining placeholders",
             "Add lessons learned based on session experience",
             "Update compliance checkboxes"
