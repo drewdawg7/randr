@@ -25,12 +25,12 @@ const HORIZ_SUFFIX: &str = "_.-";
 
 const BORDER_WIDTH: u16 = 7;
 
-/// Grey color palette for border (darker overall to stand out against background)
+/// Grey/white color palette for border (lighter to stand out against background)
 const BORDER_COLORS: &[Color] = &[
-    colors::DEEP_SLATE,   // darkest
-    colors::DARK_STONE,   // dark grey
-    colors::GRANITE,      // medium grey
     colors::LIGHT_STONE,  // light grey
+    colors::PALE_ROCK,    // pale grey
+    colors::GREY,         // medium grey
+    colors::WHITE,        // white
 ];
 
 /// Get color based on row position with pseudo-random variation
