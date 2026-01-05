@@ -1,6 +1,8 @@
+use std::time::Duration;
+
 use crate::{
     player::Player,
-    location::{Location, LocationEntryError, LocationId},
+    location::{Location, LocationEntryError, LocationId, Refreshable},
 };
 
 use super::definition::Blacksmith;
@@ -15,6 +17,7 @@ impl Default for Blacksmith {
             base_upgrade_cost: 5,
             fuel_amount: 0,
             last_fuel_regen: None,
+            fuel_regen_per_min: 0,
         }
     }
 }
@@ -43,5 +46,24 @@ impl Location for Blacksmith {
 
     fn on_exit(&mut self, _player: &mut Player) {
         // No special action on exit
+    }
+}
+
+impl Refreshable for Blacksmith {
+    fn tick(&mut self, _elapsed: Duration) {
+        self.tick_fuel_regen();
+    }
+
+    fn refresh(&mut self) {
+        // Force regeneration check
+        self.tick_fuel_regen();
+    }
+
+    fn time_until_refresh(&self) -> Duration {
+        if self.fuel_regen_per_min <= 0 {
+            return Duration::MAX;
+        }
+        // Returns time until next fuel regen (every 60 seconds)
+        Duration::from_secs(60)
     }
 }

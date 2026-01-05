@@ -59,5 +59,6 @@ impl Town {
     pub fn tick_all(&mut self, elapsed: Duration) {
         self.store.tick(elapsed);
         self.mine.tick(elapsed);
+        self.blacksmith.tick(elapsed);
     }
 }

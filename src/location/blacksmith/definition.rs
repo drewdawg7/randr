@@ -26,6 +26,8 @@ pub struct Blacksmith {
     pub fuel_amount: i32,
     /// Last time fuel regeneration was applied
     pub(crate) last_fuel_regen: Option<Instant>,
+    /// Cached fuel regeneration rate (per minute) from player passive effects
+    pub(crate) fuel_regen_per_min: i32,
 }
 
 impl Blacksmith {
@@ -39,6 +41,7 @@ impl Blacksmith {
             base_upgrade_cost: data.base_upgrade_cost,
             fuel_amount: 0,
             last_fuel_regen: None,
+            fuel_regen_per_min: 0,
         }
     }
 
@@ -51,13 +54,15 @@ impl Blacksmith {
             base_upgrade_cost,
             fuel_amount: 0,
             last_fuel_regen: None,
+            fuel_regen_per_min: 0,
         }
     }
 
-    /// Apply fuel regeneration based on passive effects and elapsed time
+    /// Update fuel regeneration rate from player passive effects and apply any pending regen.
+    /// This should be called when the player enters the blacksmith or equips/unequips tomes.
     pub fn apply_fuel_regen(&mut self, player: &Player) {
-        // Calculate total fuel regen per minute from passive effects
-        let fuel_regen_per_min: i32 = player
+        // Calculate and cache total fuel regen per minute from passive effects
+        self.fuel_regen_per_min = player
             .tome_passive_effects()
             .iter()
             .filter_map(|e| {
@@ -69,7 +74,14 @@ impl Blacksmith {
             })
             .sum();
 
-        if fuel_regen_per_min <= 0 {
+        // Apply any pending regeneration
+        self.tick_fuel_regen();
+    }
+
+    /// Apply fuel regeneration based on elapsed time using the cached regen rate.
+    /// Called by Refreshable::tick.
+    pub fn tick_fuel_regen(&mut self) {
+        if self.fuel_regen_per_min <= 0 {
             return;
         }
 
@@ -86,7 +98,7 @@ impl Blacksmith {
         // Calculate fuel to add (1 per minute = 1 per 60 seconds)
         let minutes_elapsed = elapsed_secs / 60;
         if minutes_elapsed > 0 {
-            let fuel_to_add = (minutes_elapsed as i32 * fuel_regen_per_min).min(100);
+            let fuel_to_add = (minutes_elapsed as i32 * self.fuel_regen_per_min).min(100);
             self.inc_fuel(fuel_to_add);
             self.last_fuel_regen = Some(now);
         }
