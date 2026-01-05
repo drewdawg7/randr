@@ -1,34 +1,4 @@
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Grep",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/enforce_lsp.py"}]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/enforce_scripts.py"}]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/check_branch.py"}]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/check_branch.py"}]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/auto_check.py"}]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/auto_check.py"}]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Edit(.claude/skills/**)",
