@@ -3,7 +3,7 @@ use std::time::{Duration, Instant};
 
 use crate::{
     player::Player,
-    location::{Location, LocationEntryError, LocationId},
+    location::{Location, LocationEntryError, LocationId, Refreshable},
 };
 
 use super::cave::CaveLayout;
@@ -44,6 +44,20 @@ impl Location for Mine {
         Mine::description(self)
     }
 
+    fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
+        Ok(())
+    }
+
+    fn on_enter(&mut self, player: &mut Player) {
+        self.ensure_rock_exists(player);
+    }
+
+    fn on_exit(&mut self, _player: &mut Player) {
+        // No special action on exit
+    }
+}
+
+impl Refreshable for Mine {
     fn tick(&mut self, _elapsed: Duration) {
         // Check for mine regeneration (every 10 minutes)
         self.check_and_regenerate();
@@ -56,19 +70,7 @@ impl Location for Mine {
         self.cave = Some(CaveLayout::generate());
     }
 
-    fn time_until_refresh(&self) -> Option<Duration> {
-        Some(Duration::from_secs(self.time_until_regeneration()))
-    }
-
-    fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
-        Ok(())
-    }
-
-    fn on_enter(&mut self, player: &mut Player) {
-        self.ensure_rock_exists(player);
-    }
-
-    fn on_exit(&mut self, _player: &mut Player) {
-        // No special action on exit
+    fn time_until_refresh(&self) -> Duration {
+        Duration::from_secs(self.time_until_regeneration())
     }
 }

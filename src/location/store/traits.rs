@@ -3,7 +3,7 @@ use std::time::Duration;
 use crate::{
     player::Player,
     item::ItemId,
-    location::{Location, LocationEntryError, LocationId},
+    location::{Location, LocationEntryError, LocationId, Refreshable},
 };
 
 use super::definition::Store;
@@ -32,19 +32,6 @@ impl Location for Store {
         Store::description(self)
     }
 
-    fn tick(&mut self, _elapsed: Duration) {
-        self.check_and_restock();
-    }
-
-    fn refresh(&mut self) {
-        self.restock();
-    }
-
-    fn time_until_refresh(&self) -> Option<Duration> {
-        let secs = self.time_until_restock();
-        Some(Duration::from_secs(secs))
-    }
-
     fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
         Ok(())
     }
@@ -55,5 +42,19 @@ impl Location for Store {
 
     fn on_exit(&mut self, _player: &mut Player) {
         // No special action on exit
+    }
+}
+
+impl Refreshable for Store {
+    fn tick(&mut self, _elapsed: Duration) {
+        self.check_and_restock();
+    }
+
+    fn refresh(&mut self) {
+        self.restock();
+    }
+
+    fn time_until_refresh(&self) -> Duration {
+        Duration::from_secs(self.time_until_restock())
     }
 }

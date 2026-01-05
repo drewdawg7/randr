@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::time::Duration;
 
 use crate::{
     mob::MobId,
@@ -35,18 +34,6 @@ impl Location for Field {
 
     fn description(&self) -> &str {
         Field::description(self)
-    }
-
-    fn tick(&mut self, _elapsed: Duration) {
-        // No time-based updates for field
-    }
-
-    fn refresh(&mut self) {
-        // No refresh mechanic for field
-    }
-
-    fn time_until_refresh(&self) -> Option<Duration> {
-        None
     }
 
     fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
