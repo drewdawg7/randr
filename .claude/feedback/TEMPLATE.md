@@ -17,10 +17,14 @@
 ### P2: Token Usage
 | Metric | Value | Target |
 |--------|-------|--------|
+| Session tokens used | X | - |
+| Context utilization | X% | - |
 | Manual edit count | X | - |
 | ast-grep operations | X | - |
 | Manual edit ratio | X% | <20% |
 | Similar edits without ast-grep | X | 0 |
+
+*Run `/context` to get session token metrics*
 
 ### P3: Speed
 | Metric | Value |
