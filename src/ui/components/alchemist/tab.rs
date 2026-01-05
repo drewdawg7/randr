@@ -7,16 +7,45 @@ use tuirealm::{
 };
 
 use super::{brew, lab_stone_art, menu};
+use crate::ui::components::widgets::tab_state::{StatefulTab, TabState};
 
 pub enum StateChange {
     ToMenu,
     ToBrew,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum AlchemistState {
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub(crate) enum AlchemistState {
+    #[default]
     Menu,
     Brew,
+}
+
+impl TabState for AlchemistState {
+    type Change = StateChange;
+
+    fn apply_change(_current: Self, change: Self::Change) -> Self {
+        match change {
+            StateChange::ToMenu => AlchemistState::Menu,
+            StateChange::ToBrew => AlchemistState::Brew,
+        }
+    }
+}
+
+impl StatefulTab for AlchemistTab {
+    type State = AlchemistState;
+
+    fn current_state(&self) -> AlchemistState {
+        self.state
+    }
+
+    fn set_state(&mut self, state: AlchemistState) {
+        self.state = state;
+    }
+
+    fn reset_selection(&mut self) {
+        self.list_state.select(Some(0));
+    }
 }
 
 pub struct AlchemistTab {
@@ -34,18 +63,6 @@ impl AlchemistTab {
             state: AlchemistState::Menu,
             list_state,
         }
-    }
-
-    fn reset_selection(&mut self) {
-        self.list_state.select(Some(0));
-    }
-
-    fn apply_state_change(&mut self, change: StateChange) {
-        match change {
-            StateChange::ToMenu => self.state = AlchemistState::Menu,
-            StateChange::ToBrew => self.state = AlchemistState::Brew,
-        }
-        self.reset_selection();
     }
 }
 
@@ -80,7 +97,7 @@ impl MockComponent for AlchemistTab {
         };
 
         if let Some(change) = state_change {
-            self.apply_state_change(change);
+            StatefulTab::apply_state_change(self, change);
         }
 
         result

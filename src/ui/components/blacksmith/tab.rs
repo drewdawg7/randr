@@ -12,6 +12,7 @@ use crate::ui::components::backgrounds::render_stone_wall;
 use crate::ui::components::widgets::item_list::{
     ForgeFilter, InventoryFilter, ItemList, QualityItem, RecipeItem, UpgradeableItem,
 };
+use crate::ui::components::widgets::tab_state::{StatefulTab, TabState};
 
 use super::{forge, menu, quality, smelt, upgrade};
 
@@ -23,13 +24,48 @@ pub enum StateChange {
     ToForge,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum BlacksmithState {
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub(crate) enum BlacksmithState {
+    #[default]
     Menu,
     Upgrade,
     Quality,
     Smelt,
     Forge,
+}
+
+impl TabState for BlacksmithState {
+    type Change = StateChange;
+
+    fn apply_change(_current: Self, change: Self::Change) -> Self {
+        match change {
+            StateChange::ToMenu => BlacksmithState::Menu,
+            StateChange::ToUpgrade => BlacksmithState::Upgrade,
+            StateChange::ToQuality => BlacksmithState::Quality,
+            StateChange::ToSmelt => BlacksmithState::Smelt,
+            StateChange::ToForge => BlacksmithState::Forge,
+        }
+    }
+}
+
+impl StatefulTab for BlacksmithTab {
+    type State = BlacksmithState;
+
+    fn current_state(&self) -> BlacksmithState {
+        self.state
+    }
+
+    fn set_state(&mut self, state: BlacksmithState) {
+        self.state = state;
+    }
+
+    fn reset_selection(&mut self) {
+        self.menu_list_state.select(Some(0));
+        self.smelt_list_state.select(Some(0));
+        self.forge_list.reset_selection();
+        self.upgrade_list.reset_selection();
+        self.quality_list.reset_selection();
+    }
 }
 
 pub struct BlacksmithTab {
@@ -58,25 +94,6 @@ impl BlacksmithTab {
             upgrade_list: upgrade::create_item_list(),
             quality_list: quality::create_item_list(),
         }
-    }
-
-    fn reset_selection(&mut self) {
-        self.menu_list_state.select(Some(0));
-        self.smelt_list_state.select(Some(0));
-        self.forge_list.reset_selection();
-        self.upgrade_list.reset_selection();
-        self.quality_list.reset_selection();
-    }
-
-    fn apply_state_change(&mut self, change: StateChange) {
-        match change {
-            StateChange::ToMenu => self.state = BlacksmithState::Menu,
-            StateChange::ToUpgrade => self.state = BlacksmithState::Upgrade,
-            StateChange::ToQuality => self.state = BlacksmithState::Quality,
-            StateChange::ToSmelt => self.state = BlacksmithState::Smelt,
-            StateChange::ToForge => self.state = BlacksmithState::Forge,
-        }
-        self.reset_selection();
     }
 }
 
@@ -136,7 +153,7 @@ impl MockComponent for BlacksmithTab {
         };
 
         if let Some(change) = state_change {
-            self.apply_state_change(change);
+            StatefulTab::apply_state_change(self, change);
         }
 
         result

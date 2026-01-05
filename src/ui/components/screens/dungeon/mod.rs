@@ -1,10 +1,22 @@
 //! Dungeon exploration screen.
 //!
-//! This screen handles dungeon exploration with multiple states:
-//! - RoomEntry: Initial interaction when entering a room
-//! - Navigation: Compass-based movement between rooms
-//! - RestRoom: Rest areas where the player can heal
-//! - BossRoom: Boss fights (player is trapped until victory or death)
+//! ## State Machine Architecture
+//!
+//! This screen manages a state machine with four states:
+//! - `RoomEntry`: Initial interaction when entering a room (fight/open/proceed)
+//! - `Navigation`: Compass-based movement between rooms (5-position compass)
+//! - `RestRoom`: Rest areas where the player can heal (binary choice)
+//! - `BossRoom`: Boss fights - player is trapped until victory or death
+//!
+//! ## Sub-module Pattern
+//!
+//! Each state has a corresponding sub-module (`room_entry`, `navigation`, etc.)
+//! that provides:
+//! - `render(frame, area, &selection_state)` - Renders the state's UI
+//! - `handle_submit(selection) -> Option<DungeonState>` - Handles Enter key
+//!
+//! The main `DungeonScreen` coordinates state transitions via `transition_to()`,
+//! which sets the new state and resets all selection indices.
 
 mod boss_room;
 mod navigation;

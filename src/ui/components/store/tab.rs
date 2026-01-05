@@ -19,17 +19,51 @@ use crate::{
         collect_player_items, render_location_header, store_header,
     },
     ui::components::widgets::item_list::{InventoryFilter, ItemList, ItemListConfig, SellableItem, StoreBuyItem},
+    ui::components::widgets::tab_state::{StatefulTab, TabState},
     ui::theme as colors,
 };
 
 use super::{menu, storage::StorageScreen, wood_planks_art, StateChange};
 
-#[derive(Debug, Clone, Copy, PartialEq)]
-enum StoreState {
+#[derive(Debug, Clone, Copy, PartialEq, Default)]
+pub(crate) enum StoreState {
+    #[default]
     Menu,
     Buy,
     Sell,
     Storage,
+}
+
+impl TabState for StoreState {
+    type Change = StateChange;
+
+    fn apply_change(_current: Self, change: Self::Change) -> Self {
+        match change {
+            StateChange::ToBuy => StoreState::Buy,
+            StateChange::ToSell => StoreState::Sell,
+            StateChange::ToStorage => StoreState::Storage,
+            StateChange::ToMenu => StoreState::Menu,
+        }
+    }
+}
+
+impl StatefulTab for StoreTab {
+    type State = StoreState;
+
+    fn current_state(&self) -> StoreState {
+        self.state
+    }
+
+    fn set_state(&mut self, state: StoreState) {
+        self.state = state;
+    }
+
+    fn reset_selection(&mut self) {
+        self.menu_list_state.select(Some(0));
+        self.buy_list.reset_selection();
+        self.sell_list.reset_selection();
+        self.storage_screen.reset();
+    }
 }
 
 pub struct StoreTab {
@@ -72,13 +106,6 @@ impl StoreTab {
             sell_list: ItemList::new(sell_config),
             storage_screen: StorageScreen::new(),
         }
-    }
-
-    fn reset_selection(&mut self) {
-        self.menu_list_state.select(Some(0));
-        self.buy_list.reset_selection();
-        self.sell_list.reset_selection();
-        self.storage_screen.reset();
     }
 
     fn rebuild_buy_items(&mut self) {
@@ -189,24 +216,7 @@ impl StoreTab {
         let (result, state_change) = menu::handle(cmd, &mut self.menu_list_state);
 
         if let Some(change) = state_change {
-            match change {
-                StateChange::ToBuy => {
-                    self.state = StoreState::Buy;
-                    self.buy_list.reset_selection();
-                }
-                StateChange::ToSell => {
-                    self.state = StoreState::Sell;
-                    self.sell_list.reset_selection();
-                }
-                StateChange::ToStorage => {
-                    self.state = StoreState::Storage;
-                    self.storage_screen.reset();
-                }
-                StateChange::ToMenu => {
-                    self.state = StoreState::Menu;
-                    self.reset_selection();
-                }
-            }
+            StatefulTab::apply_state_change(self, change);
         }
 
         result
@@ -235,8 +245,7 @@ impl StoreTab {
                 CmdResult::Submit(self.state())
             }
             Cmd::Cancel => {
-                self.state = StoreState::Menu;
-                self.reset_selection();
+                StatefulTab::transition_to(self, StoreState::Menu);
                 CmdResult::Changed(self.state())
             }
             _ => CmdResult::None,
@@ -262,8 +271,7 @@ impl StoreTab {
                 CmdResult::Submit(self.state())
             }
             Cmd::Cancel => {
-                self.state = StoreState::Menu;
-                self.reset_selection();
+                StatefulTab::transition_to(self, StoreState::Menu);
                 CmdResult::Changed(self.state())
             }
             _ => CmdResult::None,
@@ -276,8 +284,7 @@ impl StoreTab {
                 self.storage_screen.handle_cmd(cmd)
             }
             Cmd::Cancel => {
-                self.state = StoreState::Menu;
-                self.reset_selection();
+                StatefulTab::transition_to(self, StoreState::Menu);
                 CmdResult::Changed(self.state())
             }
             _ => self.storage_screen.handle_cmd(cmd),
