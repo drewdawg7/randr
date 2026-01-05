@@ -1,8 +1,8 @@
-use crossterm::terminal;
-use game::{game_state, init_game_state, GameState, ItemId, ManagesItems};
+use game::{game_state, init_game_state, GameState, ItemId, ManagesItems, TerminalGuard};
 use game::Id;
 
 fn main() -> std::io::Result<()> {
+    let _guard = TerminalGuard::new()?;
     init_game_state(GameState::default());
     let game_state = game_state();
     game_state.initialize();
@@ -22,5 +22,5 @@ fn main() -> std::io::Result<()> {
         let _ = game_state.run_current_screen();
     }
 
-    terminal::disable_raw_mode()
+    Ok(())
 }

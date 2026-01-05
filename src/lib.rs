@@ -27,5 +27,5 @@ mod entity_test;
 // Re-exports for main.rs
 pub use inventory::{EquipmentSlot, FindsItems, HasInventory, ManagesEquipment, ManagesItems};
 pub use item::ItemId;
-pub use system::{game_state, init_game_state, GameState};
+pub use system::{game_state, init_game_state, GameState, TerminalGuard};
 pub use ui::Id;
