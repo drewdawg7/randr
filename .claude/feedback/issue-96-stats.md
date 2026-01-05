@@ -76,3 +76,15 @@
 - For simple fixes like this (3 files, <50 lines), direct edits may be more efficient than agent delegation overhead
 - Consider whether agent delegation rule should have complexity threshold
 - Grep hook did not block the `trait Refreshable` search - verify hook configuration
+
+## Token Usage
+
+**Not available programmatically.** Findings:
+
+- `/cost` command shows token usage in interactive mode but has no programmatic API
+- No environment variables expose session tokens (e.g., `CLAUDE_SESSION_INPUT_TOKENS`)
+- No `GetSessionMetrics` tool exists
+- GitHub feature request #14940 is open for this capability
+- Workaround: Use Claude Console dashboard for workspace-level tracking
+
+**Recommendation:** Create a token tracking script once the feature is available, or implement estimation based on operation counts in `.session_state.json`.
