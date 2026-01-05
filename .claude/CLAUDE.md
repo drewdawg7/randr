@@ -11,8 +11,9 @@
 
 ## Required Skills
 Invoke skills BEFORE starting work:
-- `updating-code` - Any code changes (MANDATORY)
 - `git-workflow` - Branch/commit/merge operations
+- `code-nav` - Code navigation (LSP and ast-grep, NOT grep)
+- `rust-patterns` - Rust idioms and this project's trait patterns
 - `testing` - Writing or running tests
 
 ## Enforcement Rules (Hooks)
