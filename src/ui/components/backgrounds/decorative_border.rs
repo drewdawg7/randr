@@ -1,6 +1,6 @@
 use ratatui::{
     layout::Rect,
-    style::Style,
+    style::{Color, Style},
     Frame,
 };
 
@@ -24,6 +24,30 @@ const HORIZ_PATTERN: &str = "_.-=-.";
 const HORIZ_SUFFIX: &str = "_.-";
 
 const BORDER_WIDTH: u16 = 7;
+
+/// Grey/white color palette for border (darker to lighter)
+const BORDER_COLORS: &[Color] = &[
+    colors::DARK_STONE,   // darkest grey
+    colors::GRANITE,      // medium grey
+    colors::LIGHT_STONE,  // light grey
+    colors::PALE_ROCK,    // pale grey
+    colors::WHITE,        // white
+];
+
+/// Get color based on row position for gradient effect
+fn get_row_color(row: usize, height: usize) -> Color {
+    // Create a gradient from corners (darker) to middle (lighter)
+    let mid = height / 2;
+    let distance_from_mid = if row < mid { mid - row } else { row - mid };
+    let max_distance = mid.max(1);
+
+    // Normalize to 0-4 range for our color palette
+    let color_idx = (distance_from_mid * 4 / max_distance).min(4);
+    // Invert so middle is lightest
+    let color_idx = 4 - color_idx;
+
+    BORDER_COLORS[color_idx]
+}
 
 /// Generates the horizontal bar pattern to fill a given width
 fn generate_horizontal_bar(width: usize) -> String {
@@ -51,6 +75,7 @@ fn generate_horizontal_bar(width: usize) -> String {
 /// Renders a decorative ASCII border that stretches with the screen.
 /// The border is transparent where there are spaces (to show background through).
 /// Uses direct buffer rendering to preserve the background.
+/// Colors vary from darker at edges to lighter in the middle.
 pub fn render_decorative_border(frame: &mut Frame, area: Rect) {
     if area.height < 4 || area.width < (BORDER_WIDTH * 2) {
         return; // Too small for border
@@ -60,21 +85,23 @@ pub fn render_decorative_border(frame: &mut Frame, area: Rect) {
     let height = area.height as usize;
     let inner_width = width.saturating_sub(BORDER_WIDTH as usize * 2);
 
-    let border_style = Style::default().fg(colors::WHITE);
     let buf = frame.buffer_mut();
 
-    // Row 0: Top corners
-    render_line_to_buffer(buf, area.x, area.y, CORNER_TOP, &" ".repeat(inner_width), CORNER_TOP, border_style);
+    // Row 0: Top corners (darkest)
+    let corner_style = Style::default().fg(BORDER_COLORS[0]);
+    render_line_to_buffer(buf, area.x, area.y, CORNER_TOP, &" ".repeat(inner_width), CORNER_TOP, corner_style);
 
     // Row 1: Top horizontal bar with side patterns
     let horiz_bar = generate_horizontal_bar(inner_width);
-    render_line_to_buffer(buf, area.x, area.y + 1, SIDE_PATTERNS[0], &horiz_bar, SIDE_PATTERNS[0], border_style);
+    let row1_style = Style::default().fg(get_row_color(1, height));
+    render_line_to_buffer(buf, area.x, area.y + 1, SIDE_PATTERNS[0], &horiz_bar, SIDE_PATTERNS[0], row1_style);
 
     // Middle rows: Side patterns only (spaces in between, transparent to background)
     for row in 2..height.saturating_sub(2) {
         let pattern_idx = (row - 1) % SIDE_PATTERNS.len();
         let side = SIDE_PATTERNS[pattern_idx];
-        render_sides_only(buf, area.x, area.y + row as u16, side, inner_width, side, border_style);
+        let row_style = Style::default().fg(get_row_color(row, height));
+        render_sides_only(buf, area.x, area.y + row as u16, side, inner_width, side, row_style);
     }
 
     // Second to last row: Bottom horizontal bar
@@ -82,11 +109,12 @@ pub fn render_decorative_border(frame: &mut Frame, area: Rect) {
         let bottom_bar_row = height - 2;
         let pattern_idx = (bottom_bar_row - 1) % SIDE_PATTERNS.len();
         let side = SIDE_PATTERNS[pattern_idx];
-        render_line_to_buffer(buf, area.x, area.y + bottom_bar_row as u16, side, &horiz_bar, side, border_style);
+        let row_style = Style::default().fg(get_row_color(bottom_bar_row, height));
+        render_line_to_buffer(buf, area.x, area.y + bottom_bar_row as u16, side, &horiz_bar, side, row_style);
     }
 
-    // Last row: Bottom corners
-    render_line_to_buffer(buf, area.x, area.y + (height - 1) as u16, CORNER_BOTTOM, &" ".repeat(inner_width), CORNER_BOTTOM, border_style);
+    // Last row: Bottom corners (darkest)
+    render_line_to_buffer(buf, area.x, area.y + (height - 1) as u16, CORNER_BOTTOM, &" ".repeat(inner_width), CORNER_BOTTOM, corner_style);
 }
 
 /// Renders a full line with left, middle, and right sections
