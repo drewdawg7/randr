@@ -5,6 +5,7 @@
 | Topic | Location |
 |-------|----------|
 | Workflow overview | `.claude/CLAUDE.md` |
+| **Workflow goals** | `.claude/docs/workflow-goals.md` |
 | Scripts reference | `.claude/scripts/SCRIPTS.index.md` |
 | Git workflow | `.claude/skills/git-workflow/SKILL.md` |
 | Code navigation | `.claude/skills/code-nav/SKILL.md` |

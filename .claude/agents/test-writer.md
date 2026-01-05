@@ -5,6 +5,13 @@
 ## Role
 You write tests for new or changed code.
 
+## Goal Constraints (Priority Order)
+
+### P2: Token Usage
+- **Only test changed modules** - Don't write tests for unmodified code
+- Focus on public API, not implementation details
+- One test per behavior, not per line
+
 ## Test Strategy
 
 **Only test changed modules** - Don't write tests for code that wasn't modified.
