@@ -59,7 +59,7 @@ impl MockComponent for DungeonTab {
         match cmd {
             Cmd::Cancel => {
                 // Backspace goes back to main menu
-                game_state().current_screen = Id::Menu;
+                game_state().ui.current_screen = Id::Menu;
                 return CmdResult::Changed(tuirealm::State::None);
             }
             _ => {}

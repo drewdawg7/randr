@@ -39,10 +39,6 @@ use tuirealm::{Application, Event, EventListenerCfg, NoUserEvent};
 use crate::dungeon::Dungeon;
 use crate::magic::effect::PassiveEffect;
 use crate::location::{Alchemist, Blacksmith, Field, LocationData, LocationId, Mine, Store};
-use crate::toast::ToastQueue;
-use crate::ui::components::magic::SpellTestModal;
-use crate::ui::components::player::inventory_modal::InventoryModal;
-use crate::ui::components::player::profile_modal::ProfileModal;
 use crate::ui::screen::ScreenLifecycle;
 use crate::ui::state::UIState;
 use crate::{
@@ -93,19 +89,8 @@ pub struct GameState {
     consumable_registry: ConsumableRegistry,
 
     // UI state (grouped for better organization)
-    /// UI-specific state. Prefer using `self.ui` for new code.
+    /// UI-specific state containing screen, modals, and toasts.
     pub ui: UIState,
-
-    // Legacy UI fields (deprecated - use `ui` field instead)
-    // These are kept for backward compatibility during migration
-    pub current_screen: Id,
-    screen_lifecycle: ScreenLifecycle,
-    pub active_modal: ModalType,
-    pub inventory_modal: InventoryModal,
-    pub spell_test_modal: SpellTestModal,
-    pub profile_modal: ProfileModal,
-    pub show_item_details: bool,
-    pub toasts: ToastQueue,
 
     // Framework state
     app: Application<Id, Event<NoUserEvent>, NoUserEvent>,
@@ -172,12 +157,12 @@ impl GameState {
 
             self.dungeon = Some(dungeon);
         }
-        self.current_screen = Id::Dungeon;
+        self.ui.current_screen = Id::Dungeon;
     }
 
     /// Leave the dungeon and return to town
     pub fn leave_dungeon(&mut self) {
-        self.current_screen = Id::Town;
+        self.ui.current_screen = Id::Town;
     }
 
     /// Reset the dungeon (for when completed or explicit reset)
@@ -221,12 +206,12 @@ impl GameState {
 
     /// Get the screen lifecycle tracker.
     pub fn screen_lifecycle(&self) -> &ScreenLifecycle {
-        &self.screen_lifecycle
+        &self.ui.lifecycle
     }
 
     /// Get mutable access to the screen lifecycle tracker.
     pub fn screen_lifecycle_mut(&mut self) -> &mut ScreenLifecycle {
-        &mut self.screen_lifecycle
+        &mut self.ui.lifecycle
     }
 
     pub fn initialize(&mut self) {
@@ -253,15 +238,15 @@ impl GameState {
         self.town.store.check_and_restock();
         self.town.mine.check_and_regenerate();
         self.town.mine.check_and_respawn_rock();
-        self.toasts.cleanup();
+        self.ui.toasts.cleanup();
 
-        let current = self.current_screen;
+        let current = self.ui.current_screen;
         if current == Id::Quit {
             return Ok(());
         }
 
         // Update screen lifecycle to detect transitions
-        self.screen_lifecycle.update(current);
+        self.ui.lifecycle.update(current);
 
         if current != Id::Fight {
             self.current_combat = None;
@@ -269,7 +254,7 @@ impl GameState {
         }
 
         let mut terminal = self.terminal.take().expect("terminal missing");
-        let toasts = self.toasts.toasts();
+        let toasts = self.ui.toasts.toasts();
         terminal.draw(|frame| {
             use ratatui::widgets::Block;
             use ratatui::style::Style;
@@ -343,18 +328,8 @@ impl Default for GameState {
             // Registries (only consumable_registry remains)
             consumable_registry: ConsumableRegistry::new(),
 
-            // UI state (new grouped struct)
+            // UI state
             ui: UIState::new(),
-
-            // Legacy UI fields (kept for backward compatibility)
-            current_screen: Id::Menu,
-            screen_lifecycle: ScreenLifecycle::new(Id::Menu),
-            active_modal: ModalType::None,
-            inventory_modal: InventoryModal::new(),
-            spell_test_modal: SpellTestModal::new(),
-            profile_modal: ProfileModal::new(),
-            show_item_details: false,
-            toasts: ToastQueue::default(),
 
             // Framework state
             app: Application::init(

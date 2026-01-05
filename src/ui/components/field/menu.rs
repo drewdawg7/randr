@@ -144,7 +144,7 @@ pub fn handle(cmd: Cmd, list_state: &mut ListState) -> (CmdResult, Option<StateC
         }
         Cmd::Cancel => {
             // Backspace goes back to main menu
-            game_state().current_screen = Id::Menu;
+            game_state().ui.current_screen = Id::Menu;
             (CmdResult::Changed(tuirealm::State::None), None)
         }
         _ => (CmdResult::None, None),

@@ -144,13 +144,13 @@ pub fn render_item_details(frame: &mut Frame, area: Rect, item: Option<&Item>) {
 pub fn render_item_details_beside(frame: &mut Frame, list_area: Rect, item: Option<&Item>) {
     use crate::system::ModalType;
 
-    let gs = game_state();
-    if !gs.show_item_details {
+    let ui = &game_state().ui;
+    if !ui.show_item_details {
         return;
     }
 
     // Don't render if inventory modal is active (it will render its own)
-    if gs.active_modal == ModalType::Inventory {
+    if ui.active_modal == ModalType::Inventory {
         return;
     }
 
@@ -159,7 +159,7 @@ pub fn render_item_details_beside(frame: &mut Frame, list_area: Rect, item: Opti
 
 /// Renders item details for the inventory modal (always renders if show_item_details is true).
 pub fn render_item_details_for_modal(frame: &mut Frame, modal_area: Rect, item: Option<&Item>) {
-    if !game_state().show_item_details {
+    if !game_state().ui.show_item_details {
         return;
     }
 

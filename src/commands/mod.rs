@@ -218,14 +218,14 @@ pub fn apply_result(result: &CommandResult) {
     // Show toast message
     if let Some(msg) = &result.message {
         match msg {
-            CommandMessage::Success(text) => gs.toasts.success(text),
-            CommandMessage::Info(text) => gs.toasts.info(text),
-            CommandMessage::Error(text) => gs.toasts.error(text),
+            CommandMessage::Success(text) => gs.ui.toasts.success(text),
+            CommandMessage::Info(text) => gs.ui.toasts.info(text),
+            CommandMessage::Error(text) => gs.ui.toasts.error(text),
         }
     }
 
     // Change screen
     if let Some(screen) = result.screen_change {
-        gs.current_screen = screen;
+        gs.ui.current_screen = screen;
     }
 }

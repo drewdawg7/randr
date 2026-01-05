@@ -78,7 +78,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
                 // Backspace goes back to Town
-                game_state().current_screen = Id::Town;
+                game_state().ui.current_screen = Id::Town;
                 None
             }
             Event::Keyboard(KeyEvent { code: Key::Up, .. }) => {
@@ -111,7 +111,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
                 // Check if on exit first
                 if let Some(cave) = gs.town.mine.cave() {
                     if cave.is_on_exit() {
-                        gs.current_screen = Id::Town;
+                        gs.ui.current_screen = Id::Town;
                         return None;
                     }
                 }
@@ -128,7 +128,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for MineScreen {
                         collect_loot_drops(
                             &mut gs.player,
                             &drops,
-                            Some(&mut gs.toasts),
+                            Some(&mut gs.ui.toasts),
                         );
                     }
                 }

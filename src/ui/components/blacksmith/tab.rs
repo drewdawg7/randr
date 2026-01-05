@@ -226,7 +226,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for BlacksmithTab {
             }) => {
                 if self.state == BlacksmithState::Upgrade || self.state == BlacksmithState::Quality
                 {
-                    game_state().show_item_details = !game_state().show_item_details;
+                    game_state().ui.show_item_details = !game_state().ui.show_item_details;
                 }
                 None
             }

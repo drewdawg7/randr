@@ -127,7 +127,7 @@ pub fn back_button(back_screen: Id) -> Menu {
         MenuItem {
             label: format!("{} Back", RETURN_ARROW),
             action: Box::new(move || {
-                game_state().current_screen = back_screen;
+                game_state().ui.current_screen = back_screen;
             }),
         },
     ])

@@ -97,7 +97,7 @@ impl Component<Event<NoUserEvent>, NoUserEvent> for PlayerProfile {
     fn on(&mut self, ev: Event<NoUserEvent>) -> Option<Event<NoUserEvent>> {
         match ev {
             Event::Keyboard(KeyEvent { code: Key::Backspace, .. }) => {
-                game_state().current_screen = Id::Menu;
+                game_state().ui.current_screen = Id::Menu;
                 None
             }
             _ => None

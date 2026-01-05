@@ -71,7 +71,7 @@ impl MockComponent for FieldTab {
                     apply_result(&cmd_result);
                 }
                 StateChange::ToMine => {
-                    game_state().current_screen = Id::Mine;
+                    game_state().ui.current_screen = Id::Mine;
                 }
             }
         }

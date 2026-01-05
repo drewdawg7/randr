@@ -5,7 +5,9 @@
 //! or to reason about what state affects the presentation layer vs. the game.
 
 use crate::toast::ToastQueue;
+use crate::ui::components::magic::SpellTestModal;
 use crate::ui::components::player::inventory_modal::InventoryModal;
+use crate::ui::components::player::profile_modal::ProfileModal;
 use crate::ui::screen::{ScreenLifecycle, ScreenMetadata};
 use crate::ui::Id;
 
@@ -39,6 +41,12 @@ pub struct UIState {
     /// The inventory modal state (kept separately as it has its own state).
     pub inventory_modal: InventoryModal,
 
+    /// The spell test modal state.
+    pub spell_test_modal: SpellTestModal,
+
+    /// The profile modal state.
+    pub profile_modal: ProfileModal,
+
     /// Whether to show detailed item information in lists.
     pub show_item_details: bool,
 
@@ -54,6 +62,8 @@ impl UIState {
             lifecycle: ScreenLifecycle::new(Id::Menu),
             active_modal: ModalType::None,
             inventory_modal: InventoryModal::new(),
+            spell_test_modal: SpellTestModal::new(),
+            profile_modal: ProfileModal::new(),
             show_item_details: false,
             toasts: ToastQueue::default(),
         }

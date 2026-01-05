@@ -15,7 +15,7 @@ fn main() -> std::io::Result<()> {
 
 
     loop {
-        let current = game_state.current_screen;
+        let current = game_state.ui.current_screen;
         if current == Id::Quit {
             break;
         }
