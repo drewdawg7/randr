@@ -2,10 +2,9 @@
 //!
 //! Handles room interactions, navigation, resting, and boss fights.
 
-use crate::combat::{self, Combatant, DealsDamage, HasGold, IsKillable};
+use crate::combat::{self, Combatant, DealsDamage, IsKillable};
 use crate::dungeon::{Direction, Explorable, RoomType};
 use crate::mob::MobId;
-use crate::entities::progression::HasProgression;
 use crate::loot::collect_loot_drops;
 use crate::stats::HasStats;
 use crate::system::{game_state, CombatSource};
@@ -202,19 +201,19 @@ pub fn attack_boss() -> CommandResult {
         };
 
         if let Some(death_result) = death_result {
-            // Apply gold with goldfind bonus
-            let gold_with_bonus = combat::apply_goldfind(death_result.gold_dropped, gs.player.effective_goldfind());
-            gs.player.add_gold(gold_with_bonus);
-
-            // Award XP
-            gs.player.gain_xp(death_result.xp_dropped);
+            // Apply gold and XP rewards using shared helper (includes XP multiplier from tomes)
+            let rewards = combat::apply_victory_rewards(
+                &mut gs.player,
+                death_result.gold_dropped,
+                death_result.xp_dropped,
+            );
 
             // Add loot to inventory
             collect_loot_drops(&mut gs.player, &death_result.loot_drops, Some(&mut gs.ui.toasts));
 
             gs.ui.toasts.success(format!(
                 "Dragon defeated! +{} gold, +{} XP",
-                gold_with_bonus, death_result.xp_dropped
+                rewards.gold_gained, rewards.xp_gained
             ));
         }
 

@@ -35,6 +35,39 @@ pub fn apply_goldfind(base_gold: i32, goldfind: i32) -> i32 {
     ((base_gold as f64) * multiplier).round() as i32
 }
 
+/// Result of applying victory rewards to a player.
+#[derive(Debug, Clone)]
+pub struct VictoryRewards {
+    pub gold_gained: i32,
+    pub xp_gained: i32,
+}
+
+/// Apply victory rewards to player: gold (with goldfind) and XP (with tome multipliers).
+/// Returns the calculated gold and XP for display purposes.
+pub fn apply_victory_rewards(player: &mut Player, base_gold: i32, base_xp: i32) -> VictoryRewards {
+    // Apply gold with goldfind bonus
+    let gold_gained = apply_goldfind(base_gold, player.effective_goldfind());
+    player.add_gold(gold_gained);
+
+    // Apply XP with tome passive multiplier
+    let xp_bonus_pct: i32 = player
+        .tome_passive_effects()
+        .iter()
+        .filter_map(|e| {
+            if let PassiveEffect::XPMultiplier(pct) = e {
+                Some(*pct)
+            } else {
+                None
+            }
+        })
+        .sum();
+    let xp_multiplier = 1.0 + (xp_bonus_pct as f64 / 100.0);
+    let xp_gained = (base_xp as f64 * xp_multiplier).round() as i32;
+    player.gain_xp(xp_gained);
+
+    VictoryRewards { gold_gained, xp_gained }
+}
+
 pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 -> AttackResult {
     let target_health_before = defender.effective_health();
@@ -123,27 +156,10 @@ pub fn enemy_attack_step(combat: &mut ActiveCombat, player: &mut Player) -> Atta
 pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
     let death_result = combat.mob.on_death(player.effective_magicfind());
 
-    // Apply gold with goldfind bonus
-    let gold_with_bonus = apply_goldfind(death_result.gold_dropped, player.effective_goldfind());
-    player.add_gold(gold_with_bonus);
-    combat.gold_gained = gold_with_bonus;
-
-    // Award XP (with XP multiplier passive bonus)
-    let base_xp = death_result.xp_dropped;
-    let xp_bonus_pct: i32 = player
-        .tome_passive_effects()
-        .iter()
-        .filter_map(|e| {
-            if let PassiveEffect::XPMultiplier(pct) = e {
-                Some(*pct)
-            } else {
-                None
-            }
-        })
-        .sum();
-    let xp_multiplier = 1.0 + (xp_bonus_pct as f64 / 100.0);
-    combat.xp_gained = (base_xp as f64 * xp_multiplier).round() as i32;
-    player.gain_xp(combat.xp_gained);
+    // Apply gold and XP rewards using shared helper
+    let rewards = apply_victory_rewards(player, death_result.gold_dropped, death_result.xp_dropped);
+    combat.gold_gained = rewards.gold_gained;
+    combat.xp_gained = rewards.xp_gained;
 
     // Store loot drops for spawning
     combat.loot_drops = death_result.loot_drops;
