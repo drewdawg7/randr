@@ -1,74 +1,50 @@
----
-name: git-workflow
-description: Git branch management for code changes. Checkout, commit, merge, and push workflows.
----
+# Git Workflow Skill
 
-## Branch Checkout
+## Branch Naming Convention
 
-Before making code changes, create a descriptive branch from main:
+Format: `<type>/<description>`
 
+| Type | Use For |
+|------|---------|
+| `feat` | New features |
+| `fix` | Bug fixes |
+| `refactor` | Code restructuring |
+| `docs` | Documentation only |
+| `test` | Test additions/fixes |
+| `chore` | Maintenance tasks |
+
+## Workflow Steps
+
+### 1. Create Branch
 ```bash
-git checkout main
-git pull origin main
-git checkout -b <type>/<short-description>
+python3 .claude/scripts/git/branch.py feat/my-feature
 ```
 
-**Branch naming conventions:**
-- `feat/` - New features
-- `fix/` - Bug fixes
-- `refactor/` - Code restructuring
-- `docs/` - Documentation changes
+### 2. Make Changes
+Edit files, run `cargo check` after each change.
 
-## Commit Conventions
-
-Commit logical chunks of work for easy rollback:
-
+### 3. Commit
 ```bash
-git add <files>
-git commit -m "<type>: <short description>"
+python3 .claude/scripts/git/commit.py "feat: add new feature"
 ```
 
-**When to commit:**
-- After completing a discrete, working change
-- Before moving to a different area of the codebase
-- After fixing a failing test
-- Before risky changes (allows easy revert)
+Commit message format: `<type>[(scope)]: <description>`
 
-**Commit message types:**
-- `feat:` - New functionality
-- `fix:` - Bug fix
-- `refactor:` - Code restructure without behavior change
-- `docs:` - Documentation only
-- `test:` - Test additions/changes
-
-## Merge Workflow
-
-After all changes are complete and verified:
-
+### 4. Merge to Main
 ```bash
-# Ensure all changes are committed
-git status
-
-# Push branch to remote
-git push -u origin <branch-name>
-
-# Merge into main
-git checkout main
-git merge <branch-name>
-
-# Push main and delete feature branch
-git push origin main
-git branch -d <branch-name>
-git push origin --delete <branch-name>
+python3 .claude/scripts/git/merge.py
 ```
 
-## Quick Reference
+This will:
+1. Switch to main
+2. Pull latest
+3. Merge your branch
+4. Push to remote
+5. Delete the feature branch
 
-| Action | Command |
-|--------|---------|
-| Create branch | `git checkout -b type/name` |
-| Commit changes | `git commit -m "type: message"` |
-| Push branch | `git push -u origin branch` |
-| Merge to main | `git checkout main && git merge branch` |
-| Delete local | `git branch -d branch` |
-| Delete remote | `git push origin --delete branch` |
+## Rules
+
+1. **Never commit directly to main** - Always use feature branches
+2. **Use conventional commits** - Enforced by scripts
+3. **Run cargo check before commit** - Catches errors early
+4. **One feature per branch** - Keep changes focused

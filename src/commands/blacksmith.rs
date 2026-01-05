@@ -27,7 +27,10 @@ pub fn upgrade_item(item_uuid: Uuid) -> CommandResult {
         .blacksmith
         .upgrade_player_item(&mut gs.player, item_uuid)
     {
-        Ok(_) => CommandResult::success(format!("Upgraded {}!", item_name)),
+        Ok(result) => CommandResult::success(format!(
+            "Upgraded {} to +{} (-{} gold)",
+            item_name, result.upgrade.new_level, result.gold_spent
+        )),
         Err(e) => {
             let msg = match e {
                 BlacksmithError::MaxUpgradesReached => "Max upgrades reached",
@@ -59,7 +62,11 @@ pub fn upgrade_quality(item_uuid: Uuid) -> CommandResult {
         .blacksmith
         .upgrade_player_item_quality(&mut gs.player, item_uuid)
     {
-        Ok(_) => CommandResult::success(format!("Improved {} quality!", item_name)),
+        Ok(new_quality) => CommandResult::success(format!(
+            "{} is now {} quality!",
+            item_name,
+            new_quality.display_name()
+        )),
         Err(e) => {
             let msg = match e {
                 BlacksmithError::MaxUpgradesReached => "Max quality reached",
@@ -79,7 +86,7 @@ pub fn add_fuel() -> CommandResult {
     let gs = game_state();
 
     match gs.town.blacksmith.add_fuel(&mut gs.player) {
-        Ok(_) => CommandResult::success("Added fuel"),
+        Ok(new_fuel) => CommandResult::success(format!("Added fuel (now at {})", new_fuel)),
         Err(e) => {
             let msg = match e {
                 BlacksmithError::NoFuel => "No coal to add",
@@ -99,12 +106,7 @@ pub fn smelt_recipe(recipe_id: RecipeId) -> CommandResult {
         .blacksmith
         .smelt_and_give(&mut gs.player, &recipe_id)
     {
-        Ok(_) => {
-            let name = Recipe::new(recipe_id)
-                .map(|r| r.name().to_string())
-                .unwrap_or_else(|_| "item".to_string());
-            CommandResult::success(format!("Smelted {}!", name))
-        }
+        Ok(item) => CommandResult::success(format!("Smelted {}!", item.name)),
         Err(e) => {
             let msg = match e {
                 BlacksmithError::NotEnoughFuel => "Not enough fuel",

@@ -5,9 +5,9 @@ use uuid::Uuid;
 use crate::{
     combat::HasGold,
     player::Player,
-    game_state,
     inventory::EquipmentSlot,
     item::{
+        enums::ItemQuality,
         recipe::{Recipe, RecipeId},
         Item, ItemId,
     },
@@ -16,7 +16,7 @@ use crate::{
     HasInventory,
 };
 
-use super::enums::BlacksmithError;
+use super::enums::{BlacksmithError, BlacksmithUpgradeResult};
 
 pub struct Blacksmith {
     pub(crate) location_id: LocationId,
@@ -97,7 +97,7 @@ impl Blacksmith {
         &self,
         player: &mut Player,
         item: &mut Item,
-    ) -> Result<(), BlacksmithError> {
+    ) -> Result<BlacksmithUpgradeResult, BlacksmithError> {
         // Only equipment can be upgraded
         if !item.item_type.is_equipment() {
             return Err(BlacksmithError::NotEquipment);
@@ -111,9 +111,12 @@ impl Blacksmith {
         }
 
         match item.upgrade() {
-            Ok(_) => {
+            Ok(upgrade) => {
                 player.dec_gold(upgrade_cost);
-                Ok(())
+                Ok(BlacksmithUpgradeResult {
+                    upgrade,
+                    gold_spent: upgrade_cost,
+                })
             }
             Err(e) => Err(BlacksmithError::ItemError(e)),
         }
@@ -131,7 +134,7 @@ impl Blacksmith {
         &self,
         player: &mut Player,
         item: &mut Item,
-    ) -> Result<(), BlacksmithError> {
+    ) -> Result<ItemQuality, BlacksmithError> {
         // Only equipment can have quality upgraded
         if !item.item_type.is_equipment() {
             return Err(BlacksmithError::NotEquipment);
@@ -143,12 +146,12 @@ impl Blacksmith {
             .clone();
 
         // Upgrade the item quality
-        item.upgrade_quality()
+        let new_quality = item.upgrade_quality()
             .map_err(BlacksmithError::ItemError)?;
 
         // Decrease the upgrade stone quantity
         player.decrease_item_quantity(&stone, 1);
-        Ok(())
+        Ok(new_quality)
     }
 
     pub fn calc_upgrade_cost(&self, item: &Item) -> i32 {
@@ -179,8 +182,9 @@ impl Blacksmith {
         Ok(item)
     }
 
-    /// Add fuel to the forge by consuming coal from player inventory
-    pub fn add_fuel(&mut self, player: &mut Player) -> Result<(), BlacksmithError> {
+    /// Add fuel to the forge by consuming coal from player inventory.
+    /// Returns the new fuel amount on success.
+    pub fn add_fuel(&mut self, player: &mut Player) -> Result<i32, BlacksmithError> {
         let coal = player
             .find_item_by_id(ItemId::Coal)
             .cloned()
@@ -192,15 +196,16 @@ impl Blacksmith {
 
         player.decrease_item_quantity(&coal, 1);
         self.inc_fuel(1);
-        Ok(())
+        Ok(self.fuel_amount)
     }
 
-    /// Upgrade an item in player's inventory or equipment by UUID
+    /// Upgrade an item in player's inventory or equipment by UUID.
+    /// Returns the upgrade result with stat increases and gold spent.
     pub fn upgrade_player_item(
         &self,
         player: &mut Player,
         item_uuid: Uuid,
-    ) -> Result<(), BlacksmithError> {
+    ) -> Result<BlacksmithUpgradeResult, BlacksmithError> {
         // Check equipped items first
         for slot in EquipmentSlot::all() {
             if let Some(equipped) = player.get_equipped_item(*slot) {
@@ -230,12 +235,13 @@ impl Blacksmith {
         Err(BlacksmithError::ItemNotFound)
     }
 
-    /// Upgrade item quality in player's inventory or equipment by UUID
+    /// Upgrade item quality in player's inventory or equipment by UUID.
+    /// Returns the new quality level.
     pub fn upgrade_player_item_quality(
         &self,
         player: &mut Player,
         item_uuid: Uuid,
-    ) -> Result<(), BlacksmithError> {
+    ) -> Result<ItemQuality, BlacksmithError> {
         // Check equipped items first
         for slot in EquipmentSlot::all() {
             if let Some(equipped) = player.get_equipped_item(*slot) {
@@ -265,17 +271,18 @@ impl Blacksmith {
         Err(BlacksmithError::ItemNotFound)
     }
 
-    /// Smelt ore and add result to player inventory
+    /// Smelt ore and add result to player inventory.
+    /// Returns the smelted item.
     pub fn smelt_and_give(
         &mut self,
         player: &mut Player,
         recipe_id: &RecipeId,
-    ) -> Result<(), BlacksmithError> {
+    ) -> Result<Item, BlacksmithError> {
         let item = self.smelt_ore(player, recipe_id)?;
         player
-            .add_to_inv(item)
+            .add_to_inv(item.clone())
             .map_err(|_| BlacksmithError::InventoryFull)?;
-        Ok(())
+        Ok(item)
     }
 
     // Location trait accessors

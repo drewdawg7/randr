@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{item::enums::{ItemError, ItemQuality}, magic::tome::Tome, stats::{StatSheet, StatType}};
+use crate::{item::enums::{ItemError, ItemQuality, UpgradeResult}, magic::tome::Tome, stats::{StatSheet, StatType}};
 
 // ItemId now comes from definitions (macro-generated)
 pub use super::definitions::ItemId;
@@ -34,7 +34,7 @@ impl Item {
         self.is_locked = !self.is_locked;
     }
 
-    pub fn upgrade(&mut self) -> Result<(), ItemError> {
+    pub fn upgrade(&mut self) -> Result<UpgradeResult, ItemError> {
         if !self.item_type.is_equipment() {
             return Err(ItemError::NotEquipment);
         }
@@ -44,24 +44,31 @@ impl Item {
         self.num_upgrades += 1;
         let multiplier = 1.1;
 
+        // Track stat increases
+        let mut stat_increases = StatSheet::new();
+
         // Upgrade all stats that have a base value > 0
         for stat_type in StatType::all() {
             let base_value = self.base_stats.value(*stat_type);
             if base_value > 0 {
                 let increase = ((base_value as f64) * (multiplier - 1.0)).round().max(1.0) as i32;
                 self.base_stats.increase_stat(*stat_type, increase);
+                stat_increases.insert(stat_type.instance(increase));
             }
         }
 
         self.recalculate_stats();
-        Ok(())
+        Ok(UpgradeResult {
+            new_level: self.num_upgrades,
+            stat_increases,
+        })
     }
 
     fn recalculate_stats(&mut self) {
         self.stats = self.quality.multiply_stats(self.base_stats.clone());
     }
 
-    pub fn upgrade_quality(&mut self) -> Result<(), ItemError> {
+    pub fn upgrade_quality(&mut self) -> Result<ItemQuality, ItemError> {
         if self.quality == ItemQuality::Mythic {
             return Err(ItemError::MaxQualityReached)
         }
@@ -69,9 +76,9 @@ impl Item {
             Some(next) => {
                 self.quality = next;
                 self.recalculate_stats();
-                Ok(())
+                Ok(self.quality)
             }
-            None => Ok(())
+            None => Ok(self.quality)
         }
     }
 
