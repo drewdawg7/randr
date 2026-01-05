@@ -65,3 +65,23 @@ Only for:
 1. **Start with LSP** - Most accurate for Rust code
 2. **Fall back to ast-grep** - For pattern matching
 3. **Use Grep last** - For non-Rust files or strings
+
+## Before Removing Code
+
+**MANDATORY** checklist before removing any struct field, function, or type:
+
+1. [ ] Run `LSP findReferences` on the symbol
+2. [ ] Check if any references exist outside the current file
+3. [ ] If references exist: Update all callers FIRST, then remove
+4. [ ] If no references: Safe to remove
+5. [ ] Run `cargo check` after removal to verify
+
+**Why this matters:** Removing code without checking references causes compilation errors that require reverts, wasting time and context.
+
+```
+# Example: Before removing a struct field
+LSP operation="findReferences" filePath="src/combat/loot.rs" line=15 character=8
+
+# If no references found, safe to remove
+# If references found, update those files first
+```

@@ -77,8 +77,10 @@ def merge_to_main(delete_branch=True, push=True):
         push_result = run_git("push", "origin", "main")
         if push_result.returncode != 0:
             result["push_error"] = push_result.stderr.strip()
+            result["message"] = f"Merged {current} to main but push failed"
         else:
             result["pushed"] = True
+            result["message"] = f"Merged {current} to main and pushed to origin"
 
     # Delete feature branch
     if delete_branch:
