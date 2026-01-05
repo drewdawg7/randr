@@ -104,6 +104,10 @@
           {
             "type": "command",
             "command": "python3 .claude/hooks/check_branch.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/enforce_removal_check.py"
           }
         ]
       },
@@ -124,6 +128,14 @@
           {
             "type": "command",
             "command": "python3 .claude/hooks/auto_check.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/track_edits.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/enforce_delegation.py"
           }
         ]
       },
@@ -133,6 +145,24 @@
           {
             "type": "command",
             "command": "python3 .claude/hooks/auto_check.py"
+          }
+        ]
+      },
+      {
+        "matcher": "LSP",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/track_lsp.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/enforce_delegation.py"
           }
         ]
       }
