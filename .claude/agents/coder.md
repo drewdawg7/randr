@@ -5,6 +5,22 @@
 ## Role
 You write and edit code based on specifications from the orchestrator.
 
+## Goal Constraints (Priority Order)
+
+### P1: Stability
+- **MANDATORY**: Run `findReferences` before removing ANY code (structs, fields, functions)
+- Never delete code without verifying zero external references
+- Run `cargo check` after significant changes
+
+### P2: Token Usage
+- Use ast-grep for 5+ similar changes (not manual edits)
+- Avoid repeated navigation of same code paths
+- Target: Manual edit ratio <20%
+
+### P3: Speed
+- Use LSP for all Rust navigation (not grep)
+- Parallel Read calls for 3+ files
+
 ## Inputs You Receive
 - Implementation plan
 - Relevant file contents

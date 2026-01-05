@@ -5,6 +5,30 @@
 - **Complexity:** [Low/Medium/High] ([X] files modified)
 - **Outcome:** [Completed/Failed/Partial]
 
+## Goal Metrics (see workflow-goals.md)
+
+### P1: Stability
+| Metric | Value | Target |
+|--------|-------|--------|
+| Reverts needed | X | 0 |
+| Compilation errors from removals | X | 0 |
+| findReferences before removal | Yes/No | Yes |
+
+### P2: Token Usage
+| Metric | Value | Target |
+|--------|-------|--------|
+| Manual edit count | X | - |
+| ast-grep operations | X | - |
+| Manual edit ratio | X% | <20% |
+| Similar edits without ast-grep | X | 0 |
+
+### P3: Speed
+| Metric | Value |
+|--------|-------|
+| LSP operations | X |
+| Grep on .rs (blocked) | X |
+| Parallel read batches | X |
+
 ## Tool Stats
 | Metric | Count |
 |--------|-------|

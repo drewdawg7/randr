@@ -52,6 +52,30 @@ python3 .claude/scripts/code/find_symbol.py impl MyType
 python3 .claude/scripts/code/find_symbol.py pattern "fn $NAME($$$) -> Result<$$$>"
 ```
 
+## Before Multi-File Changes
+
+**STOP** and ask yourself:
+1. How many files will I touch?
+2. Are the changes similar (same pattern)?
+3. Could ast-grep handle this?
+
+If answers: **many, yes, yes** → Use ast-grep FIRST
+
+### Batch Operation Patterns
+Use ast-grep for:
+- Rename across files → `ast-grep --rewrite`
+- Add attribute to many items → `ast-grep --rewrite`
+- Update import paths → `ast-grep --rewrite`
+- Change method signatures → `ast-grep --rewrite`
+
+### Self-Check Before Editing
+After planning but before first edit:
+- Am I about to make > 5 similar changes?
+- Should I use ast-grep instead?
+- Did I run findReferences for removals?
+
+See `.claude/docs/batch-operations.md` for detailed examples.
+
 ## When to Use Grep
 
 Only for:
