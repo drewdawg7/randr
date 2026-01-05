@@ -49,16 +49,17 @@ impl Tome {
         self.pages.get_mut(index).and_then(|p| p.as_mut())
     }
 
-    /// Insert a page at the given index
-    pub fn set_page(&mut self, index: usize, page: Page) -> Result<(), TomeError> {
+    /// Insert a page at the given index, returning the previous page if any
+    pub fn set_page(&mut self, index: usize, page: Page) -> Result<Option<Page>, TomeError> {
         if index >= self.capacity {
             return Err(TomeError::IndexOutOfBounds {
                 index,
                 capacity: self.capacity,
             });
         }
+        let old = self.pages[index].take();
         self.pages[index] = Some(page);
-        Ok(())
+        Ok(old)
     }
 
     /// Remove a page at the given index
@@ -79,16 +80,17 @@ impl Tome {
         self.active_page_index
     }
 
-    /// Set the active page index
-    pub fn set_active_page(&mut self, index: usize) -> Result<(), TomeError> {
+    /// Set the active page index, returning the previous active page index
+    pub fn set_active_page(&mut self, index: usize) -> Result<usize, TomeError> {
         if index >= self.capacity {
             return Err(TomeError::IndexOutOfBounds {
                 index,
                 capacity: self.capacity,
             });
         }
+        let old = self.active_page_index;
         self.active_page_index = index;
-        Ok(())
+        Ok(old)
     }
 
     /// Cycle to the next page
