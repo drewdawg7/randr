@@ -89,7 +89,9 @@
       "Bash(git -C /tmp/randr-wiki add Mob-System.md)",
       "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Mob System wiki page\")",
       "Bash(git -C /tmp/randr-wiki add \"Loot-&-Economy.md\")",
-      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Loot & Economy wiki page\")"
+      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Loot & Economy wiki page\")",
+      "WebFetch(domain:www.boringcactus.com)",
+      "WebFetch(domain:an4t.com)"
     ]
   },
   "enabledMcpjsonServers": [
