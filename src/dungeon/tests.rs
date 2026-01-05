@@ -2,6 +2,7 @@
 use crate::dungeon::{
     definition::{Dungeon, DungeonRoom, DUNGEON_SIZE, MAX_FILL_PERCENT},
     enums::{Direction, DungeonError, RoomType},
+    traits::Explorable,
 };
 
 // ==================== DungeonRoom tests ====================

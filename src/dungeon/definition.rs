@@ -2,7 +2,10 @@ use std::collections::HashMap;
 
 use crate::{
     chest::Chest,
-    dungeon::enums::{Direction, DungeonError, RoomType},
+    dungeon::{
+        enums::{Direction, DungeonError, RoomType},
+        traits::Explorable,
+    },
     loot::{HasLoot, LootDrop},
     mob::{Mob, MobId},
     utils::weighted_select,
@@ -209,22 +212,6 @@ impl DungeonRoom {
             chest,
             has_healed: false,
         }
-    }
-
-    /// Mark the room as visited (also reveals it)
-    pub fn visit(&mut self) {
-        self.is_visited = true;
-        self.is_revealed = true;
-    }
-
-    /// Mark the room as revealed (visible on map but not visited)
-    pub fn reveal(&mut self) {
-        self.is_revealed = true;
-    }
-
-    /// Mark the room as cleared
-    pub fn clear(&mut self) {
-        self.is_cleared = true;
     }
 
     /// Open the chest and get loot drops (only for chest rooms)

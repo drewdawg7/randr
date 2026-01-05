@@ -7,3 +7,4 @@ pub mod traits;
 
 pub use definition::{Dungeon, DungeonRoom, DUNGEON_SIZE};
 pub use enums::{Direction, DungeonError, RoomType};
+pub use traits::Explorable;
