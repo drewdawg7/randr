@@ -72,7 +72,9 @@
       "Skill(documentation)",
       "Bash(git grep:*)",
       "Bash(git show:*)",
-      "Bash(cargo fix:*)"
+      "Bash(cargo fix:*)",
+      "Bash(gh repo view:*)",
+      "Bash(git clone:*)"
     ]
   },
   "enabledMcpjsonServers": [
