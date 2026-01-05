@@ -7,10 +7,8 @@ use crossterm::terminal;
 
 /// RAII guard that ensures terminal is restored to normal mode on drop.
 /// This handles both normal exit and panic scenarios.
-#[allow(dead_code)]
 pub struct TerminalGuard;
 
-#[allow(dead_code)]
 impl TerminalGuard {
     /// Creates a new TerminalGuard, enabling raw mode and setting up a panic hook.
     pub fn new() -> io::Result<Self> {
@@ -215,7 +213,6 @@ impl GameState {
     }
 
     pub fn initialize(&mut self) {
-        let _ = terminal::enable_raw_mode();
 
         // Populate store with initial stock (must happen after game_state is set)
         self.town.store.restock();
