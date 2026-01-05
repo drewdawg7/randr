@@ -6,7 +6,7 @@ use crate::{
     inventory::{FindsItems, ManagesItems},
 };
 
-use super::definitions::{RecipeId, RecipeSpec};
+use super::specs::{RecipeId, RecipeSpec};
 use super::enums::RecipeError;
 
 pub struct Recipe {
