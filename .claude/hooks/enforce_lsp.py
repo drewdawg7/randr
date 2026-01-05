@@ -67,12 +67,13 @@ def main():
         print(json.dumps({"decision": "allow"}))
         return
 
-    # Check if searching .rs files
+    # Check if searching .rs files or Rust source directories
     pattern = tool_input.get("pattern", "")
     glob_filter = tool_input.get("glob", "")
     type_filter = tool_input.get("type", "")
     path = tool_input.get("path", "")
 
+    # Detect Rust-related searches
     is_rust_search = (
         "*.rs" in glob_filter or
         type_filter == "rust" or
@@ -80,7 +81,16 @@ def main():
         path.endswith(".rs")
     )
 
-    if is_rust_search:
+    # Also detect searches in src/ directory (likely Rust code in this project)
+    is_src_search = (
+        path.startswith("src/") or
+        path.startswith("./src/") or
+        "/src/" in path or
+        path == "src"
+    )
+
+    # Block if searching Rust files OR searching in src/ without explicit non-Rust filter
+    if is_rust_search or (is_src_search and not glob_filter and not type_filter):
         print(json.dumps({
             "decision": "block",
             "reason": get_lsp_suggestion(pattern)

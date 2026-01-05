@@ -19,8 +19,11 @@ def get_current_branch():
     return result.stdout.strip()
 
 def has_uncommitted_changes():
-    """Check for uncommitted changes."""
-    result = run_git("status", "--porcelain")
+    """Check for uncommitted changes (tracked files only).
+
+    Ignores untracked files since they don't affect merge operations.
+    """
+    result = run_git("status", "--porcelain", "--untracked-files=no")
     return bool(result.stdout.strip())
 
 def merge_to_main(delete_branch=True, push=True):

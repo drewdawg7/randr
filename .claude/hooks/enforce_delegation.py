@@ -18,8 +18,9 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent))
 from session_state import get_state
 
-# Thresholds for suggestions
-LINES_THRESHOLD = 50
+# Thresholds for suggestions (advisory, not blocking)
+# See .claude/docs/delegation.md for full guide
+LINES_THRESHOLD = 30  # Lowered from 50 based on feedback analysis
 FILES_THRESHOLD = 5
 
 
@@ -88,7 +89,7 @@ def main():
 
     # Check thresholds at specific points to avoid spam
     lines_edited = state.get("lines_edited", 0)
-    check_thresholds = [50, 100, 150, 200]
+    check_thresholds = [30, 60, 100, 150]  # First reminder at 30 lines
 
     # Only suggest when we first cross a threshold
     for threshold in check_thresholds:

@@ -74,7 +74,22 @@
       "Bash(git show:*)",
       "Bash(cargo fix:*)",
       "Bash(gh repo view:*)",
-      "Bash(git clone:*)"
+      "Bash(git clone:*)",
+      "Bash(git -C /tmp/randr-wiki add Magic-System.md)",
+      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Magic System wiki page\")",
+      "Bash(git -C /tmp/randr-wiki push)",
+      "Bash(git -C /tmp/randr-wiki add \"Inventory-&-Equipment.md\")",
+      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Inventory & Equipment wiki page\")",
+      "Bash(git -C /tmp/randr-wiki add Item-System.md)",
+      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Item System wiki page\")",
+      "Bash(git -C /tmp/randr-wiki add Dungeon-System.md)",
+      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Dungeon System wiki page\")",
+      "Bash(git -C /tmp/randr-wiki add Location-System.md)",
+      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Location System wiki page\")",
+      "Bash(git -C /tmp/randr-wiki add Mob-System.md)",
+      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Mob System wiki page\")",
+      "Bash(git -C /tmp/randr-wiki add \"Loot-&-Economy.md\")",
+      "Bash(git -C /tmp/randr-wiki commit -m \"docs: add Loot & Economy wiki page\")"
     ]
   },
   "enabledMcpjsonServers": [
@@ -134,6 +149,10 @@
           {
             "type": "command",
             "command": "python3 .claude/hooks/track_edits.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/enforce_batch_ops.py"
           },
           {
             "type": "command",

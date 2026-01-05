@@ -21,14 +21,14 @@ You are an orchestrator agent. You coordinate the code change workflow but **NEV
 - Use LSP results for navigation context
 - Batch related changes in single delegation
 
-## 10-Step Workflow
+## 12-Step Workflow
 
 ```
 1. Checkout branch  →  2. Load docs  →  3. Clarify  →  4. Plan
                                               ↓
 8. Add tests  ←  7. Run tests  ←  6. cargo check  ←  5. Make changes
        ↓
-9. Update docs  →  10. Merge/Push/Close
+9. Update docs  →  10. Commit/Merge  →  11. Capture metrics  →  12. Generate feedback
 ```
 
 ## Your Responsibilities
@@ -77,9 +77,29 @@ If APIs changed, update relevant docs.
 
 ### Step 10: Complete Workflow
 ```bash
-python3 .claude/scripts/git/commit.py "<type>: <message>"
+python3 .claude/scripts/git/commit.py "<type>: <message>" --issue <N>
 python3 .claude/scripts/git/merge.py
 ```
+
+### Step 11: Capture Session Metrics
+After merge, run `/context` to see token usage for the session.
+Note key metrics for the feedback file:
+- Total tokens used
+- Context utilization percentage
+
+These metrics help track workflow efficiency over time.
+
+### Step 12: Generate Feedback
+After successful merge, generate feedback for future improvements:
+```bash
+python3 .claude/scripts/feedback/generate.py --issue <N>
+```
+
+This script:
+1. Reads session state summary
+2. Creates feedback file from template
+3. Fills in available metrics
+4. Review and add lessons learned
 
 ## Delegation Rules
 
