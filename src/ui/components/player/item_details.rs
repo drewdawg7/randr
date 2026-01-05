@@ -7,7 +7,7 @@ use ratatui::{
 
 use crate::ui::components::widgets::scroll_border::{render_scroll_with_styled_content, StyledContent};
 use crate::ui::components::utilities::{CROSSED_SWORDS, SHIELD, COIN, PICKAXE};
-use crate::ui::utilities::HAMMER;
+use crate::ui::theme::icons::HAMMER;
 use crate::ui::theme::{quality_color, SOFT_GREEN, SOFT_RED};
 
 use crate::{

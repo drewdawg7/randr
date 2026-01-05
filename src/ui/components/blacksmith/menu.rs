@@ -18,7 +18,7 @@ use crate::ui::components::utilities::{
     blacksmith_header, list_move_down, list_move_up, render_location_header,
     selection_prefix, CROSSED_SWORDS, DOUBLE_ARROW_UP, FIRE,
 };
-use crate::ui::utilities::HAMMER;
+use crate::ui::theme::icons::HAMMER;
 use crate::ui::theme as colors;
 
 use super::StateChange;
