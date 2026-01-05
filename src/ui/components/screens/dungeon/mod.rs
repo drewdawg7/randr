@@ -72,6 +72,7 @@ pub struct DungeonScreen {
     boss_combat_log: Vec<String>,
 }
 
+#[allow(dead_code)]
 impl DungeonScreen {
     pub fn new() -> Self {
         let mut list_state = ListState::default();

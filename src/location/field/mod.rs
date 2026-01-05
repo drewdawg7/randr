@@ -6,4 +6,3 @@ pub mod traits;
 mod tests;
 
 pub use definition::Field;
-pub use enums::{FieldError, FieldId};

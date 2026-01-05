@@ -2,8 +2,7 @@
 use std::collections::HashMap;
 #[cfg(test)]
 use crate::{
-    combat::{attack, enter_combat, apply_defense, calculate_damage_reduction, Combatant, DealsDamage, HasGold, IsKillable},
-    entities::progression::HasProgression,
+    combat::{attack, apply_defense, calculate_damage_reduction, Combatant, DealsDamage, HasGold, IsKillable},
     loot::LootTable,
     mob::{Mob, MobId, enums::MobQuality},
     player::Player,
@@ -120,114 +119,6 @@ fn attack_with_zero_defense_takes_full_damage() {
     // Player attack ~20 with ±25% variance (15-25)
     assert!(result.damage_to_target >= 15);
     assert!(result.damage_to_target <= 25);
-}
-
-// ==================== enter_combat() tests ====================
-
-#[test]
-fn enter_combat_player_wins_when_stronger() {
-    let mut player = create_test_player(100, 30, 10);
-    let mut mob = create_test_mob("Weak Goblin", 20, 5, 2);
-
-    let result = enter_combat(&mut player, &mut mob);
-
-    assert!(result.player_won);
-    assert!(!mob.is_alive());
-    assert!(player.is_alive());
-    // Gold should be awarded (mob drops 5 gold)
-    assert_eq!(result.gold_gained, 5);
-    // XP should be awarded
-    assert_eq!(result.xp_gained, 15);
-}
-
-#[test]
-fn enter_combat_player_loses_when_weaker() {
-    let mut player = create_test_player(20, 5, 0);
-    let mut mob = create_test_mob("Strong Orc", 100, 30, 10);
-
-    let result = enter_combat(&mut player, &mut mob);
-
-    assert!(!result.player_won);
-    // Note: on_death restores player health, so player is alive after combat
-    assert!(mob.is_alive());
-    assert_eq!(result.gold_gained, 0);
-    assert_eq!(result.xp_gained, 0);
-}
-
-#[test]
-fn enter_combat_records_attack_rounds() {
-    let mut player = create_test_player(100, 15, 5);
-    let mut mob = create_test_mob("Goblin", 30, 8, 3);
-
-    let result = enter_combat(&mut player, &mut mob);
-
-    // Combat should have multiple rounds recorded
-    assert!(!result.attack_results.is_empty());
-
-    // First attack should be from player
-    assert_eq!(result.attack_results[0].attacker, "Drew");
-    assert_eq!(result.attack_results[0].defender, "Goblin");
-}
-
-#[test]
-fn enter_combat_alternates_attackers() {
-    let mut player = create_test_player(100, 10, 5);
-    let mut mob = create_test_mob("Goblin", 50, 8, 3);
-
-    let result = enter_combat(&mut player, &mut mob);
-
-    // Check that attacks alternate (player, mob, player, mob, ...)
-    for (i, attack_result) in result.attack_results.iter().enumerate() {
-        if i % 2 == 0 {
-            assert_eq!(attack_result.attacker, "Drew");
-        } else {
-            assert_eq!(attack_result.attacker, "Goblin");
-        }
-    }
-}
-
-#[test]
-fn enter_combat_mob_does_not_attack_after_dying() {
-    // Player one-shots the mob
-    let mut player = create_test_player(100, 100, 0);
-    let mut mob = create_test_mob("Weak Slime", 10, 50, 0);
-
-    let result = enter_combat(&mut player, &mut mob);
-
-    // Only one attack should occur (player kills mob in one hit)
-    assert_eq!(result.attack_results.len(), 1);
-    assert_eq!(result.attack_results[0].attacker, "Drew");
-    assert!(result.attack_results[0].target_died);
-
-    // Player should take no damage
-    assert_eq!(player.hp(), 100);
-}
-
-#[test]
-fn enter_combat_player_gains_xp_on_victory() {
-    let mut player = create_test_player(100, 50, 10);
-    let starting_xp = player.progression().xp;
-    let mut mob = create_test_mob("Goblin", 20, 5, 0);
-
-    let result = enter_combat(&mut player, &mut mob);
-
-    assert!(result.player_won);
-    assert_eq!(result.xp_gained, 15);
-    assert!(player.progression().xp > starting_xp || player.progression().level > 1);
-}
-
-#[test]
-fn enter_combat_player_gains_gold_on_victory() {
-    let mut player = create_test_player(100, 50, 10);
-    let starting_gold = player.gold();
-    let mut mob = create_test_mob("Rich Goblin", 20, 5, 0);
-
-    let result = enter_combat(&mut player, &mut mob);
-
-    assert!(result.player_won);
-    assert_eq!(result.gold_gained, 5);
-    // Player gold should increase (gold_gained is base, actual gain may be modified by goldfind)
-    assert!(player.gold() >= starting_gold + result.gold_gained);
 }
 
 // ==================== Combatant trait tests ====================
@@ -422,18 +313,6 @@ fn player_on_death_restores_health() {
 }
 
 // ==================== CombatRounds tests ====================
-
-#[test]
-fn combat_rounds_tracks_loot_drops() {
-    let mut player = create_test_player(100, 100, 10);
-    let mut mob = create_test_mob("Loot Mob", 10, 5, 0);
-
-    let result = enter_combat(&mut player, &mut mob);
-
-    assert!(result.player_won);
-    // loot_drops returns the items rolled from loot table
-    let _ = result.loot_drops();
-}
 
 #[test]
 fn combat_rounds_new_is_empty() {

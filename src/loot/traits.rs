@@ -1,6 +1,7 @@
 use crate::item::{Item, ItemId};
 use crate::loot::definition::{LootDrop, LootTable};
 
+#[allow(dead_code)]
 pub trait HasLoot {
     fn loot(&self) -> &LootTable;
 

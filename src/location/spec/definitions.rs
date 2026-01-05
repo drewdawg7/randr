@@ -13,7 +13,7 @@ use std::time::Duration;
 use crate::item::ItemId;
 use crate::location::mine::RockId;
 use crate::mob::MobId;
-use crate::registry::{Registry, RegistryDefaults};
+use crate::registry::RegistryDefaults;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Location-Specific Data Types
@@ -146,8 +146,6 @@ entity_macros::define_data! {
     }
 }
 
-// Re-export LocationRegistry type for compatibility
-pub type LocationRegistry = Registry<LocationId, LocationSpec>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RegistryDefaults

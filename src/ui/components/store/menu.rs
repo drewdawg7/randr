@@ -18,6 +18,7 @@ use crate::ui::components::utilities::{
 };
 use crate::ui::theme as colors;
 
+#[allow(dead_code)]
 pub enum StateChange {
     ToBuy,
     ToSell,

@@ -27,6 +27,7 @@ impl Recipe {
         &self.spec.ingredients
     }
 
+    #[allow(dead_code)]
     pub fn output_item_id(&self) -> ItemId {
         self.spec.output
     }

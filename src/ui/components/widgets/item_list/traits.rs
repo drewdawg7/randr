@@ -6,6 +6,7 @@ use crate::item::{recipe::ForgeMaterial, Item, ItemType};
 
 /// Core trait for items that can be displayed in an ItemList.
 /// Implement this for any type that should appear in an item list.
+#[allow(dead_code)]
 pub trait ListItem {
     /// Reference to the underlying Item (for quality color, lock status, etc.)
     /// Return None for non-item entries like recipe items.

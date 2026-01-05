@@ -5,6 +5,6 @@ pub mod generation;
 mod tests;
 pub mod traits;
 
-pub use definition::{Dungeon, DungeonRoom, DUNGEON_SIZE};
-pub use enums::{Direction, DungeonError, RoomType};
+pub use definition::{Dungeon, DUNGEON_SIZE};
+pub use enums::{Direction, RoomType};
 pub use traits::Explorable;

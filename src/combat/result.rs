@@ -1,5 +1,4 @@
 use crate::loot::LootDrop;
-use crate::magic::word::Element;
 
 #[derive(Debug, Clone)]
 pub struct AttackResult {
@@ -9,41 +8,6 @@ pub struct AttackResult {
     pub target_health_before: i32,
     pub target_health_after: i32,
     pub target_died: bool,
-}
-
-/// Result of casting a spell
-#[derive(Debug, Clone)]
-pub enum SpellCastResult {
-    /// Spell dealt damage to target
-    Damage {
-        spell_name: String,
-        damage_dealt: i32,
-        element: Element,
-        target_health_before: i32,
-        target_health_after: i32,
-        target_died: bool,
-    },
-    /// Spell healed the caster
-    Heal {
-        spell_name: String,
-        amount_healed: i32,
-        caster_health_after: i32,
-    },
-    /// Spell dealt damage and healed caster (life drain)
-    LifeDrain {
-        spell_name: String,
-        damage_dealt: i32,
-        amount_healed: i32,
-        target_health_after: i32,
-        caster_health_after: i32,
-        target_died: bool,
-    },
-    /// No spell was available to cast
-    NoSpell,
-    /// Spell fizzled (no effect)
-    Fizzle {
-        reason: String,
-    },
 }
 
 /// Result of a mob dying - contains rewards for the killer
@@ -67,6 +31,7 @@ impl Default for MobDeathResult {
 /// Result of player dying
 #[derive(Debug, Clone, Default)]
 pub struct PlayerDeathResult {
+    #[allow(dead_code)]
     pub gold_lost: i32,
 }
 

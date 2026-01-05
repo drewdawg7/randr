@@ -3,8 +3,7 @@
 
 use ratatui::{
     layout::Rect,
-    style::{Color, Style},
-    text::{Line, Span},
+    style::Color,
     Frame,
 };
 use tuirealm::event::Key;

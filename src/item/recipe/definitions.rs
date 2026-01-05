@@ -9,7 +9,7 @@
 use std::collections::HashMap;
 
 use crate::item::ItemId;
-use crate::registry::{Registry, RegistryDefaults};
+use crate::registry::RegistryDefaults;
 
 // RecipeType and other enums are kept separate
 pub use super::enums::{ForgeMaterial, RecipeType};
@@ -205,9 +205,6 @@ entity_macros::define_data! {
         }
     }
 }
-
-// Re-export RecipeRegistry type for compatibility
-pub type RecipeRegistry = Registry<RecipeId, RecipeSpec>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RegistryDefaults (no spawn for recipes, just lookup)

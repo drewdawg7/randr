@@ -25,11 +25,6 @@ impl Recipe {
     pub fn matches(&self, words: &HashSet<WordId>) -> bool {
         self.required_words == *words
     }
-
-    /// Check if a set of words contains all required words (subset match)
-    pub fn is_subset_of(&self, words: &HashSet<WordId>) -> bool {
-        self.required_words.is_subset(words)
-    }
 }
 
 /// Hardcoded spell recipes - specific word combinations that produce designed spells

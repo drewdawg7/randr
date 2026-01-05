@@ -28,6 +28,7 @@ pub struct TabEntry {
     pub border_theme: BorderTheme,
 }
 
+#[allow(dead_code)]
 impl TabEntry {
     pub fn new<C: TabContent + 'static>(label: Line<'static>, content: C) -> Self {
         Self {

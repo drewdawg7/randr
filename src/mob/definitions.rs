@@ -13,7 +13,7 @@ use rand::Rng;
 
 use crate::item::ItemId;
 use crate::loot::LootTable;
-use crate::registry::{Registry, RegistryDefaults, SpawnFromSpec};
+use crate::registry::{RegistryDefaults, SpawnFromSpec};
 use crate::stats::{StatInstance, StatSheet, StatType};
 
 use super::definition::Mob;
@@ -87,9 +87,6 @@ entity_macros::define_entity! {
         }
     }
 }
-
-// Re-export MobRegistry type for compatibility
-pub type MobRegistry = Registry<MobId, MobSpec>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Spawn Implementation

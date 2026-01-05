@@ -2,7 +2,7 @@
 //!
 //! Handles room interactions, navigation, resting, and boss fights.
 
-use crate::combat::{self, Combatant, DealsDamage, HasGold, IsKillable, Named};
+use crate::combat::{self, Combatant, DealsDamage, HasGold, IsKillable};
 use crate::dungeon::{Direction, Explorable, RoomType};
 use crate::mob::MobId;
 use crate::entities::progression::HasProgression;
@@ -12,21 +12,6 @@ use crate::system::{game_state, CombatSource};
 use crate::ui::Id;
 
 use super::CommandResult;
-
-/// Possible outcomes when entering a room.
-#[derive(Debug, Clone)]
-pub enum RoomEntryResult {
-    /// Started combat, screen changed to Fight.
-    StartedCombat,
-    /// Opened a chest, collected loot.
-    OpenedChest { items_found: usize },
-    /// Room was already cleared.
-    AlreadyCleared,
-    /// Entered boss room.
-    EnteredBossRoom,
-    /// Generic room cleared.
-    RoomCleared,
-}
 
 /// Enter/interact with the current dungeon room.
 pub fn enter_room() -> CommandResult {

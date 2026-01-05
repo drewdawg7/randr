@@ -406,9 +406,6 @@ entity_macros::define_entity! {
     }
 }
 
-// Re-export ItemRegistry type for compatibility
-pub type ItemRegistry = crate::registry::Registry<ItemId, ItemSpec>;
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Spawn Implementation
 // ─────────────────────────────────────────────────────────────────────────────

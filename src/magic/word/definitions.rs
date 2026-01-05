@@ -9,7 +9,7 @@
 
 use std::collections::HashSet;
 
-use crate::registry::{Registry, RegistryDefaults};
+use crate::registry::RegistryDefaults;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Element Types
@@ -337,9 +337,6 @@ entity_macros::define_data! {
         }
     }
 }
-
-// Re-export WordRegistry type for compatibility
-pub type WordRegistry = Registry<WordId, WordSpec>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // RegistryDefaults
