@@ -25,28 +25,19 @@ const HORIZ_SUFFIX: &str = "_.-";
 
 const BORDER_WIDTH: u16 = 7;
 
-/// Grey/white color palette for border (darker to lighter)
+/// Grey color palette for border (darker overall to stand out against background)
 const BORDER_COLORS: &[Color] = &[
-    colors::DARK_STONE,   // darkest grey
+    colors::DEEP_SLATE,   // darkest
+    colors::DARK_STONE,   // dark grey
     colors::GRANITE,      // medium grey
     colors::LIGHT_STONE,  // light grey
-    colors::PALE_ROCK,    // pale grey
-    colors::WHITE,        // white
 ];
 
-/// Get color based on row position for gradient effect
-fn get_row_color(row: usize, height: usize) -> Color {
-    // Create a gradient from corners (darker) to middle (lighter)
-    let mid = height / 2;
-    let distance_from_mid = if row < mid { mid - row } else { row - mid };
-    let max_distance = mid.max(1);
-
-    // Normalize to 0-4 range for our color palette
-    let color_idx = (distance_from_mid * 4 / max_distance).min(4);
-    // Invert so middle is lightest
-    let color_idx = 4 - color_idx;
-
-    BORDER_COLORS[color_idx]
+/// Get color based on row position with pseudo-random variation
+fn get_row_color(row: usize) -> Color {
+    // Use a simple hash-like formula for pseudo-random but deterministic coloring
+    let hash = (row.wrapping_mul(7) ^ (row.wrapping_mul(13))) % BORDER_COLORS.len();
+    BORDER_COLORS[hash]
 }
 
 /// Generates the horizontal bar pattern to fill a given width
@@ -93,14 +84,14 @@ pub fn render_decorative_border(frame: &mut Frame, area: Rect) {
 
     // Row 1: Top horizontal bar with side patterns
     let horiz_bar = generate_horizontal_bar(inner_width);
-    let row1_style = Style::default().fg(get_row_color(1, height));
+    let row1_style = Style::default().fg(get_row_color(1));
     render_line_to_buffer(buf, area.x, area.y + 1, SIDE_PATTERNS[0], &horiz_bar, SIDE_PATTERNS[0], row1_style);
 
     // Middle rows: Side patterns only (spaces in between, transparent to background)
     for row in 2..height.saturating_sub(2) {
         let pattern_idx = (row - 1) % SIDE_PATTERNS.len();
         let side = SIDE_PATTERNS[pattern_idx];
-        let row_style = Style::default().fg(get_row_color(row, height));
+        let row_style = Style::default().fg(get_row_color(row));
         render_sides_only(buf, area.x, area.y + row as u16, side, inner_width, side, row_style);
     }
 
@@ -109,7 +100,7 @@ pub fn render_decorative_border(frame: &mut Frame, area: Rect) {
         let bottom_bar_row = height - 2;
         let pattern_idx = (bottom_bar_row - 1) % SIDE_PATTERNS.len();
         let side = SIDE_PATTERNS[pattern_idx];
-        let row_style = Style::default().fg(get_row_color(bottom_bar_row, height));
+        let row_style = Style::default().fg(get_row_color(bottom_bar_row));
         render_line_to_buffer(buf, area.x, area.y + bottom_bar_row as u16, side, &horiz_bar, side, row_style);
     }
 
