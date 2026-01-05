@@ -4,6 +4,7 @@ use super::{ApplyEffect, ConsumableEffect, ConsumableError};
 
 #[derive(Debug, Clone)]
 pub struct ConsumableResult {
+    #[allow(dead_code)]
     pub item_name: String,
     pub effect_applied: ConsumableEffect,
     pub actual_value: i32,

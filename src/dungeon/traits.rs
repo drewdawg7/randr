@@ -10,6 +10,7 @@ use crate::{
 /// This trait abstracts the common pattern of exploration state management,
 /// allowing consistent handling of visibility and progress across different
 /// game systems (dungeon rooms, map tiles, etc.).
+#[allow(dead_code)]
 pub trait Explorable {
     /// Returns whether this element has been visited by the player.
     fn is_visited(&self) -> bool;

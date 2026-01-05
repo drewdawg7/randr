@@ -7,16 +7,14 @@ pub mod spec;
 pub mod store;
 pub mod traits;
 
-pub use alchemist::{Alchemist, AlchemistError};
+pub use alchemist::Alchemist;
 pub use blacksmith::{Blacksmith, BlacksmithError};
+pub use spec::LocationId;
+pub use field::Field;
+pub use mine::Mine;
 pub use spec::{
-    CombatSubtype, CommerceSubtype, CraftingSubtype, LocationId, LocationType, ResourceSubtype,
-};
-pub use field::{Field, FieldError, FieldId};
-pub use mine::{Mine, Rock, RockArt, RockId, RockRegistry};
-pub use spec::{
-    AlchemistData, BlacksmithData, FieldData, LocationData, LocationRegistry, LocationSpec,
+    AlchemistData, BlacksmithData, FieldData, LocationData, LocationSpec,
     MineData, StoreData,
 };
-pub use store::{sell_player_item, Store, StoreError, StoreItem};
+pub use store::{sell_player_item, Store, StoreError};
 pub use traits::{Location, LocationEntryError, Refreshable};

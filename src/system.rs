@@ -7,8 +7,10 @@ use crossterm::terminal;
 
 /// RAII guard that ensures terminal is restored to normal mode on drop.
 /// This handles both normal exit and panic scenarios.
+#[allow(dead_code)]
 pub struct TerminalGuard;
 
+#[allow(dead_code)]
 impl TerminalGuard {
     /// Creates a new TerminalGuard, enabling raw mode and setting up a panic hook.
     pub fn new() -> io::Result<Self> {

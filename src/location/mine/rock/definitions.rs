@@ -8,7 +8,7 @@
 
 use crate::item::ItemId;
 use crate::loot::LootTable;
-use crate::registry::{Registry, RegistryDefaults, SpawnFromSpec};
+use crate::registry::{RegistryDefaults, SpawnFromSpec};
 use crate::stats::{StatSheet, StatType};
 
 use super::definition::Rock;
@@ -56,8 +56,6 @@ entity_macros::define_entity! {
     }
 }
 
-// Re-export RockRegistry type for compatibility
-pub type RockRegistry = Registry<RockId, RockSpec>;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Spawn Implementation

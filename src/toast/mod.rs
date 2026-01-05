@@ -1,4 +1,4 @@
 mod definition;
 pub mod render;
 
-pub use definition::{Toast, ToastQueue, ToastType};
+pub use definition::ToastQueue;

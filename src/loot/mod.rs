@@ -4,7 +4,7 @@ pub(crate) mod traits;
 #[cfg(test)]
 mod tests;
 
-pub(crate) use definition::{LootDrop, LootItem, LootTable};
+pub(crate) use definition::{LootDrop, LootTable};
 pub(crate) use traits::HasLoot;
 
 use crate::inventory::{HasInventory, ManagesItems};

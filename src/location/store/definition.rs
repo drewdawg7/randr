@@ -9,7 +9,6 @@ use crate::{
     item::{Item, ItemId},
     location::{LocationId, LocationSpec, StoreData},
     magic::effect::PassiveEffect,
-    system::game_state,
 };
 
 use super::store_item::StoreItem;

@@ -62,6 +62,7 @@ where
     actual_visible_count: usize,
 }
 
+#[allow(dead_code)]
 impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
     /// Create a new ItemList with the given configuration.
     pub fn new(config: ItemListConfig) -> Self {
@@ -527,6 +528,7 @@ impl<T: ListItem, F: ItemFilter<T>> ItemList<T, F> {
     }
 }
 
+#[allow(dead_code)]
 impl<T: ListItem> ItemList<T, NoFilter> {
     /// Create a new ItemList without filtering.
     pub fn new_without_filter(config: ItemListConfig) -> Self {

@@ -29,10 +29,12 @@ pub trait Healable: HasStats {
 /// Blanket implementation of Healable for all entities with stats
 impl<T: HasStats> Healable for T {}
 
+#[allow(dead_code)]
 pub trait HasStats {
     fn stats(&self) -> &StatSheet;
     fn stats_mut(&mut self) -> &mut StatSheet;
 
+    #[allow(dead_code)]
     fn stat(&self, stat: StatType) -> Option<&StatInstance> {
         self.stats().stat(stat)
     }
@@ -57,6 +59,7 @@ pub trait HasStats {
         self.stats_mut().increase_stat_max(stat, amount);
     }
 
+    #[allow(dead_code)]
     fn dec_max(&mut self, stat: StatType, amount: i32) {
         self.stats_mut().decrease_stat_max(stat, amount);
     }

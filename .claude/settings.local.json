@@ -1,34 +1,4 @@
 {
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Grep",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/enforce_lsp.py"}]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/enforce_scripts.py"}]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/check_branch.py"}]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/check_branch.py"}]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/auto_check.py"}]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [{"type": "command", "command": "python3 .claude/hooks/auto_check.py"}]
-      }
-    ]
-  },
   "permissions": {
     "allow": [
       "Edit(.claude/skills/**)",
@@ -99,12 +69,75 @@
       "Read(.worktrees/**)",
       "Edit(.worktrees/**)",
       "Write(.worktrees/**)",
-      "Skill(documentation)"
+      "Skill(documentation)",
+      "Bash(git grep:*)",
+      "Bash(git show:*)",
+      "Bash(cargo fix:*)"
     ]
   },
   "enabledMcpjsonServers": [
     "rust-analyzer"
   ],
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Grep",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/enforce_lsp.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/enforce_scripts.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/check_branch.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/check_branch.py"
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/auto_check.py"
+          }
+        ]
+      },
+      {
+        "matcher": "Write",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/auto_check.py"
+          }
+        ]
+      }
+    ]
+  },
   "outputStyle": "default",
   "spinnerTipsEnabled": false
 }

@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use crate::{
-    game_state,
     location::{FieldData, LocationId, LocationSpec},
     magic::effect::PassiveEffect,
     mob::{Mob, MobId},

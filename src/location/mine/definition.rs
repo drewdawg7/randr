@@ -3,7 +3,6 @@ use std::time::{Duration, Instant};
 
 use crate::{
     player::Player,
-    game_state,
     location::{LocationId, LocationSpec, MineData},
     magic::effect::PassiveEffect,
     utils::weighted_select,

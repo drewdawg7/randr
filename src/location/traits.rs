@@ -48,6 +48,7 @@ pub trait Location {
 
 /// Trait for locations that have time-based refresh mechanics.
 /// Only locations with actual refresh behavior should implement this.
+#[allow(dead_code)]
 pub trait Refreshable: Location {
     /// Called each game tick with elapsed time
     fn tick(&mut self, elapsed: Duration);

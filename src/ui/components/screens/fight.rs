@@ -621,6 +621,7 @@ fn hp_bar_spans(pct: u16, width: u16) -> Vec<Span<'static>> {
     ]
 }
 
+#[allow(dead_code)]
 fn hp_color(pct: u16) -> ratatui::style::Color {
     if pct > 60 {
         colors::GREEN

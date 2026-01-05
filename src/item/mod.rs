@@ -11,4 +11,3 @@ pub(crate) use definition::Item;
 pub use definitions::ItemId;
 pub(crate) use enums::ItemType;
 pub(crate) use enums::UpgradeResult;
-pub(crate) use definitions::{ItemRegistry, ItemSpec};

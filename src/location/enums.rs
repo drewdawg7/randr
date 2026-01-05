@@ -2,5 +2,5 @@
 // This module is kept for backward compatibility but re-exports from spec.
 
 pub use super::spec::{
-    CombatSubtype, CommerceSubtype, CraftingSubtype, LocationId, LocationType, ResourceSubtype,
+    LocationId, LocationType,
 };

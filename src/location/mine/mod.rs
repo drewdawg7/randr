@@ -4,6 +4,6 @@ pub mod rock;
 pub mod tests;
 pub mod traits;
 
-pub use cave::{CaveLayout, CaveRock, RockType, CAVE_HEIGHT, CAVE_WIDTH, MAX_ROCKS};
+pub use cave::{CaveLayout, RockType, CAVE_HEIGHT, CAVE_WIDTH};
 pub use definition::Mine;
-pub use rock::{Rock, RockArt, RockId, RockRegistry};
+pub use rock::RockId;

@@ -114,25 +114,3 @@ impl BackfireEffect {
     }
 }
 
-// ─────────────────────────────────────────────────────────────────────────────
-// Spell Result (outcome of casting)
-// ─────────────────────────────────────────────────────────────────────────────
-
-#[derive(Debug)]
-pub enum SpellResult {
-    /// Spell cast successfully
-    Success {
-        damage_dealt: Option<i32>,
-        healing_done: Option<i32>,
-        effects_applied: Vec<String>,
-    },
-
-    /// Spell backfired
-    Backfired {
-        self_damage: i32,
-        message: String,
-    },
-
-    /// No spell to cast (page empty or no active spell)
-    NoSpell,
-}

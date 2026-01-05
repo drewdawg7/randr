@@ -1,7 +1,6 @@
 pub mod definitions;
 
 pub use definitions::{
-    AlchemistData, BlacksmithData, CombatSubtype, CommerceSubtype, CraftingSubtype, FieldData,
-    LocationData, LocationId, LocationRegistry, LocationSpec, LocationType, MineData,
-    ResourceSubtype, StoreData,
+    AlchemistData, BlacksmithData, FieldData,
+    LocationData, LocationId, LocationSpec, LocationType, MineData, StoreData,
 };

@@ -30,11 +30,6 @@ use crate::item::recipe::RecipeId;
 use crate::ui::Id;
 use uuid::Uuid;
 
-pub use combat::*;
-pub use dungeon::*;
-pub use inventory::*;
-pub use mining::*;
-pub use store::*;
 
 /// Result of executing a game command.
 #[derive(Debug, Clone)]

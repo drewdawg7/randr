@@ -5,4 +5,3 @@ pub mod traits;
 
 pub use definition::Blacksmith;
 pub use enums::BlacksmithError;
-pub use enums::BlacksmithUpgradeResult;

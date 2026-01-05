@@ -40,6 +40,7 @@ pub struct StorageScreen {
     storage_list: ItemList<StoredItem, InventoryFilter>,
 }
 
+#[allow(dead_code)]
 impl StorageScreen {
     pub fn new() -> Self {
         let player_config = ItemListConfig {
