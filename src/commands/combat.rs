@@ -5,6 +5,7 @@
 use crate::combat::{
     enemy_attack_step, player_attack_step, process_defeat, process_victory, CombatPhase,
 };
+use crate::dungeon::Explorable;
 use crate::loot::collect_loot_drops;
 use crate::system::{game_state, CombatSource};
 use crate::ui::Id;

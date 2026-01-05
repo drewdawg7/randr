@@ -3,7 +3,7 @@
 //! Handles room interactions, navigation, resting, and boss fights.
 
 use crate::combat::{self, Combatant, DealsDamage, HasGold, IsKillable, Named};
-use crate::dungeon::{Direction, RoomType};
+use crate::dungeon::{Direction, Explorable, RoomType};
 use crate::mob::MobId;
 use crate::entities::progression::HasProgression;
 use crate::loot::collect_loot_drops;

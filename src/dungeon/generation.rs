@@ -4,6 +4,7 @@ use rand::Rng;
 use crate::dungeon::{
     definition::{Dungeon, DungeonRoom, DUNGEON_SIZE, MAX_FILL_PERCENT},
     enums::RoomType,
+    traits::Explorable,
 };
 
 /// Minimum number of rooms to generate

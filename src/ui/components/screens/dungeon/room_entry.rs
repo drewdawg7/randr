@@ -12,7 +12,7 @@ use ratatui::{
 
 use crate::{
     commands::{apply_result, execute, GameCommand},
-    dungeon::RoomType,
+    dungeon::{Explorable, RoomType},
     magic::effect::PassiveEffect,
     system::game_state,
     ui::{
