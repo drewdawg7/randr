@@ -67,6 +67,31 @@ pub const ALCHEMIST_BG: Color = Color::Rgb(38, 32, 48); // Very subtle purple ti
 pub const ORANGE: Color = Color::Rgb(255, 152, 0);
 pub const PURPLE: Color = Color::Rgb(171, 71, 188);
 pub const BRONZE: Color = Color::Rgb(205, 127, 50);
+
+// Icon constants (Unicode symbols from nerd fonts)
+pub mod icons {
+    pub const HEART: char           = '\u{F004}';
+    pub const COIN: char            = '\u{EDE8}';
+    pub const CROSSED_SWORDS: char  = '\u{f0787}';
+    pub const CHECKED: char         = '\u{F14A}';
+    pub const UNCHECKED: char       = '\u{F0C8}';
+    pub const STORE: char           = '\u{ee17}';
+    pub const PERSON: char          = '\u{F415}';
+    pub const SHIRT: char           = '\u{EE1C}';
+    pub const OPEN_DOOR: char       = '\u{F081C}';
+    pub const SHIELD: char          = '\u{F132}';
+    pub const ANVIL: char           = '\u{F089B}';
+    pub const DOUBLE_ARROW_UP: char = '\u{F102}';
+    pub const HOUSE: char           = '\u{F015}';
+    pub const RETURN_ARROW: char    = '\u{F17B1}';
+    pub const HAMMER: char          = '\u{EEFF}';
+    pub const LOCK: char            = '\u{F023}';
+    pub const PICKAXE: char         = '\u{F08B7}';
+    pub const HOURGLASS: char       = '\u{F252}';
+    pub const FIRE: char            = '\u{F0238}';
+    pub const FLASK: char           = '\u{F0093}';
+}
+
 // Soft colors for stat comparisons
 pub const SOFT_GREEN: Color = Color::Rgb(100, 200, 100);
 pub const SOFT_RED: Color = Color::Rgb(200, 100, 100);
