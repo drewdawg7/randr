@@ -4,7 +4,8 @@
 Usage:
     python3 generate.py --issue 42
     python3 generate.py --issue 42 --title "Add inventory feature"
-    python3 generate.py --issue 42 --type feat --complexity medium
+    python3 generate.py --branch feat/add-inventory
+    python3 generate.py --branch feat/add-inventory --title "Add inventory feature"
 
 This script:
 1. Reads session state from .session_state.json
@@ -120,13 +121,18 @@ def get_default_template() -> str:
 """
 
 
-def fill_template(template: str, issue: int, title: str, issue_type: str,
-                  complexity: str, state: dict) -> str:
+def fill_template(template: str, identifier: str, title: str, issue_type: str,
+                  complexity: str, state: dict, is_branch: bool = False) -> str:
     """Fill in template with available data."""
     content = template
 
-    # Basic info
-    content = content.replace("[NUMBER]", str(issue))
+    # Basic info - handle both issue numbers and branch names
+    if is_branch:
+        # Replace issue-specific header with branch-based header
+        content = content.replace("# Issue #[NUMBER]: [TITLE]", f"# Branch: {identifier}")
+        content = content.replace("[NUMBER]", identifier)
+    else:
+        content = content.replace("[NUMBER]", str(identifier))
     content = content.replace("[TITLE]", title)
     content = content.replace("[feat/fix/refactor]", issue_type)
 
@@ -172,22 +178,37 @@ def fill_template(template: str, issue: int, title: str, issue_type: str,
     return content
 
 
-def generate_feedback(issue: int, title: str = "", issue_type: str = "feat",
-                      complexity: str = "Medium") -> dict:
-    """Generate feedback file for an issue."""
+def generate_feedback(issue: int = None, branch: str = None, title: str = "",
+                      issue_type: str = "feat", complexity: str = "Medium") -> dict:
+    """Generate feedback file for an issue or branch."""
+    # Must have either issue or branch
+    if not issue and not branch:
+        return {
+            "success": False,
+            "error": "Either --issue or --branch must be provided"
+        }
+
     # Load data
     state = load_session_state()
     template = load_template()
 
-    # Default title if not provided
-    if not title:
-        title = f"Issue #{issue}"
+    # Determine identifier and filename
+    is_branch = branch is not None
+    if is_branch:
+        identifier = branch
+        # Clean branch name for filename (replace / with -)
+        safe_name = branch.replace("/", "-")
+        output_path = FEEDBACK_DIR / f"branch-{safe_name}-stats.md"
+        if not title:
+            title = branch
+    else:
+        identifier = issue
+        output_path = FEEDBACK_DIR / f"issue-{issue}-stats.md"
+        if not title:
+            title = f"Issue #{issue}"
 
     # Fill template
-    content = fill_template(template, issue, title, issue_type, complexity, state)
-
-    # Write feedback file
-    output_path = FEEDBACK_DIR / f"issue-{issue}-stats.md"
+    content = fill_template(template, identifier, title, issue_type, complexity, state, is_branch)
 
     # Check if file already exists
     if output_path.exists():
@@ -199,10 +220,11 @@ def generate_feedback(issue: int, title: str = "", issue_type: str = "feat",
 
     output_path.write_text(content)
 
+    label = f"branch {branch}" if is_branch else f"issue #{issue}"
     return {
         "success": True,
         "file": str(output_path),
-        "message": f"Generated feedback for issue #{issue}",
+        "message": f"Generated feedback for {label}",
         "session_metrics": {
             "edit_count": state.get("edit_count", 0),
             "lsp_calls": state.get("lsp_calls", 0),
@@ -210,6 +232,7 @@ def generate_feedback(issue: int, title: str = "", issue_type: str = "feat",
             "files_edited": len(state.get("files_edited", []))
         },
         "next_steps": [
+            "Run /context to capture token usage metrics",
             "Review generated file and fill in remaining placeholders",
             "Add lessons learned based on session experience",
             "Update compliance checkboxes"
@@ -223,13 +246,16 @@ def parse_args():
         description="Generate feedback file from session state",
         formatter_class=argparse.RawDescriptionHelpFormatter
     )
-    parser.add_argument("--issue", "-i", type=int, required=True,
-                        help="Issue number")
+    group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument("--issue", "-i", type=int,
+                       help="Issue number")
+    group.add_argument("--branch", "-b", type=str,
+                       help="Branch name (e.g., feat/add-inventory)")
     parser.add_argument("--title", "-t", type=str, default="",
-                        help="Issue title (optional)")
+                        help="Title/description (optional)")
     parser.add_argument("--type", type=str, default="feat",
                         choices=["feat", "fix", "refactor", "docs", "test", "chore"],
-                        help="Issue type (default: feat)")
+                        help="Change type (default: feat)")
     parser.add_argument("--complexity", "-c", type=str, default="Medium",
                         choices=["Low", "Medium", "High"],
                         help="Complexity level (default: Medium)")
@@ -240,6 +266,7 @@ def main():
     args = parse_args()
     result = generate_feedback(
         issue=args.issue,
+        branch=args.branch,
         title=args.title,
         issue_type=args.type,
         complexity=args.complexity

@@ -50,19 +50,29 @@ def main():
     if len(sys.argv) < 2:
         print(json.dumps({
             "success": False,
-            "error": "Usage: create.py <title> [--body <body>] [--label <label>] [--assignee <user>]"
+            "error": "Usage: create.py <title> [--title <title>] [--body <body>] [--label <label>] [--assignee <user>]"
         }))
         sys.exit(1)
 
-    title = sys.argv[1]
+    # Check if first arg is a flag or a positional title
+    title = None
+    if not sys.argv[1].startswith("--"):
+        title = sys.argv[1]
+        start_idx = 2
+    else:
+        start_idx = 1
+
     body = ""
     labels = []
     assignee = None
 
-    i = 2
+    i = start_idx
     while i < len(sys.argv):
         arg = sys.argv[i]
-        if arg == "--body" and i + 1 < len(sys.argv):
+        if arg == "--title" and i + 1 < len(sys.argv):
+            title = sys.argv[i + 1]
+            i += 2
+        elif arg == "--body" and i + 1 < len(sys.argv):
             body = sys.argv[i + 1]
             i += 2
         elif arg == "--label" and i + 1 < len(sys.argv):
@@ -73,6 +83,13 @@ def main():
             i += 2
         else:
             i += 1
+
+    if not title:
+        print(json.dumps({
+            "success": False,
+            "error": "Title is required. Use: create.py <title> or create.py --title <title>"
+        }))
+        sys.exit(1)
 
     result = create_issue(title, body, labels if labels else None, assignee)
     print(json.dumps(result, indent=2))

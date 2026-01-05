@@ -73,3 +73,17 @@ player.inventory
     .map(|item| item.damage)
     .unwrap_or(0)
 ```
+
+## Re-export Pattern
+
+For backward-compatible module reorganization, prefer re-exports over updating every import:
+
+```rust
+// old_module.rs - keep re-exports for compatibility
+pub use new_module::Thing;
+
+// new_module.rs - actual implementation
+pub struct Thing { ... }
+```
+
+This is simpler than transforming imports across many files.

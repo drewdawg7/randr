@@ -3,6 +3,11 @@
 import json
 import subprocess
 import sys
+from pathlib import Path
+
+# Import feedback generator
+sys.path.insert(0, str(Path(__file__).parent.parent / "feedback"))
+from generate import generate_feedback
 
 def run_git(*args):
     """Run a git command and return result."""
@@ -26,7 +31,7 @@ def has_uncommitted_changes():
     result = run_git("status", "--porcelain", "--untracked-files=no")
     return bool(result.stdout.strip())
 
-def merge_to_main(delete_branch=True, push=True):
+def merge_to_main(delete_branch=True, push=True, skip_feedback=False):
     """Merge current branch to main."""
     current = get_current_branch()
 
@@ -42,6 +47,19 @@ def merge_to_main(delete_branch=True, push=True):
             "error": "Uncommitted changes exist",
             "hint": "Commit or stash changes before merging"
         }
+
+    # Generate feedback before merge (unless skipped)
+    feedback_result = None
+    if not skip_feedback:
+        feedback_result = generate_feedback(branch=current)
+        if not feedback_result.get("success"):
+            # Feedback file may already exist, that's OK
+            if "already exists" not in feedback_result.get("error", ""):
+                return {
+                    "success": False,
+                    "error": f"Failed to generate feedback: {feedback_result.get('error')}",
+                    "hint": "Use --skip-feedback to bypass"
+                }
 
     # Fetch latest main
     fetch_result = run_git("fetch", "origin", "main")
@@ -72,7 +90,9 @@ def merge_to_main(delete_branch=True, push=True):
     result = {
         "success": True,
         "merged": current,
-        "into": "main"
+        "into": "main",
+        "feedback": feedback_result if feedback_result else None,
+        "reminder": "Run /context to capture token usage in feedback file" if feedback_result and feedback_result.get("success") else None
     }
 
     # Push to remote
@@ -96,8 +116,9 @@ def merge_to_main(delete_branch=True, push=True):
 def main():
     delete = "--keep" not in sys.argv
     push = "--no-push" not in sys.argv
+    skip_feedback = "--skip-feedback" in sys.argv
 
-    result = merge_to_main(delete_branch=delete, push=push)
+    result = merge_to_main(delete_branch=delete, push=push, skip_feedback=skip_feedback)
     print(json.dumps(result, indent=2))
 
 if __name__ == "__main__":

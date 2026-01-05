@@ -1,13 +1,17 @@
 # Claude Code Workflow
 
-## 10-Step Code Change Process
+## 11-Step Code Change Process
 ```
 1. Checkout branch → 2. Load docs → 3. Clarify → 4. Plan
                                               ↓
 8. Add tests ← 7. Run tests ← 6. cargo check ← 5. Make changes
        ↓
-9. Update docs → 10. Merge/Push/Close
+9. Update docs → 10. Feedback → 11. Merge/Push/Close
 ```
+
+**Step 3 - Clarify**: Ask user about PR vs direct merge preference, push to origin?
+
+**Step 10 - Feedback**: Run `/context` to capture token usage, then merge (feedback auto-generated)
 
 ## Required Skills
 Invoke skills BEFORE starting work:
@@ -23,6 +27,7 @@ Invoke skills BEFORE starting work:
 | Raw `gh` commands | Blocked → Use scripts |
 | Edit on main branch | Warned → Checkout first |
 | Edit .rs files | Auto cargo check |
+| Merge to main | Auto-generates feedback file |
 
 ## Tool Selection (MANDATORY)
 
@@ -53,6 +58,11 @@ Before making changes:
 - [ ] Using LSP for Rust navigation?
 - [ ] Considered delegation for large changes (>50 lines)?
 
+## New Code Rules
+- New public APIs must be used in production code, not just tests
+- Never add `#[allow(dead_code)]` to hide unused new code
+- Think simplest solution first (e.g., re-exports vs transforming imports)
+
 ## Scripts (Use Instead of CLI)
 All scripts output JSON. Located in `.claude/scripts/`:
 
@@ -65,7 +75,9 @@ All scripts output JSON. Located in `.claude/scripts/`:
 - `list.py` - Query issues
 - `view.py` - Get issue details
 - `create.py` - Create new issue
+- `edit.py` - Edit issue (title, body, labels)
 - `close.py` - Close issue
+- `labels.py` - List repository labels
 
 ### Code: `scripts/check/`
 - `cargo_check.py` - Type check with JSON output

@@ -75,7 +75,7 @@ def extract_removed_symbols(old_string: str, new_string: str) -> list:
             match = re.search(pattern, line)
             if match:
                 # Extract the symbol name (usually last group)
-                groups = [g for g in match.groups() if g and not g.strip() in ('pub', 'async')]
+                groups = [g for g in match.groups() if g and g.strip() not in ('pub', 'async')]
                 if groups:
                     symbol_name = groups[-1].strip()
                     if symbol_name and len(symbol_name) > 1:

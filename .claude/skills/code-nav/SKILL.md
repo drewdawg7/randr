@@ -38,6 +38,22 @@ LSP workspaceSymbol with query
 
 For pattern-based searches that LSP can't handle:
 
+### ast-grep Limitations
+
+ast-grep works well for:
+- Adding/removing attributes
+- Renaming symbols
+- Simple structural changes
+
+ast-grep does NOT work well for:
+- Complex import splitting (e.g., `use {A, B, C}` where A stays, B/C move)
+- Context-dependent transformations
+- Changes requiring semantic understanding
+
+For complex cases, use LSP + targeted manual edits.
+
+### Pattern Examples
+
 ```bash
 # Find all functions
 python3 .claude/scripts/code/find_symbol.py function my_function
