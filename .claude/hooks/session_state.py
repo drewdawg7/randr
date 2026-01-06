@@ -69,8 +69,25 @@ class SessionState:
                 "edit": 0,
                 "read": 0,
                 "search": 0,
-                "lsp": 0
-            }
+                "lsp": 0,
+                "bash": 0
+            },
+            # New tracking fields
+            "bash_calls": 0,
+            "grep_blocked": 0,
+            "agent_delegations": {
+                "coder": 0,
+                "reviewer": 0,
+                "test-writer": 0,
+                "explore": 0,
+                "other": 0
+            },
+            "removals_attempted": 0,
+            "removals_with_check": 0,
+            "compilation_errors": 0,
+            "tests_run": False,
+            "tests_passed": None,
+            "reverts_needed": 0
         }
 
     def _save(self):
@@ -139,9 +156,44 @@ class SessionState:
         """Record an ast-grep operation."""
         self.increment("ast_grep_calls")
 
-    def record_delegation(self):
+    def record_delegation(self, agent_type: str = "other"):
         """Record that agent delegation was used."""
         self.set("delegation_used", True)
+        delegations = self._state.get("agent_delegations", {})
+        agent_key = agent_type.lower()
+        if agent_key not in delegations:
+            agent_key = "other"
+        delegations[agent_key] = delegations.get(agent_key, 0) + 1
+        self._state["agent_delegations"] = delegations
+        self._save()
+
+    def record_bash_call(self):
+        """Record a Bash tool invocation."""
+        self.increment("bash_calls")
+        self._increment_operation("bash")
+
+    def record_grep_blocked(self):
+        """Record a blocked grep attempt on Rust files."""
+        self.increment("grep_blocked")
+
+    def record_removal_attempt(self, had_check: bool):
+        """Record a code removal attempt."""
+        self.increment("removals_attempted")
+        if had_check:
+            self.increment("removals_with_check")
+
+    def record_compilation_error(self):
+        """Record a compilation error."""
+        self.increment("compilation_errors")
+
+    def record_test_result(self, passed: bool):
+        """Record test run result."""
+        self.set("tests_run", True)
+        self.set("tests_passed", passed)
+
+    def record_revert(self):
+        """Record that a revert was needed."""
+        self.increment("reverts_needed")
 
     def _increment_operation(self, op_type: str):
         """Increment operation counter by type."""
@@ -151,6 +203,8 @@ class SessionState:
 
     def get_summary(self) -> dict:
         """Get a summary of session state for feedback."""
+        removals_attempted = self.get("removals_attempted", 0)
+        removals_with_check = self.get("removals_with_check", 0)
         return {
             "edit_count": self.get("edit_count", 0),
             "files_edited": len(self.get("files_edited", [])),
@@ -159,7 +213,18 @@ class SessionState:
             "ast_grep_calls": self.get("ast_grep_calls", 0),
             "symbols_checked": len(self.get("symbols_checked", [])),
             "delegation_used": self.get("delegation_used", False),
-            "operations": self.get("operations", {})
+            "operations": self.get("operations", {}),
+            # New fields
+            "bash_calls": self.get("bash_calls", 0),
+            "grep_blocked": self.get("grep_blocked", 0),
+            "agent_delegations": self.get("agent_delegations", {}),
+            "removals_attempted": removals_attempted,
+            "removals_with_check": removals_with_check,
+            "find_references_compliant": removals_attempted == 0 or removals_with_check == removals_attempted,
+            "compilation_errors": self.get("compilation_errors", 0),
+            "tests_run": self.get("tests_run", False),
+            "tests_passed": self.get("tests_passed", None),
+            "reverts_needed": self.get("reverts_needed", 0)
         }
 
     def reset(self):

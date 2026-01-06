@@ -3,6 +3,11 @@
 import json
 import re
 import sys
+from pathlib import Path
+
+# Import session state from same directory
+sys.path.insert(0, str(Path(__file__).parent))
+from session_state import get_state
 
 def check_bash_grep_rust(command: str) -> bool:
     """Check if a bash command is grep/rg searching Rust files."""
@@ -54,6 +59,9 @@ def main():
     if tool_name == "Bash":
         command = tool_input.get("command", "")
         if check_bash_grep_rust(command):
+            # Track the blocked grep attempt
+            state = get_state()
+            state.record_grep_blocked()
             print(json.dumps({
                 "decision": "block",
                 "reason": get_lsp_suggestion()
@@ -91,6 +99,9 @@ def main():
 
     # Block if searching Rust files OR searching in src/ without explicit non-Rust filter
     if is_rust_search or (is_src_search and not glob_filter and not type_filter):
+        # Track the blocked grep attempt
+        state = get_state()
+        state.record_grep_blocked()
         print(json.dumps({
             "decision": "block",
             "reason": get_lsp_suggestion(pattern)

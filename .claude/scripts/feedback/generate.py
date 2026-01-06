@@ -155,11 +155,39 @@ def fill_template(template: str, identifier: str, title: str, issue_type: str,
     edit_patterns = state.get("edit_patterns", {})
     operations = state.get("operations", {})
 
-    # Calculate manual edit ratio
+    # New tracked fields
+    bash_calls = state.get("bash_calls", 0)
+    grep_blocked = state.get("grep_blocked", 0)
+    agent_delegations = state.get("agent_delegations", {})
+    reverts_needed = state.get("reverts_needed", 0)
+    compilation_errors = state.get("compilation_errors", 0)
+    removals_attempted = state.get("removals_attempted", 0)
+    removals_with_check = state.get("removals_with_check", 0)
+    tests_run = state.get("tests_run", False)
+    tests_passed = state.get("tests_passed", None)
+
+    # Calculate metrics
     total_ops = edit_count + ast_grep_calls
     manual_ratio = (edit_count / total_ops * 100) if total_ops > 0 else 100
+    find_refs_compliant = removals_attempted == 0 or removals_with_check == removals_attempted
 
-    # Fill in P2: Token Usage
+    # Determine outcome based on metrics
+    if reverts_needed > 0 or compilation_errors > 0:
+        outcome = "Partial"
+    elif tests_run and tests_passed is False:
+        outcome = "Failed"
+    else:
+        outcome = "Completed"
+    content = content.replace("[Completed/Failed/Partial]", outcome)
+
+    # === P1: Stability ===
+    content = content.replace("| Reverts needed | X |", f"| Reverts needed | {reverts_needed} |")
+    content = content.replace("| Compilation errors from removals | X |", f"| Compilation errors from removals | {compilation_errors} |")
+    find_refs_status = "Yes" if find_refs_compliant else "No"
+    content = content.replace("| findReferences before removal | Yes/No |", f"| findReferences before removal | {find_refs_status} |")
+
+    # === P2: Token & Cost Analysis ===
+    # Edit stats
     content = content.replace("| Manual edit count | X |", f"| Manual edit count | {edit_count} |")
     content = content.replace("| ast-grep operations | X |", f"| ast-grep operations | {ast_grep_calls} |")
     content = content.replace("| Manual edit ratio | X% |", f"| Manual edit ratio | {manual_ratio:.0f}% |")
@@ -188,20 +216,67 @@ def fill_template(template: str, identifier: str, title: str, issue_type: str,
             content = content.replace(f"| TOOL{i}_NAME | TOOL{i}_CALLS | $TOOL{i}_COST | $TOOL{i}_AVG |",
                 f"| {tool['name']} | {tool['calls']} | ${tool['cost']:.2f} | ${tool['avg_cost']:.4f} |")
 
-    # Fill in P3: Speed
+    # === P3: Speed ===
     content = content.replace("| LSP operations | X |", f"| LSP operations | {lsp_calls} |", 1)
+    content = content.replace("| Grep on .rs (blocked) | X |", f"| Grep on .rs (blocked) | {grep_blocked} |")
+    # Parallel read batches - tracked in operations if available
+    parallel_reads = operations.get("parallel_read", 0)
+    content = content.replace("| Parallel read batches | X |", f"| Parallel read batches | {parallel_reads} |")
 
-    # Fill in Tool Stats
-    content = content.replace("| Edit operations | X |", f"| Edit operations | {edit_count} |")
-    content = content.replace("| LSP operations | X |", f"| LSP operations | {lsp_calls} |")
+    # === Tool Stats ===
+    content = content.replace("| Bash invocations | X |", f"| Bash invocations | {bash_calls} |")
     read_ops = operations.get("read", 0)
     content = content.replace("| Read operations | X |", f"| Read operations | {read_ops} |")
+    content = content.replace("| Edit operations | X |", f"| Edit operations | {edit_count} |")
+    content = content.replace("| LSP operations | X |", f"| LSP operations | {lsp_calls} |")
+    content = content.replace("| Grep attempts blocked | X |", f"| Grep attempts blocked | {grep_blocked} |")
 
-    # Agent usage - direct edits
-    if delegation_used:
-        content = content.replace("| Direct edits (should be 0) | X |", "| Direct edits (should be 0) | 0 |")
+    # === Workflow Compliance (auto-check based on metrics) ===
+    # LSP used for Rust navigation
+    lsp_compliant = lsp_calls > 0 or grep_blocked == 0
+    if lsp_compliant:
+        content = content.replace("- [ ] LSP used for Rust navigation (not grep)", "- [x] LSP used for Rust navigation (not grep)")
+
+    # Batch operations used where applicable
+    rs_edits = edit_patterns.get(".rs", 0)
+    batch_compliant = rs_edits <= 5 or ast_grep_calls > 0
+    if batch_compliant:
+        content = content.replace("- [ ] Batch operations used where applicable (>5 similar changes)", "- [x] Batch operations used where applicable (>5 similar changes)")
+
+    # findReferences before removal
+    if find_refs_compliant:
+        content = content.replace("- [ ] `findReferences` run before any code removal", "- [x] `findReferences` run before any code removal")
+
+    # Agent delegation
+    total_delegations = sum(agent_delegations.values()) if agent_delegations else 0
+    if delegation_used or total_delegations > 0 or edit_count == 0:
+        content = content.replace("- [ ] Agent delegation followed (orchestrator doesn't write code)", "- [x] Agent delegation followed (orchestrator doesn't write code)")
+
+    # === Agent Usage ===
+    coder_calls = agent_delegations.get("coder", 0)
+    reviewer_calls = agent_delegations.get("reviewer", 0)
+    test_writer_calls = agent_delegations.get("test-writer", 0)
+    content = content.replace("| Coder (Opus) | X |", f"| Coder (Opus) | {coder_calls} |")
+    content = content.replace("| Reviewer (Sonnet) | X |", f"| Reviewer (Sonnet) | {reviewer_calls} |")
+    content = content.replace("| Test-writer (Sonnet) | X |", f"| Test-writer (Sonnet) | {test_writer_calls} |")
+
+    # Direct edits
+    direct_edits = edit_count if not delegation_used else 0
+    content = content.replace("| Direct edits (should be 0) | X |", f"| Direct edits (should be 0) | {direct_edits} |")
+
+    # === Quality Metrics ===
+    # Compilation warnings - we track errors, start is unknown
+    content = content.replace("| Compilation warnings | X | 0 |", f"| Compilation warnings | - | {compilation_errors} |")
+
+    # Tests passing
+    if tests_run:
+        test_status = "Yes" if tests_passed else "No"
+        content = content.replace("| Tests passing | X | X |", f"| Tests passing | - | {test_status} |")
     else:
-        content = content.replace("| Direct edits (should be 0) | X |", f"| Direct edits (should be 0) | {edit_count} |")
+        content = content.replace("| Tests passing | X | X |", "| Tests passing | - | Not run |")
+
+    # Reverts
+    content = content.replace("| Reverts needed | - | X (target: 0) |", f"| Reverts needed | - | {reverts_needed} (target: 0) |")
 
     return content
 

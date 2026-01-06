@@ -70,10 +70,18 @@ def main():
     # Track Task tool usage as delegation
     if tool_name == "Task":
         state = get_state()
+        subagent_type = tool_input.get("subagent_type", "").lower()
         prompt = tool_input.get("prompt", "").lower()
-        # Check if delegating to a known agent
-        if any(agent in prompt for agent in ["coder", "reviewer", "test-writer"]):
-            state.record_delegation()
+
+        # Determine agent type from subagent_type or prompt
+        agent_type = "other"
+        known_agents = ["coder", "reviewer", "test-writer", "explore"]
+        for agent in known_agents:
+            if agent in subagent_type or agent in prompt:
+                agent_type = agent
+                break
+
+        state.record_delegation(agent_type)
         return
 
     # Only check after Edit operations

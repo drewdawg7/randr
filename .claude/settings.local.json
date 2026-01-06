@@ -200,6 +200,19 @@
             "command": "python3 .claude/hooks/enforce_delegation.py"
           }
         ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/track_bash.py"
+          },
+          {
+            "type": "command",
+            "command": "python3 .claude/hooks/track_tests.py"
+          }
+        ]
       }
     ]
   },

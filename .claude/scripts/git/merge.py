@@ -5,9 +5,72 @@ import subprocess
 import sys
 from pathlib import Path
 
-# Import feedback generator
+# Import feedback generator and session state
 sys.path.insert(0, str(Path(__file__).parent.parent / "feedback"))
+sys.path.insert(0, str(Path(__file__).parent.parent.parent / "hooks"))
 from generate import generate_feedback
+from session_state import get_state
+
+
+def validate_workflow_compliance() -> dict:
+    """Validate that workflow requirements are met before merge.
+
+    Returns dict with:
+    - compliant: bool - whether all requirements are met
+    - violations: list - specific violations found
+    - warnings: list - non-blocking issues
+    """
+    state = get_state()
+    summary = state.get_summary()
+
+    violations = []
+    warnings = []
+
+    # P1: Stability checks (BLOCKING)
+    if summary.get("reverts_needed", 0) > 0:
+        violations.append(f"Reverts were needed ({summary['reverts_needed']}x) - review for stability issues")
+
+    if summary.get("compilation_errors", 0) > 0:
+        violations.append(f"Compilation errors occurred ({summary['compilation_errors']}x)")
+
+    if not summary.get("find_references_compliant", True):
+        removals = summary.get("removals_attempted", 0)
+        checked = summary.get("removals_with_check", 0)
+        violations.append(f"Code removals without findReferences check ({checked}/{removals} checked)")
+
+    # P2: Token efficiency checks (WARNINGS)
+    edit_count = summary.get("edit_count", 0)
+    ast_grep_calls = summary.get("ast_grep_calls", 0)
+    if edit_count > 5 and ast_grep_calls == 0:
+        warnings.append(f"High manual edit count ({edit_count}) without ast-grep - consider batch operations")
+
+    # P3: Tool usage checks (WARNINGS)
+    grep_blocked = summary.get("grep_blocked", 0)
+    if grep_blocked > 0:
+        warnings.append(f"Grep was blocked {grep_blocked}x - LSP should be used for Rust navigation")
+
+    # Agent delegation check (WARNING for now, could be violation)
+    delegation_used = summary.get("delegation_used", False)
+    if edit_count > 0 and not delegation_used:
+        agent_delegations = summary.get("agent_delegations", {})
+        total_delegations = sum(agent_delegations.values())
+        if total_delegations == 0:
+            warnings.append(f"Direct edits made ({edit_count}) without agent delegation")
+
+    # Test check (WARNING)
+    tests_run = summary.get("tests_run", False)
+    tests_passed = summary.get("tests_passed", None)
+    if not tests_run:
+        warnings.append("Tests were not run during this session")
+    elif tests_passed is False:
+        violations.append("Tests are failing - fix before merge")
+
+    return {
+        "compliant": len(violations) == 0,
+        "violations": violations,
+        "warnings": warnings,
+        "summary": summary
+    }
 
 def run_git(*args):
     """Run a git command and return result."""
@@ -31,8 +94,15 @@ def has_uncommitted_changes():
     result = run_git("status", "--porcelain", "--untracked-files=no")
     return bool(result.stdout.strip())
 
-def merge_to_main(delete_branch=True, push=True, skip_feedback=False):
-    """Merge current branch to main."""
+def merge_to_main(delete_branch=True, push=True, skip_feedback=False, force=False):
+    """Merge current branch to main.
+
+    Args:
+        delete_branch: Delete feature branch after merge
+        push: Push to remote after merge
+        skip_feedback: Skip feedback generation
+        force: Force merge even with workflow violations (not recommended)
+    """
     current = get_current_branch()
 
     if current in ("main", "master"):
@@ -46,6 +116,18 @@ def merge_to_main(delete_branch=True, push=True, skip_feedback=False):
             "success": False,
             "error": "Uncommitted changes exist",
             "hint": "Commit or stash changes before merging"
+        }
+
+    # Validate workflow compliance BEFORE allowing merge
+    validation = validate_workflow_compliance()
+    if not validation["compliant"] and not force:
+        return {
+            "success": False,
+            "error": "Workflow violations detected - merge blocked",
+            "violations": validation["violations"],
+            "warnings": validation["warnings"],
+            "hint": "Fix violations before merging, or use --force to override (not recommended)",
+            "session_summary": validation["summary"]
         }
 
     # Generate feedback before merge (unless skipped)
@@ -92,6 +174,8 @@ def merge_to_main(delete_branch=True, push=True, skip_feedback=False):
         "merged": current,
         "into": "main",
         "feedback": feedback_result if feedback_result else None,
+        "validation": validation,
+        "forced": force and not validation["compliant"],
         "reminder": "Run /context to capture token usage in feedback file" if feedback_result and feedback_result.get("success") else None
     }
 
@@ -117,9 +201,14 @@ def main():
     delete = "--keep" not in sys.argv
     push = "--no-push" not in sys.argv
     skip_feedback = "--skip-feedback" in sys.argv
+    force = "--force" in sys.argv
 
-    result = merge_to_main(delete_branch=delete, push=push, skip_feedback=skip_feedback)
+    result = merge_to_main(delete_branch=delete, push=push, skip_feedback=skip_feedback, force=force)
     print(json.dumps(result, indent=2))
+
+    # Exit with error code if merge failed
+    if not result.get("success"):
+        sys.exit(1)
 
 if __name__ == "__main__":
     main()

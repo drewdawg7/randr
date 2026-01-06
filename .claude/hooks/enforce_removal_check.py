@@ -134,10 +134,12 @@ def main():
 
     if not unchecked:
         # All symbols were checked, allow the removal
+        state.record_removal_attempt(had_check=True)
         print(json.dumps({"decision": "allow"}))
         return
 
     # Block the removal - symbols weren't checked
+    state.record_removal_attempt(had_check=False)
     symbol_list = "\n".join([
         f"  - {s['name']} ({s['type']}): {s['line']}..."
         for s in unchecked[:3]  # Limit to first 3
