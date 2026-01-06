@@ -19,8 +19,9 @@ import sys
 from datetime import datetime
 from pathlib import Path
 
-# Import token usage module
+# Import analysis modules
 from token_usage import get_session_tokens
+from session_analysis import analyze_session
 
 # Paths
 SCRIPT_DIR = Path(__file__).parent
@@ -125,7 +126,7 @@ def get_default_template() -> str:
 
 
 def fill_template(template: str, identifier: str, title: str, issue_type: str,
-                  complexity: str, state: dict, token_usage: dict, is_branch: bool = False) -> str:
+                  complexity: str, state: dict, token_usage: dict, analysis: dict, is_branch: bool = False) -> str:
     """Fill in template with available data."""
     content = template
 
@@ -163,20 +164,29 @@ def fill_template(template: str, identifier: str, title: str, issue_type: str,
     content = content.replace("| ast-grep operations | X |", f"| ast-grep operations | {ast_grep_calls} |")
     content = content.replace("| Manual edit ratio | X% |", f"| Manual edit ratio | {manual_ratio:.0f}% |")
 
-    # Fill in token usage from session data
-    if token_usage.get("success"):
-        msg_tokens = token_usage.get("message_tokens", 0)
-        input_tokens = token_usage.get("input_tokens", 0)
-        output_tokens = token_usage.get("output_tokens", 0)
-        cache_read = token_usage.get("cache_read_tokens", 0)
-        cache_write = token_usage.get("cache_creation_tokens", 0)
+    # Fill in session analysis data
+    if analysis.get("success"):
+        # Summary metrics
+        content = content.replace("| Session duration | DURATION |", f"| Session duration | {analysis.get('duration_formatted', 'N/A')} |")
+        content = content.replace("| API calls | API_CALLS |", f"| API calls | {analysis.get('api_calls', 0):,} |")
+        content = content.replace("| Estimated cost | $TOTAL_COST |", f"| Estimated cost | ${analysis.get('total_cost', 0):.2f} |")
+        content = content.replace("| Avg cost/call | $AVG_COST |", f"| Avg cost/call | ${analysis.get('avg_cost_per_call', 0):.4f} |")
 
-        # Format with commas for readability
-        content = content.replace("| Session tokens used | X |", f"| Session tokens used | {msg_tokens:,} |")
-        content = content.replace("| Input tokens | X |", f"| Input tokens | {input_tokens:,} |")
-        content = content.replace("| Output tokens | X |", f"| Output tokens | {output_tokens:,} |")
-        content = content.replace("| Cache read tokens | X |", f"| Cache read tokens | {cache_read:,} |")
-        content = content.replace("| Cache creation tokens | X |", f"| Cache creation tokens | {cache_write:,} |")
+        tokens = analysis.get('tokens', {})
+        content = content.replace("| Message tokens | MSG_TOKENS |", f"| Message tokens | {tokens.get('message', 0):,} |")
+        content = content.replace("| Cache efficiency | CACHE_RATIO:1 |", f"| Cache efficiency | {analysis.get('cache_efficiency_ratio', 0)}:1 |")
+
+        # Token breakdown
+        content = content.replace("| Input | INPUT_TOKENS |", f"| Input | {tokens.get('input', 0):,} |")
+        content = content.replace("| Output | OUTPUT_TOKENS |", f"| Output | {tokens.get('output', 0):,} |")
+        content = content.replace("| Cache read | CACHE_READ |", f"| Cache read | {tokens.get('cache_read', 0):,} |")
+        content = content.replace("| Cache write | CACHE_WRITE |", f"| Cache write | {tokens.get('cache_write', 0):,} |")
+
+        # Top tools by cost
+        top_tools = analysis.get('top_tools_by_cost', [])
+        for i, tool in enumerate(top_tools[:3], 1):
+            content = content.replace(f"| TOOL{i}_NAME | TOOL{i}_CALLS | $TOOL{i}_COST | $TOOL{i}_AVG |",
+                f"| {tool['name']} | {tool['calls']} | ${tool['cost']:.2f} | ${tool['avg_cost']:.4f} |")
 
     # Fill in P3: Speed
     content = content.replace("| LSP operations | X |", f"| LSP operations | {lsp_calls} |", 1)
@@ -210,6 +220,7 @@ def generate_feedback(issue: int = None, branch: str = None, title: str = "",
     state = load_session_state()
     template = load_template()
     token_usage = get_session_tokens()
+    analysis = analyze_session()
 
     # Determine identifier and filename
     is_branch = branch is not None
@@ -227,7 +238,7 @@ def generate_feedback(issue: int = None, branch: str = None, title: str = "",
             title = f"Issue #{issue}"
 
     # Fill template
-    content = fill_template(template, identifier, title, issue_type, complexity, state, token_usage, is_branch)
+    content = fill_template(template, identifier, title, issue_type, complexity, state, token_usage, analysis, is_branch)
 
     # Check if file already exists
     if output_path.exists():
@@ -250,13 +261,13 @@ def generate_feedback(issue: int = None, branch: str = None, title: str = "",
             "ast_grep_calls": state.get("ast_grep_calls", 0),
             "files_edited": len(state.get("files_edited", []))
         },
-        "token_usage": {
-            "message_tokens": token_usage.get("message_tokens", 0),
-            "input_tokens": token_usage.get("input_tokens", 0),
-            "output_tokens": token_usage.get("output_tokens", 0),
-            "cache_read_tokens": token_usage.get("cache_read_tokens", 0),
-            "cache_creation_tokens": token_usage.get("cache_creation_tokens", 0)
-        } if token_usage.get("success") else None,
+        "cost_analysis": {
+            "total_cost": analysis.get("total_cost", 0),
+            "api_calls": analysis.get("api_calls", 0),
+            "duration": analysis.get("duration_formatted", "N/A"),
+            "cache_efficiency": analysis.get("cache_efficiency_ratio", 0),
+            "top_tools": analysis.get("top_tools_by_cost", [])[:3]
+        } if analysis.get("success") else None,
         "next_steps": [
             "Review generated file and fill in remaining placeholders",
             "Add lessons learned based on session experience",

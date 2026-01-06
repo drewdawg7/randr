@@ -14,14 +14,34 @@
 | Compilation errors from removals | X | 0 |
 | findReferences before removal | Yes/No | Yes |
 
-### P2: Token Usage
+### P2: Token & Cost Analysis
+| Metric | Value |
+|--------|-------|
+| Session duration | DURATION |
+| API calls | API_CALLS |
+| Estimated cost | $TOTAL_COST |
+| Avg cost/call | $AVG_COST |
+| Message tokens | MSG_TOKENS |
+| Cache efficiency | CACHE_RATIO:1 |
+
+#### Token Breakdown
+| Type | Tokens |
+|------|--------|
+| Input | INPUT_TOKENS |
+| Output | OUTPUT_TOKENS |
+| Cache read | CACHE_READ |
+| Cache write | CACHE_WRITE |
+
+#### Top Tools by Cost
+| Tool | Calls | Cost | Avg |
+|------|-------|------|-----|
+| TOOL1_NAME | TOOL1_CALLS | $TOOL1_COST | $TOOL1_AVG |
+| TOOL2_NAME | TOOL2_CALLS | $TOOL2_COST | $TOOL2_AVG |
+| TOOL3_NAME | TOOL3_CALLS | $TOOL3_COST | $TOOL3_AVG |
+
+#### Edit Stats
 | Metric | Value | Target |
 |--------|-------|--------|
-| Session tokens used | X | - |
-| Input tokens | X | - |
-| Output tokens | X | - |
-| Cache read tokens | X | - |
-| Cache creation tokens | X | - |
 | Manual edit count | X | - |
 | ast-grep operations | X | - |
 | Manual edit ratio | X% | <20% |
