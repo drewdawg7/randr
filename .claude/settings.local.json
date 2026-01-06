@@ -94,7 +94,16 @@
       "WebFetch(domain:an4t.com)",
       "WebFetch(domain:crates.io)",
       "WebFetch(domain:raw.githubusercontent.com)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(for i in 133 134 135 136)",
+      "Bash(do python3 .claude/scripts/issue/edit.py $i --add-label \"ui\")",
+      "Bash(for i in 137 138 139 140)",
+      "Bash(for i in 141 142 143 144 145)",
+      "Bash(for i in 146 147 148 149)",
+      "WebFetch(domain:portkey.ai)",
+      "WebFetch(domain:www.aiengineering.report)",
+      "Bash(for i in 153 154 155)",
+      "Bash(do python3 .claude/scripts/issue/view.py $i)"
     ]
   },
   "enabledMcpjsonServers": [
