@@ -284,7 +284,10 @@ impl Default for GameState {
             let spec = id.spec();
             match &spec.data {
                 LocationData::Store(data) => Store::from_spec(id, spec, data),
-                _ => unreachable!(),
+                other => panic!(
+                    "VillageStore spec must have Store data, got {:?}",
+                    std::mem::discriminant(other)
+                ),
             }
         };
         let blacksmith = {
@@ -292,7 +295,10 @@ impl Default for GameState {
             let spec = id.spec();
             match &spec.data {
                 LocationData::Blacksmith(data) => Blacksmith::from_spec(id, spec, data),
-                _ => unreachable!(),
+                other => panic!(
+                    "VillageBlacksmith spec must have Blacksmith data, got {:?}",
+                    std::mem::discriminant(other)
+                ),
             }
         };
         let alchemist = {
@@ -300,7 +306,10 @@ impl Default for GameState {
             let spec = id.spec();
             match &spec.data {
                 LocationData::Alchemist(data) => Alchemist::from_spec(id, spec, data),
-                _ => unreachable!(),
+                other => panic!(
+                    "VillageAlchemist spec must have Alchemist data, got {:?}",
+                    std::mem::discriminant(other)
+                ),
             }
         };
         let field = {
@@ -308,7 +317,10 @@ impl Default for GameState {
             let spec = id.spec();
             match &spec.data {
                 LocationData::Field(data) => Field::from_spec(id, spec, data),
-                _ => unreachable!(),
+                other => panic!(
+                    "VillageField spec must have Field data, got {:?}",
+                    std::mem::discriminant(other)
+                ),
             }
         };
         let mine = {
@@ -316,7 +328,10 @@ impl Default for GameState {
             let spec = id.spec();
             match &spec.data {
                 LocationData::Mine(data) => Mine::from_spec(id, spec, data),
-                _ => unreachable!(),
+                other => panic!(
+                    "VillageMine spec must have Mine data, got {:?}",
+                    std::mem::discriminant(other)
+                ),
             }
         };
         let town = Town::new("Village".to_string(), store, blacksmith, alchemist, field, mine);
