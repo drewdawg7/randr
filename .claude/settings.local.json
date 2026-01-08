@@ -103,7 +103,13 @@
       "WebFetch(domain:portkey.ai)",
       "WebFetch(domain:www.aiengineering.report)",
       "Bash(for i in 153 154 155)",
-      "Bash(do python3 .claude/scripts/issue/view.py $i)"
+      "Bash(do python3 .claude/scripts/issue/view.py $i)",
+      "Bash(rustc:*)",
+      "Bash(for i in 169 170 171 172 173 174 175 176 177 178 180 181 182 183 184)",
+      "Bash(do echo '=== Issue #$i ===')",
+      "Bash(cargo rustc:*)",
+      "Bash(xargs:*)",
+      "Bash(cargo run:*)"
     ]
   },
   "enabledMcpjsonServers": [

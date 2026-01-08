@@ -90,7 +90,7 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
         target_died
     }
 }
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct CombatRounds {
     pub attack_results: Vec<AttackResult>,
     /// Spawned loot drops from the loot table, includes item instances and quantities

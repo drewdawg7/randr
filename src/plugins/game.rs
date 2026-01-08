@@ -1,0 +1,57 @@
+use bevy::prelude::*;
+
+use crate::assets::AssetPlugin as GameAssetPlugin;
+use crate::game::{CombatPlugin, DungeonPlugin, ItemPlugin, PlayerPlugin, StoragePlugin, ToastPlugin};
+use crate::input::InputPlugin;
+use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
+use crate::save_load::SaveLoadPlugin;
+use crate::screens::{
+    DungeonScreenPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin, MainMenuPlugin,
+    MinePlugin, ModalPlugin, ProfileModalPlugin, ProfilePlugin, SpellTestModalPlugin, TownPlugin,
+};
+use crate::states::StateTransitionPlugin;
+
+/// Core game plugin that bundles all game systems.
+pub struct GamePlugin;
+
+impl Plugin for GamePlugin {
+    fn build(&self, app: &mut App) {
+        // Core systems
+        app.add_plugins((
+            StateTransitionPlugin,
+            GameAssetPlugin,
+            InputPlugin,
+            PlayerPlugin,
+            StoragePlugin,
+            DungeonPlugin,
+            ItemPlugin,
+            CombatPlugin,
+            MobPlugin,
+            EconomyPlugin,
+            SaveLoadPlugin,
+            ToastPlugin,
+            ToastListenersPlugin,
+            ModalPlugin,
+        ));
+
+        // Screens and modals
+        app.add_plugins((
+            MainMenuPlugin,
+            ProfilePlugin,
+            ProfileModalPlugin,
+            InventoryModalPlugin,
+            SpellTestModalPlugin,
+            KeybindsPlugin,
+            TownPlugin,
+            MinePlugin,
+            DungeonScreenPlugin,
+            FightPlugin,
+        ));
+
+        app.add_systems(Startup, setup);
+    }
+}
+
+fn setup(mut commands: Commands) {
+    commands.spawn(Camera2d);
+}

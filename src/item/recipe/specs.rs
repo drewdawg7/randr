@@ -237,6 +237,14 @@ impl RecipeId {
             .collect()
     }
 
+    pub fn all_smelting_recipes() -> Vec<RecipeId> {
+        RecipeId::ALL
+            .iter()
+            .filter(|id| id.spec().recipe_type == RecipeType::Smelting)
+            .copied()
+            .collect()
+    }
+
     /// Get the material type for this recipe (for forge filtering)
     pub fn material(&self) -> ForgeMaterial {
         let name = format!("{:?}", self);
