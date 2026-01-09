@@ -1,5 +1,25 @@
 use bevy::prelude::*;
 
+// ============================================================================
+// State Transition Events
+// ============================================================================
+
+/// Event requesting transition to Fight state.
+#[derive(Event, Debug, Clone)]
+pub struct RequestFightEvent;
+
+/// Event requesting transition to Mine state.
+#[derive(Event, Debug, Clone)]
+pub struct RequestMineEvent;
+
+/// Event requesting transition to Dungeon state.
+#[derive(Event, Debug, Clone)]
+pub struct RequestDungeonEvent;
+
+// ============================================================================
+// Application State
+// ============================================================================
+
 /// Application states matching the original screen system.
 /// Mirrors `src/ui/screen/common.rs::Id`.
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
@@ -43,10 +63,37 @@ impl Plugin for StateTransitionPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<AppState>()
             .init_resource::<PreviousState>()
+            .add_event::<RequestFightEvent>()
+            .add_event::<RequestMineEvent>()
+            .add_event::<RequestDungeonEvent>()
             .add_systems(
                 StateTransition,
                 track_state_transitions.run_if(state_changed::<AppState>),
-            );
+            )
+            .add_systems(Update, handle_state_transition_requests);
+    }
+}
+
+/// System that handles state transition request events.
+fn handle_state_transition_requests(
+    mut fight_events: EventReader<RequestFightEvent>,
+    mut mine_events: EventReader<RequestMineEvent>,
+    mut dungeon_events: EventReader<RequestDungeonEvent>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    // Process fight requests
+    if fight_events.read().next().is_some() {
+        next_state.set(AppState::Fight);
+    }
+
+    // Process mine requests
+    if mine_events.read().next().is_some() {
+        next_state.set(AppState::Mine);
+    }
+
+    // Process dungeon requests
+    if dungeon_events.read().next().is_some() {
+        next_state.set(AppState::Dungeon);
     }
 }
 

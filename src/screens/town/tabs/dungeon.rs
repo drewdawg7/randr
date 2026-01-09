@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
-use crate::states::AppState;
+use crate::states::{AppState, RequestDungeonEvent};
 use crate::stats::HasStats;
 
 use super::super::shared::{spawn_menu, MenuOption};
@@ -37,7 +37,7 @@ const DUNGEON_OPTIONS: &[MenuOption] = &[MenuOption {
 fn handle_dungeon_input(
     mut dungeon_state: ResMut<DungeonTabState>,
     mut action_events: EventReader<GameAction>,
-    mut next_state: ResMut<NextState<AppState>>,
+    mut dungeon_events: EventWriter<RequestDungeonEvent>,
 ) {
     for action in action_events.read() {
         match action {
@@ -53,7 +53,9 @@ fn handle_dungeon_input(
                     (dungeon_state.selected_index + 1) % DUNGEON_OPTIONS.len();
             }
             GameAction::Select => match dungeon_state.selected_index {
-                0 => next_state.set(AppState::Dungeon),
+                0 => {
+                    dungeon_events.send(RequestDungeonEvent);
+                }
                 _ => {}
             },
             _ => {}

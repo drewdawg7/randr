@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::Player;
 use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
-use crate::states::AppState;
+use crate::states::{AppState, RequestFightEvent, RequestMineEvent};
 use crate::ui::widgets::spawn_player_stats;
 
 use super::super::shared::{spawn_menu, MenuOption};
@@ -45,7 +45,8 @@ const FIELD_OPTIONS: &[MenuOption] = &[
 fn handle_field_input(
     mut field_state: ResMut<FieldTabState>,
     mut action_events: EventReader<GameAction>,
-    mut next_state: ResMut<NextState<AppState>>,
+    mut fight_events: EventWriter<RequestFightEvent>,
+    mut mine_events: EventWriter<RequestMineEvent>,
 ) {
     for action in action_events.read() {
         match action {
@@ -60,8 +61,12 @@ fn handle_field_input(
                 field_state.selected_index = (field_state.selected_index + 1) % FIELD_OPTIONS.len();
             }
             GameAction::Select => match field_state.selected_index {
-                0 => next_state.set(AppState::Fight),
-                1 => next_state.set(AppState::Mine),
+                0 => {
+                    fight_events.send(RequestFightEvent);
+                }
+                1 => {
+                    mine_events.send(RequestMineEvent);
+                }
                 _ => {}
             },
             _ => {}
