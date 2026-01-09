@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::PlayerResource;
+use crate::ui::inventory_selection_bg;
 use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, FindsItems, InventoryItem, ManagesEquipment, ManagesItems};
 use crate::item::{Item, ItemType};
@@ -333,11 +334,7 @@ fn spawn_item_row(
     is_selected: bool,
 ) {
     let item = item_info.item();
-    let bg_color = if is_selected {
-        Color::srgb(0.35, 0.28, 0.22)
-    } else {
-        Color::srgb(0.2, 0.17, 0.15)
-    };
+    let bg_color = inventory_selection_bg(is_selected);
 
     parent
         .spawn((

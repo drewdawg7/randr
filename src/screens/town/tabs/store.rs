@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::{PlayerResource, StorageResource};
+use crate::ui::{selection_colors, selection_prefix};
 use crate::input::{GameAction, NavigationDirection};
 use crate::item::ItemId;
 use crate::states::AppState;
@@ -491,13 +492,9 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: 
                 let is_selected = i == store_state.buy_selection.selected;
                 let can_afford = player.gold >= item.price;
 
-                let (bg_color, text_color) = if is_selected {
-                    (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-                } else {
-                    (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-                };
+                let (bg_color, text_color) = selection_colors(is_selected);
 
-                let prefix = if is_selected { "> " } else { "  " };
+                let prefix = selection_prefix(is_selected);
 
                 let price_color = if can_afford {
                     Color::srgb(0.9, 0.8, 0.3)
@@ -604,13 +601,9 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player:
                 for (i, inv_item) in inventory_items.iter().enumerate() {
                     let is_selected = i == store_state.sell_selection.selected;
 
-                    let (bg_color, text_color) = if is_selected {
-                        (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-                    } else {
-                        (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-                    };
+                    let (bg_color, text_color) = selection_colors(is_selected);
 
-                    let prefix = if is_selected { "> " } else { "  " };
+                    let prefix = selection_prefix(is_selected);
                     let sell_price = (inv_item.item.gold_value as f32 * 0.5) as i32;
 
                     list.spawn((
@@ -769,13 +762,9 @@ fn spawn_storage_view_ui(
                 for (i, inv_item) in storage_items.iter().enumerate() {
                     let is_selected = i == store_state.storage_view_selection.selected;
 
-                    let (bg_color, text_color) = if is_selected {
-                        (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-                    } else {
-                        (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-                    };
+                    let (bg_color, text_color) = selection_colors(is_selected);
 
-                    let prefix = if is_selected { "> " } else { "  " };
+                    let prefix = selection_prefix(is_selected);
 
                     list.spawn((
                         Node {
@@ -869,13 +858,9 @@ fn spawn_storage_deposit_ui(
                 for (i, inv_item) in inventory_items.iter().enumerate() {
                     let is_selected = i == store_state.deposit_selection.selected;
 
-                    let (bg_color, text_color) = if is_selected {
-                        (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-                    } else {
-                        (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-                    };
+                    let (bg_color, text_color) = selection_colors(is_selected);
 
-                    let prefix = if is_selected { "> " } else { "  " };
+                    let prefix = selection_prefix(is_selected);
 
                     list.spawn((
                         Node {

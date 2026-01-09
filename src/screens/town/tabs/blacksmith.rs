@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::PlayerResource;
+use crate::ui::{selection_colors, selection_prefix};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 use crate::{FindsItems, ManagesItems};
@@ -518,13 +519,9 @@ fn spawn_upgrade_ui(
                     let can_upgrade = inv_item.item.num_upgrades < inv_item.item.max_upgrades;
                     let can_afford = player.gold >= upgrade_cost;
 
-                    let (bg_color, text_color) = if is_selected {
-                        (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-                    } else {
-                        (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-                    };
+                    let (bg_color, text_color) = selection_colors(is_selected);
 
-                    let prefix = if is_selected { "> " } else { "  " };
+                    let prefix = selection_prefix(is_selected);
 
                     list.spawn((
                         Node {
@@ -693,13 +690,9 @@ fn spawn_quality_ui(
                     let has_stone = stone_count > 0;
                     let can_upgrade = inv_item.item.quality.next_quality().is_some();
 
-                    let (bg_color, text_color) = if is_selected {
-                        (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-                    } else {
-                        (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-                    };
+                    let (bg_color, text_color) = selection_colors(is_selected);
 
-                    let prefix = if is_selected { "> " } else { "  " };
+                    let prefix = selection_prefix(is_selected);
 
                     list.spawn((
                         Node {
@@ -827,13 +820,9 @@ fn spawn_smelt_ui(
                     if let Ok(recipe) = Recipe::new(*recipe_id) {
                         let can_craft = recipe.can_craft(&player.0);
 
-                        let (bg_color, text_color) = if is_selected {
-                            (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-                        } else {
-                            (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-                        };
+                        let (bg_color, text_color) = selection_colors(is_selected);
 
-                        let prefix = if is_selected { "> " } else { "  " };
+                        let prefix = selection_prefix(is_selected);
 
                         list.spawn((
                             Node {
@@ -956,13 +945,9 @@ fn spawn_forge_ui(
                     if let Ok(recipe) = Recipe::new(*recipe_id) {
                         let can_craft = recipe.can_craft(&player.0);
 
-                        let (bg_color, text_color) = if is_selected {
-                            (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-                        } else {
-                            (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-                        };
+                        let (bg_color, text_color) = selection_colors(is_selected);
 
-                        let prefix = if is_selected { "> " } else { "  " };
+                        let prefix = selection_prefix(is_selected);
 
                         list.spawn((
                             Node {

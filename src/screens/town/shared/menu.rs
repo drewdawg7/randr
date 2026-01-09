@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::ui::{selection_colors, selection_prefix};
+
 /// A menu option with label and optional description.
 #[derive(Clone)]
 pub struct MenuOption {
@@ -19,13 +21,9 @@ pub fn spawn_menu_option(
     _index: usize,
     is_selected: bool,
 ) {
-    let (bg_color, text_color) = if is_selected {
-        (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-    } else {
-        (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-    };
+    let (bg_color, text_color) = selection_colors(is_selected);
 
-    let prefix = if is_selected { "> " } else { "  " };
+    let prefix = selection_prefix(is_selected);
 
     parent
         .spawn((

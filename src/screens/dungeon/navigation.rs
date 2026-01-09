@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::dungeon::{Direction, Dungeon, RoomType};
+use crate::ui::nav_selection_text;
 use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonScreenState, DungeonViewMode};
 
@@ -268,11 +269,7 @@ fn update_navigation_visuals(
             false
         };
 
-        if is_selected {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0)); // White
-        } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7)); // Gray
-        }
+        *color = TextColor(nav_selection_text(is_selected));
     }
 }
 

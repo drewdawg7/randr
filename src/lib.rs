@@ -9,6 +9,7 @@ pub mod magic;
 pub mod mob;
 pub mod player;
 pub mod town;
+pub mod ui;
 pub mod entities;
 pub mod combat;
 pub mod item;

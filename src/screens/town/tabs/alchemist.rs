@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::entities::progression::HasProgression;
+use crate::ui::{selection_colors, selection_prefix};
 use crate::game::PlayerResource;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::ManagesItems;
@@ -318,13 +319,9 @@ fn spawn_recipe_item(
         Color::srgb(0.8, 0.3, 0.3)
     };
 
-    let (bg_color, text_color) = if is_selected {
-        (Color::srgb(0.3, 0.3, 0.6), Color::WHITE)
-    } else {
-        (Color::NONE, Color::srgb(0.8, 0.8, 0.8))
-    };
+    let (bg_color, text_color) = selection_colors(is_selected);
 
-    let prefix = if is_selected { "> " } else { "  " };
+    let prefix = selection_prefix(is_selected);
 
     parent
         .spawn((

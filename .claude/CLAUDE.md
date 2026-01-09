@@ -68,3 +68,15 @@ Use the Task tool with these specialized agents for complex tasks:
 - Creating automation → `skill-optimizer`
 - Complex multi-step task → `session-orchestrator`
 
+### Agent Selection Triggers
+
+Start with the right agent based on task type:
+
+| Task Type | First Agent | Why |
+|-----------|-------------|-----|
+| "Work on issue #X" | `github-issue-analyzer` | Extract requirements before exploring code |
+| "Explore/find/trace Rust" | `rust-codebase-researcher` | LSP + ast-grep for accurate navigation |
+| "Audit/review code" | `codebase-issue-finder` | Systematic quality analysis |
+| "Complex multi-domain" | `session-orchestrator` | Coordinate multiple agents |
+| "Create/improve skill" | `skill-optimizer` | Session pattern analysis |
+
