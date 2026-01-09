@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::GameSprites;
+use crate::assets::{GameSprites, SpriteSheetKey};
 
 const CELL_SIZE: f32 = 48.0;
 const GRID_SIZE: usize = 5;
@@ -59,14 +59,18 @@ fn on_add_item_grid(
     let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
 
     // Get the cell background sprite if available
-    let cell_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node("Slice_10"));
+    let cell_image = game_sprites
+        .get(SpriteSheetKey::UiAll)
+        .and_then(|s| s.image_node("Slice_10"));
 
     // Get the selector sprite frames if available
-    let selector_data = game_sprites.ui_selectors.as_ref().and_then(|selectors| {
-        let idx1 = selectors.get("Slice_61")?;
-        let idx2 = selectors.get("Slice_91")?;
-        Some((selectors.image_node("Slice_61")?, [idx1, idx2]))
-    });
+    let selector_data = game_sprites
+        .get(SpriteSheetKey::UiSelectors)
+        .and_then(|selectors| {
+            let idx1 = selectors.get("Slice_61")?;
+            let idx2 = selectors.get("Slice_91")?;
+            Some((selectors.image_node("Slice_61")?, [idx1, idx2]))
+        });
 
     commands
         .entity(entity)
@@ -118,7 +122,10 @@ fn on_add_item_grid(
                 // Add item sprite if there's an item at this index
                 if let Some(item_grid) = item_grid {
                     if let Some(entry) = item_grid.items.get(i) {
-                        if let Some(icon_img) = game_sprites.icon_items.as_ref().and_then(|s| s.image_node(entry.sprite_name)) {
+                        if let Some(icon_img) = game_sprites
+                            .get(SpriteSheetKey::IconItems)
+                            .and_then(|s| s.image_node(entry.sprite_name))
+                        {
                             cell.with_children(|cell_content| {
                                 cell_content.spawn((
                                     Node {
@@ -155,7 +162,7 @@ fn update_grid_selector(
             if let Ok((cell_entity, grid_cell, _)) = grid_cells.get(child) {
                 if grid_cell.index == item_grid.selected_index {
                     // Add selector to this cell
-                    if let Some(selectors_sheet) = &game_sprites.ui_selectors {
+                    if let Some(selectors_sheet) = game_sprites.get(SpriteSheetKey::UiSelectors) {
                         if let (Some(idx1), Some(idx2), Some(img)) = (
                             selectors_sheet.get("Slice_61"),
                             selectors_sheet.get("Slice_91"),

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameFonts, GameSprites};
+use crate::assets::{GameFonts, GameSprites, SpriteSheetKey};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
@@ -205,7 +205,7 @@ fn update_sprite_menu_items(
     game_sprites: Res<GameSprites>,
     mut query: Query<(Entity, &SpriteMenuItem, Option<&mut ImageNode>)>,
 ) {
-    let Some(ui_all) = &game_sprites.ui_all else {
+    let Some(ui_all) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
     };
 
@@ -244,7 +244,7 @@ fn populate_randr_title(
     game_sprites: Res<GameSprites>,
     game_fonts: Res<GameFonts>,
 ) {
-    let Some(ui_all) = &game_sprites.ui_all else {
+    let Some(ui_all) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
     };
 

@@ -6,8 +6,10 @@
 //! # Usage
 //!
 //! ```ignore
-//! // Access sprites by name
-//! if let Some(icons) = &game_sprites.ui_icons {
+//! use crate::assets::sprites::SpriteSheetKey;
+//!
+//! // Access sprites by key
+//! if let Some(icons) = game_sprites.get(SpriteSheetKey::UiIcons) {
 //!     if let Some(index) = icons.get("heart_full") {
 //!         commands.spawn((
 //!             Sprite::from_atlas_image(
@@ -26,6 +28,64 @@ use bevy::{
 };
 use serde::Deserialize;
 use std::collections::HashMap;
+
+// ============================================================================
+// Sprite Sheet Key Enum
+// ============================================================================
+
+/// Keys for identifying sprite sheets.
+///
+/// Add new variants here when adding new sprite sheets to the game.
+/// Remember to also update `SpriteSheetKey::all()`.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum SpriteSheetKey {
+    /// UI icons (hearts, stars, items, arrows, etc.)
+    UiIcons,
+    /// UI buttons (various sizes and colors)
+    UiButtons,
+    /// Book UI elements (frames, backgrounds)
+    BookUi,
+    /// UI frames and borders
+    UiFrames,
+    /// UI bars (health, mana, progress)
+    UiBars,
+    /// Combined UI sprite sheet (Cute Fantasy UI pack)
+    UiAll,
+    /// Item icons (potions, weapons, armor, etc.)
+    IconItems,
+    /// UI selectors (selection highlights, cursors)
+    UiSelectors,
+}
+
+impl SpriteSheetKey {
+    /// Get all sprite sheet keys.
+    pub const fn all() -> &'static [Self] {
+        &[
+            Self::UiIcons,
+            Self::UiButtons,
+            Self::BookUi,
+            Self::UiFrames,
+            Self::UiBars,
+            Self::UiAll,
+            Self::IconItems,
+            Self::UiSelectors,
+        ]
+    }
+
+    /// Get the asset file name (without extension) for this sprite sheet.
+    pub const fn asset_name(&self) -> &'static str {
+        match self {
+            Self::UiIcons => "ui_icons",
+            Self::UiButtons => "ui_buttons",
+            Self::BookUi => "book_ui",
+            Self::UiFrames => "ui_frames",
+            Self::UiBars => "ui_bars",
+            Self::UiAll => "ui_all",
+            Self::IconItems => "icon_items",
+            Self::UiSelectors => "ui_selectors",
+        }
+    }
+}
 
 // ============================================================================
 // Sprite Sheet Metadata Types (for JSON parsing)
@@ -334,26 +394,30 @@ impl GameFonts {
 
 /// Resource containing all loaded sprite sheets.
 ///
-/// Add fields here for each sprite sheet your game uses.
-/// Sheets are loaded from `assets/sprites/` with matching `.json` metadata.
+/// Sprite sheets are indexed by `SpriteSheetKey` and loaded from
+/// `assets/sprites/` with matching `.json` metadata.
 #[derive(Resource, Default)]
 pub struct GameSprites {
-    /// UI icons (hearts, stars, items, arrows, etc.)
-    pub ui_icons: Option<SpriteSheet>,
-    /// UI buttons (various sizes and colors)
-    pub ui_buttons: Option<SpriteSheet>,
-    /// Book UI elements (frames, backgrounds)
-    pub book_ui: Option<SpriteSheet>,
-    /// UI frames and borders
-    pub ui_frames: Option<SpriteSheet>,
-    /// UI bars (health, mana, progress)
-    pub ui_bars: Option<SpriteSheet>,
-    /// Combined UI sprite sheet (Cute Fantasy UI pack)
-    pub ui_all: Option<SpriteSheet>,
-    /// Item icons (potions, weapons, armor, etc.)
-    pub icon_items: Option<SpriteSheet>,
-    /// UI selectors (selection highlights, cursors)
-    pub ui_selectors: Option<SpriteSheet>,
+    sheets: HashMap<SpriteSheetKey, SpriteSheet>,
+}
+
+impl GameSprites {
+    /// Get a sprite sheet by key.
+    ///
+    /// Returns `None` if the sprite sheet hasn't been loaded yet.
+    pub fn get(&self, key: SpriteSheetKey) -> Option<&SpriteSheet> {
+        self.sheets.get(&key)
+    }
+
+    /// Insert a sprite sheet.
+    fn insert(&mut self, key: SpriteSheetKey, sheet: SpriteSheet) {
+        self.sheets.insert(key, sheet);
+    }
+
+    /// Check if a sprite sheet is loaded.
+    fn contains(&self, key: SpriteSheetKey) -> bool {
+        self.sheets.contains_key(&key)
+    }
 }
 
 // ============================================================================
@@ -363,14 +427,7 @@ pub struct GameSprites {
 /// Tracks pending sprite sheet loads.
 #[derive(Resource, Default)]
 struct PendingSpriteSheets {
-    ui_icons: Option<Handle<SpriteSheetMeta>>,
-    ui_buttons: Option<Handle<SpriteSheetMeta>>,
-    book_ui: Option<Handle<SpriteSheetMeta>>,
-    ui_frames: Option<Handle<SpriteSheetMeta>>,
-    ui_bars: Option<Handle<SpriteSheetMeta>>,
-    ui_all: Option<Handle<SpriteSheetMeta>>,
-    icon_items: Option<Handle<SpriteSheetMeta>>,
-    ui_selectors: Option<Handle<SpriteSheetMeta>>,
+    handles: HashMap<SpriteSheetKey, Handle<SpriteSheetMeta>>,
 }
 
 /// Build a SpriteSheet from loaded metadata.
@@ -412,32 +469,19 @@ fn finalize_sprite_sheets(
             continue;
         };
 
-        // Helper macro to reduce boilerplate
-        macro_rules! check_and_build {
-            ($field:ident, $name:literal) => {
-                if let Some(handle) = &pending.$field {
-                    if handle.id() == *id && game_sprites.$field.is_none() {
-                        if let Some(meta) = meta_assets.get(*id) {
-                            game_sprites.$field = Some(build_sprite_sheet(
-                                meta,
-                                $name,
-                                &asset_server,
-                                &mut texture_atlas_layouts,
-                            ));
-                        }
-                    }
+        for (key, handle) in &pending.handles {
+            if handle.id() == *id && !game_sprites.contains(*key) {
+                if let Some(meta) = meta_assets.get(*id) {
+                    let sheet = build_sprite_sheet(
+                        meta,
+                        key.asset_name(),
+                        &asset_server,
+                        &mut texture_atlas_layouts,
+                    );
+                    game_sprites.insert(*key, sheet);
                 }
-            };
+            }
         }
-
-        check_and_build!(ui_icons, "ui_icons");
-        check_and_build!(ui_buttons, "ui_buttons");
-        check_and_build!(book_ui, "book_ui");
-        check_and_build!(ui_frames, "ui_frames");
-        check_and_build!(ui_bars, "ui_bars");
-        check_and_build!(ui_all, "ui_all");
-        check_and_build!(icon_items, "icon_items");
-        check_and_build!(ui_selectors, "ui_selectors");
     }
 }
 
@@ -509,15 +553,12 @@ fn load_assets(
 ) {
     // Load fonts
     game_fonts.pixel = asset_server.load("fonts/CuteFantasy-5x9.ttf");
-    // Kick off async sprite sheet loads
-    pending.ui_icons = Some(asset_server.load("sprites/ui_icons.json"));
-    pending.ui_buttons = Some(asset_server.load("sprites/ui_buttons.json"));
-    pending.book_ui = Some(asset_server.load("sprites/book_ui.json"));
-    pending.ui_frames = Some(asset_server.load("sprites/ui_frames.json"));
-    pending.ui_bars = Some(asset_server.load("sprites/ui_bars.json"));
-    pending.ui_all = Some(asset_server.load("sprites/ui_all.json"));
-    pending.icon_items = Some(asset_server.load("sprites/icon_items.json"));
-    pending.ui_selectors = Some(asset_server.load("sprites/ui_selectors.json"));
+
+    // Kick off async sprite sheet loads for all registered sheets
+    for key in SpriteSheetKey::all() {
+        let path = format!("sprites/{}.json", key.asset_name());
+        pending.handles.insert(*key, asset_server.load(&path));
+    }
 
     // Legacy sprite loading (individual files)
     game_assets.sprites.mine_wall = try_load(&asset_server, "sprites/mine/wall.png");

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameFonts, GameSprites};
+use crate::assets::{GameFonts, GameSprites, SpriteSheetKey};
 use crate::ui::UiText;
 use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
@@ -86,7 +86,9 @@ fn spawn_buy_ui(
     let panel_width = 240.0; // 5 columns × 48px
     let panel_height = 144.0; // 3 rows × 48px
 
-    let panel_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node_sliced("Slice_2", 10.0));
+    let panel_image = game_sprites
+        .get(SpriteSheetKey::UiAll)
+        .and_then(|s| s.image_node_sliced("Slice_2", 10.0));
 
     let mut panel = parent.spawn((
         StoreInfoPanel {

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::GameSprites;
+use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::ui::UiText;
 use crate::entities::Progression;
 use crate::entities::progression::HasProgression;
@@ -29,9 +29,15 @@ fn on_add_player_stats(
     let entity = trigger.entity();
 
     // Get sprite images
-    let heart_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node("Slice_3013"));
-    let gold_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node("Slice_3019"));
-    let background_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node_sliced("Slice_8", 8.0));
+    let heart_image = game_sprites
+        .get(SpriteSheetKey::UiAll)
+        .and_then(|s| s.image_node("Slice_3013"));
+    let gold_image = game_sprites
+        .get(SpriteSheetKey::UiAll)
+        .and_then(|s| s.image_node("Slice_3019"));
+    let background_image = game_sprites
+        .get(SpriteSheetKey::UiAll)
+        .and_then(|s| s.image_node_sliced("Slice_8", 8.0));
 
     let mut entity_commands = commands.entity(entity);
     entity_commands.insert(Node {
