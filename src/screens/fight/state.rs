@@ -39,27 +39,3 @@ impl FightScreenState {
         self.post_combat_selection = 0;
     }
 }
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CombatOrigin {
-    Field,
-    DungeonRoom,
-    DungeonBoss,
-}
-
-#[derive(Resource, Default)]
-pub struct CombatSource {
-    pub origin: Option<CombatOrigin>,
-}
-
-impl CombatSource {
-    pub fn new(origin: CombatOrigin) -> Self {
-        Self {
-            origin: Some(origin),
-        }
-    }
-
-    pub fn clear(&mut self) {
-        self.origin = None;
-    }
-}

@@ -95,7 +95,7 @@ fn spawn_player_side(parent: &mut ChildBuilder, player: &Player, health: i32, ma
 
             player_side.spawn((
                 PlayerHealthBar,
-                HealthBar { entity_name: player_name.clone() },
+                HealthBar,
                 Node {
                     flex_direction: FlexDirection::Column,
                     row_gap: Val::Px(5.0),
@@ -157,7 +157,7 @@ fn spawn_enemy_side(parent: &mut ChildBuilder, enemy_name: &str, health: i32, ma
 
             enemy_side.spawn((
                 EnemyHealthBar,
-                HealthBar { entity_name: name.clone() },
+                HealthBar,
                 Node {
                     flex_direction: FlexDirection::Column,
                     row_gap: Val::Px(5.0),
