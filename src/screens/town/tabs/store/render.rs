@@ -501,8 +501,8 @@ pub fn populate_store_info_panel(
         // Get item spec for stats
         let spec = item.item_id.spec();
 
-        // Brown text color matching the PLAY button style
-        let text_color = TextColor(Color::srgb(0.55, 0.35, 0.25));
+        // Dark brown text color
+        let text_color = TextColor(Color::srgb(0.4, 0.25, 0.15));
 
         // Remove the marker and add children with item details
         commands
@@ -512,7 +512,7 @@ pub fn populate_store_info_panel(
                 // Item name
                 parent.spawn((
                     Text::new(item.name),
-                    game_fonts.pixel_font(18.0),
+                    game_fonts.pixel_font(24.0),
                     text_color,
                 ));
 
@@ -530,7 +530,7 @@ pub fn populate_store_info_panel(
                         };
                         parent.spawn((
                             Text::new(format!("{}: +{}", stat_name, value)),
-                            game_fonts.pixel_font(14.0),
+                            game_fonts.pixel_font(18.0),
                             text_color,
                         ));
                     }
@@ -539,7 +539,7 @@ pub fn populate_store_info_panel(
                 // Cost
                 parent.spawn((
                     Text::new(format!("{} gold", item.price)),
-                    game_fonts.pixel_font(14.0),
+                    game_fonts.pixel_font(18.0),
                     text_color,
                 ));
             });
