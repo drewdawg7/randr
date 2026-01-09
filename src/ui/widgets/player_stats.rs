@@ -1,7 +1,7 @@
 use bevy::prelude::*;
-use bevy::ui::widget::NodeImageMode;
 
 use crate::assets::GameSprites;
+use crate::ui::UiText;
 use crate::entities::Progression;
 use crate::entities::progression::HasProgression;
 use crate::game::Player;
@@ -28,45 +28,10 @@ fn on_add_player_stats(
 ) {
     let entity = trigger.entity();
 
-    // Get sprite images if available
-    let (heart_image, gold_image, background_image) = game_sprites
-        .ui_all
-        .as_ref()
-        .map(|ui_all| {
-            let heart = ui_all.get("Slice_3013").map(|idx| {
-                ImageNode::from_atlas_image(
-                    ui_all.texture.clone(),
-                    TextureAtlas {
-                        layout: ui_all.layout.clone(),
-                        index: idx,
-                    },
-                )
-            });
-            let gold = ui_all.get("Slice_3019").map(|idx| {
-                ImageNode::from_atlas_image(
-                    ui_all.texture.clone(),
-                    TextureAtlas {
-                        layout: ui_all.layout.clone(),
-                        index: idx,
-                    },
-                )
-            });
-            let background = ui_all.get("Slice_8").map(|idx| {
-                ImageNode::from_atlas_image(
-                    ui_all.texture.clone(),
-                    TextureAtlas {
-                        layout: ui_all.layout.clone(),
-                        index: idx,
-                    },
-                )
-                .with_mode(NodeImageMode::Sliced(TextureSlicer {
-                    border: BorderRect::square(8.0),
-                    ..default()
-                }))
-            });
-            (heart, gold, background)
-        })
-        .unwrap_or((None, None, None));
+    // Get sprite images
+    let heart_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node("Slice_3013"));
+    let gold_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node("Slice_3019"));
+    let background_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node_sliced("Slice_8", 8.0));
 
     let mut entity_commands = commands.entity(entity);
     entity_commands.insert(Node {
@@ -101,30 +66,26 @@ fn on_add_player_stats(
                 }
 
                 // HP values
-                hp_row.spawn((
-                    Text::new(format!("{}/{}", player.hp(), player.max_hp())),
-                    TextFont {
-                        font_size: 16.0,
-                        ..default()
-                    },
-                    TextColor(Color::srgb(0.8, 0.3, 0.3)),
-                ));
+                hp_row.spawn(
+                    UiText::new(format!("{}/{}", player.hp(), player.max_hp()))
+                        .size(16.0)
+                        .red()
+                        .build(),
+                );
             });
 
         // Level & XP
-        stats.spawn((
-            Text::new(format!(
+        stats.spawn(
+            UiText::new(format!(
                 "Level: {}  XP: {}/{}",
                 player.level(),
                 player.prog.xp,
                 Progression::xp_to_next_level(player.level())
-            )),
-            TextFont {
-                font_size: 16.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.5, 0.8, 0.5)),
-        ));
+            ))
+            .size(16.0)
+            .green()
+            .build(),
+        );
 
         // Gold row with coin icon + value
         stats
@@ -146,14 +107,9 @@ fn on_add_player_stats(
                 }
 
                 // Gold value
-                gold_row.spawn((
-                    Text::new(format!("{}", player.gold)),
-                    TextFont {
-                        font_size: 16.0,
-                        ..default()
-                    },
-                    TextColor(Color::srgb(0.9, 0.8, 0.3)),
-                ));
+                gold_row.spawn(
+                    UiText::new(format!("{}", player.gold)).size(16.0).gold().build(),
+                );
             });
     });
 }

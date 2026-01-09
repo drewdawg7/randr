@@ -356,28 +356,6 @@ pub struct GameSprites {
     pub ui_selectors: Option<SpriteSheet>,
 }
 
-impl GameSprites {
-    /// Get an ImageNode from the ui_all sheet.
-    pub fn ui(&self, name: &str) -> Option<ImageNode> {
-        self.ui_all.as_ref()?.image_node(name)
-    }
-
-    /// Get a 9-slice ImageNode from the ui_all sheet.
-    pub fn ui_sliced(&self, name: &str, border: f32) -> Option<ImageNode> {
-        self.ui_all.as_ref()?.image_node_sliced(name, border)
-    }
-
-    /// Get an ImageNode from the icon_items sheet.
-    pub fn icon(&self, name: &str) -> Option<ImageNode> {
-        self.icon_items.as_ref()?.image_node(name)
-    }
-
-    /// Get an ImageNode from the ui_selectors sheet.
-    pub fn selector(&self, name: &str) -> Option<ImageNode> {
-        self.ui_selectors.as_ref()?.image_node(name)
-    }
-}
-
 // ============================================================================
 // Async Loading Infrastructure
 // ============================================================================

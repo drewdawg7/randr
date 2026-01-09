@@ -59,32 +59,13 @@ fn on_add_item_grid(
     let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
 
     // Get the cell background sprite if available
-    let cell_image = game_sprites.ui_all.as_ref().and_then(|ui_all| {
-        ui_all.get("Slice_10").map(|idx| {
-            ImageNode::from_atlas_image(
-                ui_all.texture.clone(),
-                TextureAtlas {
-                    layout: ui_all.layout.clone(),
-                    index: idx,
-                },
-            )
-        })
-    });
+    let cell_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node("Slice_10"));
 
     // Get the selector sprite frames if available
     let selector_data = game_sprites.ui_selectors.as_ref().and_then(|selectors| {
         let idx1 = selectors.get("Slice_61")?;
         let idx2 = selectors.get("Slice_91")?;
-        Some((
-            ImageNode::from_atlas_image(
-                selectors.texture.clone(),
-                TextureAtlas {
-                    layout: selectors.layout.clone(),
-                    index: idx1,
-                },
-            ),
-            [idx1, idx2],
-        ))
+        Some((selectors.image_node("Slice_61")?, [idx1, idx2]))
     });
 
     commands
@@ -137,25 +118,17 @@ fn on_add_item_grid(
                 // Add item sprite if there's an item at this index
                 if let Some(item_grid) = item_grid {
                     if let Some(entry) = item_grid.items.get(i) {
-                        if let Some(icon_items) = &game_sprites.icon_items {
-                            if let Some(idx) = icon_items.get(entry.sprite_name) {
-                                cell.with_children(|cell_content| {
-                                    cell_content.spawn((
-                                        Node {
-                                            width: Val::Px(32.0),
-                                            height: Val::Px(32.0),
-                                            ..default()
-                                        },
-                                        ImageNode::from_atlas_image(
-                                            icon_items.texture.clone(),
-                                            TextureAtlas {
-                                                layout: icon_items.layout.clone(),
-                                                index: idx,
-                                            },
-                                        ),
-                                    ));
-                                });
-                            }
+                        if let Some(icon_img) = game_sprites.icon_items.as_ref().and_then(|s| s.image_node(entry.sprite_name)) {
+                            cell.with_children(|cell_content| {
+                                cell_content.spawn((
+                                    Node {
+                                        width: Val::Px(32.0),
+                                        height: Val::Px(32.0),
+                                        ..default()
+                                    },
+                                    icon_img,
+                                ));
+                            });
                         }
                     }
                 }
@@ -183,9 +156,11 @@ fn update_grid_selector(
                 if grid_cell.index == item_grid.selected_index {
                     // Add selector to this cell
                     if let Some(selectors_sheet) = &game_sprites.ui_selectors {
-                        let idx1 = selectors_sheet.get("Slice_61");
-                        let idx2 = selectors_sheet.get("Slice_91");
-                        if let (Some(idx1), Some(idx2)) = (idx1, idx2) {
+                        if let (Some(idx1), Some(idx2), Some(img)) = (
+                            selectors_sheet.get("Slice_61"),
+                            selectors_sheet.get("Slice_91"),
+                            selectors_sheet.image_node("Slice_61"),
+                        ) {
                             commands.entity(cell_entity).with_children(|cell| {
                                 cell.spawn((
                                     GridSelector {
@@ -199,13 +174,7 @@ fn update_grid_selector(
                                         height: Val::Px(CELL_SIZE),
                                         ..default()
                                     },
-                                    ImageNode::from_atlas_image(
-                                        selectors_sheet.texture.clone(),
-                                        TextureAtlas {
-                                            layout: selectors_sheet.layout.clone(),
-                                            index: idx1,
-                                        },
-                                    ),
+                                    img,
                                 ));
                             });
                         }

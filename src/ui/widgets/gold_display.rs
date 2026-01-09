@@ -53,17 +53,7 @@ fn on_add_gold_display(
     };
 
     // Get gold icon
-    let gold_image = game_sprites.ui_all.as_ref().and_then(|ui_all| {
-        ui_all.get("Slice_3019").map(|idx| {
-            ImageNode::from_atlas_image(
-                ui_all.texture.clone(),
-                TextureAtlas {
-                    layout: ui_all.layout.clone(),
-                    index: idx,
-                },
-            )
-        })
-    });
+    let gold_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node("Slice_3019"));
 
     // Icon size scales with font size
     let icon_size = gold_display.font_size;

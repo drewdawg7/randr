@@ -1,7 +1,7 @@
 use bevy::prelude::*;
-use bevy::ui::widget::NodeImageMode;
 
 use crate::assets::{GameFonts, GameSprites};
+use crate::ui::UiText;
 use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
@@ -58,18 +58,7 @@ pub fn spawn_store_ui(
 /// Spawn the main menu UI.
 fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) {
     // Title
-    parent.spawn((
-        Text::new("Welcome to the Store"),
-        TextFont {
-            font_size: 28.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::new("Welcome to the Store").heading().yellow().margin_bottom(10.0).build_with_node());
 
     // Menu options
     spawn_menu(
@@ -91,38 +80,13 @@ fn spawn_buy_ui(
     game_sprites: &Res<GameSprites>,
 ) {
     // Title
-    parent.spawn((
-        Text::new("Buy Items"),
-        TextFont {
-            font_size: 28.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::new("Buy Items").heading().yellow().margin_bottom(10.0).build_with_node());
 
     // Info panel above the grid (same width as grid, 3 rows tall)
     let panel_width = 240.0; // 5 columns × 48px
     let panel_height = 144.0; // 3 rows × 48px
 
-    let panel_image = game_sprites.ui_all.as_ref().and_then(|ui_all| {
-        ui_all.get("Slice_2").map(|idx| {
-            ImageNode::from_atlas_image(
-                ui_all.texture.clone(),
-                TextureAtlas {
-                    layout: ui_all.layout.clone(),
-                    index: idx,
-                },
-            )
-            .with_mode(NodeImageMode::Sliced(TextureSlicer {
-                border: BorderRect::square(10.0),
-                ..default()
-            }))
-        })
-    });
+    let panel_image = game_sprites.ui_all.as_ref().and_then(|s| s.image_node_sliced("Slice_2", 10.0));
 
     let mut panel = parent.spawn((
         StoreInfoPanel {
@@ -161,31 +125,13 @@ fn spawn_buy_ui(
 /// Spawn the sell screen UI.
 fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, player: &Player) {
     // Title
-    parent.spawn((
-        Text::new("Sell Items"),
-        TextFont {
-            font_size: 28.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::new("Sell Items").heading().yellow().margin_bottom(10.0).build_with_node());
 
     // Get player inventory items
     let inventory_items = player.inventory.items.as_slice();
 
     if inventory_items.is_empty() {
-        parent.spawn((
-            Text::new("You have no items to sell."),
-            TextFont {
-                font_size: 18.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.6, 0.6, 0.6)),
-        ));
+        parent.spawn(UiText::new("You have no items to sell.").dark_gray().build());
     } else {
         parent
             .spawn(Node {
@@ -263,18 +209,7 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
 /// Spawn the storage menu UI.
 fn spawn_storage_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) {
     // Title
-    parent.spawn((
-        Text::new("Storage"),
-        TextFont {
-            font_size: 28.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::new("Storage").heading().yellow().margin_bottom(10.0).build_with_node());
 
     // Menu options
     spawn_menu(
@@ -295,31 +230,13 @@ fn spawn_storage_view_ui(
     storage: &Storage,
 ) {
     // Title
-    parent.spawn((
-        Text::new("Storage - View & Withdraw"),
-        TextFont {
-            font_size: 28.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::new("Storage - View & Withdraw").heading().yellow().margin_bottom(10.0).build_with_node());
 
     // Get storage items
     let storage_items = storage.inventory.items.as_slice();
 
     if storage_items.is_empty() {
-        parent.spawn((
-            Text::new("Storage is empty."),
-            TextFont {
-                font_size: 18.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.6, 0.6, 0.6)),
-        ));
+        parent.spawn(UiText::new("Storage is empty.").dark_gray().build());
     } else {
         parent
             .spawn(Node {
@@ -386,31 +303,13 @@ fn spawn_storage_deposit_ui(
     player: &Player,
 ) {
     // Title
-    parent.spawn((
-        Text::new("Storage - Deposit Items"),
-        TextFont {
-            font_size: 28.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::new("Storage - Deposit Items").heading().yellow().margin_bottom(10.0).build_with_node());
 
     // Get player inventory items
     let inventory_items = player.inventory.items.as_slice();
 
     if inventory_items.is_empty() {
-        parent.spawn((
-            Text::new("You have no items to deposit."),
-            TextFont {
-                font_size: 18.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.6, 0.6, 0.6)),
-        ));
+        parent.spawn(UiText::new("You have no items to deposit.").dark_gray().build());
     } else {
         parent
             .spawn(Node {

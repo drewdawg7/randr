@@ -229,13 +229,9 @@ fn update_sprite_menu_items(
             }
             None => {
                 // First time - insert the ImageNode
-                commands.entity(entity).insert(ImageNode::from_atlas_image(
-                    ui_all.texture.clone(),
-                    TextureAtlas {
-                        layout: ui_all.layout.clone(),
-                        index,
-                    },
-                ));
+                if let Some(img) = ui_all.image_node(slice_name) {
+                    commands.entity(entity).insert(img);
+                }
             }
         }
     }
@@ -253,20 +249,14 @@ fn populate_randr_title(
     };
 
     for entity in &query {
-        let Some(index) = ui_all.get("Slice_3353") else {
+        let Some(img) = ui_all.image_node("Slice_3353") else {
             continue;
         };
 
         commands
             .entity(entity)
             .remove::<RandrTitle>()
-            .insert(ImageNode::from_atlas_image(
-                ui_all.texture.clone(),
-                TextureAtlas {
-                    layout: ui_all.layout.clone(),
-                    index,
-                },
-            ))
+            .insert(img)
             .with_children(|parent| {
                 parent.spawn((
                     Text::new("RANDR"),
