@@ -6,7 +6,7 @@ use crate::states::AppState;
 use crate::stats::HasStats;
 
 use super::super::shared::{spawn_menu, MenuOption};
-use super::super::{ContentArea, CurrentTab, TabContent, TownTab};
+use super::super::{CurrentTab, TabContent, TownTab};
 
 /// Plugin for the Dungeon tab.
 pub struct DungeonTabPlugin;
@@ -15,10 +15,7 @@ impl Plugin for DungeonTabPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<DungeonTabState>().add_systems(
             Update,
-            (
-                handle_dungeon_input,
-                render_dungeon_content.run_if(resource_changed::<DungeonTabState>),
-            )
+            handle_dungeon_input
                 .run_if(in_state(AppState::Town))
                 .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Dungeon),
         );
@@ -62,27 +59,6 @@ fn handle_dungeon_input(
             _ => {}
         }
     }
-}
-
-/// Render dungeon content when state changes.
-fn render_dungeon_content(
-    mut commands: Commands,
-    dungeon_state: Res<DungeonTabState>,
-    player: Res<PlayerResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state, &player);
 }
 
 /// Spawn the dungeon UI.

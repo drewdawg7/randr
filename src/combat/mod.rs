@@ -1,10 +1,18 @@
-pub(crate) mod attack;
-pub(crate) mod result;
-pub(crate) mod state;
-pub(crate) mod system;
-pub(crate) mod traits;
-pub(crate) mod tests;
+mod attack;
+pub mod orchestration;
+pub mod plugin;
+mod result;
+mod state;
+mod system;
+mod traits;
+mod tests;
+
 pub(crate) use attack::*;
+pub use orchestration::{CombatLogState, PlayerCombatAction, PostCombatAction};
+pub use plugin::{
+    ActiveCombatResource, AttackPerformed, CombatEnded, CombatPhaseState, CombatPlugin,
+    CombatSourceResource, CombatStarted, PlayerDefeat, PlayerVictory,
+};
 pub(crate) use result::*;
 pub(crate) use state::*;
 pub(crate) use system::*;

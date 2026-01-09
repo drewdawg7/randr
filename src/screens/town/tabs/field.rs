@@ -7,7 +7,7 @@ use crate::states::AppState;
 use crate::stats::HasStats;
 
 use super::super::shared::{spawn_menu, MenuOption};
-use super::super::{ContentArea, CurrentTab, TabContent, TownTab};
+use super::super::{CurrentTab, TabContent, TownTab};
 
 /// Plugin for the Field tab.
 pub struct FieldTabPlugin;
@@ -18,11 +18,7 @@ impl Plugin for FieldTabPlugin {
             .add_systems(OnExit(AppState::Town), clear_game_action_events)
             .add_systems(
                 Update,
-                (
-                    handle_field_input,
-                    render_field_content.run_if(resource_changed::<FieldTabState>),
-                )
-                    .chain()
+                handle_field_input
                     .run_if(in_state(AppState::Town))
                     .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Field),
             );
@@ -72,27 +68,6 @@ fn handle_field_input(
             _ => {}
         }
     }
-}
-
-/// Render field content when state changes.
-fn render_field_content(
-    mut commands: Commands,
-    field_state: Res<FieldTabState>,
-    player: Res<PlayerResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_field_ui(&mut commands, content_entity, &field_state, &player);
 }
 
 /// Spawn the field UI.

@@ -7,7 +7,7 @@ use crate::states::AppState;
 use crate::{FindsItems, ManagesItems};
 
 use super::super::shared::{spawn_menu, MenuOption, SelectionState};
-use super::super::{ContentArea, CurrentTab, TabContent, TownTab};
+use super::super::{CurrentTab, TabContent, TownTab};
 
 /// Plugin for the Store tab.
 pub struct StoreTabPlugin;
@@ -16,10 +16,7 @@ impl Plugin for StoreTabPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<StoreTabState>().add_systems(
             Update,
-            (
-                handle_store_input,
-                render_store_content.run_if(resource_changed::<StoreTabState>),
-            )
+            handle_store_input
                 .run_if(in_state(AppState::Town))
                 .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Store),
         );
@@ -397,28 +394,6 @@ fn handle_storage_deposit_input(
         }
         _ => {}
     }
-}
-
-/// Render store content when state changes.
-fn render_store_content(
-    mut commands: Commands,
-    store_state: Res<StoreTabState>,
-    player: Res<PlayerResource>,
-    storage: Res<StorageResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_store_ui(&mut commands, content_entity, &store_state, &player, &storage);
 }
 
 /// Spawn the store UI based on current mode.

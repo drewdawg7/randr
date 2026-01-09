@@ -13,18 +13,20 @@ use tabs::{
     AlchemistTabState, BlacksmithTabState, DungeonTabState, FieldTabState, StoreTabState,
 };
 
-/// System set for tab navigation - tab content systems should run after this.
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TabNavigationSet;
 
-/// Plugin for the Town Hub screen.
+#[derive(Resource, Default)]
+struct ForceTabRefresh(bool);
+
 pub struct TownPlugin;
 
 impl Plugin for TownPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<CurrentTab>()
+            .init_resource::<ForceTabRefresh>()
             .add_plugins(TabsPlugin)
-            .add_systems(OnEnter(AppState::Town), setup_town_ui)
+            .add_systems(OnEnter(AppState::Town), (setup_town_ui, trigger_tab_refresh).chain())
             .add_systems(OnExit(AppState::Town), cleanup_town_ui)
             .add_systems(
                 Update,
@@ -32,7 +34,6 @@ impl Plugin for TownPlugin {
                     .in_set(TabNavigationSet)
                     .run_if(in_state(AppState::Town)),
             )
-            // Centralized tab content rendering - runs after navigation, handles ALL tabs
             .add_systems(
                 Update,
                 render_tab_content
@@ -42,7 +43,6 @@ impl Plugin for TownPlugin {
     }
 }
 
-/// The five location tabs in the town hub.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum TownTab {
     #[default]
@@ -54,7 +54,6 @@ pub enum TownTab {
 }
 
 impl TownTab {
-    /// Get the display name for the tab.
     pub fn name(&self) -> &'static str {
         match self {
             TownTab::Store => "Store",
@@ -65,7 +64,6 @@ impl TownTab {
         }
     }
 
-    /// Get all tabs in order.
     pub fn all() -> [TownTab; 5] {
         [
             TownTab::Store,
@@ -76,7 +74,6 @@ impl TownTab {
         ]
     }
 
-    /// Get the next tab (cycles to start).
     pub fn next(&self) -> Self {
         match self {
             TownTab::Store => TownTab::Blacksmith,
@@ -87,7 +84,6 @@ impl TownTab {
         }
     }
 
-    /// Get the previous tab (cycles to end).
     pub fn prev(&self) -> Self {
         match self {
             TownTab::Store => TownTab::Dungeon,
@@ -99,31 +95,25 @@ impl TownTab {
     }
 }
 
-/// Resource tracking the currently selected tab.
 #[derive(Resource, Default)]
 pub struct CurrentTab {
     pub tab: TownTab,
 }
 
-/// Marker component for the town UI root entity.
 #[derive(Component)]
 pub struct TownUiRoot;
 
-/// Marker component for tab header items.
 #[derive(Component)]
 struct TabHeaderItem {
     tab: TownTab,
 }
 
-/// Marker component for the content area.
 #[derive(Component)]
 pub struct ContentArea;
 
-/// Marker component for tab content (despawned on tab change).
 #[derive(Component)]
 pub struct TabContent;
 
-/// SystemParam grouping all tab states to reduce parameter count.
 #[derive(SystemParam)]
 struct TabStates<'w> {
     field: Res<'w, FieldTabState>,
@@ -133,9 +123,7 @@ struct TabStates<'w> {
     alchemist: Res<'w, AlchemistTabState>,
 }
 
-/// System to set up the town UI when entering the Town state.
 fn setup_town_ui(mut commands: Commands, current_tab: Res<CurrentTab>) {
-    // Root container for the entire town UI
     commands
         .spawn((
             TownUiRoot,
@@ -148,7 +136,6 @@ fn setup_town_ui(mut commands: Commands, current_tab: Res<CurrentTab>) {
             BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         ))
         .with_children(|parent| {
-            // Tab header container
             parent
                 .spawn((
                     Node {
@@ -163,13 +150,11 @@ fn setup_town_ui(mut commands: Commands, current_tab: Res<CurrentTab>) {
                     BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
                 ))
                 .with_children(|header| {
-                    // Create a tab header item for each tab
                     for tab in TownTab::all() {
                         spawn_tab_header_item(header, tab, tab == current_tab.tab);
                     }
                 });
 
-            // Content area container
             parent.spawn((
                 ContentArea,
                 Node {
@@ -184,7 +169,6 @@ fn setup_town_ui(mut commands: Commands, current_tab: Res<CurrentTab>) {
         });
 }
 
-/// Helper function to spawn a tab header item.
 fn spawn_tab_header_item(parent: &mut ChildBuilder, tab: TownTab, is_active: bool) {
     let bg_color = if is_active {
         Color::srgb(0.4, 0.4, 0.8)
@@ -213,14 +197,12 @@ fn spawn_tab_header_item(parent: &mut ChildBuilder, tab: TownTab, is_active: boo
         });
 }
 
-/// System to clean up the town UI when exiting the Town state.
 fn cleanup_town_ui(mut commands: Commands, query: Query<Entity, With<TownUiRoot>>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
 }
 
-/// System to handle tab navigation with Left/Right arrow keys.
 fn handle_tab_navigation(
     mut current_tab: ResMut<CurrentTab>,
     mut action_events: EventReader<GameAction>,
@@ -238,7 +220,6 @@ fn handle_tab_navigation(
     }
 }
 
-/// System to update tab header highlighting when CurrentTab changes.
 fn update_tab_header_visuals(
     current_tab: Res<CurrentTab>,
     mut tab_query: Query<(&TabHeaderItem, &mut BackgroundColor)>,
@@ -256,7 +237,6 @@ fn update_tab_header_visuals(
     }
 }
 
-/// System to handle Back action (Backspace) to return to Menu.
 fn handle_back_action(
     mut action_events: EventReader<GameAction>,
     mut next_state: ResMut<NextState<AppState>>,
@@ -268,34 +248,42 @@ fn handle_back_action(
     }
 }
 
-/// Centralized system to render tab content when CurrentTab changes.
-/// This single system handles ALL tab rendering, eliminating race conditions
-/// that occur when multiple parallel systems try to spawn/despawn content.
+fn trigger_tab_refresh(mut refresh: ResMut<ForceTabRefresh>) {
+    refresh.0 = true;
+}
+
 fn render_tab_content(
     mut commands: Commands,
     current_tab: Res<CurrentTab>,
+    mut force_refresh: ResMut<ForceTabRefresh>,
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
     tab_states: TabStates,
     player: Res<PlayerResource>,
     storage: Res<StorageResource>,
 ) {
-    // Only render when tab changes
-    if !current_tab.is_changed() {
+    let should_render = force_refresh.0
+        || current_tab.is_changed()
+        || (current_tab.tab == TownTab::Store && tab_states.store.is_changed())
+        || (current_tab.tab == TownTab::Blacksmith && tab_states.blacksmith.is_changed())
+        || (current_tab.tab == TownTab::Alchemist && tab_states.alchemist.is_changed())
+        || (current_tab.tab == TownTab::Field && tab_states.field.is_changed())
+        || (current_tab.tab == TownTab::Dungeon && tab_states.dungeon.is_changed());
+
+    if !should_render {
         return;
     }
 
-    // Despawn ALL existing tab content first
+    force_refresh.0 = false;
+
     for entity in &tab_content_query {
         commands.entity(entity).despawn_recursive();
     }
 
-    // Get content area
     let Ok(content_entity) = content_query.get_single() else {
         return;
     };
 
-    // Spawn content for the current tab
     match current_tab.tab {
         TownTab::Store => {
             spawn_store_ui(&mut commands, content_entity, &tab_states.store, &player, &storage);

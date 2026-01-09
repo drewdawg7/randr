@@ -1,17 +1,14 @@
 use bevy::prelude::*;
 
-/// Resource tracking the fight screen UI state.
 #[derive(Resource, Default)]
 pub struct FightScreenState {
-    /// Current action menu selection (0=Attack, 1=Run)
     pub action_selection: usize,
-    /// Post-combat menu selection (0=Fight Again, 1=Continue)
     pub post_combat_selection: usize,
 }
 
 impl FightScreenState {
-    const ACTION_ITEMS: usize = 2; // Attack, Run
-    const POST_COMBAT_ITEMS: usize = 2; // Fight Again, Continue
+    const ACTION_ITEMS: usize = 2;
+    const POST_COMBAT_ITEMS: usize = 2;
 
     pub fn action_up(&mut self) {
         if self.action_selection > 0 {
@@ -43,7 +40,6 @@ impl FightScreenState {
     }
 }
 
-/// Combat origin tracking - determines where to return after combat.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CombatOrigin {
     Field,
@@ -51,7 +47,6 @@ pub enum CombatOrigin {
     DungeonBoss,
 }
 
-/// Resource tracking where the current combat originated from.
 #[derive(Resource, Default)]
 pub struct CombatSource {
     pub origin: Option<CombatOrigin>,

@@ -1,4 +1,3 @@
-pub mod combat;
 pub mod dungeon;
 pub mod items;
 pub mod magic;
@@ -6,9 +5,10 @@ pub mod player;
 pub mod storage;
 pub mod toast;
 
-pub use combat::{
-    ActiveCombatResource, AttackPerformed, CombatEnded, CombatPlugin, CombatSourceResource,
-    CombatStarted, CombatState, PlayerDefeat, PlayerVictory,
+// Re-export combat types from the combat module
+pub use crate::combat::{
+    ActiveCombatResource, AttackPerformed, CombatEnded, CombatPhaseState, CombatPlugin,
+    CombatSourceResource, CombatStarted, PlayerDefeat, PlayerVictory,
 };
 pub use dungeon::{DungeonCompleted, DungeonPlugin, DungeonResource, RoomCleared, RoomEntered};
 pub use items::{ItemDropped, ItemEquipped, ItemPickedUp, ItemPlugin, ItemUnequipped, ItemUsed};

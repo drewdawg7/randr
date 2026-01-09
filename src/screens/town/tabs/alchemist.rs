@@ -10,7 +10,7 @@ use crate::stats::HasStats;
 use crate::states::AppState;
 
 use super::super::shared::{spawn_menu, MenuOption, SelectionState};
-use super::super::{ContentArea, CurrentTab, TabContent, TownTab};
+use super::super::{CurrentTab, TabContent, TownTab};
 
 /// Plugin for the Alchemist tab.
 pub struct AlchemistTabPlugin;
@@ -19,10 +19,7 @@ impl Plugin for AlchemistTabPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AlchemistTabState>().add_systems(
             Update,
-            (
-                handle_alchemist_input,
-                render_alchemist_content.run_if(resource_changed::<AlchemistTabState>),
-            )
+            handle_alchemist_input
                 .run_if(in_state(AppState::Town))
                 .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Alchemist),
         );
@@ -146,27 +143,6 @@ fn handle_alchemist_input(
             },
         }
     }
-}
-
-/// Render alchemist content when state changes.
-fn render_alchemist_content(
-    mut commands: Commands,
-    alchemist_state: Res<AlchemistTabState>,
-    player: Res<PlayerResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_alchemist_ui(&mut commands, content_entity, &alchemist_state, &player);
 }
 
 /// Spawn the alchemist UI based on current mode.

@@ -8,7 +8,7 @@ use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
 
 use super::super::shared::{spawn_menu, MenuOption, SelectionState};
-use super::super::{ContentArea, CurrentTab, TabContent, TownTab};
+use super::super::{CurrentTab, TabContent, TownTab};
 
 /// Plugin for the Blacksmith tab.
 pub struct BlacksmithTabPlugin;
@@ -17,10 +17,7 @@ impl Plugin for BlacksmithTabPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<BlacksmithTabState>().add_systems(
             Update,
-            (
-                handle_blacksmith_input,
-                render_blacksmith_content.run_if(resource_changed::<BlacksmithTabState>),
-            )
+            handle_blacksmith_input
                 .run_if(in_state(AppState::Town))
                 .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Blacksmith),
         );
@@ -347,27 +344,6 @@ fn calculate_upgrade_cost(item: &crate::item::Item) -> i32 {
     let base_cost = 100; // Base upgrade cost
     let quality_multiplier = item.quality.upgrade_cost_multiplier();
     (base_cost as f64 * (item.num_upgrades + 1) as f64 * quality_multiplier) as i32
-}
-
-/// Render blacksmith content when state changes.
-fn render_blacksmith_content(
-    mut commands: Commands,
-    blacksmith_state: Res<BlacksmithTabState>,
-    player: Res<PlayerResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_blacksmith_ui(&mut commands, content_entity, &blacksmith_state, &player);
 }
 
 /// Spawn the blacksmith UI based on current mode.
