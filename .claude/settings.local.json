@@ -103,119 +103,22 @@
       "WebFetch(domain:portkey.ai)",
       "WebFetch(domain:www.aiengineering.report)",
       "Bash(for i in 153 154 155)",
-      "Bash(do python3 .claude/scripts/issue/view.py $i)"
+      "Bash(do python3 .claude/scripts/issue/view.py $i)",
+      "Bash(rustc:*)",
+      "Bash(for i in 169 170 171 172 173 174 175 176 177 178 180 181 182 183 184)",
+      "Bash(do echo '=== Issue #$i ===')",
+      "Bash(cargo rustc:*)",
+      "Bash(xargs:*)",
+      "Bash(cargo run:*)",
+      "Bash(git log:*)",
+      "Bash(git -C /Users/drewstewart/code/game log --all --oneline)",
+      "Bash(git -C /Users/drewstewart/code/game show d440e2b --stat)",
+      "WebFetch(domain:bevy-cheatbook.github.io)"
     ]
   },
   "enabledMcpjsonServers": [
     "rust-analyzer"
   ],
-  "hooks": {
-    "PreToolUse": [
-      {
-        "matcher": "Grep",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/enforce_lsp.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/enforce_scripts.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/check_branch.py"
-          },
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/enforce_removal_check.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/check_branch.py"
-          }
-        ]
-      }
-    ],
-    "PostToolUse": [
-      {
-        "matcher": "Edit",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/auto_check.py"
-          },
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/track_edits.py"
-          },
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/enforce_batch_ops.py"
-          },
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/enforce_delegation.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Write",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/auto_check.py"
-          }
-        ]
-      },
-      {
-        "matcher": "LSP",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/track_lsp.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Task",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/enforce_delegation.py"
-          }
-        ]
-      },
-      {
-        "matcher": "Bash",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/track_bash.py"
-          },
-          {
-            "type": "command",
-            "command": "python3 .claude/hooks/track_tests.py"
-          }
-        ]
-      }
-    ]
-  },
   "outputStyle": "default",
   "spinnerTipsEnabled": false
 }

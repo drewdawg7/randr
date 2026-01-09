@@ -1,26 +1,17 @@
-use game::{game_state, init_game_state, GameState, ItemId, ManagesItems, TerminalGuard};
-use game::Id;
+use bevy::prelude::*;
 
-fn main() -> std::io::Result<()> {
-    let _guard = TerminalGuard::new()?;
-    init_game_state(GameState::default());
-    let game_state = game_state();
-    game_state.initialize();
+use game::plugins::GamePlugin;
 
-    let _ = game_state.player.add_to_inv(ItemId::BonkStick.spawn());
-    let _ = game_state.player.add_to_inv(ItemId::ImbaRing.spawn());
-    let _ = game_state.player.add_to_inv(ItemId::QualityUpgradeStone.spawn());
-    let _ = game_state.player.add_to_inv(ItemId::ApprenticeTome.spawn());
-
-
-
-    loop {
-        let current = game_state.ui.current_screen;
-        if current == Id::Quit {
-            break;
-        }
-        let _ = game_state.run_current_screen();
-    }
-
-    Ok(())
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                title: "R&R".into(),
+                resolution: (1280., 720.).into(),
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_plugins(GamePlugin)
+        .run();
 }

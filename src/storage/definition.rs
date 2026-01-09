@@ -1,5 +1,6 @@
 use crate::inventory::Inventory;
 
+#[derive(Debug)]
 pub struct Storage {
     pub inventory: Inventory,
 }

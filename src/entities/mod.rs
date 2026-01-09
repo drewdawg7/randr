@@ -1,6 +1,6 @@
-pub(crate) mod progression;
+pub mod progression;
 
 #[cfg(test)]
 mod tests;
 
-pub(crate) use progression::Progression;
+pub use progression::Progression;

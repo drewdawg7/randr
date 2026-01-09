@@ -1,0 +1,245 @@
+use bevy::prelude::*;
+
+use crate::game::{
+    DungeonCompleted, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped, ItemPickedUp,
+    ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerDefeat, PlayerHealed, PlayerLeveledUp,
+    PlayerVictory, RoomCleared, ShowToast,
+};
+use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, MobSpawned, TransactionCompleted};
+
+/// Plugin that listens to game events and triggers toast notifications
+pub struct ToastListenersPlugin;
+
+impl Plugin for ToastListenersPlugin {
+    fn build(&self, app: &mut App) {
+        app.add_systems(
+            Update,
+            (
+                listen_player_events,
+                listen_item_events,
+                listen_combat_events,
+                listen_economy_events,
+                listen_dungeon_events,
+            ),
+        );
+    }
+}
+
+/// Listen to player-related events
+fn listen_player_events(
+    mut level_up_events: EventReader<PlayerLeveledUp>,
+    mut healed_events: EventReader<PlayerHealed>,
+    mut gold_changed_events: EventReader<GoldChanged>,
+    mut toast_writer: EventWriter<ShowToast>,
+) {
+    // Level up notifications
+    for event in level_up_events.read() {
+        toast_writer.send(ShowToast::success(format!(
+            "Level Up! You are now level {}",
+            event.new_level
+        )));
+    }
+
+    // Healing notifications (only for significant heals)
+    for event in healed_events.read() {
+        if event.amount >= 20 {
+            toast_writer.send(ShowToast::success(format!("Healed {} HP", event.amount)));
+        }
+    }
+
+    // Gold change notifications (only for significant amounts)
+    for event in gold_changed_events.read() {
+        if event.amount.abs() >= 50 {
+            if event.amount > 0 {
+                toast_writer.send(ShowToast::success(format!("Gained {} gold", event.amount)));
+            } else {
+                toast_writer.send(ShowToast::info(format!("Spent {} gold", -event.amount)));
+            }
+        }
+    }
+}
+
+/// Listen to item-related events
+fn listen_item_events(
+    mut picked_up_events: EventReader<ItemPickedUp>,
+    mut equipped_events: EventReader<ItemEquipped>,
+    mut unequipped_events: EventReader<ItemUnequipped>,
+    mut used_events: EventReader<ItemUsed>,
+    mut dropped_events: EventReader<ItemDropped>,
+    mut deposited_events: EventReader<ItemDeposited>,
+    mut withdrawn_events: EventReader<ItemWithdrawn>,
+    mut toast_writer: EventWriter<ShowToast>,
+) {
+    // Item pickup notifications
+    for event in picked_up_events.read() {
+        let item_name = &event.item_id.spec().name;
+        if event.quantity > 1 {
+            toast_writer.send(ShowToast::success(format!(
+                "Picked up {} x{}",
+                item_name, event.quantity
+            )));
+        } else {
+            toast_writer.send(ShowToast::success(format!("Picked up {}", item_name)));
+        }
+    }
+
+    // Equipment notifications
+    for event in equipped_events.read() {
+        toast_writer.send(ShowToast::info(format!(
+            "Equipped {} to {:?}",
+            event.item_id.spec().name,
+            event.slot
+        )));
+    }
+
+    for event in unequipped_events.read() {
+        toast_writer.send(ShowToast::info(format!(
+            "Unequipped {} from {:?}",
+            event.item_id.spec().name,
+            event.slot
+        )));
+    }
+
+    // Item use notifications
+    for event in used_events.read() {
+        toast_writer.send(ShowToast::info(format!("Used {}", event.item_id.spec().name)));
+    }
+
+    // Item drop notifications
+    for event in dropped_events.read() {
+        if event.quantity > 1 {
+            toast_writer.send(ShowToast::warning(format!(
+                "Dropped {} x{}",
+                event.item_id.spec().name,
+                event.quantity
+            )));
+        } else {
+            toast_writer.send(ShowToast::warning(format!(
+                "Dropped {}",
+                event.item_id.spec().name
+            )));
+        }
+    }
+
+    // Storage notifications
+    for event in deposited_events.read() {
+        toast_writer.send(ShowToast::info(format!(
+            "Deposited {}",
+            event.item_name
+        )));
+    }
+
+    for event in withdrawn_events.read() {
+        toast_writer.send(ShowToast::info(format!(
+            "Withdrew {}",
+            event.item_name
+        )));
+    }
+}
+
+/// Listen to combat-related events
+fn listen_combat_events(
+    mut victory_events: EventReader<PlayerVictory>,
+    mut defeat_events: EventReader<PlayerDefeat>,
+    mut mob_defeated_events: EventReader<MobDefeated>,
+    mut mob_spawned_events: EventReader<MobSpawned>,
+    mut toast_writer: EventWriter<ShowToast>,
+) {
+
+    // Victory notifications
+    for event in victory_events.read() {
+        toast_writer.send(ShowToast::success(format!(
+            "Victory! Gained {} XP",
+            event.xp_gained
+        )));
+    }
+
+    // Defeat notifications
+    for _event in defeat_events.read() {
+        toast_writer.send(ShowToast::error("Defeated! You have been sent back to town"));
+    }
+
+    // Mob defeated
+    for event in mob_defeated_events.read() {
+        toast_writer.send(ShowToast::success(format!(
+            "Defeated {}!",
+            event.mob.name
+        )));
+    }
+
+    // Mob spawned (only show for bosses or special enemies)
+    for event in mob_spawned_events.read() {
+        // Show toast for all mob spawns
+        toast_writer.send(ShowToast::info(format!(
+            "{} appeared!",
+            event.mob.name
+        )));
+    }
+}
+
+/// Listen to economy-related events
+fn listen_economy_events(
+    mut gold_earned_events: EventReader<GoldEarned>,
+    mut gold_spent_events: EventReader<GoldSpent>,
+    mut loot_collected_events: EventReader<LootCollected>,
+    mut transaction_completed_events: EventReader<TransactionCompleted>,
+    mut toast_writer: EventWriter<ShowToast>,
+) {
+    // Gold earned
+    for event in gold_earned_events.read() {
+        if event.amount >= 50 {
+            toast_writer.send(ShowToast::success(format!("Earned {} gold", event.amount)));
+        }
+    }
+
+    // Gold spent
+    for event in gold_spent_events.read() {
+        if event.amount >= 100 {
+            toast_writer.send(ShowToast::info(format!("Spent {} gold", event.amount)));
+        }
+    }
+
+    // Loot collected
+    for event in loot_collected_events.read() {
+        if event.total_items >= 3 {
+            toast_writer.send(ShowToast::success(format!(
+                "Collected {} items",
+                event.total_items
+            )));
+        }
+    }
+
+    // Transaction completed
+    for event in transaction_completed_events.read() {
+        if event.price >= 100 {
+            let action = if event.is_purchase { "Purchased" } else { "Sold" };
+            toast_writer.send(ShowToast::info(format!(
+                "{} {} for {} gold",
+                action, event.item.name, event.price
+            )));
+        }
+    }
+}
+
+/// Listen to dungeon-related events
+fn listen_dungeon_events(
+    mut room_cleared_events: EventReader<RoomCleared>,
+    mut dungeon_completed_events: EventReader<DungeonCompleted>,
+    mut toast_writer: EventWriter<ShowToast>,
+) {
+    // Room cleared
+    for event in room_cleared_events.read() {
+        toast_writer.send(ShowToast::success(format!(
+            "{:?} room cleared at ({}, {})",
+            event.room_type, event.x, event.y
+        )));
+    }
+
+    // Dungeon completed
+    for event in dungeon_completed_events.read() {
+        toast_writer.send(ShowToast::success(format!(
+            "Dungeon '{}' completed! {} rooms cleared",
+            event.dungeon_name, event.rooms_cleared
+        )));
+    }
+}

@@ -13,6 +13,7 @@ pub enum CombatPhase {
     Defeat,           // Combat ended, player lost
 }
 
+#[derive(Debug)]
 pub struct ActiveCombat {
     pub mob: Mob,
     pub phase: CombatPhase,

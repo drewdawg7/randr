@@ -90,7 +90,7 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
         target_died
     }
 }
-#[derive(Default, Clone)]
+#[derive(Debug, Default, Clone)]
 pub struct CombatRounds {
     pub attack_results: Vec<AttackResult>,
     /// Spawned loot drops from the loot table, includes item instances and quantities
@@ -176,6 +176,7 @@ pub fn process_defeat(player: &mut Player) {
 pub struct CombatEntityInfo {
     pub name: String,
     pub health: i32,
+    pub max_health: i32,
     pub attack: i32,
     pub defense: i32,
     pub gold_reward: i32,
@@ -190,6 +191,7 @@ pub fn get_combat_entity_info<E: CombatEntity>(entity: &E) -> CombatEntityInfo {
     CombatEntityInfo {
         name: entity.name().to_string(),
         health: entity.effective_health(),
+        max_health: entity.max_hp(),
         attack: entity.effective_attack(),
         defense: entity.effective_defense(),
         gold_reward: entity.drop_gold(),
