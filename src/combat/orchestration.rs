@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use rand::seq::SliceRandom;
 
 use crate::game::Player;
-use crate::mob::MobId;
+use crate::mob::{Mob, MobId};
 use crate::screens::shared::CombatLogEntry;
 
 use super::{
@@ -13,6 +13,47 @@ use super::{
 #[derive(Resource, Default)]
 pub struct CombatLogState {
     pub entries: Vec<CombatLogEntry>,
+}
+
+/// Spawns the appropriate mob based on the combat source.
+fn spawn_mob_for_source(combat_source: &CombatSourceResource) -> Mob {
+    match *combat_source {
+        CombatSourceResource::Field => {
+            let field_mobs = [MobId::Slime, MobId::Cow, MobId::Goblin];
+            let mob_id = field_mobs.choose(&mut rand::thread_rng()).unwrap();
+            mob_id.spawn()
+        }
+        CombatSourceResource::Dungeon => MobId::Goblin.spawn(),
+        CombatSourceResource::DungeonBoss => MobId::Dragon.spawn(),
+    }
+}
+
+/// Sets up a new combat encounter: spawns mob, clears log, and initializes combat state.
+fn setup_new_combat(
+    combat_res: &mut ActiveCombatResource,
+    log_state: &mut CombatLogState,
+    combat_source: &CombatSourceResource,
+) {
+    let mob = spawn_mob_for_source(combat_source);
+
+    log_state.entries.clear();
+    let enemy_name = mob.name().to_string();
+    log_state.entries.push(CombatLogEntry::info(format!(
+        "A wild {} appears!",
+        enemy_name
+    )));
+
+    combat_res.0 = Some(ActiveCombat::new(mob));
+}
+
+/// Returns the app state to transition to when leaving combat.
+fn get_return_state(combat_source: &CombatSourceResource) -> crate::states::AppState {
+    match *combat_source {
+        CombatSourceResource::Field => crate::states::AppState::Town,
+        CombatSourceResource::Dungeon | CombatSourceResource::DungeonBoss => {
+            crate::states::AppState::Dungeon
+        }
+    }
 }
 
 #[derive(Event, Debug, Clone)]
@@ -33,24 +74,7 @@ pub fn initialize_combat(
     combat_source: Res<CombatSourceResource>,
     mut next_phase: ResMut<NextState<CombatPhaseState>>,
 ) {
-    let mob = match *combat_source {
-        CombatSourceResource::Field => {
-            let field_mobs = [MobId::Slime, MobId::Cow, MobId::Goblin];
-            let mob_id = field_mobs.choose(&mut rand::thread_rng()).unwrap();
-            mob_id.spawn()
-        }
-        CombatSourceResource::Dungeon => MobId::Goblin.spawn(),
-        CombatSourceResource::DungeonBoss => MobId::Dragon.spawn(),
-    };
-
-    log_state.entries.clear();
-    let enemy_name = mob.name().to_string();
-    log_state.entries.push(CombatLogEntry::info(format!(
-        "A wild {} appears!",
-        enemy_name
-    )));
-
-    combat_res.0 = Some(ActiveCombat::new(mob));
+    setup_new_combat(&mut combat_res, &mut log_state, &combat_source);
     next_phase.set(CombatPhaseState::PlayerTurn);
 }
 
@@ -106,14 +130,7 @@ pub fn handle_run_action(
             continue;
         }
 
-        match *combat_source {
-            CombatSourceResource::Field => {
-                next_app_state.set(crate::states::AppState::Town);
-            }
-            CombatSourceResource::Dungeon | CombatSourceResource::DungeonBoss => {
-                next_app_state.set(crate::states::AppState::Dungeon);
-            }
-        }
+        next_app_state.set(get_return_state(&combat_source));
     }
 }
 
@@ -129,24 +146,7 @@ pub fn handle_fight_again(
             continue;
         }
 
-        let mob = match *combat_source {
-            CombatSourceResource::Field => {
-                let field_mobs = [MobId::Slime, MobId::Cow, MobId::Goblin];
-                let mob_id = field_mobs.choose(&mut rand::thread_rng()).unwrap();
-                mob_id.spawn()
-            }
-            CombatSourceResource::Dungeon => MobId::Goblin.spawn(),
-            CombatSourceResource::DungeonBoss => MobId::Dragon.spawn(),
-        };
-
-        log_state.entries.clear();
-        let enemy_name = mob.name().to_string();
-        log_state.entries.push(CombatLogEntry::info(format!(
-            "A wild {} appears!",
-            enemy_name
-        )));
-
-        combat_res.0 = Some(ActiveCombat::new(mob));
+        setup_new_combat(&mut combat_res, &mut log_state, &combat_source);
         next_phase.set(CombatPhaseState::PlayerTurn);
     }
 }
@@ -161,14 +161,7 @@ pub fn handle_continue_action(
             continue;
         }
 
-        match *combat_source {
-            CombatSourceResource::Field => {
-                next_app_state.set(crate::states::AppState::Town);
-            }
-            CombatSourceResource::Dungeon | CombatSourceResource::DungeonBoss => {
-                next_app_state.set(crate::states::AppState::Dungeon);
-            }
-        }
+        next_app_state.set(get_return_state(&combat_source));
     }
 }
 
