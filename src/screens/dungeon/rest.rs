@@ -85,7 +85,7 @@ pub fn spawn_rest_ui(
             ));
 
             // Player stats
-            PlayerStats::spawn(parent);
+            parent.spawn(PlayerStats);
 
             // Status message
             if has_healed {

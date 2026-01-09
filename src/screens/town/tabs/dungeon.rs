@@ -1,9 +1,8 @@
 use bevy::prelude::*;
 
-use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::RequestDungeonEvent;
-use crate::stats::HasStats;
+use crate::ui::widgets::PlayerStats;
 
 use super::super::shared::{spawn_menu, MenuOption};
 use super::super::{ContentArea, TabContent, TownTab};
@@ -28,12 +27,11 @@ fn spawn_dungeon_content(
     mut commands: Commands,
     content_query: Query<Entity, With<ContentArea>>,
     dungeon_state: Res<DungeonTabState>,
-    player: Res<Player>,
 ) {
     let Ok(content_entity) = content_query.get_single() else {
         return;
     };
-    spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state, &player);
+    spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state);
 }
 
 /// Refreshes dungeon UI when state changes.
@@ -42,7 +40,6 @@ fn refresh_dungeon_on_state_change(
     dungeon_state: Res<DungeonTabState>,
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
-    player: Res<Player>,
 ) {
     if !dungeon_state.is_changed() {
         return;
@@ -57,7 +54,7 @@ fn refresh_dungeon_on_state_change(
     let Ok(content_entity) = content_query.get_single() else {
         return;
     };
-    spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state, &player);
+    spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state);
 }
 
 /// Dungeon tab state - tracks menu selection.
@@ -106,7 +103,6 @@ pub fn spawn_dungeon_ui(
     commands: &mut Commands,
     content_entity: Entity,
     dungeon_state: &DungeonTabState,
-    player: &Player,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -121,8 +117,8 @@ pub fn spawn_dungeon_ui(
                 },
             ))
             .with_children(|content| {
-                // Dungeon status
-                spawn_dungeon_status(content, player);
+                // Player stats
+                content.spawn(PlayerStats);
 
                 // Menu options
                 spawn_menu(
@@ -147,53 +143,4 @@ pub fn spawn_dungeon_ui(
                 ));
             });
     });
-}
-
-/// Spawn dungeon status display.
-fn spawn_dungeon_status(parent: &mut ChildBuilder, player: &Player) {
-    parent
-        .spawn((Node {
-            flex_direction: FlexDirection::Column,
-            padding: UiRect::all(Val::Px(10.0)),
-            row_gap: Val::Px(5.0),
-            ..default()
-        },))
-        .with_children(|status| {
-            // Player readiness
-            status.spawn((
-                Text::new(format!(
-                    "HP: {}/{}",
-                    player.hp(), player.max_hp()
-                )),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.8, 0.3, 0.3)),
-            ));
-
-            // Level
-            status.spawn((
-                Text::new(format!("Level: {}", player.prog.level)),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.5, 0.8, 0.5)),
-            ));
-
-            // Dungeon info
-            status.spawn((
-                Text::new("The dungeon awaits..."),
-                TextFont {
-                    font_size: 14.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                Node {
-                    margin: UiRect::top(Val::Px(10.0)),
-                    ..default()
-                },
-            ));
-        });
 }

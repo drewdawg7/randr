@@ -19,21 +19,6 @@ impl Plugin for PlayerStatsPlugin {
 #[derive(Component)]
 pub struct PlayerStats;
 
-impl PlayerStats {
-    /// Spawn player stats display (HP, Level/XP, Gold).
-    pub fn spawn(parent: &mut ChildBuilder) {
-        parent.spawn((
-            PlayerStats,
-            Node {
-                flex_direction: FlexDirection::Column,
-                padding: UiRect::all(Val::Px(10.0)),
-                row_gap: Val::Px(5.0),
-                ..default()
-            },
-        ));
-    }
-}
-
 fn on_add_player_stats(
     trigger: Trigger<OnAdd, PlayerStats>,
     mut commands: Commands,
@@ -69,7 +54,15 @@ fn on_add_player_stats(
         })
         .unwrap_or((None, None));
 
-    commands.entity(entity).with_children(|stats| {
+    commands
+        .entity(entity)
+        .insert(Node {
+            flex_direction: FlexDirection::Column,
+            padding: UiRect::all(Val::Px(10.0)),
+            row_gap: Val::Px(5.0),
+            ..default()
+        })
+        .with_children(|stats| {
         // HP row with heart icon + values
         stats
             .spawn(Node {

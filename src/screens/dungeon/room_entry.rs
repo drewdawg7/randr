@@ -144,7 +144,7 @@ pub fn spawn_room_entry_ui(
             }
 
             // Player stats
-            PlayerStats::spawn(parent);
+            parent.spawn(PlayerStats);
 
             // Actions
             parent

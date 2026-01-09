@@ -100,7 +100,7 @@ pub fn spawn_boss_ui(
             ));
 
             // Player stats
-            PlayerStats::spawn(parent);
+            parent.spawn(PlayerStats);
 
             // Actions
             parent

@@ -128,7 +128,7 @@ pub fn spawn_field_ui(
             ))
             .with_children(|content| {
                 // Player stats summary
-                PlayerStats::spawn(content);
+                content.spawn(PlayerStats);
 
                 // Menu options
                 spawn_menu(

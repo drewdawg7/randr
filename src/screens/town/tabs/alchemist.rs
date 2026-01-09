@@ -216,7 +216,7 @@ pub fn spawn_alchemist_ui(
 /// Spawn the menu mode UI.
 fn spawn_menu_mode(content: &mut ChildBuilder, alchemist_selections: &AlchemistSelections) {
     // Player stats summary
-    PlayerStats::spawn(content);
+    content.spawn(PlayerStats);
 
     // Menu options
     spawn_menu(
@@ -249,7 +249,7 @@ fn spawn_brew_mode(
     player: &Player,
 ) {
     // Player stats summary
-    PlayerStats::spawn(content);
+    content.spawn(PlayerStats);
 
     // Title
     content.spawn((

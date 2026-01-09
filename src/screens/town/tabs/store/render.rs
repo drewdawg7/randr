@@ -62,7 +62,7 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) 
     ));
 
     // Gold display
-    PlayerStats::spawn(parent);
+    parent.spawn(PlayerStats);
 
     // Menu options
     spawn_menu(
@@ -93,7 +93,7 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, p
     ));
 
     // Gold display
-    PlayerStats::spawn(parent);
+    parent.spawn(PlayerStats);
 
     // Items for sale
     parent
@@ -189,7 +189,7 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
     ));
 
     // Gold display
-    PlayerStats::spawn(parent);
+    parent.spawn(PlayerStats);
 
     // Get player inventory items
     let inventory_items = player.inventory.items.as_slice();
@@ -294,7 +294,7 @@ fn spawn_storage_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSele
     ));
 
     // Gold display
-    PlayerStats::spawn(parent);
+    parent.spawn(PlayerStats);
 
     // Menu options
     spawn_menu(
@@ -329,7 +329,7 @@ fn spawn_storage_view_ui(
     ));
 
     // Gold display
-    PlayerStats::spawn(parent);
+    parent.spawn(PlayerStats);
 
     // Get storage items
     let storage_items = storage.inventory.items.as_slice();
@@ -423,7 +423,7 @@ fn spawn_storage_deposit_ui(
     ));
 
     // Gold display
-    PlayerStats::spawn(parent);
+    parent.spawn(PlayerStats);
 
     // Get player inventory items
     let inventory_items = player.inventory.items.as_slice();

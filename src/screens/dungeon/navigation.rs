@@ -86,7 +86,7 @@ pub fn spawn_navigation_ui(
             }
 
             // Player stats
-            PlayerStats::spawn(parent);
+            parent.spawn(PlayerStats);
 
             // Minimap
             spawn_minimap(parent, &dungeon);
