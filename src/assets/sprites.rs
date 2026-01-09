@@ -207,6 +207,7 @@ impl Plugin for AssetPlugin {
             .init_asset_loader::<SpriteSheetMetaLoader>()
             .init_resource::<GameAssets>()
             .init_resource::<GameSprites>()
+            .init_resource::<GameFonts>()
             .init_resource::<PendingSpriteSheets>()
             .add_systems(PreStartup, load_assets)
             .add_systems(Update, finalize_sprite_sheets);
@@ -281,6 +282,25 @@ impl SpriteSheet {
 // ============================================================================
 // GameSprites Resource
 // ============================================================================
+
+/// Resource containing loaded fonts.
+#[derive(Resource, Default)]
+pub struct GameFonts {
+    /// CuteFantasy pixel font (5x9)
+    pub pixel: Handle<Font>,
+}
+
+impl GameFonts {
+    /// Create a TextFont for the pixel font with proper settings.
+    pub fn pixel_font(&self, font_size: f32) -> TextFont {
+        TextFont {
+            font: self.pixel.clone(),
+            font_size,
+            font_smoothing: bevy::text::FontSmoothing::None,
+            ..default()
+        }
+    }
+}
 
 /// Resource containing all loaded sprite sheets.
 ///
@@ -446,8 +466,11 @@ impl SpriteAssets {
 fn load_assets(
     asset_server: Res<AssetServer>,
     mut game_assets: ResMut<GameAssets>,
+    mut game_fonts: ResMut<GameFonts>,
     mut pending: ResMut<PendingSpriteSheets>,
 ) {
+    // Load fonts
+    game_fonts.pixel = asset_server.load("fonts/CuteFantasy-5x9.ttf");
     // Kick off async sprite sheet loads
     pending.ui_icons = Some(asset_server.load("sprites/ui_icons.json"));
     pending.ui_buttons = Some(asset_server.load("sprites/ui_buttons.json"));

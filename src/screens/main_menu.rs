@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::GameSprites;
-use crate::game::Player;
+use crate::assets::{GameFonts, GameSprites};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
@@ -15,7 +14,12 @@ impl Plugin for MainMenuPlugin {
             .add_systems(OnExit(AppState::Menu), despawn_main_menu)
             .add_systems(
                 Update,
-                (handle_menu_navigation, handle_menu_selection, update_sprite_menu_items)
+                (
+                    handle_menu_navigation,
+                    handle_menu_selection,
+                    update_sprite_menu_items,
+                    populate_randr_title,
+                )
                     .run_if(in_state(AppState::Menu)),
             );
     }
@@ -55,8 +59,12 @@ struct SpriteMenuItem {
     selected_slice: &'static str,
 }
 
+/// Marker component for the randr title banner.
+#[derive(Component)]
+struct RandrTitle;
+
 /// System to spawn the main menu UI.
-fn spawn_main_menu(mut commands: Commands, player: Res<Player>) {
+fn spawn_main_menu(mut commands: Commands) {
     // Root container
     commands
         .spawn((
@@ -72,16 +80,15 @@ fn spawn_main_menu(mut commands: Commands, player: Res<Player>) {
             BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         ))
         .with_children(|parent| {
-            // Player greeting
+            // Title banner with "randr" text (populated by system)
             parent.spawn((
-                Text::new(format!("Welcome, {}!", player.name)),
-                TextFont {
-                    font_size: 48.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
+                RandrTitle,
                 Node {
+                    width: Val::Px(276.0),  // 92 * 3
+                    height: Val::Px(78.0),  // 26 * 3
                     margin: UiRect::bottom(Val::Px(40.0)),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
                     ..default()
                 },
             ));
@@ -231,6 +238,46 @@ fn update_sprite_menu_items(
                 ));
             }
         }
+    }
+}
+
+/// System to populate the randr title banner with sprite and text.
+fn populate_randr_title(
+    mut commands: Commands,
+    query: Query<Entity, With<RandrTitle>>,
+    game_sprites: Res<GameSprites>,
+    game_fonts: Res<GameFonts>,
+) {
+    let Some(ui_all) = &game_sprites.ui_all else {
+        return;
+    };
+
+    for entity in &query {
+        let Some(index) = ui_all.get("Slice_3353") else {
+            continue;
+        };
+
+        commands
+            .entity(entity)
+            .remove::<RandrTitle>()
+            .insert(ImageNode::from_atlas_image(
+                ui_all.texture.clone(),
+                TextureAtlas {
+                    layout: ui_all.layout.clone(),
+                    index,
+                },
+            ))
+            .with_children(|parent| {
+                parent.spawn((
+                    Text::new("RANDR"),
+                    game_fonts.pixel_font(30.0),
+                    TextColor(Color::WHITE),
+                    Node {
+                        margin: UiRect::bottom(Val::Px(20.0)),
+                        ..default()
+                    },
+                ));
+            });
     }
 }
 
