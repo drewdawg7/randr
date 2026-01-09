@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::Player;
+use crate::game::{calculate_upgrade_cost, Player};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
 use crate::screens::town::shared::spawn_menu;
@@ -10,7 +10,6 @@ use crate::ui::{selection_colors, selection_prefix};
 use crate::FindsItems;
 
 use super::constants::MENU_OPTIONS;
-use super::input::calculate_upgrade_cost;
 use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
 
 /// Spawn a recipe list UI with selection highlighting.

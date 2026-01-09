@@ -1,3 +1,5 @@
+mod aseprite;
 mod sprites;
 
-pub use sprites::{AssetPlugin, GameAssets, SpriteAssets};
+pub use aseprite::AsepriteSheet;
+pub use sprites::{AssetPlugin, GameAssets, GameSprites, SpriteAssets, SpriteSheet};
