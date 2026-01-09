@@ -38,16 +38,16 @@ impl Plugin for DungeonScreenPlugin {
                     handle_mode_transitions,
                     // Navigation mode systems
                     navigation::handle_navigation_input
-                        .run_if(in_state(AppState::Dungeon).and_then(is_navigation_mode)),
+                        .run_if(in_state(AppState::Dungeon).and(is_navigation_mode)),
                     // Room entry mode systems
                     room_entry::handle_room_entry_input
-                        .run_if(in_state(AppState::Dungeon).and_then(is_room_entry_mode)),
+                        .run_if(in_state(AppState::Dungeon).and(is_room_entry_mode)),
                     // Rest mode systems
                     rest::handle_rest_input
-                        .run_if(in_state(AppState::Dungeon).and_then(is_rest_mode)),
+                        .run_if(in_state(AppState::Dungeon).and(is_rest_mode)),
                     // Boss mode systems
                     boss::handle_boss_input
-                        .run_if(in_state(AppState::Dungeon).and_then(is_boss_mode)),
+                        .run_if(in_state(AppState::Dungeon).and(is_boss_mode)),
                 )
                     .run_if(in_state(AppState::Dungeon)),
             );
