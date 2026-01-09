@@ -13,6 +13,84 @@ use super::constants::MENU_OPTIONS;
 use super::input::calculate_upgrade_cost;
 use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
 
+/// Spawn a recipe list UI with selection highlighting.
+fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_index: usize, player: &Player) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(5.0),
+            ..default()
+        })
+        .with_children(|list| {
+            for (i, recipe_id) in recipes.iter().enumerate() {
+                let is_selected = i == selected_index;
+
+                if let Ok(recipe) = Recipe::new(*recipe_id) {
+                    let can_craft = recipe.can_craft(player);
+
+                    let (bg_color, text_color) = selection_colors(is_selected);
+
+                    let prefix = selection_prefix(is_selected);
+
+                    list.spawn((
+                        Node {
+                            padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
+                            flex_direction: FlexDirection::Row,
+                            column_gap: Val::Px(10.0),
+                            ..default()
+                        },
+                        BackgroundColor(bg_color),
+                    ))
+                    .with_children(|item_row| {
+                        // Recipe name
+                        item_row.spawn((
+                            Text::new(format!("{}{}", prefix, recipe.name())),
+                            TextFont {
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(text_color),
+                            Node {
+                                width: Val::Px(200.0),
+                                ..default()
+                            },
+                        ));
+
+                        // Ingredients
+                        let ingredients_text = recipe
+                            .ingredients()
+                            .iter()
+                            .map(|(item_id, qty)| {
+                                let owned = player
+                                    .find_item_by_id(*item_id)
+                                    .map(|inv| inv.quantity)
+                                    .unwrap_or(0);
+                                let item_name = &item_id.spec().name;
+                                format!("{}: {}/{}", item_name, owned, qty)
+                            })
+                            .collect::<Vec<_>>()
+                            .join(", ");
+
+                        let ingredients_color = if can_craft {
+                            Color::srgb(0.5, 0.9, 0.5)
+                        } else {
+                            Color::srgb(0.8, 0.3, 0.3)
+                        };
+
+                        item_row.spawn((
+                            Text::new(ingredients_text),
+                            TextFont {
+                                font_size: 16.0,
+                                ..default()
+                            },
+                            TextColor(ingredients_color),
+                        ));
+                    });
+                }
+            }
+        });
+}
+
 /// Spawn the blacksmith UI based on current mode.
 pub fn spawn_blacksmith_ui(
     commands: &mut Commands,
@@ -414,80 +492,7 @@ fn spawn_smelt_ui(
             TextColor(Color::srgb(0.6, 0.6, 0.6)),
         ));
     } else {
-        parent
-            .spawn(Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(5.0),
-                ..default()
-            })
-            .with_children(|list| {
-                for (i, recipe_id) in recipes.iter().enumerate() {
-                    let is_selected = i == blacksmith_selections.smelt.selected;
-
-                    if let Ok(recipe) = Recipe::new(*recipe_id) {
-                        let can_craft = recipe.can_craft(&player);
-
-                        let (bg_color, text_color) = selection_colors(is_selected);
-
-                        let prefix = selection_prefix(is_selected);
-
-                        list.spawn((
-                            Node {
-                                padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
-                                flex_direction: FlexDirection::Row,
-                                column_gap: Val::Px(10.0),
-                                ..default()
-                            },
-                            BackgroundColor(bg_color),
-                        ))
-                        .with_children(|item_row| {
-                            // Recipe name
-                            item_row.spawn((
-                                Text::new(format!("{}{}", prefix, recipe.name())),
-                                TextFont {
-                                    font_size: 18.0,
-                                    ..default()
-                                },
-                                TextColor(text_color),
-                                Node {
-                                    width: Val::Px(200.0),
-                                    ..default()
-                                },
-                            ));
-
-                            // Ingredients
-                            let ingredients_text = recipe
-                                .ingredients()
-                                .iter()
-                                .map(|(item_id, qty)| {
-                                    let owned = player
-                                        .find_item_by_id(*item_id)
-                                        .map(|inv| inv.quantity)
-                                        .unwrap_or(0);
-                                    let item_name = &item_id.spec().name;
-                                    format!("{}: {}/{}", item_name, owned, qty)
-                                })
-                                .collect::<Vec<_>>()
-                                .join(", ");
-
-                            let ingredients_color = if can_craft {
-                                Color::srgb(0.5, 0.9, 0.5)
-                            } else {
-                                Color::srgb(0.8, 0.3, 0.3)
-                            };
-
-                            item_row.spawn((
-                                Text::new(ingredients_text),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(ingredients_color),
-                            ));
-                        });
-                    }
-                }
-            });
+        spawn_recipe_list(parent, &recipes, blacksmith_selections.smelt.selected, player);
     }
 
     // Navigation hint
@@ -537,80 +542,7 @@ fn spawn_forge_ui(
             TextColor(Color::srgb(0.6, 0.6, 0.6)),
         ));
     } else {
-        parent
-            .spawn(Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(5.0),
-                ..default()
-            })
-            .with_children(|list| {
-                for (i, recipe_id) in recipes.iter().enumerate() {
-                    let is_selected = i == blacksmith_selections.forge.selected;
-
-                    if let Ok(recipe) = Recipe::new(*recipe_id) {
-                        let can_craft = recipe.can_craft(&player);
-
-                        let (bg_color, text_color) = selection_colors(is_selected);
-
-                        let prefix = selection_prefix(is_selected);
-
-                        list.spawn((
-                            Node {
-                                padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
-                                flex_direction: FlexDirection::Row,
-                                column_gap: Val::Px(10.0),
-                                ..default()
-                            },
-                            BackgroundColor(bg_color),
-                        ))
-                        .with_children(|item_row| {
-                            // Recipe name
-                            item_row.spawn((
-                                Text::new(format!("{}{}", prefix, recipe.name())),
-                                TextFont {
-                                    font_size: 18.0,
-                                    ..default()
-                                },
-                                TextColor(text_color),
-                                Node {
-                                    width: Val::Px(200.0),
-                                    ..default()
-                                },
-                            ));
-
-                            // Ingredients
-                            let ingredients_text = recipe
-                                .ingredients()
-                                .iter()
-                                .map(|(item_id, qty)| {
-                                    let owned = player
-                                        .find_item_by_id(*item_id)
-                                        .map(|inv| inv.quantity)
-                                        .unwrap_or(0);
-                                    let item_name = &item_id.spec().name;
-                                    format!("{}: {}/{}", item_name, owned, qty)
-                                })
-                                .collect::<Vec<_>>()
-                                .join(", ");
-
-                            let ingredients_color = if can_craft {
-                                Color::srgb(0.5, 0.9, 0.5)
-                            } else {
-                                Color::srgb(0.8, 0.3, 0.3)
-                            };
-
-                            item_row.spawn((
-                                Text::new(ingredients_text),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(ingredients_color),
-                            ));
-                        });
-                    }
-                }
-            });
+        spawn_recipe_list(parent, &recipes, blacksmith_selections.forge.selected, player);
     }
 
     // Navigation hint
