@@ -77,7 +77,7 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) 
 }
 
 /// Spawn the buy screen UI.
-fn spawn_buy_ui(parent: &mut ChildBuilder, _store_selections: &StoreSelections, _player: &Player) {
+fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, _player: &Player) {
     // Title
     parent.spawn((
         Text::new("Buy Items"),
@@ -102,6 +102,7 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, _store_selections: &StoreSelections, 
             ItemGridEntry { sprite_name: "Slice_155" }, // Sword
             ItemGridEntry { sprite_name: "Slice_100" }, // Shield
         ],
+        selected_index: store_selections.buy.selected,
     });
 
     // Navigation hint

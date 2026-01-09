@@ -322,6 +322,8 @@ pub struct GameSprites {
     pub ui_all: Option<SpriteSheet>,
     /// Item icons (potions, weapons, armor, etc.)
     pub icon_items: Option<SpriteSheet>,
+    /// UI selectors (selection highlights, cursors)
+    pub ui_selectors: Option<SpriteSheet>,
 }
 
 // ============================================================================
@@ -338,6 +340,7 @@ struct PendingSpriteSheets {
     ui_bars: Option<Handle<SpriteSheetMeta>>,
     ui_all: Option<Handle<SpriteSheetMeta>>,
     icon_items: Option<Handle<SpriteSheetMeta>>,
+    ui_selectors: Option<Handle<SpriteSheetMeta>>,
 }
 
 /// Build a SpriteSheet from loaded metadata.
@@ -404,6 +407,7 @@ fn finalize_sprite_sheets(
         check_and_build!(ui_bars, "ui_bars");
         check_and_build!(ui_all, "ui_all");
         check_and_build!(icon_items, "icon_items");
+        check_and_build!(ui_selectors, "ui_selectors");
     }
 }
 
@@ -483,6 +487,7 @@ fn load_assets(
     pending.ui_bars = Some(asset_server.load("sprites/ui_bars.json"));
     pending.ui_all = Some(asset_server.load("sprites/ui_all.json"));
     pending.icon_items = Some(asset_server.load("sprites/icon_items.json"));
+    pending.ui_selectors = Some(asset_server.load("sprites/ui_selectors.json"));
 
     // Legacy sprite loading (individual files)
     game_assets.sprites.mine_wall = try_load(&asset_server, "sprites/mine/wall.png");

@@ -94,19 +94,42 @@ fn handle_menu_input(
     }
 }
 
-/// Handle input for the buy screen.
+/// Handle input for the buy screen with 2D grid navigation.
 fn handle_buy_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
     action: &GameAction,
     purchase_events: &mut EventWriter<StorePurchaseEvent>,
 ) {
+    let items_count = BUYABLE_ITEMS.len();
+    let grid_width = 5;
+
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            store_selections.buy.move_up();
+            // Move up one row
+            if store_selections.buy.selected >= grid_width {
+                store_selections.buy.selected -= grid_width;
+            }
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            store_selections.buy.move_down();
+            // Move down one row
+            if store_selections.buy.selected + grid_width < items_count {
+                store_selections.buy.selected += grid_width;
+            }
+        }
+        GameAction::Navigate(NavigationDirection::Left) => {
+            // Move left one column
+            let col = store_selections.buy.selected % grid_width;
+            if col > 0 {
+                store_selections.buy.selected -= 1;
+            }
+        }
+        GameAction::Navigate(NavigationDirection::Right) => {
+            // Move right one column
+            let col = store_selections.buy.selected % grid_width;
+            if col < grid_width - 1 && store_selections.buy.selected + 1 < items_count {
+                store_selections.buy.selected += 1;
+            }
         }
         GameAction::Select => {
             if let Some(buyable) = BUYABLE_ITEMS.get(store_selections.buy.selected) {

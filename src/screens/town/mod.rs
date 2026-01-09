@@ -4,7 +4,7 @@ mod tabs;
 
 use bevy::prelude::*;
 
-use crate::input::{GameAction, NavigationDirection};
+use crate::input::GameAction;
 use crate::states::AppState;
 
 pub use tabs::TabsPlugin;
@@ -191,11 +191,11 @@ fn handle_tab_navigation(
 ) {
     for action in action_events.read() {
         match action {
-            GameAction::Navigate(NavigationDirection::Left) => {
-                next_tab.set(current_tab.get().prev());
-            }
-            GameAction::Navigate(NavigationDirection::Right) => {
+            GameAction::NextTab => {
                 next_tab.set(current_tab.get().next());
+            }
+            GameAction::PrevTab => {
+                next_tab.set(current_tab.get().prev());
             }
             _ => {}
         }
