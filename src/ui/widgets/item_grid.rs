@@ -11,7 +11,7 @@ pub struct ItemGridPlugin;
 impl Plugin for ItemGridPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(on_add_item_grid)
-            .add_systems(Update, update_grid_selector);
+            .add_systems(Update, (update_grid_selector, animate_grid_selector));
     }
 }
 
@@ -37,9 +37,16 @@ pub struct GridCell {
     pub index: usize,
 }
 
-/// Marker for the selector sprite.
+/// Marker for the selector sprite with animation state.
 #[derive(Component)]
-pub struct GridSelector;
+pub struct GridSelector {
+    /// Timer for animation
+    pub timer: Timer,
+    /// Current frame (0 = Slice_61, 1 = Slice_91)
+    pub frame: usize,
+    /// Atlas indices for the two frames
+    pub frame_indices: [usize; 2],
+}
 
 fn on_add_item_grid(
     trigger: Trigger<OnAdd, ItemGrid>,
@@ -64,17 +71,20 @@ fn on_add_item_grid(
         })
     });
 
-    // Get the selector sprite if available
-    let selector_image = game_sprites.ui_selectors.as_ref().and_then(|selectors| {
-        selectors.get("Slice_61").map(|idx| {
+    // Get the selector sprite frames if available
+    let selector_data = game_sprites.ui_selectors.as_ref().and_then(|selectors| {
+        let idx1 = selectors.get("Slice_61")?;
+        let idx2 = selectors.get("Slice_91")?;
+        Some((
             ImageNode::from_atlas_image(
                 selectors.texture.clone(),
                 TextureAtlas {
                     layout: selectors.layout.clone(),
-                    index: idx,
+                    index: idx1,
                 },
-            )
-        })
+            ),
+            [idx1, idx2],
+        ))
     });
 
     commands
@@ -104,10 +114,14 @@ fn on_add_item_grid(
                 // Add selector sprite if this is the selected cell
                 let is_selected = i == selected_index;
                 if is_selected {
-                    if let Some(ref selector_img) = selector_image {
+                    if let Some((ref selector_img, frame_indices)) = selector_data {
                         cell.with_children(|cell_content| {
                             cell_content.spawn((
-                                GridSelector,
+                                GridSelector {
+                                    timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+                                    frame: 0,
+                                    frame_indices,
+                                },
                                 Node {
                                     position_type: PositionType::Absolute,
                                     width: Val::Px(CELL_SIZE),
@@ -169,10 +183,16 @@ fn update_grid_selector(
                 if grid_cell.index == item_grid.selected_index {
                     // Add selector to this cell
                     if let Some(selectors_sheet) = &game_sprites.ui_selectors {
-                        if let Some(idx) = selectors_sheet.get("Slice_61") {
+                        let idx1 = selectors_sheet.get("Slice_61");
+                        let idx2 = selectors_sheet.get("Slice_91");
+                        if let (Some(idx1), Some(idx2)) = (idx1, idx2) {
                             commands.entity(cell_entity).with_children(|cell| {
                                 cell.spawn((
-                                    GridSelector,
+                                    GridSelector {
+                                        timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+                                        frame: 0,
+                                        frame_indices: [idx1, idx2],
+                                    },
                                     Node {
                                         position_type: PositionType::Absolute,
                                         width: Val::Px(CELL_SIZE),
@@ -183,7 +203,7 @@ fn update_grid_selector(
                                         selectors_sheet.texture.clone(),
                                         TextureAtlas {
                                             layout: selectors_sheet.layout.clone(),
-                                            index: idx,
+                                            index: idx1,
                                         },
                                     ),
                                 ));
@@ -192,6 +212,24 @@ fn update_grid_selector(
                     }
                     break;
                 }
+            }
+        }
+    }
+}
+
+/// Animate the grid selector by alternating between frames.
+fn animate_grid_selector(
+    time: Res<Time>,
+    mut selectors: Query<(&mut GridSelector, &mut ImageNode)>,
+) {
+    for (mut selector, mut image) in &mut selectors {
+        selector.timer.tick(time.delta());
+        if selector.timer.just_finished() {
+            // Toggle frame
+            selector.frame = (selector.frame + 1) % 2;
+            // Update the atlas index
+            if let Some(ref mut atlas) = image.texture_atlas {
+                atlas.index = selector.frame_indices[selector.frame];
             }
         }
     }
