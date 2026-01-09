@@ -277,6 +277,36 @@ impl SpriteSheet {
         sprite.custom_size = Some(size);
         Some(sprite)
     }
+
+    /// Create an ImageNode for the named sprite (UI).
+    ///
+    /// Use this for UI elements that need to display sprites from the atlas.
+    /// Returns `None` if the sprite name doesn't exist.
+    pub fn image_node(&self, name: &str) -> Option<ImageNode> {
+        let index = self.get(name)?;
+        Some(ImageNode::from_atlas_image(
+            self.texture.clone(),
+            TextureAtlas {
+                layout: self.layout.clone(),
+                index,
+            },
+        ))
+    }
+
+    /// Create a 9-slice ImageNode for panels/buttons.
+    ///
+    /// 9-slice images stretch the center while preserving border regions,
+    /// perfect for panels, buttons, and frames.
+    /// Returns `None` if the sprite name doesn't exist.
+    pub fn image_node_sliced(&self, name: &str, border: f32) -> Option<ImageNode> {
+        use bevy::ui::widget::NodeImageMode;
+        self.image_node(name).map(|img| {
+            img.with_mode(NodeImageMode::Sliced(TextureSlicer {
+                border: BorderRect::square(border),
+                ..default()
+            }))
+        })
+    }
 }
 
 // ============================================================================
@@ -324,6 +354,28 @@ pub struct GameSprites {
     pub icon_items: Option<SpriteSheet>,
     /// UI selectors (selection highlights, cursors)
     pub ui_selectors: Option<SpriteSheet>,
+}
+
+impl GameSprites {
+    /// Get an ImageNode from the ui_all sheet.
+    pub fn ui(&self, name: &str) -> Option<ImageNode> {
+        self.ui_all.as_ref()?.image_node(name)
+    }
+
+    /// Get a 9-slice ImageNode from the ui_all sheet.
+    pub fn ui_sliced(&self, name: &str, border: f32) -> Option<ImageNode> {
+        self.ui_all.as_ref()?.image_node_sliced(name, border)
+    }
+
+    /// Get an ImageNode from the icon_items sheet.
+    pub fn icon(&self, name: &str) -> Option<ImageNode> {
+        self.icon_items.as_ref()?.image_node(name)
+    }
+
+    /// Get an ImageNode from the ui_selectors sheet.
+    pub fn selector(&self, name: &str) -> Option<ImageNode> {
+        self.ui_selectors.as_ref()?.image_node(name)
+    }
 }
 
 // ============================================================================
