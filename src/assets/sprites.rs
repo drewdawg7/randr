@@ -1,7 +1,7 @@
 //! Sprite loading and management for the game.
 //!
-//! This module provides a system for loading sprite sheets exported from Aseprite,
-//! with support for both JSON metadata (named sprite access) and simple image loading.
+//! This module provides a system for loading sprite sheets with JSON metadata,
+//! with support for named sprite access via Bevy's async asset pipeline.
 //!
 //! # Usage
 //!
@@ -20,21 +20,202 @@
 //! }
 //! ```
 
-use bevy::prelude::*;
+use bevy::{
+    asset::{io::Reader, AssetLoader, LoadContext},
+    prelude::*,
+};
+use serde::Deserialize;
 use std::collections::HashMap;
 
-use crate::assets::aseprite::AsepriteSheet;
+// ============================================================================
+// Sprite Sheet Metadata Types (for JSON parsing)
+// ============================================================================
+
+/// Sprite sheet JSON metadata (Hash format).
+///
+/// This represents the structure of sprite sheet JSON files.
+#[derive(Asset, TypePath, Debug, Deserialize)]
+pub struct SpriteSheetMeta {
+    /// Map of frame names to frame data.
+    pub frames: HashMap<String, SpriteFrameMeta>,
+    /// Metadata about the sprite sheet.
+    pub meta: SpriteSheetInfo,
+}
+
+/// A single frame/sprite in the sheet.
+#[derive(Debug, Deserialize)]
+pub struct SpriteFrameMeta {
+    /// The rectangle defining this frame's position in the sheet.
+    pub frame: SpriteRect,
+    /// Whether the frame was rotated during packing.
+    #[serde(default)]
+    pub rotated: bool,
+    /// Whether the frame was trimmed (transparent pixels removed).
+    #[serde(default)]
+    pub trimmed: bool,
+    /// Original sprite size before trimming.
+    #[serde(rename = "sourceSize")]
+    pub source_size: Option<SpriteSize>,
+    /// Sprite position within the original canvas.
+    #[serde(rename = "spriteSourceSize")]
+    pub sprite_source_size: Option<SpriteRect>,
+}
+
+/// Rectangle coordinates in the sprite sheet.
+#[derive(Debug, Deserialize, Clone, Copy)]
+pub struct SpriteRect {
+    pub x: u32,
+    pub y: u32,
+    pub w: u32,
+    pub h: u32,
+}
+
+/// Metadata about the sprite sheet.
+#[derive(Debug, Deserialize)]
+pub struct SpriteSheetInfo {
+    /// Total size of the sprite sheet image.
+    pub size: SpriteSize,
+    /// Original filename (optional).
+    #[serde(default)]
+    pub image: String,
+    /// Application that created this (optional).
+    #[serde(default)]
+    pub app: String,
+    /// Scale factor (optional).
+    #[serde(default)]
+    pub scale: String,
+    /// Slices defined in the sprite sheet (for irregular sprite regions).
+    #[serde(default)]
+    pub slices: Vec<SpriteSlice>,
+}
+
+/// A slice definition for irregular sprite regions.
+#[derive(Debug, Deserialize)]
+pub struct SpriteSlice {
+    /// Name of the slice.
+    pub name: String,
+    /// Keyframes containing bounds for this slice.
+    pub keys: Vec<SpriteSliceKey>,
+}
+
+/// A keyframe for a slice, containing its bounds.
+#[derive(Debug, Deserialize)]
+pub struct SpriteSliceKey {
+    /// The bounding rectangle for this slice.
+    pub bounds: SpriteRect,
+}
+
+/// Size dimensions.
+#[derive(Debug, Deserialize, Clone, Copy)]
+pub struct SpriteSize {
+    pub w: u32,
+    pub h: u32,
+}
+
+impl SpriteSheetMeta {
+    /// Convert this metadata to a Bevy TextureAtlasLayout.
+    ///
+    /// Returns both the layout and a mapping from sprite names to atlas indices.
+    pub fn to_layout(&self) -> (TextureAtlasLayout, HashMap<String, usize>) {
+        let mut layout =
+            TextureAtlasLayout::new_empty(UVec2::new(self.meta.size.w, self.meta.size.h));
+        let mut name_to_index = HashMap::new();
+
+        // Sort frames by name for consistent ordering
+        let mut frames: Vec<_> = self.frames.iter().collect();
+        frames.sort_by_key(|(name, _)| *name);
+
+        for (name, frame) in frames {
+            let rect = URect::new(
+                frame.frame.x,
+                frame.frame.y,
+                frame.frame.x + frame.frame.w,
+                frame.frame.y + frame.frame.h,
+            );
+            let index = layout.add_texture(rect);
+            name_to_index.insert(name.clone(), index);
+        }
+
+        // Also add slices (used for irregular sprite regions)
+        for slice in &self.meta.slices {
+            if let Some(key) = slice.keys.first() {
+                let bounds = &key.bounds;
+                let rect = URect::new(
+                    bounds.x,
+                    bounds.y,
+                    bounds.x + bounds.w,
+                    bounds.y + bounds.h,
+                );
+                let index = layout.add_texture(rect);
+                name_to_index.insert(slice.name.clone(), index);
+            }
+        }
+
+        (layout, name_to_index)
+    }
+}
+
+
+// ============================================================================
+// Asset Loader
+// ============================================================================
+
+/// Error type for sprite sheet loading.
+#[derive(Debug, thiserror::Error)]
+pub enum SpriteSheetLoaderError {
+    #[error("Failed to read sprite sheet: {0}")]
+    Io(#[from] std::io::Error),
+    #[error("Failed to parse sprite sheet JSON: {0}")]
+    Parse(#[from] serde_json::Error),
+}
+
+/// Asset loader for sprite sheet JSON metadata.
+#[derive(Default)]
+pub struct SpriteSheetMetaLoader;
+
+impl AssetLoader for SpriteSheetMetaLoader {
+    type Asset = SpriteSheetMeta;
+    type Settings = ();
+    type Error = SpriteSheetLoaderError;
+
+    async fn load(
+        &self,
+        reader: &mut dyn Reader,
+        _settings: &Self::Settings,
+        _load_context: &mut LoadContext<'_>,
+    ) -> Result<Self::Asset, Self::Error> {
+        let mut bytes = Vec::new();
+        reader.read_to_end(&mut bytes).await?;
+        Ok(serde_json::from_slice(&bytes)?)
+    }
+
+    fn extensions(&self) -> &[&str] {
+        &["json"]
+    }
+}
+
+// ============================================================================
+// Plugin
+// ============================================================================
 
 /// Plugin that loads and manages game assets.
 pub struct AssetPlugin;
 
 impl Plugin for AssetPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<GameAssets>()
+        app.init_asset::<SpriteSheetMeta>()
+            .init_asset_loader::<SpriteSheetMetaLoader>()
+            .init_resource::<GameAssets>()
             .init_resource::<GameSprites>()
-            .add_systems(PreStartup, load_assets);
+            .init_resource::<PendingSpriteSheets>()
+            .add_systems(PreStartup, load_assets)
+            .add_systems(Update, finalize_sprite_sheets);
     }
 }
+
+// ============================================================================
+// SpriteSheet (Runtime representation)
+// ============================================================================
 
 /// A loaded sprite sheet with named sprite access.
 ///
@@ -97,6 +278,10 @@ impl SpriteSheet {
     }
 }
 
+// ============================================================================
+// GameSprites Resource
+// ============================================================================
+
 /// Resource containing all loaded sprite sheets.
 ///
 /// Add fields here for each sprite sheet your game uses.
@@ -117,52 +302,84 @@ pub struct GameSprites {
     pub ui_all: Option<SpriteSheet>,
 }
 
-impl GameSprites {
-    /// Load a sprite sheet from Aseprite JSON export.
-    ///
-    /// Expects both `{name}.png` and `{name}.json` in `assets/sprites/`.
-    pub fn load_sheet(
-        name: &str,
-        asset_server: &AssetServer,
-        texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
-    ) -> Option<SpriteSheet> {
-        let json_path = format!("assets/sprites/{}.json", name);
-        let png_path = format!("sprites/{}.png", name);
+// ============================================================================
+// Async Loading Infrastructure
+// ============================================================================
 
-        // Try to read the JSON file
-        let json = match std::fs::read_to_string(&json_path) {
-            Ok(content) => content,
-            Err(e) => {
-                debug!("Could not load sprite sheet JSON '{}': {}", json_path, e);
-                return None;
-            }
+/// Tracks pending sprite sheet loads.
+#[derive(Resource, Default)]
+struct PendingSpriteSheets {
+    ui_icons: Option<Handle<SpriteSheetMeta>>,
+    ui_buttons: Option<Handle<SpriteSheetMeta>>,
+    book_ui: Option<Handle<SpriteSheetMeta>>,
+    ui_frames: Option<Handle<SpriteSheetMeta>>,
+    ui_bars: Option<Handle<SpriteSheetMeta>>,
+    ui_all: Option<Handle<SpriteSheetMeta>>,
+}
+
+/// Build a SpriteSheet from loaded metadata.
+fn build_sprite_sheet(
+    meta: &SpriteSheetMeta,
+    name: &str,
+    asset_server: &AssetServer,
+    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
+) -> SpriteSheet {
+    let png_path = format!("sprites/{}.png", name);
+    let (layout, sprites) = meta.to_layout();
+    let layout_handle = texture_atlas_layouts.add(layout);
+    let texture = asset_server.load(&png_path);
+
+    info!(
+        "Loaded sprite sheet '{}' with {} sprites",
+        name,
+        sprites.len()
+    );
+
+    SpriteSheet {
+        texture,
+        layout: layout_handle,
+        sprites,
+    }
+}
+
+/// System to finalize sprite sheets when their metadata loads.
+fn finalize_sprite_sheets(
+    mut events: EventReader<AssetEvent<SpriteSheetMeta>>,
+    meta_assets: Res<Assets<SpriteSheetMeta>>,
+    pending: Res<PendingSpriteSheets>,
+    mut game_sprites: ResMut<GameSprites>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
+    asset_server: Res<AssetServer>,
+) {
+    for event in events.read() {
+        let AssetEvent::LoadedWithDependencies { id } = event else {
+            continue;
         };
 
-        // Parse the Aseprite JSON
-        let sheet = match AsepriteSheet::load(&json) {
-            Ok(s) => s,
-            Err(e) => {
-                warn!("Failed to parse Aseprite JSON '{}': {}", json_path, e);
-                return None;
-            }
-        };
+        // Helper macro to reduce boilerplate
+        macro_rules! check_and_build {
+            ($field:ident, $name:literal) => {
+                if let Some(handle) = &pending.$field {
+                    if handle.id() == *id && game_sprites.$field.is_none() {
+                        if let Some(meta) = meta_assets.get(*id) {
+                            game_sprites.$field = Some(build_sprite_sheet(
+                                meta,
+                                $name,
+                                &asset_server,
+                                &mut texture_atlas_layouts,
+                            ));
+                        }
+                    }
+                }
+            };
+        }
 
-        // Convert to Bevy layout
-        let (layout, sprites) = sheet.to_layout();
-        let layout_handle = texture_atlas_layouts.add(layout);
-        let texture = asset_server.load(&png_path);
-
-        info!(
-            "Loaded sprite sheet '{}' with {} sprites",
-            name,
-            sprites.len()
-        );
-
-        Some(SpriteSheet {
-            texture,
-            layout: layout_handle,
-            sprites,
-        })
+        check_and_build!(ui_icons, "ui_icons");
+        check_and_build!(ui_buttons, "ui_buttons");
+        check_and_build!(book_ui, "book_ui");
+        check_and_build!(ui_frames, "ui_frames");
+        check_and_build!(ui_bars, "ui_bars");
+        check_and_build!(ui_all, "ui_all");
     }
 }
 
@@ -228,23 +445,16 @@ impl SpriteAssets {
 /// System to load assets at startup.
 fn load_assets(
     asset_server: Res<AssetServer>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut game_assets: ResMut<GameAssets>,
-    mut game_sprites: ResMut<GameSprites>,
+    mut pending: ResMut<PendingSpriteSheets>,
 ) {
-    // Load new sprite sheet system
-    game_sprites.ui_icons =
-        GameSprites::load_sheet("ui_icons", &asset_server, &mut texture_atlas_layouts);
-    game_sprites.ui_buttons =
-        GameSprites::load_sheet("ui_buttons", &asset_server, &mut texture_atlas_layouts);
-    game_sprites.book_ui =
-        GameSprites::load_sheet("book_ui", &asset_server, &mut texture_atlas_layouts);
-    game_sprites.ui_frames =
-        GameSprites::load_sheet("ui_frames", &asset_server, &mut texture_atlas_layouts);
-    game_sprites.ui_bars =
-        GameSprites::load_sheet("ui_bars", &asset_server, &mut texture_atlas_layouts);
-    game_sprites.ui_all =
-        GameSprites::load_sheet("ui_all", &asset_server, &mut texture_atlas_layouts);
+    // Kick off async sprite sheet loads
+    pending.ui_icons = Some(asset_server.load("sprites/ui_icons.json"));
+    pending.ui_buttons = Some(asset_server.load("sprites/ui_buttons.json"));
+    pending.book_ui = Some(asset_server.load("sprites/book_ui.json"));
+    pending.ui_frames = Some(asset_server.load("sprites/ui_frames.json"));
+    pending.ui_bars = Some(asset_server.load("sprites/ui_bars.json"));
+    pending.ui_all = Some(asset_server.load("sprites/ui_all.json"));
 
     // Legacy sprite loading (individual files)
     game_assets.sprites.mine_wall = try_load(&asset_server, "sprites/mine/wall.png");
@@ -270,4 +480,44 @@ fn load_assets(
 /// Try to load an asset, returning None if file doesn't exist.
 fn try_load(asset_server: &AssetServer, path: &str) -> Option<Handle<Image>> {
     Some(asset_server.load(path))
+}
+
+// ============================================================================
+// Tests
+// ============================================================================
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_parse_sprite_sheet_json() {
+        let json = r#"{
+            "frames": {
+                "heart_full": {
+                    "frame": {"x": 0, "y": 0, "w": 16, "h": 16},
+                    "rotated": false,
+                    "trimmed": false
+                },
+                "heart_empty": {
+                    "frame": {"x": 16, "y": 0, "w": 16, "h": 16},
+                    "rotated": false,
+                    "trimmed": false
+                }
+            },
+            "meta": {
+                "size": {"w": 32, "h": 16}
+            }
+        }"#;
+
+        let sheet: SpriteSheetMeta = serde_json::from_str(json).unwrap();
+        assert_eq!(sheet.frames.len(), 2);
+        assert_eq!(sheet.meta.size.w, 32);
+        assert_eq!(sheet.meta.size.h, 16);
+
+        let (layout, name_to_index) = sheet.to_layout();
+        assert_eq!(layout.len(), 2);
+        assert!(name_to_index.contains_key("heart_full"));
+        assert!(name_to_index.contains_key("heart_empty"));
+    }
 }
