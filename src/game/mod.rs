@@ -4,6 +4,7 @@ pub mod items;
 pub mod magic;
 pub mod player;
 pub mod storage;
+pub mod store_transactions;
 pub mod toast;
 
 // Re-export combat types from the combat module
@@ -20,3 +21,7 @@ pub use player::{GoldChanged, PlayerDamaged, PlayerHealed, PlayerLeveledUp, Play
 pub use storage::{ItemDeposited, ItemWithdrawn, StoragePlugin};
 pub use toast::{ShowToast, ToastPlugin, ToastQueue, ToastType};
 pub use crafting::{BrewPotionEvent, BrewingResult, CraftingPlugin};
+pub use store_transactions::{
+    StorageDepositEvent, StorageWithdrawEvent, StorePurchaseEvent, StoreSellEvent,
+    StoreTransactionResult, StoreTransactionsPlugin,
+};

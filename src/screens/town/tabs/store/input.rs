@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
-use crate::game::{Player, Storage};
+use crate::game::{
+    Player, Storage, StorageDepositEvent, StorageWithdrawEvent, StorePurchaseEvent, StoreSellEvent,
+};
 use crate::input::{GameAction, NavigationDirection};
-use crate::{FindsItems, ManagesItems};
 
 use super::constants::BUYABLE_ITEMS;
 use super::state::{StoreModeKind, StoreMode, StoreSelections};
@@ -12,8 +13,12 @@ pub fn handle_store_input(
     mut store_mode: ResMut<StoreMode>,
     mut store_selections: ResMut<StoreSelections>,
     mut action_events: EventReader<GameAction>,
-    mut player: ResMut<Player>,
-    mut storage: ResMut<Storage>,
+    player: Res<Player>,
+    storage: Res<Storage>,
+    mut purchase_events: EventWriter<StorePurchaseEvent>,
+    mut sell_events: EventWriter<StoreSellEvent>,
+    mut withdraw_events: EventWriter<StorageWithdrawEvent>,
+    mut deposit_events: EventWriter<StorageDepositEvent>,
 ) {
     for action in action_events.read() {
         match store_mode.mode {
@@ -21,10 +26,21 @@ pub fn handle_store_input(
                 handle_menu_input(&mut store_mode, &mut store_selections, action)
             }
             StoreModeKind::Buy => {
-                handle_buy_input(&mut store_mode, &mut store_selections, &mut player, action)
+                handle_buy_input(
+                    &mut store_mode,
+                    &mut store_selections,
+                    action,
+                    &mut purchase_events,
+                )
             }
             StoreModeKind::Sell => {
-                handle_sell_input(&mut store_mode, &mut store_selections, &mut player, action)
+                handle_sell_input(
+                    &mut store_mode,
+                    &mut store_selections,
+                    &player,
+                    action,
+                    &mut sell_events,
+                )
             }
             StoreModeKind::StorageMenu => {
                 handle_storage_menu_input(&mut store_mode, &mut store_selections, action)
@@ -33,15 +49,15 @@ pub fn handle_store_input(
                 &mut store_mode,
                 &mut store_selections,
                 action,
-                &mut player,
-                &mut storage,
+                &storage,
+                &mut withdraw_events,
             ),
             StoreModeKind::StorageDeposit => handle_storage_deposit_input(
                 &mut store_mode,
                 &mut store_selections,
                 action,
-                &mut player,
-                &mut storage,
+                &player,
+                &mut deposit_events,
             ),
         }
     }
@@ -82,8 +98,8 @@ fn handle_menu_input(
 fn handle_buy_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
-    player: &mut Player,
     action: &GameAction,
+    purchase_events: &mut EventWriter<StorePurchaseEvent>,
 ) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
@@ -94,20 +110,11 @@ fn handle_buy_input(
         }
         GameAction::Select => {
             if let Some(buyable) = BUYABLE_ITEMS.get(store_selections.buy.selected) {
-                if player.gold >= buyable.price {
-                    let new_item = buyable.item_id.spawn();
-                    if player.add_to_inv(new_item).is_ok() {
-                        player.gold -= buyable.price;
-                        info!("Purchased {} for {} gold", buyable.name, buyable.price);
-                    } else {
-                        info!("Inventory full!");
-                    }
-                } else {
-                    info!(
-                        "Not enough gold! Need {} but have {}",
-                        buyable.price, player.gold
-                    );
-                }
+                purchase_events.send(StorePurchaseEvent {
+                    item_id: buyable.item_id,
+                    price: buyable.price,
+                    item_name: buyable.name.to_string(),
+                });
             }
         }
         GameAction::Back => {
@@ -122,8 +129,9 @@ fn handle_buy_input(
 fn handle_sell_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
-    player: &mut Player,
+    player: &Player,
     action: &GameAction,
+    sell_events: &mut EventWriter<StoreSellEvent>,
 ) {
     // Update selection count based on current inventory
     store_selections.sell.set_count(player.inventory.items.len());
@@ -136,22 +144,13 @@ fn handle_sell_input(
             store_selections.sell.move_down();
         }
         GameAction::Select => {
-            if let Some(inv_item) = player
-                .inventory
-                .items
-                .get(store_selections.sell.selected)
-                .cloned()
-            {
-                let sell_price = (inv_item.item.gold_value as f32 * 0.5) as i32;
-                let item_name = inv_item.item.name.clone();
+            if store_selections.sell.selected < player.inventory.items.len() {
+                sell_events.send(StoreSellEvent {
+                    inventory_index: store_selections.sell.selected,
+                });
 
-                // Add gold and remove item
-                player.gold += sell_price;
-                player.decrease_item_quantity(&inv_item, 1);
-                info!("Sold {} for {} gold", item_name, sell_price);
-
-                // Update selection if we removed the last item
-                let new_count = player.inventory.items.len();
+                // Adjust selection for removed item (will be processed next frame)
+                let new_count = player.inventory.items.len().saturating_sub(1);
                 store_selections.sell.set_count(new_count);
                 if store_selections.sell.selected >= new_count && new_count > 0 {
                     store_selections.sell.selected = new_count - 1;
@@ -197,8 +196,8 @@ fn handle_storage_view_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
     action: &GameAction,
-    player: &mut Player,
-    storage: &mut Storage,
+    storage: &Storage,
+    withdraw_events: &mut EventWriter<StorageWithdrawEvent>,
 ) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
@@ -208,23 +207,10 @@ fn handle_storage_view_input(
             store_selections.storage_view.move_down();
         }
         GameAction::Select => {
-            // Withdraw item from storage
-            let storage_items = storage.inventory.items.as_slice();
-            if let Some(inv_item) = storage_items.get(store_selections.storage_view.selected) {
-                let item = inv_item.item.clone();
-
-                // Try to add to player inventory
-                match player.add_to_inv(item.clone()) {
-                    Ok(_) => {
-                        // Remove from storage
-                        let item_uuid = inv_item.uuid();
-                        storage.remove_item(item_uuid);
-                        info!("Withdrew {} from storage", item.name);
-                    }
-                    Err(_) => {
-                        info!("Inventory is full! Cannot withdraw item.");
-                    }
-                }
+            if store_selections.storage_view.selected < storage.inventory.items.len() {
+                withdraw_events.send(StorageWithdrawEvent {
+                    storage_index: store_selections.storage_view.selected,
+                });
             }
         }
         GameAction::Back => {
@@ -240,8 +226,8 @@ fn handle_storage_deposit_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
     action: &GameAction,
-    player: &mut Player,
-    storage: &mut Storage,
+    player: &Player,
+    deposit_events: &mut EventWriter<StorageDepositEvent>,
 ) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
@@ -251,23 +237,10 @@ fn handle_storage_deposit_input(
             store_selections.deposit.move_down();
         }
         GameAction::Select => {
-            // Deposit item into storage
-            let inventory_items = player.inventory.items.as_slice();
-            if let Some(inv_item) = inventory_items.get(store_selections.deposit.selected) {
-                let item = inv_item.item.clone();
-
-                // Add to storage (storage has unlimited capacity)
-                match storage.add_to_inv(item.clone()) {
-                    Ok(_) => {
-                        // Remove from player inventory
-                        let item_uuid = inv_item.uuid();
-                        player.remove_item(item_uuid);
-                        info!("Deposited {} into storage", item.name);
-                    }
-                    Err(e) => {
-                        info!("Failed to deposit item: {:?}", e);
-                    }
-                }
+            if store_selections.deposit.selected < player.inventory.items.len() {
+                deposit_events.send(StorageDepositEvent {
+                    inventory_index: store_selections.deposit.selected,
+                });
             }
         }
         GameAction::Back => {
