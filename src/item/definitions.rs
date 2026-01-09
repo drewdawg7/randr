@@ -429,7 +429,7 @@ impl ItemSpec {
         // Use fixed quality from spec, or roll if None
         let quality = self.quality.unwrap_or_else(ItemQuality::roll);
         let base_stats = self.stats.clone();
-        let stats = quality.multiply_stats(base_stats.clone());
+        let stats = quality.multiply_stats(&base_stats);
 
         // Initialize tome_data if this is a tome item
         let tome_data = match self.item_type {

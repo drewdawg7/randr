@@ -65,7 +65,7 @@ impl Item {
     }
 
     fn recalculate_stats(&mut self) {
-        self.stats = self.quality.multiply_stats(self.base_stats.clone());
+        self.stats = self.quality.multiply_stats(&self.base_stats);
     }
 
     pub fn upgrade_quality(&mut self) -> Result<ItemQuality, ItemError> {

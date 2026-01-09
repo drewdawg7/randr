@@ -23,7 +23,7 @@ fn create_test_item(
     let base_stats = StatSheet::new()
         .with(StatType::Attack, attack)
         .with(StatType::Defense, defense);
-    let stats = quality.multiply_stats(base_stats.clone());
+    let stats = quality.multiply_stats(&base_stats);
 
     Item {
         item_uuid: Uuid::new_v4(),
@@ -415,9 +415,9 @@ fn item_quality_multiplier_increases_with_quality() {
 fn item_quality_multiply_stats_applies_multiplier() {
     let stats = StatSheet::new().with(StatType::Attack, 10);
 
-    let poor_stats = ItemQuality::Poor.multiply_stats(stats.clone());
-    let normal_stats = ItemQuality::Normal.multiply_stats(stats.clone());
-    let mythic_stats = ItemQuality::Mythic.multiply_stats(stats.clone());
+    let poor_stats = ItemQuality::Poor.multiply_stats(&stats);
+    let normal_stats = ItemQuality::Normal.multiply_stats(&stats);
+    let mythic_stats = ItemQuality::Mythic.multiply_stats(&stats);
 
     // Poor (0.8x) < Normal (1.0x) < Mythic (1.8x)
     assert!(poor_stats.value(StatType::Attack) < normal_stats.value(StatType::Attack));

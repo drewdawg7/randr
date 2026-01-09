@@ -195,12 +195,13 @@ impl ItemQuality {
             ItemQuality::Mythic       => 1.4,
         }
     }
-    pub fn multiply_stats(&self, mut sheet: StatSheet) -> StatSheet {
+    pub fn multiply_stats(&self, sheet: &StatSheet) -> StatSheet {
         let multiplier = self.multiplier();
-        for stat in sheet.stats_mut().values_mut() {
+        let mut result = sheet.clone();
+        for stat in result.stats_mut().values_mut() {
             stat.current_value = ((stat.current_value as f64) * multiplier).round() as i32;
             stat.max_value     = ((stat.max_value     as f64) * multiplier).round() as i32;
         }
-        sheet
+        result
     }
 }
