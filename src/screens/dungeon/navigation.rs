@@ -212,9 +212,12 @@ pub fn handle_navigation_input(
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<DungeonScreenState>,
     mut dungeon: ResMut<crate::game::DungeonResource>,
-    compass_dirs: Query<&CompassDirection>,
-    enter_action: Query<&EnterRoomAction>,
-    mut all_items: Query<(&mut TextColor, Option<&CompassDirection>, Option<&EnterRoomAction>)>,
+    compass_dirs: Query<&CompassDirection, Without<EnterRoomAction>>,
+    enter_action: Query<&EnterRoomAction, Without<CompassDirection>>,
+    mut all_items: Query<
+        (&mut TextColor, Option<&CompassDirection>, Option<&EnterRoomAction>),
+        Or<(With<CompassDirection>, With<EnterRoomAction>)>,
+    >,
 ) {
     for action in action_reader.read() {
         match action {
@@ -258,7 +261,10 @@ pub fn handle_navigation_input(
 /// Update visual highlighting for navigation options
 fn update_navigation_visuals(
     state: &DungeonScreenState,
-    items: &mut Query<(&mut TextColor, Option<&CompassDirection>, Option<&EnterRoomAction>)>,
+    items: &mut Query<
+        (&mut TextColor, Option<&CompassDirection>, Option<&EnterRoomAction>),
+        Or<(With<CompassDirection>, With<EnterRoomAction>)>,
+    >,
 ) {
     for (mut color, compass_opt, enter_opt) in items.iter_mut() {
         let is_selected = if let Some(compass) = compass_opt {

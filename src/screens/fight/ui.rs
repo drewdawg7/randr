@@ -343,8 +343,8 @@ pub fn update_combat_visuals(
     mut commands: Commands,
     player: Res<Player>,
     combat_res: Res<ActiveCombatResource>,
-    player_health_bar: Query<Entity, With<PlayerHealthBar>>,
-    enemy_health_bar: Query<Entity, With<EnemyHealthBar>>,
+    player_health_bar: Query<Entity, (With<PlayerHealthBar>, Without<EnemyHealthBar>)>,
+    enemy_health_bar: Query<Entity, (With<EnemyHealthBar>, Without<PlayerHealthBar>)>,
     children: Query<&Children>,
     mut fill_query: Query<&mut Node, With<HealthBarFill>>,
     mut text_query: Query<&mut Text, With<HealthBarText>>,
@@ -388,7 +388,7 @@ pub fn cleanup_fight_screen(
 
 pub fn reset_fight_state(
     mut fight_state: ResMut<FightScreenState>,
-    mut action_items: Query<(&ActionMenuItem, &mut TextColor, &mut Text)>,
+    mut action_items: Query<(&ActionMenuItem, &mut TextColor, &mut Text), Without<PostCombatMenuItem>>,
 ) {
     fight_state.reset();
     let labels = ["Attack", "Run"];

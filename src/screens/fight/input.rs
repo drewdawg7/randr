@@ -10,7 +10,7 @@ pub fn handle_player_turn_input(
     mut action_reader: EventReader<GameAction>,
     mut fight_state: ResMut<FightScreenState>,
     mut combat_action: EventWriter<PlayerCombatAction>,
-    mut action_items: Query<(&ActionMenuItem, &mut TextColor, &mut Text)>,
+    mut action_items: Query<(&ActionMenuItem, &mut TextColor, &mut Text), Without<PostCombatMenuItem>>,
 ) {
     for action in action_reader.read() {
         match action {
@@ -67,7 +67,7 @@ pub fn handle_post_combat_input(
 
 fn update_action_visuals(
     state: &FightScreenState,
-    items: &mut Query<(&ActionMenuItem, &mut TextColor, &mut Text)>,
+    items: &mut Query<(&ActionMenuItem, &mut TextColor, &mut Text), Without<PostCombatMenuItem>>,
 ) {
     let labels = ["Attack", "Run"];
     for (item, mut color, mut text) in items.iter_mut() {
