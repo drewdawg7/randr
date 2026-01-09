@@ -3,10 +3,10 @@ use bevy::prelude::*;
 use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
-use crate::ui::widgets::PlayerStats;
+use crate::ui::widgets::{ItemGrid, PlayerStats};
 use crate::ui::{selection_colors, selection_prefix};
 
-use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
+use super::constants::{STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
 use super::state::{StoreModeKind, StoreMode, StoreSelections};
 
 /// Spawn the store UI based on current mode.
@@ -77,7 +77,7 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) 
 }
 
 /// Spawn the buy screen UI.
-fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, player: &Player) {
+fn spawn_buy_ui(parent: &mut ChildBuilder, _store_selections: &StoreSelections, _player: &Player) {
     // Title
     parent.spawn((
         Text::new("Buy Items"),
@@ -95,78 +95,8 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, p
     // Gold display
     parent.spawn(PlayerStats);
 
-    // Items for sale
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(5.0),
-            ..default()
-        })
-        .with_children(|list| {
-            for (i, item) in BUYABLE_ITEMS.iter().enumerate() {
-                let is_selected = i == store_selections.buy.selected;
-                let can_afford = player.gold >= item.price;
-
-                let (bg_color, text_color) = selection_colors(is_selected);
-
-                let prefix = selection_prefix(is_selected);
-
-                let price_color = if can_afford {
-                    Color::srgb(0.9, 0.8, 0.3)
-                } else {
-                    Color::srgb(0.8, 0.3, 0.3)
-                };
-
-                list.spawn((
-                    Node {
-                        padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
-                        flex_direction: FlexDirection::Row,
-                        column_gap: Val::Px(10.0),
-                        ..default()
-                    },
-                    BackgroundColor(bg_color),
-                ))
-                .with_children(|item_row| {
-                    // Item name
-                    item_row.spawn((
-                        Text::new(format!("{}{}", prefix, item.name)),
-                        TextFont {
-                            font_size: 18.0,
-                            ..default()
-                        },
-                        TextColor(text_color),
-                        Node {
-                            width: Val::Px(200.0),
-                            ..default()
-                        },
-                    ));
-
-                    // Price
-                    item_row.spawn((
-                        Text::new(format!("{} gold", item.price)),
-                        TextFont {
-                            font_size: 18.0,
-                            ..default()
-                        },
-                        TextColor(price_color),
-                        Node {
-                            width: Val::Px(100.0),
-                            ..default()
-                        },
-                    ));
-
-                    // Description
-                    item_row.spawn((
-                        Text::new(item.description),
-                        TextFont {
-                            font_size: 16.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.6, 0.6, 0.6)),
-                    ));
-                });
-            }
-        });
+    // Item grid
+    parent.spawn(ItemGrid);
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Buy  [Backspace] Back");
