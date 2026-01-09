@@ -1,3 +1,4 @@
+pub mod crafting;
 pub mod dungeon;
 pub mod items;
 pub mod magic;
@@ -18,3 +19,4 @@ pub use crate::storage::Storage;
 pub use player::{GoldChanged, PlayerDamaged, PlayerHealed, PlayerLeveledUp, PlayerPlugin};
 pub use storage::{ItemDeposited, ItemWithdrawn, StoragePlugin};
 pub use toast::{ShowToast, ToastPlugin, ToastQueue, ToastType};
+pub use crafting::{BrewPotionEvent, BrewingResult, CraftingPlugin};

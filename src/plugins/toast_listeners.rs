@@ -1,9 +1,9 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::game::{
-    DungeonCompleted, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped, ItemPickedUp,
-    ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerDefeat, PlayerHealed, PlayerLeveledUp,
-    PlayerVictory, RoomCleared, ShowToast,
+    BrewingResult, DungeonCompleted, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped,
+    ItemPickedUp, ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerDefeat, PlayerHealed,
+    PlayerLeveledUp, PlayerVictory, RoomCleared, ShowToast,
 };
 use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, MobSpawned, TransactionCompleted};
 
@@ -32,6 +32,7 @@ impl Plugin for ToastListenersPlugin {
                 listen_combat_events,
                 listen_economy_events,
                 listen_dungeon_events,
+                listen_brewing_events,
             ),
         );
     }
@@ -238,5 +239,37 @@ fn listen_dungeon_events(
             "Dungeon '{}' completed! {} rooms cleared",
             event.dungeon_name, event.rooms_cleared
         )));
+    }
+}
+
+/// Listen to brewing-related events
+fn listen_brewing_events(
+    mut brewing_events: EventReader<BrewingResult>,
+    mut toast_writer: EventWriter<ShowToast>,
+) {
+    for event in brewing_events.read() {
+        match event {
+            BrewingResult::Success { item_name } => {
+                toast_writer.send(ShowToast::success(format!("Crafted {}!", item_name)));
+            }
+            BrewingResult::InsufficientIngredients { recipe_name } => {
+                toast_writer.send(ShowToast::warning(format!(
+                    "Missing ingredients for {}",
+                    recipe_name
+                )));
+            }
+            BrewingResult::InventoryFull { item_name } => {
+                toast_writer.send(ShowToast::error(format!(
+                    "Inventory full - could not add {}",
+                    item_name
+                )));
+            }
+            BrewingResult::CraftingFailed { recipe_name } => {
+                toast_writer.send(ShowToast::error(format!(
+                    "Failed to craft {}",
+                    recipe_name
+                )));
+            }
+        }
     }
 }

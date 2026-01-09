@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
-use crate::game::Player;
+use crate::game::{BrewPotionEvent, Player};
 use crate::input::{GameAction, NavigationDirection};
-use crate::inventory::ManagesItems;
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
 use crate::states::AppState;
@@ -83,8 +82,8 @@ const ALCHEMIST_MENU_OPTIONS: &[MenuOption] = &[MenuOption {
 fn handle_alchemist_input(
     mut alchemist_mode: ResMut<AlchemistMode>,
     mut alchemist_selections: ResMut<AlchemistSelections>,
-    mut player: ResMut<Player>,
     mut action_events: EventReader<GameAction>,
+    mut brew_events: EventWriter<BrewPotionEvent>,
 ) {
     for action in action_events.read() {
         match alchemist_mode.mode {
@@ -117,34 +116,12 @@ fn handle_alchemist_input(
                     alchemist_selections.recipe.move_down();
                 }
                 GameAction::Select => {
-                    // Try to craft the selected recipe
+                    // Emit brewing event - game logic handled by CraftingPlugin
                     if let Some(&recipe_id) = alchemist_mode
                         .available_recipes
                         .get(alchemist_selections.recipe.selected)
                     {
-                        if let Ok(recipe) = Recipe::new(recipe_id) {
-                            if recipe.can_craft(&player) {
-                                match recipe.craft(&mut player) {
-                                    Ok(item_id) => {
-                                        // Spawn the item and add to inventory
-                                        let item = item_id.spawn();
-                                        match player.add_to_inv(item) {
-                                            Ok(_) => {
-                                                info!("Crafted {}!", recipe.name());
-                                            }
-                                            Err(_) => {
-                                                error!("Inventory is full");
-                                            }
-                                        }
-                                    }
-                                    Err(e) => {
-                                        error!("Failed to craft: {:?}", e);
-                                    }
-                                }
-                            } else {
-                                info!("Missing ingredients for {}", recipe.name());
-                            }
-                        }
+                        brew_events.send(BrewPotionEvent { recipe_id });
                     }
                 }
                 GameAction::Back => {
