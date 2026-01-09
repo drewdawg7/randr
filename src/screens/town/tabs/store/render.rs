@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
-use crate::ui::widgets::{ItemGrid, PlayerStats};
+use crate::ui::widgets::{ItemGrid, ItemGridEntry, PlayerStats};
 use crate::ui::{selection_colors, selection_prefix};
 
 use super::constants::{STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
@@ -95,8 +95,14 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, _store_selections: &StoreSelections, 
     // Gold display
     parent.spawn(PlayerStats);
 
-    // Item grid
-    parent.spawn(ItemGrid);
+    // Item grid with store items
+    parent.spawn(ItemGrid {
+        items: vec![
+            ItemGridEntry { sprite_name: "Slice_337" }, // HP Potion
+            ItemGridEntry { sprite_name: "Slice_155" }, // Sword
+            ItemGridEntry { sprite_name: "Slice_100" }, // Shield
+        ],
+    });
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Buy  [Backspace] Back");
