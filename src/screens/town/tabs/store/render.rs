@@ -133,6 +133,8 @@ fn spawn_buy_ui(
             height: Val::Px(panel_height),
             margin: UiRect::bottom(Val::Px(10.0)),
             flex_direction: FlexDirection::Column,
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
             padding: UiRect::all(Val::Px(12.0)),
             row_gap: Val::Px(4.0),
             ..default()
@@ -499,16 +501,19 @@ pub fn populate_store_info_panel(
         // Get item spec for stats
         let spec = item.item_id.spec();
 
+        // Brown text color matching the PLAY button style
+        let text_color = TextColor(Color::srgb(0.55, 0.35, 0.25));
+
         // Remove the marker and add children with item details
         commands
             .entity(entity)
             .remove::<StoreInfoPanel>()
             .with_children(|parent| {
-                // Item name (yellow, larger)
+                // Item name
                 parent.spawn((
                     Text::new(item.name),
                     game_fonts.pixel_font(18.0),
-                    TextColor(Color::srgb(0.9, 0.9, 0.5)),
+                    text_color,
                 ));
 
                 // Stats (only show non-zero stats)
@@ -526,20 +531,16 @@ pub fn populate_store_info_panel(
                         parent.spawn((
                             Text::new(format!("{}: +{}", stat_name, value)),
                             game_fonts.pixel_font(14.0),
-                            TextColor(Color::srgb(0.7, 0.9, 0.7)),
+                            text_color,
                         ));
                     }
                 }
 
-                // Cost (gold color)
+                // Cost
                 parent.spawn((
                     Text::new(format!("{} gold", item.price)),
                     game_fonts.pixel_font(14.0),
-                    TextColor(Color::srgb(0.9, 0.8, 0.3)),
-                    Node {
-                        margin: UiRect::top(Val::Auto),
-                        ..default()
-                    },
+                    text_color,
                 ));
             });
     }
