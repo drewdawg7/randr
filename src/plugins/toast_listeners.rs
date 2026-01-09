@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::game::{
     DungeonCompleted, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped, ItemPickedUp,
@@ -6,6 +6,18 @@ use crate::game::{
     PlayerVictory, RoomCleared, ShowToast,
 };
 use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, MobSpawned, TransactionCompleted};
+
+/// SystemParam grouping all item-related event readers to reduce parameter count.
+#[derive(SystemParam)]
+struct ItemEventReaders<'w, 's> {
+    picked_up: EventReader<'w, 's, ItemPickedUp>,
+    equipped: EventReader<'w, 's, ItemEquipped>,
+    unequipped: EventReader<'w, 's, ItemUnequipped>,
+    used: EventReader<'w, 's, ItemUsed>,
+    dropped: EventReader<'w, 's, ItemDropped>,
+    deposited: EventReader<'w, 's, ItemDeposited>,
+    withdrawn: EventReader<'w, 's, ItemWithdrawn>,
+}
 
 /// Plugin that listens to game events and triggers toast notifications
 pub struct ToastListenersPlugin;
@@ -60,18 +72,9 @@ fn listen_player_events(
 }
 
 /// Listen to item-related events
-fn listen_item_events(
-    mut picked_up_events: EventReader<ItemPickedUp>,
-    mut equipped_events: EventReader<ItemEquipped>,
-    mut unequipped_events: EventReader<ItemUnequipped>,
-    mut used_events: EventReader<ItemUsed>,
-    mut dropped_events: EventReader<ItemDropped>,
-    mut deposited_events: EventReader<ItemDeposited>,
-    mut withdrawn_events: EventReader<ItemWithdrawn>,
-    mut toast_writer: EventWriter<ShowToast>,
-) {
+fn listen_item_events(mut events: ItemEventReaders, mut toast_writer: EventWriter<ShowToast>) {
     // Item pickup notifications
-    for event in picked_up_events.read() {
+    for event in events.picked_up.read() {
         let item_name = &event.item_id.spec().name;
         if event.quantity > 1 {
             toast_writer.send(ShowToast::success(format!(
@@ -84,7 +87,7 @@ fn listen_item_events(
     }
 
     // Equipment notifications
-    for event in equipped_events.read() {
+    for event in events.equipped.read() {
         toast_writer.send(ShowToast::info(format!(
             "Equipped {} to {:?}",
             event.item_id.spec().name,
@@ -92,7 +95,7 @@ fn listen_item_events(
         )));
     }
 
-    for event in unequipped_events.read() {
+    for event in events.unequipped.read() {
         toast_writer.send(ShowToast::info(format!(
             "Unequipped {} from {:?}",
             event.item_id.spec().name,
@@ -101,12 +104,12 @@ fn listen_item_events(
     }
 
     // Item use notifications
-    for event in used_events.read() {
+    for event in events.used.read() {
         toast_writer.send(ShowToast::info(format!("Used {}", event.item_id.spec().name)));
     }
 
     // Item drop notifications
-    for event in dropped_events.read() {
+    for event in events.dropped.read() {
         if event.quantity > 1 {
             toast_writer.send(ShowToast::warning(format!(
                 "Dropped {} x{}",
@@ -122,18 +125,12 @@ fn listen_item_events(
     }
 
     // Storage notifications
-    for event in deposited_events.read() {
-        toast_writer.send(ShowToast::info(format!(
-            "Deposited {}",
-            event.item_name
-        )));
+    for event in events.deposited.read() {
+        toast_writer.send(ShowToast::info(format!("Deposited {}", event.item_name)));
     }
 
-    for event in withdrawn_events.read() {
-        toast_writer.send(ShowToast::info(format!(
-            "Withdrew {}",
-            event.item_name
-        )));
+    for event in events.withdrawn.read() {
+        toast_writer.send(ShowToast::info(format!("Withdrew {}", event.item_name)));
     }
 }
 

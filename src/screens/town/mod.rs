@@ -1,7 +1,7 @@
 mod shared;
 mod tabs;
 
-use bevy::prelude::*;
+use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::game::{PlayerResource, StorageResource};
 use crate::input::{GameAction, NavigationDirection};
@@ -122,6 +122,16 @@ pub struct ContentArea;
 /// Marker component for tab content (despawned on tab change).
 #[derive(Component)]
 pub struct TabContent;
+
+/// SystemParam grouping all tab states to reduce parameter count.
+#[derive(SystemParam)]
+struct TabStates<'w> {
+    field: Res<'w, FieldTabState>,
+    dungeon: Res<'w, DungeonTabState>,
+    store: Res<'w, StoreTabState>,
+    blacksmith: Res<'w, BlacksmithTabState>,
+    alchemist: Res<'w, AlchemistTabState>,
+}
 
 /// System to set up the town UI when entering the Town state.
 fn setup_town_ui(mut commands: Commands, current_tab: Res<CurrentTab>) {
@@ -266,13 +276,7 @@ fn render_tab_content(
     current_tab: Res<CurrentTab>,
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
-    // Tab states
-    field_state: Res<FieldTabState>,
-    dungeon_state: Res<DungeonTabState>,
-    store_state: Res<StoreTabState>,
-    blacksmith_state: Res<BlacksmithTabState>,
-    alchemist_state: Res<AlchemistTabState>,
-    // Other resources needed for rendering
+    tab_states: TabStates,
     player: Res<PlayerResource>,
     storage: Res<StorageResource>,
 ) {
@@ -294,19 +298,19 @@ fn render_tab_content(
     // Spawn content for the current tab
     match current_tab.tab {
         TownTab::Store => {
-            spawn_store_ui(&mut commands, content_entity, &store_state, &player, &storage);
+            spawn_store_ui(&mut commands, content_entity, &tab_states.store, &player, &storage);
         }
         TownTab::Blacksmith => {
-            spawn_blacksmith_ui(&mut commands, content_entity, &blacksmith_state, &player);
+            spawn_blacksmith_ui(&mut commands, content_entity, &tab_states.blacksmith, &player);
         }
         TownTab::Alchemist => {
-            spawn_alchemist_ui(&mut commands, content_entity, &alchemist_state, &player);
+            spawn_alchemist_ui(&mut commands, content_entity, &tab_states.alchemist, &player);
         }
         TownTab::Field => {
-            spawn_field_ui(&mut commands, content_entity, &field_state, &player);
+            spawn_field_ui(&mut commands, content_entity, &tab_states.field, &player);
         }
         TownTab::Dungeon => {
-            spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state, &player);
+            spawn_dungeon_ui(&mut commands, content_entity, &tab_states.dungeon, &player);
         }
     }
 }
