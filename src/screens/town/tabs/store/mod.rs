@@ -10,6 +10,7 @@ use crate::game::{Player, Storage};
 use crate::screens::town::{ContentArea, TabContent, TownTab};
 
 use input::handle_store_input;
+use render::populate_store_info_panel;
 
 pub use render::spawn_store_ui;
 pub use state::{StoreMode, StoreSelections};
@@ -24,7 +25,11 @@ impl Plugin for StoreTabPlugin {
             .add_systems(OnEnter(TownTab::Store), spawn_store_content)
             .add_systems(
                 Update,
-                (handle_store_input, refresh_store_on_mode_change)
+                (
+                    handle_store_input,
+                    refresh_store_on_mode_change,
+                    populate_store_info_panel,
+                )
                     .run_if(in_state(TownTab::Store)),
             );
     }

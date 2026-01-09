@@ -1,15 +1,22 @@
 use bevy::prelude::*;
 use bevy::ui::widget::NodeImageMode;
 
-use crate::assets::GameSprites;
+use crate::assets::{GameFonts, GameSprites};
 use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
+use crate::stats::StatType;
 use crate::ui::widgets::{ItemGrid, ItemGridEntry};
 use crate::ui::{selection_colors, selection_prefix};
 
-use super::constants::{STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
+use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
 use super::state::{StoreModeKind, StoreMode, StoreSelections};
+
+/// Marker component for the store info panel that displays selected item details.
+#[derive(Component)]
+pub struct StoreInfoPanel {
+    pub selected_index: usize,
+}
 
 /// Spawn the store UI based on current mode.
 pub fn spawn_store_ui(
@@ -117,12 +124,20 @@ fn spawn_buy_ui(
         })
     });
 
-    let mut panel = parent.spawn(Node {
-        width: Val::Px(panel_width),
-        height: Val::Px(panel_height),
-        margin: UiRect::bottom(Val::Px(10.0)),
-        ..default()
-    });
+    let mut panel = parent.spawn((
+        StoreInfoPanel {
+            selected_index: store_selections.buy.selected,
+        },
+        Node {
+            width: Val::Px(panel_width),
+            height: Val::Px(panel_height),
+            margin: UiRect::bottom(Val::Px(10.0)),
+            flex_direction: FlexDirection::Column,
+            padding: UiRect::all(Val::Px(12.0)),
+            row_gap: Val::Px(4.0),
+            ..default()
+        },
+    ));
     if let Some(img) = panel_image {
         panel.insert(img);
     }
@@ -467,4 +482,65 @@ fn spawn_navigation_hint(parent: &mut ChildBuilder, hint: &str) {
             ..default()
         },
     ));
+}
+
+/// System to populate the store info panel with item details.
+pub fn populate_store_info_panel(
+    mut commands: Commands,
+    query: Query<(Entity, &StoreInfoPanel)>,
+    game_fonts: Res<GameFonts>,
+) {
+    for (entity, panel) in &query {
+        // Get the selected item from BUYABLE_ITEMS
+        let Some(item) = BUYABLE_ITEMS.get(panel.selected_index) else {
+            continue;
+        };
+
+        // Get item spec for stats
+        let spec = item.item_id.spec();
+
+        // Remove the marker and add children with item details
+        commands
+            .entity(entity)
+            .remove::<StoreInfoPanel>()
+            .with_children(|parent| {
+                // Item name (yellow, larger)
+                parent.spawn((
+                    Text::new(item.name),
+                    game_fonts.pixel_font(18.0),
+                    TextColor(Color::srgb(0.9, 0.9, 0.5)),
+                ));
+
+                // Stats (only show non-zero stats)
+                for stat_type in StatType::all() {
+                    let value = spec.stats.value(*stat_type);
+                    if value > 0 {
+                        let stat_name = match stat_type {
+                            StatType::Health => "HP",
+                            StatType::Attack => "ATK",
+                            StatType::Defense => "DEF",
+                            StatType::GoldFind => "Gold Find",
+                            StatType::Mining => "Mining",
+                            StatType::MagicFind => "Magic Find",
+                        };
+                        parent.spawn((
+                            Text::new(format!("{}: +{}", stat_name, value)),
+                            game_fonts.pixel_font(14.0),
+                            TextColor(Color::srgb(0.7, 0.9, 0.7)),
+                        ));
+                    }
+                }
+
+                // Cost (gold color)
+                parent.spawn((
+                    Text::new(format!("{} gold", item.price)),
+                    game_fonts.pixel_font(14.0),
+                    TextColor(Color::srgb(0.9, 0.8, 0.3)),
+                    Node {
+                        margin: UiRect::top(Val::Auto),
+                        ..default()
+                    },
+                ));
+            });
+    }
 }
