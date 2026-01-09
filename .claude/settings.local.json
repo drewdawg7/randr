@@ -121,7 +121,8 @@
       "WebFetch(domain:bevy.org)",
       "Skill(bevy-patterns)",
       "Skill(creating-skills)",
-      "Skill(sprites)"
+      "Skill(sprites)",
+      "Bash(git -C /Users/drewstewart/code/game checkout -b feat/randr-title)"
     ]
   },
   "enabledMcpjsonServers": [

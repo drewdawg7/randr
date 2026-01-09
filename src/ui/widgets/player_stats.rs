@@ -28,7 +28,7 @@ fn on_add_player_stats(
     let entity = trigger.entity();
 
     // Get sprite images if available
-    let (heart_image, gold_image) = game_sprites
+    let (heart_image, gold_image, background_image) = game_sprites
         .ui_all
         .as_ref()
         .map(|ui_all| {
@@ -50,18 +50,31 @@ fn on_add_player_stats(
                     },
                 )
             });
-            (heart, gold)
+            let background = ui_all.get("Slice_47").map(|idx| {
+                ImageNode::from_atlas_image(
+                    ui_all.texture.clone(),
+                    TextureAtlas {
+                        layout: ui_all.layout.clone(),
+                        index: idx,
+                    },
+                )
+            });
+            (heart, gold, background)
         })
-        .unwrap_or((None, None));
+        .unwrap_or((None, None, None));
 
-    commands
-        .entity(entity)
-        .insert(Node {
-            flex_direction: FlexDirection::Column,
-            padding: UiRect::all(Val::Px(10.0)),
-            row_gap: Val::Px(5.0),
-            ..default()
-        })
+    let mut entity_commands = commands.entity(entity);
+    entity_commands.insert(Node {
+        flex_direction: FlexDirection::Row,
+        padding: UiRect::all(Val::Px(10.0)),
+        column_gap: Val::Px(15.0),
+        align_items: AlignItems::Center,
+        ..default()
+    });
+    if let Some(bg) = background_image {
+        entity_commands.insert(bg);
+    }
+    entity_commands
         .with_children(|stats| {
         // HP row with heart icon + values
         stats
