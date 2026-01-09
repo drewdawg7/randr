@@ -19,17 +19,19 @@ impl Plugin for PlayerStatsPlugin {
 #[derive(Component)]
 pub struct PlayerStats;
 
-/// Spawn player stats display (HP, Level/XP, Gold).
-pub fn spawn_player_stats(parent: &mut ChildBuilder) {
-    parent.spawn((
-        PlayerStats,
-        Node {
-            flex_direction: FlexDirection::Column,
-            padding: UiRect::all(Val::Px(10.0)),
-            row_gap: Val::Px(5.0),
-            ..default()
-        },
-    ));
+impl PlayerStats {
+    /// Spawn player stats display (HP, Level/XP, Gold).
+    pub fn spawn(parent: &mut ChildBuilder) {
+        parent.spawn((
+            PlayerStats,
+            Node {
+                flex_direction: FlexDirection::Column,
+                padding: UiRect::all(Val::Px(10.0)),
+                row_gap: Val::Px(5.0),
+                ..default()
+            },
+        ));
+    }
 }
 
 fn on_add_player_stats(

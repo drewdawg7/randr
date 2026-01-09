@@ -4,6 +4,7 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::states::AppState;
 use crate::stats::HasStats;
+use crate::ui::widgets::PlayerStats;
 
 /// Component marker for boss UI root
 #[derive(Component)]
@@ -97,6 +98,9 @@ pub fn spawn_boss_ui(
                     ..default()
                 },
             ));
+
+            // Player stats
+            PlayerStats::spawn(parent);
 
             // Actions
             parent

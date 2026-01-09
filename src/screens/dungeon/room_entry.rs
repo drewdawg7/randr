@@ -4,6 +4,7 @@ use crate::dungeon::RoomType;
 use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::states::AppState;
+use crate::ui::widgets::PlayerStats;
 
 /// Component marker for room entry UI root
 #[derive(Component)]
@@ -141,6 +142,9 @@ pub fn spawn_room_entry_ui(
                     },
                 ));
             }
+
+            // Player stats
+            PlayerStats::spawn(parent);
 
             // Actions
             parent

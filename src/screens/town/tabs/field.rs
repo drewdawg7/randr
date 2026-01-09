@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
 use crate::states::{AppState, RequestFightEvent, RequestMineEvent};
-use crate::ui::widgets::spawn_player_stats;
+use crate::ui::widgets::PlayerStats;
 
 use super::super::shared::{spawn_menu, MenuOption};
 use super::super::{ContentArea, TabContent, TownTab};
@@ -128,7 +128,7 @@ pub fn spawn_field_ui(
             ))
             .with_children(|content| {
                 // Player stats summary
-                spawn_player_stats(content);
+                PlayerStats::spawn(content);
 
                 // Menu options
                 spawn_menu(

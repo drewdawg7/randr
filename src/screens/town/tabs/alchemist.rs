@@ -4,7 +4,7 @@ use crate::game::{BrewPotionEvent, Player};
 use crate::input::{GameAction, NavigationDirection};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
-use crate::ui::widgets::spawn_player_stats;
+use crate::ui::widgets::PlayerStats;
 use crate::ui::{selection_colors, selection_prefix};
 
 use super::super::shared::{spawn_menu, MenuOption, SelectionState};
@@ -216,7 +216,7 @@ pub fn spawn_alchemist_ui(
 /// Spawn the menu mode UI.
 fn spawn_menu_mode(content: &mut ChildBuilder, alchemist_selections: &AlchemistSelections) {
     // Player stats summary
-    spawn_player_stats(content);
+    PlayerStats::spawn(content);
 
     // Menu options
     spawn_menu(
@@ -249,7 +249,7 @@ fn spawn_brew_mode(
     player: &Player,
 ) {
     // Player stats summary
-    spawn_player_stats(content);
+    PlayerStats::spawn(content);
 
     // Title
     content.spawn((

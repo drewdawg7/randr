@@ -4,7 +4,7 @@ use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::stats::{HasStats, Healable};
-use crate::ui::widgets::spawn_player_stats;
+use crate::ui::widgets::PlayerStats;
 
 /// Component marker for rest UI root
 #[derive(Component)]
@@ -85,7 +85,7 @@ pub fn spawn_rest_ui(
             ));
 
             // Player stats
-            spawn_player_stats(parent);
+            PlayerStats::spawn(parent);
 
             // Status message
             if has_healed {

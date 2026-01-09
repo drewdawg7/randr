@@ -4,6 +4,7 @@ use crate::dungeon::{Direction, Dungeon, RoomType};
 use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::ui::nav_selection_text;
+use crate::ui::widgets::PlayerStats;
 
 /// Component marker for dungeon navigation UI root
 #[derive(Component)]
@@ -83,6 +84,9 @@ pub fn spawn_navigation_ui(
                     },
                 ));
             }
+
+            // Player stats
+            PlayerStats::spawn(parent);
 
             // Minimap
             spawn_minimap(parent, &dungeon);
