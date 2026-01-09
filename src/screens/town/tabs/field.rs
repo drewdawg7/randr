@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::entities::Progression;
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
 use crate::states::AppState;
 use crate::stats::HasStats;
@@ -75,7 +75,7 @@ pub fn spawn_field_ui(
     commands: &mut Commands,
     content_entity: Entity,
     field_state: &FieldTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -119,7 +119,7 @@ pub fn spawn_field_ui(
 }
 
 /// Spawn player stats display.
-fn spawn_player_stats(parent: &mut ChildBuilder, player: &PlayerResource) {
+fn spawn_player_stats(parent: &mut ChildBuilder, player: &Player) {
     parent
         .spawn((Node {
             flex_direction: FlexDirection::Column,

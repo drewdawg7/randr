@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::entities::progression::HasProgression;
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::input::GameAction;
 use crate::stats::HasStats;
 use crate::states::AppState;
@@ -25,7 +25,7 @@ impl Plugin for ProfilePlugin {
 struct ProfileScreenRoot;
 
 /// System to spawn the profile screen UI.
-fn spawn_profile_screen(mut commands: Commands, player: Res<PlayerResource>) {
+fn spawn_profile_screen(mut commands: Commands, player: Res<Player>) {
     // Root container
     commands
         .spawn((

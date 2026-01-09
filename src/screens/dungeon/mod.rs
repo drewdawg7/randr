@@ -59,7 +59,7 @@ fn handle_mode_transitions(
     mut commands: Commands,
     mut state: ResMut<DungeonScreenState>,
     dungeon: Res<crate::game::DungeonResource>,
-    player: Res<crate::game::PlayerResource>,
+    player: Res<crate::game::Player>,
     navigation_root: Query<Entity, With<navigation::NavigationRoot>>,
     room_entry_root: Query<Entity, With<room_entry::RoomEntryRoot>>,
     rest_root: Query<Entity, With<rest::RestRoot>>,

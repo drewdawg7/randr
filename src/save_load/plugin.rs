@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::{DungeonResource, PlayerResource, StorageResource};
+use crate::game::{DungeonResource, Player, Storage};
 use super::system::{load_game, save_game, save_exists};
 
 /// Event to trigger saving the game
@@ -50,8 +50,8 @@ impl Plugin for SaveLoadPlugin {
 
 /// System that attempts to auto-load the game on startup if a save exists
 fn try_auto_load(
-    mut player: ResMut<PlayerResource>,
-    mut storage: ResMut<StorageResource>,
+    mut player: ResMut<Player>,
+    mut storage: ResMut<Storage>,
     mut dungeon: ResMut<DungeonResource>,
     mut game_loaded_events: EventWriter<GameLoaded>,
     mut failed_events: EventWriter<SaveLoadFailed>,
@@ -68,10 +68,10 @@ fn try_auto_load(
     match load_game(None) {
         Ok((loaded_player, loaded_storage, loaded_dungeon)) => {
             // Update resources
-            player.0 = loaded_player;
-            storage.0 = loaded_storage;
+            *player = loaded_player;
+            *storage = loaded_storage;
             if let Some(d) = loaded_dungeon {
-                dungeon.0 = d;
+                *dungeon = DungeonResource(d);
             }
 
             info!("Game loaded successfully!");
@@ -95,8 +95,8 @@ fn try_auto_load(
 /// System that handles SaveGameEvent
 fn handle_save_event(
     mut save_events: EventReader<SaveGameEvent>,
-    player: Res<PlayerResource>,
-    storage: Res<StorageResource>,
+    player: Res<Player>,
+    storage: Res<Storage>,
     dungeon: Res<DungeonResource>,
     mut game_saved_events: EventWriter<GameSaved>,
     mut failed_events: EventWriter<SaveLoadFailed>,
@@ -110,7 +110,7 @@ fn handle_save_event(
             None
         };
 
-        match save_game(&player.0, &storage.0, dungeon_ref, None) {
+        match save_game(&player, &storage, dungeon_ref, None) {
             Ok(_) => {
                 info!("Game saved successfully!");
                 game_saved_events.send(GameSaved {
@@ -131,8 +131,8 @@ fn handle_save_event(
 /// System that handles LoadGameEvent
 fn handle_load_event(
     mut load_events: EventReader<LoadGameEvent>,
-    mut player: ResMut<PlayerResource>,
-    mut storage: ResMut<StorageResource>,
+    mut player: ResMut<Player>,
+    mut storage: ResMut<Storage>,
     mut dungeon: ResMut<DungeonResource>,
     mut game_loaded_events: EventWriter<GameLoaded>,
     mut failed_events: EventWriter<SaveLoadFailed>,
@@ -143,10 +143,10 @@ fn handle_load_event(
         match load_game(None) {
             Ok((loaded_player, loaded_storage, loaded_dungeon)) => {
                 // Update resources
-                player.0 = loaded_player;
-                storage.0 = loaded_storage;
+                *player = loaded_player;
+                *storage = loaded_storage;
                 if let Some(d) = loaded_dungeon {
-                    dungeon.0 = d;
+                    *dungeon = DungeonResource(d);
                 }
 
                 info!("Game loaded successfully!");

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::ui::inventory_selection_bg;
 use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, FindsItems, InventoryItem, ManagesEquipment, ManagesItems};
@@ -93,7 +93,7 @@ impl ItemInfo {
 }
 
 /// Get all items for display (equipped first, then backpack).
-fn get_all_inventory_items(player: &PlayerResource) -> Vec<ItemInfo> {
+fn get_all_inventory_items(player: &Player) -> Vec<ItemInfo> {
     let mut items = Vec::new();
 
     // Add equipped items first
@@ -117,7 +117,7 @@ fn handle_inventory_modal_toggle(
     mut action_reader: EventReader<GameAction>,
     mut active_modal: ResMut<ActiveModal>,
     mut selection: ResMut<InventorySelection>,
-    player: Res<PlayerResource>,
+    player: Res<Player>,
     existing_modal: Query<Entity, With<InventoryModalRoot>>,
 ) {
     for action in action_reader.read() {
@@ -152,7 +152,7 @@ fn handle_inventory_modal_input(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
     mut selection: ResMut<InventorySelection>,
-    mut player: ResMut<PlayerResource>,
+    mut player: ResMut<Player>,
 ) {
     if active_modal.modal != Some(ModalType::Inventory) {
         return;
@@ -178,7 +178,7 @@ fn handle_inventory_modal_input(
 }
 
 /// Toggle equipping/unequipping of the selected item.
-fn toggle_equip(player: &mut PlayerResource, selection: &InventorySelection) {
+fn toggle_equip(player: &mut Player, selection: &InventorySelection) {
     let items = get_all_inventory_items(player);
     if let Some(item_info) = items.get(selection.index) {
         match item_info {
@@ -202,7 +202,7 @@ fn toggle_equip(player: &mut PlayerResource, selection: &InventorySelection) {
 /// Spawn the inventory modal UI.
 fn spawn_inventory_modal(
     commands: &mut Commands,
-    player: &PlayerResource,
+    player: &Player,
     selection: &mut InventorySelection,
 ) {
     let items = get_all_inventory_items(player);
@@ -556,7 +556,7 @@ fn update_inventory_display(
     mut commands: Commands,
     modal_root: Query<Entity, With<InventoryModalRoot>>,
     active_modal: Res<ActiveModal>,
-    player: Res<PlayerResource>,
+    player: Res<Player>,
     mut selection: ResMut<InventorySelection>,
 ) {
     // Only update if the inventory modal is open

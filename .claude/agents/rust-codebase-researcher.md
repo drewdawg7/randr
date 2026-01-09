@@ -77,6 +77,22 @@ Use ast-grep for structural code pattern searches:
 4. **Be Clear**: Organize findings with headers, lists, and code blocks
 5. **Be Actionable**: End with concrete insights or recommendations
 
+## Serving the Caller's Purpose
+
+Shape your output to serve what the caller actually needs:
+
+**When supporting code changes** (remove, rename, refactor):
+- Group findings by transformation type (imports, type annotations, etc.)
+- Show concrete patterns: current → target
+- Include ast-grep patterns that would match each category
+- Note side effects the caller should anticipate
+
+**When exploring architecture** (how does X work):
+- Focus on structure, data flow, relationships
+- Provide navigational context, not change specs
+
+The caller shouldn't need to translate your output into something actionable.
+
 ## Example ast-grep Patterns
 
 ```bash

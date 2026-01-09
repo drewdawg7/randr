@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::entities::progression::HasProgression;
 use crate::ui::{selection_colors, selection_prefix};
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::ManagesItems;
 use crate::item::recipe::{Recipe, RecipeId};
@@ -72,7 +72,7 @@ const ALCHEMIST_MENU_OPTIONS: &[MenuOption] = &[MenuOption {
 /// Handle input for the Alchemist tab.
 fn handle_alchemist_input(
     mut alchemist_state: ResMut<AlchemistTabState>,
-    mut player: ResMut<PlayerResource>,
+    mut player: ResMut<Player>,
     mut action_events: EventReader<GameAction>,
 ) {
     for action in action_events.read() {
@@ -113,7 +113,7 @@ fn handle_alchemist_input(
                     {
                         if let Ok(recipe) = Recipe::new(recipe_id) {
                             if recipe.can_craft(&player) {
-                                match recipe.craft(&mut player.0) {
+                                match recipe.craft(&mut player) {
                                     Ok(item_id) => {
                                         // Spawn the item and add to inventory
                                         let item = item_id.spawn();
@@ -151,7 +151,7 @@ pub fn spawn_alchemist_ui(
     commands: &mut Commands,
     content_entity: Entity,
     alchemist_state: &AlchemistTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -178,7 +178,7 @@ pub fn spawn_alchemist_ui(
 fn spawn_menu_mode(
     content: &mut ChildBuilder,
     alchemist_state: &AlchemistTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Player stats summary
     spawn_player_stats(content, player);
@@ -210,7 +210,7 @@ fn spawn_menu_mode(
 fn spawn_brew_mode(
     content: &mut ChildBuilder,
     alchemist_state: &AlchemistTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Player stats summary
     spawn_player_stats(content, player);
@@ -267,7 +267,7 @@ fn spawn_brew_mode(
 fn spawn_recipe_list(
     parent: &mut ChildBuilder,
     alchemist_state: &AlchemistTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     parent
         .spawn((
@@ -308,7 +308,7 @@ fn spawn_recipe_item(
     parent: &mut ChildBuilder,
     recipe: &Recipe,
     is_selected: bool,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Determine if this recipe can be crafted
     let can_craft = recipe.can_craft(&player);
@@ -364,7 +364,7 @@ fn spawn_recipe_item(
 fn spawn_ingredient_details(
     parent: &mut ChildBuilder,
     alchemist_state: &AlchemistTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     parent
         .spawn((
@@ -420,7 +420,7 @@ fn spawn_ingredient_row(
     parent: &mut ChildBuilder,
     item_id: ItemId,
     required: u32,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     use crate::inventory::FindsItems;
 
@@ -477,7 +477,7 @@ fn spawn_ingredient_row(
 }
 
 /// Spawn player stats display.
-fn spawn_player_stats(parent: &mut ChildBuilder, player: &PlayerResource) {
+fn spawn_player_stats(parent: &mut ChildBuilder, player: &Player) {
     use crate::entities::Progression;
 
     parent

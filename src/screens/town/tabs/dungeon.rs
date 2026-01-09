@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 use crate::stats::HasStats;
@@ -66,7 +66,7 @@ pub fn spawn_dungeon_ui(
     commands: &mut Commands,
     content_entity: Entity,
     dungeon_state: &DungeonTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -110,7 +110,7 @@ pub fn spawn_dungeon_ui(
 }
 
 /// Spawn dungeon status display.
-fn spawn_dungeon_status(parent: &mut ChildBuilder, player: &PlayerResource) {
+fn spawn_dungeon_status(parent: &mut ChildBuilder, player: &Player) {
     parent
         .spawn((Node {
             flex_direction: FlexDirection::Column,

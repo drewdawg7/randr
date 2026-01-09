@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::ui::{selection_colors, selection_prefix};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
@@ -87,7 +87,7 @@ const MENU_OPTIONS: &[MenuOption] = &[
 /// Handle input for the Blacksmith tab.
 fn handle_blacksmith_input(
     mut blacksmith_state: ResMut<BlacksmithTabState>,
-    mut player: ResMut<PlayerResource>,
+    mut player: ResMut<Player>,
     mut action_events: EventReader<GameAction>,
 ) {
     for action in action_events.read() {
@@ -126,7 +126,7 @@ fn handle_menu_input(blacksmith_state: &mut BlacksmithTabState, action: &GameAct
 /// Handle input for Upgrade mode.
 fn handle_upgrade_input(
     blacksmith_state: &mut BlacksmithTabState,
-    player: &mut PlayerResource,
+    player: &mut Player,
     action: &GameAction,
 ) {
     // Get equipment items and update selection count
@@ -191,7 +191,7 @@ fn handle_upgrade_input(
 /// Handle input for Quality mode.
 fn handle_quality_input(
     blacksmith_state: &mut BlacksmithTabState,
-    player: &mut PlayerResource,
+    player: &mut Player,
     action: &GameAction,
 ) {
     // Get equipment items and update selection count
@@ -253,7 +253,7 @@ fn handle_quality_input(
 /// Handle input for Smelt mode.
 fn handle_smelt_input(
     blacksmith_state: &mut BlacksmithTabState,
-    player: &mut PlayerResource,
+    player: &mut Player,
     action: &GameAction,
 ) {
     // Update selection count based on available recipes
@@ -275,11 +275,11 @@ fn handle_smelt_input(
             let Ok(recipe) = Recipe::new(*recipe_id) else {
                 break 'select;
             };
-            if !recipe.can_craft(&player.0) {
+            if !recipe.can_craft(&player) {
                 info!("Not enough ingredients to smelt {}", recipe.name());
                 break 'select;
             }
-            let Ok(output_item_id) = recipe.craft(&mut player.0) else {
+            let Ok(output_item_id) = recipe.craft(player) else {
                 break 'select;
             };
             let new_item = output_item_id.spawn();
@@ -298,7 +298,7 @@ fn handle_smelt_input(
 /// Handle input for Forge mode.
 fn handle_forge_input(
     blacksmith_state: &mut BlacksmithTabState,
-    player: &mut PlayerResource,
+    player: &mut Player,
     action: &GameAction,
 ) {
     // Update selection count based on available recipes
@@ -320,11 +320,11 @@ fn handle_forge_input(
             let Ok(recipe) = Recipe::new(*recipe_id) else {
                 break 'select;
             };
-            if !recipe.can_craft(&player.0) {
+            if !recipe.can_craft(&player) {
                 info!("Not enough ingredients to forge {}", recipe.name());
                 break 'select;
             }
-            let Ok(output_item_id) = recipe.craft(&mut player.0) else {
+            let Ok(output_item_id) = recipe.craft(player) else {
                 break 'select;
             };
             let new_item = output_item_id.spawn();
@@ -352,7 +352,7 @@ pub fn spawn_blacksmith_ui(
     commands: &mut Commands,
     content_entity: Entity,
     blacksmith_state: &BlacksmithTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -412,7 +412,7 @@ pub fn spawn_blacksmith_ui(
 }
 
 /// Spawn player stats display.
-fn spawn_player_stats(parent: &mut ChildBuilder, player: &PlayerResource) {
+fn spawn_player_stats(parent: &mut ChildBuilder, player: &Player) {
     use crate::stats::StatType;
     use crate::entities::Progression;
 
@@ -470,7 +470,7 @@ fn spawn_player_stats(parent: &mut ChildBuilder, player: &PlayerResource) {
 fn spawn_upgrade_ui(
     parent: &mut ChildBuilder,
     blacksmith_state: &BlacksmithTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Title
     parent.spawn((
@@ -623,7 +623,7 @@ fn spawn_upgrade_ui(
 fn spawn_quality_ui(
     parent: &mut ChildBuilder,
     blacksmith_state: &BlacksmithTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Title
     parent.spawn((
@@ -777,7 +777,7 @@ fn spawn_quality_ui(
 fn spawn_smelt_ui(
     parent: &mut ChildBuilder,
     blacksmith_state: &BlacksmithTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Title
     parent.spawn((
@@ -818,7 +818,7 @@ fn spawn_smelt_ui(
                     let is_selected = i == blacksmith_state.smelt_selection.selected;
 
                     if let Ok(recipe) = Recipe::new(*recipe_id) {
-                        let can_craft = recipe.can_craft(&player.0);
+                        let can_craft = recipe.can_craft(&player);
 
                         let (bg_color, text_color) = selection_colors(is_selected);
 
@@ -902,7 +902,7 @@ fn spawn_smelt_ui(
 fn spawn_forge_ui(
     parent: &mut ChildBuilder,
     blacksmith_state: &BlacksmithTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Title
     parent.spawn((
@@ -943,7 +943,7 @@ fn spawn_forge_ui(
                     let is_selected = i == blacksmith_state.forge_selection.selected;
 
                     if let Ok(recipe) = Recipe::new(*recipe_id) {
-                        let can_craft = recipe.can_craft(&player.0);
+                        let can_craft = recipe.can_craft(&player);
 
                         let (bg_color, text_color) = selection_colors(is_selected);
 

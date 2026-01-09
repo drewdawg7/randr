@@ -104,6 +104,15 @@ Use the **Edit tool** to modify the SKILL.md file directly.
 4. **Write**: Create/update the skill file at `.claude/skills/[skill-name]/SKILL.md` using Write/Edit tools
 5. **Validate**: Ensure the skill follows all best practices and the quality checklist
 
+## Before Recommending New Skills
+
+Ask: Can existing agents/skills be improved instead?
+
+- **Enhance first** - Better guidance in existing skills beats new narrow skills
+- **Progressive disclosure** - Layer complexity (simple → advanced) rather than separate skills
+- **Appropriate freedom** - Match specificity to task fragility; avoid rigid rules like "always do X when Y"
+- **Guide, don't prescribe** - Help agents make intelligent choices rather than following rigid decision trees
+
 ## SKILL.md Format (Official Anthropic Standard)
 
 Skills are SKILL.md files with YAML frontmatter. Always create/update files using Write/Edit tools.

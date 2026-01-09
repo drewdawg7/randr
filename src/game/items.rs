@@ -46,7 +46,7 @@ pub struct ItemPickedUp {
 
 /// Plugin that registers item-related events
 ///
-/// The inventory system is accessed through PlayerResource (player.inventory).
+/// The inventory system is accessed through Player (player.inventory).
 /// This plugin provides events for the UI to react to item-related actions.
 pub struct ItemPlugin;
 

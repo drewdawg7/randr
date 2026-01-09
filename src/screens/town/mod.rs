@@ -3,7 +3,7 @@ mod tabs;
 
 use bevy::{ecs::system::SystemParam, prelude::*};
 
-use crate::game::{PlayerResource, StorageResource};
+use crate::game::{Player, Storage};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
@@ -259,8 +259,8 @@ fn render_tab_content(
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
     tab_states: TabStates,
-    player: Res<PlayerResource>,
-    storage: Res<StorageResource>,
+    player: Res<Player>,
+    storage: Res<Storage>,
 ) {
     let should_render = force_refresh.0
         || current_tab.is_changed()

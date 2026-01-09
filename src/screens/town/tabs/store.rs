@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::{PlayerResource, StorageResource};
+use crate::game::{Player, Storage};
 use crate::ui::{selection_colors, selection_prefix};
 use crate::input::{GameAction, NavigationDirection};
 use crate::item::ItemId;
@@ -147,8 +147,8 @@ const BUYABLE_ITEMS: &[BuyableItem] = &[
 fn handle_store_input(
     mut store_state: ResMut<StoreTabState>,
     mut action_events: EventReader<GameAction>,
-    mut player: ResMut<PlayerResource>,
-    mut storage: ResMut<StorageResource>,
+    mut player: ResMut<Player>,
+    mut storage: ResMut<Storage>,
 ) {
     for action in action_events.read() {
         match store_state.mode {
@@ -193,7 +193,7 @@ fn handle_menu_input(store_state: &mut StoreTabState, action: &GameAction) {
 /// Handle input for the buy screen.
 fn handle_buy_input(
     store_state: &mut StoreTabState,
-    player: &mut PlayerResource,
+    player: &mut Player,
     action: &GameAction,
 ) {
     match action {
@@ -229,7 +229,7 @@ fn handle_buy_input(
 /// Handle input for the sell screen.
 fn handle_sell_input(
     store_state: &mut StoreTabState,
-    player: &mut PlayerResource,
+    player: &mut Player,
     action: &GameAction,
 ) {
     // Update selection count based on current inventory
@@ -272,8 +272,8 @@ fn handle_sell_input(
 fn handle_storage_input(
     store_state: &mut StoreTabState,
     action: &GameAction,
-    player: &mut PlayerResource,
-    storage: &mut StorageResource,
+    player: &mut Player,
+    storage: &mut Storage,
 ) {
     match store_state.storage_submode {
         StorageSubmode::Menu => handle_storage_menu_input(store_state, action),
@@ -317,8 +317,8 @@ fn handle_storage_menu_input(store_state: &mut StoreTabState, action: &GameActio
 fn handle_storage_view_input(
     store_state: &mut StoreTabState,
     action: &GameAction,
-    player: &mut PlayerResource,
-    storage: &mut StorageResource,
+    player: &mut Player,
+    storage: &mut Storage,
 ) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
@@ -359,8 +359,8 @@ fn handle_storage_view_input(
 fn handle_storage_deposit_input(
     store_state: &mut StoreTabState,
     action: &GameAction,
-    player: &mut PlayerResource,
-    storage: &mut StorageResource,
+    player: &mut Player,
+    storage: &mut Storage,
 ) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
@@ -402,8 +402,8 @@ pub fn spawn_store_ui(
     commands: &mut Commands,
     content_entity: Entity,
     store_state: &StoreTabState,
-    player: &PlayerResource,
-    storage: &StorageResource,
+    player: &Player,
+    storage: &Storage,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -429,7 +429,7 @@ pub fn spawn_store_ui(
 }
 
 /// Spawn the main menu UI.
-fn spawn_menu_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &PlayerResource) {
+fn spawn_menu_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &Player) {
     // Title
     parent.spawn((
         Text::new("Welcome to the Store"),
@@ -460,7 +460,7 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player:
 }
 
 /// Spawn the buy screen UI.
-fn spawn_buy_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &PlayerResource) {
+fn spawn_buy_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &Player) {
     // Title
     parent.spawn((
         Text::new("Buy Items"),
@@ -558,7 +558,7 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: 
 }
 
 /// Spawn the sell screen UI.
-fn spawn_sell_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &PlayerResource) {
+fn spawn_sell_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &Player) {
     // Title
     parent.spawn((
         Text::new("Sell Items"),
@@ -668,8 +668,8 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player:
 fn spawn_storage_ui(
     parent: &mut ChildBuilder,
     store_state: &StoreTabState,
-    player: &PlayerResource,
-    storage: &StorageResource,
+    player: &Player,
+    storage: &Storage,
 ) {
     match store_state.storage_submode {
         StorageSubmode::Menu => spawn_storage_menu_ui(parent, store_state, player),
@@ -682,7 +682,7 @@ fn spawn_storage_ui(
 fn spawn_storage_menu_ui(
     parent: &mut ChildBuilder,
     store_state: &StoreTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Title
     parent.spawn((
@@ -717,8 +717,8 @@ fn spawn_storage_menu_ui(
 fn spawn_storage_view_ui(
     parent: &mut ChildBuilder,
     store_state: &StoreTabState,
-    player: &PlayerResource,
-    storage: &StorageResource,
+    player: &Player,
+    storage: &Storage,
 ) {
     // Title
     parent.spawn((
@@ -814,7 +814,7 @@ fn spawn_storage_view_ui(
 fn spawn_storage_deposit_ui(
     parent: &mut ChildBuilder,
     store_state: &StoreTabState,
-    player: &PlayerResource,
+    player: &Player,
 ) {
     // Title
     parent.spawn((
@@ -907,7 +907,7 @@ fn spawn_storage_deposit_ui(
 }
 
 /// Spawn gold display widget.
-fn spawn_gold_display(parent: &mut ChildBuilder, player: &PlayerResource) {
+fn spawn_gold_display(parent: &mut ChildBuilder, player: &Player) {
     parent
         .spawn((
             Node {

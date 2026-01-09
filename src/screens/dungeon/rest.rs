@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonScreenState, DungeonViewMode};
 use crate::stats::{HasStats, Healable};
@@ -26,7 +26,7 @@ pub enum RestActionType {
 /// Spawn the rest UI
 pub fn spawn_rest_ui(
     mut commands: Commands,
-    player: &PlayerResource,
+    player: &Player,
     dungeon: &crate::game::DungeonResource,
     state: &mut DungeonScreenState,
 ) {
@@ -156,7 +156,7 @@ pub fn spawn_rest_ui(
 pub fn handle_rest_input(
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<DungeonScreenState>,
-    mut player: ResMut<PlayerResource>,
+    mut player: ResMut<Player>,
     mut dungeon: ResMut<crate::game::DungeonResource>,
     rest_actions: Query<&RestAction>,
     mut items: Query<(&RestAction, &mut TextColor)>,

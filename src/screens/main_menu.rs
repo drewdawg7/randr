@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
@@ -53,7 +53,7 @@ struct MenuItem {
 }
 
 /// System to spawn the main menu UI.
-fn spawn_main_menu(mut commands: Commands, player: Res<PlayerResource>) {
+fn spawn_main_menu(mut commands: Commands, player: Res<Player>) {
     // Root container
     commands
         .spawn((

@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::combat::{DealsDamage, HasGold};
 use crate::entities::progression::HasProgression;
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, HasInventory};
 use crate::screens::modal::{
@@ -32,7 +32,7 @@ fn handle_profile_modal_toggle(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut active_modal: ResMut<ActiveModal>,
-    player: Res<PlayerResource>,
+    player: Res<Player>,
     existing_modal: Query<Entity, With<ProfileModalRoot>>,
 ) {
     for action in action_reader.read() {
@@ -70,7 +70,7 @@ fn handle_profile_modal_close(
 }
 
 /// Spawn the profile modal UI showing player stats and equipped items.
-fn spawn_profile_modal(commands: &mut Commands, player: &PlayerResource) {
+fn spawn_profile_modal(commands: &mut Commands, player: &Player) {
     let overlay = spawn_modal_overlay(commands);
 
     commands
@@ -113,7 +113,7 @@ fn spawn_profile_modal(commands: &mut Commands, player: &PlayerResource) {
 }
 
 /// Spawn the left column showing player stats.
-fn spawn_stats_column(parent: &mut ChildBuilder, player: &PlayerResource) {
+fn spawn_stats_column(parent: &mut ChildBuilder, player: &Player) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -274,7 +274,7 @@ fn spawn_stats_column(parent: &mut ChildBuilder, player: &PlayerResource) {
 }
 
 /// Spawn the right column showing equipped items.
-fn spawn_equipment_column(parent: &mut ChildBuilder, player: &PlayerResource) {
+fn spawn_equipment_column(parent: &mut ChildBuilder, player: &Player) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,

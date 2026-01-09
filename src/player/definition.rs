@@ -1,12 +1,14 @@
 use std::{collections::HashMap, fmt::Display};
 
+use bevy::prelude::*;
+
 use crate::inventory::{HasInventory, Inventory};
 use crate::entities::Progression;
 use crate::magic::effect::PassiveEffect;
 use crate::magic::tome::Tome;
 use crate::stats::{HasStats, StatInstance, StatSheet, StatType};
 
-#[derive(Debug, Clone)]
+#[derive(Resource, Debug, Clone)]
 pub struct Player {
     pub name: &'static str,
     pub gold: i32,

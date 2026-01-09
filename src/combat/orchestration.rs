@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::seq::SliceRandom;
 
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::mob::MobId;
 use crate::screens::shared::CombatLogEntry;
 
@@ -57,7 +57,7 @@ pub fn initialize_combat(
 pub fn execute_player_attack(
     mut action_events: EventReader<PlayerCombatAction>,
     mut combat_res: ResMut<ActiveCombatResource>,
-    mut player: ResMut<PlayerResource>,
+    mut player: ResMut<Player>,
     mut log_state: ResMut<CombatLogState>,
     mut next_phase: ResMut<NextState<CombatPhaseState>>,
 ) {

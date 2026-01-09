@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhase};
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::screens::shared::{spawn_combat_log, update_health_bar, HealthBar, HealthBarFill, HealthBarText};
 use crate::stats::HasStats;
 
@@ -10,7 +10,7 @@ use super::state::FightScreenState;
 
 pub fn spawn_fight_screen(
     mut commands: Commands,
-    player: Res<PlayerResource>,
+    player: Res<Player>,
     combat_res: Res<ActiveCombatResource>,
     log_state: Res<CombatLogState>,
 ) {
@@ -50,7 +50,7 @@ pub fn spawn_fight_screen(
 
 fn spawn_combatants_section(
     parent: &mut ChildBuilder,
-    player: &PlayerResource,
+    player: &Player,
     player_health: i32,
     player_max_health: i32,
     enemy_name: &str,
@@ -77,7 +77,7 @@ fn spawn_combatants_section(
         });
 }
 
-fn spawn_player_side(parent: &mut ChildBuilder, player: &PlayerResource, health: i32, max_health: i32) {
+fn spawn_player_side(parent: &mut ChildBuilder, player: &Player, health: i32, max_health: i32) {
     let player_name = player.name.to_string();
     parent
         .spawn(Node {
@@ -341,7 +341,7 @@ pub fn despawn_post_combat_overlay(
 
 pub fn update_combat_visuals(
     mut commands: Commands,
-    player: Res<PlayerResource>,
+    player: Res<Player>,
     combat_res: Res<ActiveCombatResource>,
     player_health_bar: Query<Entity, With<PlayerHealthBar>>,
     enemy_health_bar: Query<Entity, With<EnemyHealthBar>>,

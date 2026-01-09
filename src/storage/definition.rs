@@ -1,6 +1,8 @@
+use bevy::prelude::*;
+
 use crate::inventory::Inventory;
 
-#[derive(Debug)]
+#[derive(Resource, Debug)]
 pub struct Storage {
     pub inventory: Inventory,
 }

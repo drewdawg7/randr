@@ -2,30 +2,6 @@ use bevy::prelude::*;
 
 use crate::player::Player;
 
-/// Bevy Resource that wraps the existing Player struct
-#[derive(Resource, Debug)]
-pub struct PlayerResource(pub Player);
-
-impl Default for PlayerResource {
-    fn default() -> Self {
-        Self(Player::default())
-    }
-}
-
-impl std::ops::Deref for PlayerResource {
-    type Target = Player;
-
-    fn deref(&self) -> &Self::Target {
-        &self.0
-    }
-}
-
-impl std::ops::DerefMut for PlayerResource {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.0
-    }
-}
-
 /// Event fired when the player takes damage
 #[derive(Event, Debug, Clone)]
 pub struct PlayerDamaged {
@@ -56,12 +32,12 @@ pub struct GoldChanged {
     pub new_total: i32,
 }
 
-/// Plugin that initializes the PlayerResource and registers player-related events
+/// Plugin that initializes the Player and registers player-related events
 pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<PlayerResource>()
+        app.init_resource::<Player>()
             .add_event::<PlayerDamaged>()
             .add_event::<PlayerHealed>()
             .add_event::<PlayerLeveledUp>()

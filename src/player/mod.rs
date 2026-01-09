@@ -4,4 +4,4 @@ mod inventory;
 mod progression;
 mod stats;
 
-pub(crate) use definition::Player;
+pub use definition::Player;

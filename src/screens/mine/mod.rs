@@ -3,7 +3,7 @@ mod state;
 
 use bevy::prelude::*;
 
-use crate::game::PlayerResource;
+use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::ManagesItems;
 use crate::location::mine::RockId;
@@ -142,7 +142,7 @@ fn handle_mine_input(
 fn handle_mining_action(
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<MineScreenState>,
-    mut player: ResMut<PlayerResource>,
+    mut player: ResMut<Player>,
 ) {
     for action in action_reader.read() {
         if *action == GameAction::Mine {
