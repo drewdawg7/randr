@@ -50,7 +50,7 @@ fn on_add_player_stats(
                     },
                 )
             });
-            let background = ui_all.get("Slice_99").map(|idx| {
+            let background = ui_all.get("Slice_8").map(|idx| {
                 ImageNode::from_atlas_image(
                     ui_all.texture.clone(),
                     TextureAtlas {

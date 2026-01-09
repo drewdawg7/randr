@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
-use crate::ui::widgets::{ItemGrid, ItemGridEntry, PlayerStats};
+use crate::ui::widgets::{ItemGrid, ItemGridEntry};
 use crate::ui::{selection_colors, selection_prefix};
 
 use super::constants::{STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
@@ -61,9 +61,6 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) 
         },
     ));
 
-    // Gold display
-    parent.spawn(PlayerStats);
-
     // Menu options
     spawn_menu(
         parent,
@@ -91,9 +88,6 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, _
             ..default()
         },
     ));
-
-    // Gold display
-    parent.spawn(PlayerStats);
 
     // Item grid with store items
     parent.spawn(ItemGrid {
@@ -124,9 +118,6 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
             ..default()
         },
     ));
-
-    // Gold display
-    parent.spawn(PlayerStats);
 
     // Get player inventory items
     let inventory_items = player.inventory.items.as_slice();
@@ -230,9 +221,6 @@ fn spawn_storage_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSele
         },
     ));
 
-    // Gold display
-    parent.spawn(PlayerStats);
-
     // Menu options
     spawn_menu(
         parent,
@@ -264,9 +252,6 @@ fn spawn_storage_view_ui(
             ..default()
         },
     ));
-
-    // Gold display
-    parent.spawn(PlayerStats);
 
     // Get storage items
     let storage_items = storage.inventory.items.as_slice();
@@ -358,9 +343,6 @@ fn spawn_storage_deposit_ui(
             ..default()
         },
     ));
-
-    // Gold display
-    parent.spawn(PlayerStats);
 
     // Get player inventory items
     let inventory_items = player.inventory.items.as_slice();

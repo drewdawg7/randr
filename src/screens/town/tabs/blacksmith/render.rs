@@ -5,7 +5,6 @@ use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
-use crate::ui::widgets::PlayerStats;
 use crate::ui::{selection_colors, selection_prefix};
 use crate::FindsItems;
 
@@ -111,9 +110,6 @@ pub fn spawn_blacksmith_ui(
                 },
             ))
             .with_children(|content| {
-                // Player stats summary
-                content.spawn(PlayerStats);
-
                 // Render content based on mode
                 match blacksmith_mode.mode {
                     BlacksmithModeKind::Menu => {

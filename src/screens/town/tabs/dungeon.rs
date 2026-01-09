@@ -2,7 +2,6 @@ use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::RequestDungeonEvent;
-use crate::ui::widgets::PlayerStats;
 
 use super::super::shared::{spawn_menu, MenuOption};
 use super::super::{ContentArea, TabContent, TownTab};
@@ -117,9 +116,6 @@ pub fn spawn_dungeon_ui(
                 },
             ))
             .with_children(|content| {
-                // Player stats
-                content.spawn(PlayerStats);
-
                 // Menu options
                 spawn_menu(
                     content,
