@@ -4,12 +4,11 @@ use crate::game::{BrewPotionEvent, Player};
 use crate::input::{GameAction, NavigationDirection};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
-use crate::states::AppState;
 use crate::ui::widgets::spawn_player_stats;
 use crate::ui::{selection_colors, selection_prefix};
 
 use super::super::shared::{spawn_menu, MenuOption, SelectionState};
-use super::super::{CurrentTab, TabContent, TownTab};
+use super::super::{ContentArea, TabContent, TownTab};
 
 /// Plugin for the Alchemist tab.
 pub struct AlchemistTabPlugin;
@@ -18,13 +17,64 @@ impl Plugin for AlchemistTabPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<AlchemistMode>()
             .init_resource::<AlchemistSelections>()
+            .add_systems(OnEnter(TownTab::Alchemist), spawn_alchemist_content)
             .add_systems(
                 Update,
-                handle_alchemist_input
-                    .run_if(in_state(AppState::Town))
-                    .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Alchemist),
+                (handle_alchemist_input, refresh_alchemist_on_mode_change)
+                    .run_if(in_state(TownTab::Alchemist)),
             );
     }
+}
+
+/// Spawns alchemist UI content when entering the Alchemist tab.
+fn spawn_alchemist_content(
+    mut commands: Commands,
+    content_query: Query<Entity, With<ContentArea>>,
+    alchemist_mode: Res<AlchemistMode>,
+    alchemist_selections: Res<AlchemistSelections>,
+    player: Res<Player>,
+) {
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+    spawn_alchemist_ui(
+        &mut commands,
+        content_entity,
+        &alchemist_mode,
+        &alchemist_selections,
+        &player,
+    );
+}
+
+/// Refreshes alchemist UI when mode or selections change.
+fn refresh_alchemist_on_mode_change(
+    mut commands: Commands,
+    alchemist_mode: Res<AlchemistMode>,
+    alchemist_selections: Res<AlchemistSelections>,
+    content_query: Query<Entity, With<ContentArea>>,
+    tab_content_query: Query<Entity, With<TabContent>>,
+    player: Res<Player>,
+) {
+    if !alchemist_mode.is_changed() && !alchemist_selections.is_changed() {
+        return;
+    }
+
+    // Despawn existing content
+    for entity in &tab_content_query {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    // Respawn with new state
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+    spawn_alchemist_ui(
+        &mut commands,
+        content_entity,
+        &alchemist_mode,
+        &alchemist_selections,
+        &player,
+    );
 }
 
 /// The kind of mode for the Alchemist tab.

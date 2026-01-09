@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
 use crate::dungeon::{Direction, Dungeon, RoomType};
-use crate::ui::nav_selection_text;
 use crate::input::{GameAction, NavigationDirection};
-use crate::screens::dungeon::state::{DungeonScreenState, DungeonViewMode};
+use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
+use crate::ui::nav_selection_text;
 
 /// Component marker for dungeon navigation UI root
 #[derive(Component)]
@@ -26,6 +26,7 @@ pub struct EnterRoomAction {
 pub fn spawn_navigation_ui(
     mut commands: Commands,
     dungeon: Res<crate::game::DungeonResource>,
+    mut selection_state: ResMut<DungeonSelectionState>,
 ) {
     let available_dirs = dungeon.available_directions();
     let action_count = available_dirs.len() + 1; // directions + "Enter Room"
@@ -135,12 +136,8 @@ pub fn spawn_navigation_ui(
                 });
         });
 
-    // Store action count in state
-    commands.insert_resource(DungeonScreenState {
-        mode: DungeonViewMode::Navigation,
-        selected_action: 0,
-        action_count,
-    });
+    // Update selection state
+    selection_state.reset(action_count);
 }
 
 /// Spawn the minimap UI showing room states
@@ -210,7 +207,8 @@ fn spawn_minimap(parent: &mut ChildBuilder, dungeon: &Dungeon) {
 /// Handle navigation input
 pub fn handle_navigation_input(
     mut action_reader: EventReader<GameAction>,
-    mut state: ResMut<DungeonScreenState>,
+    mut selection_state: ResMut<DungeonSelectionState>,
+    mut next_mode: ResMut<NextState<DungeonMode>>,
     mut dungeon: ResMut<crate::game::DungeonResource>,
     compass_dirs: Query<&CompassDirection, Without<EnterRoomAction>>,
     enter_action: Query<&EnterRoomAction, Without<CompassDirection>>,
@@ -222,18 +220,18 @@ pub fn handle_navigation_input(
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
-                state.move_up();
-                update_navigation_visuals(&state, &mut all_items);
+                selection_state.move_up();
+                update_navigation_visuals(&selection_state, &mut all_items);
             }
             GameAction::Navigate(NavigationDirection::Down) => {
-                state.move_down();
-                update_navigation_visuals(&state, &mut all_items);
+                selection_state.move_down();
+                update_navigation_visuals(&selection_state, &mut all_items);
             }
             GameAction::Select => {
                 // Check if selecting a direction
                 let mut moved = false;
                 for compass in compass_dirs.iter() {
-                    if compass.index == state.selected_action {
+                    if compass.index == selection_state.selected_action {
                         // Move player
                         if dungeon.move_player(compass.direction).is_ok() {
                             moved = true;
@@ -245,9 +243,9 @@ pub fn handle_navigation_input(
                 // Check if selecting "Enter Room"
                 if !moved {
                     for enter in enter_action.iter() {
-                        if enter.index == state.selected_action {
+                        if enter.index == selection_state.selected_action {
                             // Switch to RoomEntry mode
-                            state.set_mode(DungeonViewMode::RoomEntry, 0);
+                            next_mode.set(DungeonMode::RoomEntry);
                             break;
                         }
                     }
@@ -260,7 +258,7 @@ pub fn handle_navigation_input(
 
 /// Update visual highlighting for navigation options
 fn update_navigation_visuals(
-    state: &DungeonScreenState,
+    selection_state: &DungeonSelectionState,
     items: &mut Query<
         (&mut TextColor, Option<&CompassDirection>, Option<&EnterRoomAction>),
         Or<(With<CompassDirection>, With<EnterRoomAction>)>,
@@ -268,9 +266,9 @@ fn update_navigation_visuals(
 ) {
     for (mut color, compass_opt, enter_opt) in items.iter_mut() {
         let is_selected = if let Some(compass) = compass_opt {
-            compass.index == state.selected_action
+            compass.index == selection_state.selected_action
         } else if let Some(enter) = enter_opt {
-            enter.index == state.selected_action
+            enter.index == selection_state.selected_action
         } else {
             false
         };

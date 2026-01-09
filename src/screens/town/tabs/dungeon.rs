@@ -2,24 +2,62 @@ use bevy::prelude::*;
 
 use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
-use crate::states::{AppState, RequestDungeonEvent};
+use crate::states::RequestDungeonEvent;
 use crate::stats::HasStats;
 
 use super::super::shared::{spawn_menu, MenuOption};
-use super::super::{CurrentTab, TabContent, TownTab};
+use super::super::{ContentArea, TabContent, TownTab};
 
 /// Plugin for the Dungeon tab.
 pub struct DungeonTabPlugin;
 
 impl Plugin for DungeonTabPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<DungeonTabState>().add_systems(
-            Update,
-            handle_dungeon_input
-                .run_if(in_state(AppState::Town))
-                .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Dungeon),
-        );
+        app.init_resource::<DungeonTabState>()
+            .add_systems(OnEnter(TownTab::Dungeon), spawn_dungeon_content)
+            .add_systems(
+                Update,
+                (handle_dungeon_input, refresh_dungeon_on_state_change)
+                    .run_if(in_state(TownTab::Dungeon)),
+            );
     }
+}
+
+/// Spawns dungeon UI content when entering the Dungeon tab.
+fn spawn_dungeon_content(
+    mut commands: Commands,
+    content_query: Query<Entity, With<ContentArea>>,
+    dungeon_state: Res<DungeonTabState>,
+    player: Res<Player>,
+) {
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+    spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state, &player);
+}
+
+/// Refreshes dungeon UI when state changes.
+fn refresh_dungeon_on_state_change(
+    mut commands: Commands,
+    dungeon_state: Res<DungeonTabState>,
+    content_query: Query<Entity, With<ContentArea>>,
+    tab_content_query: Query<Entity, With<TabContent>>,
+    player: Res<Player>,
+) {
+    if !dungeon_state.is_changed() {
+        return;
+    }
+
+    // Despawn existing content
+    for entity in &tab_content_query {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    // Respawn with new state
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+    spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state, &player);
 }
 
 /// Dungeon tab state - tracks menu selection.

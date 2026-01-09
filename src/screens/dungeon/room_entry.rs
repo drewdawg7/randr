@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::dungeon::RoomType;
 use crate::input::{GameAction, NavigationDirection};
-use crate::screens::dungeon::state::{DungeonScreenState, DungeonViewMode};
+use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::states::AppState;
 
 /// Component marker for room entry UI root
@@ -29,13 +29,14 @@ pub enum RoomActionType {
 /// Spawn the room entry UI
 pub fn spawn_room_entry_ui(
     mut commands: Commands,
-    dungeon: &crate::game::DungeonResource,
-    state: &mut DungeonScreenState,
+    dungeon: Res<crate::game::DungeonResource>,
+    mut selection_state: ResMut<DungeonSelectionState>,
+    mut next_mode: ResMut<NextState<DungeonMode>>,
 ) {
     let current_room = dungeon.current_room();
     if current_room.is_none() {
         // No room to enter, return to navigation
-        state.set_mode(DungeonViewMode::Navigation, 0);
+        next_mode.set(DungeonMode::Navigation);
         return;
     }
 
@@ -174,14 +175,15 @@ pub fn spawn_room_entry_ui(
                 });
         });
 
-    // Update state
-    state.set_mode(DungeonViewMode::RoomEntry, action_count);
+    // Update selection state
+    selection_state.reset(action_count);
 }
 
 /// Handle room entry input
 pub fn handle_room_entry_input(
     mut action_reader: EventReader<GameAction>,
-    mut state: ResMut<DungeonScreenState>,
+    mut selection_state: ResMut<DungeonSelectionState>,
+    mut next_mode: ResMut<NextState<DungeonMode>>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut combat_source: ResMut<crate::game::CombatSourceResource>,
     mut dungeon: ResMut<crate::game::DungeonResource>,
@@ -191,17 +193,17 @@ pub fn handle_room_entry_input(
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
-                state.move_up();
-                update_room_entry_visuals(&state, &mut items);
+                selection_state.move_up();
+                update_room_entry_visuals(&selection_state, &mut items);
             }
             GameAction::Navigate(NavigationDirection::Down) => {
-                state.move_down();
-                update_room_entry_visuals(&state, &mut items);
+                selection_state.move_down();
+                update_room_entry_visuals(&selection_state, &mut items);
             }
             GameAction::Select => {
                 // Find selected action
                 for room_action in room_actions.iter() {
-                    if room_action.index == state.selected_action {
+                    if room_action.index == selection_state.selected_action {
                         match room_action.action {
                             RoomActionType::Fight => {
                                 // Set combat source and transition to Fight
@@ -214,19 +216,19 @@ pub fn handle_room_entry_input(
                                 if let Some(room) = dungeon.current_room_mut() {
                                     room.is_cleared = true;
                                 }
-                                state.set_mode(DungeonViewMode::Navigation, 0);
+                                next_mode.set(DungeonMode::Navigation);
                             }
                             RoomActionType::Rest => {
                                 // Switch to Rest mode
-                                state.set_mode(DungeonViewMode::Rest, 0);
+                                next_mode.set(DungeonMode::Rest);
                             }
                             RoomActionType::ChallengeBoss => {
                                 // Switch to Boss mode
-                                state.set_mode(DungeonViewMode::Boss, 0);
+                                next_mode.set(DungeonMode::Boss);
                             }
                             RoomActionType::Leave => {
                                 // Return to Navigation mode
-                                state.set_mode(DungeonViewMode::Navigation, 0);
+                                next_mode.set(DungeonMode::Navigation);
                             }
                         }
                         break;
@@ -235,7 +237,7 @@ pub fn handle_room_entry_input(
             }
             GameAction::Back => {
                 // Return to navigation
-                state.set_mode(DungeonViewMode::Navigation, 0);
+                next_mode.set(DungeonMode::Navigation);
             }
             _ => {}
         }
@@ -244,11 +246,11 @@ pub fn handle_room_entry_input(
 
 /// Update visual highlighting for room actions
 fn update_room_entry_visuals(
-    state: &DungeonScreenState,
+    selection_state: &DungeonSelectionState,
     items: &mut Query<(&RoomAction, &mut TextColor)>,
 ) {
     for (action, mut color) in items.iter_mut() {
-        if action.index == state.selected_action {
+        if action.index == selection_state.selected_action {
             *color = TextColor(Color::srgb(1.0, 1.0, 1.0)); // White
         } else {
             *color = TextColor(Color::srgb(0.7, 0.7, 0.7)); // Gray

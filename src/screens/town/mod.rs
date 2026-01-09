@@ -8,7 +8,7 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
 pub use tabs::TabsPlugin;
-use render::{render_tab_content, trigger_tab_refresh, update_tab_header_visuals, ForceTabRefresh};
+use render::{cleanup_tab_content, update_tab_header_visuals};
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
 pub struct TabNavigationSet;
@@ -17,27 +17,27 @@ pub struct TownPlugin;
 
 impl Plugin for TownPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<CurrentTab>()
-            .init_resource::<ForceTabRefresh>()
+        app.add_sub_state::<TownTab>()
             .add_plugins(TabsPlugin)
-            .add_systems(OnEnter(AppState::Town), (setup_town_ui, trigger_tab_refresh).chain())
+            .add_systems(OnEnter(AppState::Town), setup_town_ui)
             .add_systems(OnExit(AppState::Town), cleanup_town_ui)
+            // Cleanup tab content when exiting any tab
+            .add_systems(OnExit(TownTab::Store), cleanup_tab_content)
+            .add_systems(OnExit(TownTab::Blacksmith), cleanup_tab_content)
+            .add_systems(OnExit(TownTab::Alchemist), cleanup_tab_content)
+            .add_systems(OnExit(TownTab::Field), cleanup_tab_content)
+            .add_systems(OnExit(TownTab::Dungeon), cleanup_tab_content)
             .add_systems(
                 Update,
                 (handle_tab_navigation, handle_back_action, update_tab_header_visuals)
                     .in_set(TabNavigationSet)
                     .run_if(in_state(AppState::Town)),
-            )
-            .add_systems(
-                Update,
-                render_tab_content
-                    .after(TabNavigationSet)
-                    .run_if(in_state(AppState::Town)),
             );
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+#[derive(SubStates, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
+#[source(AppState = AppState::Town)]
 pub enum TownTab {
     #[default]
     Store,
@@ -89,10 +89,6 @@ impl TownTab {
     }
 }
 
-#[derive(Resource, Default)]
-pub struct CurrentTab {
-    pub tab: TownTab,
-}
 
 #[derive(Component)]
 pub struct TownUiRoot;
@@ -108,7 +104,7 @@ pub struct ContentArea;
 #[derive(Component)]
 pub struct TabContent;
 
-fn setup_town_ui(mut commands: Commands, current_tab: Res<CurrentTab>) {
+fn setup_town_ui(mut commands: Commands, current_tab: Res<State<TownTab>>) {
     commands
         .spawn((
             TownUiRoot,
@@ -136,7 +132,7 @@ fn setup_town_ui(mut commands: Commands, current_tab: Res<CurrentTab>) {
                 ))
                 .with_children(|header| {
                     for tab in TownTab::all() {
-                        spawn_tab_header_item(header, tab, tab == current_tab.tab);
+                        spawn_tab_header_item(header, tab, tab == *current_tab.get());
                     }
                 });
 
@@ -189,16 +185,17 @@ fn cleanup_town_ui(mut commands: Commands, query: Query<Entity, With<TownUiRoot>
 }
 
 fn handle_tab_navigation(
-    mut current_tab: ResMut<CurrentTab>,
+    current_tab: Res<State<TownTab>>,
+    mut next_tab: ResMut<NextState<TownTab>>,
     mut action_events: EventReader<GameAction>,
 ) {
     for action in action_events.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Left) => {
-                current_tab.tab = current_tab.tab.prev();
+                next_tab.set(current_tab.get().prev());
             }
             GameAction::Navigate(NavigationDirection::Right) => {
-                current_tab.tab = current_tab.tab.next();
+                next_tab.set(current_tab.get().next());
             }
             _ => {}
         }
