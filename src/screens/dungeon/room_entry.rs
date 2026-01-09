@@ -256,17 +256,6 @@ fn update_room_entry_visuals(
     }
 }
 
-/// Reset room entry state when entering
-pub fn reset_room_entry_state(mut items: Query<(&RoomAction, &mut TextColor)>) {
-    for (action, mut color) in items.iter_mut() {
-        if action.index == 0 {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0)); // First item selected
-        } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7));
-        }
-    }
-}
-
 /// Despawn room entry UI
 pub fn despawn_room_entry_ui(
     mut commands: Commands,

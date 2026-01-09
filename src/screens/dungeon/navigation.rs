@@ -279,15 +279,6 @@ fn update_navigation_visuals(
     }
 }
 
-/// Reset navigation state when entering
-pub fn reset_navigation_state(
-    mut state: ResMut<DungeonScreenState>,
-    dungeon: Res<crate::game::DungeonResource>,
-) {
-    let available_dirs = dungeon.available_directions();
-    state.set_mode(DungeonViewMode::Navigation, available_dirs.len() + 1);
-}
-
 /// Despawn navigation UI
 pub fn despawn_navigation_ui(
     mut commands: Commands,

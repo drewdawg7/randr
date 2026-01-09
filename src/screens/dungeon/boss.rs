@@ -193,17 +193,6 @@ fn update_boss_visuals(
     }
 }
 
-/// Reset boss state when entering
-pub fn reset_boss_state(mut items: Query<(&BossAction, &mut TextColor)>) {
-    for (action, mut color) in items.iter_mut() {
-        if action.index == 0 {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0)); // First item selected
-        } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7));
-        }
-    }
-}
-
 /// Despawn boss UI
 pub fn despawn_boss_ui(mut commands: Commands, boss_root: Query<Entity, With<BossRoot>>) {
     if let Ok(entity) = boss_root.get_single() {

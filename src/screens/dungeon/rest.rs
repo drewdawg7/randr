@@ -221,17 +221,6 @@ fn update_rest_visuals(
     }
 }
 
-/// Reset rest state when entering
-pub fn reset_rest_state(mut items: Query<(&RestAction, &mut TextColor)>) {
-    for (action, mut color) in items.iter_mut() {
-        if action.index == 0 {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0)); // First item selected
-        } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7));
-        }
-    }
-}
-
 /// Despawn rest UI
 pub fn despawn_rest_ui(mut commands: Commands, rest_root: Query<Entity, With<RestRoot>>) {
     if let Ok(entity) = rest_root.get_single() {
