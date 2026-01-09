@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-use crate::game::Player;
 use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
 use crate::states::{AppState, RequestFightEvent, RequestMineEvent};
 use crate::ui::widgets::spawn_player_stats;
@@ -29,12 +28,11 @@ fn spawn_field_content(
     mut commands: Commands,
     content_query: Query<Entity, With<ContentArea>>,
     field_state: Res<FieldTabState>,
-    player: Res<Player>,
 ) {
     let Ok(content_entity) = content_query.get_single() else {
         return;
     };
-    spawn_field_ui(&mut commands, content_entity, &field_state, &player);
+    spawn_field_ui(&mut commands, content_entity, &field_state);
 }
 
 /// Refreshes field UI when state changes.
@@ -43,7 +41,6 @@ fn refresh_field_on_state_change(
     field_state: Res<FieldTabState>,
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
-    player: Res<Player>,
 ) {
     if !field_state.is_changed() {
         return;
@@ -58,7 +55,7 @@ fn refresh_field_on_state_change(
     let Ok(content_entity) = content_query.get_single() else {
         return;
     };
-    spawn_field_ui(&mut commands, content_entity, &field_state, &player);
+    spawn_field_ui(&mut commands, content_entity, &field_state);
 }
 
 /// Field tab state - just tracks menu selection.
@@ -116,7 +113,6 @@ pub fn spawn_field_ui(
     commands: &mut Commands,
     content_entity: Entity,
     field_state: &FieldTabState,
-    player: &Player,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -132,7 +128,7 @@ pub fn spawn_field_ui(
             ))
             .with_children(|content| {
                 // Player stats summary
-                spawn_player_stats(content, player);
+                spawn_player_stats(content);
 
                 // Menu options
                 spawn_menu(

@@ -206,7 +206,7 @@ pub fn spawn_alchemist_ui(
             ))
             .with_children(|content| {
                 match alchemist_mode.mode {
-                    AlchemistModeKind::Menu => spawn_menu_mode(content, alchemist_selections, player),
+                    AlchemistModeKind::Menu => spawn_menu_mode(content, alchemist_selections),
                     AlchemistModeKind::Brew => spawn_brew_mode(content, alchemist_mode, alchemist_selections, player),
                 }
             });
@@ -214,13 +214,9 @@ pub fn spawn_alchemist_ui(
 }
 
 /// Spawn the menu mode UI.
-fn spawn_menu_mode(
-    content: &mut ChildBuilder,
-    alchemist_selections: &AlchemistSelections,
-    player: &Player,
-) {
+fn spawn_menu_mode(content: &mut ChildBuilder, alchemist_selections: &AlchemistSelections) {
     // Player stats summary
-    spawn_player_stats(content, player);
+    spawn_player_stats(content);
 
     // Menu options
     spawn_menu(
@@ -253,7 +249,7 @@ fn spawn_brew_mode(
     player: &Player,
 ) {
     // Player stats summary
-    spawn_player_stats(content, player);
+    spawn_player_stats(content);
 
     // Title
     content.spawn((

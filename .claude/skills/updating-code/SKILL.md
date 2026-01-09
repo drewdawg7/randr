@@ -1,6 +1,6 @@
 ---
 name: updating-code
-description: Guidance for making any code changes. This provides direction on git workflow, how to navigate the code base, and more.
+description: Required workflow for all code changes. Use when implementing features, fixing bugs, refactoring, editing files, or modifying code. Covers git workflow, code navigation with LSP, and merge process.
 ---
 
 ## Workflow

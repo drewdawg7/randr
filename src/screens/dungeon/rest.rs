@@ -27,7 +27,6 @@ pub enum RestActionType {
 /// Spawn the rest UI
 pub fn spawn_rest_ui(
     mut commands: Commands,
-    player: Res<Player>,
     dungeon: Res<crate::game::DungeonResource>,
     mut selection_state: ResMut<DungeonSelectionState>,
 ) {
@@ -86,7 +85,7 @@ pub fn spawn_rest_ui(
             ));
 
             // Player stats
-            spawn_player_stats(parent, &player);
+            spawn_player_stats(parent);
 
             // Status message
             if has_healed {

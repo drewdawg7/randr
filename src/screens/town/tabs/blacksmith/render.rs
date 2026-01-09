@@ -112,7 +112,7 @@ pub fn spawn_blacksmith_ui(
             ))
             .with_children(|content| {
                 // Player stats summary
-                spawn_player_stats(content, player);
+                spawn_player_stats(content);
 
                 // Render content based on mode
                 match blacksmith_mode.mode {
