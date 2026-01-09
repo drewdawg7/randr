@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::ui::widget::NodeImageMode;
 
 use crate::assets::GameSprites;
 use crate::entities::Progression;
@@ -58,6 +59,10 @@ fn on_add_player_stats(
                         index: idx,
                     },
                 )
+                .with_mode(NodeImageMode::Sliced(TextureSlicer {
+                    border: BorderRect::square(8.0),
+                    ..default()
+                }))
             });
             (heart, gold, background)
         })
