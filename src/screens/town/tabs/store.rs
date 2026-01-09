@@ -15,18 +15,20 @@ pub struct StoreTabPlugin;
 
 impl Plugin for StoreTabPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<StoreTabState>().add_systems(
-            Update,
-            handle_store_input
-                .run_if(in_state(AppState::Town))
-                .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Store),
-        );
+        app.init_resource::<StoreMode>()
+            .init_resource::<StoreSelections>()
+            .add_systems(
+                Update,
+                handle_store_input
+                    .run_if(in_state(AppState::Town))
+                    .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Store),
+            );
     }
 }
 
-/// Store mode - what submenu the player is in.
+/// Store mode kind - what submenu the player is in.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum StoreMode {
+pub enum StoreModeKind {
     #[default]
     Menu,
     Buy,
@@ -43,40 +45,43 @@ pub enum StorageSubmode {
     Deposit,
 }
 
-/// Store tab state - tracks current mode and selections.
-#[derive(Resource)]
-pub struct StoreTabState {
-    pub mode: StoreMode,
-    pub menu_selection: SelectionState,
-    pub buy_selection: SelectionState,
-    pub sell_selection: SelectionState,
+/// Store mode - tracks navigation state within the tab.
+#[derive(Resource, Default)]
+pub struct StoreMode {
+    pub mode: StoreModeKind,
     pub storage_submode: StorageSubmode,
-    pub storage_menu_selection: SelectionState,
-    pub storage_view_selection: SelectionState,
-    pub deposit_selection: SelectionState,
 }
 
-impl Default for StoreTabState {
+/// Store selections - tracks cursor positions in each mode.
+#[derive(Resource)]
+pub struct StoreSelections {
+    pub menu: SelectionState,
+    pub buy: SelectionState,
+    pub sell: SelectionState,
+    pub storage_menu: SelectionState,
+    pub storage_view: SelectionState,
+    pub deposit: SelectionState,
+}
+
+impl Default for StoreSelections {
     fn default() -> Self {
         Self {
-            mode: StoreMode::Menu,
-            menu_selection: SelectionState {
+            menu: SelectionState {
                 selected: 0,
                 count: STORE_MENU_OPTIONS.len(),
                 scroll_offset: 0,
                 visible_count: 10,
             },
-            buy_selection: SelectionState::new(0), // Will be updated when buy screen is shown
-            sell_selection: SelectionState::new(0), // Will be updated based on player inventory
-            storage_submode: StorageSubmode::Menu,
-            storage_menu_selection: SelectionState {
+            buy: SelectionState::new(0),
+            sell: SelectionState::new(0),
+            storage_menu: SelectionState {
                 selected: 0,
                 count: STORAGE_MENU_OPTIONS.len(),
                 scroll_offset: 0,
                 visible_count: 10,
             },
-            storage_view_selection: SelectionState::new(0), // Will be updated based on storage contents
-            deposit_selection: SelectionState::new(0),      // Will be updated based on player inventory
+            storage_view: SelectionState::new(0),
+            deposit: SelectionState::new(0),
         }
     }
 }
@@ -145,43 +150,44 @@ const BUYABLE_ITEMS: &[BuyableItem] = &[
 
 /// Handle input for the Store tab.
 fn handle_store_input(
-    mut store_state: ResMut<StoreTabState>,
+    mut store_mode: ResMut<StoreMode>,
+    mut store_selections: ResMut<StoreSelections>,
     mut action_events: EventReader<GameAction>,
     mut player: ResMut<Player>,
     mut storage: ResMut<Storage>,
 ) {
     for action in action_events.read() {
-        match store_state.mode {
-            StoreMode::Menu => handle_menu_input(&mut store_state, action),
-            StoreMode::Buy => handle_buy_input(&mut store_state, &mut player, action),
-            StoreMode::Sell => handle_sell_input(&mut store_state, &mut player, action),
-            StoreMode::Storage => handle_storage_input(&mut store_state, action, &mut player, &mut storage),
+        match store_mode.mode {
+            StoreModeKind::Menu => handle_menu_input(&mut store_mode, &mut store_selections, action),
+            StoreModeKind::Buy => handle_buy_input(&mut store_mode, &mut store_selections, &mut player, action),
+            StoreModeKind::Sell => handle_sell_input(&mut store_mode, &mut store_selections, &mut player, action),
+            StoreModeKind::Storage => handle_storage_input(&mut store_mode, &mut store_selections, action, &mut player, &mut storage),
         }
     }
 }
 
 /// Handle input for the main menu.
-fn handle_menu_input(store_state: &mut StoreTabState, action: &GameAction) {
+fn handle_menu_input(store_mode: &mut StoreMode, store_selections: &mut StoreSelections, action: &GameAction) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            store_state.menu_selection.move_up();
+            store_selections.menu.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            store_state.menu_selection.move_down();
+            store_selections.menu.move_down();
         }
         GameAction::Select => {
-            match store_state.menu_selection.selected {
+            match store_selections.menu.selected {
                 0 => {
-                    store_state.mode = StoreMode::Buy;
-                    store_state.buy_selection.set_count(BUYABLE_ITEMS.len());
+                    store_mode.mode = StoreModeKind::Buy;
+                    store_selections.buy.set_count(BUYABLE_ITEMS.len());
                 }
                 1 => {
-                    store_state.mode = StoreMode::Sell;
-                    // sell_selection count will be updated in render
+                    store_mode.mode = StoreModeKind::Sell;
+                    // sell count will be updated in render
                 }
                 2 => {
-                    store_state.mode = StoreMode::Storage;
-                    // storage_selection count will be updated in render
+                    store_mode.mode = StoreModeKind::Storage;
+                    // storage count will be updated in render
                 }
                 _ => {}
             }
@@ -192,19 +198,20 @@ fn handle_menu_input(store_state: &mut StoreTabState, action: &GameAction) {
 
 /// Handle input for the buy screen.
 fn handle_buy_input(
-    store_state: &mut StoreTabState,
+    store_mode: &mut StoreMode,
+    store_selections: &mut StoreSelections,
     player: &mut Player,
     action: &GameAction,
 ) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            store_state.buy_selection.move_up();
+            store_selections.buy.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            store_state.buy_selection.move_down();
+            store_selections.buy.move_down();
         }
         GameAction::Select => {
-            if let Some(buyable) = BUYABLE_ITEMS.get(store_state.buy_selection.selected) {
+            if let Some(buyable) = BUYABLE_ITEMS.get(store_selections.buy.selected) {
                 if player.gold >= buyable.price {
                     let new_item = buyable.item_id.spawn();
                     if player.add_to_inv(new_item).is_ok() {
@@ -219,8 +226,8 @@ fn handle_buy_input(
             }
         }
         GameAction::Back => {
-            store_state.mode = StoreMode::Menu;
-            store_state.buy_selection.reset();
+            store_mode.mode = StoreModeKind::Menu;
+            store_selections.buy.reset();
         }
         _ => {}
     }
@@ -228,22 +235,23 @@ fn handle_buy_input(
 
 /// Handle input for the sell screen.
 fn handle_sell_input(
-    store_state: &mut StoreTabState,
+    store_mode: &mut StoreMode,
+    store_selections: &mut StoreSelections,
     player: &mut Player,
     action: &GameAction,
 ) {
     // Update selection count based on current inventory
-    store_state.sell_selection.set_count(player.inventory.items.len());
+    store_selections.sell.set_count(player.inventory.items.len());
 
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            store_state.sell_selection.move_up();
+            store_selections.sell.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            store_state.sell_selection.move_down();
+            store_selections.sell.move_down();
         }
         GameAction::Select => {
-            if let Some(inv_item) = player.inventory.items.get(store_state.sell_selection.selected).cloned() {
+            if let Some(inv_item) = player.inventory.items.get(store_selections.sell.selected).cloned() {
                 let sell_price = (inv_item.item.gold_value as f32 * 0.5) as i32;
                 let item_name = inv_item.item.name.clone();
 
@@ -254,15 +262,15 @@ fn handle_sell_input(
 
                 // Update selection if we removed the last item
                 let new_count = player.inventory.items.len();
-                store_state.sell_selection.set_count(new_count);
-                if store_state.sell_selection.selected >= new_count && new_count > 0 {
-                    store_state.sell_selection.selected = new_count - 1;
+                store_selections.sell.set_count(new_count);
+                if store_selections.sell.selected >= new_count && new_count > 0 {
+                    store_selections.sell.selected = new_count - 1;
                 }
             }
         }
         GameAction::Back => {
-            store_state.mode = StoreMode::Menu;
-            store_state.sell_selection.reset();
+            store_mode.mode = StoreModeKind::Menu;
+            store_selections.sell.reset();
         }
         _ => {}
     }
@@ -270,44 +278,45 @@ fn handle_sell_input(
 
 /// Handle input for the storage screen.
 fn handle_storage_input(
-    store_state: &mut StoreTabState,
+    store_mode: &mut StoreMode,
+    store_selections: &mut StoreSelections,
     action: &GameAction,
     player: &mut Player,
     storage: &mut Storage,
 ) {
-    match store_state.storage_submode {
-        StorageSubmode::Menu => handle_storage_menu_input(store_state, action),
-        StorageSubmode::View => handle_storage_view_input(store_state, action, player, storage),
-        StorageSubmode::Deposit => handle_storage_deposit_input(store_state, action, player, storage),
+    match store_mode.storage_submode {
+        StorageSubmode::Menu => handle_storage_menu_input(store_mode, store_selections, action),
+        StorageSubmode::View => handle_storage_view_input(store_mode, store_selections, action, player, storage),
+        StorageSubmode::Deposit => handle_storage_deposit_input(store_mode, store_selections, action, player, storage),
     }
 }
 
 /// Handle input for the storage menu.
-fn handle_storage_menu_input(store_state: &mut StoreTabState, action: &GameAction) {
+fn handle_storage_menu_input(store_mode: &mut StoreMode, store_selections: &mut StoreSelections, action: &GameAction) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            store_state.storage_menu_selection.move_up();
+            store_selections.storage_menu.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            store_state.storage_menu_selection.move_down();
+            store_selections.storage_menu.move_down();
         }
         GameAction::Select => {
-            match store_state.storage_menu_selection.selected {
+            match store_selections.storage_menu.selected {
                 0 => {
                     // View Storage
-                    store_state.storage_submode = StorageSubmode::View;
+                    store_mode.storage_submode = StorageSubmode::View;
                 }
                 1 => {
                     // Deposit Items
-                    store_state.storage_submode = StorageSubmode::Deposit;
+                    store_mode.storage_submode = StorageSubmode::Deposit;
                 }
                 _ => {}
             }
         }
         GameAction::Back => {
-            store_state.mode = StoreMode::Menu;
-            store_state.storage_submode = StorageSubmode::Menu;
-            store_state.storage_menu_selection.reset();
+            store_mode.mode = StoreModeKind::Menu;
+            store_mode.storage_submode = StorageSubmode::Menu;
+            store_selections.storage_menu.reset();
         }
         _ => {}
     }
@@ -315,22 +324,23 @@ fn handle_storage_menu_input(store_state: &mut StoreTabState, action: &GameActio
 
 /// Handle input for viewing/withdrawing storage items.
 fn handle_storage_view_input(
-    store_state: &mut StoreTabState,
+    store_mode: &mut StoreMode,
+    store_selections: &mut StoreSelections,
     action: &GameAction,
     player: &mut Player,
     storage: &mut Storage,
 ) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            store_state.storage_view_selection.move_up();
+            store_selections.storage_view.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            store_state.storage_view_selection.move_down();
+            store_selections.storage_view.move_down();
         }
         GameAction::Select => {
             // Withdraw item from storage
             let storage_items = storage.inventory.items.as_slice();
-            if let Some(inv_item) = storage_items.get(store_state.storage_view_selection.selected) {
+            if let Some(inv_item) = storage_items.get(store_selections.storage_view.selected) {
                 let item = inv_item.item.clone();
 
                 // Try to add to player inventory
@@ -348,8 +358,8 @@ fn handle_storage_view_input(
             }
         }
         GameAction::Back => {
-            store_state.storage_submode = StorageSubmode::Menu;
-            store_state.storage_view_selection.reset();
+            store_mode.storage_submode = StorageSubmode::Menu;
+            store_selections.storage_view.reset();
         }
         _ => {}
     }
@@ -357,22 +367,23 @@ fn handle_storage_view_input(
 
 /// Handle input for depositing items into storage.
 fn handle_storage_deposit_input(
-    store_state: &mut StoreTabState,
+    store_mode: &mut StoreMode,
+    store_selections: &mut StoreSelections,
     action: &GameAction,
     player: &mut Player,
     storage: &mut Storage,
 ) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            store_state.deposit_selection.move_up();
+            store_selections.deposit.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            store_state.deposit_selection.move_down();
+            store_selections.deposit.move_down();
         }
         GameAction::Select => {
             // Deposit item into storage
             let inventory_items = player.inventory.items.as_slice();
-            if let Some(inv_item) = inventory_items.get(store_state.deposit_selection.selected) {
+            if let Some(inv_item) = inventory_items.get(store_selections.deposit.selected) {
                 let item = inv_item.item.clone();
 
                 // Add to storage (storage has unlimited capacity)
@@ -390,8 +401,8 @@ fn handle_storage_deposit_input(
             }
         }
         GameAction::Back => {
-            store_state.storage_submode = StorageSubmode::Menu;
-            store_state.deposit_selection.reset();
+            store_mode.storage_submode = StorageSubmode::Menu;
+            store_selections.deposit.reset();
         }
         _ => {}
     }
@@ -401,7 +412,8 @@ fn handle_storage_deposit_input(
 pub fn spawn_store_ui(
     commands: &mut Commands,
     content_entity: Entity,
-    store_state: &StoreTabState,
+    store_mode: &StoreMode,
+    store_selections: &StoreSelections,
     player: &Player,
     storage: &Storage,
 ) {
@@ -418,18 +430,18 @@ pub fn spawn_store_ui(
                 },
             ))
             .with_children(|content| {
-                match store_state.mode {
-                    StoreMode::Menu => spawn_menu_ui(content, store_state, player),
-                    StoreMode::Buy => spawn_buy_ui(content, store_state, player),
-                    StoreMode::Sell => spawn_sell_ui(content, store_state, player),
-                    StoreMode::Storage => spawn_storage_ui(content, store_state, player, storage),
+                match store_mode.mode {
+                    StoreModeKind::Menu => spawn_menu_ui(content, store_selections, player),
+                    StoreModeKind::Buy => spawn_buy_ui(content, store_selections, player),
+                    StoreModeKind::Sell => spawn_sell_ui(content, store_selections, player),
+                    StoreModeKind::Storage => spawn_storage_ui(content, store_mode, store_selections, player, storage),
                 }
             });
     });
 }
 
 /// Spawn the main menu UI.
-fn spawn_menu_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &Player) {
+fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, player: &Player) {
     // Title
     parent.spawn((
         Text::new("Welcome to the Store"),
@@ -451,7 +463,7 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player:
     spawn_menu(
         parent,
         STORE_MENU_OPTIONS,
-        store_state.menu_selection.selected,
+        store_selections.menu.selected,
         None,
     );
 
@@ -460,7 +472,7 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player:
 }
 
 /// Spawn the buy screen UI.
-fn spawn_buy_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &Player) {
+fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, player: &Player) {
     // Title
     parent.spawn((
         Text::new("Buy Items"),
@@ -489,7 +501,7 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: 
         ))
         .with_children(|list| {
             for (i, item) in BUYABLE_ITEMS.iter().enumerate() {
-                let is_selected = i == store_state.buy_selection.selected;
+                let is_selected = i == store_selections.buy.selected;
                 let can_afford = player.gold >= item.price;
 
                 let (bg_color, text_color) = selection_colors(is_selected);
@@ -558,7 +570,7 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: 
 }
 
 /// Spawn the sell screen UI.
-fn spawn_sell_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player: &Player) {
+fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, player: &Player) {
     // Title
     parent.spawn((
         Text::new("Sell Items"),
@@ -599,7 +611,7 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player:
             ))
             .with_children(|list| {
                 for (i, inv_item) in inventory_items.iter().enumerate() {
-                    let is_selected = i == store_state.sell_selection.selected;
+                    let is_selected = i == store_selections.sell.selected;
 
                     let (bg_color, text_color) = selection_colors(is_selected);
 
@@ -667,21 +679,22 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_state: &StoreTabState, player:
 /// Spawn the storage screen UI.
 fn spawn_storage_ui(
     parent: &mut ChildBuilder,
-    store_state: &StoreTabState,
+    store_mode: &StoreMode,
+    store_selections: &StoreSelections,
     player: &Player,
     storage: &Storage,
 ) {
-    match store_state.storage_submode {
-        StorageSubmode::Menu => spawn_storage_menu_ui(parent, store_state, player),
-        StorageSubmode::View => spawn_storage_view_ui(parent, store_state, player, storage),
-        StorageSubmode::Deposit => spawn_storage_deposit_ui(parent, store_state, player),
+    match store_mode.storage_submode {
+        StorageSubmode::Menu => spawn_storage_menu_ui(parent, store_selections, player),
+        StorageSubmode::View => spawn_storage_view_ui(parent, store_selections, player, storage),
+        StorageSubmode::Deposit => spawn_storage_deposit_ui(parent, store_selections, player),
     }
 }
 
 /// Spawn the storage menu UI.
 fn spawn_storage_menu_ui(
     parent: &mut ChildBuilder,
-    store_state: &StoreTabState,
+    store_selections: &StoreSelections,
     player: &Player,
 ) {
     // Title
@@ -705,7 +718,7 @@ fn spawn_storage_menu_ui(
     spawn_menu(
         parent,
         STORAGE_MENU_OPTIONS,
-        store_state.storage_menu_selection.selected,
+        store_selections.storage_menu.selected,
         None,
     );
 
@@ -716,7 +729,7 @@ fn spawn_storage_menu_ui(
 /// Spawn the storage view/withdraw UI.
 fn spawn_storage_view_ui(
     parent: &mut ChildBuilder,
-    store_state: &StoreTabState,
+    store_selections: &StoreSelections,
     player: &Player,
     storage: &Storage,
 ) {
@@ -760,7 +773,7 @@ fn spawn_storage_view_ui(
             ))
             .with_children(|list| {
                 for (i, inv_item) in storage_items.iter().enumerate() {
-                    let is_selected = i == store_state.storage_view_selection.selected;
+                    let is_selected = i == store_selections.storage_view.selected;
 
                     let (bg_color, text_color) = selection_colors(is_selected);
 
@@ -813,7 +826,7 @@ fn spawn_storage_view_ui(
 /// Spawn the storage deposit UI.
 fn spawn_storage_deposit_ui(
     parent: &mut ChildBuilder,
-    store_state: &StoreTabState,
+    store_selections: &StoreSelections,
     player: &Player,
 ) {
     // Title
@@ -856,7 +869,7 @@ fn spawn_storage_deposit_ui(
             ))
             .with_children(|list| {
                 for (i, inv_item) in inventory_items.iter().enumerate() {
-                    let is_selected = i == store_state.deposit_selection.selected;
+                    let is_selected = i == store_selections.deposit.selected;
 
                     let (bg_color, text_color) = selection_colors(is_selected);
 

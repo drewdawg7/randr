@@ -17,48 +17,59 @@ pub struct AlchemistTabPlugin;
 
 impl Plugin for AlchemistTabPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<AlchemistTabState>().add_systems(
-            Update,
-            handle_alchemist_input
-                .run_if(in_state(AppState::Town))
-                .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Alchemist),
-        );
+        app.init_resource::<AlchemistMode>()
+            .init_resource::<AlchemistSelections>()
+            .add_systems(
+                Update,
+                handle_alchemist_input
+                    .run_if(in_state(AppState::Town))
+                    .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Alchemist),
+            );
     }
 }
 
-/// The current mode of the Alchemist tab.
+/// The kind of mode for the Alchemist tab.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum AlchemistMode {
+pub enum AlchemistModeKind {
     #[default]
     Menu,
     Brew,
 }
 
-/// Alchemist tab state - tracks current mode and menu selection.
+/// Alchemist mode resource.
 #[derive(Resource)]
-pub struct AlchemistTabState {
-    pub mode: AlchemistMode,
-    pub selected_index: usize,
-    pub recipe_selection: SelectionState,
+pub struct AlchemistMode {
+    pub mode: AlchemistModeKind,
     pub available_recipes: Vec<RecipeId>,
 }
 
-impl Default for AlchemistTabState {
+impl Default for AlchemistMode {
     fn default() -> Self {
-        // Get all alchemy recipes
-        let available_recipes = RecipeId::all_alchemy_recipes();
-        let recipe_count = available_recipes.len();
-
         Self {
-            mode: AlchemistMode::Menu,
-            selected_index: 0,
-            recipe_selection: SelectionState {
+            mode: AlchemistModeKind::Menu,
+            available_recipes: RecipeId::all_alchemy_recipes(),
+        }
+    }
+}
+
+/// Alchemist selections resource.
+#[derive(Resource)]
+pub struct AlchemistSelections {
+    pub menu: usize,
+    pub recipe: SelectionState,
+}
+
+impl Default for AlchemistSelections {
+    fn default() -> Self {
+        let recipe_count = RecipeId::all_alchemy_recipes().len();
+        Self {
+            menu: 0,
+            recipe: SelectionState {
                 selected: 0,
                 count: recipe_count,
                 scroll_offset: 0,
                 visible_count: 10,
             },
-            available_recipes,
         }
     }
 }
@@ -70,45 +81,46 @@ const ALCHEMIST_MENU_OPTIONS: &[MenuOption] = &[MenuOption {
 
 /// Handle input for the Alchemist tab.
 fn handle_alchemist_input(
-    mut alchemist_state: ResMut<AlchemistTabState>,
+    mut alchemist_mode: ResMut<AlchemistMode>,
+    mut alchemist_selections: ResMut<AlchemistSelections>,
     mut player: ResMut<Player>,
     mut action_events: EventReader<GameAction>,
 ) {
     for action in action_events.read() {
-        match alchemist_state.mode {
-            AlchemistMode::Menu => match action {
+        match alchemist_mode.mode {
+            AlchemistModeKind::Menu => match action {
                 GameAction::Navigate(NavigationDirection::Up) => {
-                    if alchemist_state.selected_index > 0 {
-                        alchemist_state.selected_index -= 1;
+                    if alchemist_selections.menu > 0 {
+                        alchemist_selections.menu -= 1;
                     } else {
-                        alchemist_state.selected_index = ALCHEMIST_MENU_OPTIONS.len() - 1;
+                        alchemist_selections.menu = ALCHEMIST_MENU_OPTIONS.len() - 1;
                     }
                 }
                 GameAction::Navigate(NavigationDirection::Down) => {
-                    alchemist_state.selected_index =
-                        (alchemist_state.selected_index + 1) % ALCHEMIST_MENU_OPTIONS.len();
+                    alchemist_selections.menu =
+                        (alchemist_selections.menu + 1) % ALCHEMIST_MENU_OPTIONS.len();
                 }
                 GameAction::Select => {
                     // Only one option currently: Brew
-                    if alchemist_state.selected_index == 0 {
-                        alchemist_state.mode = AlchemistMode::Brew;
-                        alchemist_state.recipe_selection.reset();
+                    if alchemist_selections.menu == 0 {
+                        alchemist_mode.mode = AlchemistModeKind::Brew;
+                        alchemist_selections.recipe.reset();
                     }
                 }
                 _ => {}
             },
-            AlchemistMode::Brew => match action {
+            AlchemistModeKind::Brew => match action {
                 GameAction::Navigate(NavigationDirection::Up) => {
-                    alchemist_state.recipe_selection.move_up();
+                    alchemist_selections.recipe.move_up();
                 }
                 GameAction::Navigate(NavigationDirection::Down) => {
-                    alchemist_state.recipe_selection.move_down();
+                    alchemist_selections.recipe.move_down();
                 }
                 GameAction::Select => {
                     // Try to craft the selected recipe
-                    if let Some(&recipe_id) = alchemist_state
+                    if let Some(&recipe_id) = alchemist_mode
                         .available_recipes
-                        .get(alchemist_state.recipe_selection.selected)
+                        .get(alchemist_selections.recipe.selected)
                     {
                         if let Ok(recipe) = Recipe::new(recipe_id) {
                             if recipe.can_craft(&player) {
@@ -136,8 +148,8 @@ fn handle_alchemist_input(
                     }
                 }
                 GameAction::Back => {
-                    alchemist_state.mode = AlchemistMode::Menu;
-                    alchemist_state.selected_index = 0;
+                    alchemist_mode.mode = AlchemistModeKind::Menu;
+                    alchemist_selections.menu = 0;
                 }
                 _ => {}
             },
@@ -149,7 +161,8 @@ fn handle_alchemist_input(
 pub fn spawn_alchemist_ui(
     commands: &mut Commands,
     content_entity: Entity,
-    alchemist_state: &AlchemistTabState,
+    alchemist_mode: &AlchemistMode,
+    alchemist_selections: &AlchemistSelections,
     player: &Player,
 ) {
     commands.entity(content_entity).with_children(|parent| {
@@ -165,9 +178,9 @@ pub fn spawn_alchemist_ui(
                 },
             ))
             .with_children(|content| {
-                match alchemist_state.mode {
-                    AlchemistMode::Menu => spawn_menu_mode(content, alchemist_state, player),
-                    AlchemistMode::Brew => spawn_brew_mode(content, alchemist_state, player),
+                match alchemist_mode.mode {
+                    AlchemistModeKind::Menu => spawn_menu_mode(content, alchemist_selections, player),
+                    AlchemistModeKind::Brew => spawn_brew_mode(content, alchemist_mode, alchemist_selections, player),
                 }
             });
     });
@@ -176,7 +189,7 @@ pub fn spawn_alchemist_ui(
 /// Spawn the menu mode UI.
 fn spawn_menu_mode(
     content: &mut ChildBuilder,
-    alchemist_state: &AlchemistTabState,
+    alchemist_selections: &AlchemistSelections,
     player: &Player,
 ) {
     // Player stats summary
@@ -186,7 +199,7 @@ fn spawn_menu_mode(
     spawn_menu(
         content,
         ALCHEMIST_MENU_OPTIONS,
-        alchemist_state.selected_index,
+        alchemist_selections.menu,
         Some("Alchemist"),
     );
 
@@ -208,7 +221,8 @@ fn spawn_menu_mode(
 /// Spawn the brew mode UI.
 fn spawn_brew_mode(
     content: &mut ChildBuilder,
-    alchemist_state: &AlchemistTabState,
+    alchemist_mode: &AlchemistMode,
+    alchemist_selections: &AlchemistSelections,
     player: &Player,
 ) {
     // Player stats summary
@@ -241,10 +255,10 @@ fn spawn_brew_mode(
         ))
         .with_children(|main_content| {
             // Left side: Recipe list
-            spawn_recipe_list(main_content, alchemist_state, player);
+            spawn_recipe_list(main_content, alchemist_mode, alchemist_selections, player);
 
             // Right side: Ingredient details for selected recipe
-            spawn_ingredient_details(main_content, alchemist_state, player);
+            spawn_ingredient_details(main_content, alchemist_mode, alchemist_selections, player);
         });
 
     // Navigation hint
@@ -265,7 +279,8 @@ fn spawn_brew_mode(
 /// Spawn the recipe list panel.
 fn spawn_recipe_list(
     parent: &mut ChildBuilder,
-    alchemist_state: &AlchemistTabState,
+    alchemist_mode: &AlchemistMode,
+    alchemist_selections: &AlchemistSelections,
     player: &Player,
 ) {
     parent
@@ -293,9 +308,9 @@ fn spawn_recipe_list(
             ));
 
             // Recipe items
-            for (i, &recipe_id) in alchemist_state.available_recipes.iter().enumerate() {
+            for (i, &recipe_id) in alchemist_mode.available_recipes.iter().enumerate() {
                 if let Ok(recipe) = Recipe::new(recipe_id) {
-                    let is_selected = i == alchemist_state.recipe_selection.selected;
+                    let is_selected = i == alchemist_selections.recipe.selected;
                     spawn_recipe_item(list_container, &recipe, is_selected, player);
                 }
             }
@@ -362,7 +377,8 @@ fn spawn_recipe_item(
 /// Spawn the ingredient details panel for the selected recipe.
 fn spawn_ingredient_details(
     parent: &mut ChildBuilder,
-    alchemist_state: &AlchemistTabState,
+    alchemist_mode: &AlchemistMode,
+    alchemist_selections: &AlchemistSelections,
     player: &Player,
 ) {
     parent
@@ -391,9 +407,9 @@ fn spawn_ingredient_details(
             ));
 
             // Get the selected recipe
-            if let Some(&recipe_id) = alchemist_state
+            if let Some(&recipe_id) = alchemist_mode
                 .available_recipes
-                .get(alchemist_state.recipe_selection.selected)
+                .get(alchemist_selections.recipe.selected)
             {
                 if let Ok(recipe) = Recipe::new(recipe_id) {
                     // Display each ingredient with owned/required counts

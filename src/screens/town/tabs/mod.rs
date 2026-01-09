@@ -6,11 +6,11 @@ mod store;
 
 use bevy::prelude::*;
 
-pub use alchemist::{AlchemistTabPlugin, AlchemistTabState, spawn_alchemist_ui};
-pub use blacksmith::{BlacksmithTabPlugin, BlacksmithTabState, spawn_blacksmith_ui};
+pub use alchemist::{AlchemistTabPlugin, AlchemistMode, AlchemistSelections, spawn_alchemist_ui};
+pub use blacksmith::{BlacksmithTabPlugin, BlacksmithMode, BlacksmithSelections, spawn_blacksmith_ui};
 pub use dungeon::{DungeonTabPlugin, DungeonTabState, spawn_dungeon_ui};
 pub use field::{FieldTabPlugin, FieldTabState, spawn_field_ui};
-pub use store::{StoreTabPlugin, StoreTabState, spawn_store_ui};
+pub use store::{StoreTabPlugin, StoreMode, StoreSelections, spawn_store_ui};
 
 /// Plugin that bundles all tab plugins together.
 pub struct TabsPlugin;

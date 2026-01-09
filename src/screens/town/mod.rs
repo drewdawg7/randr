@@ -10,7 +10,7 @@ use crate::states::AppState;
 pub use tabs::TabsPlugin;
 use tabs::{
     spawn_alchemist_ui, spawn_blacksmith_ui, spawn_dungeon_ui, spawn_field_ui, spawn_store_ui,
-    AlchemistTabState, BlacksmithTabState, DungeonTabState, FieldTabState, StoreTabState,
+    AlchemistMode, AlchemistSelections, BlacksmithMode, BlacksmithSelections, DungeonTabState, FieldTabState, StoreMode, StoreSelections,
 };
 
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
@@ -118,9 +118,12 @@ pub struct TabContent;
 struct TabStates<'w> {
     field: Res<'w, FieldTabState>,
     dungeon: Res<'w, DungeonTabState>,
-    store: Res<'w, StoreTabState>,
-    blacksmith: Res<'w, BlacksmithTabState>,
-    alchemist: Res<'w, AlchemistTabState>,
+    store_mode: Res<'w, StoreMode>,
+    store_selections: Res<'w, StoreSelections>,
+    blacksmith_mode: Res<'w, BlacksmithMode>,
+    blacksmith_selections: Res<'w, BlacksmithSelections>,
+    alchemist_mode: Res<'w, AlchemistMode>,
+    alchemist_selections: Res<'w, AlchemistSelections>,
 }
 
 fn setup_town_ui(mut commands: Commands, current_tab: Res<CurrentTab>) {
@@ -264,9 +267,9 @@ fn render_tab_content(
 ) {
     let should_render = force_refresh.0
         || current_tab.is_changed()
-        || (current_tab.tab == TownTab::Store && tab_states.store.is_changed())
-        || (current_tab.tab == TownTab::Blacksmith && tab_states.blacksmith.is_changed())
-        || (current_tab.tab == TownTab::Alchemist && tab_states.alchemist.is_changed())
+        || (current_tab.tab == TownTab::Store && (tab_states.store_mode.is_changed() || tab_states.store_selections.is_changed()))
+        || (current_tab.tab == TownTab::Blacksmith && (tab_states.blacksmith_mode.is_changed() || tab_states.blacksmith_selections.is_changed()))
+        || (current_tab.tab == TownTab::Alchemist && (tab_states.alchemist_mode.is_changed() || tab_states.alchemist_selections.is_changed()))
         || (current_tab.tab == TownTab::Field && tab_states.field.is_changed())
         || (current_tab.tab == TownTab::Dungeon && tab_states.dungeon.is_changed());
 
@@ -286,13 +289,13 @@ fn render_tab_content(
 
     match current_tab.tab {
         TownTab::Store => {
-            spawn_store_ui(&mut commands, content_entity, &tab_states.store, &player, &storage);
+            spawn_store_ui(&mut commands, content_entity, &tab_states.store_mode, &tab_states.store_selections, &player, &storage);
         }
         TownTab::Blacksmith => {
-            spawn_blacksmith_ui(&mut commands, content_entity, &tab_states.blacksmith, &player);
+            spawn_blacksmith_ui(&mut commands, content_entity, &tab_states.blacksmith_mode, &tab_states.blacksmith_selections, &player);
         }
         TownTab::Alchemist => {
-            spawn_alchemist_ui(&mut commands, content_entity, &tab_states.alchemist, &player);
+            spawn_alchemist_ui(&mut commands, content_entity, &tab_states.alchemist_mode, &tab_states.alchemist_selections, &player);
         }
         TownTab::Field => {
             spawn_field_ui(&mut commands, content_entity, &tab_states.field, &player);

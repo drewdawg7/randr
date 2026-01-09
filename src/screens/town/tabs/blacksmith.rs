@@ -17,18 +17,20 @@ pub struct BlacksmithTabPlugin;
 
 impl Plugin for BlacksmithTabPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<BlacksmithTabState>().add_systems(
-            Update,
-            handle_blacksmith_input
-                .run_if(in_state(AppState::Town))
-                .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Blacksmith),
-        );
+        app.init_resource::<BlacksmithMode>()
+            .init_resource::<BlacksmithSelections>()
+            .add_systems(
+                Update,
+                handle_blacksmith_input
+                    .run_if(in_state(AppState::Town))
+                    .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Blacksmith),
+            );
     }
 }
 
 /// The different modes/screens in the Blacksmith tab.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum BlacksmithMode {
+pub enum BlacksmithModeKind {
     #[default]
     Menu,
     Upgrade,
@@ -37,31 +39,35 @@ pub enum BlacksmithMode {
     Forge,
 }
 
-/// Blacksmith tab state - tracks current mode and selection.
-#[derive(Resource)]
-pub struct BlacksmithTabState {
-    pub mode: BlacksmithMode,
-    pub menu_selection: SelectionState,
-    pub upgrade_selection: SelectionState,
-    pub quality_selection: SelectionState,
-    pub smelt_selection: SelectionState,
-    pub forge_selection: SelectionState,
+/// Blacksmith mode - tracks navigation state within the tab.
+#[derive(Resource, Default)]
+pub struct BlacksmithMode {
+    pub mode: BlacksmithModeKind,
 }
 
-impl Default for BlacksmithTabState {
+/// Blacksmith selections - tracks cursor positions in each mode.
+#[derive(Resource)]
+pub struct BlacksmithSelections {
+    pub menu: SelectionState,
+    pub upgrade: SelectionState,
+    pub quality: SelectionState,
+    pub smelt: SelectionState,
+    pub forge: SelectionState,
+}
+
+impl Default for BlacksmithSelections {
     fn default() -> Self {
         Self {
-            mode: BlacksmithMode::Menu,
-            menu_selection: SelectionState {
+            menu: SelectionState {
                 selected: 0,
                 count: MENU_OPTIONS.len(),
                 scroll_offset: 0,
                 visible_count: 10,
             },
-            upgrade_selection: SelectionState::new(0),
-            quality_selection: SelectionState::new(0),
-            smelt_selection: SelectionState::new(0),
-            forge_selection: SelectionState::new(0),
+            upgrade: SelectionState::new(0),
+            quality: SelectionState::new(0),
+            smelt: SelectionState::new(0),
+            forge: SelectionState::new(0),
         }
     }
 }
@@ -87,37 +93,38 @@ const MENU_OPTIONS: &[MenuOption] = &[
 
 /// Handle input for the Blacksmith tab.
 fn handle_blacksmith_input(
-    mut blacksmith_state: ResMut<BlacksmithTabState>,
+    mut blacksmith_mode: ResMut<BlacksmithMode>,
+    mut blacksmith_selections: ResMut<BlacksmithSelections>,
     mut player: ResMut<Player>,
     mut action_events: EventReader<GameAction>,
 ) {
     for action in action_events.read() {
-        match blacksmith_state.mode {
-            BlacksmithMode::Menu => handle_menu_input(&mut blacksmith_state, action),
-            BlacksmithMode::Upgrade => handle_upgrade_input(&mut blacksmith_state, &mut player, action),
-            BlacksmithMode::Quality => handle_quality_input(&mut blacksmith_state, &mut player, action),
-            BlacksmithMode::Smelt => handle_smelt_input(&mut blacksmith_state, &mut player, action),
-            BlacksmithMode::Forge => handle_forge_input(&mut blacksmith_state, &mut player, action),
+        match blacksmith_mode.mode {
+            BlacksmithModeKind::Menu => handle_menu_input(&mut blacksmith_mode, &mut blacksmith_selections, action),
+            BlacksmithModeKind::Upgrade => handle_upgrade_input(&mut blacksmith_mode, &mut blacksmith_selections, &mut player, action),
+            BlacksmithModeKind::Quality => handle_quality_input(&mut blacksmith_mode, &mut blacksmith_selections, &mut player, action),
+            BlacksmithModeKind::Smelt => handle_smelt_input(&mut blacksmith_mode, &mut blacksmith_selections, &mut player, action),
+            BlacksmithModeKind::Forge => handle_forge_input(&mut blacksmith_mode, &mut blacksmith_selections, &mut player, action),
         }
     }
 }
 
 /// Handle input for the main menu.
-fn handle_menu_input(blacksmith_state: &mut BlacksmithTabState, action: &GameAction) {
+fn handle_menu_input(blacksmith_mode: &mut BlacksmithMode, blacksmith_selections: &mut BlacksmithSelections, action: &GameAction) {
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            blacksmith_state.menu_selection.move_up();
+            blacksmith_selections.menu.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            blacksmith_state.menu_selection.move_down();
+            blacksmith_selections.menu.move_down();
         }
         GameAction::Select => {
-            blacksmith_state.mode = match blacksmith_state.menu_selection.selected {
-                0 => BlacksmithMode::Upgrade,
-                1 => BlacksmithMode::Quality,
-                2 => BlacksmithMode::Smelt,
-                3 => BlacksmithMode::Forge,
-                _ => BlacksmithMode::Menu,
+            blacksmith_mode.mode = match blacksmith_selections.menu.selected {
+                0 => BlacksmithModeKind::Upgrade,
+                1 => BlacksmithModeKind::Quality,
+                2 => BlacksmithModeKind::Smelt,
+                3 => BlacksmithModeKind::Forge,
+                _ => BlacksmithModeKind::Menu,
             };
         }
         _ => {}
@@ -126,7 +133,8 @@ fn handle_menu_input(blacksmith_state: &mut BlacksmithTabState, action: &GameAct
 
 /// Handle input for Upgrade mode.
 fn handle_upgrade_input(
-    blacksmith_state: &mut BlacksmithTabState,
+    blacksmith_mode: &mut BlacksmithMode,
+    blacksmith_selections: &mut BlacksmithSelections,
     player: &mut Player,
     action: &GameAction,
 ) {
@@ -137,14 +145,14 @@ fn handle_upgrade_input(
         .iter()
         .filter(|inv_item| inv_item.item.item_type.is_equipment())
         .count();
-    blacksmith_state.upgrade_selection.set_count(equipment_count);
+    blacksmith_selections.upgrade.set_count(equipment_count);
 
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            blacksmith_state.upgrade_selection.move_up();
+            blacksmith_selections.upgrade.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            blacksmith_state.upgrade_selection.move_down();
+            blacksmith_selections.upgrade.move_down();
         }
         GameAction::Select => {
             // Get equipment items
@@ -155,7 +163,7 @@ fn handle_upgrade_input(
                 .filter(|inv_item| inv_item.item.item_type.is_equipment())
                 .collect();
 
-            if let Some(inv_item) = equipment_items.get(blacksmith_state.upgrade_selection.selected) {
+            if let Some(inv_item) = equipment_items.get(blacksmith_selections.upgrade.selected) {
                 let item_uuid = inv_item.item.item_uuid;
 
                 // Calculate upgrade cost first
@@ -182,8 +190,8 @@ fn handle_upgrade_input(
             }
         }
         GameAction::Back => {
-            blacksmith_state.mode = BlacksmithMode::Menu;
-            blacksmith_state.upgrade_selection.reset();
+            blacksmith_mode.mode = BlacksmithModeKind::Menu;
+            blacksmith_selections.upgrade.reset();
         }
         _ => {}
     }
@@ -191,7 +199,8 @@ fn handle_upgrade_input(
 
 /// Handle input for Quality mode.
 fn handle_quality_input(
-    blacksmith_state: &mut BlacksmithTabState,
+    blacksmith_mode: &mut BlacksmithMode,
+    blacksmith_selections: &mut BlacksmithSelections,
     player: &mut Player,
     action: &GameAction,
 ) {
@@ -202,14 +211,14 @@ fn handle_quality_input(
         .iter()
         .filter(|inv_item| inv_item.item.item_type.is_equipment())
         .count();
-    blacksmith_state.quality_selection.set_count(equipment_count);
+    blacksmith_selections.quality.set_count(equipment_count);
 
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            blacksmith_state.quality_selection.move_up();
+            blacksmith_selections.quality.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            blacksmith_state.quality_selection.move_down();
+            blacksmith_selections.quality.move_down();
         }
         GameAction::Select => {
             // Get equipment items
@@ -220,7 +229,7 @@ fn handle_quality_input(
                 .filter(|inv_item| inv_item.item.item_type.is_equipment())
                 .collect();
 
-            if let Some(inv_item) = equipment_items.get(blacksmith_state.quality_selection.selected) {
+            if let Some(inv_item) = equipment_items.get(blacksmith_selections.quality.selected) {
                 let item_uuid = inv_item.item.item_uuid;
 
                 // Check if player has QualityUpgradeStone
@@ -244,8 +253,8 @@ fn handle_quality_input(
             }
         }
         GameAction::Back => {
-            blacksmith_state.mode = BlacksmithMode::Menu;
-            blacksmith_state.quality_selection.reset();
+            blacksmith_mode.mode = BlacksmithModeKind::Menu;
+            blacksmith_selections.quality.reset();
         }
         _ => {}
     }
@@ -253,24 +262,25 @@ fn handle_quality_input(
 
 /// Handle input for Smelt mode.
 fn handle_smelt_input(
-    blacksmith_state: &mut BlacksmithTabState,
+    blacksmith_mode: &mut BlacksmithMode,
+    blacksmith_selections: &mut BlacksmithSelections,
     player: &mut Player,
     action: &GameAction,
 ) {
     // Update selection count based on available recipes
     let recipe_count = RecipeId::all_smelting_recipes().len();
-    blacksmith_state.smelt_selection.set_count(recipe_count);
+    blacksmith_selections.smelt.set_count(recipe_count);
 
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            blacksmith_state.smelt_selection.move_up();
+            blacksmith_selections.smelt.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            blacksmith_state.smelt_selection.move_down();
+            blacksmith_selections.smelt.move_down();
         }
         GameAction::Select => 'select: {
             let recipes = RecipeId::all_smelting_recipes();
-            let Some(recipe_id) = recipes.get(blacksmith_state.smelt_selection.selected) else {
+            let Some(recipe_id) = recipes.get(blacksmith_selections.smelt.selected) else {
                 break 'select;
             };
             let Ok(recipe) = Recipe::new(*recipe_id) else {
@@ -289,8 +299,8 @@ fn handle_smelt_input(
             }
         }
         GameAction::Back => {
-            blacksmith_state.mode = BlacksmithMode::Menu;
-            blacksmith_state.smelt_selection.reset();
+            blacksmith_mode.mode = BlacksmithModeKind::Menu;
+            blacksmith_selections.smelt.reset();
         }
         _ => {}
     }
@@ -298,24 +308,25 @@ fn handle_smelt_input(
 
 /// Handle input for Forge mode.
 fn handle_forge_input(
-    blacksmith_state: &mut BlacksmithTabState,
+    blacksmith_mode: &mut BlacksmithMode,
+    blacksmith_selections: &mut BlacksmithSelections,
     player: &mut Player,
     action: &GameAction,
 ) {
     // Update selection count based on available recipes
     let recipe_count = RecipeId::all_forging_recipes().len();
-    blacksmith_state.forge_selection.set_count(recipe_count);
+    blacksmith_selections.forge.set_count(recipe_count);
 
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
-            blacksmith_state.forge_selection.move_up();
+            blacksmith_selections.forge.move_up();
         }
         GameAction::Navigate(NavigationDirection::Down) => {
-            blacksmith_state.forge_selection.move_down();
+            blacksmith_selections.forge.move_down();
         }
         GameAction::Select => 'select: {
             let recipes = RecipeId::all_forging_recipes();
-            let Some(recipe_id) = recipes.get(blacksmith_state.forge_selection.selected) else {
+            let Some(recipe_id) = recipes.get(blacksmith_selections.forge.selected) else {
                 break 'select;
             };
             let Ok(recipe) = Recipe::new(*recipe_id) else {
@@ -334,8 +345,8 @@ fn handle_forge_input(
             }
         }
         GameAction::Back => {
-            blacksmith_state.mode = BlacksmithMode::Menu;
-            blacksmith_state.forge_selection.reset();
+            blacksmith_mode.mode = BlacksmithModeKind::Menu;
+            blacksmith_selections.forge.reset();
         }
         _ => {}
     }
@@ -352,7 +363,8 @@ fn calculate_upgrade_cost(item: &crate::item::Item) -> i32 {
 pub fn spawn_blacksmith_ui(
     commands: &mut Commands,
     content_entity: Entity,
-    blacksmith_state: &BlacksmithTabState,
+    blacksmith_mode: &BlacksmithMode,
+    blacksmith_selections: &BlacksmithSelections,
     player: &Player,
 ) {
     commands.entity(content_entity).with_children(|parent| {
@@ -372,12 +384,12 @@ pub fn spawn_blacksmith_ui(
                 spawn_player_stats(content, player);
 
                 // Render content based on mode
-                match blacksmith_state.mode {
-                    BlacksmithMode::Menu => {
+                match blacksmith_mode.mode {
+                    BlacksmithModeKind::Menu => {
                         spawn_menu(
                             content,
                             MENU_OPTIONS,
-                            blacksmith_state.menu_selection.selected,
+                            blacksmith_selections.menu.selected,
                             Some("Blacksmith"),
                         );
 
@@ -395,17 +407,17 @@ pub fn spawn_blacksmith_ui(
                             },
                         ));
                     }
-                    BlacksmithMode::Upgrade => {
-                        spawn_upgrade_ui(content, blacksmith_state, player);
+                    BlacksmithModeKind::Upgrade => {
+                        spawn_upgrade_ui(content, blacksmith_selections, player);
                     }
-                    BlacksmithMode::Quality => {
-                        spawn_quality_ui(content, blacksmith_state, player);
+                    BlacksmithModeKind::Quality => {
+                        spawn_quality_ui(content, blacksmith_selections, player);
                     }
-                    BlacksmithMode::Smelt => {
-                        spawn_smelt_ui(content, blacksmith_state, player);
+                    BlacksmithModeKind::Smelt => {
+                        spawn_smelt_ui(content, blacksmith_selections, player);
                     }
-                    BlacksmithMode::Forge => {
-                        spawn_forge_ui(content, blacksmith_state, player);
+                    BlacksmithModeKind::Forge => {
+                        spawn_forge_ui(content, blacksmith_selections, player);
                     }
                 }
             });
@@ -415,7 +427,7 @@ pub fn spawn_blacksmith_ui(
 /// Spawn the Upgrade mode UI.
 fn spawn_upgrade_ui(
     parent: &mut ChildBuilder,
-    blacksmith_state: &BlacksmithTabState,
+    blacksmith_selections: &BlacksmithSelections,
     player: &Player,
 ) {
     // Title
@@ -460,7 +472,7 @@ fn spawn_upgrade_ui(
             ))
             .with_children(|list| {
                 for (i, inv_item) in equipment_items.iter().enumerate() {
-                    let is_selected = i == blacksmith_state.upgrade_selection.selected;
+                    let is_selected = i == blacksmith_selections.upgrade.selected;
                     let upgrade_cost = calculate_upgrade_cost(&inv_item.item);
                     let can_upgrade = inv_item.item.num_upgrades < inv_item.item.max_upgrades;
                     let can_afford = player.gold >= upgrade_cost;
@@ -568,7 +580,7 @@ fn spawn_upgrade_ui(
 /// Spawn the Quality mode UI.
 fn spawn_quality_ui(
     parent: &mut ChildBuilder,
-    blacksmith_state: &BlacksmithTabState,
+    blacksmith_selections: &BlacksmithSelections,
     player: &Player,
 ) {
     // Title
@@ -632,7 +644,7 @@ fn spawn_quality_ui(
             ))
             .with_children(|list| {
                 for (i, inv_item) in equipment_items.iter().enumerate() {
-                    let is_selected = i == blacksmith_state.quality_selection.selected;
+                    let is_selected = i == blacksmith_selections.quality.selected;
                     let has_stone = stone_count > 0;
                     let can_upgrade = inv_item.item.quality.next_quality().is_some();
 
@@ -722,7 +734,7 @@ fn spawn_quality_ui(
 /// Spawn the Smelt mode UI.
 fn spawn_smelt_ui(
     parent: &mut ChildBuilder,
-    blacksmith_state: &BlacksmithTabState,
+    blacksmith_selections: &BlacksmithSelections,
     player: &Player,
 ) {
     // Title
@@ -761,7 +773,7 @@ fn spawn_smelt_ui(
             ))
             .with_children(|list| {
                 for (i, recipe_id) in recipes.iter().enumerate() {
-                    let is_selected = i == blacksmith_state.smelt_selection.selected;
+                    let is_selected = i == blacksmith_selections.smelt.selected;
 
                     if let Ok(recipe) = Recipe::new(*recipe_id) {
                         let can_craft = recipe.can_craft(&player);
@@ -847,7 +859,7 @@ fn spawn_smelt_ui(
 /// Spawn the Forge mode UI.
 fn spawn_forge_ui(
     parent: &mut ChildBuilder,
-    blacksmith_state: &BlacksmithTabState,
+    blacksmith_selections: &BlacksmithSelections,
     player: &Player,
 ) {
     // Title
@@ -886,7 +898,7 @@ fn spawn_forge_ui(
             ))
             .with_children(|list| {
                 for (i, recipe_id) in recipes.iter().enumerate() {
-                    let is_selected = i == blacksmith_state.forge_selection.selected;
+                    let is_selected = i == blacksmith_selections.forge.selected;
 
                     if let Ok(recipe) = Recipe::new(*recipe_id) {
                         let can_craft = recipe.can_craft(&player);
