@@ -113,6 +113,8 @@ pub struct GameSprites {
     pub ui_frames: Option<SpriteSheet>,
     /// UI bars (health, mana, progress)
     pub ui_bars: Option<SpriteSheet>,
+    /// Combined UI sprite sheet (Cute Fantasy UI pack)
+    pub ui_all: Option<SpriteSheet>,
 }
 
 impl GameSprites {
@@ -241,6 +243,8 @@ fn load_assets(
         GameSprites::load_sheet("ui_frames", &asset_server, &mut texture_atlas_layouts);
     game_sprites.ui_bars =
         GameSprites::load_sheet("ui_bars", &asset_server, &mut texture_atlas_layouts);
+    game_sprites.ui_all =
+        GameSprites::load_sheet("ui_all", &asset_server, &mut texture_atlas_layouts);
 
     // Legacy sprite loading (individual files)
     game_assets.sprites.mine_wall = try_load(&asset_server, "sprites/mine/wall.png");

@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::assets::GameSprites;
 use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
@@ -14,7 +15,7 @@ impl Plugin for MainMenuPlugin {
             .add_systems(OnExit(AppState::Menu), despawn_main_menu)
             .add_systems(
                 Update,
-                (handle_menu_navigation, handle_menu_selection)
+                (handle_menu_navigation, handle_menu_selection, update_sprite_menu_items)
                     .run_if(in_state(AppState::Menu)),
             );
     }
@@ -46,10 +47,12 @@ impl MenuSelection {
 #[derive(Component)]
 struct MainMenuRoot;
 
-/// Component marker for menu items.
+/// Component for menu items that use sprites instead of text.
 #[derive(Component)]
-struct MenuItem {
+struct SpriteMenuItem {
     index: usize,
+    unselected_slice: &'static str,
+    selected_slice: &'static str,
 }
 
 /// System to spawn the main menu UI.
@@ -91,41 +94,64 @@ fn spawn_main_menu(mut commands: Commands, player: Res<Player>) {
                     ..default()
                 })
                 .with_children(|parent| {
-                    spawn_menu_item(parent, 0, "Town");
-                    spawn_menu_item(parent, 1, "Profile");
-                    spawn_menu_item(parent, 2, "Quit");
+                    // Town - uses sprite (placeholder, populated by system)
+                    // Original sprite is 47x14, scale 3x to match 32px text
+                    parent.spawn((
+                        SpriteMenuItem {
+                            index: 0,
+                            unselected_slice: "Slice_295",
+                            selected_slice: "Slice_329",
+                        },
+                        Node {
+                            width: Val::Px(141.0),
+                            height: Val::Px(42.0),
+                            ..default()
+                        },
+                    ));
+                    // Profile - uses sprite
+                    // Original sprite is 47x14, scale 3x to match 32px text
+                    parent.spawn((
+                        SpriteMenuItem {
+                            index: 1,
+                            unselected_slice: "Slice_193",
+                            selected_slice: "Slice_227",
+                        },
+                        Node {
+                            width: Val::Px(141.0),
+                            height: Val::Px(42.0),
+                            ..default()
+                        },
+                    ));
+                    // Quit - uses sprite
+                    // Original sprite is 47x14, scale 3x to match 32px text
+                    parent.spawn((
+                        SpriteMenuItem {
+                            index: 2,
+                            unselected_slice: "Slice_397",
+                            selected_slice: "Slice_431",
+                        },
+                        Node {
+                            width: Val::Px(141.0),
+                            height: Val::Px(42.0),
+                            ..default()
+                        },
+                    ));
                 });
         });
-}
-
-/// Helper to spawn a menu item.
-fn spawn_menu_item(parent: &mut ChildBuilder, index: usize, label: &str) {
-    parent.spawn((
-        MenuItem { index },
-        Text::new(label),
-        TextFont {
-            font_size: 32.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.7, 0.7, 0.7)),
-    ));
 }
 
 /// System to handle menu navigation using GameAction events.
 fn handle_menu_navigation(
     mut action_reader: EventReader<GameAction>,
     mut menu_selection: ResMut<MenuSelection>,
-    mut menu_items: Query<(&MenuItem, &mut TextColor)>,
 ) {
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
                 menu_selection.up();
-                update_menu_visuals(&menu_selection, &mut menu_items);
             }
             GameAction::Navigate(NavigationDirection::Down) => {
                 menu_selection.down();
-                update_menu_visuals(&menu_selection, &mut menu_items);
             }
             _ => {}
         }
@@ -160,26 +186,52 @@ fn handle_menu_selection(
     }
 }
 
-/// Update menu item visuals based on current selection.
-fn update_menu_visuals(selection: &MenuSelection, menu_items: &mut Query<(&MenuItem, &mut TextColor)>) {
-    for (item, mut color) in menu_items.iter_mut() {
-        if item.index == selection.index {
-            // Selected item is white
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0));
-        } else {
-            // Unselected items are gray
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7));
-        }
-    }
+/// System to reset the menu selection to the first item.
+fn reset_menu_selection(mut menu_selection: ResMut<MenuSelection>) {
+    menu_selection.index = 0;
 }
 
-/// System to reset the menu selection to the first item.
-fn reset_menu_selection(
-    mut menu_selection: ResMut<MenuSelection>,
-    mut menu_items: Query<(&MenuItem, &mut TextColor)>,
+/// System to populate and update sprite menu items based on selection.
+fn update_sprite_menu_items(
+    mut commands: Commands,
+    menu_selection: Res<MenuSelection>,
+    game_sprites: Res<GameSprites>,
+    mut query: Query<(Entity, &SpriteMenuItem, Option<&mut ImageNode>)>,
 ) {
-    menu_selection.index = 0;
-    update_menu_visuals(&menu_selection, &mut menu_items);
+    let Some(ui_all) = &game_sprites.ui_all else {
+        return;
+    };
+
+    for (entity, sprite_item, image_node) in &mut query {
+        let slice_name = if sprite_item.index == menu_selection.index {
+            sprite_item.selected_slice
+        } else {
+            sprite_item.unselected_slice
+        };
+
+        let Some(index) = ui_all.get(slice_name) else {
+            continue;
+        };
+
+        match image_node {
+            Some(mut node) => {
+                // Update existing sprite's atlas index
+                if let Some(atlas) = &mut node.texture_atlas {
+                    atlas.index = index;
+                }
+            }
+            None => {
+                // First time - insert the ImageNode
+                commands.entity(entity).insert(ImageNode::from_atlas_image(
+                    ui_all.texture.clone(),
+                    TextureAtlas {
+                        layout: ui_all.layout.clone(),
+                        index,
+                    },
+                ));
+            }
+        }
+    }
 }
 
 /// System to despawn the main menu UI.

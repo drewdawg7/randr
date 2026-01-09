@@ -66,6 +66,25 @@ pub struct AsepriteMeta {
     /// Scale factor (optional).
     #[serde(default)]
     pub scale: String,
+    /// Slices defined in the sprite sheet (for irregular sprite regions).
+    #[serde(default)]
+    pub slices: Vec<AsepriteSlice>,
+}
+
+/// A slice definition from Aseprite.
+#[derive(Debug, Deserialize)]
+pub struct AsepriteSlice {
+    /// Name of the slice.
+    pub name: String,
+    /// Keyframes containing bounds for this slice.
+    pub keys: Vec<AsepriteSliceKey>,
+}
+
+/// A keyframe for a slice, containing its bounds.
+#[derive(Debug, Deserialize)]
+pub struct AsepriteSliceKey {
+    /// The bounding rectangle for this slice.
+    pub bounds: AsepriteRect,
 }
 
 /// Size dimensions.
@@ -114,6 +133,21 @@ impl AsepriteSheet {
             );
             let index = layout.add_texture(rect);
             name_to_index.insert(name.clone(), index);
+        }
+
+        // Also add slices (used for irregular sprite regions)
+        for slice in &self.meta.slices {
+            if let Some(key) = slice.keys.first() {
+                let bounds = &key.bounds;
+                let rect = URect::new(
+                    bounds.x,
+                    bounds.y,
+                    bounds.x + bounds.w,
+                    bounds.y + bounds.h,
+                );
+                let index = layout.add_texture(rect);
+                name_to_index.insert(slice.name.clone(), index);
+            }
         }
 
         (layout, name_to_index)

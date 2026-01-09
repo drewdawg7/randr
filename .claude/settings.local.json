@@ -116,7 +116,10 @@
       "WebFetch(domain:bevy-cheatbook.github.io)",
       "Bash(cargo clippy:*)",
       "Bash(for i in 201 202 203 207 209 211 214 215 216 217 218 219)",
-      "Bash(do echo -n \"#$i: \")"
+      "Bash(do echo -n \"#$i: \")",
+      "Bash(git revert:*)",
+      "WebFetch(domain:bevy.org)",
+      "Skill(bevy-patterns)"
     ]
   },
   "enabledMcpjsonServers": [
