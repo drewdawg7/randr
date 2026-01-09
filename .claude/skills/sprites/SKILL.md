@@ -1,9 +1,19 @@
 ---
 name: sprites
-description: Bevy sprite sheets and fonts. Use when adding sprites, spawning text, loading custom fonts, or creating sprite sheets.
+description: Bevy sprite sheets and fonts. Use when adding sprites, spawning text, loading custom fonts, finding sprite dimensions, or creating sprite sheets.
 ---
 
 # Sprites
+
+## Finding Sprites
+
+Look up sprite dimensions:
+
+```bash
+python .claude/skills/sprites/scripts/find_sprite.py ui_all Slice_3353
+```
+
+Output: `Slice_3353: 92x26 at (202, 1280)`
 
 ## Quick Start
 
