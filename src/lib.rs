@@ -1,4 +1,3 @@
-pub mod assets;
 pub mod chest;
 pub mod dungeon;
 pub mod storage;
