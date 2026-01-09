@@ -95,6 +95,73 @@ pub struct GameSprites {
 }
 ```
 
+## 9-Slice Scaling
+
+Use 9-slice to stretch sprites without distorting corners (e.g., UI panels, buttons, frames).
+
+### For UI Nodes (ImageNode)
+
+```rust
+use bevy::prelude::*;
+use bevy::ui::widget::NodeImageMode;
+
+// When creating the ImageNode, chain .with_mode()
+let background = ui_all.get("Slice_8").map(|idx| {
+    ImageNode::from_atlas_image(
+        ui_all.texture.clone(),
+        TextureAtlas { layout: ui_all.layout.clone(), index: idx },
+    )
+    .with_mode(NodeImageMode::Sliced(TextureSlicer {
+        border: BorderRect::square(8.0),  // 8px border on all sides
+        ..default()
+    }))
+});
+
+// Insert normally
+commands.entity(entity).insert(background);
+```
+
+### Border Configuration
+
+```rust
+// Same border on all sides
+border: BorderRect::square(8.0)
+
+// Different horizontal/vertical
+border: BorderRect::axes(10.0, 8.0)  // (horizontal, vertical)
+
+// Each side different
+border: BorderRect {
+    left: 10.0,
+    right: 10.0,
+    top: 8.0,
+    bottom: 8.0,
+}
+```
+
+### Scale Modes
+
+```rust
+TextureSlicer {
+    border: BorderRect::square(8.0),
+    center_scale_mode: SliceScaleMode::Stretch,  // default - stretch center
+    sides_scale_mode: SliceScaleMode::Stretch,   // default - stretch sides
+    max_corner_scale: 1.0,                        // don't scale corners beyond 1x
+}
+
+// For tiling instead of stretching:
+center_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 }
+```
+
+### Choosing Border Size
+
+The border value should match the corner size in your sprite:
+- Look at the sprite in an image editor
+- Measure the corner radius or decorative corner area
+- Use that as your border value
+
+For a 28x28 sprite with ~8px rounded corners, use `BorderRect::square(8.0)`.
+
 ## Adding New Sprite Sheets
 
 ### Step 1: Add Field
