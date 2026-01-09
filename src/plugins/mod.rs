@@ -1,10 +1,7 @@
-mod dungeon;
 mod economy;
 mod game;
 mod mobs;
 mod toast_listeners;
-
-pub use dungeon::DungeonPlugin;
 pub use economy::{
     EconomyPlugin, GoldEarned, GoldSpent, LootCollected, LootDrop, LootDropped,
     TransactionCompleted,
