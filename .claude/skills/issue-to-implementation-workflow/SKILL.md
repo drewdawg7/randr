@@ -1,6 +1,6 @@
 ---
 name: issue-to-implementation-workflow
-description: Guides the complete workflow from GitHub issue to implementation. Use when starting work on a GitHub issue that involves code changes.
+description: End-to-end workflow from GitHub issue to implementation. Use when starting work on an issue that involves code changes.
 ---
 
 # Issue to Implementation Workflow
@@ -9,61 +9,58 @@ description: Guides the complete workflow from GitHub issue to implementation. U
 
 When user says "work on issue #X":
 
-1. **Analyze Issue** (skip if trivially simple)
-   - Invoke: github-issue-analyzer
-   - Output: Requirements, acceptance criteria, complexity estimate
+1. **Analyze Issue**
+   - Use `analyzing-issues` skill for requirements extraction
+   - Skip if trivially simple (one sentence, no comments)
 
-2. **Research Code** (always for Rust)
-   - Invoke: rust-codebase-researcher
-   - Focus: Areas mentioned in issue, related modules
-   - Output: Affected files, patterns, dependencies
+2. **Research Code**
+   - Invoke `rust-codebase-researcher` agent
+   - Focus: areas mentioned in issue, related modules
 
 3. **Plan Implementation**
-   - Match pattern to approach:
-     - Refactoring/deduplication -> Consider refactor-extract-pattern skill
-     - New feature -> Identify integration points
-     - Bug fix -> Trace the bug path
+   - Match pattern to approach (see below)
+   - For >5 similar changes → use `refactor-extract-pattern` skill
 
 4. **Execute with Pre-Edit Checklist**
-   - [ ] Checked if batch operation appropriate?
-   - [ ] Ran findReferences for any removals?
+   - [ ] Batch operation appropriate?
+   - [ ] findReferences for removals?
    - [ ] Using LSP for Rust navigation?
+
+## Workflow Patterns
+
+### Bug Fix
+```
+1. Analyze issue (extract reproduction steps)
+2. rust-codebase-researcher (trace code path)
+3. Implement fix
+4. cargo test
+```
+
+### New Feature
+```
+1. Analyze issue (extract requirements)
+2. rust-codebase-researcher (find integration points)
+3. Plan implementation
+4. Execute with checklist
+5. cargo check && cargo test
+```
+
+### Refactoring
+```
+1. Analyze issue (understand scope)
+2. rust-codebase-researcher (find all instances)
+3. If >5 instances → refactor-extract-pattern skill
+4. cargo check
+```
 
 ## Decision Points
 
-### Skip github-issue-analyzer when:
-- Issue is one sentence AND no comments AND no linked issues
+### Skip Issue Analysis When
+- One sentence + no comments + no linked issues
 - You're the issue author
-- Issue was analyzed in current session
+- Already analyzed in current session
 
-### Use refactor-extract-pattern skill when:
-- Issue involves "extract", "deduplicate", "consolidate"
-- Code research reveals >5 similar patterns
-- ast-grep would be more efficient than manual edits
-
-## Agent Chain Examples
-
-### Refactoring Task
-```
-1. gh issue view #X -> understand requirements
-2. rust-codebase-researcher -> find all instances, understand patterns
-3. refactor-extract-pattern skill -> batch apply changes (if >5 instances)
-4. cargo check -> verify
-```
-
-### Bug Fix Task
-```
-1. github-issue-analyzer -> extract reproduction steps, expected behavior
-2. rust-codebase-researcher -> trace code path, find root cause
-3. Implement fix with LSP navigation
-4. cargo test -> verify
-```
-
-### New Feature Task
-```
-1. github-issue-analyzer -> extract requirements, acceptance criteria
-2. rust-codebase-researcher -> find integration points, existing patterns
-3. Plan implementation with architectural decisions
-4. Implement with Pre-Edit Checklist
-5. cargo check && cargo test -> verify
-```
+### Use refactor-extract-pattern When
+- Issue mentions "extract", "deduplicate", "consolidate"
+- Research reveals >5 similar patterns
+- ast-grep more efficient than manual edits
