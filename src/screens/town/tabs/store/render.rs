@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
+use crate::ui::widgets::spawn_player_stats;
 use crate::ui::{selection_colors, selection_prefix};
 
 use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
@@ -63,7 +64,7 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
     ));
 
     // Gold display
-    spawn_gold_display(parent, player);
+    spawn_player_stats(parent, player);
 
     // Menu options
     spawn_menu(
@@ -94,7 +95,7 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, p
     ));
 
     // Gold display
-    spawn_gold_display(parent, player);
+    spawn_player_stats(parent, player);
 
     // Items for sale
     parent
@@ -190,7 +191,7 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
     ));
 
     // Gold display
-    spawn_gold_display(parent, player);
+    spawn_player_stats(parent, player);
 
     // Get player inventory items
     let inventory_items = player.inventory.items.as_slice();
@@ -299,7 +300,7 @@ fn spawn_storage_menu_ui(
     ));
 
     // Gold display
-    spawn_gold_display(parent, player);
+    spawn_player_stats(parent, player);
 
     // Menu options
     spawn_menu(
@@ -335,7 +336,7 @@ fn spawn_storage_view_ui(
     ));
 
     // Gold display
-    spawn_gold_display(parent, player);
+    spawn_player_stats(parent, player);
 
     // Get storage items
     let storage_items = storage.inventory.items.as_slice();
@@ -429,7 +430,7 @@ fn spawn_storage_deposit_ui(
     ));
 
     // Gold display
-    spawn_gold_display(parent, player);
+    spawn_player_stats(parent, player);
 
     // Get player inventory items
     let inventory_items = player.inventory.items.as_slice();
@@ -500,26 +501,6 @@ fn spawn_storage_deposit_ui(
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Deposit  [Backspace] Back");
-}
-
-/// Spawn gold display widget.
-fn spawn_gold_display(parent: &mut ChildBuilder, player: &Player) {
-    parent
-        .spawn(Node {
-            padding: UiRect::all(Val::Px(10.0)),
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        })
-        .with_children(|gold| {
-            gold.spawn((
-                Text::new(format!("Gold: {}", player.gold)),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.9, 0.8, 0.3)),
-            ));
-        });
 }
 
 /// Spawn navigation hint at the bottom.

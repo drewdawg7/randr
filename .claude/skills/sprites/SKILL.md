@@ -1,6 +1,6 @@
 ---
 name: sprites
-description: Bevy sprite sheets from Aseprite exports. Use when adding sprites to UI, spawning sprite entities, or creating new sprite sheets.
+description: Bevy sprite sheets and fonts. Use when adding sprites, spawning text, loading custom fonts, or creating sprite sheets.
 ---
 
 # Sprites
@@ -127,3 +127,4 @@ For detailed patterns and workflows, see:
 - [patterns.md](references/patterns.md) - Marker+system pattern for UI widgets, animation, stateful buttons
 - [aseprite.md](references/aseprite.md) - Grid-aligned vs irregular sprites, JSON formats, finding slice dimensions
 - [troubleshooting.md](references/troubleshooting.md) - Blurry sprites, parse errors, loading issues
+- [fonts.md](references/fonts.md) - Custom fonts, GameFonts resource, pixel font rendering

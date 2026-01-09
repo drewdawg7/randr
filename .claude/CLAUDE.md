@@ -1,5 +1,8 @@
 # Project Guidelines
 
+## MUST DO EVERY TIME
+**IMPORTANT**: YOU MUST USE THE updating-code skill every time.
+
 ## Pre-Edit Checklist
 - [ ] Batch operation appropriate? (>5 similar changes → use ast-grep)
 - [ ] findReferences for removals? (REQUIRED before deleting code)

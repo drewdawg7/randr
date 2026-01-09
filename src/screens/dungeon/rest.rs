@@ -4,6 +4,7 @@ use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::stats::{HasStats, Healable};
+use crate::ui::widgets::spawn_player_stats;
 
 /// Component marker for rest UI root
 #[derive(Component)]
@@ -84,23 +85,8 @@ pub fn spawn_rest_ui(
                 },
             ));
 
-            // HP display
-            parent.spawn((
-                Text::new(format!(
-                    "Health: {} / {}",
-                    player.hp(),
-                    player.max_hp()
-                )),
-                TextFont {
-                    font_size: 28.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.0, 1.0, 0.0)),
-                Node {
-                    margin: UiRect::bottom(Val::Px(20.0)),
-                    ..default()
-                },
-            ));
+            // Player stats
+            spawn_player_stats(parent, &player);
 
             // Status message
             if has_healed {
