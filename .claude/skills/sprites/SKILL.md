@@ -10,10 +10,12 @@ description: Bevy sprite sheets and fonts. Use when adding sprites, spawning tex
 Look up sprite dimensions:
 
 ```bash
-python .claude/skills/sprites/scripts/find_sprite.py ui_all Slice_3353
+python3 .claude/skills/sprites/scripts/find_sprite.py ui_all Slice_3353
 ```
 
 Output: `Slice_3353: 92x26 at (202, 1280)`
+
+> **Important**: Always use this script to look up sprite dimensions. The user provides the exact sprite name - trust it and use the script output directly. Do not manually search JSON files.
 
 ## Quick Start
 
