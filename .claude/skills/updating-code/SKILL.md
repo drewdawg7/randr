@@ -1,6 +1,6 @@
 ---
 name: updating-code
-description: Required workflow for all code changes. Use when implementing features, fixing bugs, refactoring, editing files, or modifying code. Covers git workflow, code navigation with LSP, and merge process.
+description: Required workflow for ALL code changes - invoke FIRST before any implementation. Use when: adding features, fixing bugs, refactoring, editing files, modifying code, updating functions, changing behavior, writing new code, deleting code, working on issues, or making any changes to the codebase. Covers git branching, LSP navigation, testing, and merge process.
 ---
 
 ## Workflow
