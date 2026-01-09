@@ -27,29 +27,22 @@ impl Plugin for StoreTabPlugin {
 }
 
 /// Store mode kind - what submenu the player is in.
+/// Flattened to avoid nested state dispatch.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum StoreModeKind {
     #[default]
     Menu,
     Buy,
     Sell,
-    Storage,
-}
-
-/// Storage submode - what the player is doing in storage.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub enum StorageSubmode {
-    #[default]
-    Menu,
-    View,
-    Deposit,
+    StorageMenu,
+    StorageView,
+    StorageDeposit,
 }
 
 /// Store mode - tracks navigation state within the tab.
 #[derive(Resource, Default)]
 pub struct StoreMode {
     pub mode: StoreModeKind,
-    pub storage_submode: StorageSubmode,
 }
 
 /// Store selections - tracks cursor positions in each mode.
@@ -161,7 +154,9 @@ fn handle_store_input(
             StoreModeKind::Menu => handle_menu_input(&mut store_mode, &mut store_selections, action),
             StoreModeKind::Buy => handle_buy_input(&mut store_mode, &mut store_selections, &mut player, action),
             StoreModeKind::Sell => handle_sell_input(&mut store_mode, &mut store_selections, &mut player, action),
-            StoreModeKind::Storage => handle_storage_input(&mut store_mode, &mut store_selections, action, &mut player, &mut storage),
+            StoreModeKind::StorageMenu => handle_storage_menu_input(&mut store_mode, &mut store_selections, action),
+            StoreModeKind::StorageView => handle_storage_view_input(&mut store_mode, &mut store_selections, action, &mut player, &mut storage),
+            StoreModeKind::StorageDeposit => handle_storage_deposit_input(&mut store_mode, &mut store_selections, action, &mut player, &mut storage),
         }
     }
 }
@@ -186,8 +181,7 @@ fn handle_menu_input(store_mode: &mut StoreMode, store_selections: &mut StoreSel
                     // sell count will be updated in render
                 }
                 2 => {
-                    store_mode.mode = StoreModeKind::Storage;
-                    // storage count will be updated in render
+                    store_mode.mode = StoreModeKind::StorageMenu;
                 }
                 _ => {}
             }
@@ -276,21 +270,6 @@ fn handle_sell_input(
     }
 }
 
-/// Handle input for the storage screen.
-fn handle_storage_input(
-    store_mode: &mut StoreMode,
-    store_selections: &mut StoreSelections,
-    action: &GameAction,
-    player: &mut Player,
-    storage: &mut Storage,
-) {
-    match store_mode.storage_submode {
-        StorageSubmode::Menu => handle_storage_menu_input(store_mode, store_selections, action),
-        StorageSubmode::View => handle_storage_view_input(store_mode, store_selections, action, player, storage),
-        StorageSubmode::Deposit => handle_storage_deposit_input(store_mode, store_selections, action, player, storage),
-    }
-}
-
 /// Handle input for the storage menu.
 fn handle_storage_menu_input(store_mode: &mut StoreMode, store_selections: &mut StoreSelections, action: &GameAction) {
     match action {
@@ -302,20 +281,13 @@ fn handle_storage_menu_input(store_mode: &mut StoreMode, store_selections: &mut 
         }
         GameAction::Select => {
             match store_selections.storage_menu.selected {
-                0 => {
-                    // View Storage
-                    store_mode.storage_submode = StorageSubmode::View;
-                }
-                1 => {
-                    // Deposit Items
-                    store_mode.storage_submode = StorageSubmode::Deposit;
-                }
+                0 => store_mode.mode = StoreModeKind::StorageView,
+                1 => store_mode.mode = StoreModeKind::StorageDeposit,
                 _ => {}
             }
         }
         GameAction::Back => {
             store_mode.mode = StoreModeKind::Menu;
-            store_mode.storage_submode = StorageSubmode::Menu;
             store_selections.storage_menu.reset();
         }
         _ => {}
@@ -358,7 +330,7 @@ fn handle_storage_view_input(
             }
         }
         GameAction::Back => {
-            store_mode.storage_submode = StorageSubmode::Menu;
+            store_mode.mode = StoreModeKind::StorageMenu;
             store_selections.storage_view.reset();
         }
         _ => {}
@@ -401,7 +373,7 @@ fn handle_storage_deposit_input(
             }
         }
         GameAction::Back => {
-            store_mode.storage_submode = StorageSubmode::Menu;
+            store_mode.mode = StoreModeKind::StorageMenu;
             store_selections.deposit.reset();
         }
         _ => {}
@@ -434,7 +406,9 @@ pub fn spawn_store_ui(
                     StoreModeKind::Menu => spawn_menu_ui(content, store_selections, player),
                     StoreModeKind::Buy => spawn_buy_ui(content, store_selections, player),
                     StoreModeKind::Sell => spawn_sell_ui(content, store_selections, player),
-                    StoreModeKind::Storage => spawn_storage_ui(content, store_mode, store_selections, player, storage),
+                    StoreModeKind::StorageMenu => spawn_storage_menu_ui(content, store_selections, player),
+                    StoreModeKind::StorageView => spawn_storage_view_ui(content, store_selections, player, storage),
+                    StoreModeKind::StorageDeposit => spawn_storage_deposit_ui(content, store_selections, player),
                 }
             });
     });
@@ -674,21 +648,6 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Sell  [Backspace] Back");
-}
-
-/// Spawn the storage screen UI.
-fn spawn_storage_ui(
-    parent: &mut ChildBuilder,
-    store_mode: &StoreMode,
-    store_selections: &StoreSelections,
-    player: &Player,
-    storage: &Storage,
-) {
-    match store_mode.storage_submode {
-        StorageSubmode::Menu => spawn_storage_menu_ui(parent, store_selections, player),
-        StorageSubmode::View => spawn_storage_view_ui(parent, store_selections, player, storage),
-        StorageSubmode::Deposit => spawn_storage_deposit_ui(parent, store_selections, player),
-    }
 }
 
 /// Spawn the storage menu UI.
