@@ -15,7 +15,6 @@ pub mod combat;
 pub mod item;
 pub mod registry;
 pub mod inventory;
-pub mod utilities;
 pub mod stats;
 pub mod utils;
 pub mod game;

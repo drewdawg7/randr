@@ -1,4 +1,4 @@
-use crate::utilities::{text_bar_with_label};
+use crate::utils::text_bar_with_label;
 
 
 #[derive(Debug, Default, Clone)]
