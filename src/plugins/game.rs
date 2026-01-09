@@ -10,7 +10,7 @@ use crate::screens::{
     MinePlugin, ModalPlugin, ProfileModalPlugin, ProfilePlugin, SpellTestModalPlugin, TownPlugin,
 };
 use crate::states::StateTransitionPlugin;
-use crate::ui::widgets::{ItemGridPlugin, PlayerStatsPlugin};
+use crate::ui::widgets::{GoldDisplayPlugin, ItemGridPlugin, PlayerStatsPlugin};
 
 /// Core game plugin that bundles all game systems.
 pub struct GamePlugin;
@@ -36,7 +36,7 @@ impl Plugin for GamePlugin {
         ));
 
         // Additional core plugins
-        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin));
+        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin));
 
         // Screens and modals
         app.add_plugins((

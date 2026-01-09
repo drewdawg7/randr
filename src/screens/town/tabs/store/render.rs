@@ -6,7 +6,7 @@ use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
 use crate::stats::StatType;
-use crate::ui::widgets::{ItemGrid, ItemGridEntry};
+use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry};
 use crate::ui::{selection_colors, selection_prefix};
 
 use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
@@ -536,12 +536,12 @@ pub fn populate_store_info_panel(
                     }
                 }
 
-                // Cost
-                parent.spawn((
-                    Text::new(format!("{} gold", item.price)),
-                    game_fonts.pixel_font(18.0),
-                    text_color,
-                ));
+                // Cost with gold icon
+                parent.spawn(
+                    GoldDisplay::new(item.price)
+                        .with_font_size(18.0)
+                        .with_color(text_color.0),
+                );
             });
     }
 }
