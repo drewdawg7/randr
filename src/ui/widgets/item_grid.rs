@@ -66,7 +66,7 @@ fn on_add_item_grid(
 
     // Get the selector sprite if available
     let selector_image = game_sprites.ui_selectors.as_ref().and_then(|selectors| {
-        selectors.get("Slice_60").map(|idx| {
+        selectors.get("Slice_61").map(|idx| {
             ImageNode::from_atlas_image(
                 selectors.texture.clone(),
                 TextureAtlas {
@@ -169,7 +169,7 @@ fn update_grid_selector(
                 if grid_cell.index == item_grid.selected_index {
                     // Add selector to this cell
                     if let Some(selectors_sheet) = &game_sprites.ui_selectors {
-                        if let Some(idx) = selectors_sheet.get("Slice_60") {
+                        if let Some(idx) = selectors_sheet.get("Slice_61") {
                             commands.entity(cell_entity).with_children(|cell| {
                                 cell.spawn((
                                     GridSelector,
