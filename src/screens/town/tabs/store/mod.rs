@@ -5,6 +5,7 @@ mod state;
 
 use bevy::prelude::*;
 
+use crate::assets::GameSprites;
 use crate::game::{Player, Storage};
 use crate::screens::town::{ContentArea, TabContent, TownTab};
 
@@ -37,6 +38,7 @@ fn spawn_store_content(
     store_selections: Res<StoreSelections>,
     player: Res<Player>,
     storage: Res<Storage>,
+    game_sprites: Res<GameSprites>,
 ) {
     let Ok(content_entity) = content_query.get_single() else {
         return;
@@ -48,6 +50,7 @@ fn spawn_store_content(
         &store_selections,
         &player,
         &storage,
+        &game_sprites,
     );
 }
 
@@ -60,6 +63,7 @@ fn refresh_store_on_mode_change(
     tab_content_query: Query<Entity, With<TabContent>>,
     player: Res<Player>,
     storage: Res<Storage>,
+    game_sprites: Res<GameSprites>,
 ) {
     if !store_mode.is_changed() && !store_selections.is_changed() {
         return;
@@ -81,5 +85,6 @@ fn refresh_store_on_mode_change(
         &store_selections,
         &player,
         &storage,
+        &game_sprites,
     );
 }

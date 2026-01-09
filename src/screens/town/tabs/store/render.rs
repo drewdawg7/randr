@@ -1,5 +1,7 @@
 use bevy::prelude::*;
+use bevy::ui::widget::NodeImageMode;
 
+use crate::assets::GameSprites;
 use crate::game::{Player, Storage};
 use crate::screens::town::shared::spawn_menu;
 use crate::screens::town::TabContent;
@@ -17,6 +19,7 @@ pub fn spawn_store_ui(
     store_selections: &StoreSelections,
     player: &Player,
     storage: &Storage,
+    game_sprites: &Res<GameSprites>,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -32,7 +35,7 @@ pub fn spawn_store_ui(
             ))
             .with_children(|content| match store_mode.mode {
                 StoreModeKind::Menu => spawn_menu_ui(content, store_selections),
-                StoreModeKind::Buy => spawn_buy_ui(content, store_selections, player),
+                StoreModeKind::Buy => spawn_buy_ui(content, store_selections, player, game_sprites),
                 StoreModeKind::Sell => spawn_sell_ui(content, store_selections, player),
                 StoreModeKind::StorageMenu => spawn_storage_menu_ui(content, store_selections),
                 StoreModeKind::StorageView => {
@@ -74,7 +77,12 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) 
 }
 
 /// Spawn the buy screen UI.
-fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, _player: &Player) {
+fn spawn_buy_ui(
+    parent: &mut ChildBuilder,
+    store_selections: &StoreSelections,
+    _player: &Player,
+    game_sprites: &Res<GameSprites>,
+) {
     // Title
     parent.spawn((
         Text::new("Buy Items"),
@@ -88,6 +96,36 @@ fn spawn_buy_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, _
             ..default()
         },
     ));
+
+    // Info panel above the grid (same width as grid, 3 rows tall)
+    let panel_width = 240.0; // 5 columns × 48px
+    let panel_height = 144.0; // 3 rows × 48px
+
+    let panel_image = game_sprites.ui_all.as_ref().and_then(|ui_all| {
+        ui_all.get("Slice_2").map(|idx| {
+            ImageNode::from_atlas_image(
+                ui_all.texture.clone(),
+                TextureAtlas {
+                    layout: ui_all.layout.clone(),
+                    index: idx,
+                },
+            )
+            .with_mode(NodeImageMode::Sliced(TextureSlicer {
+                border: BorderRect::square(10.0),
+                ..default()
+            }))
+        })
+    });
+
+    let mut panel = parent.spawn(Node {
+        width: Val::Px(panel_width),
+        height: Val::Px(panel_height),
+        margin: UiRect::bottom(Val::Px(10.0)),
+        ..default()
+    });
+    if let Some(img) = panel_image {
+        panel.insert(img);
+    }
 
     // Item grid with store items
     parent.spawn(ItemGrid {
