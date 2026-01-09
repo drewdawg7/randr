@@ -62,3 +62,34 @@ Start with the right agent based on task type:
 | "Complex multi-domain" | `session-orchestrator` | Coordinate multiple agents |
 | "Create/improve skill" | `skill-optimizer` | Session pattern analysis |
 
+### Agent Chains for Common Workflows
+
+| Workflow | Agent Chain | Notes |
+|----------|-------------|-------|
+| Refactoring from issue | github-issue-analyzer -> rust-codebase-researcher -> (skill: refactor-extract-pattern) | Use skill when >5 similar changes |
+| Bug fix from issue | github-issue-analyzer -> rust-codebase-researcher -> implement | Trace the bug before fixing |
+| New feature from issue | github-issue-analyzer -> rust-codebase-researcher -> implement | Understand integration points |
+| Code deduplication | rust-codebase-researcher -> (skill: refactor-extract-pattern) | Find all instances first |
+
+### Skill Integration
+
+When agents identify patterns suitable for batch operations:
+- **>5 similar code changes**: Use `refactor-extract-pattern` skill
+- **Pattern extraction/deduplication**: Use `refactor-extract-pattern` skill
+
+Available skills:
+- `refactor-extract-pattern` - Extract repeated code patterns using ast-grep
+
+### Agent Selection Shortcuts
+
+**Skip `github-issue-analyzer` when:**
+- Issue is one sentence AND no comments AND no linked issues
+- You're the issue author
+- Issue was analyzed in current session
+
+**Always use `rust-codebase-researcher` when:**
+- ANY Rust code exploration is needed (never grep/read directly for exploration)
+- Need to understand code before modifying
+
+**NEVER use an agent called "Explore"** - it doesn't exist. Use `rust-codebase-researcher` for code exploration.
+

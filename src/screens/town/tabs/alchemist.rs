@@ -1,14 +1,13 @@
 use bevy::prelude::*;
 
-use crate::entities::progression::HasProgression;
-use crate::ui::{selection_colors, selection_prefix};
 use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::ManagesItems;
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
-use crate::stats::HasStats;
 use crate::states::AppState;
+use crate::ui::widgets::spawn_player_stats;
+use crate::ui::{selection_colors, selection_prefix};
 
 use super::super::shared::{spawn_menu, MenuOption, SelectionState};
 use super::super::{CurrentTab, TabContent, TownTab};
@@ -472,55 +471,6 @@ fn spawn_ingredient_row(
                     ..default()
                 },
                 TextColor(count_color),
-            ));
-        });
-}
-
-/// Spawn player stats display.
-fn spawn_player_stats(parent: &mut ChildBuilder, player: &Player) {
-    use crate::entities::Progression;
-
-    parent
-        .spawn((Node {
-            flex_direction: FlexDirection::Column,
-            padding: UiRect::all(Val::Px(10.0)),
-            row_gap: Val::Px(5.0),
-            ..default()
-        },))
-        .with_children(|stats| {
-            // HP
-            stats.spawn((
-                Text::new(format!("HP: {}/{}", player.hp(), player.max_hp())),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.8, 0.3, 0.3)),
-            ));
-
-            // Level & XP
-            stats.spawn((
-                Text::new(format!(
-                    "Level: {}  XP: {}/{}",
-                    player.level(),
-                    player.prog.xp,
-                    Progression::xp_to_next_level(player.level())
-                )),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.5, 0.8, 0.5)),
-            ));
-
-            // Gold
-            stats.spawn((
-                Text::new(format!("Gold: {}", player.gold)),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.9, 0.8, 0.3)),
             ));
         });
 }

@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
 use crate::game::Player;
-use crate::ui::{selection_colors, selection_prefix};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
+use crate::ui::widgets::spawn_player_stats;
+use crate::ui::{selection_colors, selection_prefix};
 use crate::{FindsItems, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
@@ -409,61 +410,6 @@ pub fn spawn_blacksmith_ui(
                 }
             });
     });
-}
-
-/// Spawn player stats display.
-fn spawn_player_stats(parent: &mut ChildBuilder, player: &Player) {
-    use crate::stats::StatType;
-    use crate::entities::Progression;
-
-    parent
-        .spawn((Node {
-            flex_direction: FlexDirection::Column,
-            padding: UiRect::all(Val::Px(10.0)),
-            row_gap: Val::Px(5.0),
-            ..default()
-        },))
-        .with_children(|stats| {
-            // HP - Health stat has both current and max values
-            if let Some(health_stat) = player.stats.stat(StatType::Health) {
-                stats.spawn((
-                    Text::new(format!(
-                        "HP: {}/{}",
-                        health_stat.current_value, health_stat.max_value
-                    )),
-                    TextFont {
-                        font_size: 16.0,
-                        ..default()
-                    },
-                    TextColor(Color::srgb(0.8, 0.3, 0.3)),
-                ));
-            }
-
-            // Level & XP
-            stats.spawn((
-                Text::new(format!(
-                    "Level: {}  XP: {}/{}",
-                    player.prog.level,
-                    player.prog.xp,
-                    Progression::xp_to_next_level(player.prog.level)
-                )),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.5, 0.8, 0.5)),
-            ));
-
-            // Gold
-            stats.spawn((
-                Text::new(format!("Gold: {}", player.gold)),
-                TextFont {
-                    font_size: 16.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.9, 0.8, 0.3)),
-            ));
-        });
 }
 
 /// Spawn the Upgrade mode UI.
