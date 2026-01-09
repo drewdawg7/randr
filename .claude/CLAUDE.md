@@ -49,3 +49,22 @@ Before making changes:
 - Tests: Changed modules only
 - Issues: Auto-close on merge
 
+## Agents
+
+Use the Task tool with these specialized agents for complex tasks:
+
+| Agent | When to Use |
+|-------|-------------|
+| `rust-codebase-researcher` | Exploring Rust code: finding definitions, tracing code paths, understanding type hierarchies, mapping module structures. Uses LSP + ast-grep. |
+| `github-issue-analyzer` | Analyzing GitHub issues: extracting requirements, scoping work, breaking down complex issues into actionable items. |
+| `codebase-issue-finder` | Auditing code quality: finding anti-patterns, non-idiomatic Rust/Bevy code, architectural issues, bloated modules. Use after feature work. |
+| `skill-optimizer` | Creating/refining skills: analyzing sessions for patterns, improving existing skills with progressive disclosure. |
+| `session-orchestrator` | Coordinating complex tasks: multi-domain work, ambiguous requests, tasks needing multiple agent types. |
+
+### Quick Decision Guide
+- Exploring unfamiliar Rust code → `rust-codebase-researcher`
+- Working on a GitHub issue → `github-issue-analyzer`
+- Reviewing code quality → `codebase-issue-finder`
+- Creating automation → `skill-optimizer`
+- Complex multi-step task → `session-orchestrator`
+
