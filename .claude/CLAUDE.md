@@ -5,27 +5,9 @@
 
 Before ANY code change, check:
 
-```
-1. Similar changes needed?
-   > 5 similar → ast-grep (NOT manual edits)
-   ≤ 5 → individual edits OK
-
-2. Removing code?
-   YES → LSP findReferences FIRST (mandatory)
-   NO → proceed
-
-3. Navigating Rust code?
-   YES → LSP (grep blocked by hook)
-   NO → grep OK for .md, strings
-
-4. Reading multiple files?
-   > 3 files → parallel Read calls
-   ≤ 3 → sequential OK
-```
-
 ## Pre-Edit Checklist
 Before making changes:
-- [ ] Checked if batch operation appropriate (>5 similar changes)?
+- [ ] Checked if batch operation appropriate?
 - [ ] Ran findReferences for any removals?
 - [ ] Using LSP for Rust navigation?
 - [ ] Considered delegation for large changes (>50 lines)?
