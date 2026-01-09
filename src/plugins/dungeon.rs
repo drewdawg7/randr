@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::dungeon::{Dungeon, RoomType};
+use crate::dungeon::Dungeon;
 
 /// Resource wrapping the existing Dungeon system.
 /// None when not in a dungeon, Some when inside one.
@@ -9,35 +9,23 @@ pub struct DungeonResource(pub Option<Dungeon>);
 
 /// Event fired when the player enters a dungeon.
 #[derive(Event)]
-pub struct DungeonEntered {
-    pub dungeon_name: String,
-}
+pub struct DungeonEntered;
 
 /// Event fired when the player exits a dungeon.
 #[derive(Event)]
-pub struct DungeonExited {
-    pub dungeon_name: String,
-}
+pub struct DungeonExited;
 
 /// Event fired when the player enters a room.
 #[derive(Event)]
-pub struct RoomEntered {
-    pub room_type: RoomType,
-    pub position: (i32, i32),
-}
+pub struct RoomEntered;
 
 /// Event fired when a room is cleared of enemies.
 #[derive(Event)]
-pub struct RoomCleared {
-    pub room_type: RoomType,
-    pub position: (i32, i32),
-}
+pub struct RoomCleared;
 
 /// Event fired when the boss is defeated.
 #[derive(Event)]
-pub struct BossDefeated {
-    pub boss_name: String,
-}
+pub struct BossDefeated;
 
 /// Plugin that integrates the existing dungeon system with Bevy ECS.
 pub struct DungeonPlugin;

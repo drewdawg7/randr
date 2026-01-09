@@ -73,10 +73,6 @@ pub trait Combatant: Named + IsKillable + DealsDamage {
     fn effective_health(&self) -> i32 {
         self.health()
     }
-
-    fn increase_health(&mut self, amount: i32) {
-        self.inc(StatType::Health, amount);
-    }
 }
 
 pub trait Named: {

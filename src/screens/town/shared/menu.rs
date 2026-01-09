@@ -7,33 +7,16 @@ pub struct MenuOption {
     pub description: Option<&'static str>,
 }
 
-impl MenuOption {
-    pub fn new(label: &'static str) -> Self {
-        Self {
-            label,
-            description: None,
-        }
-    }
-
-    pub fn with_description(label: &'static str, description: &'static str) -> Self {
-        Self {
-            label,
-            description: Some(description),
-        }
-    }
-}
 
 /// Marker component for menu option items.
 #[derive(Component)]
-pub struct MenuOptionItem {
-    pub index: usize,
-}
+pub struct MenuOptionItem;
 
 /// Spawn a menu option as a Bevy UI node.
 pub fn spawn_menu_option(
     parent: &mut ChildBuilder,
     option: &MenuOption,
-    index: usize,
+    _index: usize,
     is_selected: bool,
 ) {
     let (bg_color, text_color) = if is_selected {
@@ -46,7 +29,7 @@ pub fn spawn_menu_option(
 
     parent
         .spawn((
-            MenuOptionItem { index },
+            MenuOptionItem,
             Node {
                 padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                 ..default()
