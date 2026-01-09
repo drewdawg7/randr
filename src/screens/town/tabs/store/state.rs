@@ -1,0 +1,58 @@
+use bevy::prelude::*;
+
+use crate::screens::town::shared::SelectionState;
+
+use super::constants::{STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
+
+/// Store mode kind - what submenu the player is in.
+/// Flattened to avoid nested state dispatch.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum StoreModeKind {
+    #[default]
+    Menu,
+    Buy,
+    Sell,
+    StorageMenu,
+    StorageView,
+    StorageDeposit,
+}
+
+/// Store mode - tracks navigation state within the tab.
+#[derive(Resource, Default)]
+pub struct StoreMode {
+    pub mode: StoreModeKind,
+}
+
+/// Store selections - tracks cursor positions in each mode.
+#[derive(Resource)]
+pub struct StoreSelections {
+    pub menu: SelectionState,
+    pub buy: SelectionState,
+    pub sell: SelectionState,
+    pub storage_menu: SelectionState,
+    pub storage_view: SelectionState,
+    pub deposit: SelectionState,
+}
+
+impl Default for StoreSelections {
+    fn default() -> Self {
+        Self {
+            menu: SelectionState {
+                selected: 0,
+                count: STORE_MENU_OPTIONS.len(),
+                scroll_offset: 0,
+                visible_count: 10,
+            },
+            buy: SelectionState::new(0),
+            sell: SelectionState::new(0),
+            storage_menu: SelectionState {
+                selected: 0,
+                count: STORAGE_MENU_OPTIONS.len(),
+                scroll_offset: 0,
+                visible_count: 10,
+            },
+            storage_view: SelectionState::new(0),
+            deposit: SelectionState::new(0),
+        }
+    }
+}
