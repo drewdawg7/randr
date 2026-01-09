@@ -1,3 +1,1 @@
-pub(crate) mod definition;
-pub(crate) mod enums;
-pub(crate) mod traits;
+// Empty - consumable types removed as dead code
