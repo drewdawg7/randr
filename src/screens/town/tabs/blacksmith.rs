@@ -271,21 +271,24 @@ fn handle_smelt_input(
         GameAction::Navigate(NavigationDirection::Down) => {
             blacksmith_state.smelt_selection.move_down();
         }
-        GameAction::Select => {
+        GameAction::Select => 'select: {
             let recipes = RecipeId::all_smelting_recipes();
-            if let Some(recipe_id) = recipes.get(blacksmith_state.smelt_selection.selected) {
-                if let Ok(recipe) = Recipe::new(*recipe_id) {
-                    if recipe.can_craft(&player.0) {
-                        if let Ok(output_item_id) = recipe.craft(&mut player.0) {
-                            let new_item = output_item_id.spawn();
-                            if let Ok(_) = player.add_to_inv(new_item) {
-                                info!("Smelted {}", recipe.name());
-                            }
-                        }
-                    } else {
-                        info!("Not enough ingredients to smelt {}", recipe.name());
-                    }
-                }
+            let Some(recipe_id) = recipes.get(blacksmith_state.smelt_selection.selected) else {
+                break 'select;
+            };
+            let Ok(recipe) = Recipe::new(*recipe_id) else {
+                break 'select;
+            };
+            if !recipe.can_craft(&player.0) {
+                info!("Not enough ingredients to smelt {}", recipe.name());
+                break 'select;
+            }
+            let Ok(output_item_id) = recipe.craft(&mut player.0) else {
+                break 'select;
+            };
+            let new_item = output_item_id.spawn();
+            if player.add_to_inv(new_item).is_ok() {
+                info!("Smelted {}", recipe.name());
             }
         }
         GameAction::Back => {
@@ -313,21 +316,24 @@ fn handle_forge_input(
         GameAction::Navigate(NavigationDirection::Down) => {
             blacksmith_state.forge_selection.move_down();
         }
-        GameAction::Select => {
+        GameAction::Select => 'select: {
             let recipes = RecipeId::all_forging_recipes();
-            if let Some(recipe_id) = recipes.get(blacksmith_state.forge_selection.selected) {
-                if let Ok(recipe) = Recipe::new(*recipe_id) {
-                    if recipe.can_craft(&player.0) {
-                        if let Ok(output_item_id) = recipe.craft(&mut player.0) {
-                            let new_item = output_item_id.spawn();
-                            if let Ok(_) = player.add_to_inv(new_item) {
-                                info!("Forged {}", recipe.name());
-                            }
-                        }
-                    } else {
-                        info!("Not enough ingredients to forge {}", recipe.name());
-                    }
-                }
+            let Some(recipe_id) = recipes.get(blacksmith_state.forge_selection.selected) else {
+                break 'select;
+            };
+            let Ok(recipe) = Recipe::new(*recipe_id) else {
+                break 'select;
+            };
+            if !recipe.can_craft(&player.0) {
+                info!("Not enough ingredients to forge {}", recipe.name());
+                break 'select;
+            }
+            let Ok(output_item_id) = recipe.craft(&mut player.0) else {
+                break 'select;
+            };
+            let new_item = output_item_id.spawn();
+            if player.add_to_inv(new_item).is_ok() {
+                info!("Forged {}", recipe.name());
             }
         }
         GameAction::Back => {
