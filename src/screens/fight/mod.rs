@@ -7,7 +7,7 @@ use rand::seq::SliceRandom;
 use crate::combat::{enemy_attack_step, player_attack_step, process_defeat, process_victory, ActiveCombat, CombatPhase};
 use crate::game::{ActiveCombatResource, CombatSourceResource, PlayerResource};
 use crate::mob::MobId;
-use crate::input::{GameAction, NavigationDirection};
+use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
 use crate::screens::shared::{spawn_combat_log, update_health_bar, CombatLogEntry};
 use crate::states::AppState;
 use crate::stats::HasStats;
@@ -23,11 +23,10 @@ impl Plugin for FightPlugin {
             .init_resource::<CombatSource>()
             .init_resource::<CombatLogState>()
             .add_systems(OnEnter(AppState::Fight), (initialize_combat, spawn_fight_screen, reset_fight_state).chain())
-            .add_systems(OnExit(AppState::Fight), cleanup_fight_screen)
+            .add_systems(OnExit(AppState::Fight), (cleanup_fight_screen, clear_game_action_events))
             .add_systems(
                 Update,
                 (
-                    increment_fight_frame_counter,
                     handle_fight_input,
                     execute_combat_turn,
                     update_combat_visuals,
@@ -37,11 +36,6 @@ impl Plugin for FightPlugin {
                     .run_if(in_state(AppState::Fight)),
             );
     }
-}
-
-/// Increment frame counter each frame.
-fn increment_fight_frame_counter(mut fight_state: ResMut<FightScreenState>) {
-    fight_state.frames_since_entry = fight_state.frames_since_entry.saturating_add(1);
 }
 
 /// Resource tracking combat log entries for the current fight.
@@ -422,13 +416,6 @@ fn execute_combat_turn(
     mut next_state: ResMut<NextState<AppState>>,
     combat_source: Res<CombatSource>,
 ) {
-    // Skip input on first frames to prevent stale Select events from previous state
-    if fight_state.frames_since_entry < 2 {
-        // Drain events without processing to clear the EventReader cursor
-        for _ in action_reader.read() {}
-        return;
-    }
-
     // Only process if combat is active and not over
     let combat_active = combat_res.get().map(|c| !c.is_combat_over()).unwrap_or(false);
     if !combat_active {

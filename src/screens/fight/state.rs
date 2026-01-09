@@ -7,8 +7,6 @@ pub struct FightScreenState {
     pub action_selection: usize,
     /// Post-combat menu selection (0=Fight Again, 1=Continue)
     pub post_combat_selection: usize,
-    /// Frames since entering fight screen (used to skip input on first frame)
-    pub frames_since_entry: u32,
 }
 
 impl FightScreenState {
@@ -42,7 +40,6 @@ impl FightScreenState {
     pub fn reset(&mut self) {
         self.action_selection = 0;
         self.post_combat_selection = 0;
-        self.frames_since_entry = 0;
     }
 }
 

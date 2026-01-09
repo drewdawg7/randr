@@ -162,6 +162,11 @@ impl GridSelection {
     }
 }
 
+/// Clear all pending GameAction events. Use in OnExit to prevent event bleed.
+pub fn clear_game_action_events(mut events: ResMut<Events<GameAction>>) {
+    events.clear();
+}
+
 /// Global system to handle OpenKeybinds action from any state.
 /// This allows the keybinds modal to be opened from anywhere in the game.
 fn handle_global_keybinds_action(

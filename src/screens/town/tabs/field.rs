@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::entities::Progression;
 use crate::game::PlayerResource;
-use crate::input::{GameAction, NavigationDirection};
+use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
 use crate::states::AppState;
 use crate::stats::HasStats;
 
@@ -15,11 +15,10 @@ pub struct FieldTabPlugin;
 impl Plugin for FieldTabPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<FieldTabState>()
-            .add_systems(OnEnter(AppState::Town), reset_field_frame_counter)
+            .add_systems(OnExit(AppState::Town), clear_game_action_events)
             .add_systems(
                 Update,
                 (
-                    increment_field_frame_counter,
                     handle_field_input,
                     render_field_content.run_if(resource_changed::<FieldTabState>),
                 )
@@ -30,23 +29,10 @@ impl Plugin for FieldTabPlugin {
     }
 }
 
-/// Reset frame counter when entering Town state.
-fn reset_field_frame_counter(mut field_state: ResMut<FieldTabState>) {
-    field_state.frames_since_entry = 0;
-}
-
-/// Increment frame counter each frame.
-fn increment_field_frame_counter(mut field_state: ResMut<FieldTabState>) {
-    field_state.frames_since_entry = field_state.frames_since_entry.saturating_add(1);
-}
-
 /// Field tab state - just tracks menu selection.
 #[derive(Resource, Default)]
 pub struct FieldTabState {
     pub selected_index: usize,
-    /// Frames since entering Town state - used to skip input on first frame
-    /// to prevent Select events from the previous state from being processed.
-    pub frames_since_entry: u32,
 }
 
 const FIELD_OPTIONS: &[MenuOption] = &[
@@ -66,13 +52,6 @@ fn handle_field_input(
     mut action_events: EventReader<GameAction>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
-    // Skip input on first frame to prevent stale Select events from previous state
-    if field_state.frames_since_entry < 2 {
-        // Drain events without processing to clear the EventReader cursor
-        for _ in action_events.read() {}
-        return;
-    }
-
     for action in action_events.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
