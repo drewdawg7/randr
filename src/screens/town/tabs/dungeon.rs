@@ -18,7 +18,6 @@ impl Plugin for DungeonTabPlugin {
             (
                 handle_dungeon_input,
                 render_dungeon_content.run_if(resource_changed::<DungeonTabState>),
-                render_dungeon_on_tab_change.run_if(resource_changed::<CurrentTab>),
             )
                 .run_if(in_state(AppState::Town))
                 .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Dungeon),
@@ -65,32 +64,6 @@ fn handle_dungeon_input(
     }
 }
 
-/// Render dungeon content when tab is changed to Dungeon.
-fn render_dungeon_on_tab_change(
-    mut commands: Commands,
-    current_tab: Res<CurrentTab>,
-    dungeon_state: Res<DungeonTabState>,
-    player: Res<PlayerResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    if current_tab.tab != TownTab::Dungeon {
-        return;
-    }
-
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state, &player);
-}
-
 /// Render dungeon content when state changes.
 fn render_dungeon_content(
     mut commands: Commands,
@@ -113,7 +86,7 @@ fn render_dungeon_content(
 }
 
 /// Spawn the dungeon UI.
-fn spawn_dungeon_ui(
+pub fn spawn_dungeon_ui(
     commands: &mut Commands,
     content_entity: Entity,
     dungeon_state: &DungeonTabState,

@@ -19,7 +19,6 @@ impl Plugin for StoreTabPlugin {
             (
                 handle_store_input,
                 render_store_content.run_if(resource_changed::<StoreTabState>),
-                render_store_on_tab_change.run_if(resource_changed::<CurrentTab>),
             )
                 .run_if(in_state(AppState::Town))
                 .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Store),
@@ -400,33 +399,6 @@ fn handle_storage_deposit_input(
     }
 }
 
-/// Render store content when tab is changed to Store.
-fn render_store_on_tab_change(
-    mut commands: Commands,
-    current_tab: Res<CurrentTab>,
-    store_state: Res<StoreTabState>,
-    player: Res<PlayerResource>,
-    storage: Res<StorageResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    if current_tab.tab != TownTab::Store {
-        return;
-    }
-
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_store_ui(&mut commands, content_entity, &store_state, &player, &storage);
-}
-
 /// Render store content when state changes.
 fn render_store_content(
     mut commands: Commands,
@@ -450,7 +422,7 @@ fn render_store_content(
 }
 
 /// Spawn the store UI based on current mode.
-fn spawn_store_ui(
+pub fn spawn_store_ui(
     commands: &mut Commands,
     content_entity: Entity,
     store_state: &StoreTabState,

@@ -109,7 +109,11 @@
       "Bash(do echo '=== Issue #$i ===')",
       "Bash(cargo rustc:*)",
       "Bash(xargs:*)",
-      "Bash(cargo run:*)"
+      "Bash(cargo run:*)",
+      "Bash(git log:*)",
+      "Bash(git -C /Users/drewstewart/code/game log --all --oneline)",
+      "Bash(git -C /Users/drewstewart/code/game show d440e2b --stat)",
+      "WebFetch(domain:bevy-cheatbook.github.io)"
     ]
   },
   "enabledMcpjsonServers": [

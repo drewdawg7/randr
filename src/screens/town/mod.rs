@@ -3,10 +3,19 @@ mod tabs;
 
 use bevy::prelude::*;
 
+use crate::game::{PlayerResource, StorageResource};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
 pub use tabs::TabsPlugin;
+use tabs::{
+    spawn_alchemist_ui, spawn_blacksmith_ui, spawn_dungeon_ui, spawn_field_ui, spawn_store_ui,
+    AlchemistTabState, BlacksmithTabState, DungeonTabState, FieldTabState, StoreTabState,
+};
+
+/// System set for tab navigation - tab content systems should run after this.
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub struct TabNavigationSet;
 
 /// Plugin for the Town Hub screen.
 pub struct TownPlugin;
@@ -20,6 +29,14 @@ impl Plugin for TownPlugin {
             .add_systems(
                 Update,
                 (handle_tab_navigation, handle_back_action, update_tab_header_visuals)
+                    .in_set(TabNavigationSet)
+                    .run_if(in_state(AppState::Town)),
+            )
+            // Centralized tab content rendering - runs after navigation, handles ALL tabs
+            .add_systems(
+                Update,
+                render_tab_content
+                    .after(TabNavigationSet)
                     .run_if(in_state(AppState::Town)),
             );
     }
@@ -237,6 +254,59 @@ fn handle_back_action(
     for action in action_events.read() {
         if matches!(action, GameAction::Back) {
             next_state.set(AppState::Menu);
+        }
+    }
+}
+
+/// Centralized system to render tab content when CurrentTab changes.
+/// This single system handles ALL tab rendering, eliminating race conditions
+/// that occur when multiple parallel systems try to spawn/despawn content.
+fn render_tab_content(
+    mut commands: Commands,
+    current_tab: Res<CurrentTab>,
+    content_query: Query<Entity, With<ContentArea>>,
+    tab_content_query: Query<Entity, With<TabContent>>,
+    // Tab states
+    field_state: Res<FieldTabState>,
+    dungeon_state: Res<DungeonTabState>,
+    store_state: Res<StoreTabState>,
+    blacksmith_state: Res<BlacksmithTabState>,
+    alchemist_state: Res<AlchemistTabState>,
+    // Other resources needed for rendering
+    player: Res<PlayerResource>,
+    storage: Res<StorageResource>,
+) {
+    // Only render when tab changes
+    if !current_tab.is_changed() {
+        return;
+    }
+
+    // Despawn ALL existing tab content first
+    for entity in &tab_content_query {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    // Get content area
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+
+    // Spawn content for the current tab
+    match current_tab.tab {
+        TownTab::Store => {
+            spawn_store_ui(&mut commands, content_entity, &store_state, &player, &storage);
+        }
+        TownTab::Blacksmith => {
+            spawn_blacksmith_ui(&mut commands, content_entity, &blacksmith_state, &player);
+        }
+        TownTab::Alchemist => {
+            spawn_alchemist_ui(&mut commands, content_entity, &alchemist_state, &player);
+        }
+        TownTab::Field => {
+            spawn_field_ui(&mut commands, content_entity, &field_state, &player);
+        }
+        TownTab::Dungeon => {
+            spawn_dungeon_ui(&mut commands, content_entity, &dungeon_state, &player);
         }
     }
 }

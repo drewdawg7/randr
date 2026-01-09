@@ -20,7 +20,6 @@ impl Plugin for BlacksmithTabPlugin {
             (
                 handle_blacksmith_input,
                 render_blacksmith_content.run_if(resource_changed::<BlacksmithTabState>),
-                render_blacksmith_on_tab_change.run_if(resource_changed::<CurrentTab>),
             )
                 .run_if(in_state(AppState::Town))
                 .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Blacksmith),
@@ -346,32 +345,6 @@ fn calculate_upgrade_cost(item: &crate::item::Item) -> i32 {
     (base_cost as f64 * (item.num_upgrades + 1) as f64 * quality_multiplier) as i32
 }
 
-/// Render blacksmith content when tab is changed to Blacksmith.
-fn render_blacksmith_on_tab_change(
-    mut commands: Commands,
-    current_tab: Res<CurrentTab>,
-    blacksmith_state: Res<BlacksmithTabState>,
-    player: Res<PlayerResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    if current_tab.tab != TownTab::Blacksmith {
-        return;
-    }
-
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_blacksmith_ui(&mut commands, content_entity, &blacksmith_state, &player);
-}
-
 /// Render blacksmith content when state changes.
 fn render_blacksmith_content(
     mut commands: Commands,
@@ -394,7 +367,7 @@ fn render_blacksmith_content(
 }
 
 /// Spawn the blacksmith UI based on current mode.
-fn spawn_blacksmith_ui(
+pub fn spawn_blacksmith_ui(
     commands: &mut Commands,
     content_entity: Entity,
     blacksmith_state: &BlacksmithTabState,

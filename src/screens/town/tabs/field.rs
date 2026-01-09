@@ -14,23 +14,39 @@ pub struct FieldTabPlugin;
 
 impl Plugin for FieldTabPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<FieldTabState>().add_systems(
-            Update,
-            (
-                handle_field_input,
-                render_field_content.run_if(resource_changed::<FieldTabState>),
-                render_field_on_tab_change.run_if(resource_changed::<CurrentTab>),
-            )
-                .run_if(in_state(AppState::Town))
-                .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Field),
-        );
+        app.init_resource::<FieldTabState>()
+            .add_systems(OnEnter(AppState::Town), reset_field_frame_counter)
+            .add_systems(
+                Update,
+                (
+                    increment_field_frame_counter,
+                    handle_field_input,
+                    render_field_content.run_if(resource_changed::<FieldTabState>),
+                )
+                    .chain()
+                    .run_if(in_state(AppState::Town))
+                    .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Field),
+            );
     }
+}
+
+/// Reset frame counter when entering Town state.
+fn reset_field_frame_counter(mut field_state: ResMut<FieldTabState>) {
+    field_state.frames_since_entry = 0;
+}
+
+/// Increment frame counter each frame.
+fn increment_field_frame_counter(mut field_state: ResMut<FieldTabState>) {
+    field_state.frames_since_entry = field_state.frames_since_entry.saturating_add(1);
 }
 
 /// Field tab state - just tracks menu selection.
 #[derive(Resource, Default)]
 pub struct FieldTabState {
     pub selected_index: usize,
+    /// Frames since entering Town state - used to skip input on first frame
+    /// to prevent Select events from the previous state from being processed.
+    pub frames_since_entry: u32,
 }
 
 const FIELD_OPTIONS: &[MenuOption] = &[
@@ -50,6 +66,13 @@ fn handle_field_input(
     mut action_events: EventReader<GameAction>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
+    // Skip input on first frame to prevent stale Select events from previous state
+    if field_state.frames_since_entry < 2 {
+        // Drain events without processing to clear the EventReader cursor
+        for _ in action_events.read() {}
+        return;
+    }
+
     for action in action_events.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
@@ -70,32 +93,6 @@ fn handle_field_input(
             _ => {}
         }
     }
-}
-
-/// Render field content when tab is changed to Field.
-fn render_field_on_tab_change(
-    mut commands: Commands,
-    current_tab: Res<CurrentTab>,
-    field_state: Res<FieldTabState>,
-    player: Res<PlayerResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    if current_tab.tab != TownTab::Field {
-        return;
-    }
-
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_field_ui(&mut commands, content_entity, &field_state, &player);
 }
 
 /// Render field content when state changes.
@@ -120,7 +117,7 @@ fn render_field_content(
 }
 
 /// Spawn the field UI.
-fn spawn_field_ui(
+pub fn spawn_field_ui(
     commands: &mut Commands,
     content_entity: Entity,
     field_state: &FieldTabState,

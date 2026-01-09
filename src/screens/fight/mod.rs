@@ -2,8 +2,11 @@ mod state;
 
 use bevy::prelude::*;
 
-use crate::combat::{enemy_attack_step, player_attack_step, process_defeat, process_victory, CombatPhase};
-use crate::game::{ActiveCombatResource, PlayerResource};
+use rand::seq::SliceRandom;
+
+use crate::combat::{enemy_attack_step, player_attack_step, process_defeat, process_victory, ActiveCombat, CombatPhase};
+use crate::game::{ActiveCombatResource, CombatSourceResource, PlayerResource};
+use crate::mob::MobId;
 use crate::input::{GameAction, NavigationDirection};
 use crate::screens::shared::{spawn_combat_log, update_health_bar, CombatLogEntry};
 use crate::states::AppState;
@@ -19,19 +22,26 @@ impl Plugin for FightPlugin {
         app.init_resource::<FightScreenState>()
             .init_resource::<CombatSource>()
             .init_resource::<CombatLogState>()
-            .add_systems(OnEnter(AppState::Fight), (spawn_fight_screen, reset_fight_state).chain())
+            .add_systems(OnEnter(AppState::Fight), (initialize_combat, spawn_fight_screen, reset_fight_state).chain())
             .add_systems(OnExit(AppState::Fight), cleanup_fight_screen)
             .add_systems(
                 Update,
                 (
+                    increment_fight_frame_counter,
                     handle_fight_input,
                     execute_combat_turn,
                     update_combat_visuals,
                     handle_combat_end,
                 )
+                    .chain()
                     .run_if(in_state(AppState::Fight)),
             );
     }
+}
+
+/// Increment frame counter each frame.
+fn increment_fight_frame_counter(mut fight_state: ResMut<FightScreenState>) {
+    fight_state.frames_since_entry = fight_state.frames_since_entry.saturating_add(1);
 }
 
 /// Resource tracking combat log entries for the current fight.
@@ -106,7 +116,7 @@ fn spawn_fight_screen(
                 player.max_hp(),
                 enemy_info.name.clone(),
                 enemy_info.health,
-                enemy_info.health, // Use current health as max for display
+                enemy_info.max_health,
             )
         } else {
             // No combat - shouldn't happen, but provide defaults
@@ -321,22 +331,27 @@ fn spawn_fight_screen(
                         TextColor(Color::srgb(0.8, 0.8, 0.8)),
                     ));
 
-                    spawn_action_item(action_section, 0, "Attack");
-                    spawn_action_item(action_section, 1, "Run");
+                    spawn_action_item(action_section, 0, "Attack", true);  // Selected by default
+                    spawn_action_item(action_section, 1, "Run", false);
                 });
         });
 }
 
 /// Helper to spawn an action menu item.
-fn spawn_action_item(parent: &mut ChildBuilder, index: usize, label: &str) {
+fn spawn_action_item(parent: &mut ChildBuilder, index: usize, label: &str, selected: bool) {
+    let color = if selected {
+        Color::srgb(1.0, 1.0, 1.0) // White for selected
+    } else {
+        Color::srgb(0.5, 0.5, 0.5) // Dimmer gray for unselected
+    };
     parent.spawn((
         ActionMenuItem { index },
-        Text::new(label),
+        Text::new(format!("{} {}", if selected { ">" } else { " " }, label)),
         TextFont {
             font_size: 28.0,
             ..default()
         },
-        TextColor(Color::srgb(0.7, 0.7, 0.7)),
+        TextColor(color),
     ));
 }
 
@@ -358,7 +373,7 @@ fn handle_fight_input(
     mut action_reader: EventReader<GameAction>,
     mut fight_state: ResMut<FightScreenState>,
     combat_res: Res<ActiveCombatResource>,
-    mut action_items: Query<(&ActionMenuItem, &mut TextColor)>,
+    mut action_items: Query<(&ActionMenuItem, &mut TextColor, &mut Text)>,
     mut post_combat_items: Query<(&PostCombatMenuItem, &mut TextColor), Without<ActionMenuItem>>,
 ) {
     let is_combat_over = combat_res
@@ -407,6 +422,13 @@ fn execute_combat_turn(
     mut next_state: ResMut<NextState<AppState>>,
     combat_source: Res<CombatSource>,
 ) {
+    // Skip input on first frames to prevent stale Select events from previous state
+    if fight_state.frames_since_entry < 2 {
+        // Drain events without processing to clear the EventReader cursor
+        for _ in action_reader.read() {}
+        return;
+    }
+
     // Only process if combat is active and not over
     let combat_active = combat_res.get().map(|c| !c.is_combat_over()).unwrap_or(false);
     if !combat_active {
@@ -495,7 +517,7 @@ fn update_combat_visuals(
                 &mut commands,
                 bar_entity,
                 enemy_info.health,
-                enemy_info.health, // Using current as max
+                enemy_info.max_health,
                 &children,
                 &mut fill_query,
                 &mut text_query,
@@ -508,8 +530,10 @@ fn update_combat_visuals(
 fn handle_combat_end(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    fight_state: Res<FightScreenState>,
-    combat_res: Res<ActiveCombatResource>,
+    mut fight_state: ResMut<FightScreenState>,
+    mut combat_res: ResMut<ActiveCombatResource>,
+    mut log_state: ResMut<CombatLogState>,
+    combat_source_res: Res<CombatSourceResource>,
     mut next_state: ResMut<NextState<AppState>>,
     combat_source: Res<CombatSource>,
     overlay_query: Query<Entity, With<PostCombatOverlay>>,
@@ -598,25 +622,54 @@ fn handle_combat_end(
                             spawn_post_combat_item(overlay, 1, "Continue");
                         });
                 });
+
+                // Return early - don't process any Select events this frame
+                // This prevents the same Select that killed the mob from
+                // immediately selecting a post-combat menu option
+                return;
             }
         }
     }
 
-    // Handle post-combat menu selection
+    // Handle post-combat menu selection (only when overlay already exists)
     for action in action_reader.read() {
         if *action == GameAction::Select {
             match fight_state.post_combat_selection {
                 0 => {
-                    // Fight Again - stay in fight state, will need new combat
-                    // For now, return to origin (proper implementation would respawn combat)
-                    match combat_source.origin {
-                        Some(CombatOrigin::Field) | None => {
-                            next_state.set(AppState::Town);
-                        }
-                        Some(CombatOrigin::DungeonRoom) | Some(CombatOrigin::DungeonBoss) => {
-                            next_state.set(AppState::Dungeon);
-                        }
+                    // Fight Again - reinitialize combat with a new mob
+                    // Despawn overlay
+                    for entity in &overlay_query {
+                        commands.entity(entity).despawn_recursive();
                     }
+
+                    // Clear combat log and add new encounter message
+                    log_state.entries.clear();
+
+                    // Spawn new mob based on combat source
+                    let mob = match *combat_source_res {
+                        CombatSourceResource::Field => {
+                            let field_mobs = [MobId::Slime, MobId::Cow, MobId::Goblin];
+                            let mob_id = field_mobs.choose(&mut rand::thread_rng()).unwrap();
+                            mob_id.spawn()
+                        }
+                        CombatSourceResource::Dungeon => MobId::Goblin.spawn(),
+                        CombatSourceResource::DungeonBoss => MobId::Dragon.spawn(),
+                    };
+
+                    // Initialize new combat
+                    combat_res.0 = Some(ActiveCombat::new(mob));
+
+                    // Add encounter message
+                    if let Some(combat) = combat_res.get() {
+                        let enemy_info = combat.enemy_info();
+                        log_state.entries.push(CombatLogEntry::info(format!(
+                            "A wild {} appears!",
+                            enemy_info.name
+                        )));
+                    }
+
+                    // Reset fight state
+                    fight_state.reset();
                 }
                 1 => {
                     // Continue - return to origin
@@ -638,13 +691,17 @@ fn handle_combat_end(
 /// Update action menu visuals based on current selection.
 fn update_action_visuals(
     state: &FightScreenState,
-    items: &mut Query<(&ActionMenuItem, &mut TextColor)>,
+    items: &mut Query<(&ActionMenuItem, &mut TextColor, &mut Text)>,
 ) {
-    for (item, mut color) in items.iter_mut() {
-        if item.index == state.action_selection {
+    let labels = ["Attack", "Run"];
+    for (item, mut color, mut text) in items.iter_mut() {
+        let selected = item.index == state.action_selection;
+        if selected {
             *color = TextColor(Color::srgb(1.0, 1.0, 1.0));
+            **text = format!("> {}", labels[item.index]);
         } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7));
+            *color = TextColor(Color::srgb(0.5, 0.5, 0.5));
+            **text = format!("  {}", labels[item.index]);
         }
     }
 }
@@ -666,17 +723,47 @@ fn update_post_combat_visuals(
 /// System to reset fight state when entering the screen.
 fn reset_fight_state(
     mut fight_state: ResMut<FightScreenState>,
-    mut action_items: Query<(&ActionMenuItem, &mut TextColor)>,
+    mut action_items: Query<(&ActionMenuItem, &mut TextColor, &mut Text)>,
 ) {
     fight_state.reset();
     update_action_visuals(&fight_state, &mut action_items);
 }
 
-/// System to cleanup fight screen UI.
+/// System to initialize combat when entering the fight screen.
+/// Spawns a random mob based on the combat source.
+fn initialize_combat(
+    mut combat_res: ResMut<ActiveCombatResource>,
+    combat_source: Res<CombatSourceResource>,
+) {
+    let mob = match *combat_source {
+        CombatSourceResource::Field => {
+            // Random field mob
+            let field_mobs = [MobId::Slime, MobId::Cow, MobId::Goblin];
+            let mob_id = field_mobs.choose(&mut rand::thread_rng()).unwrap();
+            mob_id.spawn()
+        }
+        CombatSourceResource::Dungeon => {
+            // Dungeon mob - could scale based on dungeon level
+            MobId::Goblin.spawn()
+        }
+        CombatSourceResource::DungeonBoss => {
+            MobId::Dragon.spawn()
+        }
+    };
+
+    combat_res.0 = Some(ActiveCombat::new(mob));
+}
+
+/// System to cleanup fight screen UI and clear combat state.
 fn cleanup_fight_screen(
     mut commands: Commands,
+    mut combat_res: ResMut<ActiveCombatResource>,
     fight_root: Query<Entity, With<FightScreenRoot>>,
 ) {
+    // Clear combat state
+    combat_res.clear();
+
+    // Despawn UI
     if let Ok(entity) = fight_root.get_single() {
         commands.entity(entity).despawn_recursive();
     }

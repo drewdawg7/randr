@@ -22,7 +22,6 @@ impl Plugin for AlchemistTabPlugin {
             (
                 handle_alchemist_input,
                 render_alchemist_content.run_if(resource_changed::<AlchemistTabState>),
-                render_alchemist_on_tab_change.run_if(resource_changed::<CurrentTab>),
             )
                 .run_if(in_state(AppState::Town))
                 .run_if(|tab: Res<CurrentTab>| tab.tab == TownTab::Alchemist),
@@ -149,32 +148,6 @@ fn handle_alchemist_input(
     }
 }
 
-/// Render alchemist content when tab is changed to Alchemist.
-fn render_alchemist_on_tab_change(
-    mut commands: Commands,
-    current_tab: Res<CurrentTab>,
-    alchemist_state: Res<AlchemistTabState>,
-    player: Res<PlayerResource>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
-) {
-    if current_tab.tab != TownTab::Alchemist {
-        return;
-    }
-
-    // Despawn existing tab content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Get content area
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-
-    spawn_alchemist_ui(&mut commands, content_entity, &alchemist_state, &player);
-}
-
 /// Render alchemist content when state changes.
 fn render_alchemist_content(
     mut commands: Commands,
@@ -197,7 +170,7 @@ fn render_alchemist_content(
 }
 
 /// Spawn the alchemist UI based on current mode.
-fn spawn_alchemist_ui(
+pub fn spawn_alchemist_ui(
     commands: &mut Commands,
     content_entity: Entity,
     alchemist_state: &AlchemistTabState,
