@@ -14,3 +14,6 @@
 - Branches: `type/description` (e.g., `feat/add-inventory`)
 - Commits: conventional (`feat:`, `fix:`, `refactor:`)
 - Tests: changed modules only
+
+## Sprites
+Use the `sprites` skill when working with sprite sheets, Aseprite exports, or adding sprites to UI.
