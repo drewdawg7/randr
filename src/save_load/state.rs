@@ -260,9 +260,8 @@ impl TomeState {
         for (i, page_state) in self.pages.iter().enumerate() {
             if let Some(page) = page_state {
                 let p = page.to_page();
-                if let Err(_) = tome.set_page(i, p) {
-                    // Skip invalid pages
-                }
+                // Skip invalid pages silently
+                let _ = tome.set_page(i, p);
             }
         }
         // Restore active page

@@ -231,8 +231,6 @@ fn handle_quality_input(
                         // Upgrade quality
                         if let Ok(new_quality) = inv_item_mut.item.upgrade_quality() {
                             let item_name = inv_item_mut.item.name.clone();
-                            // Drop the mutable borrow before consuming the stone
-                            drop(inv_item_mut);
 
                             // Consume the stone
                             player.decrease_item_quantity(&stone_inv, 1);
