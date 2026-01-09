@@ -6,6 +6,7 @@ use bevy::prelude::*;
 
 use crate::input::GameAction;
 use crate::states::AppState;
+use crate::ui::widgets::PlayerStats;
 
 pub use tabs::TabsPlugin;
 use render::{cleanup_tab_content, update_tab_header_visuals};
@@ -135,6 +136,9 @@ fn setup_town_ui(mut commands: Commands, current_tab: Res<State<TownTab>>) {
                         spawn_tab_header_item(header, tab, tab == *current_tab.get());
                     }
                 });
+
+            // Player stats banner directly below tabs
+            parent.spawn(PlayerStats);
 
             parent.spawn((
                 ContentArea,
