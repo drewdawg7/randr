@@ -1,5 +1,3 @@
-use bevy::prelude::*;
-
 /// State for tracking selection in a list.
 #[derive(Default, Clone)]
 pub struct ListState {

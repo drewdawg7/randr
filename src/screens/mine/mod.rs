@@ -7,7 +7,7 @@ use crate::game::PlayerResource;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::ManagesItems;
 use crate::location::mine::RockId;
-use crate::stats::{HasStats, StatType};
+use crate::stats::StatType;
 use crate::states::AppState;
 
 pub use state::MineScreenState;
