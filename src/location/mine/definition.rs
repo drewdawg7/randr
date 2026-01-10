@@ -1,5 +1,7 @@
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
+use bevy::time::{Timer, TimerMode};
 
 use crate::{
     player::Player,
@@ -25,16 +27,15 @@ pub struct Mine {
     pub current_rock: Option<Rock>,
     /// The persistent cave layout
     pub cave: Option<CaveLayout>,
-    /// Last time a rock was spawned
-    pub(crate) last_rock_respawn: Instant,
-    /// Last time the mine was regenerated
-    pub(crate) last_regeneration: Instant,
+    /// Timer for rock respawns
+    pub(crate) rock_respawn_timer: Timer,
+    /// Timer for mine regeneration
+    pub(crate) regeneration_timer: Timer,
 }
 
 impl Mine {
     /// Create a Mine from a LocationSpec
     pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &MineData) -> Self {
-        let now = Instant::now();
         Mine {
             location_id,
             name: spec.name.to_string(),
@@ -42,8 +43,8 @@ impl Mine {
             rock_weights: data.rock_weights.clone(),
             current_rock: None,
             cave: Some(CaveLayout::generate()),
-            last_rock_respawn: now,
-            last_regeneration: now,
+            rock_respawn_timer: Timer::new(ROCK_RESPAWN_INTERVAL, TimerMode::Repeating),
+            regeneration_timer: Timer::new(MINE_REGENERATION_INTERVAL, TimerMode::Repeating),
         }
     }
 
@@ -53,7 +54,6 @@ impl Mine {
         rock_weights.insert(RockId::Coal, 30);
         rock_weights.insert(RockId::Tin, 20);
 
-        let now = Instant::now();
         Self {
             location_id: LocationId::VillageMine,
             name,
@@ -61,8 +61,8 @@ impl Mine {
             rock_weights,
             current_rock: None,
             cave: Some(CaveLayout::generate()),
-            last_rock_respawn: now,
-            last_regeneration: now,
+            rock_respawn_timer: Timer::new(ROCK_RESPAWN_INTERVAL, TimerMode::Repeating),
+            regeneration_timer: Timer::new(MINE_REGENERATION_INTERVAL, TimerMode::Repeating),
         }
     }
 
@@ -105,45 +105,40 @@ impl Mine {
         &self.description
     }
 
-    /// Check and perform rock respawn if interval has elapsed
-    /// Called by tick() in the game loop
+    /// Check and perform rock respawn if timer finished.
+    /// Call tick_timers() first to advance the timers.
     pub fn check_and_respawn_rock(&mut self) {
-        if self.last_rock_respawn.elapsed() >= ROCK_RESPAWN_INTERVAL {
+        if self.rock_respawn_timer.just_finished() {
             if let Some(cave) = &mut self.cave {
                 cave.spawn_rock();
             }
-            self.last_rock_respawn = Instant::now();
         }
     }
 
-    /// Check and regenerate the entire mine if interval has elapsed
-    /// Called by tick() in the game loop
+    /// Check and regenerate the entire mine if timer finished.
+    /// Call tick_timers() first to advance the timers.
     pub fn check_and_regenerate(&mut self) {
-        if self.last_regeneration.elapsed() >= MINE_REGENERATION_INTERVAL {
+        if self.regeneration_timer.just_finished() {
             self.cave = Some(CaveLayout::generate());
-            self.last_regeneration = Instant::now();
-            self.last_rock_respawn = Instant::now(); // Reset rock respawn timer too
+            self.rock_respawn_timer.reset(); // Reset rock respawn timer too
         }
+    }
+
+    /// Tick all mine timers with the given delta time.
+    /// Should be called from the Refreshable::tick implementation.
+    pub fn tick_timers(&mut self, delta: Duration) {
+        self.rock_respawn_timer.tick(delta);
+        self.regeneration_timer.tick(delta);
     }
 
     /// Returns seconds until next mine regeneration
     pub fn time_until_regeneration(&self) -> u64 {
-        let elapsed = self.last_regeneration.elapsed();
-        if elapsed >= MINE_REGENERATION_INTERVAL {
-            0
-        } else {
-            (MINE_REGENERATION_INTERVAL - elapsed).as_secs()
-        }
+        self.regeneration_timer.remaining_secs() as u64
     }
 
     /// Returns seconds until next rock respawn
     pub fn time_until_rock_respawn(&self) -> u64 {
-        let elapsed = self.last_rock_respawn.elapsed();
-        if elapsed >= ROCK_RESPAWN_INTERVAL {
-            0
-        } else {
-            (ROCK_RESPAWN_INTERVAL - elapsed).as_secs()
-        }
+        self.rock_respawn_timer.remaining_secs() as u64
     }
 
     /// Get a mutable reference to the cave layout
@@ -160,8 +155,8 @@ impl Mine {
     pub fn ensure_cave_exists(&mut self) {
         if self.cave.is_none() {
             self.cave = Some(CaveLayout::generate());
-            self.last_regeneration = Instant::now();
-            self.last_rock_respawn = Instant::now();
+            self.regeneration_timer.reset();
+            self.rock_respawn_timer.reset();
         }
     }
 }

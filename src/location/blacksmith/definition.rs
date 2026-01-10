@@ -1,5 +1,6 @@
-use std::time::Instant;
+use std::time::Duration;
 
+use bevy::time::{Timer, TimerMode};
 use uuid::Uuid;
 
 use crate::{
@@ -17,6 +18,9 @@ use crate::{
 
 use super::enums::{BlacksmithError, BlacksmithUpgradeResult};
 
+/// Fuel regeneration interval (1 minute)
+pub const FUEL_REGEN_INTERVAL: Duration = Duration::from_secs(60);
+
 pub struct Blacksmith {
     pub(crate) location_id: LocationId,
     pub name: String,
@@ -24,8 +28,8 @@ pub struct Blacksmith {
     pub max_upgrades: i32,
     pub base_upgrade_cost: i32,
     pub fuel_amount: i32,
-    /// Last time fuel regeneration was applied
-    pub(crate) last_fuel_regen: Option<Instant>,
+    /// Timer for fuel regeneration (fires every minute)
+    pub(crate) fuel_regen_timer: Timer,
     /// Cached fuel regeneration rate (per minute) from player passive effects
     pub(crate) fuel_regen_per_min: i32,
 }
@@ -40,7 +44,7 @@ impl Blacksmith {
             max_upgrades: data.max_upgrades,
             base_upgrade_cost: data.base_upgrade_cost,
             fuel_amount: 0,
-            last_fuel_regen: None,
+            fuel_regen_timer: Timer::new(FUEL_REGEN_INTERVAL, TimerMode::Repeating),
             fuel_regen_per_min: 0,
         }
     }
@@ -53,12 +57,12 @@ impl Blacksmith {
             max_upgrades,
             base_upgrade_cost,
             fuel_amount: 0,
-            last_fuel_regen: None,
+            fuel_regen_timer: Timer::new(FUEL_REGEN_INTERVAL, TimerMode::Repeating),
             fuel_regen_per_min: 0,
         }
     }
 
-    /// Update fuel regeneration rate from player passive effects and apply any pending regen.
+    /// Update fuel regeneration rate from player passive effects.
     /// This should be called when the player enters the blacksmith or equips/unequips tomes.
     pub fn apply_fuel_regen(&mut self, player: &Player) {
         // Calculate and cache total fuel regen per minute from passive effects
@@ -73,34 +77,23 @@ impl Blacksmith {
                 }
             })
             .sum();
-
-        // Apply any pending regeneration
-        self.tick_fuel_regen();
     }
 
-    /// Apply fuel regeneration based on elapsed time using the cached regen rate.
-    /// Called by Refreshable::tick.
-    pub fn tick_fuel_regen(&mut self) {
+    /// Tick the fuel regeneration timer and apply fuel if finished.
+    /// Should be called from Refreshable::tick with the elapsed duration.
+    pub fn tick_fuel_regen(&mut self, elapsed: Duration) {
         if self.fuel_regen_per_min <= 0 {
             return;
         }
 
-        let now = Instant::now();
-        let elapsed_secs = match self.last_fuel_regen {
-            Some(last) => now.duration_since(last).as_secs(),
-            None => {
-                // First time - just set the timestamp, no retroactive regen
-                self.last_fuel_regen = Some(now);
-                return;
-            }
-        };
+        // Advance the timer
+        self.fuel_regen_timer.tick(elapsed);
 
-        // Calculate fuel to add (1 per minute = 1 per 60 seconds)
-        let minutes_elapsed = elapsed_secs / 60;
-        if minutes_elapsed > 0 {
-            let fuel_to_add = (minutes_elapsed as i32 * self.fuel_regen_per_min).min(100);
+        // Add fuel for each time the timer completes (handles multiple completions)
+        let times_finished = self.fuel_regen_timer.times_finished_this_tick();
+        if times_finished > 0 {
+            let fuel_to_add = (times_finished as i32 * self.fuel_regen_per_min).min(100);
             self.inc_fuel(fuel_to_add);
-            self.last_fuel_regen = Some(now);
         }
     }
 

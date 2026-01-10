@@ -1,11 +1,13 @@
 use std::time::Duration;
 
+use bevy::time::{Timer, TimerMode};
+
 use crate::{
     player::Player,
     location::{Location, LocationEntryError, LocationId, Refreshable},
 };
 
-use super::definition::Blacksmith;
+use super::definition::{Blacksmith, FUEL_REGEN_INTERVAL};
 
 impl Default for Blacksmith {
     fn default() -> Self {
@@ -16,7 +18,7 @@ impl Default for Blacksmith {
             max_upgrades: 4,
             base_upgrade_cost: 5,
             fuel_amount: 0,
-            last_fuel_regen: None,
+            fuel_regen_timer: Timer::new(FUEL_REGEN_INTERVAL, TimerMode::Repeating),
             fuel_regen_per_min: 0,
         }
     }
@@ -50,20 +52,19 @@ impl Location for Blacksmith {
 }
 
 impl Refreshable for Blacksmith {
-    fn tick(&mut self, _elapsed: Duration) {
-        self.tick_fuel_regen();
+    fn tick(&mut self, elapsed: Duration) {
+        self.tick_fuel_regen(elapsed);
     }
 
     fn refresh(&mut self) {
-        // Force regeneration check
-        self.tick_fuel_regen();
+        // Reset the timer so next tick will trigger regen
+        self.fuel_regen_timer.reset();
     }
 
     fn time_until_refresh(&self) -> Duration {
         if self.fuel_regen_per_min <= 0 {
             return Duration::MAX;
         }
-        // Returns time until next fuel regen (every 60 seconds)
-        Duration::from_secs(60)
+        Duration::from_secs_f32(self.fuel_regen_timer.remaining_secs())
     }
 }

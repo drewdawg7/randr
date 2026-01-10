@@ -1,5 +1,7 @@
 use std::collections::HashMap;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
+use bevy::time::{Timer, TimerMode};
 
 use crate::{
     player::Player,
@@ -7,7 +9,7 @@ use crate::{
 };
 
 use super::cave::CaveLayout;
-use super::definition::Mine;
+use super::definition::{Mine, MINE_REGENERATION_INTERVAL, ROCK_RESPAWN_INTERVAL};
 use super::rock::RockId;
 
 impl Default for Mine {
@@ -17,7 +19,6 @@ impl Default for Mine {
         rock_weights.insert(RockId::Coal, 2);
         rock_weights.insert(RockId::Copper, 2);
         rock_weights.insert(RockId::Mixed, 1);
-        let now = Instant::now();
         Self {
             location_id: LocationId::VillageMine,
             name: "Village Mine".to_string(),
@@ -25,8 +26,8 @@ impl Default for Mine {
             rock_weights,
             current_rock: None,
             cave: Some(CaveLayout::generate()),
-            last_rock_respawn: now,
-            last_regeneration: now,
+            rock_respawn_timer: Timer::new(ROCK_RESPAWN_INTERVAL, TimerMode::Repeating),
+            regeneration_timer: Timer::new(MINE_REGENERATION_INTERVAL, TimerMode::Repeating),
         }
     }
 }
@@ -58,7 +59,9 @@ impl Location for Mine {
 }
 
 impl Refreshable for Mine {
-    fn tick(&mut self, _elapsed: Duration) {
+    fn tick(&mut self, elapsed: Duration) {
+        // Advance all timers
+        self.tick_timers(elapsed);
         // Check for mine regeneration (every 10 minutes)
         self.check_and_regenerate();
         // Check for rock respawn (every 2 minutes)
@@ -68,6 +71,8 @@ impl Refreshable for Mine {
     fn refresh(&mut self) {
         // Force regenerate the mine
         self.cave = Some(CaveLayout::generate());
+        self.regeneration_timer.reset();
+        self.rock_respawn_timer.reset();
     }
 
     fn time_until_refresh(&self) -> Duration {
