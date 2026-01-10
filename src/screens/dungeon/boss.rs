@@ -5,16 +5,17 @@ use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::states::AppState;
 use crate::stats::HasStats;
 use crate::ui::widgets::PlayerStats;
+use crate::ui::{nav_selection_text, update_menu_colors, MenuIndex};
 
 /// Component marker for boss UI root
 #[derive(Component)]
 pub struct BossRoot;
 
-/// Component marker for boss actions
+/// Component marker for boss actions.
+/// Use with `MenuIndex` for selection tracking.
 #[derive(Component)]
 pub struct BossAction {
     pub action: BossActionType,
-    pub index: usize,
 }
 
 /// Types of actions in the boss screen
@@ -115,18 +116,19 @@ pub fn spawn_boss_ui(
                             BossActionType::ChallengeBoss => "Challenge Boss",
                             BossActionType::Retreat => "Retreat",
                         };
+                        let selected = i == 0;
 
                         parent.spawn((
                             BossAction {
                                 action: *action_type,
-                                index: i,
                             },
+                            MenuIndex(i),
                             Text::new(label),
                             TextFont {
                                 font_size: 28.0,
                                 ..default()
                             },
-                            TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                            TextColor(nav_selection_text(selected)),
                         ));
                     }
                 });
@@ -143,23 +145,23 @@ pub fn handle_boss_input(
     mut next_mode: ResMut<NextState<DungeonMode>>,
     mut next_app_state: ResMut<NextState<AppState>>,
     mut combat_source: ResMut<crate::game::CombatSourceResource>,
-    boss_actions: Query<&BossAction>,
-    mut items: Query<(&BossAction, &mut TextColor)>,
+    boss_actions: Query<(&MenuIndex, &BossAction)>,
+    mut items: Query<(&MenuIndex, &mut TextColor), With<BossAction>>,
 ) {
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
                 selection_state.move_up();
-                update_boss_visuals(&selection_state, &mut items);
+                update_menu_colors::<BossAction>(selection_state.selected_action, &mut items);
             }
             GameAction::Navigate(NavigationDirection::Down) => {
                 selection_state.move_down();
-                update_boss_visuals(&selection_state, &mut items);
+                update_menu_colors::<BossAction>(selection_state.selected_action, &mut items);
             }
             GameAction::Select => {
                 // Find selected action
-                for boss_action in boss_actions.iter() {
-                    if boss_action.index == selection_state.selected_action {
+                for (menu_index, boss_action) in boss_actions.iter() {
+                    if menu_index.0 == selection_state.selected_action {
                         match boss_action.action {
                             BossActionType::ChallengeBoss => {
                                 // Set combat source to DungeonBoss and transition to Fight
@@ -180,20 +182,6 @@ pub fn handle_boss_input(
                 next_mode.set(DungeonMode::Navigation);
             }
             _ => {}
-        }
-    }
-}
-
-/// Update visual highlighting for boss actions
-fn update_boss_visuals(
-    selection_state: &DungeonSelectionState,
-    items: &mut Query<(&BossAction, &mut TextColor)>,
-) {
-    for (action, mut color) in items.iter_mut() {
-        if action.index == selection_state.selected_action {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0)); // White
-        } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7)); // Gray
         }
     }
 }

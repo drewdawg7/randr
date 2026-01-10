@@ -4,6 +4,7 @@ use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhase};
 use crate::game::Player;
 use crate::screens::shared::{spawn_combat_log, update_health_bar, HealthBar, HealthBarFill, HealthBarText};
 use crate::stats::HasStats;
+use crate::ui::{nav_selection_text, MenuIndex};
 
 use super::components::*;
 use super::state::FightScreenState;
@@ -237,16 +238,13 @@ fn spawn_action_menu(parent: &mut ChildBuilder) {
 }
 
 fn spawn_action_item(parent: &mut ChildBuilder, index: usize, label: &str, selected: bool) {
-    let color = if selected {
-        Color::srgb(1.0, 1.0, 1.0)
-    } else {
-        Color::srgb(0.5, 0.5, 0.5)
-    };
+    let prefix = if selected { ">" } else { " " };
     parent.spawn((
-        ActionMenuItem { index },
-        Text::new(format!("{} {}", if selected { ">" } else { " " }, label)),
+        ActionMenuItem,
+        MenuIndex(index),
+        Text::new(format!("{} {}", prefix, label)),
         TextFont { font_size: 28.0, ..default() },
-        TextColor(color),
+        TextColor(nav_selection_text(selected)),
     ));
 }
 
@@ -322,11 +320,13 @@ pub fn spawn_post_combat_overlay(
 }
 
 fn spawn_post_combat_item(parent: &mut ChildBuilder, index: usize, label: &str) {
+    let selected = index == 0;
     parent.spawn((
-        PostCombatMenuItem { index },
+        PostCombatMenuItem,
+        MenuIndex(index),
         Text::new(label),
         TextFont { font_size: 28.0, ..default() },
-        TextColor(Color::srgb(0.7, 0.7, 0.7)),
+        TextColor(nav_selection_text(selected)),
     ));
 }
 
@@ -388,18 +388,14 @@ pub fn cleanup_fight_screen(
 
 pub fn reset_fight_state(
     mut fight_state: ResMut<FightScreenState>,
-    mut action_items: Query<(&ActionMenuItem, &mut TextColor, &mut Text), Without<PostCombatMenuItem>>,
+    mut action_items: Query<(&MenuIndex, &mut TextColor, &mut Text), With<ActionMenuItem>>,
 ) {
     fight_state.reset();
     let labels = ["Attack", "Run"];
-    for (item, mut color, mut text) in action_items.iter_mut() {
-        let selected = item.index == fight_state.action_selection;
-        if selected {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0));
-            **text = format!("> {}", labels[item.index]);
-        } else {
-            *color = TextColor(Color::srgb(0.5, 0.5, 0.5));
-            **text = format!("  {}", labels[item.index]);
-        }
+    for (menu_index, mut color, mut text) in action_items.iter_mut() {
+        let selected = menu_index.0 == fight_state.action_selection;
+        let prefix = if selected { ">" } else { " " };
+        *color = TextColor(nav_selection_text(selected));
+        **text = format!("{} {}", prefix, labels[menu_index.0]);
     }
 }

@@ -5,16 +5,17 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::stats::{HasStats, Healable};
 use crate::ui::widgets::PlayerStats;
+use crate::ui::{nav_selection_text, update_menu_colors, MenuIndex};
 
 /// Component marker for rest UI root
 #[derive(Component)]
 pub struct RestRoot;
 
-/// Component marker for rest actions
+/// Component marker for rest actions.
+/// Use with `MenuIndex` for selection tracking.
 #[derive(Component)]
 pub struct RestAction {
     pub action: RestActionType,
-    pub index: usize,
 }
 
 /// Types of actions in the rest screen
@@ -116,18 +117,19 @@ pub fn spawn_rest_ui(
                             RestActionType::Rest => "Rest (Heal to Full HP)",
                             RestActionType::Leave => "Leave",
                         };
+                        let selected = i == 0;
 
                         parent.spawn((
                             RestAction {
                                 action: *action_type,
-                                index: i,
                             },
+                            MenuIndex(i),
                             Text::new(label),
                             TextFont {
                                 font_size: 28.0,
                                 ..default()
                             },
-                            TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                            TextColor(nav_selection_text(selected)),
                         ));
                     }
                 });
@@ -144,23 +146,23 @@ pub fn handle_rest_input(
     mut next_mode: ResMut<NextState<DungeonMode>>,
     mut player: ResMut<Player>,
     mut dungeon: ResMut<crate::game::DungeonResource>,
-    rest_actions: Query<&RestAction>,
-    mut items: Query<(&RestAction, &mut TextColor)>,
+    rest_actions: Query<(&MenuIndex, &RestAction)>,
+    mut items: Query<(&MenuIndex, &mut TextColor), With<RestAction>>,
 ) {
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
                 selection_state.move_up();
-                update_rest_visuals(&selection_state, &mut items);
+                update_menu_colors::<RestAction>(selection_state.selected_action, &mut items);
             }
             GameAction::Navigate(NavigationDirection::Down) => {
                 selection_state.move_down();
-                update_rest_visuals(&selection_state, &mut items);
+                update_menu_colors::<RestAction>(selection_state.selected_action, &mut items);
             }
             GameAction::Select => {
                 // Find selected action
-                for rest_action in rest_actions.iter() {
-                    if rest_action.index == selection_state.selected_action {
+                for (menu_index, rest_action) in rest_actions.iter() {
+                    if menu_index.0 == selection_state.selected_action {
                         match rest_action.action {
                             RestActionType::Rest => {
                                 // Heal player to full
@@ -189,20 +191,6 @@ pub fn handle_rest_input(
                 next_mode.set(DungeonMode::Navigation);
             }
             _ => {}
-        }
-    }
-}
-
-/// Update visual highlighting for rest actions
-fn update_rest_visuals(
-    selection_state: &DungeonSelectionState,
-    items: &mut Query<(&RestAction, &mut TextColor)>,
-) {
-    for (action, mut color) in items.iter_mut() {
-        if action.index == selection_state.selected_action {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0)); // White
-        } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7)); // Gray
         }
     }
 }

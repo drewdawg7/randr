@@ -5,16 +5,17 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::states::AppState;
 use crate::ui::widgets::PlayerStats;
+use crate::ui::{nav_selection_text, update_menu_colors, MenuIndex};
 
 /// Component marker for room entry UI root
 #[derive(Component)]
 pub struct RoomEntryRoot;
 
-/// Component marker for room action items
+/// Component marker for room action items.
+/// Use with `MenuIndex` for selection tracking.
 #[derive(Component)]
 pub struct RoomAction {
     pub action: RoomActionType,
-    pub index: usize,
 }
 
 /// Types of actions available in a room
@@ -162,18 +163,19 @@ pub fn spawn_room_entry_ui(
                             RoomActionType::ChallengeBoss => "Challenge Boss",
                             RoomActionType::Leave => "Leave Room",
                         };
+                        let selected = i == 0;
 
                         parent.spawn((
                             RoomAction {
                                 action: *action_type,
-                                index: i,
                             },
+                            MenuIndex(i),
                             Text::new(label),
                             TextFont {
                                 font_size: 28.0,
                                 ..default()
                             },
-                            TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                            TextColor(nav_selection_text(selected)),
                         ));
                     }
                 });
@@ -191,23 +193,23 @@ pub fn handle_room_entry_input(
     mut next_app_state: ResMut<NextState<AppState>>,
     mut combat_source: ResMut<crate::game::CombatSourceResource>,
     mut dungeon: ResMut<crate::game::DungeonResource>,
-    room_actions: Query<&RoomAction>,
-    mut items: Query<(&RoomAction, &mut TextColor)>,
+    room_actions: Query<(&MenuIndex, &RoomAction)>,
+    mut items: Query<(&MenuIndex, &mut TextColor), With<RoomAction>>,
 ) {
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
                 selection_state.move_up();
-                update_room_entry_visuals(&selection_state, &mut items);
+                update_menu_colors::<RoomAction>(selection_state.selected_action, &mut items);
             }
             GameAction::Navigate(NavigationDirection::Down) => {
                 selection_state.move_down();
-                update_room_entry_visuals(&selection_state, &mut items);
+                update_menu_colors::<RoomAction>(selection_state.selected_action, &mut items);
             }
             GameAction::Select => {
                 // Find selected action
-                for room_action in room_actions.iter() {
-                    if room_action.index == selection_state.selected_action {
+                for (menu_index, room_action) in room_actions.iter() {
+                    if menu_index.0 == selection_state.selected_action {
                         match room_action.action {
                             RoomActionType::Fight => {
                                 // Set combat source and transition to Fight
@@ -244,20 +246,6 @@ pub fn handle_room_entry_input(
                 next_mode.set(DungeonMode::Navigation);
             }
             _ => {}
-        }
-    }
-}
-
-/// Update visual highlighting for room actions
-fn update_room_entry_visuals(
-    selection_state: &DungeonSelectionState,
-    items: &mut Query<(&RoomAction, &mut TextColor)>,
-) {
-    for (action, mut color) in items.iter_mut() {
-        if action.index == selection_state.selected_action {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0)); // White
-        } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7)); // Gray
         }
     }
 }

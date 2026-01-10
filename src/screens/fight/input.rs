@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::combat::{PlayerCombatAction, PostCombatAction};
 use crate::input::{GameAction, NavigationDirection};
+use crate::ui::{nav_selection_text, update_menu_colors, MenuIndex};
 
 use super::components::{ActionMenuItem, PostCombatMenuItem};
 use super::state::FightScreenState;
@@ -10,7 +11,7 @@ pub fn handle_player_turn_input(
     mut action_reader: EventReader<GameAction>,
     mut fight_state: ResMut<FightScreenState>,
     mut combat_action: EventWriter<PlayerCombatAction>,
-    mut action_items: Query<(&ActionMenuItem, &mut TextColor, &mut Text), Without<PostCombatMenuItem>>,
+    mut action_items: Query<(&MenuIndex, &mut TextColor, &mut Text), With<ActionMenuItem>>,
 ) {
     for action in action_reader.read() {
         match action {
@@ -39,17 +40,23 @@ pub fn handle_post_combat_input(
     mut action_reader: EventReader<GameAction>,
     mut fight_state: ResMut<FightScreenState>,
     mut post_combat_action: EventWriter<PostCombatAction>,
-    mut post_combat_items: Query<(&PostCombatMenuItem, &mut TextColor), Without<ActionMenuItem>>,
+    mut post_combat_items: Query<(&MenuIndex, &mut TextColor), With<PostCombatMenuItem>>,
 ) {
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
                 fight_state.post_combat_up();
-                update_post_combat_visuals(&fight_state, &mut post_combat_items);
+                update_menu_colors::<PostCombatMenuItem>(
+                    fight_state.post_combat_selection,
+                    &mut post_combat_items,
+                );
             }
             GameAction::Navigate(NavigationDirection::Down) => {
                 fight_state.post_combat_down();
-                update_post_combat_visuals(&fight_state, &mut post_combat_items);
+                update_menu_colors::<PostCombatMenuItem>(
+                    fight_state.post_combat_selection,
+                    &mut post_combat_items,
+                );
             }
             GameAction::Select => {
                 let action = match fight_state.post_combat_selection {
@@ -67,30 +74,13 @@ pub fn handle_post_combat_input(
 
 fn update_action_visuals(
     state: &FightScreenState,
-    items: &mut Query<(&ActionMenuItem, &mut TextColor, &mut Text), Without<PostCombatMenuItem>>,
+    items: &mut Query<(&MenuIndex, &mut TextColor, &mut Text), With<ActionMenuItem>>,
 ) {
     let labels = ["Attack", "Run"];
-    for (item, mut color, mut text) in items.iter_mut() {
-        let selected = item.index == state.action_selection;
-        if selected {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0));
-            **text = format!("> {}", labels[item.index]);
-        } else {
-            *color = TextColor(Color::srgb(0.5, 0.5, 0.5));
-            **text = format!("  {}", labels[item.index]);
-        }
-    }
-}
-
-fn update_post_combat_visuals(
-    state: &FightScreenState,
-    items: &mut Query<(&PostCombatMenuItem, &mut TextColor), Without<ActionMenuItem>>,
-) {
-    for (item, mut color) in items.iter_mut() {
-        if item.index == state.post_combat_selection {
-            *color = TextColor(Color::srgb(1.0, 1.0, 1.0));
-        } else {
-            *color = TextColor(Color::srgb(0.7, 0.7, 0.7));
-        }
+    for (menu_index, mut color, mut text) in items.iter_mut() {
+        let selected = menu_index.0 == state.action_selection;
+        let prefix = if selected { ">" } else { " " };
+        *color = TextColor(nav_selection_text(selected));
+        **text = format!("{} {}", prefix, labels[menu_index.0]);
     }
 }
