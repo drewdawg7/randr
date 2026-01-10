@@ -1,0 +1,79 @@
+{
+  "schema_version": "1.0",
+  "session_id": "293374d0-cd91-49b3-9bd5-cfa14a8c057f",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-10T21:23:52.012Z",
+    "end_time": "2026-01-10T21:30:05.068Z",
+    "duration_minutes": 6.22,
+    "duration_formatted": "6m 13s"
+  },
+  "messages": {
+    "user": 63,
+    "assistant": 119,
+    "total": 182
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 2834,
+    "output": 13923,
+    "cache_read": 5186248,
+    "cache_creation": 142594,
+    "total": 5345599,
+    "cost_usd": 11.5397
+  },
+  "tools": {
+    "total_calls": 61,
+    "by_type": {
+      "Bash": 24,
+      "Skill": 2,
+      "TodoWrite": 8,
+      "Read": 8,
+      "Write": 9,
+      "LSP": 6,
+      "Edit": 4
+    },
+    "success_rate": 1.0
+  },
+  "agents": {
+    "total_calls": 0,
+    "by_type": {}
+  },
+  "skills": {
+    "total_calls": 2,
+    "by_name": {
+      "updating-code": 1,
+      "session-stats": 1
+    }
+  },
+  "files": {
+    "modified": [
+      "0ae776d5643069a4@v1",
+      "936d54fda55deb38@v1",
+      "17f56d26e2fb7182@v1",
+      "1854424c2c93edca@v1",
+      "4ea44d693c5601f1@v1",
+      "d239c9db0c3d14e9@v1",
+      "4fbea72eb5bd9c67@v1",
+      "3c7019af410ae4f5@v1",
+      "6540e1234ee323ea@v1"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 0
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/293374d0-cd91-49b3-9bd5-cfa14a8c057f.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/293374d0-cd91-49b3-9bd5-cfa14a8c057f.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/293374d0-cd91-49b3-9bd5-cfa14a8c057f",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-10T21:30:05.233384Z",
+    "generator_version": "1.0.0"
+  }
+}

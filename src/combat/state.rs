@@ -1,5 +1,5 @@
 use crate::{
-    combat::{AttackResult, CombatEntityInfo, CombatRounds, get_combat_entity_info},
+    combat::{CombatEntityInfo, CombatRounds, get_combat_entity_info},
     mob::Mob,
     loot::LootDrop,
 };
@@ -8,8 +8,6 @@ use crate::{
 pub struct ActiveCombat {
     pub mob: Mob,
     pub rounds: CombatRounds,
-    pub last_player_attack: Option<AttackResult>,
-    pub last_enemy_attack: Option<AttackResult>,
     pub gold_gained: i32,
     pub xp_gained: i32,
     pub loot_drops: Vec<LootDrop>,
@@ -20,8 +18,6 @@ impl ActiveCombat {
         Self {
             mob,
             rounds: CombatRounds::new(),
-            last_player_attack: None,
-            last_enemy_attack: None,
             gold_gained: 0,
             xp_gained: 0,
             loot_drops: Vec::new(),

@@ -319,7 +319,6 @@ fn combat_rounds_new_is_empty() {
     use crate::combat::CombatRounds;
     let rounds = CombatRounds::new();
 
-    assert!(rounds.attack_results.is_empty());
     assert!(rounds.loot_drops.is_empty());
     assert_eq!(rounds.gold_gained, 0);
     assert_eq!(rounds.xp_gained, 0);

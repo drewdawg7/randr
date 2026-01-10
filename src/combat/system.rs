@@ -92,7 +92,6 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
 }
 #[derive(Debug, Default, Clone)]
 pub struct CombatRounds {
-    pub attack_results: Vec<AttackResult>,
     /// Spawned loot drops from the loot table, includes item instances and quantities
     pub loot_drops: Vec<LootDrop>,
     pub gold_gained: i32,
@@ -103,15 +102,11 @@ pub struct CombatRounds {
 impl CombatRounds {
     pub fn new() -> Self {
         Self {
-            attack_results: Vec::new(),
             loot_drops: Vec::new(),
             gold_gained: 0,
             xp_gained: 0,
             player_won: false,
         }
-    }
-    pub fn add_round(&mut self, round: AttackResult) {
-        self.attack_results.push(round);
     }
 
     pub fn loot_drops(&self) -> &[LootDrop] {
@@ -121,18 +116,12 @@ impl CombatRounds {
 
 /// Execute a single player attack step. Returns the AttackResult.
 pub fn player_attack_step(player: &Player, combat: &mut ActiveCombat) -> AttackResult {
-    let result = attack(player, &mut combat.mob);
-    combat.rounds.add_round(result.clone());
-    combat.last_player_attack = Some(result.clone());
-    result
+    attack(player, &mut combat.mob)
 }
 
 /// Execute a single enemy attack step. Returns the AttackResult.
 pub fn enemy_attack_step(combat: &mut ActiveCombat, player: &mut Player) -> AttackResult {
-    let result = attack(&combat.mob, player);
-    combat.rounds.add_round(result.clone());
-    combat.last_enemy_attack = Some(result.clone());
-    result
+    attack(&combat.mob, player)
 }
 
 /// Process victory rewards: gold (with goldfind), XP, and loot drops.
