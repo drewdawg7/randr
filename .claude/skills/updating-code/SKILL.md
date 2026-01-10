@@ -39,3 +39,26 @@ Common patterns:
 - `$EXPR.unwrap()` - Find unwrap calls
 - `impl $TRAIT for $TYPE { $$$ }` - Find trait implementations
 - `pub fn $NAME($$$) $$$` - Find public functions
+
+## Bevy UI Patterns
+
+Use **bundles** for complex UI spawning instead of inline component tuples:
+
+```rust
+// Good: Use bundles for reusable UI patterns
+player_side.spawn(HeaderLabelBundle::new("PLAYER", Color::srgb(0.5, 0.8, 0.5)));
+bar.spawn(HealthBarBundle::new(200.0));
+
+// Avoid: Inline component tuples for repeated patterns
+player_side.spawn((
+    Text::new("PLAYER"),
+    TextFont { font_size: 24.0, ..default() },
+    TextColor(Color::srgb(0.5, 0.8, 0.5)),
+    Node { margin: UiRect::bottom(Val::Px(10.0)), ..default() },
+));
+```
+
+Available bundles in `src/screens/shared/health_bar.rs`:
+- `HeaderLabelBundle` - Headers like "PLAYER", "ENEMY"
+- `HealthBarBundle` - Health bar container
+- `HealthBarNameBundle`, `HealthBarBackgroundBundle`, `HealthBarFillBundle`, `HealthBarTextBundle`
