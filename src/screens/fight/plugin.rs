@@ -11,32 +11,64 @@ use super::ui::{
     spawn_post_combat_overlay, update_combat_visuals,
 };
 
+/// SystemSets for organizing Fight screen systems by function.
+/// Configured to run in order: Input -> UI
+#[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
+pub enum FightSystemSet {
+    /// Handle player input (combat actions, post-combat choices)
+    Input,
+    /// Update combat visuals and overlays
+    Ui,
+}
+
 pub struct FightPlugin;
 
 impl Plugin for FightPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<FightScreenState>()
+            // Configure SystemSet ordering: Input runs before UI
+            .configure_sets(
+                Update,
+                (FightSystemSet::Input, FightSystemSet::Ui)
+                    .chain()
+                    .run_if(in_state(AppState::Fight)),
+            )
             .add_systems(
                 OnEnter(AppState::Fight),
                 (spawn_fight_screen, reset_fight_state).chain(),
             )
             .add_systems(OnExit(AppState::Fight), (cleanup_fight_screen, clear_game_action_events))
+            // Input systems
             .add_systems(
                 Update,
-                handle_player_turn_input.run_if(in_state(CombatPhaseState::PlayerTurn)),
+                handle_player_turn_input
+                    .in_set(FightSystemSet::Input)
+                    .run_if(in_state(CombatPhaseState::PlayerTurn)),
             )
             .add_systems(
                 Update,
-                (spawn_post_combat_overlay, handle_post_combat_input)
-                    .chain()
+                handle_post_combat_input
+                    .in_set(FightSystemSet::Input)
+                    .run_if(
+                        in_state(CombatPhaseState::Victory).or(in_state(CombatPhaseState::Defeat)),
+                    ),
+            )
+            // UI systems
+            .add_systems(
+                Update,
+                spawn_post_combat_overlay
+                    .in_set(FightSystemSet::Ui)
                     .run_if(
                         in_state(CombatPhaseState::Victory).or(in_state(CombatPhaseState::Defeat)),
                     ),
             )
             .add_systems(
+                Update,
+                update_combat_visuals.in_set(FightSystemSet::Ui),
+            )
+            .add_systems(
                 OnEnter(CombatPhaseState::PlayerTurn),
                 despawn_post_combat_overlay,
-            )
-            .add_systems(Update, update_combat_visuals.run_if(in_state(AppState::Fight)));
+            );
     }
 }

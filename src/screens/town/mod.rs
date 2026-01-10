@@ -11,8 +11,15 @@ use crate::ui::widgets::PlayerStats;
 pub use tabs::TabsPlugin;
 use render::{cleanup_tab_content, update_tab_header_visuals};
 
+/// SystemSets for organizing Town screen systems by function.
+/// Configured to run in order: Input -> Logic -> UI
 #[derive(SystemSet, Debug, Clone, PartialEq, Eq, Hash)]
-pub struct TabNavigationSet;
+pub enum TownSystemSet {
+    /// Handle user input (tab navigation, back action)
+    Input,
+    /// Update UI based on state changes
+    Ui,
+}
 
 pub struct TownPlugin;
 
@@ -20,6 +27,13 @@ impl Plugin for TownPlugin {
     fn build(&self, app: &mut App) {
         app.add_sub_state::<TownTab>()
             .add_plugins(TabsPlugin)
+            // Configure SystemSet ordering: Input runs before UI
+            .configure_sets(
+                Update,
+                (TownSystemSet::Input, TownSystemSet::Ui)
+                    .chain()
+                    .run_if(in_state(AppState::Town)),
+            )
             .add_systems(OnEnter(AppState::Town), setup_town_ui)
             .add_systems(OnExit(AppState::Town), cleanup_town_ui)
             // Cleanup tab content when exiting any tab
@@ -28,15 +42,17 @@ impl Plugin for TownPlugin {
             .add_systems(OnExit(TownTab::Alchemist), cleanup_tab_content)
             .add_systems(OnExit(TownTab::Field), cleanup_tab_content)
             .add_systems(OnExit(TownTab::Dungeon), cleanup_tab_content)
+            // Input systems
             .add_systems(
                 Update,
-                (
-                    handle_tab_navigation,
-                    handle_back_action,
-                    update_tab_header_visuals.run_if(state_changed::<TownTab>),
-                )
-                    .in_set(TabNavigationSet)
-                    .run_if(in_state(AppState::Town)),
+                (handle_tab_navigation, handle_back_action).in_set(TownSystemSet::Input),
+            )
+            // UI systems
+            .add_systems(
+                Update,
+                update_tab_header_visuals
+                    .in_set(TownSystemSet::Ui)
+                    .run_if(state_changed::<TownTab>),
             );
     }
 }
