@@ -33,7 +33,13 @@ impl Plugin for AlchemistTabPlugin {
             .add_systems(OnEnter(TownTab::Alchemist), spawn_alchemist_content)
             .add_systems(
                 Update,
-                (handle_alchemist_input, refresh_alchemist_on_mode_change)
+                (
+                    handle_alchemist_input,
+                    refresh_alchemist_on_mode_change.run_if(
+                        resource_changed::<AlchemistMode>
+                            .or(resource_changed::<AlchemistSelections>),
+                    ),
+                )
                     .run_if(in_state(TownTab::Alchemist)),
             );
     }
@@ -68,10 +74,6 @@ fn refresh_alchemist_on_mode_change(
     tab_content_query: Query<Entity, With<TabContent>>,
     player: Res<Player>,
 ) {
-    if !alchemist_mode.is_changed() && !alchemist_selections.is_changed() {
-        return;
-    }
-
     // Despawn existing content
     for entity in &tab_content_query {
         commands.entity(entity).despawn_recursive();

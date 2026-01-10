@@ -5,6 +5,8 @@ mod utils;
 
 use bevy::prelude::*;
 
+use crate::game::Player;
+
 use input::{handle_inventory_modal_input, handle_inventory_modal_toggle};
 use render::update_inventory_display;
 use state::InventorySelection;
@@ -19,7 +21,8 @@ impl Plugin for InventoryModalPlugin {
             (
                 handle_inventory_modal_toggle,
                 handle_inventory_modal_input,
-                update_inventory_display,
+                update_inventory_display
+                    .run_if(resource_changed::<Player>.or(resource_changed::<InventorySelection>)),
             ),
         );
     }

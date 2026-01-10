@@ -19,7 +19,7 @@ impl Plugin for SpellTestModalPlugin {
             (
                 handle_spell_test_modal_toggle,
                 handle_spell_test_input,
-                update_spell_test_display,
+                update_spell_test_display.run_if(resource_changed::<SpellTestState>),
             ),
         );
     }
@@ -448,10 +448,6 @@ fn update_spell_test_display(
     >,
 ) {
     if active_modal.modal != Some(ModalType::SpellTest) {
-        return;
-    }
-
-    if !state.is_changed() {
         return;
     }
 

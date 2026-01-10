@@ -193,7 +193,12 @@ impl Plugin for ToastPlugin {
             .add_systems(Startup, spawn_toast_container)
             .add_systems(
                 Update,
-                (handle_toast_events, cleanup_toasts, update_toast_ui).chain(),
+                (
+                    handle_toast_events,
+                    cleanup_toasts,
+                    update_toast_ui.run_if(resource_changed::<ToastQueue>),
+                )
+                    .chain(),
             );
     }
 }
@@ -242,11 +247,6 @@ fn update_toast_ui(
     container_query: Query<Entity, With<ToastContainer>>,
     toast_elements: Query<Entity, With<ToastElement>>,
 ) {
-    // Only update if the queue has changed
-    if !toast_queue.is_changed() {
-        return;
-    }
-
     let container = match container_query.get_single() {
         Ok(entity) => entity,
         Err(_) => return,

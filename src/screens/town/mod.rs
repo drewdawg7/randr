@@ -30,7 +30,11 @@ impl Plugin for TownPlugin {
             .add_systems(OnExit(TownTab::Dungeon), cleanup_tab_content)
             .add_systems(
                 Update,
-                (handle_tab_navigation, handle_back_action, update_tab_header_visuals)
+                (
+                    handle_tab_navigation,
+                    handle_back_action,
+                    update_tab_header_visuals.run_if(resource_changed::<State<TownTab>>),
+                )
                     .in_set(TabNavigationSet)
                     .run_if(in_state(AppState::Town)),
             );

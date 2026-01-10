@@ -366,11 +366,6 @@ pub fn update_inventory_display(
         return;
     }
 
-    // Only rebuild if player or selection changed
-    if !player.is_changed() && !selection.is_changed() {
-        return;
-    }
-
     // Despawn and respawn the modal to update it
     if let Ok(entity) = modal_root.get_single() {
         commands.entity(entity).despawn_recursive();

@@ -7,10 +7,6 @@ pub fn update_tab_header_visuals(
     current_tab: Res<State<TownTab>>,
     mut tab_query: Query<(&TabHeaderItem, &mut BackgroundColor)>,
 ) {
-    if !current_tab.is_changed() {
-        return;
-    }
-
     for (tab_item, mut bg_color) in tab_query.iter_mut() {
         if tab_item.tab == *current_tab.get() {
             *bg_color = BackgroundColor(Color::srgb(0.4, 0.4, 0.8));

@@ -27,7 +27,9 @@ impl Plugin for StoreTabPlugin {
                 Update,
                 (
                     handle_store_input,
-                    refresh_store_on_mode_change,
+                    refresh_store_on_mode_change.run_if(
+                        resource_changed::<StoreMode>.or(resource_changed::<StoreSelections>),
+                    ),
                     populate_store_info_panel,
                 )
                     .run_if(in_state(TownTab::Store)),
@@ -70,10 +72,6 @@ fn refresh_store_on_mode_change(
     storage: Res<Storage>,
     game_sprites: Res<GameSprites>,
 ) {
-    if !store_mode.is_changed() && !store_selections.is_changed() {
-        return;
-    }
-
     // Despawn existing content
     for entity in &tab_content_query {
         commands.entity(entity).despawn_recursive();

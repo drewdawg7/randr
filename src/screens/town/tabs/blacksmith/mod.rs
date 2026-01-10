@@ -23,7 +23,13 @@ impl Plugin for BlacksmithTabPlugin {
             .add_systems(OnEnter(TownTab::Blacksmith), spawn_blacksmith_content)
             .add_systems(
                 Update,
-                (handle_blacksmith_input, refresh_blacksmith_on_mode_change)
+                (
+                    handle_blacksmith_input,
+                    refresh_blacksmith_on_mode_change.run_if(
+                        resource_changed::<BlacksmithMode>
+                            .or(resource_changed::<BlacksmithSelections>),
+                    ),
+                )
                     .run_if(in_state(TownTab::Blacksmith)),
             );
     }
@@ -58,10 +64,6 @@ fn refresh_blacksmith_on_mode_change(
     tab_content_query: Query<Entity, With<TabContent>>,
     player: Res<Player>,
 ) {
-    if !blacksmith_mode.is_changed() && !blacksmith_selections.is_changed() {
-        return;
-    }
-
     // Despawn existing content
     for entity in &tab_content_query {
         commands.entity(entity).despawn_recursive();

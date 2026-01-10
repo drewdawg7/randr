@@ -16,7 +16,11 @@ impl Plugin for FieldTabPlugin {
             .add_systems(OnEnter(TownTab::Field), spawn_field_content)
             .add_systems(
                 Update,
-                (handle_field_input, refresh_field_on_state_change)
+                (
+                    handle_field_input,
+                    refresh_field_on_state_change
+                        .run_if(resource_changed::<FieldTabState>),
+                )
                     .run_if(in_state(TownTab::Field)),
             );
     }
@@ -41,10 +45,6 @@ fn refresh_field_on_state_change(
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
 ) {
-    if !field_state.is_changed() {
-        return;
-    }
-
     // Despawn existing content
     for entity in &tab_content_query {
         commands.entity(entity).despawn_recursive();

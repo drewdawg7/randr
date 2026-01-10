@@ -15,7 +15,11 @@ impl Plugin for DungeonTabPlugin {
             .add_systems(OnEnter(TownTab::Dungeon), spawn_dungeon_content)
             .add_systems(
                 Update,
-                (handle_dungeon_input, refresh_dungeon_on_state_change)
+                (
+                    handle_dungeon_input,
+                    refresh_dungeon_on_state_change
+                        .run_if(resource_changed::<DungeonTabState>),
+                )
                     .run_if(in_state(TownTab::Dungeon)),
             );
     }
@@ -40,10 +44,6 @@ fn refresh_dungeon_on_state_change(
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
 ) {
-    if !dungeon_state.is_changed() {
-        return;
-    }
-
     // Despawn existing content
     for entity in &tab_content_query {
         commands.entity(entity).despawn_recursive();
