@@ -147,20 +147,32 @@ fn on_add_item_grid(
 fn update_grid_selector(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
-    item_grids: Query<(&ItemGrid, &Children), Changed<ItemGrid>>,
+    item_grids: Query<(Entity, &ItemGrid, &Children), Changed<ItemGrid>>,
     grid_cells: Query<(Entity, &GridCell, &Children)>,
     selectors: Query<Entity, With<GridSelector>>,
 ) {
-    for (item_grid, grid_children) in &item_grids {
-        // Remove existing selector
+    for (grid_entity, item_grid, grid_children) in &item_grids {
+        // Skip if the grid entity is being despawned
+        if commands.get_entity(grid_entity).is_none() {
+            continue;
+        }
+
+        // Remove existing selector (only if it still exists)
         for selector_entity in &selectors {
-            commands.entity(selector_entity).despawn_recursive();
+            if commands.get_entity(selector_entity).is_some() {
+                commands.entity(selector_entity).despawn_recursive();
+            }
         }
 
         // Find the selected cell and add selector
         for &child in grid_children.iter() {
             if let Ok((cell_entity, grid_cell, _)) = grid_cells.get(child) {
                 if grid_cell.index == item_grid.selected_index {
+                    // Skip if cell entity no longer exists
+                    if commands.get_entity(cell_entity).is_none() {
+                        break;
+                    }
+
                     // Add selector to this cell
                     if let Some(selectors_sheet) = game_sprites.get(SpriteSheetKey::UiSelectors) {
                         if let (Some(idx1), Some(idx2), Some(img)) = (

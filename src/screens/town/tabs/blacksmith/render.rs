@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::game::{calculate_upgrade_cost, Player};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
-use crate::screens::town::shared::spawn_menu;
+use crate::screens::town::shared::{spawn_empty_state, spawn_menu, spawn_navigation_hint};
 use crate::screens::town::TabContent;
 use crate::ui::{selection_colors, selection_prefix};
 use crate::FindsItems;
@@ -121,18 +121,10 @@ pub fn spawn_blacksmith_ui(
                         );
 
                         // Navigation hint
-                        content.spawn((
-                            Text::new("[↑↓] Navigate  [Enter] Select  [←→] Switch Tab"),
-                            TextFont {
-                                font_size: 14.0,
-                                ..default()
-                            },
-                            TextColor(Color::srgb(0.5, 0.5, 0.5)),
-                            Node {
-                                margin: UiRect::top(Val::Auto),
-                                ..default()
-                            },
-                        ));
+                        spawn_navigation_hint(
+                            content,
+                            "[↑↓] Navigate  [Enter] Select  [←→] Switch Tab",
+                        );
                     }
                     BlacksmithModeKind::Upgrade => {
                         spawn_upgrade_ui(content, blacksmith_selections, player);
@@ -180,14 +172,7 @@ fn spawn_upgrade_ui(
         .collect();
 
     if equipment_items.is_empty() {
-        parent.spawn((
-            Text::new("You have no equipment to upgrade."),
-            TextFont {
-                font_size: 18.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.6, 0.6, 0.6)),
-        ));
+        spawn_empty_state(parent, "You have no equipment to upgrade.");
     } else {
         parent
             .spawn(Node {
@@ -288,18 +273,7 @@ fn spawn_upgrade_ui(
     }
 
     // Navigation hint
-    parent.spawn((
-        Text::new("[↑↓] Navigate  [Enter] Upgrade  [Backspace] Back"),
-        TextFont {
-            font_size: 14.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.5, 0.5, 0.5)),
-        Node {
-            margin: UiRect::top(Val::Auto),
-            ..default()
-        },
-    ));
+    spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Upgrade  [Backspace] Back");
 }
 
 /// Spawn the Quality mode UI.
@@ -350,14 +324,7 @@ fn spawn_quality_ui(
         .collect();
 
     if equipment_items.is_empty() {
-        parent.spawn((
-            Text::new("You have no equipment to improve."),
-            TextFont {
-                font_size: 18.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.6, 0.6, 0.6)),
-        ));
+        spawn_empty_state(parent, "You have no equipment to improve.");
     } else {
         parent
             .spawn(Node {
@@ -441,18 +408,7 @@ fn spawn_quality_ui(
     }
 
     // Navigation hint
-    parent.spawn((
-        Text::new("[↑↓] Navigate  [Enter] Improve  [Backspace] Back"),
-        TextFont {
-            font_size: 14.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.5, 0.5, 0.5)),
-        Node {
-            margin: UiRect::top(Val::Auto),
-            ..default()
-        },
-    ));
+    spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Improve  [Backspace] Back");
 }
 
 /// Spawn the Smelt mode UI.
@@ -478,31 +434,13 @@ fn spawn_smelt_ui(
     let recipes = RecipeId::all_smelting_recipes();
 
     if recipes.is_empty() {
-        parent.spawn((
-            Text::new("No smelting recipes available."),
-            TextFont {
-                font_size: 18.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.6, 0.6, 0.6)),
-        ));
+        spawn_empty_state(parent, "No smelting recipes available.");
     } else {
         spawn_recipe_list(parent, &recipes, blacksmith_selections.smelt.selected, player);
     }
 
     // Navigation hint
-    parent.spawn((
-        Text::new("[↑↓] Navigate  [Enter] Smelt  [Backspace] Back"),
-        TextFont {
-            font_size: 14.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.5, 0.5, 0.5)),
-        Node {
-            margin: UiRect::top(Val::Auto),
-            ..default()
-        },
-    ));
+    spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Smelt  [Backspace] Back");
 }
 
 /// Spawn the Forge mode UI.
@@ -528,29 +466,11 @@ fn spawn_forge_ui(
     let recipes = RecipeId::all_forging_recipes();
 
     if recipes.is_empty() {
-        parent.spawn((
-            Text::new("No forging recipes available."),
-            TextFont {
-                font_size: 18.0,
-                ..default()
-            },
-            TextColor(Color::srgb(0.6, 0.6, 0.6)),
-        ));
+        spawn_empty_state(parent, "No forging recipes available.");
     } else {
         spawn_recipe_list(parent, &recipes, blacksmith_selections.forge.selected, player);
     }
 
     // Navigation hint
-    parent.spawn((
-        Text::new("[↑↓] Navigate  [Enter] Forge  [Backspace] Back"),
-        TextFont {
-            font_size: 14.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.5, 0.5, 0.5)),
-        Node {
-            margin: UiRect::top(Val::Auto),
-            ..default()
-        },
-    ));
+    spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Forge  [Backspace] Back");
 }

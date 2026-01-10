@@ -1,0 +1,91 @@
+//! Alchemist tab for brewing potions.
+
+mod input;
+mod render;
+mod state;
+
+use bevy::prelude::*;
+
+use crate::game::Player;
+
+use super::super::shared::MenuOption;
+use super::super::{ContentArea, TabContent, TownTab};
+
+pub use state::AlchemistMode;
+
+use input::handle_alchemist_input;
+use render::spawn_alchemist_ui;
+use state::AlchemistSelections;
+
+/// Menu options for the alchemist.
+const ALCHEMIST_MENU_OPTIONS: &[MenuOption] = &[MenuOption {
+    label: "Brew",
+    description: Some("Brew potions from recipes"),
+}];
+
+/// Plugin for the Alchemist tab.
+pub struct AlchemistTabPlugin;
+
+impl Plugin for AlchemistTabPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<AlchemistMode>()
+            .init_resource::<AlchemistSelections>()
+            .add_systems(OnEnter(TownTab::Alchemist), spawn_alchemist_content)
+            .add_systems(
+                Update,
+                (handle_alchemist_input, refresh_alchemist_on_mode_change)
+                    .run_if(in_state(TownTab::Alchemist)),
+            );
+    }
+}
+
+/// Spawns alchemist UI content when entering the Alchemist tab.
+fn spawn_alchemist_content(
+    mut commands: Commands,
+    content_query: Query<Entity, With<ContentArea>>,
+    alchemist_mode: Res<AlchemistMode>,
+    alchemist_selections: Res<AlchemistSelections>,
+    player: Res<Player>,
+) {
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+    spawn_alchemist_ui(
+        &mut commands,
+        content_entity,
+        &alchemist_mode,
+        &alchemist_selections,
+        &player,
+    );
+}
+
+/// Refreshes alchemist UI when mode or selections change.
+fn refresh_alchemist_on_mode_change(
+    mut commands: Commands,
+    alchemist_mode: Res<AlchemistMode>,
+    alchemist_selections: Res<AlchemistSelections>,
+    content_query: Query<Entity, With<ContentArea>>,
+    tab_content_query: Query<Entity, With<TabContent>>,
+    player: Res<Player>,
+) {
+    if !alchemist_mode.is_changed() && !alchemist_selections.is_changed() {
+        return;
+    }
+
+    // Despawn existing content
+    for entity in &tab_content_query {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    // Respawn with new state
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+    spawn_alchemist_ui(
+        &mut commands,
+        content_entity,
+        &alchemist_mode,
+        &alchemist_selections,
+        &player,
+    );
+}

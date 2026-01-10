@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
 use crate::assets::{GameFonts, GameSprites, SpriteSheetKey};
-use crate::ui::UiText;
 use crate::game::{Player, Storage};
-use crate::screens::town::shared::spawn_menu;
+use crate::inventory::InventoryItem;
+use crate::screens::town::shared::{spawn_menu, spawn_navigation_hint};
 use crate::screens::town::TabContent;
+use crate::ui::UiText;
 use crate::stats::StatType;
 use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry};
 use crate::ui::{selection_colors, selection_prefix};
@@ -129,80 +130,16 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
     // Title
     parent.spawn(UiText::new("Sell Items").heading().yellow().margin_bottom(10.0).build_with_node());
 
-    // Get player inventory items
-    let inventory_items = player.inventory.items.as_slice();
-
-    if inventory_items.is_empty() {
-        parent.spawn(UiText::new("You have no items to sell.").dark_gray().build());
-    } else {
-        parent
-            .spawn(Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(5.0),
-                ..default()
-            })
-            .with_children(|list| {
-                for (i, inv_item) in inventory_items.iter().enumerate() {
-                    let is_selected = i == store_selections.sell.selected;
-
-                    let (bg_color, text_color) = selection_colors(is_selected);
-
-                    let prefix = selection_prefix(is_selected);
-                    let sell_price = (inv_item.item.gold_value as f32 * 0.5) as i32;
-
-                    list.spawn((
-                        Node {
-                            padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
-                            flex_direction: FlexDirection::Row,
-                            column_gap: Val::Px(10.0),
-                            ..default()
-                        },
-                        BackgroundColor(bg_color),
-                    ))
-                    .with_children(|item_row| {
-                        // Item name
-                        item_row.spawn((
-                            Text::new(format!("{}{}", prefix, inv_item.item.name)),
-                            TextFont {
-                                font_size: 18.0,
-                                ..default()
-                            },
-                            TextColor(text_color),
-                            Node {
-                                width: Val::Px(200.0),
-                                ..default()
-                            },
-                        ));
-
-                        // Quantity (if > 1)
-                        if inv_item.quantity > 1 {
-                            item_row.spawn((
-                                Text::new(format!("x{}", inv_item.quantity)),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                                Node {
-                                    width: Val::Px(60.0),
-                                    ..default()
-                                },
-                            ));
-                        }
-
-                        // Sell price
-                        item_row.spawn((
-                            Text::new(format!("{} gold", sell_price)),
-                            TextFont {
-                                font_size: 18.0,
-                                ..default()
-                            },
-                            TextColor(Color::srgb(0.9, 0.8, 0.3)),
-                        ));
-                    });
-                }
-            });
-    }
+    spawn_inventory_list(
+        parent,
+        player.inventory.items.as_slice(),
+        store_selections.sell.selected,
+        "You have no items to sell.",
+        Some(|item: &InventoryItem| {
+            let sell_price = (item.item.gold_value as f32 * 0.5) as i32;
+            format!("{} gold", sell_price)
+        }),
+    );
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Sell  [Backspace] Back");
@@ -234,65 +171,13 @@ fn spawn_storage_view_ui(
     // Title
     parent.spawn(UiText::new("Storage - View & Withdraw").heading().yellow().margin_bottom(10.0).build_with_node());
 
-    // Get storage items
-    let storage_items = storage.inventory.items.as_slice();
-
-    if storage_items.is_empty() {
-        parent.spawn(UiText::new("Storage is empty.").dark_gray().build());
-    } else {
-        parent
-            .spawn(Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(5.0),
-                ..default()
-            })
-            .with_children(|list| {
-                for (i, inv_item) in storage_items.iter().enumerate() {
-                    let is_selected = i == store_selections.storage_view.selected;
-
-                    let (bg_color, text_color) = selection_colors(is_selected);
-
-                    let prefix = selection_prefix(is_selected);
-
-                    list.spawn((
-                        Node {
-                            padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
-                            flex_direction: FlexDirection::Row,
-                            column_gap: Val::Px(10.0),
-                            ..default()
-                        },
-                        BackgroundColor(bg_color),
-                    ))
-                    .with_children(|item_row| {
-                        // Item name
-                        item_row.spawn((
-                            Text::new(format!("{}{}", prefix, inv_item.item.name)),
-                            TextFont {
-                                font_size: 18.0,
-                                ..default()
-                            },
-                            TextColor(text_color),
-                            Node {
-                                width: Val::Px(200.0),
-                                ..default()
-                            },
-                        ));
-
-                        // Quantity (if > 1)
-                        if inv_item.quantity > 1 {
-                            item_row.spawn((
-                                Text::new(format!("x{}", inv_item.quantity)),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                            ));
-                        }
-                    });
-                }
-            });
-    }
+    spawn_inventory_list(
+        parent,
+        storage.inventory.items.as_slice(),
+        store_selections.storage_view.selected,
+        "Storage is empty.",
+        None::<fn(&InventoryItem) -> String>,
+    );
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Withdraw  [Backspace] Back");
@@ -307,84 +192,99 @@ fn spawn_storage_deposit_ui(
     // Title
     parent.spawn(UiText::new("Storage - Deposit Items").heading().yellow().margin_bottom(10.0).build_with_node());
 
-    // Get player inventory items
-    let inventory_items = player.inventory.items.as_slice();
-
-    if inventory_items.is_empty() {
-        parent.spawn(UiText::new("You have no items to deposit.").dark_gray().build());
-    } else {
-        parent
-            .spawn(Node {
-                flex_direction: FlexDirection::Column,
-                row_gap: Val::Px(5.0),
-                ..default()
-            })
-            .with_children(|list| {
-                for (i, inv_item) in inventory_items.iter().enumerate() {
-                    let is_selected = i == store_selections.deposit.selected;
-
-                    let (bg_color, text_color) = selection_colors(is_selected);
-
-                    let prefix = selection_prefix(is_selected);
-
-                    list.spawn((
-                        Node {
-                            padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
-                            flex_direction: FlexDirection::Row,
-                            column_gap: Val::Px(10.0),
-                            ..default()
-                        },
-                        BackgroundColor(bg_color),
-                    ))
-                    .with_children(|item_row| {
-                        // Item name
-                        item_row.spawn((
-                            Text::new(format!("{}{}", prefix, inv_item.item.name)),
-                            TextFont {
-                                font_size: 18.0,
-                                ..default()
-                            },
-                            TextColor(text_color),
-                            Node {
-                                width: Val::Px(200.0),
-                                ..default()
-                            },
-                        ));
-
-                        // Quantity (if > 1)
-                        if inv_item.quantity > 1 {
-                            item_row.spawn((
-                                Text::new(format!("x{}", inv_item.quantity)),
-                                TextFont {
-                                    font_size: 16.0,
-                                    ..default()
-                                },
-                                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                            ));
-                        }
-                    });
-                }
-            });
-    }
+    spawn_inventory_list(
+        parent,
+        player.inventory.items.as_slice(),
+        store_selections.deposit.selected,
+        "You have no items to deposit.",
+        None::<fn(&InventoryItem) -> String>,
+    );
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Deposit  [Backspace] Back");
 }
 
-/// Spawn navigation hint at the bottom.
-fn spawn_navigation_hint(parent: &mut ChildBuilder, hint: &str) {
-    parent.spawn((
-        Text::new(hint),
-        TextFont {
-            font_size: 14.0,
+/// Spawn an inventory item list with optional extra column.
+fn spawn_inventory_list<F>(
+    parent: &mut ChildBuilder,
+    items: &[InventoryItem],
+    selected_index: usize,
+    empty_message: &str,
+    extra_column: Option<F>,
+) where
+    F: Fn(&InventoryItem) -> String,
+{
+    if items.is_empty() {
+        parent.spawn(UiText::new(empty_message).dark_gray().build());
+        return;
+    }
+
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            row_gap: Val::Px(5.0),
             ..default()
-        },
-        TextColor(Color::srgb(0.5, 0.5, 0.5)),
-        Node {
-            margin: UiRect::top(Val::Auto),
-            ..default()
-        },
-    ));
+        })
+        .with_children(|list| {
+            for (i, inv_item) in items.iter().enumerate() {
+                let is_selected = i == selected_index;
+                let (bg_color, text_color) = selection_colors(is_selected);
+                let prefix = selection_prefix(is_selected);
+
+                list.spawn((
+                    Node {
+                        padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
+                        flex_direction: FlexDirection::Row,
+                        column_gap: Val::Px(10.0),
+                        ..default()
+                    },
+                    BackgroundColor(bg_color),
+                ))
+                .with_children(|item_row| {
+                    // Item name
+                    item_row.spawn((
+                        Text::new(format!("{}{}", prefix, inv_item.item.name)),
+                        TextFont {
+                            font_size: 18.0,
+                            ..default()
+                        },
+                        TextColor(text_color),
+                        Node {
+                            width: Val::Px(200.0),
+                            ..default()
+                        },
+                    ));
+
+                    // Quantity (if > 1)
+                    if inv_item.quantity > 1 {
+                        item_row.spawn((
+                            Text::new(format!("x{}", inv_item.quantity)),
+                            TextFont {
+                                font_size: 16.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.7, 0.7, 0.7)),
+                            Node {
+                                width: Val::Px(60.0),
+                                ..default()
+                            },
+                        ));
+                    }
+
+                    // Extra column (e.g., sell price)
+                    if let Some(ref render_extra) = extra_column {
+                        item_row.spawn((
+                            Text::new(render_extra(inv_item)),
+                            TextFont {
+                                font_size: 18.0,
+                                ..default()
+                            },
+                            TextColor(Color::srgb(0.9, 0.8, 0.3)),
+                        ));
+                    }
+                });
+            }
+        });
 }
 
 /// System to populate the store info panel with item details.
