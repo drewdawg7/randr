@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "session_id": "9fd8a094-b723-4746-ac57-a0efa4ff1611",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-10T17:12:58.231Z",
+    "end_time": "2026-01-10T17:21:56.943Z",
+    "duration_minutes": 8.98,
+    "duration_formatted": "8m 58s"
+  },
+  "messages": {
+    "user": 81,
+    "assistant": 146,
+    "total": 227
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 3850,
+    "output": 23739,
+    "cache_read": 7927945,
+    "cache_creation": 187657,
+    "total": 8143191,
+    "cost_usd": 17.2487
+  },
+  "tools": {
+    "total_calls": 76,
+    "by_type": {
+      "Bash": 13,
+      "Skill": 2,
+      "TodoWrite": 13,
+      "Read": 20,
+      "Glob": 1,
+      "LSP": 3,
+      "Grep": 2,
+      "Write": 1,
+      "Edit": 21
+    },
+    "success_rate": 1.0
+  },
+  "agents": {
+    "total_calls": 0,
+    "by_type": {}
+  },
+  "skills": {
+    "total_calls": 2,
+    "by_name": {
+      "updating-code": 1,
+      "session-stats": 1
+    }
+  },
+  "files": {
+    "modified": [
+      "a6438d6c5e977a0f@v1",
+      "4ef6f4b5b8503717@v1",
+      "98b445badb70bdf4@v1",
+      "94811d9d53711e3d@v1",
+      "ec63a129a15065bc@v1",
+      "572c489074215546@v1",
+      "4c18f1a8642c8756@v1",
+      "51f3fee02839cc4f@v1"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 0
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/9fd8a094-b723-4746-ac57-a0efa4ff1611.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/9fd8a094-b723-4746-ac57-a0efa4ff1611.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/9fd8a094-b723-4746-ac57-a0efa4ff1611",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-10T17:21:57.165111Z",
+    "generator_version": "1.0.0"
+  }
+}

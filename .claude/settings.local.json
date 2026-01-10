@@ -122,7 +122,10 @@
       "Skill(bevy-patterns)",
       "Skill(creating-skills)",
       "Skill(sprites)",
-      "Bash(git -C /Users/drewstewart/code/game checkout -b feat/randr-title)"
+      "Bash(git -C /Users/drewstewart/code/game checkout -b feat/randr-title)",
+      "Skill(session-stats)",
+      "Bash(timeout 3 cargo run:*)",
+      "Bash(git status:*)"
     ]
   },
   "enabledMcpjsonServers": [
