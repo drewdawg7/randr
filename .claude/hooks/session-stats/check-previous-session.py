@@ -1,14 +1,13 @@
 #!/usr/bin/env python3
 """
 Check if previous session needs stats aggregation.
-Outputs JSON prompt for Claude if aggregation is needed.
+Outputs a prompt for Claude if aggregation is needed.
 
-This hook runs on UserPromptSubmit and checks if the previous session
+This hook runs on SessionStart and checks if the previous session
 has unaggregated stats. If so, it outputs a prompt for Claude to ask
 the user if they want to generate a report.
 """
 import json
-import sys
 from pathlib import Path
 
 CLAUDE_DIR = Path.home() / ".claude"
@@ -62,13 +61,11 @@ def main():
     session_id = get_previous_session_id()
 
     if not session_id:
-        # No previous session, output empty result
-        print(json.dumps({"result": ""}))
+        # No previous session, no output needed
         return
 
     if stats_exist(session_id):
-        # Already aggregated, output empty result
-        print(json.dumps({"result": ""}))
+        # Already aggregated, no output needed
         return
 
     # Previous session needs aggregation - prompt user
@@ -78,7 +75,7 @@ def main():
         "Ask the user if they would like to generate a session stats report "
         "using the session-stats skill."
     )
-    print(json.dumps({"result": prompt}))
+    print(prompt)
 
 
 if __name__ == "__main__":
