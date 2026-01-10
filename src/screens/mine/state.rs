@@ -36,7 +36,7 @@ impl OreType {
 
 /// Different tile types in the mine grid.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum MineTile {
+pub(super) enum MineTile {
     /// Wall - impassable, appears at edges
     Wall,
     /// Floor - walkable empty space
@@ -74,7 +74,7 @@ impl MineTile {
 
 /// 12x8 grid structure for the mine.
 #[derive(Debug, Clone)]
-pub struct MineGrid {
+pub(super) struct MineGrid {
     pub width: usize,
     pub height: usize,
     pub tiles: Vec<Vec<MineTile>>,
