@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhase};
+use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhaseState};
 use crate::game::Player;
 use crate::screens::shared::{spawn_combat_log, update_health_bar, HealthBar, HealthBarFill, HealthBarText};
 use crate::stats::HasStats;
@@ -253,6 +253,7 @@ pub fn spawn_post_combat_overlay(
     combat_res: Res<ActiveCombatResource>,
     overlay_query: Query<Entity, With<PostCombatOverlay>>,
     fight_root: Query<Entity, With<FightScreenRoot>>,
+    phase_state: Res<State<CombatPhaseState>>,
 ) {
     if !overlay_query.is_empty() {
         return;
@@ -265,7 +266,7 @@ pub fn spawn_post_combat_overlay(
         return;
     };
 
-    let is_victory = combat.phase == CombatPhase::Victory;
+    let is_victory = *phase_state.get() == CombatPhaseState::Victory;
 
     commands.entity(root_entity).with_children(|parent| {
         parent

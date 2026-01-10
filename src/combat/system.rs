@@ -1,5 +1,5 @@
 use crate::{
-    combat::{ActiveCombat, AttackResult, CombatEntity, Combatant, CombatPhase, HasGold, IsKillable},
+    combat::{ActiveCombat, AttackResult, CombatEntity, Combatant, HasGold, IsKillable},
     entities::progression::HasProgression,
     loot::LootDrop,
     magic::effect::PassiveEffect,
@@ -120,39 +120,23 @@ impl CombatRounds {
 }
 
 /// Execute a single player attack step. Returns the AttackResult.
-/// Updates the combat phase based on outcome.
 pub fn player_attack_step(player: &Player, combat: &mut ActiveCombat) -> AttackResult {
     let result = attack(player, &mut combat.mob);
     combat.rounds.add_round(result.clone());
     combat.last_player_attack = Some(result.clone());
-
-    if !combat.mob.is_alive() {
-        combat.phase = CombatPhase::Victory;
-    } else {
-        combat.phase = CombatPhase::PlayerAttacking;
-    }
-
     result
 }
 
 /// Execute a single enemy attack step. Returns the AttackResult.
-/// Updates the combat phase based on outcome.
 pub fn enemy_attack_step(combat: &mut ActiveCombat, player: &mut Player) -> AttackResult {
     let result = attack(&combat.mob, player);
     combat.rounds.add_round(result.clone());
     combat.last_enemy_attack = Some(result.clone());
-
-    if !player.is_alive() {
-        combat.phase = CombatPhase::Defeat;
-    } else {
-        combat.phase = CombatPhase::PlayerTurn;
-    }
-
     result
 }
 
 /// Process victory rewards: gold (with goldfind), XP, and loot drops.
-/// Call this when combat.phase == CombatPhase::Victory.
+/// Call this when in `CombatPhaseState::Victory`.
 pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
     let death_result = combat.mob.on_death(player.effective_magicfind());
 
@@ -166,7 +150,7 @@ pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
 }
 
 /// Process player defeat: gold penalty and health restore.
-/// Call this when combat.phase == CombatPhase::Defeat.
+/// Call this when in `CombatPhaseState::Defeat`.
 pub fn process_defeat(player: &mut Player) {
     let _death_result = player.on_death(0);
 }

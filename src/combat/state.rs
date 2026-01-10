@@ -4,19 +4,9 @@ use crate::{
     loot::LootDrop,
 };
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum CombatPhase {
-    PlayerTurn,       // Waiting for Attack/Run input
-    PlayerAttacking,  // Brief pause showing player attack result
-    EnemyAttacking,   // Brief pause showing enemy attack result
-    Victory,          // Combat ended, player won
-    Defeat,           // Combat ended, player lost
-}
-
 #[derive(Debug)]
 pub struct ActiveCombat {
     pub mob: Mob,
-    pub phase: CombatPhase,
     pub rounds: CombatRounds,
     pub last_player_attack: Option<AttackResult>,
     pub last_enemy_attack: Option<AttackResult>,
@@ -29,7 +19,6 @@ impl ActiveCombat {
     pub fn new(mob: Mob) -> Self {
         Self {
             mob,
-            phase: CombatPhase::PlayerTurn,
             rounds: CombatRounds::new(),
             last_player_attack: None,
             last_enemy_attack: None,
@@ -37,10 +26,6 @@ impl ActiveCombat {
             xp_gained: 0,
             loot_drops: Vec::new(),
         }
-    }
-
-    pub fn is_combat_over(&self) -> bool {
-        matches!(self.phase, CombatPhase::Victory | CombatPhase::Defeat)
     }
 
     /// Get summary info about the enemy using the CombatEntity trait.
