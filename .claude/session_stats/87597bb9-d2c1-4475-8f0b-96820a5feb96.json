@@ -1,0 +1,69 @@
+{
+  "schema_version": "1.0",
+  "session_id": "87597bb9-d2c1-4475-8f0b-96820a5feb96",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-10T06:57:05.222Z",
+    "end_time": "2026-01-10T07:07:49.906Z",
+    "duration_minutes": 10.74,
+    "duration_formatted": "10m 44s"
+  },
+  "messages": {
+    "user": 98,
+    "assistant": 197,
+    "total": 295
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 2244,
+    "output": 31784,
+    "cache_read": 14520276,
+    "cache_creation": 395381,
+    "total": 14949685,
+    "cost_usd": 31.6113
+  },
+  "tools": {
+    "total_calls": 94,
+    "by_type": {
+      "Bash": 22,
+      "Read": 27,
+      "Glob": 2,
+      "Grep": 3,
+      "TodoWrite": 7,
+      "Edit": 32,
+      "Skill": 1
+    },
+    "success_rate": 1.0
+  },
+  "files": {
+    "modified": [
+      "962cacc49a0bb34f@v1",
+      "26a75c88b9007a3f@v1",
+      "be1405a75b9cd840@v1",
+      "248c4b20b7dbda23@v1",
+      "e5376e69018b2135@v1",
+      "02207ed518b6ff30@v1",
+      "891d05deaa3fddc0@v1",
+      "fb9f3d3354c9e97a@v1",
+      "f78f41037c128920@v1",
+      "42c57b814d990bc2@v1"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 0
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/87597bb9-d2c1-4475-8f0b-96820a5feb96.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/87597bb9-d2c1-4475-8f0b-96820a5feb96.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/87597bb9-d2c1-4475-8f0b-96820a5feb96",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-10T07:07:50.051263Z",
+    "generator_version": "1.0.0"
+  }
+}

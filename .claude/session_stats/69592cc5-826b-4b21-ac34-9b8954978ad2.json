@@ -1,0 +1,77 @@
+{
+  "schema_version": "1.0",
+  "session_id": "69592cc5-826b-4b21-ac34-9b8954978ad2",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-10T00:24:18.814Z",
+    "end_time": "2026-01-10T06:41:25.374Z",
+    "duration_minutes": 377.11,
+    "duration_formatted": "6h 17m 6s"
+  },
+  "messages": {
+    "user": 76,
+    "assistant": 153,
+    "total": 229
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 1345,
+    "output": 29061,
+    "cache_read": 10063018,
+    "cache_creation": 934830,
+    "total": 11028254,
+    "cost_usd": 34.8223
+  },
+  "tools": {
+    "total_calls": 71,
+    "by_type": {
+      "Bash": 15,
+      "Task": 4,
+      "Write": 7,
+      "AskUserQuestion": 1,
+      "Edit": 16,
+      "ExitPlanMode": 1,
+      "TodoWrite": 11,
+      "Read": 12,
+      "Grep": 3,
+      "Skill": 1
+    },
+    "success_rate": 1.0
+  },
+  "files": {
+    "modified": [
+      "962cacc49a0bb34f@v1",
+      "be1405a75b9cd840@v1",
+      "a117c4ca06d286b7@v1",
+      "f78f41037c128920@v2",
+      "02207ed518b6ff30@v1",
+      "fd0a07f10d6776e5@v1",
+      "891d05deaa3fddc0@v1",
+      "b4faf7840f8d942a@v2",
+      "962cacc49a0bb34f@v2",
+      "2b272d32567ca371@v1",
+      "be1405a75b9cd840@v2",
+      "f78f41037c128920@v1",
+      "e73d6fef97b55ce6@v1",
+      "ed8ef756f707fa14@v1",
+      "02207ed518b6ff30@v2"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 39183
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/69592cc5-826b-4b21-ac34-9b8954978ad2.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/69592cc5-826b-4b21-ac34-9b8954978ad2.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/69592cc5-826b-4b21-ac34-9b8954978ad2",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-10T06:41:25.524290Z",
+    "generator_version": "1.0.0"
+  }
+}
