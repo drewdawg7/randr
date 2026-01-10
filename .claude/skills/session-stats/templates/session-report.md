@@ -12,6 +12,8 @@
 |--------|-------|
 | Messages | {{messages.total}} ({{messages.user}} user / {{messages.assistant}} assistant) |
 | Tool Calls | {{tools.total_calls}} |
+| Agents Used | {{agents.total_calls}} |
+| Skills Used | {{skills.total_calls}} |
 | Files Modified | {{files.modified|length}} |
 | Cost | ${{tokens.cost_usd}} |
 
@@ -40,6 +42,34 @@
 {{/each}}
 
 **Success Rate:** {{tools.success_rate|percent}}
+
+{{#if agents.total_calls}}
+---
+
+## Agent Usage
+
+| Agent Type | Calls |
+|------------|-------|
+{{#each agents.by_type}}
+| {{@key}} | {{this}} |
+{{/each}}
+
+**Total Agent Calls:** {{agents.total_calls}}
+{{/if}}
+
+{{#if skills.total_calls}}
+---
+
+## Skill Usage
+
+| Skill | Calls |
+|-------|-------|
+{{#each skills.by_name}}
+| {{@key}} | {{this}} |
+{{/each}}
+
+**Total Skill Calls:** {{skills.total_calls}}
+{{/if}}
 
 ---
 

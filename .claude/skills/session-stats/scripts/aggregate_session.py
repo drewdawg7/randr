@@ -249,6 +249,16 @@ def aggregate_session(session_id: str, project_path: Optional[str] = None) -> di
             "success_rate": 1.0  # Assume success unless we have failure data
         },
 
+        "agents": {
+            "total_calls": session_data["agents"]["total_calls"],
+            "by_type": session_data["agents"]["by_type"]
+        },
+
+        "skills": {
+            "total_calls": session_data["skills"]["total_calls"],
+            "by_name": session_data["skills"]["by_name"]
+        },
+
         "files": {
             "modified": file_data["modified"],
             "read": file_data.get("read", []),

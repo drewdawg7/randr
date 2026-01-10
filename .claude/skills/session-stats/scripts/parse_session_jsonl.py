@@ -51,6 +51,8 @@ def parse_session_jsonl(session_id: str, project_path: Optional[str] = None) -> 
             - tokens: Token usage breakdown
             - messages: Message counts
             - tools: Tool usage data
+            - agents: Agent (Task tool) usage by subagent_type
+            - skills: Skill tool usage by skill name
             - timing: First/last timestamps
             - model: Primary model used
             - source_path: Actual absolute path to the file read
@@ -68,6 +70,8 @@ def parse_session_jsonl(session_id: str, project_path: Optional[str] = None) -> 
             },
             "messages": {"total": 0, "user": 0, "assistant": 0},
             "tools": {"total_calls": 0, "by_type": {}, "durations": []},
+            "agents": {"total_calls": 0, "by_type": {}},
+            "skills": {"total_calls": 0, "by_name": {}},
             "timing": {"first": None, "last": None},
             "model": None,
             "source_path": None
@@ -82,6 +86,8 @@ def parse_session_jsonl(session_id: str, project_path: Optional[str] = None) -> 
     }
     messages = {"user": 0, "assistant": 0}
     tool_counts = Counter()
+    agent_counts = Counter()
+    skill_counts = Counter()
     tool_durations = []
     timestamps = []
     models = Counter()
@@ -134,6 +140,16 @@ def parse_session_jsonl(session_id: str, project_path: Optional[str] = None) -> 
                         tool_name = block.get("name", "unknown")
                         tool_counts[tool_name] += 1
 
+                        # Track agent usage (Task tool with subagent_type)
+                        if tool_name == "Task":
+                            subagent_type = block.get("input", {}).get("subagent_type", "unknown")
+                            agent_counts[subagent_type] += 1
+
+                        # Track skill usage (Skill tool with skill name)
+                        elif tool_name == "Skill":
+                            skill_name = block.get("input", {}).get("skill", "unknown")
+                            skill_counts[skill_name] += 1
+
             # Extract tool use result data
             tool_result = entry.get("toolUseResult")
             if tool_result and isinstance(tool_result, dict):
@@ -164,6 +180,14 @@ def parse_session_jsonl(session_id: str, project_path: Optional[str] = None) -> 
             "total_calls": sum(tool_counts.values()),
             "by_type": dict(tool_counts),
             "durations": tool_durations
+        },
+        "agents": {
+            "total_calls": sum(agent_counts.values()),
+            "by_type": dict(agent_counts)
+        },
+        "skills": {
+            "total_calls": sum(skill_counts.values()),
+            "by_name": dict(skill_counts)
         },
         "timing": {
             "first": timestamps[0] if timestamps else None,
