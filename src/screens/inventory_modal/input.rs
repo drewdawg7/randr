@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
-use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
-use crate::inventory::{FindsItems, ManagesEquipment};
+use crate::inventory::{FindsItems, Inventory, ManagesEquipment};
 
 use super::render::spawn_inventory_modal;
 use super::state::{InventoryModalRoot, InventorySelection, ItemInfo};
@@ -15,7 +14,7 @@ pub fn handle_inventory_modal_toggle(
     mut action_reader: EventReader<GameAction>,
     mut active_modal: ResMut<ActiveModal>,
     mut selection: ResMut<InventorySelection>,
-    player: Res<Player>,
+    inventory: Res<Inventory>,
     existing_modal: Query<Entity, With<InventoryModalRoot>>,
 ) {
     for action in action_reader.read() {
@@ -27,7 +26,7 @@ pub fn handle_inventory_modal_toggle(
                     active_modal.modal = None;
                 } else {
                     selection.reset();
-                    spawn_inventory_modal(&mut commands, &player, &mut selection);
+                    spawn_inventory_modal(&mut commands, &inventory, &mut selection);
                     active_modal.modal = Some(ModalType::Inventory);
                 }
             }
@@ -50,7 +49,7 @@ pub fn handle_inventory_modal_input(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
     mut selection: ResMut<InventorySelection>,
-    mut player: ResMut<Player>,
+    mut inventory: ResMut<Inventory>,
 ) {
     if active_modal.modal != Some(ModalType::Inventory) {
         return;
@@ -65,7 +64,7 @@ pub fn handle_inventory_modal_input(
             },
             GameAction::Select => {
                 // Equip/unequip the selected item
-                toggle_equip(&mut player, &selection);
+                toggle_equip(&mut inventory, &selection);
             }
             _ => {}
         }
@@ -73,20 +72,20 @@ pub fn handle_inventory_modal_input(
 }
 
 /// Toggle equipping/unequipping of the selected item.
-fn toggle_equip(player: &mut Player, selection: &InventorySelection) {
-    let items = get_all_inventory_items(player);
+fn toggle_equip(inventory: &mut Inventory, selection: &InventorySelection) {
+    let items = get_all_inventory_items(inventory);
     if let Some(item_info) = items.get(selection.index) {
         match item_info {
             ItemInfo::Equipped(slot, _) => {
                 // Unequip
-                let _ = player.unequip_item(*slot);
+                let _ = inventory.unequip_item(*slot);
             }
             ItemInfo::Backpack(item_uuid, _) => {
                 // Try to equip
-                if let Some(inv_item) = player.find_item_by_uuid(*item_uuid) {
+                if let Some(inv_item) = inventory.find_item_by_uuid(*item_uuid) {
                     if let Some(slot) = inv_item.item.item_type.equipment_slot() {
                         // Equip from inventory using the trait method
-                        player.equip_from_inventory(*item_uuid, slot);
+                        inventory.equip_from_inventory(*item_uuid, slot);
                     }
                 }
             }

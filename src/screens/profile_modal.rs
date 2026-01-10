@@ -2,14 +2,15 @@ use bevy::prelude::*;
 
 use crate::combat::{DealsDamage, HasGold};
 use crate::entities::progression::HasProgression;
-use crate::game::Player;
+use crate::entities::Progression;
 use crate::input::GameAction;
-use crate::inventory::{EquipmentSlot, HasInventory};
+use crate::inventory::{EquipmentSlot, HasInventory, Inventory};
+use crate::player::{Player, PlayerGold, PlayerName};
 use crate::screens::modal::{
     create_modal_container, create_modal_instruction, create_modal_title, spawn_modal_overlay,
     ActiveModal, ModalType,
 };
-use crate::stats::{HasStats, StatType};
+use crate::stats::{HasStats, StatSheet, StatType};
 
 /// Plugin that manages the profile modal system.
 pub struct ProfileModalPlugin;
@@ -32,7 +33,11 @@ fn handle_profile_modal_toggle(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut active_modal: ResMut<ActiveModal>,
-    player: Res<Player>,
+    name: Res<PlayerName>,
+    gold: Res<PlayerGold>,
+    progression: Res<Progression>,
+    inventory: Res<Inventory>,
+    stats: Res<StatSheet>,
     existing_modal: Query<Entity, With<ProfileModalRoot>>,
 ) {
     for action in action_reader.read() {
@@ -43,6 +48,7 @@ fn handle_profile_modal_toggle(
                 active_modal.modal = None;
             } else {
                 // Open new modal
+                let player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
                 spawn_profile_modal(&mut commands, &player);
                 active_modal.modal = Some(ModalType::Profile);
             }

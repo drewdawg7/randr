@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
 use crate::combat::{ActiveCombatResource, CombatPhaseState};
-use crate::player::Player;
 use crate::input::clear_game_action_events;
+use crate::inventory::Inventory;
+use crate::stats::StatSheet;
 use crate::states::AppState;
 
 use super::input::{handle_player_turn_input, handle_post_combat_input};
@@ -68,7 +69,9 @@ impl Plugin for FightPlugin {
                 update_combat_visuals
                     .in_set(FightSystemSet::Ui)
                     .run_if(
-                        resource_changed::<Player>.or(resource_changed::<ActiveCombatResource>),
+                        resource_changed::<StatSheet>
+                            .or(resource_changed::<Inventory>)
+                            .or(resource_changed::<ActiveCombatResource>),
                     ),
             )
             .add_systems(

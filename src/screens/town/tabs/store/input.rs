@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
 use crate::game::{
-    Player, Storage, StorageDepositEvent, StorageWithdrawEvent, StorePurchaseEvent, StoreSellEvent,
+    Storage, StorageDepositEvent, StorageWithdrawEvent, StorePurchaseEvent, StoreSellEvent,
 };
 use crate::input::{GameAction, NavigationDirection};
+use crate::inventory::Inventory;
 
 use super::constants::BUYABLE_ITEMS;
 use super::state::{StoreModeKind, StoreMode, StoreSelections};
@@ -13,7 +14,7 @@ pub fn handle_store_input(
     mut store_mode: ResMut<StoreMode>,
     mut store_selections: ResMut<StoreSelections>,
     mut action_events: EventReader<GameAction>,
-    player: Res<Player>,
+    inventory: Res<Inventory>,
     storage: Res<Storage>,
     mut purchase_events: EventWriter<StorePurchaseEvent>,
     mut sell_events: EventWriter<StoreSellEvent>,
@@ -37,7 +38,7 @@ pub fn handle_store_input(
                 handle_sell_input(
                     &mut store_mode,
                     &mut store_selections,
-                    &player,
+                    &inventory,
                     action,
                     &mut sell_events,
                 )
@@ -56,7 +57,7 @@ pub fn handle_store_input(
                 &mut store_mode,
                 &mut store_selections,
                 action,
-                &player,
+                &inventory,
                 &mut deposit_events,
             ),
         }
@@ -152,12 +153,12 @@ fn handle_buy_input(
 fn handle_sell_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
-    player: &Player,
+    inventory: &Inventory,
     action: &GameAction,
     sell_events: &mut EventWriter<StoreSellEvent>,
 ) {
     // Update selection count based on current inventory
-    store_selections.sell.set_count(player.inventory.items.len());
+    store_selections.sell.set_count(inventory.items.len());
 
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
@@ -167,13 +168,13 @@ fn handle_sell_input(
             store_selections.sell.move_down();
         }
         GameAction::Select => {
-            if store_selections.sell.selected < player.inventory.items.len() {
+            if store_selections.sell.selected < inventory.items.len() {
                 sell_events.send(StoreSellEvent {
                     inventory_index: store_selections.sell.selected,
                 });
 
                 // Adjust selection for removed item (will be processed next frame)
-                let new_count = player.inventory.items.len().saturating_sub(1);
+                let new_count = inventory.items.len().saturating_sub(1);
                 store_selections.sell.set_count(new_count);
                 if store_selections.sell.selected >= new_count && new_count > 0 {
                     store_selections.sell.selected = new_count - 1;
@@ -249,7 +250,7 @@ fn handle_storage_deposit_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
     action: &GameAction,
-    player: &Player,
+    inventory: &Inventory,
     deposit_events: &mut EventWriter<StorageDepositEvent>,
 ) {
     match action {
@@ -260,7 +261,7 @@ fn handle_storage_deposit_input(
             store_selections.deposit.move_down();
         }
         GameAction::Select => {
-            if store_selections.deposit.selected < player.inventory.items.len() {
+            if store_selections.deposit.selected < inventory.items.len() {
                 deposit_events.send(StorageDepositEvent {
                     inventory_index: store_selections.deposit.selected,
                 });

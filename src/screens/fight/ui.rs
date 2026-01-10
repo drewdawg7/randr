@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
 use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhaseState};
-use crate::game::Player;
+use crate::game::PlayerName;
 use crate::screens::shared::{spawn_combat_log, update_health_bar, HealthBar, HealthBarFill, HealthBarText};
-use crate::stats::HasStats;
+use crate::stats::{HasStats, StatSheet};
 use crate::ui::{nav_selection_text, MenuIndex};
 
 use super::components::*;
@@ -11,7 +11,8 @@ use super::state::FightScreenState;
 
 pub fn spawn_fight_screen(
     mut commands: Commands,
-    player: Res<Player>,
+    name: Res<PlayerName>,
+    stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
     log_state: Res<CombatLogState>,
 ) {
@@ -19,14 +20,14 @@ pub fn spawn_fight_screen(
         if let Some(combat) = combat_res.get() {
             let enemy_info = combat.enemy_info();
             (
-                player.hp(),
-                player.max_hp(),
+                stats.hp(),
+                stats.max_hp(),
                 enemy_info.name.clone(),
                 enemy_info.health,
                 enemy_info.max_health,
             )
         } else {
-            (player.hp(), player.max_hp(), "Unknown".to_string(), 1, 1)
+            (stats.hp(), stats.max_hp(), "Unknown".to_string(), 1, 1)
         };
 
     commands
@@ -43,7 +44,7 @@ pub fn spawn_fight_screen(
             BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         ))
         .with_children(|parent| {
-            spawn_combatants_section(parent, &player, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health);
+            spawn_combatants_section(parent, name.0, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health);
             spawn_combat_log_section(parent, &log_state);
             spawn_action_menu(parent);
         });
@@ -51,7 +52,7 @@ pub fn spawn_fight_screen(
 
 fn spawn_combatants_section(
     parent: &mut ChildBuilder,
-    player: &Player,
+    player_name: &str,
     player_health: i32,
     player_max_health: i32,
     enemy_name: &str,
@@ -66,7 +67,7 @@ fn spawn_combatants_section(
             ..default()
         })
         .with_children(|combatants| {
-            spawn_player_side(combatants, player, player_health, player_max_health);
+            spawn_player_side(combatants, player_name, player_health, player_max_health);
 
             combatants.spawn((
                 Text::new("VS"),
@@ -78,8 +79,8 @@ fn spawn_combatants_section(
         });
 }
 
-fn spawn_player_side(parent: &mut ChildBuilder, player: &Player, health: i32, max_health: i32) {
-    let player_name = player.name.to_string();
+fn spawn_player_side(parent: &mut ChildBuilder, player_name: &str, health: i32, max_health: i32) {
+    let player_name = player_name.to_string();
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -342,7 +343,7 @@ pub fn despawn_post_combat_overlay(
 
 pub fn update_combat_visuals(
     mut commands: Commands,
-    player: Res<Player>,
+    stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
     player_health_bar: Query<Entity, (With<PlayerHealthBar>, Without<EnemyHealthBar>)>,
     enemy_health_bar: Query<Entity, (With<EnemyHealthBar>, Without<PlayerHealthBar>)>,
@@ -354,8 +355,8 @@ pub fn update_combat_visuals(
         update_health_bar(
             &mut commands,
             bar_entity,
-            player.hp(),
-            player.max_hp(),
+            stats.hp(),
+            stats.max_hp(),
             &children,
             &mut fill_query,
             &mut text_query,

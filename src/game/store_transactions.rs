@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
 use crate::economy::WorthGold;
-use crate::game::{ItemDeposited, ItemWithdrawn, Player, Storage};
-use crate::inventory::{FindsItems, ManagesItems};
+use crate::game::{ItemDeposited, ItemWithdrawn, Storage};
+use crate::inventory::{FindsItems, Inventory, ManagesItems};
 use crate::item::ItemId;
+use crate::player::PlayerGold;
 
 /// Event sent when player attempts to purchase an item from the store.
 #[derive(Event, Debug, Clone)]
@@ -76,28 +77,26 @@ impl Plugin for StoreTransactionsPlugin {
 fn handle_store_purchase(
     mut purchase_events: EventReader<StorePurchaseEvent>,
     mut result_events: EventWriter<StoreTransactionResult>,
-    mut player: ResMut<Player>,
+    mut gold: ResMut<PlayerGold>,
+    mut inventory: ResMut<Inventory>,
 ) {
     for event in purchase_events.read() {
         // Check gold
-        if player.gold < event.price {
+        if gold.0 < event.price {
             result_events.send(StoreTransactionResult::PurchaseFailedInsufficientGold {
                 need: event.price,
-                have: player.gold,
+                have: gold.0,
             });
-            info!(
-                "Not enough gold! Need {} but have {}",
-                event.price, player.gold
-            );
+            info!("Not enough gold! Need {} but have {}", event.price, gold.0);
             continue;
         }
 
         // Spawn and add to inventory
         let new_item = event.item_id.spawn();
 
-        match player.add_to_inv(new_item) {
+        match inventory.add_to_inv(new_item) {
             Ok(_) => {
-                player.gold -= event.price;
+                gold.0 -= event.price;
                 result_events.send(StoreTransactionResult::PurchaseSuccess {
                     item_name: event.item_name.clone(),
                     price: event.price,
@@ -116,10 +115,11 @@ fn handle_store_purchase(
 fn handle_store_sell(
     mut sell_events: EventReader<StoreSellEvent>,
     mut result_events: EventWriter<StoreTransactionResult>,
-    mut player: ResMut<Player>,
+    mut gold: ResMut<PlayerGold>,
+    mut inventory: ResMut<Inventory>,
 ) {
     for event in sell_events.read() {
-        let Some(inv_item) = player.inventory.items.get(event.inventory_index).cloned() else {
+        let Some(inv_item) = inventory.items.get(event.inventory_index).cloned() else {
             continue;
         };
 
@@ -127,8 +127,8 @@ fn handle_store_sell(
         let item_name = inv_item.item.name.clone();
 
         // Add gold and remove item
-        player.gold += sell_price;
-        player.decrease_item_quantity(&inv_item, 1);
+        gold.0 += sell_price;
+        inventory.decrease_item_quantity(&inv_item, 1);
 
         result_events.send(StoreTransactionResult::SellSuccess {
             item_name: item_name.clone(),
@@ -143,7 +143,7 @@ fn handle_storage_withdraw(
     mut withdraw_events: EventReader<StorageWithdrawEvent>,
     mut result_events: EventWriter<StoreTransactionResult>,
     mut withdrawn_events: EventWriter<ItemWithdrawn>,
-    mut player: ResMut<Player>,
+    mut inventory: ResMut<Inventory>,
     mut storage: ResMut<Storage>,
 ) {
     for event in withdraw_events.read() {
@@ -156,7 +156,7 @@ fn handle_storage_withdraw(
         let item_uuid = inv_item.uuid();
 
         // Try to add to player inventory
-        match player.add_to_inv(item) {
+        match inventory.add_to_inv(item) {
             Ok(_) => {
                 // Remove from storage
                 storage.remove_item(item_uuid);
@@ -181,11 +181,11 @@ fn handle_storage_deposit(
     mut deposit_events: EventReader<StorageDepositEvent>,
     mut result_events: EventWriter<StoreTransactionResult>,
     mut deposited_events: EventWriter<ItemDeposited>,
-    mut player: ResMut<Player>,
+    mut inventory: ResMut<Inventory>,
     mut storage: ResMut<Storage>,
 ) {
     for event in deposit_events.read() {
-        let Some(inv_item) = player.inventory.items.get(event.inventory_index).cloned() else {
+        let Some(inv_item) = inventory.items.get(event.inventory_index).cloned() else {
             continue;
         };
 
@@ -197,7 +197,7 @@ fn handle_storage_deposit(
         match storage.add_to_inv(item) {
             Ok(_) => {
                 // Remove from player inventory
-                player.remove_item(item_uuid);
+                inventory.remove_item(item_uuid);
                 result_events.send(StoreTransactionResult::DepositSuccess {
                     item_name: item_name.clone(),
                 });

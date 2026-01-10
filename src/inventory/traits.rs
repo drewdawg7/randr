@@ -221,3 +221,17 @@ pub trait FindsItems: HasInventory {
 
 // Blanket implementation for all types with HasInventory
 impl<T: HasInventory> FindsItems for T {}
+
+// =============================================================================
+// HasInventory impl for Inventory itself
+// =============================================================================
+
+/// Inventory implements HasInventory so it can use all the trait methods directly.
+impl HasInventory for Inventory {
+    fn inventory(&self) -> &Inventory {
+        self
+    }
+    fn inventory_mut(&mut self) -> &mut Inventory {
+        self
+    }
+}

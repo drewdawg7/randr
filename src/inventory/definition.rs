@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 
+use bevy::prelude::*;
 use uuid::Uuid;
 
 use crate::item::{Item, ItemType};
@@ -44,7 +45,7 @@ impl InventoryItem {
     }
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Resource, Default, Debug, Clone)]
 pub struct Inventory {
     pub items: Vec<InventoryItem>,
     max_slots: usize,

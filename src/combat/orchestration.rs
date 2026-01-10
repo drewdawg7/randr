@@ -1,13 +1,16 @@
 use bevy::prelude::*;
 use rand::seq::SliceRandom;
 
-use crate::game::Player;
+use crate::entities::Progression;
+use crate::inventory::Inventory;
 use crate::mob::{Mob, MobId};
+use crate::player::{Player, PlayerGold, PlayerName};
 use crate::screens::shared::CombatLogEntry;
+use crate::stats::StatSheet;
 
 use super::{
-    enemy_attack_step, player_attack_step, process_defeat, process_victory,
-    ActiveCombat, ActiveCombatResource, CombatPhaseState, CombatSourceResource, Named,
+    enemy_attack_step, player_attack_step, process_defeat, process_victory, ActiveCombat,
+    ActiveCombatResource, CombatPhaseState, CombatSourceResource, Named,
 };
 
 #[derive(Resource, Default)]
@@ -38,10 +41,9 @@ fn setup_new_combat(
 
     log_state.entries.clear();
     let enemy_name = mob.name().to_string();
-    log_state.entries.push(CombatLogEntry::info(format!(
-        "A wild {} appears!",
-        enemy_name
-    )));
+    log_state
+        .entries
+        .push(CombatLogEntry::info(format!("A wild {} appears!", enemy_name)));
 
     combat_res.0 = Some(ActiveCombat::new(mob));
 }
@@ -81,7 +83,11 @@ pub fn initialize_combat(
 pub fn execute_player_attack(
     mut action_events: EventReader<PlayerCombatAction>,
     mut combat_res: ResMut<ActiveCombatResource>,
-    mut player: ResMut<Player>,
+    name: Res<PlayerName>,
+    mut gold: ResMut<PlayerGold>,
+    mut progression: ResMut<Progression>,
+    mut inventory: ResMut<Inventory>,
+    mut stats: ResMut<StatSheet>,
     mut log_state: ResMut<CombatLogState>,
     mut next_phase: ResMut<NextState<CombatPhaseState>>,
 ) {
@@ -94,6 +100,9 @@ pub fn execute_player_attack(
             continue;
         };
 
+        // Build Player view for combat
+        let mut player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
+
         let player_result = player_attack_step(&player, combat);
         log_state.entries.push(CombatLogEntry::player_attack(
             player_result.damage_to_target,
@@ -101,8 +110,12 @@ pub fn execute_player_attack(
         ));
 
         if player_result.target_died {
-            log_state.entries.push(CombatLogEntry::enemy_defeated(&player_result.defender));
+            log_state
+                .entries
+                .push(CombatLogEntry::enemy_defeated(&player_result.defender));
             process_victory(&mut player, combat);
+            // Write changes back to resources
+            player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
             next_phase.set(CombatPhaseState::Victory);
         } else {
             let enemy_result = enemy_attack_step(combat, &mut player);
@@ -114,7 +127,12 @@ pub fn execute_player_attack(
             if enemy_result.target_died {
                 log_state.entries.push(CombatLogEntry::player_defeated());
                 process_defeat(&mut player);
+                // Write changes back to resources
+                player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
                 next_phase.set(CombatPhaseState::Defeat);
+            } else {
+                // Write stat changes back (HP damage)
+                player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
             }
         }
     }

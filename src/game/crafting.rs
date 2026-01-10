@@ -1,8 +1,10 @@
 use bevy::prelude::*;
 
-use crate::game::Player;
-use crate::inventory::ManagesItems;
+use crate::entities::Progression;
+use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
+use crate::player::{Player, PlayerGold, PlayerName};
+use crate::stats::StatSheet;
 
 /// Event sent when player attempts to brew a potion.
 #[derive(Event, Debug, Clone)]
@@ -34,7 +36,11 @@ impl Plugin for CraftingPlugin {
 fn handle_brew_potion(
     mut brew_events: EventReader<BrewPotionEvent>,
     mut result_events: EventWriter<BrewingResult>,
-    mut player: ResMut<Player>,
+    name: Res<PlayerName>,
+    mut gold: ResMut<PlayerGold>,
+    mut progression: ResMut<Progression>,
+    mut inventory: ResMut<Inventory>,
+    mut stats: ResMut<StatSheet>,
 ) {
     for event in brew_events.read() {
         let Ok(recipe) = Recipe::new(event.recipe_id) else {
@@ -42,6 +48,9 @@ fn handle_brew_potion(
         };
 
         let recipe_name = recipe.name().to_string();
+
+        // Build Player view for Recipe API
+        let mut player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
 
         // Check ingredients
         if !recipe.can_craft(&player) {
@@ -58,6 +67,8 @@ fn handle_brew_potion(
 
                 match player.add_to_inv(item) {
                     Ok(_) => {
+                        // Write changes back to resources
+                        player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
                         result_events.send(BrewingResult::Success { item_name });
                     }
                     Err(_) => {

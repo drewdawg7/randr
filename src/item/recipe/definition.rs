@@ -1,7 +1,6 @@
 use std::collections::HashMap;
 
 use crate::{
-    player::Player,
     item::ItemId,
     inventory::{FindsItems, ManagesItems},
 };
@@ -32,25 +31,25 @@ impl Recipe {
         self.spec.output
     }
 
-    pub fn can_craft(&self, player: &Player) -> bool {
+    pub fn can_craft<T: FindsItems>(&self, inventory: &T) -> bool {
         self.spec.ingredients.iter().all(|(&item_id, &qty)| {
-            player
+            inventory
                 .find_item_by_id(item_id)
                 .map(|inv| inv.quantity >= qty)
                 .unwrap_or(false)
         })
     }
 
-    /// Consumes ingredients from player inventory and returns the ItemId to spawn.
+    /// Consumes ingredients from inventory and returns the ItemId to spawn.
     /// The caller is responsible for spawning the item using an ItemRegistry.
-    pub fn craft(&self, player: &mut Player) -> Result<ItemId, RecipeError> {
-        if !self.can_craft(player) {
+    pub fn craft<T: FindsItems + ManagesItems>(&self, inventory: &mut T) -> Result<ItemId, RecipeError> {
+        if !self.can_craft(inventory) {
             return Err(RecipeError::NotEnoughIngredients);
         }
 
         for (&item_id, &qty) in &self.spec.ingredients {
-            if let Some(inv_item) = player.find_item_by_id(item_id).cloned() {
-                player.decrease_item_quantity(&inv_item, qty);
+            if let Some(inv_item) = inventory.find_item_by_id(item_id).cloned() {
+                inventory.decrease_item_quantity(&inv_item, qty);
             }
         }
 
