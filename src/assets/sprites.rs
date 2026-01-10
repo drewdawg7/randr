@@ -519,6 +519,9 @@ pub struct SpriteAssets {
     pub dungeon_current: Option<Handle<Image>>,
     pub dungeon_cleared: Option<Handle<Image>>,
     pub dungeon_boss: Option<Handle<Image>>,
+
+    // Background images
+    pub menu_background: Option<Handle<Image>>,
 }
 
 impl SpriteAssets {
@@ -577,6 +580,8 @@ fn load_assets(
     game_assets.sprites.dungeon_current = try_load(&asset_server, "sprites/dungeon/current.png");
     game_assets.sprites.dungeon_cleared = try_load(&asset_server, "sprites/dungeon/cleared.png");
     game_assets.sprites.dungeon_boss = try_load(&asset_server, "sprites/dungeon/boss.png");
+
+    game_assets.sprites.menu_background = try_load(&asset_server, "backgrounds/sunrise.png");
 
     info!("Asset loading initiated");
 }

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameFonts, GameSprites, SpriteSheetKey};
+use crate::assets::{GameAssets, GameFonts, GameSprites, SpriteSheetKey};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
@@ -19,6 +19,7 @@ impl Plugin for MainMenuPlugin {
                     handle_menu_selection,
                     update_sprite_menu_items,
                     populate_randr_title,
+                    populate_menu_background,
                 )
                     .run_if(in_state(AppState::Menu)),
             );
@@ -63,12 +64,17 @@ struct SpriteMenuItem {
 #[derive(Component)]
 struct RandrTitle;
 
+/// Marker component indicating the background needs to be populated.
+#[derive(Component)]
+struct NeedsBackground;
+
 /// System to spawn the main menu UI.
 fn spawn_main_menu(mut commands: Commands) {
-    // Root container
+    // Root container with placeholder background (populated by system when asset loads)
     commands
         .spawn((
             MainMenuRoot,
+            NeedsBackground,
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
@@ -268,6 +274,25 @@ fn populate_randr_title(
                     },
                 ));
             });
+    }
+}
+
+/// System to populate the menu background when the asset loads.
+fn populate_menu_background(
+    mut commands: Commands,
+    query: Query<Entity, With<NeedsBackground>>,
+    game_assets: Res<GameAssets>,
+) {
+    let Some(bg) = &game_assets.sprites.menu_background else {
+        return;
+    };
+
+    for entity in &query {
+        commands
+            .entity(entity)
+            .remove::<NeedsBackground>()
+            .remove::<BackgroundColor>()
+            .insert(ImageNode::new(bg.clone()));
     }
 }
 
