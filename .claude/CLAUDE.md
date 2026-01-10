@@ -15,6 +15,20 @@ Follow this workflow for ALL code changes:
 9. **Close**: If working on a GitHub issue, close it
 10. **Stats**: Use the `session-stats` skill to aggregate previous session stats
 
+## Rust Navigation Rules (MANDATORY)
+
+**NEVER use Grep to search Rust code.** Use these LSP operations instead:
+
+| Task | Tool | Example |
+|------|------|---------|
+| Find where symbol is defined | `LSP goToDefinition` | Find struct/function definition |
+| Find all usages | `LSP findReferences` | **REQUIRED before any deletion** |
+| Find trait implementations | `LSP goToImplementation` | Find all Components |
+| Get type/docs | `LSP hover` | Check inferred types |
+| Search by name | `LSP workspaceSymbol` | Find symbols across codebase |
+
+For structural patterns across files, use `ast-grep --pattern 'PATTERN' --lang rust src/`
+
 ## Pre-Edit Checklist
 - [ ] Batch operation appropriate? (>5 similar changes → use ast-grep)
 - [ ] findReferences for removals? (REQUIRED before deleting code)

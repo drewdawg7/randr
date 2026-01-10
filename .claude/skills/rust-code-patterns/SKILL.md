@@ -1,9 +1,12 @@
 ---
 name: rust-code-patterns
-description: LSP operations and ast-grep patterns for Rust navigation. Use when exploring code, finding usages, or pattern matching.
+description: "[DEPRECATED - content merged into updating-code skill] LSP operations and ast-grep patterns for Rust navigation."
 ---
 
 # Rust Code Patterns
+
+> **Note:** This skill's core content has been merged into the `updating-code` skill and CLAUDE.md.
+> This file is kept as a detailed reference only.
 
 ## LSP Quick Reference
 
