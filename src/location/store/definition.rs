@@ -1,5 +1,7 @@
 use std::fmt::Display;
-use std::time::{Duration, Instant};
+use std::time::Duration;
+
+use bevy::time::{Timer, TimerMode};
 
 use crate::{
     combat::HasGold,
@@ -19,8 +21,7 @@ pub struct Store {
     pub name: String,
     description: String,
     pub inventory: Vec<StoreItem>,
-    last_refresh: Instant,
-    refresh_interval: Duration,
+    refresh_timer: Timer,
 }
 
 impl Clone for Store {
@@ -30,8 +31,7 @@ impl Clone for Store {
             name: self.name.clone(),
             description: self.description.clone(),
             inventory: self.inventory.clone(),
-            last_refresh: self.last_refresh,
-            refresh_interval: self.refresh_interval,
+            refresh_timer: self.refresh_timer.clone(),
         }
     }
 }
@@ -39,13 +39,13 @@ impl Clone for Store {
 impl Store {
     /// Create a Store from a LocationSpec
     pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &StoreData) -> Self {
+        let refresh_interval = spec.refresh_interval.unwrap_or(Duration::from_secs(60));
         let mut store = Store {
             location_id,
             name: spec.name.to_string(),
             description: spec.description.to_string(),
             inventory: Vec::new(),
-            last_refresh: Instant::now(),
-            refresh_interval: spec.refresh_interval.unwrap_or(Duration::from_secs(60)),
+            refresh_timer: Timer::new(refresh_interval, TimerMode::Repeating),
         };
 
         // Initialize stock from spec
@@ -62,18 +62,22 @@ impl Store {
             name: name.to_string(),
             description: String::new(),
             inventory: Vec::new(),
-            last_refresh: Instant::now(),
-            refresh_interval: Duration::from_secs(60),
+            refresh_timer: Timer::new(Duration::from_secs(60), TimerMode::Repeating),
         }
     }
 
-    /// Check if refresh interval elapsed and restock if needed.
-    /// Cheap to call every frame.
+    /// Check if refresh timer finished and restock if needed.
+    /// Call tick_timer() first to advance the timer.
     pub fn check_and_restock(&mut self) {
-        if self.last_refresh.elapsed() >= self.refresh_interval {
+        if self.refresh_timer.just_finished() {
             self.restock();
-            self.last_refresh = Instant::now();
         }
+    }
+
+    /// Tick the refresh timer with the given delta time.
+    /// Should be called from the Refreshable::tick implementation.
+    pub fn tick_timer(&mut self, elapsed: Duration) {
+        self.refresh_timer.tick(elapsed);
     }
 
     /// Respawn all items in the store with fresh qualities
@@ -85,12 +89,7 @@ impl Store {
 
     /// Returns seconds until next restock
     pub fn time_until_restock(&self) -> u64 {
-        let elapsed = self.last_refresh.elapsed();
-        if elapsed >= self.refresh_interval {
-            0
-        } else {
-            (self.refresh_interval - elapsed).as_secs()
-        }
+        self.refresh_timer.remaining_secs() as u64
     }
 
     pub fn get_store_item_by_id(&self, item_id: ItemId) -> Option<&StoreItem> {

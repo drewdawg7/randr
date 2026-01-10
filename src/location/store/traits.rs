@@ -46,7 +46,8 @@ impl Location for Store {
 }
 
 impl Refreshable for Store {
-    fn tick(&mut self, _elapsed: Duration) {
+    fn tick(&mut self, elapsed: Duration) {
+        self.tick_timer(elapsed);
         self.check_and_restock();
     }
 

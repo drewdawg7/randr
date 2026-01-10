@@ -1,10 +1,12 @@
 #[cfg(test)]
+use std::time::Duration;
+#[cfg(test)]
 use crate::{
     combat::HasGold,
     player::Player,
     inventory::{HasInventory, ManagesItems},
     item::{Item, ItemId, ItemType},
-    item::enums::{EquipmentType, ItemQuality, MaterialType},
+    item::enums::{EquipmentType, ItemQuality},
     location::store::{sell_player_item, Store, StoreError, StoreItem},
     stats::StatSheet,
 };
@@ -65,16 +67,6 @@ fn create_shield(gold_value: i32) -> Item {
     )
 }
 
-#[cfg(test)]
-fn create_material(gold_value: i32) -> Item {
-    create_test_item(
-        ItemId::CopperOre,
-        "Copper Ore",
-        ItemType::Material(MaterialType::Ore),
-        gold_value,
-        false,
-    )
-}
 
 #[cfg(test)]
 fn create_locked_item(gold_value: i32) -> Item {
@@ -96,9 +88,8 @@ fn store_new_creates_with_correct_defaults() {
     assert_eq!(store.name, "Test Store");
     assert_eq!(store.description(), "");
     assert!(store.inventory.is_empty());
-    // Time should be close to 60, but may be slightly less due to execution time
-    let time = store.time_until_restock();
-    assert!(time > 0 && time <= 60);
+    // Timer starts at full duration (60 seconds)
+    assert_eq!(store.time_until_restock(), 60);
 }
 
 // ==================== Store::add_stock tests ====================
@@ -359,50 +350,59 @@ fn check_and_restock_does_not_restock_immediately() {
     // Clear items
     store.inventory[0].items.clear();
 
+    // Advance timer by 30 seconds (not enough to trigger restock)
+    store.tick_timer(Duration::from_secs(30));
     store.check_and_restock();
 
-    // Should still be empty since refresh_interval hasn't passed
+    // Should still be empty since refresh timer hasn't finished
     assert_eq!(store.inventory[0].quantity(), 0);
 }
 
 #[test]
-fn check_and_restock_respects_refresh_interval() {
+fn check_and_restock_restocks_after_interval() {
     let mut store = Store::new("Test Store");
     store.add_stock(ItemId::Sword, 3);
 
-    // Manually set last_refresh to past the interval
-    // We need to wait for the interval to pass, so this test
-    // verifies the interval is set correctly
-    let time_until = store.time_until_restock();
-    assert!(time_until > 0);
-    assert!(time_until <= 60);
+    // Advance timer exactly to the 60-second interval
+    store.tick_timer(Duration::from_secs(60));
+
+    // Timer should indicate restock is ready (just finished)
+    assert!(store.time_until_restock() <= 60);
+
+    store.check_and_restock();
+
+    // Timer wraps around for repeating timers, so it will have started over
+    assert!(store.time_until_restock() <= 60);
 }
 
 // ==================== Store::time_until_restock tests ====================
 
 #[test]
 fn time_until_restock_returns_correct_countdown() {
-    let store = Store::new("Test Store");
+    let mut store = Store::new("Test Store");
 
-    let time = store.time_until_restock();
+    // Timer starts at 60 seconds
+    assert_eq!(store.time_until_restock(), 60);
 
-    // Should be close to 60 seconds for a new store
-    assert!(time > 0);
-    assert!(time <= 60);
+    // Advance by 20 seconds
+    store.tick_timer(Duration::from_secs(20));
+    assert_eq!(store.time_until_restock(), 40);
+
+    // Advance by another 30 seconds
+    store.tick_timer(Duration::from_secs(30));
+    assert_eq!(store.time_until_restock(), 10);
 }
 
 #[test]
-fn time_until_restock_returns_zero_when_ready() {
+fn time_until_restock_decreases_over_time() {
     let mut store = Store::new("Test Store");
 
-    // Set refresh interval to 0 for immediate restock
-    // This is a bit of a hack since we can't easily manipulate Instant
-    // We'll just verify the logic in the method
-    store.check_and_restock();
+    // Timer starts at 60 seconds
+    assert_eq!(store.time_until_restock(), 60);
 
-    // After check_and_restock with a 60s interval, time should be 60 or less
-    let time = store.time_until_restock();
-    assert!(time <= 60);
+    // Advance by 59 seconds
+    store.tick_timer(Duration::from_secs(59));
+    assert_eq!(store.time_until_restock(), 1);
 }
 
 // ==================== StoreItem::new tests ====================
