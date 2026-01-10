@@ -2,7 +2,11 @@ use bevy::prelude::*;
 
 use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhaseState};
 use crate::game::PlayerName;
-use crate::screens::shared::{spawn_combat_log, update_health_bar, HealthBar, HealthBarFill, HealthBarText};
+use crate::screens::shared::{
+    spawn_combat_log, update_health_bar, HeaderLabelBundle, HealthBarBackgroundBundle,
+    HealthBarBundle, HealthBarFill, HealthBarFillBundle, HealthBarNameBundle, HealthBarText,
+    HealthBarTextBundle,
+};
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::{nav_selection_text, MenuIndex};
 
@@ -80,7 +84,6 @@ fn spawn_combatants_section(
 }
 
 fn spawn_player_side(parent: &mut ChildBuilder, player_name: &str, health: i32, max_health: i32) {
-    let player_name = player_name.to_string();
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -88,61 +91,26 @@ fn spawn_player_side(parent: &mut ChildBuilder, player_name: &str, health: i32, 
             ..default()
         })
         .with_children(|player_side| {
-            player_side.spawn((
-                Text::new("PLAYER"),
-                TextFont { font_size: 24.0, ..default() },
-                TextColor(Color::srgb(0.5, 0.8, 0.5)),
-                Node { margin: UiRect::bottom(Val::Px(10.0)), ..default() },
-            ));
+            player_side.spawn(HeaderLabelBundle::new("PLAYER", Color::srgb(0.5, 0.8, 0.5)));
 
-            player_side.spawn((
-                PlayerHealthBar,
-                HealthBar,
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    row_gap: Val::Px(5.0),
-                    width: Val::Px(200.0),
-                    ..default()
-                },
-            )).with_children(|bar| {
-                bar.spawn((
-                    Text::new(player_name),
-                    TextFont { font_size: 18.0, ..default() },
-                    TextColor(Color::WHITE),
-                ));
-                bar.spawn((
-                    Node {
-                        width: Val::Percent(100.0),
-                        height: Val::Px(20.0),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
-                )).with_children(|bg| {
-                    let fill_percent = if max_health > 0 {
-                        (health as f32 / max_health as f32 * 100.0).clamp(0.0, 100.0)
-                    } else { 0.0 };
-                    bg.spawn((
-                        HealthBarFill,
-                        Node {
-                            width: Val::Percent(fill_percent),
-                            height: Val::Percent(100.0),
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgb(0.3, 0.8, 0.3)),
-                    ));
+            player_side
+                .spawn((PlayerHealthBar, HealthBarBundle::new(200.0)))
+                .with_children(|bar| {
+                    bar.spawn(HealthBarNameBundle::new(player_name));
+                    bar.spawn(HealthBarBackgroundBundle::default())
+                        .with_children(|bg| {
+                            bg.spawn(HealthBarFillBundle::new(
+                                health,
+                                max_health,
+                                Color::srgb(0.3, 0.8, 0.3),
+                            ));
+                        });
+                    bar.spawn(HealthBarTextBundle::new(health, max_health));
                 });
-                bar.spawn((
-                    HealthBarText,
-                    Text::new(format!("{}/{}", health, max_health)),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
-                ));
-            });
         });
 }
 
 fn spawn_enemy_side(parent: &mut ChildBuilder, enemy_name: &str, health: i32, max_health: i32) {
-    let name = enemy_name.to_string();
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -150,56 +118,22 @@ fn spawn_enemy_side(parent: &mut ChildBuilder, enemy_name: &str, health: i32, ma
             ..default()
         })
         .with_children(|enemy_side| {
-            enemy_side.spawn((
-                Text::new("ENEMY"),
-                TextFont { font_size: 24.0, ..default() },
-                TextColor(Color::srgb(0.8, 0.5, 0.5)),
-                Node { margin: UiRect::bottom(Val::Px(10.0)), ..default() },
-            ));
+            enemy_side.spawn(HeaderLabelBundle::new("ENEMY", Color::srgb(0.8, 0.5, 0.5)));
 
-            enemy_side.spawn((
-                EnemyHealthBar,
-                HealthBar,
-                Node {
-                    flex_direction: FlexDirection::Column,
-                    row_gap: Val::Px(5.0),
-                    width: Val::Px(200.0),
-                    ..default()
-                },
-            )).with_children(|bar| {
-                bar.spawn((
-                    Text::new(name),
-                    TextFont { font_size: 18.0, ..default() },
-                    TextColor(Color::WHITE),
-                ));
-                bar.spawn((
-                    Node {
-                        width: Val::Percent(100.0),
-                        height: Val::Px(20.0),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgb(0.2, 0.2, 0.2)),
-                )).with_children(|bg| {
-                    let fill_percent = if max_health > 0 {
-                        (health as f32 / max_health as f32 * 100.0).clamp(0.0, 100.0)
-                    } else { 0.0 };
-                    bg.spawn((
-                        HealthBarFill,
-                        Node {
-                            width: Val::Percent(fill_percent),
-                            height: Val::Percent(100.0),
-                            ..default()
-                        },
-                        BackgroundColor(Color::srgb(0.8, 0.3, 0.3)),
-                    ));
+            enemy_side
+                .spawn((EnemyHealthBar, HealthBarBundle::new(200.0)))
+                .with_children(|bar| {
+                    bar.spawn(HealthBarNameBundle::new(enemy_name));
+                    bar.spawn(HealthBarBackgroundBundle::default())
+                        .with_children(|bg| {
+                            bg.spawn(HealthBarFillBundle::new(
+                                health,
+                                max_health,
+                                Color::srgb(0.8, 0.3, 0.3),
+                            ));
+                        });
+                    bar.spawn(HealthBarTextBundle::new(health, max_health));
                 });
-                bar.spawn((
-                    HealthBarText,
-                    Text::new(format!("{}/{}", health, max_health)),
-                    TextFont { font_size: 14.0, ..default() },
-                    TextColor(Color::srgb(0.8, 0.8, 0.8)),
-                ));
-            });
         });
 }
 
