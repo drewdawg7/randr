@@ -5,7 +5,7 @@ use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::inventory_selection_bg;
 
 use super::state::{InventoryItemUI, InventoryModalRoot, InventorySelection, ItemInfo};
-use super::utils::{format_item_type, get_all_inventory_items, get_quality_color};
+use super::utils::get_all_inventory_items;
 
 /// Spawn the inventory modal UI.
 pub fn spawn_inventory_modal(
@@ -147,7 +147,7 @@ fn spawn_item_row(parent: &mut ChildBuilder, item_info: &ItemInfo, index: usize,
         ))
         .with_children(|row| {
             // Item name with quality color
-            let quality_color = get_quality_color(&item.quality);
+            let quality_color = item.quality.color();
             let equipped_marker = if item_info.is_equipped() { "[E] " } else { "" };
             let quantity_text = if item_info.quantity() > 1 {
                 format!(" (x{})", item_info.quantity())
@@ -204,7 +204,7 @@ fn spawn_item_details_panel(parent: &mut ChildBuilder, item_info: Option<&ItemIn
                         font_size: 26.0,
                         ..default()
                     },
-                    TextColor(get_quality_color(&item.quality)),
+                    TextColor(item.quality.color()),
                     Node {
                         margin: UiRect::bottom(Val::Px(15.0)),
                         ..default()
@@ -223,7 +223,7 @@ fn spawn_item_details_panel(parent: &mut ChildBuilder, item_info: Option<&ItemIn
                 spawn_detail_row(
                     panel,
                     "Type:",
-                    &format_item_type(&item.item_type),
+                    &item.item_type.to_string(),
                     Color::srgb(0.8, 0.8, 0.8),
                 );
 

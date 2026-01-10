@@ -317,7 +317,7 @@ fn spawn_equipment_column(parent: &mut ChildBuilder, player: &Player) {
                         equipment,
                         label,
                         &item.name,
-                        get_quality_color(&item.quality),
+                        item.quality.color(),
                     );
                 } else {
                     spawn_equipment_row(
@@ -505,17 +505,4 @@ fn spawn_xp_bar(parent: &mut ChildBuilder, current: i32, max: i32) {
                 BackgroundColor(Color::srgb(0.6, 0.4, 0.8)),
             ));
         });
-}
-
-/// Get the display color for an item quality.
-fn get_quality_color(quality: &crate::item::enums::ItemQuality) -> Color {
-    use crate::item::enums::ItemQuality;
-    match quality {
-        ItemQuality::Poor => Color::srgb(0.6, 0.6, 0.6),
-        ItemQuality::Normal => Color::srgb(1.0, 1.0, 1.0),
-        ItemQuality::Improved => Color::srgb(0.3, 1.0, 0.3),
-        ItemQuality::WellForged => Color::srgb(0.4, 0.6, 1.0),
-        ItemQuality::Masterworked => Color::srgb(0.8, 0.4, 1.0),
-        ItemQuality::Mythic => Color::srgb(1.0, 0.6, 0.0),
-    }
 }

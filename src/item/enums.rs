@@ -1,3 +1,4 @@
+use bevy::prelude::Color;
 use rand::Rng;
 
 use crate::stats::StatSheet;
@@ -102,6 +103,59 @@ impl EquipmentType {
     }
 }
 
+impl std::fmt::Display for ItemType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ItemType::Equipment(eq) => write!(f, "Equipment ({})", eq),
+            ItemType::Material(mat) => write!(f, "Material ({})", mat),
+            ItemType::Consumable(con) => write!(f, "Consumable ({})", con),
+            ItemType::QuestItem => write!(f, "Quest Item"),
+        }
+    }
+}
+
+impl std::fmt::Display for EquipmentType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            EquipmentType::Weapon => write!(f, "Weapon"),
+            EquipmentType::Shield => write!(f, "Shield"),
+            EquipmentType::Tome => write!(f, "Tome"),
+            EquipmentType::Ring => write!(f, "Ring"),
+            EquipmentType::Tool(kind) => write!(f, "{}", kind),
+            EquipmentType::Armor(slot) => write!(f, "{:?}", slot),
+        }
+    }
+}
+
+impl std::fmt::Display for MaterialType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            MaterialType::Ore => write!(f, "Ore"),
+            MaterialType::Gem => write!(f, "Gem"),
+            MaterialType::CraftingMaterial => write!(f, "Crafting Material"),
+            MaterialType::UpgradeStone => write!(f, "Upgrade Stone"),
+        }
+    }
+}
+
+impl std::fmt::Display for ConsumableType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ConsumableType::Potion => write!(f, "Potion"),
+            ConsumableType::Food => write!(f, "Food"),
+            ConsumableType::Scroll => write!(f, "Scroll"),
+        }
+    }
+}
+
+impl std::fmt::Display for ToolKind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            ToolKind::Pickaxe => write!(f, "Pickaxe"),
+        }
+    }
+}
+
 #[derive(Debug)]
 pub enum ItemError {
     MaxUpgradesReached,
@@ -140,6 +194,19 @@ impl ItemQuality {
             ItemQuality::Mythic => "Mythic",
         }
     }
+
+    /// Returns the display color for this quality level
+    pub fn color(&self) -> Color {
+        match self {
+            ItemQuality::Poor => Color::srgb(0.6, 0.6, 0.6),
+            ItemQuality::Normal => Color::srgb(1.0, 1.0, 1.0),
+            ItemQuality::Improved => Color::srgb(0.3, 1.0, 0.3),
+            ItemQuality::WellForged => Color::srgb(0.3, 0.5, 1.0),
+            ItemQuality::Masterworked => Color::srgb(0.8, 0.3, 1.0),
+            ItemQuality::Mythic => Color::srgb(1.0, 0.5, 0.0),
+        }
+    }
+
     pub fn next_quality(&self) -> Option<ItemQuality>{
             match self {
                 ItemQuality::Poor         => Some(ItemQuality::Normal),
