@@ -33,7 +33,7 @@ impl Plugin for TownPlugin {
                 (
                     handle_tab_navigation,
                     handle_back_action,
-                    update_tab_header_visuals.run_if(resource_changed::<State<TownTab>>),
+                    update_tab_header_visuals.run_if(state_changed::<TownTab>),
                 )
                     .in_set(TabNavigationSet)
                     .run_if(in_state(AppState::Town)),
