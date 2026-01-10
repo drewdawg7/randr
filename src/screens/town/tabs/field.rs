@@ -3,7 +3,9 @@ use bevy::prelude::*;
 use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
 use crate::states::{AppState, RequestFightEvent, RequestMineEvent};
 
-use super::super::shared::{spawn_menu, MenuOption};
+use super::super::shared::{
+    spawn_menu, update_menu_selection, MenuOption, MenuOptionItem, MenuOptionText,
+};
 use super::super::{ContentArea, TabContent, TownTab};
 
 /// Plugin for the Field tab.
@@ -18,8 +20,7 @@ impl Plugin for FieldTabPlugin {
                 Update,
                 (
                     handle_field_input,
-                    refresh_field_on_state_change
-                        .run_if(resource_changed::<FieldTabState>),
+                    update_field_selection.run_if(resource_changed::<FieldTabState>),
                 )
                     .run_if(in_state(TownTab::Field)),
             );
@@ -38,23 +39,13 @@ fn spawn_field_content(
     spawn_field_ui(&mut commands, content_entity, &field_state);
 }
 
-/// Refreshes field UI when state changes.
-fn refresh_field_on_state_change(
-    mut commands: Commands,
+/// Updates field menu selection highlighting reactively.
+fn update_field_selection(
     field_state: Res<FieldTabState>,
-    content_query: Query<Entity, With<ContentArea>>,
-    tab_content_query: Query<Entity, With<TabContent>>,
+    mut menu_query: Query<(&MenuOptionItem, &mut BackgroundColor, &Children)>,
+    mut text_query: Query<(&mut Text, &mut TextColor), With<MenuOptionText>>,
 ) {
-    // Despawn existing content
-    for entity in &tab_content_query {
-        commands.entity(entity).despawn_recursive();
-    }
-
-    // Respawn with new state
-    let Ok(content_entity) = content_query.get_single() else {
-        return;
-    };
-    spawn_field_ui(&mut commands, content_entity, &field_state);
+    update_menu_selection(field_state.selected_index, &mut menu_query, &mut text_query);
 }
 
 /// Field tab state - just tracks menu selection.

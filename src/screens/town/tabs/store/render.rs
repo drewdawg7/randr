@@ -13,6 +13,17 @@ use crate::ui::{selection_colors, selection_prefix};
 use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
 use super::state::{StoreModeKind, StoreMode, StoreSelections};
 
+/// Marker component for store inventory list items.
+#[derive(Component)]
+pub struct StoreListItem {
+    pub index: usize,
+    pub name: String,
+}
+
+/// Marker for the text of a store list item.
+#[derive(Component)]
+pub struct StoreListItemText;
+
 /// Marker component for the store info panel that displays selected item details.
 #[derive(Component)]
 pub struct StoreInfoPanel {
@@ -230,8 +241,13 @@ fn spawn_inventory_list<F>(
                 let is_selected = i == selected_index;
                 let (bg_color, text_color) = selection_colors(is_selected);
                 let prefix = selection_prefix(is_selected);
+                let item_name = inv_item.item.name.clone();
 
                 list.spawn((
+                    StoreListItem {
+                        index: i,
+                        name: item_name.clone(),
+                    },
                     Node {
                         padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                         flex_direction: FlexDirection::Row,
@@ -243,7 +259,8 @@ fn spawn_inventory_list<F>(
                 .with_children(|item_row| {
                     // Item name
                     item_row.spawn((
-                        Text::new(format!("{}{}", prefix, inv_item.item.name)),
+                        StoreListItemText,
+                        Text::new(format!("{}{}", prefix, item_name)),
                         TextFont {
                             font_size: 18.0,
                             ..default()
@@ -344,5 +361,31 @@ pub fn populate_store_info_panel(
                         .with_color(text_color.0),
                 );
             });
+    }
+}
+
+/// Update store list selection highlighting reactively.
+pub fn update_store_list_selection<F1, F2>(
+    selected_index: usize,
+    list_query: &mut Query<(&StoreListItem, &mut BackgroundColor, &Children), F1>,
+    text_query: &mut Query<(&mut Text, &mut TextColor), F2>,
+)
+where
+    F1: bevy::ecs::query::QueryFilter,
+    F2: bevy::ecs::query::QueryFilter,
+{
+    for (item, mut bg_color, children) in list_query.iter_mut() {
+        let is_selected = item.index == selected_index;
+        let (new_bg, text_color) = selection_colors(is_selected);
+        *bg_color = new_bg.into();
+
+        // Update child text
+        for &child in children.iter() {
+            if let Ok((mut text, mut color)) = text_query.get_mut(child) {
+                let prefix = selection_prefix(is_selected);
+                **text = format!("{}{}", prefix, item.name);
+                *color = text_color.into();
+            }
+        }
     }
 }

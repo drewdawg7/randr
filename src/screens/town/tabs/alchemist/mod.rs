@@ -8,14 +8,17 @@ use bevy::prelude::*;
 
 use crate::game::Player;
 
-use super::super::shared::MenuOption;
+use super::super::shared::{update_menu_selection, MenuOption, MenuOptionItem, MenuOptionText};
 use super::super::{ContentArea, TabContent, TownTab};
 
 pub use state::AlchemistMode;
 
 use input::handle_alchemist_input;
-use render::spawn_alchemist_ui;
-use state::AlchemistSelections;
+use render::{
+    spawn_alchemist_ui, update_alchemist_recipe_selection, AlchemistRecipeItem,
+    AlchemistRecipeItemText,
+};
+use state::{AlchemistModeKind, AlchemistSelections};
 
 /// Menu options for the alchemist.
 const ALCHEMIST_MENU_OPTIONS: &[MenuOption] = &[MenuOption {
@@ -35,10 +38,10 @@ impl Plugin for AlchemistTabPlugin {
                 Update,
                 (
                     handle_alchemist_input,
-                    refresh_alchemist_on_mode_change.run_if(
-                        resource_changed::<AlchemistMode>
-                            .or(resource_changed::<AlchemistSelections>),
-                    ),
+                    // Only respawn on mode changes (Menu -> Brew, etc.)
+                    refresh_alchemist_on_mode_change.run_if(resource_changed::<AlchemistMode>),
+                    // Reactive selection updates within each mode
+                    update_alchemist_selection.run_if(resource_changed::<AlchemistSelections>),
                 )
                     .run_if(in_state(TownTab::Alchemist)),
             );
@@ -65,7 +68,7 @@ fn spawn_alchemist_content(
     );
 }
 
-/// Refreshes alchemist UI when mode or selections change.
+/// Refreshes alchemist UI when mode changes (Menu -> Brew, etc.).
 fn refresh_alchemist_on_mode_change(
     mut commands: Commands,
     alchemist_mode: Res<AlchemistMode>,
@@ -90,4 +93,39 @@ fn refresh_alchemist_on_mode_change(
         &alchemist_selections,
         &player,
     );
+}
+
+/// Updates alchemist selection highlighting reactively.
+fn update_alchemist_selection(
+    alchemist_mode: Res<AlchemistMode>,
+    alchemist_selections: Res<AlchemistSelections>,
+    // Menu mode uses shared menu components
+    mut menu_query: Query<(&MenuOptionItem, &mut BackgroundColor, &Children)>,
+    mut menu_text_query: Query<(&mut Text, &mut TextColor), With<MenuOptionText>>,
+    // Brew mode uses alchemist recipe components
+    mut recipe_query: Query<
+        (&AlchemistRecipeItem, &mut BackgroundColor, &Children),
+        Without<MenuOptionItem>,
+    >,
+    mut recipe_text_query: Query<
+        (&mut Text, &mut TextColor),
+        (With<AlchemistRecipeItemText>, Without<MenuOptionText>),
+    >,
+) {
+    match alchemist_mode.mode {
+        AlchemistModeKind::Menu => {
+            update_menu_selection(
+                alchemist_selections.menu,
+                &mut menu_query,
+                &mut menu_text_query,
+            );
+        }
+        AlchemistModeKind::Brew => {
+            update_alchemist_recipe_selection(
+                alchemist_selections.recipe.selected,
+                &mut recipe_query,
+                &mut recipe_text_query,
+            );
+        }
+    }
 }

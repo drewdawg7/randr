@@ -11,6 +11,17 @@ use crate::FindsItems;
 use super::constants::MENU_OPTIONS;
 use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
 
+/// Marker component for selectable items with their index and name.
+#[derive(Component)]
+pub struct BlacksmithListItem {
+    pub index: usize,
+    pub name: String,
+}
+
+/// Marker for the text of a blacksmith list item.
+#[derive(Component)]
+pub struct BlacksmithListItemText;
+
 /// Spawn a recipe list UI with selection highlighting.
 fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_index: usize, player: &Player) {
     parent
@@ -30,7 +41,13 @@ fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_i
 
                     let prefix = selection_prefix(is_selected);
 
+                    let recipe_name = recipe.name().to_string();
+
                     list.spawn((
+                        BlacksmithListItem {
+                            index: i,
+                            name: recipe_name.clone(),
+                        },
                         Node {
                             padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                             flex_direction: FlexDirection::Row,
@@ -42,7 +59,8 @@ fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_i
                     .with_children(|item_row| {
                         // Recipe name
                         item_row.spawn((
-                            Text::new(format!("{}{}", prefix, recipe.name())),
+                            BlacksmithListItemText,
+                            Text::new(format!("{}{}", prefix, recipe_name)),
                             TextFont {
                                 font_size: 18.0,
                                 ..default()
@@ -191,7 +209,12 @@ fn spawn_upgrade_ui(
 
                     let prefix = selection_prefix(is_selected);
 
+                    let item_name = inv_item.item.name.clone();
                     list.spawn((
+                        BlacksmithListItem {
+                            index: i,
+                            name: item_name.clone(),
+                        },
                         Node {
                             padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                             flex_direction: FlexDirection::Row,
@@ -203,7 +226,8 @@ fn spawn_upgrade_ui(
                     .with_children(|item_row| {
                         // Item name
                         item_row.spawn((
-                            Text::new(format!("{}{}", prefix, inv_item.item.name)),
+                            BlacksmithListItemText,
+                            Text::new(format!("{}{}", prefix, item_name)),
                             TextFont {
                                 font_size: 18.0,
                                 ..default()
@@ -342,7 +366,12 @@ fn spawn_quality_ui(
 
                     let prefix = selection_prefix(is_selected);
 
+                    let item_name = inv_item.item.name.clone();
                     list.spawn((
+                        BlacksmithListItem {
+                            index: i,
+                            name: item_name.clone(),
+                        },
                         Node {
                             padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                             flex_direction: FlexDirection::Row,
@@ -354,7 +383,8 @@ fn spawn_quality_ui(
                     .with_children(|item_row| {
                         // Item name
                         item_row.spawn((
-                            Text::new(format!("{}{}", prefix, inv_item.item.name)),
+                            BlacksmithListItemText,
+                            Text::new(format!("{}{}", prefix, item_name)),
                             TextFont {
                                 font_size: 18.0,
                                 ..default()
@@ -473,4 +503,30 @@ fn spawn_forge_ui(
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Forge  [Backspace] Back");
+}
+
+/// Update list selection highlighting reactively.
+pub fn update_blacksmith_list_selection<F1, F2>(
+    selected_index: usize,
+    list_query: &mut Query<(&BlacksmithListItem, &mut BackgroundColor, &Children), F1>,
+    text_query: &mut Query<(&mut Text, &mut TextColor), F2>,
+)
+where
+    F1: bevy::ecs::query::QueryFilter,
+    F2: bevy::ecs::query::QueryFilter,
+{
+    for (item, mut bg_color, children) in list_query.iter_mut() {
+        let is_selected = item.index == selected_index;
+        let (new_bg, text_color) = selection_colors(is_selected);
+        *bg_color = new_bg.into();
+
+        // Update child text
+        for &child in children.iter() {
+            if let Ok((mut text, mut color)) = text_query.get_mut(child) {
+                let prefix = selection_prefix(is_selected);
+                **text = format!("{}{}", prefix, item.name);
+                *color = text_color.into();
+            }
+        }
+    }
 }

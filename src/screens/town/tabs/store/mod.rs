@@ -7,13 +7,16 @@ use bevy::prelude::*;
 
 use crate::assets::GameSprites;
 use crate::game::{Player, Storage};
+use crate::screens::town::shared::{update_menu_selection, MenuOptionItem, MenuOptionText};
 use crate::screens::town::{ContentArea, TabContent, TownTab};
 
 use input::handle_store_input;
-use render::populate_store_info_panel;
+use render::{
+    populate_store_info_panel, update_store_list_selection, StoreListItem, StoreListItemText,
+};
 
 pub use render::spawn_store_ui;
-pub use state::{StoreMode, StoreSelections};
+pub use state::{StoreMode, StoreModeKind, StoreSelections};
 
 /// Plugin for the Store tab.
 pub struct StoreTabPlugin;
@@ -27,9 +30,10 @@ impl Plugin for StoreTabPlugin {
                 Update,
                 (
                     handle_store_input,
-                    refresh_store_on_mode_change.run_if(
-                        resource_changed::<StoreMode>.or(resource_changed::<StoreSelections>),
-                    ),
+                    // Only respawn on mode changes
+                    refresh_store_on_mode_change.run_if(resource_changed::<StoreMode>),
+                    // Reactive selection updates within each mode
+                    update_store_selection.run_if(resource_changed::<StoreSelections>),
                     populate_store_info_panel,
                 )
                     .run_if(in_state(TownTab::Store)),
@@ -61,7 +65,7 @@ fn spawn_store_content(
     );
 }
 
-/// Refreshes store UI when mode or selections change.
+/// Refreshes store UI when mode changes.
 fn refresh_store_on_mode_change(
     mut commands: Commands,
     store_mode: Res<StoreMode>,
@@ -90,4 +94,64 @@ fn refresh_store_on_mode_change(
         &storage,
         &game_sprites,
     );
+}
+
+/// Updates store selection highlighting reactively.
+fn update_store_selection(
+    store_mode: Res<StoreMode>,
+    store_selections: Res<StoreSelections>,
+    // Menu modes use shared menu components
+    mut menu_query: Query<(&MenuOptionItem, &mut BackgroundColor, &Children)>,
+    mut menu_text_query: Query<(&mut Text, &mut TextColor), With<MenuOptionText>>,
+    // Inventory modes use store list components
+    mut list_query: Query<
+        (&StoreListItem, &mut BackgroundColor, &Children),
+        Without<MenuOptionItem>,
+    >,
+    mut list_text_query: Query<
+        (&mut Text, &mut TextColor),
+        (With<StoreListItemText>, Without<MenuOptionText>),
+    >,
+) {
+    match store_mode.mode {
+        StoreModeKind::Menu => {
+            update_menu_selection(
+                store_selections.menu.selected,
+                &mut menu_query,
+                &mut menu_text_query,
+            );
+        }
+        StoreModeKind::StorageMenu => {
+            update_menu_selection(
+                store_selections.storage_menu.selected,
+                &mut menu_query,
+                &mut menu_text_query,
+            );
+        }
+        StoreModeKind::Sell => {
+            update_store_list_selection(
+                store_selections.sell.selected,
+                &mut list_query,
+                &mut list_text_query,
+            );
+        }
+        StoreModeKind::StorageView => {
+            update_store_list_selection(
+                store_selections.storage_view.selected,
+                &mut list_query,
+                &mut list_text_query,
+            );
+        }
+        StoreModeKind::StorageDeposit => {
+            update_store_list_selection(
+                store_selections.deposit.selected,
+                &mut list_query,
+                &mut list_text_query,
+            );
+        }
+        StoreModeKind::Buy => {
+            // Buy mode uses ItemGrid widget - handled by its own system
+            // No reactive selection update needed here
+        }
+    }
 }

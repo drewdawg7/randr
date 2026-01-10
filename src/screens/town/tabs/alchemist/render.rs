@@ -13,6 +13,17 @@ use super::super::super::TabContent;
 use super::state::{AlchemistMode, AlchemistModeKind, AlchemistSelections};
 use super::ALCHEMIST_MENU_OPTIONS;
 
+/// Marker component for alchemist recipe list items.
+#[derive(Component)]
+pub struct AlchemistRecipeItem {
+    pub index: usize,
+    pub name: String,
+}
+
+/// Marker for the text of an alchemist recipe item.
+#[derive(Component)]
+pub struct AlchemistRecipeItemText;
+
 /// Spawn the alchemist UI based on current mode.
 pub fn spawn_alchemist_ui(
     commands: &mut Commands,
@@ -131,14 +142,14 @@ fn spawn_recipe_list(
             for (i, &recipe_id) in alchemist_mode.available_recipes.iter().enumerate() {
                 if let Ok(recipe) = Recipe::new(recipe_id) {
                     let is_selected = i == alchemist_selections.recipe.selected;
-                    spawn_recipe_item(list_container, &recipe, is_selected, player);
+                    spawn_recipe_item(list_container, &recipe, i, is_selected, player);
                 }
             }
         });
 }
 
 /// Spawn a single recipe list item.
-fn spawn_recipe_item(parent: &mut ChildBuilder, recipe: &Recipe, is_selected: bool, player: &Player) {
+fn spawn_recipe_item(parent: &mut ChildBuilder, recipe: &Recipe, index: usize, is_selected: bool, player: &Player) {
     // Determine if this recipe can be crafted
     let can_craft = recipe.can_craft(player);
     let status_text = if can_craft { "[READY]" } else { "[MISSING]" };
@@ -150,9 +161,14 @@ fn spawn_recipe_item(parent: &mut ChildBuilder, recipe: &Recipe, is_selected: bo
 
     let (bg_color, text_color) = selection_colors(is_selected);
     let prefix = selection_prefix(is_selected);
+    let recipe_name = recipe.name().to_string();
 
     parent
         .spawn((
+            AlchemistRecipeItem {
+                index,
+                name: recipe_name.clone(),
+            },
             Node {
                 padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                 flex_direction: FlexDirection::Row,
@@ -164,7 +180,8 @@ fn spawn_recipe_item(parent: &mut ChildBuilder, recipe: &Recipe, is_selected: bo
         .with_children(|item_row| {
             // Recipe name
             item_row.spawn((
-                Text::new(format!("{}{}", prefix, recipe.name())),
+                AlchemistRecipeItemText,
+                Text::new(format!("{}{}", prefix, recipe_name)),
                 TextFont {
                     font_size: 18.0,
                     ..default()
@@ -292,4 +309,30 @@ fn spawn_ingredient_row(parent: &mut ChildBuilder, item_id: ItemId, required: u3
                 TextColor(count_color),
             ));
         });
+}
+
+/// Update alchemist recipe selection highlighting reactively.
+pub fn update_alchemist_recipe_selection<F1, F2>(
+    selected_index: usize,
+    recipe_query: &mut Query<(&AlchemistRecipeItem, &mut BackgroundColor, &Children), F1>,
+    text_query: &mut Query<(&mut Text, &mut TextColor), F2>,
+)
+where
+    F1: bevy::ecs::query::QueryFilter,
+    F2: bevy::ecs::query::QueryFilter,
+{
+    for (item, mut bg_color, children) in recipe_query.iter_mut() {
+        let is_selected = item.index == selected_index;
+        let (new_bg, text_color) = selection_colors(is_selected);
+        *bg_color = new_bg.into();
+
+        // Update child text
+        for &child in children.iter() {
+            if let Ok((mut text, mut color)) = text_query.get_mut(child) {
+                let prefix = selection_prefix(is_selected);
+                **text = format!("{}{}", prefix, item.name);
+                *color = text_color.into();
+            }
+        }
+    }
 }

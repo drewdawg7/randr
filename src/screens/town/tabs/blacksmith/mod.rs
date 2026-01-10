@@ -6,12 +6,16 @@ mod state;
 use bevy::prelude::*;
 
 use crate::game::Player;
+use crate::screens::town::shared::{
+    update_menu_selection, MenuOptionItem, MenuOptionText,
+};
 use crate::screens::town::{ContentArea, TabContent, TownTab};
 
 use input::handle_blacksmith_input;
+use render::{update_blacksmith_list_selection, BlacksmithListItem, BlacksmithListItemText};
 
 pub use render::spawn_blacksmith_ui;
-pub use state::{BlacksmithMode, BlacksmithSelections};
+pub use state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
 
 /// Plugin for the Blacksmith tab.
 pub struct BlacksmithTabPlugin;
@@ -25,10 +29,10 @@ impl Plugin for BlacksmithTabPlugin {
                 Update,
                 (
                     handle_blacksmith_input,
-                    refresh_blacksmith_on_mode_change.run_if(
-                        resource_changed::<BlacksmithMode>
-                            .or(resource_changed::<BlacksmithSelections>),
-                    ),
+                    // Only respawn on mode changes (Menu -> Upgrade, etc.)
+                    refresh_blacksmith_on_mode_change.run_if(resource_changed::<BlacksmithMode>),
+                    // Reactive selection updates within each mode
+                    update_blacksmith_selection.run_if(resource_changed::<BlacksmithSelections>),
                 )
                     .run_if(in_state(TownTab::Blacksmith)),
             );
@@ -55,7 +59,7 @@ fn spawn_blacksmith_content(
     );
 }
 
-/// Refreshes blacksmith UI when mode or selections change.
+/// Refreshes blacksmith UI when mode changes (Menu -> Upgrade, etc.).
 fn refresh_blacksmith_on_mode_change(
     mut commands: Commands,
     blacksmith_mode: Res<BlacksmithMode>,
@@ -80,4 +84,60 @@ fn refresh_blacksmith_on_mode_change(
         &blacksmith_selections,
         &player,
     );
+}
+
+/// Updates blacksmith selection highlighting reactively.
+fn update_blacksmith_selection(
+    blacksmith_mode: Res<BlacksmithMode>,
+    blacksmith_selections: Res<BlacksmithSelections>,
+    // Menu mode uses shared menu components
+    mut menu_query: Query<(&MenuOptionItem, &mut BackgroundColor, &Children)>,
+    mut menu_text_query: Query<(&mut Text, &mut TextColor), With<MenuOptionText>>,
+    // Other modes use blacksmith list components
+    mut list_query: Query<
+        (&BlacksmithListItem, &mut BackgroundColor, &Children),
+        Without<MenuOptionItem>,
+    >,
+    mut list_text_query: Query<
+        (&mut Text, &mut TextColor),
+        (With<BlacksmithListItemText>, Without<MenuOptionText>),
+    >,
+) {
+    match blacksmith_mode.mode {
+        BlacksmithModeKind::Menu => {
+            update_menu_selection(
+                blacksmith_selections.menu.selected,
+                &mut menu_query,
+                &mut menu_text_query,
+            );
+        }
+        BlacksmithModeKind::Upgrade => {
+            update_blacksmith_list_selection(
+                blacksmith_selections.upgrade.selected,
+                &mut list_query,
+                &mut list_text_query,
+            );
+        }
+        BlacksmithModeKind::Quality => {
+            update_blacksmith_list_selection(
+                blacksmith_selections.quality.selected,
+                &mut list_query,
+                &mut list_text_query,
+            );
+        }
+        BlacksmithModeKind::Smelt => {
+            update_blacksmith_list_selection(
+                blacksmith_selections.smelt.selected,
+                &mut list_query,
+                &mut list_text_query,
+            );
+        }
+        BlacksmithModeKind::Forge => {
+            update_blacksmith_list_selection(
+                blacksmith_selections.forge.selected,
+                &mut list_query,
+                &mut list_text_query,
+            );
+        }
+    }
 }
