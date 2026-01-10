@@ -13,6 +13,7 @@ Follow this workflow for ALL code changes:
 7. **Clean-Up**: Fix any compiler warnings related to your changes
 8. **Merge**: Commit, merge, and push. No PR necessary.
 9. **Close**: If working on a GitHub issue, close it
+10. **Stats**: Use the `session-stats` skill to aggregate previous session stats
 
 ## Pre-Edit Checklist
 - [ ] Batch operation appropriate? (>5 similar changes → use ast-grep)
