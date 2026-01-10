@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
-use crate::entities::progression::HasProgression;
-use crate::game::Player;
+use crate::entities::Progression;
+use crate::game::{PlayerGold, PlayerName};
 use crate::input::GameAction;
-use crate::stats::HasStats;
+use crate::stats::{HasStats, StatSheet};
 use crate::states::AppState;
 
 /// Plugin that manages the profile/stats screen.
@@ -25,7 +25,13 @@ impl Plugin for ProfilePlugin {
 struct ProfileScreenRoot;
 
 /// System to spawn the profile screen UI.
-fn spawn_profile_screen(mut commands: Commands, player: Res<Player>) {
+fn spawn_profile_screen(
+    mut commands: Commands,
+    name: Res<PlayerName>,
+    gold: Res<PlayerGold>,
+    stats: Res<StatSheet>,
+    prog: Res<Progression>,
+) {
     // Root container
     commands
         .spawn((
@@ -44,7 +50,7 @@ fn spawn_profile_screen(mut commands: Commands, player: Res<Player>) {
         .with_children(|parent| {
             // Title - Character Name
             parent.spawn((
-                Text::new(format!("{}'s Profile", player.name)),
+                Text::new(format!("{}'s Profile", name.0)),
                 TextFont {
                     font_size: 56.0,
                     ..default()
@@ -70,7 +76,7 @@ fn spawn_profile_screen(mut commands: Commands, player: Res<Player>) {
                     spawn_stat_row(
                         parent,
                         "HP",
-                        &format!("{} / {}", player.hp(), player.max_hp()),
+                        &format!("{} / {}", stats.hp(), stats.max_hp()),
                         Color::srgb(0.9, 0.2, 0.2),
                     );
 
@@ -78,7 +84,7 @@ fn spawn_profile_screen(mut commands: Commands, player: Res<Player>) {
                     spawn_stat_row(
                         parent,
                         "Gold",
-                        &format!("{}", player.gold),
+                        &format!("{}", gold.0),
                         Color::srgb(1.0, 0.84, 0.0),
                     );
 
@@ -86,7 +92,7 @@ fn spawn_profile_screen(mut commands: Commands, player: Res<Player>) {
                     spawn_stat_row(
                         parent,
                         "Attack",
-                        &format!("{}", player.attack()),
+                        &format!("{}", stats.attack()),
                         Color::srgb(1.0, 0.4, 0.2),
                     );
 
@@ -94,7 +100,7 @@ fn spawn_profile_screen(mut commands: Commands, player: Res<Player>) {
                     spawn_stat_row(
                         parent,
                         "Defense",
-                        &format!("{}", player.defense()),
+                        &format!("{}", stats.defense()),
                         Color::srgb(0.4, 0.6, 1.0),
                     );
 
@@ -102,13 +108,13 @@ fn spawn_profile_screen(mut commands: Commands, player: Res<Player>) {
                     spawn_stat_row(
                         parent,
                         "Level",
-                        &format!("{}", player.level()),
+                        &format!("{}", prog.level),
                         Color::srgb(0.6, 1.0, 0.6),
                     );
 
                     // XP Bar
-                    let xp_current = player.prog.xp;
-                    let xp_needed = crate::entities::Progression::xp_to_next_level(player.level());
+                    let xp_current = prog.xp;
+                    let xp_needed = Progression::xp_to_next_level(prog.level);
                     let xp_percent = (xp_current as f32 / xp_needed as f32 * 100.0) as i32;
                     let xp_bar = create_text_progress_bar(xp_current, xp_needed, 20);
 

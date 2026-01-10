@@ -2,8 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::game::Player;
-use crate::inventory::FindsItems;
+use crate::inventory::{FindsItems, Inventory};
 use crate::item::recipe::Recipe;
 use crate::item::ItemId;
 use crate::ui::{selection_colors, selection_prefix};
@@ -30,7 +29,7 @@ pub fn spawn_alchemist_ui(
     content_entity: Entity,
     alchemist_mode: &AlchemistMode,
     alchemist_selections: &AlchemistSelections,
-    player: &Player,
+    inventory: &Inventory,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -47,7 +46,7 @@ pub fn spawn_alchemist_ui(
             .with_children(|content| match alchemist_mode.mode {
                 AlchemistModeKind::Menu => spawn_menu_mode(content, alchemist_selections),
                 AlchemistModeKind::Brew => {
-                    spawn_brew_mode(content, alchemist_mode, alchemist_selections, player)
+                    spawn_brew_mode(content, alchemist_mode, alchemist_selections, inventory)
                 }
             });
     });
@@ -72,7 +71,7 @@ fn spawn_brew_mode(
     content: &mut ChildBuilder,
     alchemist_mode: &AlchemistMode,
     alchemist_selections: &AlchemistSelections,
-    player: &Player,
+    inventory: &Inventory,
 ) {
     // Title
     content.spawn((
@@ -99,10 +98,10 @@ fn spawn_brew_mode(
         },))
         .with_children(|main_content| {
             // Left side: Recipe list
-            spawn_recipe_list(main_content, alchemist_mode, alchemist_selections, player);
+            spawn_recipe_list(main_content, alchemist_mode, alchemist_selections, inventory);
 
             // Right side: Ingredient details for selected recipe
-            spawn_ingredient_details(main_content, alchemist_mode, alchemist_selections, player);
+            spawn_ingredient_details(main_content, alchemist_mode, alchemist_selections, inventory);
         });
 
     // Navigation hint
@@ -114,7 +113,7 @@ fn spawn_recipe_list(
     parent: &mut ChildBuilder,
     alchemist_mode: &AlchemistMode,
     alchemist_selections: &AlchemistSelections,
-    player: &Player,
+    inventory: &Inventory,
 ) {
     parent
         .spawn((Node {
@@ -142,16 +141,16 @@ fn spawn_recipe_list(
             for (i, &recipe_id) in alchemist_mode.available_recipes.iter().enumerate() {
                 if let Ok(recipe) = Recipe::new(recipe_id) {
                     let is_selected = i == alchemist_selections.recipe.selected;
-                    spawn_recipe_item(list_container, &recipe, i, is_selected, player);
+                    spawn_recipe_item(list_container, &recipe, i, is_selected, inventory);
                 }
             }
         });
 }
 
 /// Spawn a single recipe list item.
-fn spawn_recipe_item(parent: &mut ChildBuilder, recipe: &Recipe, index: usize, is_selected: bool, player: &Player) {
+fn spawn_recipe_item(parent: &mut ChildBuilder, recipe: &Recipe, index: usize, is_selected: bool, inventory: &Inventory) {
     // Determine if this recipe can be crafted
-    let can_craft = recipe.can_craft(player);
+    let can_craft = recipe.can_craft(inventory);
     let status_text = if can_craft { "[READY]" } else { "[MISSING]" };
     let status_color = if can_craft {
         Color::srgb(0.3, 0.8, 0.3)
@@ -210,7 +209,7 @@ fn spawn_ingredient_details(
     parent: &mut ChildBuilder,
     alchemist_mode: &AlchemistMode,
     alchemist_selections: &AlchemistSelections,
-    player: &Player,
+    inventory: &Inventory,
 ) {
     parent
         .spawn((Node {
@@ -243,7 +242,7 @@ fn spawn_ingredient_details(
                 if let Ok(recipe) = Recipe::new(recipe_id) {
                     // Display each ingredient with owned/required counts
                     for (&item_id, &required) in recipe.ingredients() {
-                        spawn_ingredient_row(details_container, item_id, required, player);
+                        spawn_ingredient_row(details_container, item_id, required, inventory);
                     }
                 }
             } else {
@@ -260,12 +259,12 @@ fn spawn_ingredient_details(
 }
 
 /// Spawn a single ingredient row showing owned/required counts.
-fn spawn_ingredient_row(parent: &mut ChildBuilder, item_id: ItemId, required: u32, player: &Player) {
+fn spawn_ingredient_row(parent: &mut ChildBuilder, item_id: ItemId, required: u32, inventory: &Inventory) {
     // Get the item name from the spec
     let item_name = item_id.spec().name.clone();
 
     // Check how many the player has
-    let owned = player
+    let owned = inventory
         .find_item_by_id(item_id)
         .map(|inv_item| inv_item.quantity)
         .unwrap_or(0);

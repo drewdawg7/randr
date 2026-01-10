@@ -1,11 +1,10 @@
 use bevy::prelude::*;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
-use crate::ui::UiText;
 use crate::entities::Progression;
-use crate::entities::progression::HasProgression;
-use crate::game::Player;
-use crate::stats::HasStats;
+use crate::player::PlayerGold;
+use crate::stats::{StatSheet, StatType};
+use crate::ui::UiText;
 
 /// Plugin for player stats widget.
 pub struct PlayerStatsPlugin;
@@ -23,7 +22,9 @@ pub struct PlayerStats;
 fn on_add_player_stats(
     trigger: Trigger<OnAdd, PlayerStats>,
     mut commands: Commands,
-    player: Res<Player>,
+    stats: Res<StatSheet>,
+    progression: Res<Progression>,
+    gold: Res<PlayerGold>,
     game_sprites: Res<GameSprites>,
 ) {
     let entity = trigger.entity();
@@ -39,6 +40,9 @@ fn on_add_player_stats(
         .get(SpriteSheetKey::UiAll)
         .and_then(|s| s.image_node_sliced("Slice_8", 8.0));
 
+    let hp = stats.value(StatType::Health);
+    let max_hp = stats.max_value(StatType::Health);
+
     let mut entity_commands = commands.entity(entity);
     entity_commands.insert(Node {
         flex_direction: FlexDirection::Row,
@@ -50,10 +54,9 @@ fn on_add_player_stats(
     if let Some(bg) = background_image {
         entity_commands.insert(bg);
     }
-    entity_commands
-        .with_children(|stats| {
+    entity_commands.with_children(|stats_node| {
         // HP row with heart icon + values
-        stats
+        stats_node
             .spawn(Node {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
@@ -72,21 +75,16 @@ fn on_add_player_stats(
                 }
 
                 // HP values
-                hp_row.spawn(
-                    UiText::new(format!("{}/{}", player.hp(), player.max_hp()))
-                        .size(16.0)
-                        .red()
-                        .build(),
-                );
+                hp_row.spawn(UiText::new(format!("{}/{}", hp, max_hp)).size(16.0).red().build());
             });
 
         // Level & XP
-        stats.spawn(
+        stats_node.spawn(
             UiText::new(format!(
                 "Level: {}  XP: {}/{}",
-                player.level(),
-                player.prog.xp,
-                Progression::xp_to_next_level(player.level())
+                progression.level,
+                progression.xp,
+                Progression::xp_to_next_level(progression.level)
             ))
             .size(16.0)
             .green()
@@ -94,7 +92,7 @@ fn on_add_player_stats(
         );
 
         // Gold row with coin icon + value
-        stats
+        stats_node
             .spawn(Node {
                 flex_direction: FlexDirection::Row,
                 align_items: AlignItems::Center,
@@ -113,9 +111,7 @@ fn on_add_player_stats(
                 }
 
                 // Gold value
-                gold_row.spawn(
-                    UiText::new(format!("{}", player.gold)).size(16.0).gold().build(),
-                );
+                gold_row.spawn(UiText::new(format!("{}", gold.0)).size(16.0).gold().build());
             });
     });
 }

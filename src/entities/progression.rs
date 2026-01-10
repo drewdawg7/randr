@@ -1,7 +1,9 @@
+use bevy::prelude::*;
+
 use crate::utils::text_bar_with_label;
 
 
-#[derive(Debug, Default, Clone)]
+#[derive(Resource, Debug, Default, Clone)]
 pub struct Progression {
     pub level: i32,
     pub xp: i32,

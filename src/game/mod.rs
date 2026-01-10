@@ -16,7 +16,7 @@ pub use crate::combat::{
 pub use dungeon::{DungeonCompleted, DungeonPlugin, DungeonResource, RoomCleared, RoomEntered};
 pub use items::{ItemDropped, ItemEquipped, ItemPickedUp, ItemPlugin, ItemUnequipped, ItemUsed};
 pub use magic::MagicPlugin;
-pub use crate::player::Player;
+pub use crate::player::{Player, PlayerGold, PlayerName};
 pub use crate::storage::Storage;
 pub use player::{GoldChanged, PlayerDamaged, PlayerHealed, PlayerLeveledUp, PlayerPlugin};
 pub use storage::{ItemDeposited, ItemWithdrawn, StoragePlugin};

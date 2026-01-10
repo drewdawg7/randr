@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::game::Player;
+use crate::inventory::Inventory;
 use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::inventory_selection_bg;
 
@@ -10,10 +10,10 @@ use super::utils::get_all_inventory_items;
 /// Spawn the inventory modal UI.
 pub fn spawn_inventory_modal(
     commands: &mut Commands,
-    player: &Player,
+    inventory: &Inventory,
     selection: &mut InventorySelection,
 ) {
-    let items = get_all_inventory_items(player);
+    let items = get_all_inventory_items(inventory);
     selection.set_count(items.len());
 
     let overlay = spawn_modal_overlay(commands);
@@ -358,7 +358,7 @@ pub fn update_inventory_display(
     mut commands: Commands,
     modal_root: Query<Entity, With<InventoryModalRoot>>,
     active_modal: Res<ActiveModal>,
-    player: Res<Player>,
+    inventory: Res<Inventory>,
     mut selection: ResMut<InventorySelection>,
 ) {
     // Only update if the inventory modal is open
@@ -371,6 +371,6 @@ pub fn update_inventory_display(
         commands.entity(entity).despawn_recursive();
 
         // Respawn with updated data
-        spawn_inventory_modal(&mut commands, &player, &mut selection);
+        spawn_inventory_modal(&mut commands, &inventory, &mut selection);
     }
 }

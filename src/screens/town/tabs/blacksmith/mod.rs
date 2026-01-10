@@ -5,7 +5,8 @@ mod state;
 
 use bevy::prelude::*;
 
-use crate::game::Player;
+use crate::inventory::Inventory;
+use crate::player::PlayerGold;
 use crate::screens::town::shared::{
     update_menu_selection, MenuOptionItem, MenuOptionText,
 };
@@ -45,7 +46,8 @@ fn spawn_blacksmith_content(
     content_query: Query<Entity, With<ContentArea>>,
     blacksmith_mode: Res<BlacksmithMode>,
     blacksmith_selections: Res<BlacksmithSelections>,
-    player: Res<Player>,
+    gold: Res<PlayerGold>,
+    inventory: Res<Inventory>,
 ) {
     let Ok(content_entity) = content_query.get_single() else {
         return;
@@ -55,7 +57,8 @@ fn spawn_blacksmith_content(
         content_entity,
         &blacksmith_mode,
         &blacksmith_selections,
-        &player,
+        gold.0,
+        &inventory,
     );
 }
 
@@ -66,7 +69,8 @@ fn refresh_blacksmith_on_mode_change(
     blacksmith_selections: Res<BlacksmithSelections>,
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
-    player: Res<Player>,
+    gold: Res<PlayerGold>,
+    inventory: Res<Inventory>,
 ) {
     // Despawn existing content
     for entity in &tab_content_query {
@@ -82,7 +86,8 @@ fn refresh_blacksmith_on_mode_change(
         content_entity,
         &blacksmith_mode,
         &blacksmith_selections,
-        &player,
+        gold.0,
+        &inventory,
     );
 }
 

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::assets::{GameFonts, GameSprites, SpriteSheetKey};
-use crate::game::{Player, Storage};
-use crate::inventory::InventoryItem;
+use crate::game::Storage;
+use crate::inventory::{Inventory, InventoryItem};
 use crate::screens::town::shared::{spawn_menu, spawn_navigation_hint};
 use crate::screens::town::TabContent;
 use crate::ui::UiText;
@@ -36,7 +36,7 @@ pub fn spawn_store_ui(
     content_entity: Entity,
     store_mode: &StoreMode,
     store_selections: &StoreSelections,
-    player: &Player,
+    inventory: &Inventory,
     storage: &Storage,
     game_sprites: &Res<GameSprites>,
 ) {
@@ -54,14 +54,14 @@ pub fn spawn_store_ui(
             ))
             .with_children(|content| match store_mode.mode {
                 StoreModeKind::Menu => spawn_menu_ui(content, store_selections),
-                StoreModeKind::Buy => spawn_buy_ui(content, store_selections, player, game_sprites),
-                StoreModeKind::Sell => spawn_sell_ui(content, store_selections, player),
+                StoreModeKind::Buy => spawn_buy_ui(content, store_selections, game_sprites),
+                StoreModeKind::Sell => spawn_sell_ui(content, store_selections, inventory),
                 StoreModeKind::StorageMenu => spawn_storage_menu_ui(content, store_selections),
                 StoreModeKind::StorageView => {
                     spawn_storage_view_ui(content, store_selections, storage)
                 }
                 StoreModeKind::StorageDeposit => {
-                    spawn_storage_deposit_ui(content, store_selections, player)
+                    spawn_storage_deposit_ui(content, store_selections, inventory)
                 }
             });
     });
@@ -88,7 +88,6 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) 
 fn spawn_buy_ui(
     parent: &mut ChildBuilder,
     store_selections: &StoreSelections,
-    _player: &Player,
     game_sprites: &Res<GameSprites>,
 ) {
     // Title
@@ -137,13 +136,13 @@ fn spawn_buy_ui(
 }
 
 /// Spawn the sell screen UI.
-fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, player: &Player) {
+fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, inventory: &Inventory) {
     // Title
     parent.spawn(UiText::new("Sell Items").heading().yellow().margin_bottom(10.0).build_with_node());
 
     spawn_inventory_list(
         parent,
-        player.inventory.items.as_slice(),
+        inventory.items.as_slice(),
         store_selections.sell.selected,
         "You have no items to sell.",
         Some(|item: &InventoryItem| {
@@ -198,14 +197,14 @@ fn spawn_storage_view_ui(
 fn spawn_storage_deposit_ui(
     parent: &mut ChildBuilder,
     store_selections: &StoreSelections,
-    player: &Player,
+    inventory: &Inventory,
 ) {
     // Title
     parent.spawn(UiText::new("Storage - Deposit Items").heading().yellow().margin_bottom(10.0).build_with_node());
 
     spawn_inventory_list(
         parent,
-        player.inventory.items.as_slice(),
+        inventory.items.as_slice(),
         store_selections.deposit.selected,
         "You have no items to deposit.",
         None::<fn(&InventoryItem) -> String>,

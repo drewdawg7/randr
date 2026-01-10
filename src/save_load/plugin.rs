@@ -1,6 +1,10 @@
 use bevy::prelude::*;
 
-use crate::game::{DungeonResource, Player, Storage};
+use crate::entities::Progression;
+use crate::game::{DungeonResource, Storage};
+use crate::inventory::Inventory;
+use crate::player::{Player, PlayerGold, PlayerName};
+use crate::stats::StatSheet;
 use super::system::{load_game, save_game, save_exists};
 
 /// Event to trigger saving the game
@@ -50,7 +54,11 @@ impl Plugin for SaveLoadPlugin {
 
 /// System that attempts to auto-load the game on startup if a save exists
 fn try_auto_load(
-    mut player: ResMut<Player>,
+    mut name: ResMut<PlayerName>,
+    mut gold: ResMut<PlayerGold>,
+    mut progression: ResMut<Progression>,
+    mut inventory: ResMut<Inventory>,
+    mut stats: ResMut<StatSheet>,
     mut storage: ResMut<Storage>,
     mut dungeon: ResMut<DungeonResource>,
     mut game_loaded_events: EventWriter<GameLoaded>,
@@ -67,8 +75,12 @@ fn try_auto_load(
     // Try to load the game
     match load_game(None) {
         Ok((loaded_player, loaded_storage, loaded_dungeon)) => {
-            // Update resources
-            *player = loaded_player;
+            // Update resources from loaded player
+            name.0 = loaded_player.name;
+            gold.0 = loaded_player.gold;
+            *progression = loaded_player.prog;
+            *inventory = loaded_player.inventory;
+            *stats = loaded_player.stats;
             *storage = loaded_storage;
             if let Some(d) = loaded_dungeon {
                 *dungeon = DungeonResource(d);
@@ -78,9 +90,9 @@ fn try_auto_load(
 
             // Send event
             game_loaded_events.send(GameLoaded {
-                player_name: player.name.to_string(),
-                player_level: player.prog.level,
-                player_gold: player.gold,
+                player_name: name.0.to_string(),
+                player_level: progression.level,
+                player_gold: gold.0,
             });
         }
         Err(e) => {
@@ -95,7 +107,11 @@ fn try_auto_load(
 /// System that handles SaveGameEvent
 fn handle_save_event(
     mut save_events: EventReader<SaveGameEvent>,
-    player: Res<Player>,
+    name: Res<PlayerName>,
+    gold: Res<PlayerGold>,
+    progression: Res<Progression>,
+    inventory: Res<Inventory>,
+    stats: Res<StatSheet>,
     storage: Res<Storage>,
     dungeon: Res<DungeonResource>,
     mut game_saved_events: EventWriter<GameSaved>,
@@ -110,12 +126,13 @@ fn handle_save_event(
             None
         };
 
+        let player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
         match save_game(&player, &storage, dungeon_ref, None) {
             Ok(_) => {
                 info!("Game saved successfully!");
                 game_saved_events.send(GameSaved {
-                    player_name: player.name.to_string(),
-                    player_level: player.prog.level,
+                    player_name: name.0.to_string(),
+                    player_level: progression.level,
                 });
             }
             Err(e) => {
@@ -131,7 +148,11 @@ fn handle_save_event(
 /// System that handles LoadGameEvent
 fn handle_load_event(
     mut load_events: EventReader<LoadGameEvent>,
-    mut player: ResMut<Player>,
+    mut name: ResMut<PlayerName>,
+    mut gold: ResMut<PlayerGold>,
+    mut progression: ResMut<Progression>,
+    mut inventory: ResMut<Inventory>,
+    mut stats: ResMut<StatSheet>,
     mut storage: ResMut<Storage>,
     mut dungeon: ResMut<DungeonResource>,
     mut game_loaded_events: EventWriter<GameLoaded>,
@@ -142,8 +163,12 @@ fn handle_load_event(
 
         match load_game(None) {
             Ok((loaded_player, loaded_storage, loaded_dungeon)) => {
-                // Update resources
-                *player = loaded_player;
+                // Update resources from loaded player
+                name.0 = loaded_player.name;
+                gold.0 = loaded_player.gold;
+                *progression = loaded_player.prog;
+                *inventory = loaded_player.inventory;
+                *stats = loaded_player.stats;
                 *storage = loaded_storage;
                 if let Some(d) = loaded_dungeon {
                     *dungeon = DungeonResource(d);
@@ -153,9 +178,9 @@ fn handle_load_event(
 
                 // Send event
                 game_loaded_events.send(GameLoaded {
-                    player_name: player.name.to_string(),
-                    player_level: player.prog.level,
-                    player_gold: player.gold,
+                    player_name: name.0.to_string(),
+                    player_level: progression.level,
+                    player_gold: gold.0,
                 });
             }
             Err(e) => {

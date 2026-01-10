@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
-use crate::game::{calculate_upgrade_cost, Player};
+use crate::game::calculate_upgrade_cost;
+use crate::inventory::{FindsItems, Inventory};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
 use crate::screens::town::shared::{spawn_empty_state, spawn_menu, spawn_navigation_hint};
 use crate::screens::town::TabContent;
 use crate::ui::{selection_colors, selection_prefix};
-use crate::FindsItems;
 
 use super::constants::MENU_OPTIONS;
 use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
@@ -23,7 +23,7 @@ pub struct BlacksmithListItem {
 pub struct BlacksmithListItemText;
 
 /// Spawn a recipe list UI with selection highlighting.
-fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_index: usize, player: &Player) {
+fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_index: usize, inventory: &Inventory) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -35,7 +35,7 @@ fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_i
                 let is_selected = i == selected_index;
 
                 if let Ok(recipe) = Recipe::new(*recipe_id) {
-                    let can_craft = recipe.can_craft(player);
+                    let can_craft = recipe.can_craft(inventory);
 
                     let (bg_color, text_color) = selection_colors(is_selected);
 
@@ -77,7 +77,7 @@ fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_i
                             .ingredients()
                             .iter()
                             .map(|(item_id, qty)| {
-                                let owned = player
+                                let owned = inventory
                                     .find_item_by_id(*item_id)
                                     .map(|inv| inv.quantity)
                                     .unwrap_or(0);
@@ -113,7 +113,8 @@ pub fn spawn_blacksmith_ui(
     content_entity: Entity,
     blacksmith_mode: &BlacksmithMode,
     blacksmith_selections: &BlacksmithSelections,
-    player: &Player,
+    gold: i32,
+    inventory: &Inventory,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -145,16 +146,16 @@ pub fn spawn_blacksmith_ui(
                         );
                     }
                     BlacksmithModeKind::Upgrade => {
-                        spawn_upgrade_ui(content, blacksmith_selections, player);
+                        spawn_upgrade_ui(content, blacksmith_selections, gold, inventory);
                     }
                     BlacksmithModeKind::Quality => {
-                        spawn_quality_ui(content, blacksmith_selections, player);
+                        spawn_quality_ui(content, blacksmith_selections, inventory);
                     }
                     BlacksmithModeKind::Smelt => {
-                        spawn_smelt_ui(content, blacksmith_selections, player);
+                        spawn_smelt_ui(content, blacksmith_selections, inventory);
                     }
                     BlacksmithModeKind::Forge => {
-                        spawn_forge_ui(content, blacksmith_selections, player);
+                        spawn_forge_ui(content, blacksmith_selections, inventory);
                     }
                 }
             });
@@ -165,7 +166,8 @@ pub fn spawn_blacksmith_ui(
 fn spawn_upgrade_ui(
     parent: &mut ChildBuilder,
     blacksmith_selections: &BlacksmithSelections,
-    player: &Player,
+    gold: i32,
+    inventory: &Inventory,
 ) {
     // Title
     parent.spawn((
@@ -182,8 +184,7 @@ fn spawn_upgrade_ui(
     ));
 
     // Get equipment items
-    let equipment_items: Vec<_> = player
-        .inventory
+    let equipment_items: Vec<_> = inventory
         .items
         .iter()
         .filter(|inv_item| inv_item.item.item_type.is_equipment())
@@ -203,7 +204,7 @@ fn spawn_upgrade_ui(
                     let is_selected = i == blacksmith_selections.upgrade.selected;
                     let upgrade_cost = calculate_upgrade_cost(&inv_item.item);
                     let can_upgrade = inv_item.item.num_upgrades < inv_item.item.max_upgrades;
-                    let can_afford = player.gold >= upgrade_cost;
+                    let can_afford = gold >= upgrade_cost;
 
                     let (bg_color, text_color) = selection_colors(is_selected);
 
@@ -304,7 +305,7 @@ fn spawn_upgrade_ui(
 fn spawn_quality_ui(
     parent: &mut ChildBuilder,
     blacksmith_selections: &BlacksmithSelections,
-    player: &Player,
+    inventory: &Inventory,
 ) {
     // Title
     parent.spawn((
@@ -321,7 +322,7 @@ fn spawn_quality_ui(
     ));
 
     // Show stone count
-    let stone_count = player
+    let stone_count = inventory
         .find_item_by_id(ItemId::QualityUpgradeStone)
         .map(|inv| inv.quantity)
         .unwrap_or(0);
@@ -340,8 +341,7 @@ fn spawn_quality_ui(
     ));
 
     // Get equipment items
-    let equipment_items: Vec<_> = player
-        .inventory
+    let equipment_items: Vec<_> = inventory
         .items
         .iter()
         .filter(|inv_item| inv_item.item.item_type.is_equipment())
@@ -445,7 +445,7 @@ fn spawn_quality_ui(
 fn spawn_smelt_ui(
     parent: &mut ChildBuilder,
     blacksmith_selections: &BlacksmithSelections,
-    player: &Player,
+    inventory: &Inventory,
 ) {
     // Title
     parent.spawn((
@@ -466,7 +466,7 @@ fn spawn_smelt_ui(
     if recipes.is_empty() {
         spawn_empty_state(parent, "No smelting recipes available.");
     } else {
-        spawn_recipe_list(parent, &recipes, blacksmith_selections.smelt.selected, player);
+        spawn_recipe_list(parent, &recipes, blacksmith_selections.smelt.selected, inventory);
     }
 
     // Navigation hint
@@ -477,7 +477,7 @@ fn spawn_smelt_ui(
 fn spawn_forge_ui(
     parent: &mut ChildBuilder,
     blacksmith_selections: &BlacksmithSelections,
-    player: &Player,
+    inventory: &Inventory,
 ) {
     // Title
     parent.spawn((
@@ -498,7 +498,7 @@ fn spawn_forge_ui(
     if recipes.is_empty() {
         spawn_empty_state(parent, "No forging recipes available.");
     } else {
-        spawn_recipe_list(parent, &recipes, blacksmith_selections.forge.selected, player);
+        spawn_recipe_list(parent, &recipes, blacksmith_selections.forge.selected, inventory);
     }
 
     // Navigation hint

@@ -3,11 +3,10 @@ mod state;
 
 use bevy::prelude::*;
 
-use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
-use crate::inventory::ManagesItems;
+use crate::inventory::{Inventory, ManagesItems};
 use crate::location::mine::RockId;
-use crate::stats::StatType;
+use crate::stats::{StatSheet, StatType};
 use crate::states::AppState;
 
 pub use state::MineScreenState;
@@ -142,7 +141,8 @@ fn handle_mine_input(
 fn handle_mining_action(
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<MineScreenState>,
-    mut player: ResMut<Player>,
+    stats: Res<StatSheet>,
+    mut inventory: ResMut<Inventory>,
 ) {
     for action in action_reader.read() {
         if *action == GameAction::Mine {
@@ -179,7 +179,7 @@ fn handle_mining_action(
 
                     // Get the rock and roll for loot
                     let rock = rock_id.spawn();
-                    let magic_find = player.stats.value(StatType::MagicFind);
+                    let magic_find = stats.value(StatType::MagicFind);
                     let drops = rock.loot.roll_drops(magic_find);
 
                     // Add items to player inventory
@@ -190,7 +190,7 @@ fn handle_mining_action(
 
                         // Add item to inventory
                         for _ in 0..quantity {
-                            if let Ok(_result) = player.add_to_inv(drop.item.clone()) {
+                            if let Ok(_result) = inventory.add_to_inv(drop.item.clone()) {
                                 message_parts.push(format!("{}x {}", quantity, item_name));
                                 break; // Only add message once per drop type
                             }

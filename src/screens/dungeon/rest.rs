@@ -1,9 +1,8 @@
 use bevy::prelude::*;
 
-use crate::game::Player;
 use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
-use crate::stats::{HasStats, Healable};
+use crate::stats::{HasStats, Healable, StatSheet};
 use crate::ui::widgets::PlayerStats;
 use crate::ui::{nav_selection_text, update_menu_colors, MenuIndex};
 
@@ -144,7 +143,7 @@ pub fn handle_rest_input(
     mut action_reader: EventReader<GameAction>,
     mut selection_state: ResMut<DungeonSelectionState>,
     mut next_mode: ResMut<NextState<DungeonMode>>,
-    mut player: ResMut<Player>,
+    mut stats: ResMut<StatSheet>,
     mut dungeon: ResMut<crate::game::DungeonResource>,
     rest_actions: Query<(&MenuIndex, &RestAction)>,
     mut items: Query<(&MenuIndex, &mut TextColor), With<RestAction>>,
@@ -166,8 +165,8 @@ pub fn handle_rest_input(
                         match rest_action.action {
                             RestActionType::Rest => {
                                 // Heal player to full
-                                let heal_amount = player.max_hp();
-                                player.heal(heal_amount);
+                                let heal_amount = stats.max_hp();
+                                stats.heal(heal_amount);
 
                                 // Mark room as healed
                                 if let Some(room) = dungeon.current_room_mut() {

@@ -6,7 +6,7 @@ mod state;
 
 use bevy::prelude::*;
 
-use crate::game::Player;
+use crate::inventory::Inventory;
 
 use super::super::shared::{update_menu_selection, MenuOption, MenuOptionItem, MenuOptionText};
 use super::super::{ContentArea, TabContent, TownTab};
@@ -54,7 +54,7 @@ fn spawn_alchemist_content(
     content_query: Query<Entity, With<ContentArea>>,
     alchemist_mode: Res<AlchemistMode>,
     alchemist_selections: Res<AlchemistSelections>,
-    player: Res<Player>,
+    inventory: Res<Inventory>,
 ) {
     let Ok(content_entity) = content_query.get_single() else {
         return;
@@ -64,7 +64,7 @@ fn spawn_alchemist_content(
         content_entity,
         &alchemist_mode,
         &alchemist_selections,
-        &player,
+        &inventory,
     );
 }
 
@@ -75,7 +75,7 @@ fn refresh_alchemist_on_mode_change(
     alchemist_selections: Res<AlchemistSelections>,
     content_query: Query<Entity, With<ContentArea>>,
     tab_content_query: Query<Entity, With<TabContent>>,
-    player: Res<Player>,
+    inventory: Res<Inventory>,
 ) {
     // Despawn existing content
     for entity in &tab_content_query {
@@ -91,7 +91,7 @@ fn refresh_alchemist_on_mode_change(
         content_entity,
         &alchemist_mode,
         &alchemist_selections,
-        &player,
+        &inventory,
     );
 }
 

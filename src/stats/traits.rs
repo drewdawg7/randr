@@ -69,7 +69,15 @@ pub trait HasStats {
     fn max_hp(&self) -> i32 { self.max_value(StatType::Health) }
     fn attack(&self) -> i32 { self.value(StatType::Attack) }
     fn defense(&self) -> i32 { self.value(StatType::Defense) }
+}
 
-
+/// StatSheet implements HasStats so it can use all the trait methods directly.
+impl HasStats for StatSheet {
+    fn stats(&self) -> &StatSheet {
+        self
+    }
+    fn stats_mut(&mut self) -> &mut StatSheet {
+        self
+    }
 }
 

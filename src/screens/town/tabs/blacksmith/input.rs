@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
 use crate::game::{
-    ForgeRecipeEvent, Player, SmeltRecipeEvent, UpgradeItemEvent, UpgradeQualityEvent,
+    ForgeRecipeEvent, SmeltRecipeEvent, UpgradeItemEvent, UpgradeQualityEvent,
 };
 use crate::input::{GameAction, NavigationDirection};
+use crate::inventory::Inventory;
 use crate::item::recipe::RecipeId;
 
 use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
@@ -12,7 +13,7 @@ use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
 pub fn handle_blacksmith_input(
     mut blacksmith_mode: ResMut<BlacksmithMode>,
     mut blacksmith_selections: ResMut<BlacksmithSelections>,
-    player: Res<Player>,
+    inventory: Res<Inventory>,
     mut action_events: EventReader<GameAction>,
     mut upgrade_events: EventWriter<UpgradeItemEvent>,
     mut quality_events: EventWriter<UpgradeQualityEvent>,
@@ -27,14 +28,14 @@ pub fn handle_blacksmith_input(
             BlacksmithModeKind::Upgrade => handle_upgrade_input(
                 &mut blacksmith_mode,
                 &mut blacksmith_selections,
-                &player,
+                &inventory,
                 action,
                 &mut upgrade_events,
             ),
             BlacksmithModeKind::Quality => handle_quality_input(
                 &mut blacksmith_mode,
                 &mut blacksmith_selections,
-                &player,
+                &inventory,
                 action,
                 &mut quality_events,
             ),
@@ -84,13 +85,12 @@ fn handle_menu_input(
 fn handle_upgrade_input(
     blacksmith_mode: &mut BlacksmithMode,
     blacksmith_selections: &mut BlacksmithSelections,
-    player: &Player,
+    inventory: &Inventory,
     action: &GameAction,
     upgrade_events: &mut EventWriter<UpgradeItemEvent>,
 ) {
     // Get equipment items and update selection count
-    let equipment_count = player
-        .inventory
+    let equipment_count = inventory
         .items
         .iter()
         .filter(|inv_item| inv_item.item.item_type.is_equipment())
@@ -106,8 +106,7 @@ fn handle_upgrade_input(
         }
         GameAction::Select => {
             // Get equipment items
-            let equipment_items: Vec<_> = player
-                .inventory
+            let equipment_items: Vec<_> = inventory
                 .items
                 .iter()
                 .filter(|inv_item| inv_item.item.item_type.is_equipment())
@@ -132,13 +131,12 @@ fn handle_upgrade_input(
 fn handle_quality_input(
     blacksmith_mode: &mut BlacksmithMode,
     blacksmith_selections: &mut BlacksmithSelections,
-    player: &Player,
+    inventory: &Inventory,
     action: &GameAction,
     quality_events: &mut EventWriter<UpgradeQualityEvent>,
 ) {
     // Get equipment items and update selection count
-    let equipment_count = player
-        .inventory
+    let equipment_count = inventory
         .items
         .iter()
         .filter(|inv_item| inv_item.item.item_type.is_equipment())
@@ -154,8 +152,7 @@ fn handle_quality_input(
         }
         GameAction::Select => {
             // Get equipment items
-            let equipment_items: Vec<_> = player
-                .inventory
+            let equipment_items: Vec<_> = inventory
                 .items
                 .iter()
                 .filter(|inv_item| inv_item.item.item_type.is_equipment())
