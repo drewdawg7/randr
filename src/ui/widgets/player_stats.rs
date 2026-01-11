@@ -37,8 +37,8 @@ fn on_add_player_stats(
         .get(SpriteSheetKey::UiAll)
         .and_then(|s| s.image_node("Slice_3019"));
     let background_image = game_sprites
-        .get(SpriteSheetKey::UiAll)
-        .and_then(|s| s.image_node_sliced("Slice_8", 8.0));
+        .get(SpriteSheetKey::TravelBook)
+        .and_then(|s| s.image_node_sliced("banner", 16.0));
 
     let hp = stats.value(StatType::Health);
     let max_hp = stats.max_value(StatType::Health);

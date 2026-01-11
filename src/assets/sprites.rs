@@ -55,6 +55,8 @@ pub enum SpriteSheetKey {
     IconItems,
     /// UI selectors (selection highlights, cursors)
     UiSelectors,
+    /// TravelBook UI elements (banners, panels)
+    TravelBook,
 }
 
 impl SpriteSheetKey {
@@ -69,6 +71,7 @@ impl SpriteSheetKey {
             Self::UiAll,
             Self::IconItems,
             Self::UiSelectors,
+            Self::TravelBook,
         ]
     }
 
@@ -83,6 +86,7 @@ impl SpriteSheetKey {
             Self::UiAll => "ui_all",
             Self::IconItems => "icon_items",
             Self::UiSelectors => "ui_selectors",
+            Self::TravelBook => "travel_book",
         }
     }
 }
