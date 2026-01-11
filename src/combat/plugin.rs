@@ -19,14 +19,8 @@ pub enum CombatPhaseState {
     Defeat,
 }
 
-#[derive(Resource, Debug)]
+#[derive(Resource, Debug, Default)]
 pub struct ActiveCombatResource(pub Option<ActiveCombat>);
-
-impl Default for ActiveCombatResource {
-    fn default() -> Self {
-        Self(None)
-    }
-}
 
 impl ActiveCombatResource {
     pub fn new(combat: ActiveCombat) -> Self {

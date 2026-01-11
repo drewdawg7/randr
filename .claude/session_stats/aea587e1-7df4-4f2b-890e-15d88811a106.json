@@ -1,0 +1,82 @@
+{
+  "schema_version": "1.0",
+  "session_id": "aea587e1-7df4-4f2b-890e-15d88811a106",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-11T21:46:07.706Z",
+    "end_time": "2026-01-11T22:13:16.413Z",
+    "duration_minutes": 27.15,
+    "duration_formatted": "27m 8s"
+  },
+  "messages": {
+    "user": 61,
+    "assistant": 101,
+    "total": 162
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 2994,
+    "output": 10459,
+    "cache_read": 3893402,
+    "cache_creation": 188441,
+    "total": 4095296,
+    "cost_usd": 10.2027
+  },
+  "tools": {
+    "total_calls": 54,
+    "by_type": {
+      "Bash": 18,
+      "Skill": 2,
+      "TodoWrite": 8,
+      "Read": 11,
+      "LSP": 3,
+      "Write": 4,
+      "Edit": 8
+    },
+    "success_rate": 1.0
+  },
+  "agents": {
+    "total_calls": 0,
+    "by_type": {}
+  },
+  "skills": {
+    "total_calls": 2,
+    "by_name": {
+      "updating-code": 1,
+      "session-stats": 1
+    }
+  },
+  "files": {
+    "modified": [
+      "a6438d6c5e977a0f@v1",
+      "98b445badb70bdf4@v1",
+      "7868f7aed6cf76d1@v1",
+      "daee9ef733761b60@v1",
+      "c4bb5d71e45573f0@v1",
+      "245d8485668adb52@v1",
+      "794f1de2d42da0a2@v1",
+      "e18d7dbceda30d35@v1",
+      "93e0ef6284532ebe@v1",
+      "bb0acc5ad4fa4bb9@v1",
+      "3820de1cbd4f8bea@v1",
+      "4d42ca1dac829c44@v1"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 0
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/aea587e1-7df4-4f2b-890e-15d88811a106.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/aea587e1-7df4-4f2b-890e-15d88811a106.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/aea587e1-7df4-4f2b-890e-15d88811a106",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-11T22:13:16.543458Z",
+    "generator_version": "1.0.0"
+  }
+}
