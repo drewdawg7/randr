@@ -7,7 +7,6 @@ mod mine;
 pub mod modal;
 mod profile;
 mod profile_modal;
-pub(crate) mod shared;
 mod spell_test_modal;
 mod town;
 

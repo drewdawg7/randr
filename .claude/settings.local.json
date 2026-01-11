@@ -127,7 +127,13 @@
       "Bash(timeout 3 cargo run:*)",
       "Bash(git status:*)",
       "Bash(/Applications/Aseprite.app/Contents/MacOS/aseprite:*)",
-      "Bash(\"/Users/drewstewart/Applications/Aseprite.app/Contents/MacOS/aseprite\" --batch --list-slices \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\")"
+      "Bash(\"/Users/drewstewart/Applications/Aseprite.app/Contents/MacOS/aseprite\" --batch --list-slices \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\")",
+      "Bash(ASEPRITE=\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\":*)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\" --list-slices)",
+      "Bash('ASEPRITE=/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite' $ASEPRITE --batch /Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite --data /tmp/travelbook_temp.json --format json-hash --list-slices 2)",
+      "Bash(1 cat /tmp/travelbook_temp.json)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\" --list-layers)",
+      "Bash(sips:*)"
     ]
   },
   "enabledMcpjsonServers": [

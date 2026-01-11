@@ -13,7 +13,7 @@ use super::ui::{
     reset_fight_state, spawn_fight_screen, spawn_post_combat_overlay, update_combat_visuals,
     update_enemy_name, SelectedFightBackground,
 };
-use crate::screens::shared::init_sprite_health_bars;
+use crate::ui::init_sprite_health_bars;
 
 /// SystemSets for organizing Fight screen systems by function.
 /// Configured to run in order: Input -> UI

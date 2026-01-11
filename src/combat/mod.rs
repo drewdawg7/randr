@@ -1,4 +1,5 @@
 mod attack;
+pub mod log;
 pub mod orchestration;
 pub mod plugin;
 mod result;
@@ -8,6 +9,7 @@ mod traits;
 mod tests;
 
 pub(crate) use attack::*;
+pub use log::CombatLogEntry;
 pub use orchestration::{CombatLogState, PlayerCombatAction, PostCombatAction};
 pub use plugin::{
     ActiveCombatResource, AttackPerformed, CombatEnded, CombatPhaseState, CombatPlugin,

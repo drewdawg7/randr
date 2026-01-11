@@ -49,7 +49,6 @@ For structural patterns across files, use `ast-grep --pattern 'PATTERN' --lang r
 Use the `sprites` skill when working with sprite sheets, Aseprite exports, or adding sprites to UI.
 
 ## Bevy UI Bundles
-Use bundles from `src/screens/shared/health_bar.rs` for UI spawning:
-- `HeaderLabelBundle::new(text, color)` - Section headers
-- `HealthBarBundle::new(width)` - Health bar container
-- `HealthBarNameBundle`, `HealthBarBackgroundBundle`, `HealthBarFillBundle`, `HealthBarTextBundle`
+Use bundles from `src/ui/screens/health_bar.rs` for UI spawning:
+- `HealthBarBundle::new(align)` - Health bar container
+- `HealthBarNameBundle`, `HealthBarTextBundle`, `SpriteHealthBarBundle`

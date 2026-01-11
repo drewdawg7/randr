@@ -51,8 +51,12 @@ Use **bundles** for complex UI spawning instead of inline component tuples:
 
 ```rust
 // Good: Use bundles for reusable UI patterns
-player_side.spawn(HeaderLabelBundle::new("PLAYER", Color::srgb(0.5, 0.8, 0.5)));
-bar.spawn(HealthBarBundle::new(200.0));
+bar.spawn((PlayerHealthBar, HealthBarBundle::new(AlignItems::FlexStart)))
+    .with_children(|bar| {
+        bar.spawn(HealthBarNameBundle::new(player_name));
+        bar.spawn(SpriteHealthBarBundle::new(AlignSelf::FlexStart));
+        bar.spawn(HealthBarTextBundle::new(health, max_health));
+    });
 
 // Avoid: Inline component tuples for repeated patterns
 player_side.spawn((
@@ -63,7 +67,6 @@ player_side.spawn((
 ));
 ```
 
-Available bundles in `src/screens/shared/health_bar.rs`:
-- `HeaderLabelBundle` - Headers like "PLAYER", "ENEMY"
+Available bundles in `src/ui/screens/health_bar.rs`:
 - `HealthBarBundle` - Health bar container
-- `HealthBarNameBundle`, `HealthBarBackgroundBundle`, `HealthBarFillBundle`, `HealthBarTextBundle`
+- `HealthBarNameBundle`, `HealthBarTextBundle`, `SpriteHealthBarBundle`

@@ -5,9 +5,9 @@ use rand::seq::SliceRandom;
 use crate::combat::{ActiveCombatResource, CombatPhaseState};
 use crate::game::PlayerName;
 use crate::assets::{GameAssets, GameSprites, SpriteSheetKey};
-use crate::screens::shared::{
-    update_health_bar, HealthBarBundle, HealthBarNameBundle,
-    HealthBarText, HealthBarTextBundle, SpriteHealthBar, SpriteHealthBarBundle,
+use crate::ui::{
+    update_health_bar, HealthBarBundle, HealthBarNameBundle, HealthBarText, HealthBarTextBundle,
+    SpriteHealthBar, SpriteHealthBarBundle,
 };
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::{nav_selection_text, MenuIndex};

@@ -5,7 +5,7 @@ use crate::entities::Progression;
 use crate::inventory::Inventory;
 use crate::mob::{Mob, MobId};
 use crate::player::{Player, PlayerGold, PlayerName};
-use crate::screens::shared::CombatLogEntry;
+use super::log::CombatLogEntry;
 use crate::stats::StatSheet;
 
 use super::{
