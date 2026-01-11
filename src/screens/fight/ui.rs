@@ -1,8 +1,9 @@
 use bevy::prelude::*;
+use rand::seq::SliceRandom;
 
 use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhaseState};
 use crate::game::PlayerName;
-use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::assets::{GameAssets, GameSprites, SpriteSheetKey};
 use crate::screens::shared::{
     spawn_combat_log, update_health_bar, HealthBarBundle, HealthBarNameBundle,
     HealthBarText, HealthBarTextBundle, SpriteHealthBar, SpriteHealthBarBundle,
@@ -13,13 +14,25 @@ use crate::ui::{nav_selection_text, MenuIndex};
 use super::components::*;
 use super::state::FightScreenState;
 
+/// Resource holding the selected fight background for the current fight.
+#[derive(Resource, Default)]
+pub struct SelectedFightBackground(pub Option<Handle<Image>>);
+
 pub fn spawn_fight_screen(
     mut commands: Commands,
     name: Res<PlayerName>,
     stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
     log_state: Res<CombatLogState>,
+    game_assets: Res<GameAssets>,
+    mut selected_bg: ResMut<SelectedFightBackground>,
 ) {
+    // Select a random background
+    selected_bg.0 = game_assets
+        .sprites
+        .fight_backgrounds
+        .choose(&mut rand::thread_rng())
+        .cloned();
     let (player_health, player_max_health, enemy_name, enemy_health, enemy_max_health) =
         if let Some(combat) = combat_res.get() {
             let enemy_info = combat.enemy_info();
@@ -37,6 +50,7 @@ pub fn spawn_fight_screen(
     commands
         .spawn((
             FightScreenRoot,
+            NeedsFightBackground,
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),
@@ -308,6 +322,25 @@ pub fn cleanup_fight_screen(
 ) {
     if let Ok(entity) = fight_root.get_single() {
         commands.entity(entity).despawn_recursive();
+    }
+}
+
+/// System to populate the fight background when the asset is ready.
+pub fn populate_fight_background(
+    mut commands: Commands,
+    query: Query<Entity, With<NeedsFightBackground>>,
+    selected_bg: Res<SelectedFightBackground>,
+) {
+    let Some(bg) = &selected_bg.0 else {
+        return;
+    };
+
+    for entity in &query {
+        commands
+            .entity(entity)
+            .remove::<NeedsFightBackground>()
+            .remove::<BackgroundColor>()
+            .insert(ImageNode::new(bg.clone()));
     }
 }
 

@@ -30,3 +30,7 @@ pub struct CombatResultText;
 
 #[derive(Component)]
 pub struct RewardsText;
+
+/// Marker component indicating the fight background needs to be populated.
+#[derive(Component)]
+pub struct NeedsFightBackground;

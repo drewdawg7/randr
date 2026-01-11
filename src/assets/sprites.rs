@@ -522,6 +522,7 @@ pub struct SpriteAssets {
 
     // Background images
     pub menu_background: Option<Handle<Image>>,
+    pub fight_backgrounds: Vec<Handle<Image>>,
 }
 
 impl SpriteAssets {
@@ -582,6 +583,13 @@ fn load_assets(
     game_assets.sprites.dungeon_boss = try_load(&asset_server, "sprites/dungeon/boss.png");
 
     game_assets.sprites.menu_background = try_load(&asset_server, "backgrounds/sunrise.png");
+
+    // Load fight backgrounds (80 images)
+    for i in 1..=80 {
+        if let Some(handle) = try_load(&asset_server, &format!("backgrounds/fight/{}.png", i)) {
+            game_assets.sprites.fight_backgrounds.push(handle);
+        }
+    }
 
     info!("Asset loading initiated");
 }

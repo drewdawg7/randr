@@ -9,8 +9,9 @@ use crate::states::AppState;
 use super::input::{handle_player_turn_input, handle_post_combat_input};
 use super::state::FightScreenState;
 use super::ui::{
-    cleanup_fight_screen, despawn_post_combat_overlay, reset_fight_state, spawn_fight_screen,
-    spawn_post_combat_overlay, update_combat_visuals,
+    cleanup_fight_screen, despawn_post_combat_overlay, populate_fight_background,
+    reset_fight_state, spawn_fight_screen, spawn_post_combat_overlay, update_combat_visuals,
+    SelectedFightBackground,
 };
 use crate::screens::shared::init_sprite_health_bars;
 
@@ -29,6 +30,7 @@ pub struct FightPlugin;
 impl Plugin for FightPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<FightScreenState>()
+            .init_resource::<SelectedFightBackground>()
             // Configure SystemSet ordering: Input runs before UI
             .configure_sets(
                 Update,
@@ -59,7 +61,7 @@ impl Plugin for FightPlugin {
             // UI systems
             .add_systems(
                 Update,
-                init_sprite_health_bars.in_set(FightSystemSet::Ui),
+                (init_sprite_health_bars, populate_fight_background).in_set(FightSystemSet::Ui),
             )
             .add_systems(
                 Update,
