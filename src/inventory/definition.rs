@@ -117,4 +117,16 @@ impl Inventory {
                 }
             })
     }
+
+    /// Iterate over equipment items in inventory (not equipped items).
+    pub fn equipment_items(&self) -> impl Iterator<Item = &InventoryItem> {
+        self.items
+            .iter()
+            .filter(|inv_item| inv_item.item.item_type.is_equipment())
+    }
+
+    /// Count of equipment items in inventory.
+    pub fn equipment_count(&self) -> usize {
+        self.equipment_items().count()
+    }
 }

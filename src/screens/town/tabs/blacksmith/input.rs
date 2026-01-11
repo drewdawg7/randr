@@ -90,12 +90,9 @@ fn handle_upgrade_input(
     upgrade_events: &mut EventWriter<UpgradeItemEvent>,
 ) {
     // Get equipment items and update selection count
-    let equipment_count = inventory
-        .items
-        .iter()
-        .filter(|inv_item| inv_item.item.item_type.is_equipment())
-        .count();
-    blacksmith_selections.upgrade.set_count(equipment_count);
+    blacksmith_selections
+        .upgrade
+        .set_count(inventory.equipment_count());
 
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
@@ -106,11 +103,7 @@ fn handle_upgrade_input(
         }
         GameAction::Select => {
             // Get equipment items
-            let equipment_items: Vec<_> = inventory
-                .items
-                .iter()
-                .filter(|inv_item| inv_item.item.item_type.is_equipment())
-                .collect();
+            let equipment_items: Vec<_> = inventory.equipment_items().collect();
 
             if let Some(inv_item) = equipment_items.get(blacksmith_selections.upgrade.selected) {
                 // Emit event - game logic handled by event system
@@ -136,12 +129,9 @@ fn handle_quality_input(
     quality_events: &mut EventWriter<UpgradeQualityEvent>,
 ) {
     // Get equipment items and update selection count
-    let equipment_count = inventory
-        .items
-        .iter()
-        .filter(|inv_item| inv_item.item.item_type.is_equipment())
-        .count();
-    blacksmith_selections.quality.set_count(equipment_count);
+    blacksmith_selections
+        .quality
+        .set_count(inventory.equipment_count());
 
     match action {
         GameAction::Navigate(NavigationDirection::Up) => {
@@ -152,11 +142,7 @@ fn handle_quality_input(
         }
         GameAction::Select => {
             // Get equipment items
-            let equipment_items: Vec<_> = inventory
-                .items
-                .iter()
-                .filter(|inv_item| inv_item.item.item_type.is_equipment())
-                .collect();
+            let equipment_items: Vec<_> = inventory.equipment_items().collect();
 
             if let Some(inv_item) = equipment_items.get(blacksmith_selections.quality.selected) {
                 // Emit event - game logic handled by event system

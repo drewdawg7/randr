@@ -184,11 +184,7 @@ fn spawn_upgrade_ui(
     ));
 
     // Get equipment items
-    let equipment_items: Vec<_> = inventory
-        .items
-        .iter()
-        .filter(|inv_item| inv_item.item.item_type.is_equipment())
-        .collect();
+    let equipment_items: Vec<_> = inventory.equipment_items().collect();
 
     if equipment_items.is_empty() {
         spawn_empty_state(parent, "You have no equipment to upgrade.");
@@ -341,11 +337,7 @@ fn spawn_quality_ui(
     ));
 
     // Get equipment items
-    let equipment_items: Vec<_> = inventory
-        .items
-        .iter()
-        .filter(|inv_item| inv_item.item.item_type.is_equipment())
-        .collect();
+    let equipment_items: Vec<_> = inventory.equipment_items().collect();
 
     if equipment_items.is_empty() {
         spawn_empty_state(parent, "You have no equipment to improve.");
