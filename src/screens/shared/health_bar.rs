@@ -19,11 +19,12 @@ pub struct HealthBarBundle {
 }
 
 impl HealthBarBundle {
-    pub fn new(width: f32) -> Self {
+    pub fn new(width: f32, align: AlignItems) -> Self {
         Self {
             bar: HealthBar,
             node: Node {
                 flex_direction: FlexDirection::Column,
+                align_items: align,
                 row_gap: Val::Px(5.0),
                 width: Val::Px(width),
                 ..default()
