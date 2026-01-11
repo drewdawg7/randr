@@ -11,6 +11,7 @@ pub struct LootDrop {
     pub quantity: i32,
 }
 
+#[derive(Clone)]
 pub struct LootItem {
     item_kind: ItemId,
     numerator: i32,
@@ -170,17 +171,6 @@ impl LootItem {
             numerator,
             denominator,
         })
-    }
-}
-
-impl Clone for LootItem {
-    fn clone(&self) -> Self {
-        Self {
-            item_kind: self.item_kind,
-            numerator: self.numerator,
-            denominator: self.denominator,
-            quantity: self.quantity.clone(),
-        }
     }
 }
 
