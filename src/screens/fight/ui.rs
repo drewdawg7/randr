@@ -104,7 +104,7 @@ fn spawn_player_side(
         })
         .with_children(|player_side| {
             player_side
-                .spawn((PlayerHealthBar, HealthBarBundle::new(200.0, AlignItems::FlexStart)))
+                .spawn((PlayerHealthBar, HealthBarBundle::new(AlignItems::FlexStart)))
                 .with_children(|bar| {
                     bar.spawn(HealthBarNameBundle::new(player_name));
                     bar.spawn(SpriteHealthBarBundle::new(AlignSelf::FlexStart));
@@ -127,7 +127,7 @@ fn spawn_enemy_side(
         })
         .with_children(|enemy_side| {
             enemy_side
-                .spawn((EnemyHealthBar, HealthBarBundle::new(200.0, AlignItems::FlexEnd)))
+                .spawn((EnemyHealthBar, HealthBarBundle::new(AlignItems::FlexEnd)))
                 .with_children(|bar| {
                     bar.spawn(HealthBarNameBundle::new(enemy_name));
                     bar.spawn(SpriteHealthBarBundle::new(AlignSelf::FlexEnd));

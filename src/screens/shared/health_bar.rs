@@ -20,14 +20,13 @@ pub struct HealthBarBundle {
 }
 
 impl HealthBarBundle {
-    pub fn new(width: f32, align: AlignItems) -> Self {
+    pub fn new(align: AlignItems) -> Self {
         Self {
             bar: HealthBar,
             node: Node {
                 flex_direction: FlexDirection::Column,
                 align_items: align,
                 row_gap: Val::Px(5.0),
-                width: Val::Px(width),
                 ..default()
             },
         }
@@ -117,7 +116,6 @@ impl SpriteHealthBarBundle {
         Self {
             marker: SpriteHealthBar,
             node: Node {
-                width: Val::Px(200.0),
                 height: Val::Px(20.0),
                 align_self: align,
                 ..default()
