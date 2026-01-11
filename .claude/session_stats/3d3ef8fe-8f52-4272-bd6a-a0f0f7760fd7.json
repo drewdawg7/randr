@@ -1,0 +1,71 @@
+{
+  "schema_version": "1.0",
+  "session_id": "3d3ef8fe-8f52-4272-bd6a-a0f0f7760fd7",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-11T22:31:07.277Z",
+    "end_time": "2026-01-11T22:33:46.098Z",
+    "duration_minutes": 2.65,
+    "duration_formatted": "2m 38s"
+  },
+  "messages": {
+    "user": 37,
+    "assistant": 62,
+    "total": 99
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 454,
+    "output": 6497,
+    "cache_read": 2026328,
+    "cache_creation": 72267,
+    "total": 2105546,
+    "cost_usd": 4.8886
+  },
+  "tools": {
+    "total_calls": 32,
+    "by_type": {
+      "Bash": 11,
+      "Skill": 2,
+      "TodoWrite": 7,
+      "Read": 5,
+      "LSP": 4,
+      "Edit": 3
+    },
+    "success_rate": 1.0
+  },
+  "agents": {
+    "total_calls": 0,
+    "by_type": {}
+  },
+  "skills": {
+    "total_calls": 2,
+    "by_name": {
+      "updating-code": 1,
+      "session-stats": 1
+    }
+  },
+  "files": {
+    "modified": [
+      "52ab2bda495fa349@v1",
+      "282226a30757db3f@v1"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 0
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/3d3ef8fe-8f52-4272-bd6a-a0f0f7760fd7.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/3d3ef8fe-8f52-4272-bd6a-a0f0f7760fd7.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/3d3ef8fe-8f52-4272-bd6a-a0f0f7760fd7",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-11T22:33:46.228280Z",
+    "generator_version": "1.0.0"
+  }
+}

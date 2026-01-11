@@ -6,7 +6,6 @@ use crate::game::BrewPotionEvent;
 use crate::input::{GameAction, NavigationDirection};
 
 use super::state::{AlchemistMode, AlchemistModeKind, AlchemistSelections};
-use super::ALCHEMIST_MENU_OPTIONS;
 
 /// Handle input for the Alchemist tab.
 pub fn handle_alchemist_input(
@@ -19,19 +18,14 @@ pub fn handle_alchemist_input(
         match alchemist_mode.mode {
             AlchemistModeKind::Menu => match action {
                 GameAction::Navigate(NavigationDirection::Up) => {
-                    if alchemist_selections.menu > 0 {
-                        alchemist_selections.menu -= 1;
-                    } else {
-                        alchemist_selections.menu = ALCHEMIST_MENU_OPTIONS.len() - 1;
-                    }
+                    alchemist_selections.menu.move_up();
                 }
                 GameAction::Navigate(NavigationDirection::Down) => {
-                    alchemist_selections.menu =
-                        (alchemist_selections.menu + 1) % ALCHEMIST_MENU_OPTIONS.len();
+                    alchemist_selections.menu.move_down();
                 }
                 GameAction::Select => {
                     // Only one option currently: Brew
-                    if alchemist_selections.menu == 0 {
+                    if alchemist_selections.menu.selected == 0 {
                         alchemist_mode.mode = AlchemistModeKind::Brew;
                         alchemist_selections.recipe.reset();
                     }
@@ -56,7 +50,7 @@ pub fn handle_alchemist_input(
                 }
                 GameAction::Back => {
                     alchemist_mode.mode = AlchemistModeKind::Menu;
-                    alchemist_selections.menu = 0;
+                    alchemist_selections.menu.reset();
                 }
                 _ => {}
             },

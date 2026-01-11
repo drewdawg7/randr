@@ -33,7 +33,7 @@ impl Default for AlchemistMode {
 /// Alchemist selections resource.
 #[derive(Resource)]
 pub struct AlchemistSelections {
-    pub menu: usize,
+    pub menu: SelectionState,
     pub recipe: SelectionState,
 }
 
@@ -41,13 +41,8 @@ impl Default for AlchemistSelections {
     fn default() -> Self {
         let recipe_count = RecipeId::all_alchemy_recipes().len();
         Self {
-            menu: 0,
-            recipe: SelectionState {
-                selected: 0,
-                count: recipe_count,
-                scroll_offset: 0,
-                visible_count: 10,
-            },
+            menu: SelectionState::new(1), // 1 menu option: Brew
+            recipe: SelectionState::new(recipe_count),
         }
     }
 }

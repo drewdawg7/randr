@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "session_id": "a879e338-bf5f-4528-a717-b2ff381f54d6",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-11T22:41:34.830Z",
+    "end_time": "2026-01-11T22:46:54.759Z",
+    "duration_minutes": 5.33,
+    "duration_formatted": "5m 19s"
+  },
+  "messages": {
+    "user": 68,
+    "assistant": 127,
+    "total": 195
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 2737,
+    "output": 15436,
+    "cache_read": 6834069,
+    "cache_creation": 198337,
+    "total": 7050579,
+    "cost_usd": 15.1687
+  },
+  "tools": {
+    "total_calls": 63,
+    "by_type": {
+      "Bash": 14,
+      "Skill": 2,
+      "TodoWrite": 9,
+      "Read": 14,
+      "LSP": 5,
+      "Glob": 1,
+      "Edit": 17,
+      "Write": 1
+    },
+    "success_rate": 1.0
+  },
+  "agents": {
+    "total_calls": 0,
+    "by_type": {}
+  },
+  "skills": {
+    "total_calls": 2,
+    "by_name": {
+      "updating-code": 1,
+      "session-stats": 1
+    }
+  },
+  "files": {
+    "modified": [
+      "962cacc49a0bb34f@v1",
+      "be1405a75b9cd840@v1",
+      "248c4b20b7dbda23@v1",
+      "02207ed518b6ff30@v1",
+      "2308b6b8a12d9b65@v1",
+      "fb9f3d3354c9e97a@v1",
+      "8a0271be3ce9be99@v1",
+      "f78f41037c128920@v1",
+      "7992f3ec5567885e@v1"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 0
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/a879e338-bf5f-4528-a717-b2ff381f54d6.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/a879e338-bf5f-4528-a717-b2ff381f54d6.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/a879e338-bf5f-4528-a717-b2ff381f54d6",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-11T22:46:54.927975Z",
+    "generator_version": "1.0.0"
+  }
+}

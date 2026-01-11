@@ -114,7 +114,7 @@ fn update_alchemist_selection(
     match alchemist_mode.mode {
         AlchemistModeKind::Menu => {
             update_menu_selection(
-                alchemist_selections.menu,
+                alchemist_selections.menu.selected,
                 &mut menu_query,
                 &mut menu_text_query,
             );

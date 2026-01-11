@@ -52,7 +52,7 @@ fn spawn_menu_mode(content: &mut ChildBuilder, alchemist_selections: &AlchemistS
     spawn_menu(
         content,
         ALCHEMIST_MENU_OPTIONS,
-        alchemist_selections.menu,
+        alchemist_selections.menu.selected,
         Some("Alchemist"),
     );
 
