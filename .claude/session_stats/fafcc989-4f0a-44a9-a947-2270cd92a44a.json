@@ -1,0 +1,88 @@
+{
+  "schema_version": "1.0",
+  "session_id": "fafcc989-4f0a-44a9-a947-2270cd92a44a",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-11T02:23:55.924Z",
+    "end_time": "2026-01-11T02:43:43.511Z",
+    "duration_minutes": 19.79,
+    "duration_formatted": "19m 47s"
+  },
+  "messages": {
+    "user": 95,
+    "assistant": 198,
+    "total": 293
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 1554,
+    "output": 29363,
+    "cache_read": 15740700,
+    "cache_creation": 310499,
+    "total": 16082116,
+    "cost_usd": 31.6584
+  },
+  "tools": {
+    "total_calls": 90,
+    "by_type": {
+      "Skill": 3,
+      "Bash": 21,
+      "Task": 1,
+      "Read": 16,
+      "AskUserQuestion": 1,
+      "Write": 1,
+      "ExitPlanMode": 2,
+      "Edit": 35,
+      "TodoWrite": 6,
+      "LSP": 3,
+      "Glob": 1
+    },
+    "success_rate": 1.0
+  },
+  "agents": {
+    "total_calls": 1,
+    "by_type": {
+      "Explore": 1
+    }
+  },
+  "skills": {
+    "total_calls": 3,
+    "by_name": {
+      "sprites": 1,
+      "updating-code": 1,
+      "session-stats": 1
+    }
+  },
+  "files": {
+    "modified": [
+      "a6438d6c5e977a0f@v1",
+      "0b48f5d0ad0dd44b@v2",
+      "0b48f5d0ad0dd44b@v3",
+      "b9beaec20ba55c8b@v2",
+      "4d42ca1dac829c44@v2",
+      "a6438d6c5e977a0f@v2",
+      "a6438d6c5e977a0f@v3",
+      "0b48f5d0ad0dd44b@v1",
+      "b9beaec20ba55c8b@v1",
+      "afd933fd8e0af400@v2",
+      "4d42ca1dac829c44@v1"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 31887
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/fafcc989-4f0a-44a9-a947-2270cd92a44a.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/fafcc989-4f0a-44a9-a947-2270cd92a44a.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/fafcc989-4f0a-44a9-a947-2270cd92a44a",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-11T02:43:43.662129Z",
+    "generator_version": "1.0.0"
+  }
+}
