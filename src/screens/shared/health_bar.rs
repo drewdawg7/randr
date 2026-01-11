@@ -111,13 +111,14 @@ pub struct SpriteHealthBarBundle {
     pub node: Node,
 }
 
-impl Default for SpriteHealthBarBundle {
-    fn default() -> Self {
+impl SpriteHealthBarBundle {
+    pub fn new(align: AlignSelf) -> Self {
         Self {
             marker: SpriteHealthBar,
             node: Node {
-                width: Val::Percent(100.0),
+                width: Val::Px(200.0),
                 height: Val::Px(20.0),
+                align_self: align,
                 ..default()
             },
         }

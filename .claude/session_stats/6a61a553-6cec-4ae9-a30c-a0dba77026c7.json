@@ -4,35 +4,36 @@
   "project": "/Users/drewstewart/code/game",
   "timing": {
     "start_time": "2026-01-11T02:45:36.856Z",
-    "end_time": "2026-01-11T02:50:29.631Z",
-    "duration_minutes": 4.88,
-    "duration_formatted": "4m 52s"
+    "end_time": "2026-01-11T02:52:15.994Z",
+    "duration_minutes": 6.65,
+    "duration_formatted": "6m 39s"
   },
   "messages": {
-    "user": 36,
-    "assistant": 81,
-    "total": 117
+    "user": 48,
+    "assistant": 108,
+    "total": 156
   },
   "tokens": {
     "model": "claude-opus-4-5-20251101",
-    "input": 571,
-    "output": 5606,
-    "cache_read": 3167847,
-    "cache_creation": 99322,
-    "total": 3273346,
-    "cost_usd": 7.0431
+    "input": 739,
+    "output": 6440,
+    "cache_read": 4683703,
+    "cache_creation": 118332,
+    "total": 4809214,
+    "cost_usd": 9.7384
   },
   "tools": {
-    "total_calls": 33,
+    "total_calls": 44,
     "by_type": {
       "Task": 1,
-      "Read": 5,
+      "Read": 7,
       "Write": 1,
       "ExitPlanMode": 1,
       "Skill": 2,
-      "Bash": 12,
-      "Edit": 9,
-      "LSP": 2
+      "Bash": 17,
+      "Edit": 10,
+      "LSP": 4,
+      "Grep": 1
     },
     "success_rate": 1.0
   },
@@ -52,7 +53,9 @@
   "files": {
     "modified": [
       "a6438d6c5e977a0f@v1",
+      "0b48f5d0ad0dd44b@v2",
       "a6438d6c5e977a0f@v2",
+      "a6438d6c5e977a0f@v3",
       "0b48f5d0ad0dd44b@v1",
       "b9beaec20ba55c8b@v1",
       "cf7ee279c4c80d39@v2"
@@ -72,7 +75,7 @@
     "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
   },
   "metadata": {
-    "generated_at": "2026-01-11T02:50:29.761624Z",
+    "generated_at": "2026-01-11T02:52:16.136136Z",
     "generator_version": "1.0.0"
   }
 }
