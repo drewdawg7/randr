@@ -2,10 +2,10 @@ use bevy::prelude::*;
 
 use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhaseState};
 use crate::game::PlayerName;
+use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::screens::shared::{
-    spawn_combat_log, update_health_bar, HeaderLabelBundle, HealthBarBackgroundBundle,
-    HealthBarBundle, HealthBarFill, HealthBarFillBundle, HealthBarNameBundle, HealthBarText,
-    HealthBarTextBundle,
+    spawn_combat_log, update_health_bar, HeaderLabelBundle, HealthBarBundle, HealthBarNameBundle,
+    HealthBarText, HealthBarTextBundle, SpriteHealthBar, SpriteHealthBarBundle,
 };
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::{nav_selection_text, MenuIndex};
@@ -19,6 +19,7 @@ pub fn spawn_fight_screen(
     stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
     log_state: Res<CombatLogState>,
+    game_sprites: Res<GameSprites>,
 ) {
     let (player_health, player_max_health, enemy_name, enemy_health, enemy_max_health) =
         if let Some(combat) = combat_res.get() {
@@ -48,7 +49,7 @@ pub fn spawn_fight_screen(
             BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         ))
         .with_children(|parent| {
-            spawn_combatants_section(parent, name.0, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health);
+            spawn_combatants_section(parent, name.0, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health, &game_sprites);
             spawn_combat_log_section(parent, &log_state);
             spawn_action_menu(parent);
         });
@@ -62,6 +63,7 @@ fn spawn_combatants_section(
     enemy_name: &str,
     enemy_health: i32,
     enemy_max_health: i32,
+    game_sprites: &GameSprites,
 ) {
     parent
         .spawn(Node {
@@ -71,7 +73,7 @@ fn spawn_combatants_section(
             ..default()
         })
         .with_children(|combatants| {
-            spawn_player_side(combatants, player_name, player_health, player_max_health);
+            spawn_player_side(combatants, player_name, player_health, player_max_health, game_sprites);
 
             combatants.spawn((
                 Text::new("VS"),
@@ -79,11 +81,17 @@ fn spawn_combatants_section(
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             ));
 
-            spawn_enemy_side(combatants, enemy_name, enemy_health, enemy_max_health);
+            spawn_enemy_side(combatants, enemy_name, enemy_health, enemy_max_health, game_sprites);
         });
 }
 
-fn spawn_player_side(parent: &mut ChildBuilder, player_name: &str, health: i32, max_health: i32) {
+fn spawn_player_side(
+    parent: &mut ChildBuilder,
+    player_name: &str,
+    health: i32,
+    max_health: i32,
+    game_sprites: &GameSprites,
+) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -97,20 +105,24 @@ fn spawn_player_side(parent: &mut ChildBuilder, player_name: &str, health: i32, 
                 .spawn((PlayerHealthBar, HealthBarBundle::new(200.0)))
                 .with_children(|bar| {
                     bar.spawn(HealthBarNameBundle::new(player_name));
-                    bar.spawn(HealthBarBackgroundBundle::default())
-                        .with_children(|bg| {
-                            bg.spawn(HealthBarFillBundle::new(
-                                health,
-                                max_health,
-                                Color::srgb(0.3, 0.8, 0.3),
-                            ));
-                        });
+                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) {
+                        if let Some(bundle) = SpriteHealthBarBundle::new(health, max_health, sheet)
+                        {
+                            bar.spawn(bundle);
+                        }
+                    }
                     bar.spawn(HealthBarTextBundle::new(health, max_health));
                 });
         });
 }
 
-fn spawn_enemy_side(parent: &mut ChildBuilder, enemy_name: &str, health: i32, max_health: i32) {
+fn spawn_enemy_side(
+    parent: &mut ChildBuilder,
+    enemy_name: &str,
+    health: i32,
+    max_health: i32,
+    game_sprites: &GameSprites,
+) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
@@ -124,14 +136,12 @@ fn spawn_enemy_side(parent: &mut ChildBuilder, enemy_name: &str, health: i32, ma
                 .spawn((EnemyHealthBar, HealthBarBundle::new(200.0)))
                 .with_children(|bar| {
                     bar.spawn(HealthBarNameBundle::new(enemy_name));
-                    bar.spawn(HealthBarBackgroundBundle::default())
-                        .with_children(|bg| {
-                            bg.spawn(HealthBarFillBundle::new(
-                                health,
-                                max_health,
-                                Color::srgb(0.8, 0.3, 0.3),
-                            ));
-                        });
+                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) {
+                        if let Some(bundle) = SpriteHealthBarBundle::new(health, max_health, sheet)
+                        {
+                            bar.spawn(bundle);
+                        }
+                    }
                     bar.spawn(HealthBarTextBundle::new(health, max_health));
                 });
         });
@@ -276,24 +286,28 @@ pub fn despawn_post_combat_overlay(
 }
 
 pub fn update_combat_visuals(
-    mut commands: Commands,
     stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
+    game_sprites: Res<GameSprites>,
     player_health_bar: Query<Entity, (With<PlayerHealthBar>, Without<EnemyHealthBar>)>,
     enemy_health_bar: Query<Entity, (With<EnemyHealthBar>, Without<PlayerHealthBar>)>,
     children: Query<&Children>,
-    mut fill_query: Query<&mut Node, With<HealthBarFill>>,
+    mut sprite_query: Query<&mut ImageNode, With<SpriteHealthBar>>,
     mut text_query: Query<&mut Text, With<HealthBarText>>,
 ) {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
+        return;
+    };
+
     if let Ok(bar_entity) = player_health_bar.get_single() {
         update_health_bar(
-            &mut commands,
             bar_entity,
             stats.hp(),
             stats.max_hp(),
             &children,
-            &mut fill_query,
+            &mut sprite_query,
             &mut text_query,
+            sheet,
         );
     }
 
@@ -301,13 +315,13 @@ pub fn update_combat_visuals(
         if let Ok(bar_entity) = enemy_health_bar.get_single() {
             let enemy_info = combat.enemy_info();
             update_health_bar(
-                &mut commands,
                 bar_entity,
                 enemy_info.health,
                 enemy_info.max_health,
                 &children,
-                &mut fill_query,
+                &mut sprite_query,
                 &mut text_query,
+                sheet,
             );
         }
     }
