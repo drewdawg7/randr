@@ -9,7 +9,7 @@ use crate::screens::town::TabContent;
 use crate::ui::UiText;
 use crate::stats::StatType;
 use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry};
-use crate::ui::{selection_colors, selection_prefix};
+use crate::ui::{selection_colors, selection_prefix, SelectableListItem};
 
 use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
 use super::state::{StoreModeKind, StoreMode, StoreSelections};
@@ -19,6 +19,16 @@ use super::state::{StoreModeKind, StoreMode, StoreSelections};
 pub struct StoreListItem {
     pub index: usize,
     pub name: String,
+}
+
+impl SelectableListItem for StoreListItem {
+    fn index(&self) -> usize {
+        self.index
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 /// Marker for the text of a store list item.
@@ -361,31 +371,5 @@ pub fn populate_store_info_panel(
                         .with_color(text_color.0),
                 );
             });
-    }
-}
-
-/// Update store list selection highlighting reactively.
-pub fn update_store_list_selection<F1, F2>(
-    selected_index: usize,
-    list_query: &mut Query<(&StoreListItem, &mut BackgroundColor, &Children), F1>,
-    text_query: &mut Query<(&mut Text, &mut TextColor), F2>,
-)
-where
-    F1: bevy::ecs::query::QueryFilter,
-    F2: bevy::ecs::query::QueryFilter,
-{
-    for (item, mut bg_color, children) in list_query.iter_mut() {
-        let is_selected = item.index == selected_index;
-        let (new_bg, text_color) = selection_colors(is_selected);
-        *bg_color = new_bg.into();
-
-        // Update child text
-        for &child in children.iter() {
-            if let Ok((mut text, mut color)) = text_query.get_mut(child) {
-                let prefix = selection_prefix(is_selected);
-                **text = format!("{}{}", prefix, item.name);
-                *color = text_color.into();
-            }
-        }
     }
 }

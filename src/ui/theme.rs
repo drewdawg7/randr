@@ -1,5 +1,13 @@
 use bevy::prelude::*;
 
+/// Trait for selectable list items that have an index and a display name.
+pub trait SelectableListItem: Component {
+    /// Returns the index of this item in the list.
+    fn index(&self) -> usize;
+    /// Returns the display name of this item.
+    fn name(&self) -> &str;
+}
+
 /// Standard selection colors (blue theme - used in menus, store, blacksmith, etc.)
 pub mod colors {
     use bevy::prelude::Color;
@@ -58,5 +66,32 @@ pub fn nav_selection_text(is_selected: bool) -> Color {
         colors::NAV_SELECTED_TEXT
     } else {
         colors::NAV_NORMAL_TEXT
+    }
+}
+
+/// Update list selection highlighting reactively for any selectable list item type.
+pub fn update_list_selection<T, F1, F2>(
+    selected_index: usize,
+    list_query: &mut Query<(&T, &mut BackgroundColor, &Children), F1>,
+    text_query: &mut Query<(&mut Text, &mut TextColor), F2>,
+)
+where
+    T: SelectableListItem,
+    F1: bevy::ecs::query::QueryFilter,
+    F2: bevy::ecs::query::QueryFilter,
+{
+    for (item, mut bg_color, children) in list_query.iter_mut() {
+        let is_selected = item.index() == selected_index;
+        let (new_bg, text_color) = selection_colors(is_selected);
+        *bg_color = new_bg.into();
+
+        // Update child text
+        for &child in children.iter() {
+            if let Ok((mut text, mut color)) = text_query.get_mut(child) {
+                let prefix = selection_prefix(is_selected);
+                **text = format!("{}{}", prefix, item.name());
+                *color = text_color.into();
+            }
+        }
     }
 }

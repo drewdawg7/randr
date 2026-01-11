@@ -11,9 +11,10 @@ use crate::screens::town::shared::{
     update_menu_selection, MenuOptionItem, MenuOptionText,
 };
 use crate::screens::town::{ContentArea, TabContent, TownTab};
+use crate::ui::update_list_selection;
 
 use input::handle_blacksmith_input;
-use render::{update_blacksmith_list_selection, BlacksmithListItem, BlacksmithListItemText};
+use render::{BlacksmithListItem, BlacksmithListItemText};
 
 pub use render::spawn_blacksmith_ui;
 pub use state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
@@ -117,28 +118,28 @@ fn update_blacksmith_selection(
             );
         }
         BlacksmithModeKind::Upgrade => {
-            update_blacksmith_list_selection(
+            update_list_selection(
                 blacksmith_selections.upgrade.selected,
                 &mut list_query,
                 &mut list_text_query,
             );
         }
         BlacksmithModeKind::Quality => {
-            update_blacksmith_list_selection(
+            update_list_selection(
                 blacksmith_selections.quality.selected,
                 &mut list_query,
                 &mut list_text_query,
             );
         }
         BlacksmithModeKind::Smelt => {
-            update_blacksmith_list_selection(
+            update_list_selection(
                 blacksmith_selections.smelt.selected,
                 &mut list_query,
                 &mut list_text_query,
             );
         }
         BlacksmithModeKind::Forge => {
-            update_blacksmith_list_selection(
+            update_list_selection(
                 blacksmith_selections.forge.selected,
                 &mut list_query,
                 &mut list_text_query,

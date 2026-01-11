@@ -7,7 +7,7 @@ use crate::item::ItemId;
 use crate::screens::town::shared::{spawn_empty_state, spawn_menu};
 use crate::ui::{spawn_navigation_hint, UiText};
 use crate::screens::town::TabContent;
-use crate::ui::{selection_colors, selection_prefix};
+use crate::ui::{selection_colors, selection_prefix, SelectableListItem};
 
 use super::constants::MENU_OPTIONS;
 use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
@@ -17,6 +17,16 @@ use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
 pub struct BlacksmithListItem {
     pub index: usize,
     pub name: String,
+}
+
+impl SelectableListItem for BlacksmithListItem {
+    fn index(&self) -> usize {
+        self.index
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 /// Marker for the text of a blacksmith list item.
@@ -452,30 +462,4 @@ fn spawn_forge_ui(
 
     // Navigation hint
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Forge  [Backspace] Back");
-}
-
-/// Update list selection highlighting reactively.
-pub fn update_blacksmith_list_selection<F1, F2>(
-    selected_index: usize,
-    list_query: &mut Query<(&BlacksmithListItem, &mut BackgroundColor, &Children), F1>,
-    text_query: &mut Query<(&mut Text, &mut TextColor), F2>,
-)
-where
-    F1: bevy::ecs::query::QueryFilter,
-    F2: bevy::ecs::query::QueryFilter,
-{
-    for (item, mut bg_color, children) in list_query.iter_mut() {
-        let is_selected = item.index == selected_index;
-        let (new_bg, text_color) = selection_colors(is_selected);
-        *bg_color = new_bg.into();
-
-        // Update child text
-        for &child in children.iter() {
-            if let Ok((mut text, mut color)) = text_query.get_mut(child) {
-                let prefix = selection_prefix(is_selected);
-                **text = format!("{}{}", prefix, item.name);
-                *color = text_color.into();
-            }
-        }
-    }
 }

@@ -10,14 +10,12 @@ use crate::inventory::Inventory;
 
 use super::super::shared::{update_menu_selection, MenuOption, MenuOptionItem, MenuOptionText};
 use super::super::{ContentArea, TabContent, TownTab};
+use crate::ui::update_list_selection;
 
 pub use state::AlchemistMode;
 
 use input::handle_alchemist_input;
-use render::{
-    spawn_alchemist_ui, update_alchemist_recipe_selection, AlchemistRecipeItem,
-    AlchemistRecipeItemText,
-};
+use render::{spawn_alchemist_ui, AlchemistRecipeItem, AlchemistRecipeItemText};
 use state::{AlchemistModeKind, AlchemistSelections};
 
 /// Menu options for the alchemist.
@@ -121,7 +119,7 @@ fn update_alchemist_selection(
             );
         }
         AlchemistModeKind::Brew => {
-            update_alchemist_recipe_selection(
+            update_list_selection(
                 alchemist_selections.recipe.selected,
                 &mut recipe_query,
                 &mut recipe_text_query,

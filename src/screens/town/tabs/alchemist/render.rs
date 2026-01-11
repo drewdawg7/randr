@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::inventory::{FindsItems, Inventory};
 use crate::item::recipe::Recipe;
 use crate::item::ItemId;
-use crate::ui::{selection_colors, selection_prefix, spawn_navigation_hint, UiText};
+use crate::ui::{selection_colors, selection_prefix, spawn_navigation_hint, SelectableListItem, UiText};
 
 use super::super::super::shared::spawn_menu;
 use super::super::super::TabContent;
@@ -17,6 +17,16 @@ use super::ALCHEMIST_MENU_OPTIONS;
 pub struct AlchemistRecipeItem {
     pub index: usize,
     pub name: String,
+}
+
+impl SelectableListItem for AlchemistRecipeItem {
+    fn index(&self) -> usize {
+        self.index
+    }
+
+    fn name(&self) -> &str {
+        &self.name
+    }
 }
 
 /// Marker for the text of an alchemist recipe item.
@@ -287,30 +297,4 @@ fn spawn_ingredient_row(parent: &mut ChildBuilder, item_id: ItemId, required: u3
                 TextColor(count_color),
             ));
         });
-}
-
-/// Update alchemist recipe selection highlighting reactively.
-pub fn update_alchemist_recipe_selection<F1, F2>(
-    selected_index: usize,
-    recipe_query: &mut Query<(&AlchemistRecipeItem, &mut BackgroundColor, &Children), F1>,
-    text_query: &mut Query<(&mut Text, &mut TextColor), F2>,
-)
-where
-    F1: bevy::ecs::query::QueryFilter,
-    F2: bevy::ecs::query::QueryFilter,
-{
-    for (item, mut bg_color, children) in recipe_query.iter_mut() {
-        let is_selected = item.index == selected_index;
-        let (new_bg, text_color) = selection_colors(is_selected);
-        *bg_color = new_bg.into();
-
-        // Update child text
-        for &child in children.iter() {
-            if let Ok((mut text, mut color)) = text_query.get_mut(child) {
-                let prefix = selection_prefix(is_selected);
-                **text = format!("{}{}", prefix, item.name);
-                *color = text_color.into();
-            }
-        }
-    }
 }

@@ -10,11 +10,10 @@ use crate::game::Storage;
 use crate::inventory::Inventory;
 use crate::screens::town::shared::{update_menu_selection, MenuOptionItem, MenuOptionText};
 use crate::screens::town::{ContentArea, TabContent, TownTab};
+use crate::ui::update_list_selection;
 
 use input::handle_store_input;
-use render::{
-    populate_store_info_panel, update_store_list_selection, StoreListItem, StoreListItemText,
-};
+use render::{populate_store_info_panel, StoreListItem, StoreListItemText};
 
 pub use render::spawn_store_ui;
 pub use state::{StoreMode, StoreModeKind, StoreSelections};
@@ -130,21 +129,21 @@ fn update_store_selection(
             );
         }
         StoreModeKind::Sell => {
-            update_store_list_selection(
+            update_list_selection(
                 store_selections.sell.selected,
                 &mut list_query,
                 &mut list_text_query,
             );
         }
         StoreModeKind::StorageView => {
-            update_store_list_selection(
+            update_list_selection(
                 store_selections.storage_view.selected,
                 &mut list_query,
                 &mut list_text_query,
             );
         }
         StoreModeKind::StorageDeposit => {
-            update_store_list_selection(
+            update_list_selection(
                 store_selections.deposit.selected,
                 &mut list_query,
                 &mut list_text_query,
