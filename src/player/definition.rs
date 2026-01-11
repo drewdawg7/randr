@@ -237,3 +237,59 @@ impl Player {
         effective_goldfind(&self.stats, &self.inventory)
     }
 }
+
+// =============================================================================
+// PlayerGuard (RAII pattern for automatic write-back)
+// =============================================================================
+
+/// RAII guard that holds a `Player` and automatically writes changes back
+/// to the underlying resources when dropped. Use this in combat and other
+/// contexts where you always need to persist changes regardless of exit path.
+pub struct PlayerGuard<'a> {
+    player: Player,
+    gold: &'a mut PlayerGold,
+    prog: &'a mut Progression,
+    inventory: &'a mut Inventory,
+    stats: &'a mut StatSheet,
+}
+
+impl<'a> PlayerGuard<'a> {
+    /// Create a guard that will auto-write changes on drop.
+    pub fn from_resources(
+        name: &PlayerName,
+        gold: &'a mut PlayerGold,
+        prog: &'a mut Progression,
+        inventory: &'a mut Inventory,
+        stats: &'a mut StatSheet,
+    ) -> Self {
+        let player = Player::from_resources(name, gold, prog, inventory, stats);
+        Self {
+            player,
+            gold,
+            prog,
+            inventory,
+            stats,
+        }
+    }
+}
+
+impl std::ops::Deref for PlayerGuard<'_> {
+    type Target = Player;
+
+    fn deref(&self) -> &Self::Target {
+        &self.player
+    }
+}
+
+impl std::ops::DerefMut for PlayerGuard<'_> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.player
+    }
+}
+
+impl Drop for PlayerGuard<'_> {
+    fn drop(&mut self) {
+        self.player
+            .write_back(self.gold, self.prog, self.inventory, self.stats);
+    }
+}

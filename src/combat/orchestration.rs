@@ -4,7 +4,7 @@ use rand::seq::SliceRandom;
 use crate::entities::Progression;
 use crate::inventory::Inventory;
 use crate::mob::{Mob, MobId};
-use crate::player::{Player, PlayerGold, PlayerName};
+use crate::player::{PlayerGold, PlayerGuard, PlayerName};
 use super::log::CombatLogEntry;
 use crate::stats::StatSheet;
 
@@ -100,8 +100,9 @@ pub fn execute_player_attack(
             continue;
         };
 
-        // Build Player view for combat
-        let mut player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
+        // Build Player guard - auto-writes changes on drop
+        let mut player =
+            PlayerGuard::from_resources(&name, &mut gold, &mut progression, &mut inventory, &mut stats);
 
         let player_result = player_attack_step(&player, combat);
         log_state.entries.push(CombatLogEntry::player_attack(
@@ -114,8 +115,6 @@ pub fn execute_player_attack(
                 .entries
                 .push(CombatLogEntry::enemy_defeated(&player_result.defender));
             process_victory(&mut player, combat);
-            // Write changes back to resources
-            player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
             next_phase.set(CombatPhaseState::Victory);
         } else {
             let enemy_result = enemy_attack_step(combat, &mut player);
@@ -127,14 +126,10 @@ pub fn execute_player_attack(
             if enemy_result.target_died {
                 log_state.entries.push(CombatLogEntry::player_defeated());
                 process_defeat(&mut player);
-                // Write changes back to resources
-                player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
                 next_phase.set(CombatPhaseState::Defeat);
-            } else {
-                // Write stat changes back (HP damage)
-                player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
             }
         }
+        // PlayerGuard automatically writes back on drop
     }
 }
 
