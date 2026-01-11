@@ -25,9 +25,14 @@ impl Plugin for MinePlugin {
                     handle_ladder_exit,
                     update_player_sprite,
                     update_grid_tiles,
-                    update_message_display,
                 )
                     .run_if(in_state(AppState::Mine)),
+            )
+            .add_systems(
+                Update,
+                update_message_display
+                    .run_if(in_state(AppState::Mine))
+                    .run_if(resource_changed::<MineScreenState>),
             );
     }
 }
