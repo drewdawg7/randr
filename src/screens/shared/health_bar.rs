@@ -139,7 +139,15 @@ pub fn init_sprite_health_bars(
     let Some(mut image) = sheet.image_node("Slice_2933") else {
         return;
     };
-    image.image_mode = NodeImageMode::Stretch;
+    image.image_mode = NodeImageMode::Sliced(TextureSlicer {
+        border: BorderRect {
+            left: 3.0,
+            right: 3.0,
+            top: 2.0,
+            bottom: 2.0,
+        },
+        ..default()
+    });
 
     for entity in &query {
         commands.entity(entity).insert(image.clone());
