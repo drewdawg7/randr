@@ -116,7 +116,7 @@ impl Default for SpriteHealthBarBundle {
         Self {
             marker: SpriteHealthBar,
             node: Node {
-                width: Val::Px(200.0),
+                width: Val::Percent(100.0),
                 height: Val::Px(20.0),
                 ..default()
             },
