@@ -5,7 +5,7 @@ use crate::inventory::{FindsItems, Inventory};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
 use crate::screens::town::shared::{spawn_empty_state, spawn_menu};
-use crate::ui::spawn_navigation_hint;
+use crate::ui::{spawn_navigation_hint, UiText};
 use crate::screens::town::TabContent;
 use crate::ui::{selection_colors, selection_prefix};
 
@@ -171,18 +171,7 @@ fn spawn_upgrade_ui(
     inventory: &Inventory,
 ) {
     // Title
-    parent.spawn((
-        Text::new("Upgrade Equipment"),
-        TextFont {
-            font_size: 24.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::section("Upgrade Equipment").build_with_node());
 
     // Get equipment items
     let equipment_items: Vec<_> = inventory.equipment_items().collect();
@@ -305,18 +294,7 @@ fn spawn_quality_ui(
     inventory: &Inventory,
 ) {
     // Title
-    parent.spawn((
-        Text::new("Improve Quality"),
-        TextFont {
-            font_size: 24.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::section("Improve Quality").build_with_node());
 
     // Show stone count
     let stone_count = inventory
@@ -441,18 +419,7 @@ fn spawn_smelt_ui(
     inventory: &Inventory,
 ) {
     // Title
-    parent.spawn((
-        Text::new("Smelt Ores"),
-        TextFont {
-            font_size: 24.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::section("Smelt Ores").build_with_node());
 
     let recipes = RecipeId::all_smelting_recipes();
 
@@ -473,18 +440,7 @@ fn spawn_forge_ui(
     inventory: &Inventory,
 ) {
     // Title
-    parent.spawn((
-        Text::new("Forge Equipment"),
-        TextFont {
-            font_size: 24.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    parent.spawn(UiText::section("Forge Equipment").build_with_node());
 
     let recipes = RecipeId::all_forging_recipes();
 

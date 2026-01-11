@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::inventory::Inventory;
 use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
-use crate::ui::{inventory_selection_bg, spawn_modal_hint};
+use crate::ui::{inventory_selection_bg, spawn_modal_hint, UiText};
 
 use super::state::{InventoryItemUI, InventoryModalRoot, InventorySelection, ItemInfo};
 use super::utils::get_all_inventory_items;
@@ -61,18 +61,7 @@ fn spawn_item_list_panel(parent: &mut ChildBuilder, items: &[ItemInfo], selected
         })
         .with_children(|panel| {
             // Title
-            panel.spawn((
-                Text::new("Inventory"),
-                TextFont {
-                    font_size: 48.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.95, 0.9, 0.7)),
-                Node {
-                    margin: UiRect::bottom(Val::Px(20.0)),
-                    ..default()
-                },
-            ));
+            panel.spawn(UiText::title("Inventory").build_with_node());
 
             // Item list container with scrolling
             panel
@@ -167,18 +156,7 @@ fn spawn_item_details_panel(parent: &mut ChildBuilder, item_info: Option<&ItemIn
         })
         .with_children(|panel| {
             // Title
-            panel.spawn((
-                Text::new("Details"),
-                TextFont {
-                    font_size: 48.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.95, 0.9, 0.7)),
-                Node {
-                    margin: UiRect::bottom(Val::Px(20.0)),
-                    ..default()
-                },
-            ));
+            panel.spawn(UiText::title("Details").build_with_node());
 
             if let Some(item_info) = item_info {
                 let item = item_info.item();
@@ -241,18 +219,7 @@ fn spawn_item_details_panel(parent: &mut ChildBuilder, item_info: Option<&ItemIn
 
                 // Stats section
                 if !item.stats.stats().is_empty() {
-                    panel.spawn((
-                        Text::new("Stats:"),
-                        TextFont {
-                            font_size: 24.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.9, 0.8, 0.5)),
-                        Node {
-                            margin: UiRect::bottom(Val::Px(10.0)),
-                            ..default()
-                        },
-                    ));
+                    panel.spawn(UiText::section("Stats:").build_with_node());
 
                     for (stat_type, stat_instance) in item.stats.stats() {
                         if stat_instance.current_value > 0 {

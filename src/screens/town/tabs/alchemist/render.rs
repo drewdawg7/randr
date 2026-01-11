@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::inventory::{FindsItems, Inventory};
 use crate::item::recipe::Recipe;
 use crate::item::ItemId;
-use crate::ui::{selection_colors, selection_prefix, spawn_navigation_hint};
+use crate::ui::{selection_colors, selection_prefix, spawn_navigation_hint, UiText};
 
 use super::super::super::shared::spawn_menu;
 use super::super::super::TabContent;
@@ -74,18 +74,7 @@ fn spawn_brew_mode(
     inventory: &Inventory,
 ) {
     // Title
-    content.spawn((
-        Text::new("Brew Potions"),
-        TextFont {
-            font_size: 24.0,
-            ..default()
-        },
-        TextColor(Color::srgb(0.9, 0.9, 0.5)),
-        Node {
-            margin: UiRect::bottom(Val::Px(10.0)),
-            ..default()
-        },
-    ));
+    content.spawn(UiText::section("Brew Potions").build_with_node());
 
     // Main content area with recipe list and details panel
     content
@@ -124,18 +113,13 @@ fn spawn_recipe_list(
         },))
         .with_children(|list_container| {
             // Header
-            list_container.spawn((
-                Text::new("Available Recipes"),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.9, 0.9, 0.5)),
-                Node {
-                    margin: UiRect::bottom(Val::Px(10.0)),
-                    ..default()
-                },
-            ));
+            list_container.spawn(
+                UiText::new("Available Recipes")
+                    .medium()
+                    .yellow()
+                    .margin_bottom(10.0)
+                    .build_with_node(),
+            );
 
             // Recipe items
             for (i, &recipe_id) in alchemist_mode.available_recipes.iter().enumerate() {
@@ -221,18 +205,13 @@ fn spawn_ingredient_details(
         },))
         .with_children(|details_container| {
             // Header
-            details_container.spawn((
-                Text::new("Ingredients Required"),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.9, 0.9, 0.5)),
-                Node {
-                    margin: UiRect::bottom(Val::Px(10.0)),
-                    ..default()
-                },
-            ));
+            details_container.spawn(
+                UiText::new("Ingredients Required")
+                    .medium()
+                    .yellow()
+                    .margin_bottom(10.0)
+                    .build_with_node(),
+            );
 
             // Get the selected recipe
             if let Some(&recipe_id) = alchemist_mode
