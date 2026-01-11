@@ -517,6 +517,7 @@ pub struct SpriteAssets {
     // Fight screen sprites
     pub fight_player: Option<Handle<Image>>,
     pub fight_health_bar: Option<Handle<Image>>,
+    pub fight_popup: Option<Handle<Image>>,
 
     // Dungeon minimap sprites
     pub dungeon_unexplored: Option<Handle<Image>>,
@@ -579,6 +580,7 @@ fn load_assets(
 
     game_assets.sprites.fight_player = try_load(&asset_server, "sprites/fight/player.png");
     game_assets.sprites.fight_health_bar = try_load(&asset_server, "sprites/fight/health_bar.png");
+    game_assets.sprites.fight_popup = try_load(&asset_server, "sprites/fight/popup.png");
 
     game_assets.sprites.dungeon_unexplored =
         try_load(&asset_server, "sprites/dungeon/unexplored.png");

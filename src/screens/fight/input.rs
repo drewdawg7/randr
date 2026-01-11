@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::combat::{PlayerCombatAction, PostCombatAction};
 use crate::input::{GameAction, NavigationDirection};
-use crate::ui::{nav_selection_text, update_menu_colors, MenuIndex};
+use crate::ui::{update_menu_colors, MenuIndex};
 
 use super::components::{ActionMenuItem, PostCombatMenuItem};
 use super::state::FightScreenState;
@@ -79,8 +79,13 @@ fn update_action_visuals(
     let labels = ["Attack", "Run"];
     for (menu_index, mut color, mut text) in items.iter_mut() {
         let selected = menu_index.0 == state.action_selection;
-        let prefix = if selected { ">" } else { " " };
-        *color = TextColor(nav_selection_text(selected));
-        **text = format!("{} {}", prefix, labels[menu_index.0]);
+        let suffix = if selected { " <" } else { "" };
+        let text_color = if selected {
+            Color::srgb(0.15, 0.1, 0.05)
+        } else {
+            Color::srgb(0.4, 0.35, 0.3)
+        };
+        *color = TextColor(text_color);
+        **text = format!("{}{}", labels[menu_index.0], suffix);
     }
 }

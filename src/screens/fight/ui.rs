@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::ui::widget::NodeImageMode;
 use rand::seq::SliceRandom;
 
 use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhaseState};
@@ -64,7 +65,34 @@ pub fn spawn_fight_screen(
         .with_children(|parent| {
             spawn_combatants_section(parent, name.0, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health);
             spawn_combat_log_section(parent, &log_state);
-            spawn_action_menu(parent);
+
+            // Action menu popup in bottom right
+            if let Some(popup) = &game_assets.sprites.fight_popup {
+                parent
+                    .spawn((
+                        ImageNode::new(popup.clone()).with_mode(NodeImageMode::Sliced(TextureSlicer {
+                            border: BorderRect::square(8.0),
+                            ..default()
+                        })),
+                        Node {
+                            position_type: PositionType::Absolute,
+                            bottom: Val::Px(20.0),
+                            right: Val::Px(20.0),
+                            width: Val::Px(120.0),
+                            height: Val::Px(80.0),
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::FlexStart,
+                            justify_content: JustifyContent::Center,
+                            row_gap: Val::Px(4.0),
+                            padding: UiRect::all(Val::Px(8.0)),
+                            ..default()
+                        },
+                    ))
+                    .with_children(|popup_parent| {
+                        spawn_action_item(popup_parent, 0, "Attack", true);
+                        spawn_action_item(popup_parent, 1, "Run", false);
+                    });
+            }
         });
 }
 
@@ -151,34 +179,19 @@ fn spawn_combat_log_section(parent: &mut ChildBuilder, log_state: &CombatLogStat
         });
 }
 
-fn spawn_action_menu(parent: &mut ChildBuilder) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
-            row_gap: Val::Px(10.0),
-            ..default()
-        })
-        .with_children(|action_section| {
-            action_section.spawn((
-                Text::new("Choose Action:"),
-                TextFont { font_size: 20.0, ..default() },
-                TextColor(Color::srgb(0.8, 0.8, 0.8)),
-            ));
-
-            spawn_action_item(action_section, 0, "Attack", true);
-            spawn_action_item(action_section, 1, "Run", false);
-        });
-}
-
 fn spawn_action_item(parent: &mut ChildBuilder, index: usize, label: &str, selected: bool) {
-    let prefix = if selected { ">" } else { " " };
+    let suffix = if selected { " <" } else { "" };
+    let color = if selected {
+        Color::srgb(0.15, 0.1, 0.05)
+    } else {
+        Color::srgb(0.4, 0.35, 0.3)
+    };
     parent.spawn((
         ActionMenuItem,
         MenuIndex(index),
-        Text::new(format!("{} {}", prefix, label)),
-        TextFont { font_size: 28.0, ..default() },
-        TextColor(nav_selection_text(selected)),
+        Text::new(format!("{}{}", label, suffix)),
+        TextFont { font_size: 16.0, ..default() },
+        TextColor(color),
     ));
 }
 
@@ -352,8 +365,13 @@ pub fn reset_fight_state(
     let labels = ["Attack", "Run"];
     for (menu_index, mut color, mut text) in action_items.iter_mut() {
         let selected = menu_index.0 == fight_state.action_selection;
-        let prefix = if selected { ">" } else { " " };
-        *color = TextColor(nav_selection_text(selected));
-        **text = format!("{} {}", prefix, labels[menu_index.0]);
+        let suffix = if selected { " <" } else { "" };
+        let text_color = if selected {
+            Color::srgb(0.15, 0.1, 0.05)
+        } else {
+            Color::srgb(0.4, 0.35, 0.3)
+        };
+        *color = TextColor(text_color);
+        **text = format!("{}{}", labels[menu_index.0], suffix);
     }
 }
