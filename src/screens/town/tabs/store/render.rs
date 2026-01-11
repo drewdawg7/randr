@@ -8,28 +8,11 @@ use crate::ui::spawn_navigation_hint;
 use crate::screens::town::TabContent;
 use crate::ui::UiText;
 use crate::stats::StatType;
-use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry};
-use crate::ui::{selection_colors, selection_prefix, SelectableListItem};
+use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry, StoreListItem};
+use crate::ui::{selection_colors, selection_prefix};
 
 use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
 use super::state::{StoreModeKind, StoreMode, StoreSelections};
-
-/// Marker component for store inventory list items.
-#[derive(Component)]
-pub struct StoreListItem {
-    pub index: usize,
-    pub name: String,
-}
-
-impl SelectableListItem for StoreListItem {
-    fn index(&self) -> usize {
-        self.index
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-}
 
 /// Marker for the text of a store list item.
 #[derive(Component)]
@@ -254,10 +237,7 @@ fn spawn_inventory_list<F>(
                 let item_name = inv_item.item.name.clone();
 
                 list.spawn((
-                    StoreListItem {
-                        index: i,
-                        name: item_name.clone(),
-                    },
+                    StoreListItem::new(i, item_name.clone()),
                     Node {
                         padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                         flex_direction: FlexDirection::Row,

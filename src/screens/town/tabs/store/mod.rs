@@ -12,8 +12,9 @@ use crate::screens::town::shared::{update_menu_selection, MenuOptionItem, MenuOp
 use crate::screens::town::{ContentArea, TabContent, TownTab};
 use crate::ui::update_list_selection;
 
+use crate::ui::widgets::StoreListItem;
 use input::handle_store_input;
-use render::{populate_store_info_panel, StoreListItem, StoreListItemText};
+use render::{populate_store_info_panel, StoreListItemText};
 
 pub use render::spawn_store_ui;
 pub use state::{StoreMode, StoreModeKind, StoreSelections};

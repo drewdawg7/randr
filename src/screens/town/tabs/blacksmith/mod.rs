@@ -13,8 +13,9 @@ use crate::screens::town::shared::{
 use crate::screens::town::{ContentArea, TabContent, TownTab};
 use crate::ui::update_list_selection;
 
+use crate::ui::widgets::BlacksmithListItem;
 use input::handle_blacksmith_input;
-use render::{BlacksmithListItem, BlacksmithListItemText};
+use render::BlacksmithListItemText;
 
 pub use render::spawn_blacksmith_ui;
 pub use state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 /// Trait for selectable list items that have an index and a display name.
-pub trait SelectableListItem: Component {
+pub trait Selectable: Component {
     /// Returns the index of this item in the list.
     fn index(&self) -> usize;
     /// Returns the display name of this item.
@@ -76,7 +76,7 @@ pub fn update_list_selection<T, F1, F2>(
     text_query: &mut Query<(&mut Text, &mut TextColor), F2>,
 )
 where
-    T: SelectableListItem,
+    T: Selectable,
     F1: bevy::ecs::query::QueryFilter,
     F2: bevy::ecs::query::QueryFilter,
 {

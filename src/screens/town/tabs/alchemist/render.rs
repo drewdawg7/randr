@@ -5,29 +5,13 @@ use bevy::prelude::*;
 use crate::inventory::{FindsItems, Inventory};
 use crate::item::recipe::Recipe;
 use crate::item::ItemId;
-use crate::ui::{selection_colors, selection_prefix, spawn_navigation_hint, SelectableListItem, UiText};
+use crate::ui::widgets::AlchemistRecipeItem;
+use crate::ui::{selection_colors, selection_prefix, spawn_navigation_hint, UiText};
 
 use super::super::super::shared::spawn_menu;
 use super::super::super::TabContent;
 use super::state::{AlchemistMode, AlchemistModeKind, AlchemistSelections};
 use super::ALCHEMIST_MENU_OPTIONS;
-
-/// Marker component for alchemist recipe list items.
-#[derive(Component)]
-pub struct AlchemistRecipeItem {
-    pub index: usize,
-    pub name: String,
-}
-
-impl SelectableListItem for AlchemistRecipeItem {
-    fn index(&self) -> usize {
-        self.index
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-}
 
 /// Marker for the text of an alchemist recipe item.
 #[derive(Component)]
@@ -158,10 +142,7 @@ fn spawn_recipe_item(parent: &mut ChildBuilder, recipe: &Recipe, index: usize, i
 
     parent
         .spawn((
-            AlchemistRecipeItem {
-                index,
-                name: recipe_name.clone(),
-            },
+            AlchemistRecipeItem::new(index, recipe_name.clone()),
             Node {
                 padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                 flex_direction: FlexDirection::Row,

@@ -14,8 +14,9 @@ use crate::ui::update_list_selection;
 
 pub use state::AlchemistMode;
 
+use crate::ui::widgets::AlchemistRecipeItem;
 use input::handle_alchemist_input;
-use render::{spawn_alchemist_ui, AlchemistRecipeItem, AlchemistRecipeItemText};
+use render::{spawn_alchemist_ui, AlchemistRecipeItemText};
 use state::{AlchemistModeKind, AlchemistSelections};
 
 /// Menu options for the alchemist.

@@ -5,29 +5,12 @@ use crate::inventory::{FindsItems, Inventory};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
 use crate::screens::town::shared::{spawn_empty_state, spawn_menu};
-use crate::ui::{spawn_navigation_hint, UiText};
 use crate::screens::town::TabContent;
-use crate::ui::{selection_colors, selection_prefix, SelectableListItem};
+use crate::ui::widgets::BlacksmithListItem;
+use crate::ui::{selection_colors, selection_prefix, spawn_navigation_hint, UiText};
 
 use super::constants::MENU_OPTIONS;
 use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
-
-/// Marker component for selectable items with their index and name.
-#[derive(Component)]
-pub struct BlacksmithListItem {
-    pub index: usize,
-    pub name: String,
-}
-
-impl SelectableListItem for BlacksmithListItem {
-    fn index(&self) -> usize {
-        self.index
-    }
-
-    fn name(&self) -> &str {
-        &self.name
-    }
-}
 
 /// Marker for the text of a blacksmith list item.
 #[derive(Component)]
@@ -55,10 +38,7 @@ fn spawn_recipe_list(parent: &mut ChildBuilder, recipes: &[RecipeId], selected_i
                     let recipe_name = recipe.name().to_string();
 
                     list.spawn((
-                        BlacksmithListItem {
-                            index: i,
-                            name: recipe_name.clone(),
-                        },
+                        BlacksmithListItem::new(i, recipe_name.clone()),
                         Node {
                             padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                             flex_direction: FlexDirection::Row,
@@ -208,10 +188,7 @@ fn spawn_upgrade_ui(
 
                     let item_name = inv_item.item.name.clone();
                     list.spawn((
-                        BlacksmithListItem {
-                            index: i,
-                            name: item_name.clone(),
-                        },
+                        BlacksmithListItem::new(i, item_name.clone()),
                         Node {
                             padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                             flex_direction: FlexDirection::Row,
@@ -349,10 +326,7 @@ fn spawn_quality_ui(
 
                     let item_name = inv_item.item.name.clone();
                     list.spawn((
-                        BlacksmithListItem {
-                            index: i,
-                            name: item_name.clone(),
-                        },
+                        BlacksmithListItem::new(i, item_name.clone()),
                         Node {
                             padding: UiRect::axes(Val::Px(10.0), Val::Px(5.0)),
                             flex_direction: FlexDirection::Row,
