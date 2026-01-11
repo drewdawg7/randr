@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
 use crate::states::{AppState, RequestFightEvent, RequestMineEvent};
+use crate::ui::spawn_navigation_hint;
 
 use super::super::shared::{
     spawn_menu, update_menu_selection, MenuOption, MenuOptionItem, MenuOptionText,
@@ -126,18 +127,10 @@ pub fn spawn_field_ui(
                 );
 
                 // Navigation hint
-                content.spawn((
-                    Text::new("[↑↓] Navigate  [Enter] Select  [←→] Switch Tab"),
-                    TextFont {
-                        font_size: 14.0,
-                        ..default()
-                    },
-                    TextColor(Color::srgb(0.5, 0.5, 0.5)),
-                    Node {
-                        margin: UiRect::top(Val::Auto),
-                        ..default()
-                    },
-                ));
+                spawn_navigation_hint(
+                    content,
+                    "[↑↓] Navigate  [Enter] Select  [←→] Switch Tab",
+                );
             });
     });
 }

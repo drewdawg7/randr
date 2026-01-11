@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::inventory::Inventory;
 use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
-use crate::ui::inventory_selection_bg;
+use crate::ui::{inventory_selection_bg, spawn_modal_hint};
 
 use super::state::{InventoryItemUI, InventoryModalRoot, InventorySelection, ItemInfo};
 use super::utils::get_all_inventory_items;
@@ -110,22 +110,8 @@ fn spawn_item_list_panel(parent: &mut ChildBuilder, items: &[ItemInfo], selected
                     ..default()
                 })
                 .with_children(|instructions| {
-                    instructions.spawn((
-                        Text::new("↑↓: Navigate  Enter: Equip/Unequip"),
-                        TextFont {
-                            font_size: 16.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                    ));
-                    instructions.spawn((
-                        Text::new("I/Esc: Close"),
-                        TextFont {
-                            font_size: 16.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                    ));
+                    spawn_modal_hint(instructions, "↑↓: Navigate  Enter: Equip/Unequip");
+                    spawn_modal_hint(instructions, "I/Esc: Close");
                 });
         });
 }

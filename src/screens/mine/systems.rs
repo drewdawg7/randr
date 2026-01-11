@@ -5,6 +5,7 @@ use crate::inventory::{Inventory, ManagesItems};
 use crate::location::mine::RockId;
 use crate::stats::{StatSheet, StatType};
 use crate::states::AppState;
+use crate::ui::spawn_modal_hint;
 
 use super::components::{MessageText, MineScreenRoot};
 use super::grid::{spawn_grid, GridTile, PlayerSprite};
@@ -65,14 +66,10 @@ pub fn spawn_mine_screen(mut commands: Commands, state: Res<MineScreenState>) {
                     ..default()
                 })
                 .with_children(|instructions| {
-                    instructions.spawn((
-                        Text::new("Arrow Keys: Move | Space: Mine | Backspace: Exit at Ladder"),
-                        TextFont {
-                            font_size: 16.0,
-                            ..default()
-                        },
-                        TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                    ));
+                    spawn_modal_hint(
+                        instructions,
+                        "Arrow Keys: Move | Space: Mine | Backspace: Exit at Ladder",
+                    );
                 });
         });
 }

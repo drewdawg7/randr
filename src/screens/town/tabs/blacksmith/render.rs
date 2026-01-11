@@ -4,7 +4,8 @@ use crate::game::calculate_upgrade_cost;
 use crate::inventory::{FindsItems, Inventory};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::item::ItemId;
-use crate::screens::town::shared::{spawn_empty_state, spawn_menu, spawn_navigation_hint};
+use crate::screens::town::shared::{spawn_empty_state, spawn_menu};
+use crate::ui::spawn_navigation_hint;
 use crate::screens::town::TabContent;
 use crate::ui::{selection_colors, selection_prefix};
 

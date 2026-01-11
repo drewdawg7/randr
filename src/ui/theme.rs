@@ -16,6 +16,10 @@ pub mod colors {
     // Navigation variant (text-only, different gray)
     pub const NAV_SELECTED_TEXT: Color = Color::srgb(1.0, 1.0, 1.0);
     pub const NAV_NORMAL_TEXT: Color = Color::srgb(0.7, 0.7, 0.7);
+
+    // Hint text colors
+    pub const HINT_TOWN: Color = Color::srgb(0.5, 0.5, 0.5);
+    pub const HINT_MODAL: Color = Color::srgb(0.7, 0.7, 0.7);
 }
 
 pub const SELECTED_PREFIX: &str = "> ";
