@@ -157,10 +157,16 @@ fn update_grid_selector(
             continue;
         }
 
-        // Remove existing selector (only if it still exists)
-        for selector_entity in &selectors {
-            if commands.get_entity(selector_entity).is_some() {
-                commands.entity(selector_entity).despawn_recursive();
+        // Remove existing selector from this grid only (check children of grid cells)
+        for &child in grid_children.iter() {
+            if let Ok((_, _, cell_children)) = grid_cells.get(child) {
+                for &cell_child in cell_children.iter() {
+                    if selectors.contains(cell_child) {
+                        if commands.get_entity(cell_child).is_some() {
+                            commands.entity(cell_child).despawn_recursive();
+                        }
+                    }
+                }
             }
         }
 
