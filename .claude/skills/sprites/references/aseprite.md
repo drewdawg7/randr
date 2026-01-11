@@ -1,6 +1,55 @@
 # Aseprite Workflow
 
-## Grid-Aligned Sprites (e.g., 16x16 icons)
+## CLI Export (Batch Processing)
+
+Aseprite CLI enables automated sprite extraction without opening the GUI.
+
+**Path (Steam version):**
+```bash
+ASEPRITE="/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite"
+```
+
+### Extract Single Sprite
+```bash
+"$ASEPRITE" --batch input.aseprite --slice "Banner" --save-as banner.png
+```
+
+### Export with JSON Metadata
+```bash
+"$ASEPRITE" --batch input.aseprite \
+  --sheet output.png \
+  --data output.json \
+  --format json-hash
+```
+
+### Export All Slices as Separate Files
+```bash
+"$ASEPRITE" --batch input.aseprite --split-slices --save-as "{slice}.png"
+```
+
+### List Layers
+```bash
+"$ASEPRITE" --batch input.aseprite --list-layers
+```
+
+### Common Options
+| Option | Description |
+|--------|-------------|
+| `--batch` | Run without GUI (required for CLI) |
+| `--slice <name>` | Crop to named slice |
+| `--split-slices` | Export each slice separately |
+| `--data <file.json>` | Output JSON metadata |
+| `--sheet <file.png>` | Output sprite sheet image |
+| `--format json-hash` | Use hash format for JSON |
+| `--list-layers` | Print layer names |
+
+Run `"$ASEPRITE" --help` for full options.
+
+---
+
+## GUI Workflow
+
+### Grid-Aligned Sprites (e.g., 16x16 icons)
 
 1. **Open** the PNG in Aseprite
 2. **Import**: `File > Import Sprite Sheet`

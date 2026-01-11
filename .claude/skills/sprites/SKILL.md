@@ -21,11 +21,15 @@ Output: `Slice_3353: 92x26 at (202, 1280)`
 
 ### 1. Export from Aseprite
 
-1. Open sprite sheet in Aseprite
-2. Export: `File > Export Sprite Sheet`
-   - Check "JSON Data"
-   - Format: "Hash"
-3. Save as `name.json` next to `name.png`
+**GUI:** `File > Export Sprite Sheet` with "JSON Data" checked, Format: "Hash"
+
+**CLI:** Extract a slice directly:
+```bash
+ASEPRITE="/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite"
+"$ASEPRITE" --batch input.aseprite --slice "SpriteName" --save-as output.png
+```
+
+See [aseprite.md](references/aseprite.md) for full CLI options.
 
 ### 2. Place Files
 
