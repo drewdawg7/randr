@@ -12,6 +12,7 @@ use super::ui::{
     cleanup_fight_screen, despawn_post_combat_overlay, reset_fight_state, spawn_fight_screen,
     spawn_post_combat_overlay, update_combat_visuals,
 };
+use crate::screens::shared::init_sprite_health_bars;
 
 /// SystemSets for organizing Fight screen systems by function.
 /// Configured to run in order: Input -> UI
@@ -56,6 +57,10 @@ impl Plugin for FightPlugin {
                     ),
             )
             // UI systems
+            .add_systems(
+                Update,
+                init_sprite_health_bars.in_set(FightSystemSet::Ui),
+            )
             .add_systems(
                 Update,
                 spawn_post_combat_overlay

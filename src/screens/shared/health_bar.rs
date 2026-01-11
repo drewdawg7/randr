@@ -1,12 +1,13 @@
 use bevy::prelude::*;
 
-use crate::assets::SpriteSheet;
+use crate::assets::{GameSprites, SpriteSheet, SpriteSheetKey};
 
 /// Component marker for a health bar container.
 #[derive(Component)]
 pub struct HealthBar;
 
 /// Component marker for a sprite-based health bar.
+/// Spawned as a placeholder, then populated by `init_sprite_health_bars`.
 #[derive(Component)]
 pub struct SpriteHealthBar;
 
@@ -127,36 +128,44 @@ fn health_bar_slice(percent: f32) -> &'static str {
     SLICES[index.min(10)]
 }
 
-/// Bundle for a sprite-based health bar.
+/// Bundle for a sprite-based health bar placeholder.
+/// The ImageNode is added later by `init_sprite_health_bars`.
 #[derive(Bundle)]
 pub struct SpriteHealthBarBundle {
     pub marker: SpriteHealthBar,
     pub node: Node,
-    pub image: ImageNode,
 }
 
-impl SpriteHealthBarBundle {
-    /// Create a new sprite health bar.
-    ///
-    /// Returns None if the sprite sheet doesn't contain the required slices.
-    pub fn new(health: i32, max_health: i32, sheet: &SpriteSheet) -> Option<Self> {
-        let percent = if max_health > 0 {
-            (health as f32 / max_health as f32 * 100.0).clamp(0.0, 100.0)
-        } else {
-            0.0
-        };
-        let slice_name = health_bar_slice(percent);
-        let image = sheet.image_node(slice_name)?;
-
-        Some(Self {
+impl Default for SpriteHealthBarBundle {
+    fn default() -> Self {
+        Self {
             marker: SpriteHealthBar,
             node: Node {
                 width: Val::Px(200.0),
-                height: Val::Px(100.0),
+                height: Val::Px(20.0),
                 ..default()
             },
-            image,
-        })
+        }
+    }
+}
+
+/// System to initialize sprite health bars that don't have an ImageNode yet.
+pub fn init_sprite_health_bars(
+    mut commands: Commands,
+    game_sprites: Res<GameSprites>,
+    query: Query<Entity, (With<SpriteHealthBar>, Without<ImageNode>)>,
+) {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
+        return;
+    };
+
+    // Start with full health sprite
+    let Some(image) = sheet.image_node("Slice_2933") else {
+        return;
+    };
+
+    for entity in &query {
+        commands.entity(entity).insert(image.clone());
     }
 }
 

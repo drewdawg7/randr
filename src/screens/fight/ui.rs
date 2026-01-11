@@ -19,7 +19,6 @@ pub fn spawn_fight_screen(
     stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
     log_state: Res<CombatLogState>,
-    game_sprites: Res<GameSprites>,
 ) {
     let (player_health, player_max_health, enemy_name, enemy_health, enemy_max_health) =
         if let Some(combat) = combat_res.get() {
@@ -49,7 +48,7 @@ pub fn spawn_fight_screen(
             BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         ))
         .with_children(|parent| {
-            spawn_combatants_section(parent, name.0, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health, &game_sprites);
+            spawn_combatants_section(parent, name.0, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health);
             spawn_combat_log_section(parent, &log_state);
             spawn_action_menu(parent);
         });
@@ -63,7 +62,6 @@ fn spawn_combatants_section(
     enemy_name: &str,
     enemy_health: i32,
     enemy_max_health: i32,
-    game_sprites: &GameSprites,
 ) {
     parent
         .spawn(Node {
@@ -73,7 +71,7 @@ fn spawn_combatants_section(
             ..default()
         })
         .with_children(|combatants| {
-            spawn_player_side(combatants, player_name, player_health, player_max_health, game_sprites);
+            spawn_player_side(combatants, player_name, player_health, player_max_health);
 
             combatants.spawn((
                 Text::new("VS"),
@@ -81,7 +79,7 @@ fn spawn_combatants_section(
                 TextColor(Color::srgb(0.9, 0.9, 0.9)),
             ));
 
-            spawn_enemy_side(combatants, enemy_name, enemy_health, enemy_max_health, game_sprites);
+            spawn_enemy_side(combatants, enemy_name, enemy_health, enemy_max_health);
         });
 }
 
@@ -90,7 +88,6 @@ fn spawn_player_side(
     player_name: &str,
     health: i32,
     max_health: i32,
-    game_sprites: &GameSprites,
 ) {
     parent
         .spawn(Node {
@@ -105,12 +102,7 @@ fn spawn_player_side(
                 .spawn((PlayerHealthBar, HealthBarBundle::new(200.0)))
                 .with_children(|bar| {
                     bar.spawn(HealthBarNameBundle::new(player_name));
-                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) {
-                        if let Some(bundle) = SpriteHealthBarBundle::new(health, max_health, sheet)
-                        {
-                            bar.spawn(bundle);
-                        }
-                    }
+                    bar.spawn(SpriteHealthBarBundle::default());
                     bar.spawn(HealthBarTextBundle::new(health, max_health));
                 });
         });
@@ -121,7 +113,6 @@ fn spawn_enemy_side(
     enemy_name: &str,
     health: i32,
     max_health: i32,
-    game_sprites: &GameSprites,
 ) {
     parent
         .spawn(Node {
@@ -136,12 +127,7 @@ fn spawn_enemy_side(
                 .spawn((EnemyHealthBar, HealthBarBundle::new(200.0)))
                 .with_children(|bar| {
                     bar.spawn(HealthBarNameBundle::new(enemy_name));
-                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) {
-                        if let Some(bundle) = SpriteHealthBarBundle::new(health, max_health, sheet)
-                        {
-                            bar.spawn(bundle);
-                        }
-                    }
+                    bar.spawn(SpriteHealthBarBundle::default());
                     bar.spawn(HealthBarTextBundle::new(health, max_health));
                 });
         });
