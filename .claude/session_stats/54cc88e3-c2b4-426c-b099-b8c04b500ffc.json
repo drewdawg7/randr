@@ -1,0 +1,80 @@
+{
+  "schema_version": "1.0",
+  "session_id": "54cc88e3-c2b4-426c-b099-b8c04b500ffc",
+  "project": "/Users/drewstewart/code/game",
+  "timing": {
+    "start_time": "2026-01-11T02:12:06.012Z",
+    "end_time": "2026-01-11T02:17:19.672Z",
+    "duration_minutes": 5.23,
+    "duration_formatted": "5m 13s"
+  },
+  "messages": {
+    "user": 63,
+    "assistant": 105,
+    "total": 168
+  },
+  "tokens": {
+    "model": "claude-opus-4-5-20251101",
+    "input": 9572,
+    "output": 7304,
+    "cache_read": 3765980,
+    "cache_creation": 128954,
+    "total": 3911810,
+    "cost_usd": 8.7582
+  },
+  "tools": {
+    "total_calls": 59,
+    "by_type": {
+      "Bash": 13,
+      "Read": 21,
+      "Grep": 1,
+      "TodoWrite": 8,
+      "Edit": 14,
+      "Write": 1,
+      "Skill": 1
+    },
+    "success_rate": 1.0
+  },
+  "agents": {
+    "total_calls": 0,
+    "by_type": {}
+  },
+  "skills": {
+    "total_calls": 1,
+    "by_name": {
+      "session-stats": 1
+    }
+  },
+  "files": {
+    "modified": [
+      "962cacc49a0bb34f@v1",
+      "98b445badb70bdf4@v1",
+      "26a75c88b9007a3f@v1",
+      "be1405a75b9cd840@v1",
+      "e5376e69018b2135@v1",
+      "891d05deaa3fddc0@v1",
+      "4ea44d693c5601f1@v1",
+      "8a0271be3ce9be99@v1",
+      "f78f41037c128920@v1",
+      "64f33fcf69064147@v1",
+      "6ffe4332dd63b667@v1"
+    ],
+    "read": [],
+    "created": []
+  },
+  "performance": {
+    "slow_operations": [],
+    "average_tool_response_ms": 0
+  },
+  "sources": {
+    "session_jsonl": "/Users/drewstewart/.claude/projects/-Users-drewstewart-code-game/54cc88e3-c2b4-426c-b099-b8c04b500ffc.jsonl",
+    "debug_log": "/Users/drewstewart/.claude/debug/54cc88e3-c2b4-426c-b099-b8c04b500ffc.txt",
+    "file_history": "/Users/drewstewart/.claude/file-history/54cc88e3-c2b4-426c-b099-b8c04b500ffc",
+    "history_jsonl": "/Users/drewstewart/.claude/history.jsonl",
+    "stats_cache": "/Users/drewstewart/.claude/stats-cache.json"
+  },
+  "metadata": {
+    "generated_at": "2026-01-11T02:17:19.820928Z",
+    "generator_version": "1.0.0"
+  }
+}
