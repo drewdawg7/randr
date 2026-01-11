@@ -2,11 +2,11 @@ use bevy::prelude::*;
 use bevy::ui::widget::NodeImageMode;
 use rand::seq::SliceRandom;
 
-use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhaseState};
+use crate::combat::{ActiveCombatResource, CombatPhaseState};
 use crate::game::PlayerName;
 use crate::assets::{GameAssets, GameSprites, SpriteSheetKey};
 use crate::screens::shared::{
-    spawn_combat_log, update_health_bar, HealthBarBundle, HealthBarNameBundle,
+    update_health_bar, HealthBarBundle, HealthBarNameBundle,
     HealthBarText, HealthBarTextBundle, SpriteHealthBar, SpriteHealthBarBundle,
 };
 use crate::stats::{HasStats, StatSheet};
@@ -24,7 +24,6 @@ pub fn spawn_fight_screen(
     name: Res<PlayerName>,
     stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
-    log_state: Res<CombatLogState>,
     game_assets: Res<GameAssets>,
     mut selected_bg: ResMut<SelectedFightBackground>,
 ) {
@@ -64,7 +63,6 @@ pub fn spawn_fight_screen(
         ))
         .with_children(|parent| {
             spawn_combatants_section(parent, name.0, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health);
-            spawn_combat_log_section(parent, &log_state);
 
             // Action menu popup in bottom right
             if let Some(popup) = &game_assets.sprites.fight_popup {
@@ -78,13 +76,13 @@ pub fn spawn_fight_screen(
                             position_type: PositionType::Absolute,
                             bottom: Val::Px(20.0),
                             right: Val::Px(20.0),
-                            width: Val::Px(120.0),
-                            height: Val::Px(80.0),
+                            width: Val::Px(240.0),
+                            height: Val::Px(160.0),
                             flex_direction: FlexDirection::Column,
                             align_items: AlignItems::FlexStart,
-                            justify_content: JustifyContent::Center,
-                            row_gap: Val::Px(4.0),
-                            padding: UiRect::all(Val::Px(8.0)),
+                            justify_content: JustifyContent::FlexStart,
+                            row_gap: Val::Px(8.0),
+                            padding: UiRect::left(Val::Px(16.0)),
                             ..default()
                         },
                     ))
@@ -157,25 +155,10 @@ fn spawn_enemy_side(
             enemy_side
                 .spawn((EnemyHealthBar, HealthBarBundle::new(AlignItems::FlexEnd)))
                 .with_children(|bar| {
-                    bar.spawn(HealthBarNameBundle::new(enemy_name));
+                    bar.spawn((EnemyNameLabel, HealthBarNameBundle::new(enemy_name)));
                     bar.spawn(SpriteHealthBarBundle::new(AlignSelf::FlexEnd));
                     bar.spawn(HealthBarTextBundle::new(health, max_health));
                 });
-        });
-}
-
-fn spawn_combat_log_section(parent: &mut ChildBuilder, log_state: &CombatLogState) {
-    parent
-        .spawn((
-            CombatLogContainer,
-            Node {
-                width: Val::Percent(100.0),
-                margin: UiRect::vertical(Val::Px(20.0)),
-                ..default()
-            },
-        ))
-        .with_children(|log_parent| {
-            spawn_combat_log(log_parent, &log_state.entries, 6);
         });
 }
 
@@ -190,7 +173,7 @@ fn spawn_action_item(parent: &mut ChildBuilder, index: usize, label: &str, selec
         ActionMenuItem,
         MenuIndex(index),
         Text::new(format!("{}{}", label, suffix)),
-        TextFont { font_size: 16.0, ..default() },
+        TextFont { font_size: 18.0, ..default() },
         TextColor(color),
     ));
 }
@@ -373,5 +356,20 @@ pub fn reset_fight_state(
         };
         *color = TextColor(text_color);
         **text = format!("{}{}", labels[menu_index.0], suffix);
+    }
+}
+
+/// Updates the enemy name label when combat is initialized.
+pub fn update_enemy_name(
+    combat_res: Res<ActiveCombatResource>,
+    mut name_query: Query<&mut Text, With<EnemyNameLabel>>,
+) {
+    let Some(combat) = combat_res.get() else {
+        return;
+    };
+
+    let enemy_name = combat.enemy_info().name;
+    for mut text in name_query.iter_mut() {
+        **text = enemy_name.clone();
     }
 }

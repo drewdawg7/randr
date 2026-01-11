@@ -11,7 +11,7 @@ use super::state::FightScreenState;
 use super::ui::{
     cleanup_fight_screen, despawn_post_combat_overlay, populate_fight_background,
     reset_fight_state, spawn_fight_screen, spawn_post_combat_overlay, update_combat_visuals,
-    SelectedFightBackground,
+    update_enemy_name, SelectedFightBackground,
 };
 use crate::screens::shared::init_sprite_health_bars;
 
@@ -80,6 +80,12 @@ impl Plugin for FightPlugin {
                             .or(resource_changed::<Inventory>)
                             .or(resource_changed::<ActiveCombatResource>),
                     ),
+            )
+            .add_systems(
+                Update,
+                update_enemy_name
+                    .in_set(FightSystemSet::Ui)
+                    .run_if(resource_changed::<ActiveCombatResource>),
             )
             .add_systems(
                 OnEnter(CombatPhaseState::PlayerTurn),

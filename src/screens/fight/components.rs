@@ -19,8 +19,9 @@ pub struct PlayerHealthBar;
 #[derive(Component)]
 pub struct EnemyHealthBar;
 
+/// Marker component for the enemy name label, used to update it when combat initializes.
 #[derive(Component)]
-pub struct CombatLogContainer;
+pub struct EnemyNameLabel;
 
 #[derive(Component)]
 pub struct PostCombatOverlay;
