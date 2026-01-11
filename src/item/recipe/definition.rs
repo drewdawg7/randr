@@ -48,8 +48,8 @@ impl Recipe {
         }
 
         for (&item_id, &qty) in &self.spec.ingredients {
-            if let Some(inv_item) = inventory.find_item_by_id(item_id).cloned() {
-                inventory.decrease_item_quantity(&inv_item, qty);
+            if inventory.find_item_by_id(item_id).is_some() {
+                inventory.decrease_item_quantity(item_id, qty);
             }
         }
 

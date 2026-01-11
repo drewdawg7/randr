@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{item::Item, ItemId};
+use crate::item::{Item, ItemId};
 
 use super::{AddItemResult, EquipmentSlot, Inventory, InventoryError, InventoryItem};
 
@@ -72,8 +72,7 @@ pub trait ManagesItems: HasInventory {
 
     /// Decrease item quantity, removing if it reaches zero.
     /// Searches both inventory items and equipment.
-    fn decrease_item_quantity(&mut self, inv_item: &InventoryItem, amount: u32) {
-        let item_id = inv_item.item.item_id;
+    fn decrease_item_quantity(&mut self, item_id: ItemId, amount: u32) {
 
         // Check inventory items
         if let Some(index) = self.inventory().items.iter().position(|i| i.item.item_id == item_id) {
@@ -115,7 +114,7 @@ pub trait ManagesEquipment: HasInventory + ManagesItems {
         self.inventory().equipment().get(&slot)
     }
 
-    fn unequip_item(&mut self, slot: EquipmentSlot) -> Result<Option<Item>, InventoryError> {
+    fn unequip_item(&mut self, slot: EquipmentSlot) -> Result<(), InventoryError> {
         // Check if inventory has room before removing from equipment
         if self.inventory().equipment().contains_key(&slot)
             && self.inventory().items.len() >= self.inventory().max_slots()
@@ -123,23 +122,17 @@ pub trait ManagesEquipment: HasInventory + ManagesItems {
             return Err(InventoryError::Full);
         }
 
-        let inv_item = self.inventory_mut().equipment_mut().remove(&slot);
-
-        match inv_item {
-            Some(mut inv_item) => {
-                inv_item.item.set_is_equipped(false);
-                let item_clone = inv_item.item.clone();
-                self.add_to_inv(inv_item.item)?;
-                Ok(Some(item_clone))
-            }
-            None => Ok(None)
+        if let Some(mut inv_item) = self.inventory_mut().equipment_mut().remove(&slot) {
+            inv_item.item.set_is_equipped(false);
+            self.add_to_inv(inv_item.item)?;
         }
+        Ok(())
     }
 
-    fn equip_item(&mut self, item: &mut Item, slot: EquipmentSlot) {
+    fn equip_item(&mut self, mut item: Item, slot: EquipmentSlot) {
         let _ = self.unequip_item(slot);
         item.set_is_equipped(true);
-        self.inventory_mut().equipment_mut().insert(slot, InventoryItem::new(item.clone()));
+        self.inventory_mut().equipment_mut().insert(slot, InventoryItem::new(item));
     }
 
     fn equip_from_inventory(&mut self, item_uuid: Uuid, slot: EquipmentSlot) {

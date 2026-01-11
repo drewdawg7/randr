@@ -7,7 +7,7 @@ use crate::{
     combat::HasGold,
     economy::WorthGold,
     player::Player,
-    inventory::{FindsItems, ManagesItems},
+    inventory::ManagesItems,
     item::{Item, ItemId},
     location::{LocationId, LocationSpec, StoreData},
     magic::effect::PassiveEffect,
@@ -212,9 +212,6 @@ pub fn sell_player_item(player: &mut Player, item: &Item) -> i32 {
     }
     let sell_price = item.sell_price();
     player.add_gold(sell_price);
-    if let Some(inv_item) = player.find_item_by_id(item.item_id) {
-        let inv_item = inv_item.clone();
-        player.decrease_item_quantity(&inv_item, 1);
-    }
+    player.decrease_item_quantity(item.item_id, 1);
     sell_price
 }

@@ -150,12 +150,9 @@ pub fn handle_mining_action(
                         let item_name = drop.item.name.clone();
                         let quantity = drop.quantity;
 
-                        // Add item to inventory
-                        for _ in 0..quantity {
-                            if let Ok(_result) = inventory.add_to_inv(drop.item.clone()) {
-                                message_parts.push(format!("{}x {}", quantity, item_name));
-                                break; // Only add message once per drop type
-                            }
+                        // Add item to inventory (takes ownership, no clone needed)
+                        if inventory.add_to_inv(drop.item).is_ok() {
+                            message_parts.push(format!("{}x {}", quantity, item_name));
                         }
                     }
 

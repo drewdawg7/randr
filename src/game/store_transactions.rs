@@ -119,16 +119,17 @@ fn handle_store_sell(
     mut inventory: ResMut<Inventory>,
 ) {
     for event in sell_events.read() {
-        let Some(inv_item) = inventory.items.get(event.inventory_index).cloned() else {
+        let Some(inv_item) = inventory.items.get(event.inventory_index) else {
             continue;
         };
 
         let sell_price = inv_item.item.sell_price();
         let item_name = inv_item.item.name.clone();
+        let item_id = inv_item.item.item_id;
 
         // Add gold and remove item
         gold.0 += sell_price;
-        inventory.decrease_item_quantity(&inv_item, 1);
+        inventory.decrease_item_quantity(item_id, 1);
 
         result_events.send(StoreTransactionResult::SellSuccess {
             item_name: item_name.clone(),
@@ -147,31 +148,34 @@ fn handle_storage_withdraw(
     mut storage: ResMut<Storage>,
 ) {
     for event in withdraw_events.read() {
-        let Some(inv_item) = storage.inventory.items.get(event.storage_index).cloned() else {
+        // Get item info from reference first
+        let Some(inv_item) = storage.inventory.items.get(event.storage_index) else {
+            continue;
+        };
+        let item_name = inv_item.item.name.clone();
+        let item_uuid = inv_item.uuid();
+
+        // Check if inventory has room before removing from storage
+        if inventory.items.len() >= inventory.max_slots() {
+            result_events.send(StoreTransactionResult::WithdrawFailedInventoryFull);
+            info!("Inventory is full! Cannot withdraw item.");
+            continue;
+        }
+
+        // Remove from storage to get ownership
+        let Some(inv_item) = storage.remove_item(item_uuid) else {
             continue;
         };
 
-        let item = inv_item.item.clone();
-        let item_name = item.name.clone();
-        let item_uuid = inv_item.uuid();
-
-        // Try to add to player inventory
-        match inventory.add_to_inv(item) {
-            Ok(_) => {
-                // Remove from storage
-                storage.remove_item(item_uuid);
-                result_events.send(StoreTransactionResult::WithdrawSuccess {
-                    item_name: item_name.clone(),
-                });
-                withdrawn_events.send(ItemWithdrawn {
-                    item_name: item_name.clone(),
-                });
-                info!("Withdrew {} from storage", item_name);
-            }
-            Err(_) => {
-                result_events.send(StoreTransactionResult::WithdrawFailedInventoryFull);
-                info!("Inventory is full! Cannot withdraw item.");
-            }
+        // Add to player inventory (should succeed since we checked capacity)
+        if inventory.add_to_inv(inv_item.item).is_ok() {
+            result_events.send(StoreTransactionResult::WithdrawSuccess {
+                item_name: item_name.clone(),
+            });
+            withdrawn_events.send(ItemWithdrawn {
+                item_name: item_name.clone(),
+            });
+            info!("Withdrew {} from storage", item_name);
         }
     }
 }
@@ -185,19 +189,21 @@ fn handle_storage_deposit(
     mut storage: ResMut<Storage>,
 ) {
     for event in deposit_events.read() {
-        let Some(inv_item) = inventory.items.get(event.inventory_index).cloned() else {
+        // Get item info from reference first
+        let Some(inv_item) = inventory.items.get(event.inventory_index) else {
+            continue;
+        };
+        let item_name = inv_item.item.name.clone();
+        let item_uuid = inv_item.uuid();
+
+        // Remove from player inventory to get ownership
+        let Some(inv_item) = inventory.remove_item(item_uuid) else {
             continue;
         };
 
-        let item = inv_item.item.clone();
-        let item_name = item.name.clone();
-        let item_uuid = inv_item.uuid();
-
         // Add to storage (storage has unlimited capacity)
-        match storage.add_to_inv(item) {
+        match storage.add_to_inv(inv_item.item) {
             Ok(_) => {
-                // Remove from player inventory
-                inventory.remove_item(item_uuid);
                 result_events.send(StoreTransactionResult::DepositSuccess {
                     item_name: item_name.clone(),
                 });

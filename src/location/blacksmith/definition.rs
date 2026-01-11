@@ -144,17 +144,16 @@ impl Blacksmith {
             return Err(BlacksmithError::NotEquipment);
         }
         // Check if player has an upgrade stone
-        let stone = player
-            .find_item_by_id(ItemId::QualityUpgradeStone)
-            .ok_or(BlacksmithError::NoUpgradeStones)?
-            .clone();
+        if player.find_item_by_id(ItemId::QualityUpgradeStone).is_none() {
+            return Err(BlacksmithError::NoUpgradeStones);
+        }
 
         // Upgrade the item quality
         let new_quality = item.upgrade_quality()
             .map_err(BlacksmithError::ItemError)?;
 
         // Decrease the upgrade stone quantity
-        player.decrease_item_quantity(&stone, 1);
+        player.decrease_item_quantity(ItemId::QualityUpgradeStone, 1);
         Ok(new_quality)
     }
 
@@ -191,14 +190,13 @@ impl Blacksmith {
     pub fn add_fuel(&mut self, player: &mut Player) -> Result<i32, BlacksmithError> {
         let coal = player
             .find_item_by_id(ItemId::Coal)
-            .cloned()
             .ok_or(BlacksmithError::NoFuel)?;
 
         if coal.quantity == 0 {
             return Err(BlacksmithError::NoFuel);
         }
 
-        player.decrease_item_quantity(&coal, 1);
+        player.decrease_item_quantity(ItemId::Coal, 1);
         self.inc_fuel(1);
         Ok(self.fuel_amount)
     }

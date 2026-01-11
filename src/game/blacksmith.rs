@@ -171,14 +171,14 @@ fn handle_upgrade_quality(
         let item_name = inv_item.item.name.clone();
 
         // Check if player has QualityUpgradeStone
-        let Some(stone_inv) = inventory
+        if inventory
             .find_item_by_id(crate::item::ItemId::QualityUpgradeStone)
-            .cloned()
-        else {
+            .is_none()
+        {
             result_events.send(BlacksmithResult::QualityUpgradeFailedNoStone);
             info!("You need a Magic Rock (Quality Upgrade Stone) to improve quality");
             continue;
-        };
+        }
 
         // Perform quality upgrade
         if let Some(inv_item_mut) = inventory.find_item_by_uuid_mut(event.item_uuid) {
@@ -187,7 +187,7 @@ fn handle_upgrade_quality(
                     let quality_name = format!("{:?}", new_quality);
 
                     // Consume the stone
-                    inventory.decrease_item_quantity(&stone_inv, 1);
+                    inventory.decrease_item_quantity(crate::item::ItemId::QualityUpgradeStone, 1);
 
                     result_events.send(BlacksmithResult::QualityUpgradeSuccess {
                         item_name: item_name.clone(),

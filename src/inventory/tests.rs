@@ -232,8 +232,8 @@ fn inventory_sum_equipment_stats_returns_zero_when_empty() {
 #[test]
 fn inventory_sum_equipment_stats_sums_single_item() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 25);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 25);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     assert_eq!(holder.inventory().sum_equipment_stats(StatType::Attack), 25);
 }
@@ -242,11 +242,11 @@ fn inventory_sum_equipment_stats_sums_single_item() {
 fn inventory_sum_equipment_stats_sums_multiple_items() {
     let mut holder = MockInventoryHolder::new();
 
-    let mut weapon = create_test_weapon(ItemId::Sword, 25);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 25);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
-    let mut shield = create_test_shield(ItemId::BasicShield, 15);
-    holder.equip_item(&mut shield, EquipmentSlot::OffHand);
+    let shield = create_test_shield(ItemId::BasicShield, 15);
+    holder.equip_item(shield, EquipmentSlot::OffHand);
 
     assert_eq!(holder.inventory().sum_equipment_stats(StatType::Attack), 25);
     assert_eq!(holder.inventory().sum_equipment_stats(StatType::Defense), 15);
@@ -257,8 +257,8 @@ fn inventory_sum_equipment_stats_sums_multiple_items() {
 #[test]
 fn inventory_equipment_accessor_returns_reference() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 20);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 20);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     let equipment = holder.inventory().equipment();
     assert_eq!(equipment.len(), 1);
@@ -268,8 +268,8 @@ fn inventory_equipment_accessor_returns_reference() {
 #[test]
 fn inventory_equipment_mut_allows_modification() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 20);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 20);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     holder.inventory_mut().equipment_mut().clear();
     assert!(holder.inventory().equipment().is_empty());
@@ -393,8 +393,8 @@ fn find_item_by_id_finds_item_in_inventory() {
 #[test]
 fn find_item_by_id_finds_item_in_equipment() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     let found = holder.find_item_by_id(ItemId::Sword);
     assert!(found.is_some());
@@ -422,8 +422,7 @@ fn decrease_item_quantity_decreases_in_inventory() {
     // Should have 3 stacked
     assert_eq!(holder.inventory().items[0].quantity, 3);
 
-    let inv_item = holder.find_item_by_id(ItemId::CopperOre).unwrap().clone();
-    holder.decrease_item_quantity(&inv_item, 1);
+    holder.decrease_item_quantity(ItemId::CopperOre, 1);
 
     assert_eq!(holder.inventory().items[0].quantity, 2);
 }
@@ -434,8 +433,7 @@ fn decrease_item_quantity_removes_when_zero() {
     let material = create_test_material(ItemId::CopperOre);
     holder.add_to_inv(material).unwrap();
 
-    let inv_item = holder.find_item_by_id(ItemId::CopperOre).unwrap().clone();
-    holder.decrease_item_quantity(&inv_item, 1);
+    holder.decrease_item_quantity(ItemId::CopperOre, 1);
 
     // Item should be removed
     assert!(holder.inventory().items.is_empty());
@@ -444,11 +442,10 @@ fn decrease_item_quantity_removes_when_zero() {
 #[test]
 fn decrease_item_quantity_works_on_equipment() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
-    let inv_item = holder.find_item_by_id(ItemId::Sword).unwrap().clone();
-    holder.decrease_item_quantity(&inv_item, 1);
+    holder.decrease_item_quantity(ItemId::Sword, 1);
 
     // Equipment item should be removed from equipment slot
     assert!(holder.inventory().equipment().is_empty());
@@ -491,9 +488,9 @@ fn remove_item_from_inventory_only_removes_matching_item() {
 #[test]
 fn equip_item_adds_to_equipment_slot() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
 
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     assert!(holder.inventory().equipment().contains_key(&EquipmentSlot::Weapon));
 }
@@ -501,9 +498,9 @@ fn equip_item_adds_to_equipment_slot() {
 #[test]
 fn equip_item_sets_is_equipped_flag() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
 
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     let equipped = holder.get_equipped_item(EquipmentSlot::Weapon).unwrap();
     assert!(equipped.item.is_equipped);
@@ -512,11 +509,11 @@ fn equip_item_sets_is_equipped_flag() {
 #[test]
 fn equip_item_replaces_existing_equipped_item() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon1 = create_test_weapon(ItemId::Sword, 10);
-    let mut weapon2 = create_test_weapon(ItemId::Dagger, 15);
+    let weapon1 = create_test_weapon(ItemId::Sword, 10);
+    let weapon2 = create_test_weapon(ItemId::Dagger, 15);
 
-    holder.equip_item(&mut weapon1, EquipmentSlot::Weapon);
-    holder.equip_item(&mut weapon2, EquipmentSlot::Weapon);
+    holder.equip_item(weapon1, EquipmentSlot::Weapon);
+    holder.equip_item(weapon2, EquipmentSlot::Weapon);
 
     let equipped = holder.get_equipped_item(EquipmentSlot::Weapon).unwrap();
     assert_eq!(equipped.item.item_id, ItemId::Dagger);
@@ -530,8 +527,8 @@ fn equip_item_replaces_existing_equipped_item() {
 #[test]
 fn unequip_item_moves_to_inventory() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     let result = holder.unequip_item(EquipmentSlot::Weapon);
     assert!(result.is_ok());
@@ -543,8 +540,8 @@ fn unequip_item_moves_to_inventory() {
 #[test]
 fn unequip_item_clears_is_equipped_flag() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     holder.unequip_item(EquipmentSlot::Weapon).unwrap();
 
@@ -557,8 +554,8 @@ fn unequip_item_fails_when_inventory_full() {
     let mut holder = MockInventoryHolder::new();
 
     // Equip a weapon
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     // Fill all 15 inventory slots
     for _ in 0..15 {
@@ -652,8 +649,8 @@ fn equip_from_inventory_does_nothing_for_invalid_uuid() {
 #[test]
 fn get_equipped_item_returns_item_in_slot() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     let equipped = holder.get_equipped_item(EquipmentSlot::Weapon);
     assert!(equipped.is_some());
@@ -673,9 +670,9 @@ fn get_equipped_item_returns_none_for_empty_slot() {
 #[test]
 fn remove_item_removes_from_equipment() {
     let mut holder = MockInventoryHolder::new();
-    let mut weapon = create_test_weapon(ItemId::Sword, 10);
+    let weapon = create_test_weapon(ItemId::Sword, 10);
     let weapon_uuid = weapon.item_uuid;
-    holder.equip_item(&mut weapon, EquipmentSlot::Weapon);
+    holder.equip_item(weapon, EquipmentSlot::Weapon);
 
     let removed = holder.remove_item(weapon_uuid);
 
@@ -788,14 +785,12 @@ fn user_flow_collect_materials_and_stack() {
     assert_eq!(holder.inventory().items[0].quantity, 5);
 
     // Player uses 3 ore for crafting
-    let ore = holder.find_item_by_id(ItemId::CopperOre).unwrap().clone();
-    holder.decrease_item_quantity(&ore, 3);
+    holder.decrease_item_quantity(ItemId::CopperOre, 3);
 
     assert_eq!(holder.inventory().items[0].quantity, 2);
 
     // Player uses remaining ore
-    let ore = holder.find_item_by_id(ItemId::CopperOre).unwrap().clone();
-    holder.decrease_item_quantity(&ore, 2);
+    holder.decrease_item_quantity(ItemId::CopperOre, 2);
 
     assert!(holder.inventory().items.is_empty());
 }
