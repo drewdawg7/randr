@@ -78,48 +78,32 @@ pub fn tome_passive_effects(inventory: &Inventory) -> Vec<&PassiveEffect> {
         .unwrap_or_default()
 }
 
-/// Calculate passive bonus to attack from tome
-pub fn tome_attack_bonus(inventory: &Inventory) -> i32 {
+/// Sum tome bonus for a given stat type
+fn sum_tome_bonus(inventory: &Inventory, stat: StatType) -> i32 {
     tome_passive_effects(inventory)
         .iter()
-        .filter_map(|effect| match effect {
-            PassiveEffect::BonusAttack(amount) => Some(*amount),
-            _ => None,
-        })
+        .filter_map(|e| e.bonus_value(stat))
         .sum()
+}
+
+/// Calculate passive bonus to attack from tome
+pub fn tome_attack_bonus(inventory: &Inventory) -> i32 {
+    sum_tome_bonus(inventory, StatType::Attack)
 }
 
 /// Calculate passive bonus to defense from tome
 pub fn tome_defense_bonus(inventory: &Inventory) -> i32 {
-    tome_passive_effects(inventory)
-        .iter()
-        .filter_map(|effect| match effect {
-            PassiveEffect::BonusDefense(amount) => Some(*amount),
-            _ => None,
-        })
-        .sum()
+    sum_tome_bonus(inventory, StatType::Defense)
 }
 
 /// Calculate passive bonus to gold find from tome
 pub fn tome_goldfind_bonus(inventory: &Inventory) -> i32 {
-    tome_passive_effects(inventory)
-        .iter()
-        .filter_map(|effect| match effect {
-            PassiveEffect::BonusGoldFind(amount) => Some(*amount),
-            _ => None,
-        })
-        .sum()
+    sum_tome_bonus(inventory, StatType::GoldFind)
 }
 
 /// Calculate passive bonus to magic find from tome
 pub fn tome_magicfind_bonus(inventory: &Inventory) -> i32 {
-    tome_passive_effects(inventory)
-        .iter()
-        .filter_map(|effect| match effect {
-            PassiveEffect::BonusMagicFind(amount) => Some(*amount),
-            _ => None,
-        })
-        .sum()
+    sum_tome_bonus(inventory, StatType::MagicFind)
 }
 
 // =============================================================================

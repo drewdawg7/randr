@@ -1,5 +1,6 @@
 use crate::mob::MobId;
 use crate::location::mine::rock::RockId;
+use crate::stats::StatType;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Passive Spell Effects (always active while tome equipped)
@@ -116,6 +117,17 @@ impl PassiveEffect {
             // Dungeon
             PassiveEffect::DungeonBypass => "Can bypass dungeon rooms".to_string(),
             PassiveEffect::DungeonReveal => "Reveals all dungeon rooms".to_string(),
+        }
+    }
+
+    /// Get the bonus value for a specific stat type, if this effect provides one
+    pub fn bonus_value(&self, stat: StatType) -> Option<i32> {
+        match (self, stat) {
+            (PassiveEffect::BonusAttack(v), StatType::Attack) => Some(*v),
+            (PassiveEffect::BonusDefense(v), StatType::Defense) => Some(*v),
+            (PassiveEffect::BonusGoldFind(v), StatType::GoldFind) => Some(*v),
+            (PassiveEffect::BonusMagicFind(v), StatType::MagicFind) => Some(*v),
+            _ => None,
         }
     }
 }
