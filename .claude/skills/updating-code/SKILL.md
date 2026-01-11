@@ -4,15 +4,20 @@ description: Required workflow for ALL code changes - invoke FIRST before any im
 ---
 
 ## Workflow
-1. **Branch**: Create a new github branch with a descriptive name.
-2. **Analyze**: Analyze the code base using LSP and ast-grep. **NEVER use Grep for Rust code.**
-3. **Ask**: If there is any ambiguity, ask the user questions for clarification.
-4. **Compare**: Compare your plan to similar functionality in the codebase.
+Follow this workflow for ALL code changes:
+**IMPORTANT**: CREATE NEW BRANCHES EVEN FOR CHANGES NOT RELATED TO GITHUB ISSUES.
+
+1. **Branch**: Create a new branch with descriptive name (e.g., `feat/add-inventory`)
+2. **Analyze**: Use ast-grep and Rust LSP to understand the codebase. The `rust-codebase-researcher` agent is skilled at this.
+3. **Ask**: Clarify any ambiguity with the user before proceeding
+4. **Compare**: Check similar functionality in the codebase for patterns
 5. **Make Changes**: Execute your plan
-6. **Test**: Run the tests only relevant to code you've changed.
-7. **Clean-Up**: Clean up any compiler warnings that relate to your changes
-8. **Merge**: Commit, Merge, and Push your changes. No PR is necessary.
-9. **Close**: If working on a github issue, close it out.
+6. **Test**: Run tests for changed modules only. If the test requires the developer to verify, pause and tell the developer to run the code.
+7. **Clean-Up**: Fix any compiler warnings related to your changes
+8. **Merge**: Commit, merge, and push. No PR necessary.
+9. **Close**: If working on a GitHub issue, close it
+10. **Stats**: Use the `session-stats` skill to aggregate previous session stats
+
 
 ## LSP Quick Reference (Use Instead of Grep)
 

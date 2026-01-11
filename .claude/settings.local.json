@@ -125,7 +125,9 @@
       "Bash(git -C /Users/drewstewart/code/game checkout -b feat/randr-title)",
       "Skill(session-stats)",
       "Bash(timeout 3 cargo run:*)",
-      "Bash(git status:*)"
+      "Bash(git status:*)",
+      "Bash(/Applications/Aseprite.app/Contents/MacOS/aseprite:*)",
+      "Bash(\"/Users/drewstewart/Applications/Aseprite.app/Contents/MacOS/aseprite\" --batch --list-slices \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\")"
     ]
   },
   "enabledMcpjsonServers": [
