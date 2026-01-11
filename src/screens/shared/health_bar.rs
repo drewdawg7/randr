@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::ui::widget::NodeImageMode;
 
 use crate::assets::{GameSprites, SpriteSheet, SpriteSheetKey};
 
@@ -136,9 +137,10 @@ pub fn init_sprite_health_bars(
     };
 
     // Start with full health sprite
-    let Some(image) = sheet.image_node("Slice_2933") else {
+    let Some(mut image) = sheet.image_node("Slice_2933") else {
         return;
     };
+    image.image_mode = NodeImageMode::Stretch;
 
     for entity in &query {
         commands.entity(entity).insert(image.clone());

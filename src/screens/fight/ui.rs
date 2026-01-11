@@ -42,7 +42,7 @@ pub fn spawn_fight_screen(
                 height: Val::Percent(100.0),
                 flex_direction: FlexDirection::Column,
                 justify_content: JustifyContent::SpaceBetween,
-                padding: UiRect::all(Val::Px(20.0)),
+                padding: UiRect::vertical(Val::Px(20.0)),
                 ..default()
             },
             BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
