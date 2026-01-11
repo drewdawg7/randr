@@ -97,7 +97,7 @@ impl LootTable {
                 let roll = rng.gen_range(1..=loot_item.denominator);
                 if roll <= loot_item.numerator {
                     if let Some(item) = spawn_item(loot_item.item_kind) {
-                        let quantity = rng.gen_range(loot_item.quantity.clone());
+                        let quantity = rng.gen_range(*loot_item.quantity.start()..=*loot_item.quantity.end());
                         let drop = LootDrop { item, quantity };
 
                         best_drop = Some(match best_drop {

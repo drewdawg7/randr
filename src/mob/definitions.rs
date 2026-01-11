@@ -107,10 +107,10 @@ impl MobSpec {
         let hp_min = self.max_health.start();
         let hp_max = self.max_health.end();
         let hp_median = (hp_min + hp_max) as f32 / 2.0;
-        let attack = rng.gen_range(self.attack.clone());
-        let defense = rng.gen_range(self.defense.clone());
-        let base_gold = rng.gen_range(self.dropped_gold.clone());
-        let max_hp = rng.gen_range(self.max_health.clone());
+        let attack = rng.gen_range(*self.attack.start()..=*self.attack.end());
+        let defense = rng.gen_range(*self.defense.start()..=*self.defense.end());
+        let base_gold = rng.gen_range(*self.dropped_gold.start()..=*self.dropped_gold.end());
+        let max_hp = rng.gen_range(*self.max_health.start()..=*self.max_health.end());
         let hp = max_hp as f32;
 
         let excess_ratio = if hp > hp_median {
@@ -118,7 +118,7 @@ impl MobSpec {
         } else {
             0.0
         };
-        let base_xp = rng.gen_range(self.dropped_xp.clone());
+        let base_xp = rng.gen_range(*self.dropped_xp.start()..=*self.dropped_xp.end());
         let bonus_multiplier = 1.0 + excess_ratio * 0.5;
         let dropped_xp = (base_xp as f32 * bonus_multiplier).round() as i32;
         let gold = (base_gold as f32 * bonus_multiplier).round() as i32;
