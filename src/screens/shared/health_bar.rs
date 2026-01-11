@@ -11,32 +11,6 @@ pub struct HealthBar;
 #[derive(Component)]
 pub struct SpriteHealthBar;
 
-/// Bundle for a header label (e.g., "PLAYER", "ENEMY").
-#[derive(Bundle)]
-pub struct HeaderLabelBundle {
-    pub text: Text,
-    pub font: TextFont,
-    pub color: TextColor,
-    pub node: Node,
-}
-
-impl HeaderLabelBundle {
-    pub fn new(label: &str, color: Color) -> Self {
-        Self {
-            text: Text::new(label),
-            font: TextFont {
-                font_size: 24.0,
-                ..default()
-            },
-            color: TextColor(color),
-            node: Node {
-                margin: UiRect::bottom(Val::Px(10.0)),
-                ..default()
-            },
-        }
-    }
-}
-
 /// Bundle for the health bar container.
 #[derive(Bundle)]
 pub struct HealthBarBundle {

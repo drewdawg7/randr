@@ -4,7 +4,7 @@ use crate::combat::{ActiveCombatResource, CombatLogState, CombatPhaseState};
 use crate::game::PlayerName;
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::screens::shared::{
-    spawn_combat_log, update_health_bar, HeaderLabelBundle, HealthBarBundle, HealthBarNameBundle,
+    spawn_combat_log, update_health_bar, HealthBarBundle, HealthBarNameBundle,
     HealthBarText, HealthBarTextBundle, SpriteHealthBar, SpriteHealthBarBundle,
 };
 use crate::stats::{HasStats, StatSheet};
@@ -66,19 +66,12 @@ fn spawn_combatants_section(
     parent
         .spawn(Node {
             width: Val::Percent(100.0),
-            justify_content: JustifyContent::SpaceAround,
+            justify_content: JustifyContent::SpaceBetween,
             margin: UiRect::bottom(Val::Px(20.0)),
             ..default()
         })
         .with_children(|combatants| {
             spawn_player_side(combatants, player_name, player_health, player_max_health);
-
-            combatants.spawn((
-                Text::new("VS"),
-                TextFont { font_size: 48.0, ..default() },
-                TextColor(Color::srgb(0.9, 0.9, 0.9)),
-            ));
-
             spawn_enemy_side(combatants, enemy_name, enemy_health, enemy_max_health);
         });
 }
@@ -92,12 +85,10 @@ fn spawn_player_side(
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
+            align_items: AlignItems::FlexStart,
             ..default()
         })
         .with_children(|player_side| {
-            player_side.spawn(HeaderLabelBundle::new("PLAYER", Color::srgb(0.5, 0.8, 0.5)));
-
             player_side
                 .spawn((PlayerHealthBar, HealthBarBundle::new(200.0)))
                 .with_children(|bar| {
@@ -117,12 +108,10 @@ fn spawn_enemy_side(
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Column,
-            align_items: AlignItems::Center,
+            align_items: AlignItems::FlexEnd,
             ..default()
         })
         .with_children(|enemy_side| {
-            enemy_side.spawn(HeaderLabelBundle::new("ENEMY", Color::srgb(0.8, 0.5, 0.5)));
-
             enemy_side
                 .spawn((EnemyHealthBar, HealthBarBundle::new(200.0)))
                 .with_children(|bar| {
