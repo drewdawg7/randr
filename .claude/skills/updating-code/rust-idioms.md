@@ -22,3 +22,30 @@ match self.stat(t) {
 **Examples in codebase:**
 - `StatSheet::value()` in `src/stats/definition.rs:41`
 - `StatSheet::max_value()` in `src/stats/definition.rs:45`
+
+### Use `let-else` for Early Returns
+
+When checking an `Option` and returning early on `None`, prefer `let-else` over `is_none()` + `unwrap()`:
+
+```rust
+// Preferred
+let Some(room) = dungeon.current_room() else {
+    next_mode.set(DungeonMode::Navigation);
+    return;
+};
+
+// Avoid - potential panic if logic changes
+let current_room = dungeon.current_room();
+if current_room.is_none() {
+    next_mode.set(DungeonMode::Navigation);
+    return;
+}
+let room = current_room.unwrap();
+```
+
+**Examples in codebase:**
+- `spawn_room_entry_ui()` in `src/screens/dungeon/room_entry.rs:38`
+
+### `unwrap()` in Tests is Acceptable
+
+Using `unwrap()` in test code (`#[cfg(test)]`) is fine since tests should panic on unexpected failures.
