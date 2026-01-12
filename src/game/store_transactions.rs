@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::economy::WorthGold;
 use crate::game::{ItemDeposited, ItemWithdrawn, Storage};
-use crate::inventory::{FindsItems, Inventory, ManagesItems};
+use crate::inventory::{FindsItems, HasInventory, Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::player::PlayerGold;
 
@@ -196,28 +196,30 @@ fn handle_storage_deposit(
         let item_name = inv_item.item.name.clone();
         let item_uuid = inv_item.uuid();
 
+        // Check if storage has room before removing from inventory
+        if storage.inventory().items.len() >= storage.inventory().max_slots() {
+            result_events.send(StoreTransactionResult::DepositFailed {
+                reason: "Storage is full".to_string(),
+            });
+            info!("Storage is full! Cannot deposit item.");
+            continue;
+        }
+
         // Remove from player inventory to get ownership
         let Some(inv_item) = inventory.remove_item(item_uuid) else {
             continue;
         };
 
-        // Add to storage (storage has unlimited capacity)
-        match storage.add_to_inv(inv_item.item) {
-            Ok(_) => {
-                result_events.send(StoreTransactionResult::DepositSuccess {
-                    item_name: item_name.clone(),
-                });
-                deposited_events.send(ItemDeposited {
-                    item_name: item_name.clone(),
-                });
-                info!("Deposited {} into storage", item_name);
-            }
-            Err(e) => {
-                result_events.send(StoreTransactionResult::DepositFailed {
-                    reason: format!("{:?}", e),
-                });
-                info!("Failed to deposit item: {:?}", e);
-            }
-        }
+        // Add to storage (should succeed since we checked capacity)
+        storage
+            .add_to_inv(inv_item.item)
+            .expect("Storage capacity already verified");
+        result_events.send(StoreTransactionResult::DepositSuccess {
+            item_name: item_name.clone(),
+        });
+        deposited_events.send(ItemDeposited {
+            item_name: item_name.clone(),
+        });
+        info!("Deposited {} into storage", item_name);
     }
 }
