@@ -24,7 +24,7 @@ Follow this workflow for ALL code changes:
 
 
 ## Documentation Index
-- [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum
+- [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, recipe system, `RecipeId::material()`
 - [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 
 

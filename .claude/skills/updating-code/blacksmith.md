@@ -63,3 +63,31 @@ fn handle_smelt_recipe(/* system params */) {
 2. Add corresponding `BlacksmithResult` variants
 3. Extend each method on `CraftingOperation` to handle the new variant
 4. Create the event type and handler system following the pattern above
+
+## Recipe System
+
+### Location
+`src/item/recipe/specs.rs` - Recipe definitions using `entity_macros::define_data!`
+
+### RecipeId Material Detection
+
+The `RecipeId::material()` method returns the `ForgeMaterial` for forge filtering. It uses an exhaustive match on all `RecipeId` variants:
+
+```rust
+impl RecipeId {
+    pub fn material(&self) -> ForgeMaterial {
+        match self {
+            RecipeId::CopperIngot | RecipeId::CopperSword | ... => ForgeMaterial::Copper,
+            RecipeId::TinIngot | RecipeId::TinSword | ... => ForgeMaterial::Tin,
+            RecipeId::BronzeIngot | RecipeId::BronzeSword | ... => ForgeMaterial::Bronze,
+            RecipeId::BasicHPPotion => ForgeMaterial::Other,
+        }
+    }
+}
+```
+
+### Adding New Recipes
+
+1. Add variant to `variants {}` block in `define_data!` macro
+2. **Update `material()` method** - add new variant to appropriate match arm or create new arm
+3. The exhaustive match ensures compiler errors if new recipes are added without updating `material()`
