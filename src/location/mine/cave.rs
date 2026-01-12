@@ -477,36 +477,6 @@ impl CaveLayout {
         count
     }
 
-    /// Convert cell to display character based on neighbors (for rendering)
-    pub fn cell_to_char(&self, x: usize, y: usize) -> char {
-        if self.cells[y][x] == Cell::Floor {
-            return ' ';
-        }
-
-        let mut floor_neighbors = 0;
-        for dy in -1i32..=1 {
-            for dx in -1i32..=1 {
-                if dx == 0 && dy == 0 {
-                    continue;
-                }
-                let nx = x as i32 + dx;
-                let ny = y as i32 + dy;
-                if nx >= 0 && nx < CAVE_WIDTH as i32 && ny >= 0 && ny < CAVE_HEIGHT as i32 {
-                    if self.cells[ny as usize][nx as usize] == Cell::Floor {
-                        floor_neighbors += 1;
-                    }
-                }
-            }
-        }
-
-        match floor_neighbors {
-            0 => '#',
-            1 => '@',
-            2 => '%',
-            _ => ';',
-        }
-    }
-
     /// Get the number of rocks currently in the cave
     pub fn rock_count(&self) -> usize {
         self.rocks.len()

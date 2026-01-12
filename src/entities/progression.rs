@@ -1,8 +1,5 @@
 use bevy::prelude::*;
 
-use crate::utils::text_bar_with_label;
-
-
 #[derive(Resource, Debug, Default, Clone)]
 pub struct Progression {
     pub level: i32,
@@ -30,11 +27,6 @@ impl Progression {
             gained += 1;
         }
         gained
-    }
-
-    pub fn pretty_print(&self) -> String {
-        let xp_to_next_level = Self::xp_to_next_level(self.level);
-        text_bar_with_label("XP", self.xp, xp_to_next_level, 10)
     }
 }
 
