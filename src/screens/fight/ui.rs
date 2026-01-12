@@ -130,7 +130,18 @@ fn spawn_player_side(
         })
         .with_children(|player_side| {
             player_side
-                .spawn((PlayerHealthBar, HealthBarBundle::new(AlignItems::FlexStart)))
+                .spawn((
+                    PlayerHealthBar,
+                    HealthBarBundle::new(AlignItems::FlexStart),
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5)),
+                ))
+                .insert(Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexStart,
+                    row_gap: Val::Px(5.0),
+                    padding: UiRect::all(Val::Px(8.0)),
+                    ..default()
+                })
                 .with_children(|bar| {
                     bar.spawn(HealthBarNameBundle::new(player_name));
                     bar.spawn(SpriteHealthBarBundle::new(AlignSelf::FlexStart));
@@ -153,7 +164,18 @@ fn spawn_enemy_side(
         })
         .with_children(|enemy_side| {
             enemy_side
-                .spawn((EnemyHealthBar, HealthBarBundle::new(AlignItems::FlexEnd)))
+                .spawn((
+                    EnemyHealthBar,
+                    HealthBarBundle::new(AlignItems::FlexEnd),
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5)),
+                ))
+                .insert(Node {
+                    flex_direction: FlexDirection::Column,
+                    align_items: AlignItems::FlexEnd,
+                    row_gap: Val::Px(5.0),
+                    padding: UiRect::all(Val::Px(8.0)),
+                    ..default()
+                })
                 .with_children(|bar| {
                     bar.spawn((EnemyNameLabel, HealthBarNameBundle::new(enemy_name)));
                     bar.spawn(SpriteHealthBarBundle::new(AlignSelf::FlexEnd));
