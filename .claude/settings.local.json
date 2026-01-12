@@ -133,7 +133,8 @@
       "Bash('ASEPRITE=/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite' $ASEPRITE --batch /Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite --data /tmp/travelbook_temp.json --format json-hash --list-slices 2)",
       "Bash(1 cat /tmp/travelbook_temp.json)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\" --list-layers)",
-      "Bash(sips:*)"
+      "Bash(sips:*)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/SlimesAse/MiniSlime.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/slime.png)"
     ]
   },
   "enabledMcpjsonServers": [

@@ -13,6 +13,7 @@ pub enum ModalType {
     Inventory,
     Keybinds,
     SpellTest,
+    Book,
 }
 
 /// Component marker for modal overlay background.

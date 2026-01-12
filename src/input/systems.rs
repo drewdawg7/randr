@@ -77,6 +77,11 @@ fn handle_keyboard_input(
     if keyboard.just_pressed(KeyCode::Escape) {
         action_writer.send(GameAction::CloseModal);
     }
+
+    // Book popup - b
+    if keyboard.just_pressed(KeyCode::KeyB) {
+        action_writer.send(GameAction::OpenBook);
+    }
 }
 
 /// Clear all pending GameAction events. Use in OnExit to prevent event bleed.

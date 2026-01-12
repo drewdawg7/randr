@@ -42,4 +42,7 @@ pub enum GameAction {
 
     /// Close current modal (Escape)
     CloseModal,
+
+    /// Open book popup (b)
+    OpenBook,
 }
