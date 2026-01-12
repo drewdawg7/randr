@@ -6,6 +6,7 @@ description: Required workflow for ALL code changes - invoke FIRST before any im
 ## Workflow
 Follow this workflow for ALL code changes:
 **IMPORTANT**: CREATE NEW BRANCHES EVEN FOR CHANGES NOT RELATED TO GITHUB ISSUES.
+**IMPORTANT**: REFERENCE THE DOCUMENTATION EARLY AND OFTEN
 
 1. **Branch**: Create a new branch with descriptive name (e.g., `feat/add-inventory`)
 2. **Analyze and Research**: Use ast-grep and Rust LSP to understand the codebase. The `rust-codebase-researcher` agent is skilled at this.
