@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameAssets, GameSprites, SpriteSheetKey};
+use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::ui::{MobAnimation, MobSpriteSheets};
 use crate::input::{GameAction, NavigationDirection};
 use crate::mob::MobId;
 use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
@@ -257,7 +258,7 @@ fn spawn_book_popup(mut commands: Commands, game_sprites: Res<GameSprites>) {
 fn update_book_mob_sprite(
     mut commands: Commands,
     list_state: Res<BookListState>,
-    game_assets: Res<GameAssets>,
+    mob_sheets: Res<MobSpriteSheets>,
     query: Query<Entity, With<BookMobSprite>>,
     added: Query<Entity, Added<BookMobSprite>>,
 ) {
@@ -269,10 +270,22 @@ fn update_book_mob_sprite(
     let mob_id = MobId::ALL[list_state.selected];
 
     for entity in &query {
-        if let Some(sprite) = game_assets.sprites.mob_sprite(mob_id) {
-            commands.entity(entity).insert(ImageNode::new(sprite.clone()));
+        if let Some(sheet) = mob_sheets.get(mob_id) {
+            commands.entity(entity).insert((
+                ImageNode::from_atlas_image(
+                    sheet.texture.clone(),
+                    TextureAtlas {
+                        layout: sheet.layout.clone(),
+                        index: sheet.animation.first_frame,
+                    },
+                ),
+                MobAnimation::new(&sheet.animation),
+            ));
         } else {
-            commands.entity(entity).remove::<ImageNode>();
+            commands
+                .entity(entity)
+                .remove::<ImageNode>()
+                .remove::<MobAnimation>();
         }
     }
 }

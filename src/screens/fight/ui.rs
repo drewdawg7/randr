@@ -7,7 +7,7 @@ use crate::game::PlayerName;
 use crate::assets::{GameAssets, GameSprites, SpriteSheetKey};
 use crate::ui::{
     update_health_bar, HealthBarBundle, HealthBarNameBundle, HealthBarText, HealthBarTextBundle,
-    SpriteHealthBar, SpriteHealthBarBundle,
+    MobAnimation, MobSpriteSheets, SpriteHealthBar, SpriteHealthBarBundle,
 };
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::{nav_selection_text, MenuIndex};
@@ -407,14 +407,14 @@ pub fn populate_fight_background(
 pub fn populate_mob_sprite(
     mut commands: Commands,
     query: Query<Entity, With<NeedsMobSprite>>,
-    game_assets: Res<GameAssets>,
+    mob_sheets: Res<MobSpriteSheets>,
     combat_res: Res<ActiveCombatResource>,
 ) {
     let Some(combat) = combat_res.get() else {
         return;
     };
 
-    let Some(sprite) = game_assets.sprites.mob_sprite(combat.mob.mob_id) else {
+    let Some(sheet) = mob_sheets.get(combat.mob.mob_id) else {
         return;
     };
 
@@ -422,7 +422,16 @@ pub fn populate_mob_sprite(
         commands
             .entity(entity)
             .remove::<NeedsMobSprite>()
-            .insert(ImageNode::new(sprite.clone()));
+            .insert((
+                ImageNode::from_atlas_image(
+                    sheet.texture.clone(),
+                    TextureAtlas {
+                        layout: sheet.layout.clone(),
+                        index: sheet.animation.first_frame,
+                    },
+                ),
+                MobAnimation::new(&sheet.animation),
+            ));
     }
 }
 

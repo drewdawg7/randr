@@ -1,5 +1,6 @@
 pub mod hints;
 pub mod menu;
+pub mod mob_animation;
 pub mod nodes;
 pub mod screens;
 pub mod text;
@@ -8,6 +9,7 @@ pub mod widgets;
 
 pub use hints::*;
 pub use menu::*;
+pub use mob_animation::*;
 pub use nodes::*;
 pub use screens::*;
 pub use text::*;

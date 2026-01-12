@@ -2,53 +2,106 @@
 
 ## Overview
 
-Mob sprites are displayed during combat on the fight screen. Each `MobId` can have an associated sprite that is shown when fighting that mob.
+Mob sprites are displayed during combat on the fight screen and in the monster book popup. Each `MobId` can have an associated animated sprite sheet with idle animation support.
 
-## Adding a New Mob Sprite
+## Adding a New Mob Sprite (with Animation)
 
-1. **Export the sprite** from Aseprite to `assets/sprites/mobs/<mob_name>.png`:
-   ```bash
-   ASEPRITE="/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite"
-   "$ASEPRITE" --batch "input.aseprite" --frame-range 0,0 --save-as assets/sprites/mobs/<mob_name>.png
-   ```
+When adding a new mob sprite, **always include the idle animation if it exists** in the Aseprite file.
 
-2. **Add the field** to `SpriteAssets` in `src/assets/sprites.rs`:
-   ```rust
-   // Mob sprites
-   pub mob_slime: Option<Handle<Image>>,
-   pub mob_goblin: Option<Handle<Image>>,
-   pub mob_<new_mob>: Option<Handle<Image>>,  // Add new mob here
-   ```
+### 1. Export the Sprite Sheet
 
-3. **Load the sprite** in the `load_assets` function in `src/assets/sprites.rs`:
-   ```rust
-   game_assets.sprites.mob_<new_mob> = try_load(&asset_server, "sprites/mobs/<new_mob>.png");
-   ```
+Export all frames as a horizontal sprite sheet with JSON metadata:
 
-4. **Update `mob_sprite()`** method in `SpriteAssets` to return the sprite for the new `MobId`:
-   ```rust
-   pub fn mob_sprite(&self, mob_id: MobId) -> Option<&Handle<Image>> {
-       match mob_id {
-           MobId::Slime => self.mob_slime.as_ref(),
-           MobId::Goblin => self.mob_goblin.as_ref(),
-           MobId::<NewMob> => self.mob_<new_mob>.as_ref(),  // Add new mob here
-           _ => None,
-       }
-   }
-   ```
+```bash
+ASEPRITE="/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite"
+"$ASEPRITE" --batch "input.aseprite" \
+  --sheet assets/sprites/mobs/<mob_name>.png \
+  --data assets/sprites/mobs/<mob_name>.json \
+  --format json-hash \
+  --sheet-type horizontal
+```
+
+### 2. Register the Sprite Sheet in `MobSpriteSheets`
+
+Add the mob to `load_mob_sprite_sheets()` in `src/ui/mob_animation.rs`:
+
+```rust
+// <MobName>: <total_frames> frames total, 32x32 each, idle is frames <first>-<last>
+let <mob_name>_texture: Handle<Image> = asset_server.load("sprites/mobs/<mob_name>.png");
+let <mob_name>_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), <total_frames>, 1, None, None);
+let <mob_name>_layout_handle = layouts.add(<mob_name>_layout);
+mob_sheets.insert(
+    MobId::<MobName>,
+    MobSpriteSheet {
+        texture: <mob_name>_texture,
+        layout: <mob_name>_layout_handle,
+        animation: MobAnimationConfig {
+            first_frame: 0,  // First frame of idle animation
+            last_frame: 3,   // Last frame of idle animation (inclusive)
+            frame_duration: 0.2,  // Seconds per frame (0.2-0.25 is typical)
+        },
+    },
+);
+```
+
+### 3. Determine Animation Frame Range
+
+Check the Aseprite file for animation tags:
+- The **idle** animation is typically the first few frames (e.g., frames 0-3)
+- Look at the timeline tags in Aseprite to identify the idle range
+- Frame indices are zero-based
+
+### 4. Frame Duration Guidelines
+
+- `0.2` seconds - Normal/fast animations (goblin)
+- `0.25` seconds - Slower, bouncier animations (slime)
+- Adjust based on how the animation looks in-game
 
 ## Key Files
 
-- `src/assets/sprites.rs` - `SpriteAssets` struct, `mob_sprite()` method, `load_assets()` function
-- `src/screens/fight/ui.rs` - `populate_mob_sprite()` system that displays the sprite
-- `assets/sprites/mobs/` - Directory containing mob sprite PNGs
+| File | Purpose |
+|------|---------|
+| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `MobAnimation` component, animation system |
+| `src/screens/fight/ui.rs` | `populate_mob_sprite()` - displays animated sprite in combat |
+| `src/screens/book_popup.rs` | `update_book_mob_sprite()` - displays animated sprite in monster book |
+| `assets/sprites/mobs/` | Sprite sheet PNGs and JSON metadata |
 
 ## How It Works
 
-The `populate_mob_sprite` system in `src/screens/fight/ui.rs`:
-1. Gets the current combat from `ActiveCombatResource`
-2. Looks up the mob's `mob_id` from `combat.mob.mob_id`
-3. Calls `game_assets.sprites.mob_sprite(mob_id)` to get the correct sprite
-4. Inserts the sprite as an `ImageNode` on entities with `NeedsMobSprite` marker
+### Animation System (`MobAnimationPlugin`)
 
-Mobs without a sprite will show nothing (the system returns early if `mob_sprite()` returns `None`).
+1. **Loading**: `load_mob_sprite_sheets()` runs at `PreStartup`, loading textures and creating `TextureAtlasLayout` for each mob
+2. **Populating**: When a `NeedsMobSprite` or `BookMobSprite` entity is detected, the system inserts:
+   - `ImageNode` with the texture atlas
+   - `MobAnimation` component with timer and frame config
+3. **Animating**: `animate_mob_sprites()` runs every frame, ticking timers and updating atlas indices
+
+### Components
+
+```rust
+/// Animation configuration for a mob's idle animation.
+pub struct MobAnimationConfig {
+    pub first_frame: usize,    // First frame index
+    pub last_frame: usize,     // Last frame index (inclusive)
+    pub frame_duration: f32,   // Seconds per frame
+}
+
+/// Component for animated mob sprites.
+pub struct MobAnimation {
+    pub timer: Timer,
+    pub current_frame: usize,
+    pub first_frame: usize,
+    pub last_frame: usize,
+}
+```
+
+## Currently Supported Mobs
+
+| MobId | Sprite Sheet | Total Frames | Idle Range | Frame Duration |
+|-------|-------------|--------------|------------|----------------|
+| `Goblin` | `goblin.png` | 27 | 0-3 | 0.2s |
+| `Slime` | `slime.png` | 18 | 0-3 | 0.25s |
+
+## Legacy Note
+
+The old `SpriteAssets::mob_sprite()` method and static sprite loading in `src/assets/sprites.rs` is no longer used for mobs with animations. The `MobSpriteSheets` resource in `src/ui/mob_animation.rs` is the new source of truth.
