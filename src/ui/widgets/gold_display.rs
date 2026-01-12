@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameFonts, GameSprites, SpriteSheetKey};
+use crate::assets::{GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
 use crate::ui::row_node;
 
 /// Plugin for gold display widget.
@@ -56,7 +56,7 @@ fn on_add_gold_display(
     // Get gold icon
     let gold_image = game_sprites
         .get(SpriteSheetKey::UiAll)
-        .and_then(|s| s.image_node("Slice_3019"));
+        .and_then(|s| s.image_node(UiAllSlice::GoldIcon.as_str()));
 
     // Icon size scales with font size
     let icon_size = gold_display.font_size;

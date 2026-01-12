@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::ui::widget::NodeImageMode;
 
-use crate::assets::{GameSprites, SpriteSheet, SpriteSheetKey};
+use crate::assets::{GameSprites, HealthBarSlice, SpriteSheet, SpriteSheetKey};
 
 /// Component marker for a health bar container.
 #[derive(Component)]
@@ -81,26 +81,9 @@ impl HealthBarTextBundle {
 #[derive(Component)]
 pub struct HealthBarText;
 
-/// Get the sprite slice name for a given health percentage.
-///
-/// Returns the appropriate slice from the health bar sprite sequence:
-/// Full (100%) -> Empty (0%): 2933 -> 2934 -> ... -> 2937 -> 2940 -> ... -> 2944 -> 2938
-fn health_bar_slice(percent: f32) -> &'static str {
-    const SLICES: [&str; 11] = [
-        "Slice_2938", // 0% - empty
-        "Slice_2944", // ~9%
-        "Slice_2943", // ~18%
-        "Slice_2942", // ~27%
-        "Slice_2941", // ~36%
-        "Slice_2940", // ~45%
-        "Slice_2937", // ~55%
-        "Slice_2936", // ~64%
-        "Slice_2935", // ~73%
-        "Slice_2934", // ~82%
-        "Slice_2933", // 91-100% - full
-    ];
-    let index = ((percent / 100.0) * 10.0).round() as usize;
-    SLICES[index.min(10)]
+/// Get the sprite slice for a given health percentage.
+fn health_bar_slice(percent: f32) -> HealthBarSlice {
+    HealthBarSlice::for_percent(percent)
 }
 
 /// Bundle for a sprite-based health bar placeholder.
@@ -136,7 +119,7 @@ pub fn init_sprite_health_bars(
     };
 
     // Start with full health sprite
-    let Some(mut image) = sheet.image_node("Slice_2933") else {
+    let Some(mut image) = sheet.image_node(HealthBarSlice::Health100.as_str()) else {
         return;
     };
     image.image_mode = NodeImageMode::Sliced(TextureSlicer {
@@ -169,14 +152,14 @@ pub fn update_health_bar(
     } else {
         0.0
     };
-    let slice_name = health_bar_slice(percent);
+    let slice = health_bar_slice(percent);
 
     // Find sprite and text components in children
     if let Ok(bar_children) = children.get(bar_entity) {
         for child in bar_children.iter() {
             // Update sprite
             if let Ok(mut image_node) = sprite_query.get_mut(*child) {
-                if let Some(index) = sheet.get(slice_name) {
+                if let Some(index) = sheet.get(slice.as_str()) {
                     if let Some(atlas) = &mut image_node.texture_atlas {
                         atlas.index = index;
                     }

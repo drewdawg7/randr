@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::assets::{GameSprites, SpriteSheetKey, TravelBookSlice, UiAllSlice};
 use crate::entities::Progression;
 use crate::player::PlayerGold;
 use crate::stats::{StatSheet, StatType};
@@ -32,13 +32,13 @@ fn on_add_player_stats(
     // Get sprite images
     let heart_image = game_sprites
         .get(SpriteSheetKey::UiAll)
-        .and_then(|s| s.image_node("Slice_3013"));
+        .and_then(|s| s.image_node(UiAllSlice::HeartIcon.as_str()));
     let gold_image = game_sprites
         .get(SpriteSheetKey::UiAll)
-        .and_then(|s| s.image_node("Slice_3019"));
+        .and_then(|s| s.image_node(UiAllSlice::GoldIcon.as_str()));
     let background_image = game_sprites
         .get(SpriteSheetKey::TravelBook)
-        .and_then(|s| s.image_node_sliced("banner", 16.0));
+        .and_then(|s| s.image_node_sliced(TravelBookSlice::Banner.as_str(), 16.0));
 
     let hp = stats.value(StatType::Health);
     let max_hp = stats.max_value(StatType::Health);

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameAssets, GameFonts, GameSprites, SpriteSheetKey};
+use crate::assets::{GameAssets, GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
@@ -112,8 +112,8 @@ fn spawn_main_menu(mut commands: Commands) {
                     parent.spawn((
                         SpriteMenuItem {
                             index: 0,
-                            unselected_slice: "Slice_295",
-                            selected_slice: "Slice_329",
+                            unselected_slice: UiAllSlice::ButtonTown.as_str(),
+                            selected_slice: UiAllSlice::ButtonTownSelected.as_str(),
                         },
                         Node {
                             width: Val::Px(141.0),
@@ -126,8 +126,8 @@ fn spawn_main_menu(mut commands: Commands) {
                     parent.spawn((
                         SpriteMenuItem {
                             index: 1,
-                            unselected_slice: "Slice_193",
-                            selected_slice: "Slice_227",
+                            unselected_slice: UiAllSlice::ButtonProfile.as_str(),
+                            selected_slice: UiAllSlice::ButtonProfileSelected.as_str(),
                         },
                         Node {
                             width: Val::Px(141.0),
@@ -140,8 +140,8 @@ fn spawn_main_menu(mut commands: Commands) {
                     parent.spawn((
                         SpriteMenuItem {
                             index: 2,
-                            unselected_slice: "Slice_397",
-                            selected_slice: "Slice_431",
+                            unselected_slice: UiAllSlice::ButtonQuit.as_str(),
+                            selected_slice: UiAllSlice::ButtonQuitSelected.as_str(),
                         },
                         Node {
                             width: Val::Px(141.0),
@@ -255,7 +255,7 @@ fn populate_randr_title(
     };
 
     for entity in &query {
-        let Some(img) = ui_all.image_node("Slice_3353") else {
+        let Some(img) = ui_all.image_node(UiAllSlice::TitleBanner.as_str()) else {
             continue;
         };
 

@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::assets::{GameSprites, SpriteSheetKey, UiAllSlice, UiSelectorsSlice};
 
 const CELL_SIZE: f32 = 48.0;
 const GRID_SIZE: usize = 5;
@@ -74,15 +74,15 @@ fn on_add_item_grid(
     // Get the cell background sprite if available
     let cell_image = game_sprites
         .get(SpriteSheetKey::UiAll)
-        .and_then(|s| s.image_node("Slice_10"));
+        .and_then(|s| s.image_node(UiAllSlice::CellBackground.as_str()));
 
     // Get the selector sprite frames if available
     let selector_data = game_sprites
         .get(SpriteSheetKey::UiSelectors)
         .and_then(|selectors| {
-            let idx1 = selectors.get("Slice_61")?;
-            let idx2 = selectors.get("Slice_91")?;
-            Some((selectors.image_node("Slice_61")?, [idx1, idx2]))
+            let idx1 = selectors.get(UiSelectorsSlice::SelectorFrame1.as_str())?;
+            let idx2 = selectors.get(UiSelectorsSlice::SelectorFrame2.as_str())?;
+            Some((selectors.image_node(UiSelectorsSlice::SelectorFrame1.as_str())?, [idx1, idx2]))
         });
 
     commands
@@ -200,9 +200,9 @@ fn update_grid_selector(
                     // Add selector to this cell
                     if let Some(selectors_sheet) = game_sprites.get(SpriteSheetKey::UiSelectors) {
                         if let (Some(idx1), Some(idx2), Some(img)) = (
-                            selectors_sheet.get("Slice_61"),
-                            selectors_sheet.get("Slice_91"),
-                            selectors_sheet.image_node("Slice_61"),
+                            selectors_sheet.get(UiSelectorsSlice::SelectorFrame1.as_str()),
+                            selectors_sheet.get(UiSelectorsSlice::SelectorFrame2.as_str()),
+                            selectors_sheet.image_node(UiSelectorsSlice::SelectorFrame1.as_str()),
                         ) {
                             commands.entity(cell_entity).with_children(|cell| {
                                 cell.spawn((

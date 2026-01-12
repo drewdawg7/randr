@@ -83,10 +83,48 @@ impl SpriteSheet {
 ```rust
 // Access via SpriteSheetKey enum - NOT direct fields
 let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else { return };
-let Some(idx) = sheet.get("Slice_4891") else { return };
+let Some(idx) = sheet.get(UiAllSlice::Book.as_str()) else { return };
 ```
 
 See [game-sprites.md](references/game-sprites.md) for full details on adding new sprite sheets.
+
+## Typed Sprite Slices
+
+Use typed enums instead of magic strings for sprite slice names. This provides compile-time safety and semantic naming.
+
+### Available Enums
+
+| Enum | SpriteSheetKey | Common Slices |
+|------|---------------|---------------|
+| `UiAllSlice` | `UiAll` | CellBackground, HeartIcon, GoldIcon, TitleBanner, InfoPanelBg, Book, Button* |
+| `UiSelectorsSlice` | `UiSelectors` | SelectorFrame1, SelectorFrame2 |
+| `HealthBarSlice` | `UiAll` | Health0 through Health100 |
+| `TravelBookSlice` | `TravelBook` | Banner |
+| `BookSlotSlice` | `BookSlot` | Slot |
+
+### Usage
+
+```rust
+use crate::assets::{UiAllSlice, UiSelectorsSlice, HealthBarSlice};
+
+// Instead of magic strings:
+let cell = sheet.image_node("Slice_10");  // BAD
+
+// Use typed enums:
+let cell = sheet.image_node(UiAllSlice::CellBackground.as_str());  // GOOD
+
+// Health bar with helper method:
+let slice = HealthBarSlice::for_percent(75.0);  // Returns Health80
+let img = sheet.image_node(slice.as_str());
+```
+
+### Adding New Slices
+
+Edit `src/assets/sprite_slices.rs`:
+1. Add variant to the appropriate enum
+2. Add mapping in `as_str()` method
+
+See [sprite-slices.md](references/sprite-slices.md) for full documentation.
 
 ## 9-Slice Scaling
 
@@ -171,6 +209,7 @@ See [game-sprites.md](references/game-sprites.md) for detailed examples and the 
 For detailed patterns and workflows, see:
 
 - [game-sprites.md](references/game-sprites.md) - **GameSprites resource, SpriteSheetKey, adding new sprites, system patterns**
+- [sprite-slices.md](references/sprite-slices.md) - **Typed slice enums (UiAllSlice, HealthBarSlice, etc.), semantic naming, adding new slices**
 - [patterns.md](references/patterns.md) - Marker+system pattern for UI widgets, animation, stateful buttons
 - [aseprite.md](references/aseprite.md) - Grid-aligned vs irregular sprites, JSON formats, finding slice dimensions
 - [troubleshooting.md](references/troubleshooting.md) - Blurry sprites, parse errors, loading issues

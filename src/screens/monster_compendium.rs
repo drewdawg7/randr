@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::assets::{BookSlotSlice, GameSprites, SpriteSheetKey, UiAllSlice};
 use crate::ui::{MobAnimation, MobSpriteSheets};
 use crate::input::{GameAction, NavigationDirection};
 use crate::mob::MobId;
@@ -146,12 +146,12 @@ fn spawn_monster_compendium(mut commands: Commands, game_sprites: Res<GameSprite
     let Some(ui_all) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
     };
-    let Some(book_idx) = ui_all.get("Slice_4891") else {
+    let Some(book_idx) = ui_all.get(UiAllSlice::Book.as_str()) else {
         return;
     };
 
     let slot_sprite = game_sprites.get(SpriteSheetKey::BookSlot).and_then(|s| {
-        s.get("slot").map(|idx| (s.texture.clone(), s.layout.clone(), idx))
+        s.get(BookSlotSlice::Slot.as_str()).map(|idx| (s.texture.clone(), s.layout.clone(), idx))
     });
 
     let overlay = spawn_modal_overlay(&mut commands);

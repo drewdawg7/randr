@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameFonts, GameSprites, SpriteSheetKey};
+use crate::assets::{GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
 use crate::game::Storage;
 use crate::inventory::{Inventory, InventoryItem};
 use crate::screens::town::shared::spawn_menu;
@@ -175,7 +175,7 @@ fn spawn_info_panel(
 
     let panel_image = game_sprites
         .get(SpriteSheetKey::UiAll)
-        .and_then(|s| s.image_node_sliced("Slice_2", 10.0));
+        .and_then(|s| s.image_node_sliced(UiAllSlice::InfoPanelBg.as_str(), 10.0));
 
     let mut panel = parent.spawn((
         StoreInfoPanel { source },
