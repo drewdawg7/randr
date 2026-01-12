@@ -40,3 +40,4 @@ Follow this workflow for ALL code changes:
 - Documentation can include decisions made if it will help guide changes in the future.
 - When new files are added or files are changed update the documentation index.
 - Even if the change is consistent with existing coding patterns, it should still be added to the documentation to ensure similar changes are consistent in the future.
+- Consider if the documentation should be placed in multiple places. i.e., updating how blacksmith recipes work should go into blacksmith.md, and also possibly a recipes.md file.
