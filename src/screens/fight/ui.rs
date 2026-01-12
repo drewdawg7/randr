@@ -19,6 +19,14 @@ use super::components::{
 };
 use super::state::FightScreenState;
 
+/// Query for the player health bar entity, excluding enemy health bar.
+type PlayerHealthBarQuery<'w, 's> =
+    Query<'w, 's, Entity, (With<PlayerHealthBar>, Without<EnemyHealthBar>)>;
+
+/// Query for the enemy health bar entity, excluding player health bar.
+type EnemyHealthBarQuery<'w, 's> =
+    Query<'w, 's, Entity, (With<EnemyHealthBar>, Without<PlayerHealthBar>)>;
+
 /// Resource holding the selected fight background for the current fight.
 #[derive(Resource, Default)]
 pub struct SelectedFightBackground(pub Option<Handle<Image>>);
@@ -337,8 +345,8 @@ pub fn update_combat_visuals(
     stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
     game_sprites: Res<GameSprites>,
-    player_health_bar: Query<Entity, (With<PlayerHealthBar>, Without<EnemyHealthBar>)>,
-    enemy_health_bar: Query<Entity, (With<EnemyHealthBar>, Without<PlayerHealthBar>)>,
+    player_health_bar: PlayerHealthBarQuery,
+    enemy_health_bar: EnemyHealthBarQuery,
     children: Query<&Children>,
     mut sprite_query: Query<&mut ImageNode, With<SpriteHealthBar>>,
     mut text_query: Query<&mut Text, With<HealthBarText>>,

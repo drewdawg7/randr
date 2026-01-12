@@ -49,3 +49,28 @@ let room = current_room.unwrap();
 ### `unwrap()` in Tests is Acceptable
 
 Using `unwrap()` in test code (`#[cfg(test)]`) is fine since tests should panic on unexpected failures.
+
+## Bevy Query Type Aliases
+
+### Use Type Aliases for Complex Query Types
+
+When Query types become complex (multiple `With`/`Without` filters), define type aliases to improve readability:
+
+```rust
+// Define at module level after imports
+type PlayerHealthBarQuery<'w, 's> =
+    Query<'w, 's, Entity, (With<PlayerHealthBar>, Without<EnemyHealthBar>)>;
+
+type EnemyHealthBarQuery<'w, 's> =
+    Query<'w, 's, Entity, (With<EnemyHealthBar>, Without<PlayerHealthBar>)>;
+
+// Use in system signatures
+pub fn update_combat_visuals(
+    player_health_bar: PlayerHealthBarQuery,
+    enemy_health_bar: EnemyHealthBarQuery,
+    // ...
+)
+```
+
+**Examples in codebase:**
+- `PlayerHealthBarQuery`, `EnemyHealthBarQuery` in `src/screens/fight/ui.rs:23-28`
