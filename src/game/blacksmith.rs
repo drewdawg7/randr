@@ -96,6 +96,98 @@ impl Plugin for BlacksmithPlugin {
     }
 }
 
+/// The type of crafting operation (used by the helper to generate appropriate results).
+#[derive(Clone, Copy)]
+enum CraftingOperation {
+    Smelt,
+    Forge,
+}
+
+impl CraftingOperation {
+    fn fail_ingredients_result(self, recipe_name: String) -> BlacksmithResult {
+        match self {
+            CraftingOperation::Smelt => {
+                BlacksmithResult::SmeltFailedInsufficientIngredients { recipe_name }
+            }
+            CraftingOperation::Forge => {
+                BlacksmithResult::ForgeFailedInsufficientIngredients { recipe_name }
+            }
+        }
+    }
+
+    fn success_result(self, item_name: String) -> BlacksmithResult {
+        match self {
+            CraftingOperation::Smelt => BlacksmithResult::SmeltSuccess { item_name },
+            CraftingOperation::Forge => BlacksmithResult::ForgeSuccess { item_name },
+        }
+    }
+
+    fn fail_full_result(self, item_name: String) -> BlacksmithResult {
+        match self {
+            CraftingOperation::Smelt => BlacksmithResult::SmeltFailedInventoryFull { item_name },
+            CraftingOperation::Forge => BlacksmithResult::ForgeFailedInventoryFull { item_name },
+        }
+    }
+
+    fn verb(self) -> &'static str {
+        match self {
+            CraftingOperation::Smelt => "smelt",
+            CraftingOperation::Forge => "forge",
+        }
+    }
+
+    fn past_verb(self) -> &'static str {
+        match self {
+            CraftingOperation::Smelt => "Smelted",
+            CraftingOperation::Forge => "Forged",
+        }
+    }
+}
+
+/// Process a crafting recipe (shared logic for smelt and forge operations).
+/// Returns true if crafting succeeded and changes should be written back.
+fn process_crafting_recipe(
+    recipe_id: RecipeId,
+    operation: CraftingOperation,
+    result_events: &mut EventWriter<BlacksmithResult>,
+    player: &mut Player,
+) -> bool {
+    let Ok(recipe) = Recipe::new(recipe_id) else {
+        return false;
+    };
+
+    let recipe_name = recipe.name().to_string();
+
+    // Check ingredients
+    if !recipe.can_craft(player) {
+        result_events.send(operation.fail_ingredients_result(recipe_name));
+        info!("Not enough ingredients to {}", operation.verb());
+        return false;
+    }
+
+    // Craft (consumes ingredients)
+    match recipe.craft(player) {
+        Ok(item_id) => {
+            let item = item_id.spawn();
+            let item_name = recipe.name().to_string();
+
+            match player.add_to_inv(item) {
+                Ok(_) => {
+                    result_events.send(operation.success_result(item_name.clone()));
+                    info!("{} {}", operation.past_verb(), item_name);
+                    true
+                }
+                Err(_) => {
+                    result_events.send(operation.fail_full_result(item_name));
+                    info!("Inventory full!");
+                    false
+                }
+            }
+        }
+        Err(_) => false,
+    }
+}
+
 /// Calculate the upgrade cost for an item.
 pub fn calculate_upgrade_cost(item: &crate::item::Item) -> i32 {
     let base_cost = 100;
@@ -217,47 +309,14 @@ fn handle_smelt_recipe(
     mut stats: ResMut<StatSheet>,
 ) {
     for event in smelt_events.read() {
-        let Ok(recipe) = Recipe::new(event.recipe_id) else {
-            continue;
-        };
-
-        let recipe_name = recipe.name().to_string();
-
-        // Build Player view for Recipe API
         let mut player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
-
-        // Check ingredients
-        if !recipe.can_craft(&player) {
-            result_events.send(BlacksmithResult::SmeltFailedInsufficientIngredients { recipe_name });
-            info!("Not enough ingredients to smelt");
-            continue;
-        }
-
-        // Craft (consumes ingredients)
-        match recipe.craft(&mut player) {
-            Ok(item_id) => {
-                let item = item_id.spawn();
-                let item_name = recipe.name().to_string();
-
-                match player.add_to_inv(item) {
-                    Ok(_) => {
-                        // Write changes back
-                        player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
-                        result_events.send(BlacksmithResult::SmeltSuccess {
-                            item_name: item_name.clone(),
-                        });
-                        info!("Smelted {}", item_name);
-                    }
-                    Err(_) => {
-                        result_events.send(BlacksmithResult::SmeltFailedInventoryFull { item_name });
-                        info!("Inventory full!");
-                    }
-                }
-            }
-            Err(_) => {
-                // Crafting failed for some reason
-                continue;
-            }
+        if process_crafting_recipe(
+            event.recipe_id,
+            CraftingOperation::Smelt,
+            &mut result_events,
+            &mut player,
+        ) {
+            player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
         }
     }
 }
@@ -273,47 +332,14 @@ fn handle_forge_recipe(
     mut stats: ResMut<StatSheet>,
 ) {
     for event in forge_events.read() {
-        let Ok(recipe) = Recipe::new(event.recipe_id) else {
-            continue;
-        };
-
-        let recipe_name = recipe.name().to_string();
-
-        // Build Player view for Recipe API
         let mut player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
-
-        // Check ingredients
-        if !recipe.can_craft(&player) {
-            result_events.send(BlacksmithResult::ForgeFailedInsufficientIngredients { recipe_name });
-            info!("Not enough ingredients to forge");
-            continue;
-        }
-
-        // Craft (consumes ingredients)
-        match recipe.craft(&mut player) {
-            Ok(item_id) => {
-                let item = item_id.spawn();
-                let item_name = recipe.name().to_string();
-
-                match player.add_to_inv(item) {
-                    Ok(_) => {
-                        // Write changes back
-                        player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
-                        result_events.send(BlacksmithResult::ForgeSuccess {
-                            item_name: item_name.clone(),
-                        });
-                        info!("Forged {}", item_name);
-                    }
-                    Err(_) => {
-                        result_events.send(BlacksmithResult::ForgeFailedInventoryFull { item_name });
-                        info!("Inventory full!");
-                    }
-                }
-            }
-            Err(_) => {
-                // Crafting failed for some reason
-                continue;
-            }
+        if process_crafting_recipe(
+            event.recipe_id,
+            CraftingOperation::Forge,
+            &mut result_events,
+            &mut player,
+        ) {
+            player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
         }
     }
 }

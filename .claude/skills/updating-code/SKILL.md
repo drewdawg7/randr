@@ -20,9 +20,11 @@ Follow this workflow for ALL code changes:
 9. **Merge**: Commit, merge, and push. No PR necessary.
 10. **Close**: If working on a GitHub issue, close it
 11. **Document**: Update documentation based on the documentation section below.
+    1. Documentation is NOT a choice. You should always add additional documentation. 
 
 
 ## Documentation Index
+- [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum
 - [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 
 
@@ -34,4 +36,4 @@ Follow this workflow for ALL code changes:
 - Documentation should cover both low-level and high-level concepts and areas. It should cover game systems and UI implementations.
 - Documentation can include decisions made if it will help guide changes in the future.
 - When new files are added or files are changed update the documentation index.
-
+- Even if the change is consistent with existing coding patterns, it should still be added to the documentation to ensure similar changes are consistent in the future.
