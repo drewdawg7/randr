@@ -39,17 +39,11 @@ impl StatSheet {
         self.stats.get_mut(&t)
     }
     pub fn value(&self, t: StatType) -> i32 {
-        match self.stat(t) {
-            Some(si) => si.current_value,
-            None     => 0
-        }
+        self.stat(t).map_or(0, |si| si.current_value)
     }
 
     pub fn max_value(&self, t: StatType) -> i32 {
-        match self.stat(t) {
-            Some(si) => si.max_value,
-            None     => 0
-        }
+        self.stat(t).map_or(0, |si| si.max_value)
     }
     pub fn insert(&mut self, si: StatInstance){
         self.stats.insert(si.stat_type, si);
