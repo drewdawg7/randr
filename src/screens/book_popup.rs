@@ -259,8 +259,10 @@ fn update_book_mob_sprite(
     list_state: Res<BookListState>,
     game_assets: Res<GameAssets>,
     query: Query<Entity, With<BookMobSprite>>,
+    added: Query<Entity, Added<BookMobSprite>>,
 ) {
-    if !list_state.is_changed() {
+    let needs_update = list_state.is_changed() || !added.is_empty();
+    if !needs_update {
         return;
     }
 
