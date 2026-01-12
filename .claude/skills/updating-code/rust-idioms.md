@@ -75,6 +75,29 @@ pub fn update_combat_visuals(
 **Examples in codebase:**
 - `PlayerHealthBarQuery`, `EnemyHealthBarQuery` in `src/screens/fight/ui.rs:23-28`
 
+## Collection Type Aliases
+
+### Use Type Aliases for Semantic Collections
+
+When a collection type (HashMap, Vec, etc.) represents a specific domain concept, define a type alias for clarity:
+
+```rust
+// Define after imports
+pub type EquipmentMap = HashMap<EquipmentSlot, InventoryItem>;
+
+// Use in struct fields and return types
+pub struct Inventory {
+    equipment: EquipmentMap,
+}
+
+pub fn equipment(&self) -> &EquipmentMap {
+    &self.equipment
+}
+```
+
+**Examples in codebase:**
+- `EquipmentMap` in `src/inventory/definition.rs:14`
+
 ## Integer Safety
 
 ### Use Saturating Arithmetic for Quantities
