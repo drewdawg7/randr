@@ -7,6 +7,7 @@
 //! - The spec() method on RecipeId
 
 use std::collections::HashMap;
+use std::sync::LazyLock;
 
 use crate::item::ItemId;
 use crate::registry::RegistryDefaults;
@@ -217,32 +218,48 @@ impl RegistryDefaults<RecipeId> for RecipeSpec {
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
+// Cached Recipe Lists (lazy-initialized once, returned as static slices)
+// ─────────────────────────────────────────────────────────────────────────────
+
+static FORGING_RECIPES: LazyLock<Vec<RecipeId>> = LazyLock::new(|| {
+    RecipeId::ALL
+        .iter()
+        .filter(|id| id.spec().recipe_type == RecipeType::Forging)
+        .copied()
+        .collect()
+});
+
+static ALCHEMY_RECIPES: LazyLock<Vec<RecipeId>> = LazyLock::new(|| {
+    RecipeId::ALL
+        .iter()
+        .filter(|id| id.spec().recipe_type == RecipeType::Alchemy)
+        .copied()
+        .collect()
+});
+
+static SMELTING_RECIPES: LazyLock<Vec<RecipeId>> = LazyLock::new(|| {
+    RecipeId::ALL
+        .iter()
+        .filter(|id| id.spec().recipe_type == RecipeType::Smelting)
+        .copied()
+        .collect()
+});
+
+// ─────────────────────────────────────────────────────────────────────────────
 // Additional RecipeId Methods
 // ─────────────────────────────────────────────────────────────────────────────
 
 impl RecipeId {
-    pub fn all_forging_recipes() -> Vec<RecipeId> {
-        RecipeId::ALL
-            .iter()
-            .filter(|id| id.spec().recipe_type == RecipeType::Forging)
-            .copied()
-            .collect()
+    pub fn all_forging_recipes() -> &'static [RecipeId] {
+        &FORGING_RECIPES
     }
 
-    pub fn all_alchemy_recipes() -> Vec<RecipeId> {
-        RecipeId::ALL
-            .iter()
-            .filter(|id| id.spec().recipe_type == RecipeType::Alchemy)
-            .copied()
-            .collect()
+    pub fn all_alchemy_recipes() -> &'static [RecipeId] {
+        &ALCHEMY_RECIPES
     }
 
-    pub fn all_smelting_recipes() -> Vec<RecipeId> {
-        RecipeId::ALL
-            .iter()
-            .filter(|id| id.spec().recipe_type == RecipeType::Smelting)
-            .copied()
-            .collect()
+    pub fn all_smelting_recipes() -> &'static [RecipeId] {
+        &SMELTING_RECIPES
     }
 
     /// Get the material type for this recipe (for forge filtering)

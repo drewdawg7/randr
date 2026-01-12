@@ -18,7 +18,7 @@ pub enum AlchemistModeKind {
 #[derive(Resource)]
 pub struct AlchemistMode {
     pub mode: AlchemistModeKind,
-    pub available_recipes: Vec<RecipeId>,
+    pub available_recipes: &'static [RecipeId],
 }
 
 impl Default for AlchemistMode {
