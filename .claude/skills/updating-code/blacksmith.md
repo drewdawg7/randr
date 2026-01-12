@@ -137,6 +137,32 @@ blacksmith.upgrade_player_item_quality(player, item_uuid)
 ### Location
 `src/item/recipe/specs.rs` - Recipe definitions using `entity_macros::define_data!`
 
+### Cached Recipe Lists
+
+Recipe filtering methods use `LazyLock` for lazy static initialization. This avoids repeated filtering each frame:
+
+```rust
+static FORGING_RECIPES: LazyLock<Vec<RecipeId>> = LazyLock::new(|| {
+    RecipeId::ALL.iter()
+        .filter(|id| id.spec().recipe_type == RecipeType::Forging)
+        .copied()
+        .collect()
+});
+
+impl RecipeId {
+    pub fn all_forging_recipes() -> &'static [RecipeId] {
+        &FORGING_RECIPES
+    }
+}
+```
+
+Available cached methods:
+- `RecipeId::all_forging_recipes()` → `&'static [RecipeId]`
+- `RecipeId::all_alchemy_recipes()` → `&'static [RecipeId]`
+- `RecipeId::all_smelting_recipes()` → `&'static [RecipeId]`
+
+These methods are safe to call multiple times per frame with no performance penalty.
+
 ### RecipeId Material Detection
 
 The `RecipeId::material()` method returns the `ForgeMaterial` for forge filtering. It uses an exhaustive match on all `RecipeId` variants:

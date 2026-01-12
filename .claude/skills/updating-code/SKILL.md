@@ -24,7 +24,7 @@ Follow this workflow for ALL code changes:
 
 
 ## Documentation Index
-- [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, `UpgradeOperation` enum, recipe system, `RecipeId::material()`
+- [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, `UpgradeOperation` enum, recipe system, `RecipeId::material()`, cached recipe lists (`LazyLock`)
 - [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 - [mob-sprites.md](mob-sprites.md) - Adding mob sprites, `SpriteAssets::mob_sprite()`, `populate_mob_sprite` system
 - [rust-idioms.md](rust-idioms.md) - Preferred Rust patterns: `map_or` for Option defaults, idiomatic transformations
