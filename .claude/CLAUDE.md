@@ -30,16 +30,6 @@ Follow this workflow for ALL code changes:
 
 For structural patterns across files, use `ast-grep --pattern 'PATTERN' --lang rust src/`
 
-## Pre-Edit Checklist
-- [ ] Batch operation appropriate? (>5 similar changes → use ast-grep)
-- [ ] findReferences for removals? (REQUIRED before deleting code)
-- [ ] Using LSP for Rust navigation? (never grep for Rust code)
-
-## Code Rules
-- New public APIs must be used in production code, not just tests
-- Never add `#[allow(dead_code)]` to hide unused new code
-- Think simplest solution first
-
 ## Conventions
 - Branches: `type/description` (e.g., `feat/add-inventory`)
 - Commits: conventional (`feat:`, `fix:`, `refactor:`)
@@ -48,7 +38,3 @@ For structural patterns across files, use `ast-grep --pattern 'PATTERN' --lang r
 ## Sprites
 Use the `sprites` skill when working with sprite sheets, Aseprite exports, or adding sprites to UI.
 
-## Bevy UI Bundles
-Use bundles from `src/ui/screens/health_bar.rs` for UI spawning:
-- `HealthBarBundle::new(align)` - Health bar container
-- `HealthBarNameBundle`, `HealthBarTextBundle`, `SpriteHealthBarBundle`
