@@ -102,10 +102,28 @@ pub struct MobAnimation {
 
 ## Currently Supported Mobs
 
-| MobId | Sprite Sheet | Total Frames | Idle Range | Frame Duration |
-|-------|-------------|--------------|------------|----------------|
-| `Goblin` | `goblin.png` | 27 | 0-3 | 0.2s |
-| `Slime` | `slime.png` | 18 | 0-3 | 0.25s |
+| MobId | Sprite Sheet | Frame Size | Total Frames | Idle Range | Frame Duration |
+|-------|-------------|------------|--------------|------------|----------------|
+| `Goblin` | `goblin.png` | 32x32 | 27 | 0-3 | 0.2s |
+| `Slime` | `slime.png` | 32x32 | 18 | 0-3 | 0.25s |
+| `Dragon` | `dragon.png` | 64x32 | 66 | 0-3 | 0.35s |
+
+### Non-Square Sprites
+
+For sprites with non-square dimensions (like Dragon at 64x32), use `UVec2::new(width, height)` instead of `UVec2::splat()`:
+
+```rust
+let dragon_layout = TextureAtlasLayout::from_grid(UVec2::new(64, 32), 66, 1, None, None);
+```
+
+### Sprite Display Sizes
+
+The sprite display containers should be consistent across all locations:
+
+| Location | Container Size | Inner Sprite Size | File |
+|----------|----------------|-------------------|------|
+| Fight Screen | 224x224 | 192x192 | `src/screens/fight/ui.rs:204-222` |
+| MonsterCompendium | 112x112 | 96x96 | `src/screens/monster_compendium.rs:233-249` |
 
 ## Legacy Note
 

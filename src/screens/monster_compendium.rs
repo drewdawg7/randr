@@ -231,8 +231,8 @@ fn spawn_monster_compendium(mut commands: Commands, game_sprites: Res<GameSprite
                                         TextureAtlas { layout, index: slot_idx },
                                     ),
                                     Node {
-                                        width: Val::Px(90.0),
-                                        height: Val::Px(90.0),
+                                        width: Val::Px(112.0),
+                                        height: Val::Px(112.0),
                                         justify_content: JustifyContent::Center,
                                         align_items: AlignItems::Center,
                                         ..default()
@@ -242,8 +242,8 @@ fn spawn_monster_compendium(mut commands: Commands, game_sprites: Res<GameSprite
                                     slot.spawn((
                                         CompendiumMobSprite,
                                         Node {
-                                            width: Val::Px(64.0),
-                                            height: Val::Px(64.0),
+                                            width: Val::Px(96.0),
+                                            height: Val::Px(96.0),
                                             ..default()
                                         },
                                     ));

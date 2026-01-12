@@ -202,8 +202,8 @@ fn spawn_enemy_side(
                     wrapper
                         .spawn((
                             Node {
-                                width: Val::Px(192.0),
-                                height: Val::Px(192.0),
+                                width: Val::Px(224.0),
+                                height: Val::Px(224.0),
                                 justify_content: JustifyContent::Center,
                                 align_items: AlignItems::Center,
                                 padding: UiRect::all(Val::Px(8.0)),
@@ -215,8 +215,8 @@ fn spawn_enemy_side(
                             container.spawn((
                                 NeedsMobSprite,
                                 Node {
-                                    width: Val::Px(160.0),
-                                    height: Val::Px(160.0),
+                                    width: Val::Px(192.0),
+                                    height: Val::Px(192.0),
                                     ..default()
                                 },
                             ));

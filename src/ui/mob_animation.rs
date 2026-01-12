@@ -137,7 +137,24 @@ fn load_mob_sprite_sheets(
         },
     );
 
-    info!("Loaded mob sprite sheets for Goblin and Slime");
+    // Dragon: 66 frames total, 64x32 each, idle is frames 0-3
+    let dragon_texture: Handle<Image> = asset_server.load("sprites/mobs/dragon.png");
+    let dragon_layout = TextureAtlasLayout::from_grid(UVec2::new(64, 32), 66, 1, None, None);
+    let dragon_layout_handle = layouts.add(dragon_layout);
+    mob_sheets.insert(
+        MobId::Dragon,
+        MobSpriteSheet {
+            texture: dragon_texture,
+            layout: dragon_layout_handle,
+            animation: MobAnimationConfig {
+                first_frame: 0,
+                last_frame: 3,
+                frame_duration: 0.35,
+            },
+        },
+    );
+
+    info!("Loaded mob sprite sheets for Goblin, Slime, and Dragon");
 }
 
 /// System to animate mob sprites.
