@@ -35,14 +35,11 @@ pub fn spawn_room_entry_ui(
     mut selection_state: ResMut<DungeonSelectionState>,
     mut next_mode: ResMut<NextState<DungeonMode>>,
 ) {
-    let current_room = dungeon.current_room();
-    if current_room.is_none() {
+    let Some(room) = dungeon.current_room() else {
         // No room to enter, return to navigation
         next_mode.set(DungeonMode::Navigation);
         return;
-    }
-
-    let room = current_room.unwrap();
+    };
     let (room_name, room_desc, actions) = match room.room_type {
         RoomType::Monster => (
             "Monster Room",
