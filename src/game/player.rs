@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use crate::entities::Progression;
-use crate::inventory::Inventory;
+use crate::inventory::{Inventory, ManagesItems};
+use crate::item::ItemId;
 use crate::player::{default_player_stats, PlayerGold, PlayerName};
 use crate::stats::StatSheet;
 
@@ -44,10 +45,14 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
+        // Create inventory with initial HP potion for testing
+        let mut inventory = Inventory::new();
+        let _ = inventory.add_to_inv(ItemId::BasicHPPotion.spawn());
+
         app.init_resource::<PlayerName>()
             .init_resource::<PlayerGold>()
             .insert_resource(Progression::new())
-            .init_resource::<Inventory>()
+            .insert_resource(inventory)
             .insert_resource(default_player_stats())
             .insert_resource(PlayerPreviousLevel(1))
             .add_event::<PlayerDamaged>()

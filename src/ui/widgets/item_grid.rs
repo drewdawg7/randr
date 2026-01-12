@@ -19,16 +19,28 @@ impl Plugin for ItemGridPlugin {
 #[derive(Clone)]
 pub struct ItemGridEntry {
     /// Slice name in icon_items sprite sheet (e.g., "Slice_337")
-    pub sprite_name: &'static str,
+    pub sprite_name: String,
 }
 
 /// Item grid widget with optional items to display.
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct ItemGrid {
     /// Items to display in the grid cells (up to 25)
     pub items: Vec<ItemGridEntry>,
     /// Currently selected cell index
     pub selected_index: usize,
+    /// Whether this grid is focused (shows selector)
+    pub is_focused: bool,
+}
+
+impl Default for ItemGrid {
+    fn default() -> Self {
+        Self {
+            items: Vec::new(),
+            selected_index: 0,
+            is_focused: true,
+        }
+    }
 }
 
 /// Marker for grid cells with their index.
@@ -57,6 +69,7 @@ fn on_add_item_grid(
     let entity = trigger.entity();
     let item_grid = item_grids.get(entity).ok();
     let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
+    let is_focused = item_grid.map(|g| g.is_focused).unwrap_or(true);
 
     // Get the cell background sprite if available
     let cell_image = game_sprites
@@ -96,9 +109,9 @@ fn on_add_item_grid(
                     cell.insert(img.clone());
                 }
 
-                // Add selector sprite if this is the selected cell
+                // Add selector sprite if this is the selected cell and grid is focused
                 let is_selected = i == selected_index;
-                if is_selected {
+                if is_selected && is_focused {
                     if let Some((ref selector_img, frame_indices)) = selector_data {
                         cell.with_children(|cell_content| {
                             cell_content.spawn((
@@ -124,7 +137,7 @@ fn on_add_item_grid(
                     if let Some(entry) = item_grid.items.get(i) {
                         if let Some(icon_img) = game_sprites
                             .get(SpriteSheetKey::IconItems)
-                            .and_then(|s| s.image_node(entry.sprite_name))
+                            .and_then(|s| s.image_node(&entry.sprite_name))
                         {
                             cell.with_children(|cell_content| {
                                 cell_content.spawn((
@@ -168,6 +181,11 @@ fn update_grid_selector(
                     }
                 }
             }
+        }
+
+        // Only add selector if grid is focused
+        if !item_grid.is_focused {
+            continue;
         }
 
         // Find the selected cell and add selector

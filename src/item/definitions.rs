@@ -575,4 +575,16 @@ impl ItemId {
             spec: self.spec().with_quality(quality),
         }
     }
+
+    /// Get the sprite slice name for this item in the IconItems sprite sheet.
+    pub fn sprite_name(&self) -> &'static str {
+        match self {
+            ItemId::BasicHPPotion => "Slice_337",
+            ItemId::Sword => "Slice_155",
+            ItemId::BasicShield => "Slice_100",
+            ItemId::CopperHelmet => "Slice_101",
+            ItemId::Dagger => "Slice_156",
+            _ => "Slice_337", // Default fallback
+        }
+    }
 }
