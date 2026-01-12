@@ -408,8 +408,13 @@ pub fn populate_mob_sprite(
     mut commands: Commands,
     query: Query<Entity, With<NeedsMobSprite>>,
     game_assets: Res<GameAssets>,
+    combat_res: Res<ActiveCombatResource>,
 ) {
-    let Some(sprite) = &game_assets.sprites.mob_slime else {
+    let Some(combat) = combat_res.get() else {
+        return;
+    };
+
+    let Some(sprite) = game_assets.sprites.mob_sprite(combat.mob.mob_id) else {
         return;
     };
 

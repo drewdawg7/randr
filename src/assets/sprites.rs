@@ -527,6 +527,7 @@ pub struct SpriteAssets {
 
     // Mob sprites
     pub mob_slime: Option<Handle<Image>>,
+    pub mob_goblin: Option<Handle<Image>>,
 
     // Dungeon minimap sprites
     pub dungeon_unexplored: Option<Handle<Image>>,
@@ -565,6 +566,7 @@ impl SpriteAssets {
     pub fn mob_sprite(&self, mob_id: MobId) -> Option<&Handle<Image>> {
         match mob_id {
             MobId::Slime => self.mob_slime.as_ref(),
+            MobId::Goblin => self.mob_goblin.as_ref(),
             _ => None,
         }
     }
@@ -600,6 +602,7 @@ fn load_assets(
     game_assets.sprites.fight_popup = try_load(&asset_server, "sprites/fight/popup.png");
 
     game_assets.sprites.mob_slime = try_load(&asset_server, "sprites/mobs/slime.png");
+    game_assets.sprites.mob_goblin = try_load(&asset_server, "sprites/mobs/goblin.png");
 
     game_assets.sprites.dungeon_unexplored =
         try_load(&asset_server, "sprites/dungeon/unexplored.png");
