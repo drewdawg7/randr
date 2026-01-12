@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::assets::{GameAssets, GameSprites, SpriteSheetKey};
 use crate::input::{GameAction, NavigationDirection};
 use crate::mob::MobId;
 use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
@@ -17,6 +17,7 @@ impl Plugin for BookPopupPlugin {
                 handle_book_popup_close,
                 handle_book_navigation,
                 update_monster_list_display,
+                update_book_mob_sprite,
                 spawn_book_popup.run_if(resource_exists::<SpawnBookPopup>),
             ),
         );
@@ -30,6 +31,10 @@ pub struct BookPopupRoot;
 /// Component marker for monster list items, with their index.
 #[derive(Component)]
 pub struct MonsterListItem(usize);
+
+/// Component marker for the mob sprite display in the book.
+#[derive(Component)]
+pub struct BookMobSprite;
 
 /// Resource tracking the selected monster in the book.
 #[derive(Resource, Default)]
@@ -218,19 +223,54 @@ fn spawn_book_popup(mut commands: Commands, game_sprites: Res<GameSprites>) {
                             ..default()
                         })
                         .with_children(|right_page| {
-                            right_page.spawn((
-                                ImageNode::from_atlas_image(
-                                    texture,
-                                    TextureAtlas { layout, index: slot_idx },
-                                ),
-                                Node {
-                                    width: Val::Px(90.0),
-                                    height: Val::Px(90.0),
-                                    ..default()
-                                },
-                            ));
+                            right_page
+                                .spawn((
+                                    ImageNode::from_atlas_image(
+                                        texture,
+                                        TextureAtlas { layout, index: slot_idx },
+                                    ),
+                                    Node {
+                                        width: Val::Px(90.0),
+                                        height: Val::Px(90.0),
+                                        justify_content: JustifyContent::Center,
+                                        align_items: AlignItems::Center,
+                                        ..default()
+                                    },
+                                ))
+                                .with_children(|slot| {
+                                    slot.spawn((
+                                        BookMobSprite,
+                                        Node {
+                                            width: Val::Px(64.0),
+                                            height: Val::Px(64.0),
+                                            ..default()
+                                        },
+                                    ));
+                                });
                         });
                     }
                 });
         });
+}
+
+/// System to update the mob sprite based on selection.
+fn update_book_mob_sprite(
+    mut commands: Commands,
+    list_state: Res<BookListState>,
+    game_assets: Res<GameAssets>,
+    query: Query<Entity, With<BookMobSprite>>,
+) {
+    if !list_state.is_changed() {
+        return;
+    }
+
+    let mob_id = MobId::ALL[list_state.selected];
+
+    for entity in &query {
+        if let Some(sprite) = game_assets.sprites.mob_sprite(mob_id) {
+            commands.entity(entity).insert(ImageNode::new(sprite.clone()));
+        } else {
+            commands.entity(entity).remove::<ImageNode>();
+        }
+    }
 }

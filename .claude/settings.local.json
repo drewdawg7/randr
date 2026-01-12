@@ -134,7 +134,15 @@
       "Bash(1 cat /tmp/travelbook_temp.json)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\" --list-layers)",
       "Bash(sips:*)",
-      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/SlimesAse/MiniSlime.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/slime.png)"
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/SlimesAse/MiniSlime.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/slime.png)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\" --data /tmp/travel_book_full.json --format json-hash)",
+      "Bash(ASEPRITE=\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" \"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\" --data /tmp/travel_book_slices.json --format json-hash --list-slices 2)",
+      "Bash(1 cat /tmp/travel_book_slices.json)",
+      "Bash('ASEPRITE=/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite' $ASEPRITE --batch /Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite --data /tmp/tb.json --format json-hash --all-layers cat /tmp/tb.json)",
+      "Bash('ASEPRITE=/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite' $ASEPRITE --batch /Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite --split-slices --save-as /tmp/tb_{slice}.png 2)",
+      "Bash(1 ls -la /tmp/tb_*.png)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\" --sheet /tmp/tb_sheet.png --data /tmp/tb_full.json --format json-hash)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Complete_UI_Book_Styles_Pack_Full_v1.0/01_TravelBook/Aseprite/TravelBook.aseprite\" --sheet /tmp/tb2.png --data /tmp/tb2.json --format json-hash --list-slices)"
     ]
   },
   "enabledMcpjsonServers": [

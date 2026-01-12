@@ -29,6 +29,8 @@ use bevy::{
 use serde::Deserialize;
 use std::collections::HashMap;
 
+use crate::mob::MobId;
+
 // ============================================================================
 // Sprite Sheet Key Enum
 // ============================================================================
@@ -557,6 +559,14 @@ impl SpriteAssets {
             && self.dungeon_current.is_some()
             && self.dungeon_cleared.is_some()
             && self.dungeon_boss.is_some()
+    }
+
+    /// Get the sprite for a mob by its ID, if available.
+    pub fn mob_sprite(&self, mob_id: MobId) -> Option<&Handle<Image>> {
+        match mob_id {
+            MobId::Slime => self.mob_slime.as_ref(),
+            _ => None,
+        }
     }
 }
 
