@@ -1,7 +1,8 @@
 # Project Guidelines
 
 ## Code Change Workflow (Required)
-
+**IMPORTANT**: YOU MUST USE THE updating-code SKILL.
+**IMPORTANT**: YOU MUST USE THE sprites SKILL FOR SPRITE OR OTHER UI CHANGES
 Follow this workflow for ALL code changes:
 **IMPORTANT**: CREATE NEW BRANCHES EVEN FOR CHANGES NOT RELATED TO GITHUB ISSUES.
 
