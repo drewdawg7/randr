@@ -27,7 +27,7 @@ Follow this workflow for ALL code changes:
 - [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, `UpgradeOperation` enum, recipe system, `RecipeId::material()`, cached recipe lists (`LazyLock`)
 - [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 - [mob-sprites.md](mob-sprites.md) - Adding mob sprites, `SpriteAssets::mob_sprite()`, `populate_mob_sprite` system
-- [rust-idioms.md](rust-idioms.md) - Preferred Rust patterns: `map_or` for Option defaults, `let-else` for early returns, Query type aliases for complex Bevy queries
+- [rust-idioms.md](rust-idioms.md) - Preferred Rust patterns: `map_or` for Option defaults, `let-else` for early returns, Query type aliases for complex Bevy queries, integer safety (`saturating_add`/`saturating_sub`, bounds checking before signed-to-unsigned casts)
 - [ui-nodes.md](ui-nodes.md) - UI node helpers (`row_node`, `column_node`), reducing boilerplate for flex containers
 
 
