@@ -32,4 +32,6 @@ Follow this workflow for ALL code changes:
 - If any new files are created, update the documentation index above. The goal of the documentation index is to make it easy to find relevant code or guidance in the future.
 - Use examples, file names, function names, etc in the document to keep research quick and efficient.
 - Documentation should cover both low-level and high-level concepts and areas. It should cover game systems and UI implementations.
+- Documentation can include decisions made if it will help guide changes in the future.
+- When new files are added or files are changed update the documentation index.
 
