@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::assets::{GameFonts, GameSprites, SpriteSheetKey};
+use crate::ui::row_node;
 
 /// Plugin for gold display widget.
 pub struct GoldDisplayPlugin;
@@ -63,12 +64,7 @@ fn on_add_gold_display(
     commands
         .entity(entity)
         .remove::<GoldDisplay>()
-        .insert(Node {
-            flex_direction: FlexDirection::Row,
-            align_items: AlignItems::Center,
-            column_gap: Val::Px(4.0),
-            ..default()
-        })
+        .insert(row_node(4.0))
         .with_children(|row| {
             // Gold icon
             let mut icon = row.spawn(Node {

@@ -5,7 +5,7 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::screens::dungeon::state::{DungeonMode, DungeonSelectionState};
 use crate::states::AppState;
 use crate::ui::widgets::PlayerStats;
-use crate::ui::{nav_selection_text, update_menu_colors, MenuIndex};
+use crate::ui::{column_node, nav_selection_text, update_menu_colors, MenuIndex};
 
 /// Component marker for room entry UI root
 #[derive(Component)]
@@ -149,11 +149,7 @@ pub fn spawn_room_entry_ui(
 
             // Actions
             parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Column,
-                    row_gap: Val::Px(15.0),
-                    ..default()
-                })
+                .spawn(column_node(15.0))
                 .with_children(|parent| {
                     for (i, action_type) in actions.iter().enumerate() {
                         let label = match action_type {

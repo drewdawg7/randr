@@ -4,7 +4,7 @@ use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::entities::Progression;
 use crate::player::PlayerGold;
 use crate::stats::{StatSheet, StatType};
-use crate::ui::UiText;
+use crate::ui::{row_node, UiText};
 
 /// Plugin for player stats widget.
 pub struct PlayerStatsPlugin;
@@ -57,12 +57,7 @@ fn on_add_player_stats(
     entity_commands.with_children(|stats_node| {
         // HP row with heart icon + values
         stats_node
-            .spawn(Node {
-                flex_direction: FlexDirection::Row,
-                align_items: AlignItems::Center,
-                column_gap: Val::Px(4.0),
-                ..default()
-            })
+            .spawn(row_node(4.0))
             .with_children(|hp_row| {
                 // Heart icon
                 let mut icon = hp_row.spawn(Node {
@@ -93,12 +88,7 @@ fn on_add_player_stats(
 
         // Gold row with coin icon + value
         stats_node
-            .spawn(Node {
-                flex_direction: FlexDirection::Row,
-                align_items: AlignItems::Center,
-                column_gap: Val::Px(4.0),
-                ..default()
-            })
+            .spawn(row_node(4.0))
             .with_children(|gold_row| {
                 // Gold icon
                 let mut icon = gold_row.spawn(Node {

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::input::GameAction;
 use crate::states::AppState;
+use crate::ui::column_node;
 
 /// Plugin that manages the keybinds modal screen.
 pub struct KeybindsPlugin;
@@ -97,11 +98,7 @@ fn spawn_keybinds_screen(mut commands: Commands) {
 
                     // Categories container
                     parent
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            row_gap: Val::Px(30.0),
-                            ..default()
-                        })
+                        .spawn(column_node(30.0))
                         .with_children(|parent| {
                             for category in categories {
                                 spawn_category(parent, category);
@@ -128,11 +125,7 @@ fn spawn_keybinds_screen(mut commands: Commands) {
 /// Helper to spawn a keybind category section.
 fn spawn_category(parent: &mut ChildBuilder, category: KeybindCategory) {
     parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Column,
-            row_gap: Val::Px(10.0),
-            ..default()
-        })
+        .spawn(column_node(10.0))
         .with_children(|parent| {
             // Category name
             parent.spawn((
