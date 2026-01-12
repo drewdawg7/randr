@@ -12,7 +12,11 @@ use crate::ui::{
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::{nav_selection_text, MenuIndex};
 
-use super::components::*;
+use super::components::{
+    ActionMenuItem, EnemyHealthBar, EnemyNameLabel, FightScreenRoot, NeedsFightBackground,
+    NeedsMobSprite, PlayerHealthBar, PostCombatMenuItem, PostCombatOverlay, CombatResultText,
+    RewardsText,
+};
 use super::state::FightScreenState;
 
 /// Resource holding the selected fight background for the current fight.
@@ -106,8 +110,9 @@ fn spawn_combatants_section(
     parent
         .spawn(Node {
             width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            flex_grow: 1.0,
             justify_content: JustifyContent::SpaceBetween,
-            margin: UiRect::bottom(Val::Px(20.0)),
             ..default()
         })
         .with_children(|combatants| {
@@ -160,6 +165,7 @@ fn spawn_enemy_side(
         .spawn(Node {
             flex_direction: FlexDirection::Column,
             align_items: AlignItems::FlexEnd,
+            height: Val::Percent(100.0),
             ..default()
         })
         .with_children(|enemy_side| {
@@ -180,6 +186,41 @@ fn spawn_enemy_side(
                     bar.spawn((EnemyNameLabel, HealthBarNameBundle::new(enemy_name)));
                     bar.spawn(SpriteHealthBarBundle::new(AlignSelf::FlexEnd));
                     bar.spawn(HealthBarTextBundle::new(health, max_health));
+                });
+
+            // Wrapper to vertically center the mob sprite container
+            enemy_side
+                .spawn(Node {
+                    flex_grow: 1.0,
+                    width: Val::Percent(100.0),
+                    justify_content: JustifyContent::Center,
+                    align_items: AlignItems::Center,
+                    ..default()
+                })
+                .with_children(|wrapper| {
+                    // Mob sprite container with translucent background
+                    wrapper
+                        .spawn((
+                            Node {
+                                width: Val::Px(192.0),
+                                height: Val::Px(192.0),
+                                justify_content: JustifyContent::Center,
+                                align_items: AlignItems::Center,
+                                padding: UiRect::all(Val::Px(8.0)),
+                                ..default()
+                            },
+                            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
+                        ))
+                        .with_children(|container| {
+                            container.spawn((
+                                NeedsMobSprite,
+                                Node {
+                                    width: Val::Px(160.0),
+                                    height: Val::Px(160.0),
+                                    ..default()
+                                },
+                            ));
+                        });
                 });
         });
 }
@@ -359,6 +400,24 @@ pub fn populate_fight_background(
             .remove::<NeedsFightBackground>()
             .remove::<BackgroundColor>()
             .insert(ImageNode::new(bg.clone()));
+    }
+}
+
+/// System to populate the mob sprite when the asset is ready.
+pub fn populate_mob_sprite(
+    mut commands: Commands,
+    query: Query<Entity, With<NeedsMobSprite>>,
+    game_assets: Res<GameAssets>,
+) {
+    let Some(sprite) = &game_assets.sprites.mob_slime else {
+        return;
+    };
+
+    for entity in &query {
+        commands
+            .entity(entity)
+            .remove::<NeedsMobSprite>()
+            .insert(ImageNode::new(sprite.clone()));
     }
 }
 

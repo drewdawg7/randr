@@ -35,3 +35,7 @@ pub struct RewardsText;
 /// Marker component indicating the fight background needs to be populated.
 #[derive(Component)]
 pub struct NeedsFightBackground;
+
+/// Marker component indicating the mob sprite needs to be populated.
+#[derive(Component)]
+pub struct NeedsMobSprite;

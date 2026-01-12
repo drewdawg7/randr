@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use rand::seq::SliceRandom;
 
 use crate::entities::Progression;
 use crate::inventory::Inventory;
@@ -22,9 +21,8 @@ pub struct CombatLogState {
 fn spawn_mob_for_source(combat_source: &CombatSourceResource) -> Mob {
     match *combat_source {
         CombatSourceResource::Field => {
-            let field_mobs = [MobId::Slime, MobId::Cow, MobId::Goblin];
-            let mob_id = field_mobs.choose(&mut rand::thread_rng()).unwrap();
-            mob_id.spawn()
+            // For testing: only spawn slimes
+            MobId::Slime.spawn()
         }
         CombatSourceResource::Dungeon => MobId::Goblin.spawn(),
         CombatSourceResource::DungeonBoss => MobId::Dragon.spawn(),
