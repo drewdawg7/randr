@@ -41,7 +41,7 @@ impl InventoryItem {
     }
 
     pub fn increase_quantity(&mut self, amount: u32) {
-        self.quantity += amount;
+        self.quantity = self.quantity.saturating_add(amount);
     }
 }
 

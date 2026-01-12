@@ -198,11 +198,16 @@ impl CaveLayout {
         for radius in 0..CAVE_WIDTH.max(CAVE_HEIGHT) {
             for dy in -(radius as i32)..=(radius as i32) {
                 for dx in -(radius as i32)..=(radius as i32) {
-                    let x = (center_x as i32 + dx) as usize;
-                    let y = (center_y as i32 + dy) as usize;
+                    let x = center_x as i32 + dx;
+                    let y = center_y as i32 + dy;
 
-                    if x < CAVE_WIDTH && y < CAVE_HEIGHT && cells[y][x] == Cell::Floor {
-                        return (x, y);
+                    if x >= 0
+                        && y >= 0
+                        && (x as usize) < CAVE_WIDTH
+                        && (y as usize) < CAVE_HEIGHT
+                        && cells[y as usize][x as usize] == Cell::Floor
+                    {
+                        return (x as usize, y as usize);
                     }
                 }
             }
@@ -224,10 +229,11 @@ impl CaveLayout {
         for radius in 1..CAVE_WIDTH.max(CAVE_HEIGHT) {
             for dy in -(radius as i32)..=(radius as i32) {
                 for dx in -(radius as i32)..=(radius as i32) {
-                    let x = (center_x as i32 + dx) as usize;
-                    let y = (center_y as i32 + dy) as usize;
+                    let x = center_x as i32 + dx;
+                    let y = center_y as i32 + dy;
 
-                    if x < CAVE_WIDTH && y < CAVE_HEIGHT {
+                    if x >= 0 && y >= 0 && (x as usize) < CAVE_WIDTH && (y as usize) < CAVE_HEIGHT {
+                        let (x, y) = (x as usize, y as usize);
                         if cells[y][x] == Cell::Floor {
                             if x == exit_x && y == exit_y {
                                 continue;
@@ -247,12 +253,14 @@ impl CaveLayout {
 
     /// Try to move the player in a direction. Returns true if moved.
     pub fn move_player(&mut self, dx: i32, dy: i32) -> bool {
-        let new_x = (self.player_x as i32 + dx) as usize;
-        let new_y = (self.player_y as i32 + dy) as usize;
+        let new_x = self.player_x as i32 + dx;
+        let new_y = self.player_y as i32 + dy;
 
-        if new_x >= CAVE_WIDTH || new_y >= CAVE_HEIGHT {
+        if new_x < 0 || new_y < 0 || new_x as usize >= CAVE_WIDTH || new_y as usize >= CAVE_HEIGHT {
             return false;
         }
+
+        let (new_x, new_y) = (new_x as usize, new_y as usize);
 
         if self.cells[new_y][new_x] == Cell::Wall {
             return false;
@@ -453,9 +461,15 @@ impl CaveLayout {
         let mut count = 0;
         for dy in -1i32..=1 {
             for dx in -1i32..=1 {
-                let nx = (x as i32 + dx) as usize;
-                let ny = (y as i32 + dy) as usize;
-                if cells[ny][nx] == Cell::Wall {
+                let nx = x as i32 + dx;
+                let ny = y as i32 + dy;
+                // Treat out-of-bounds as walls
+                if nx < 0
+                    || ny < 0
+                    || nx as usize >= CAVE_WIDTH
+                    || ny as usize >= CAVE_HEIGHT
+                    || cells[ny as usize][nx as usize] == Cell::Wall
+                {
                     count += 1;
                 }
             }
