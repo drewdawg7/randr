@@ -1,4 +1,4 @@
-mod book_popup;
+mod monster_compendium;
 mod dungeon;
 mod fight;
 mod inventory_modal;
@@ -11,7 +11,7 @@ mod profile_modal;
 mod spell_test_modal;
 mod town;
 
-pub use book_popup::BookPopupPlugin;
+pub use monster_compendium::MonsterCompendiumPlugin;
 pub use dungeon::DungeonScreenPlugin;
 pub use fight::FightPlugin;
 pub use inventory_modal::InventoryModalPlugin;

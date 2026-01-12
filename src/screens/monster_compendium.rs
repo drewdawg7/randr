@@ -6,81 +6,81 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::mob::MobId;
 use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 
-/// Plugin that manages the book popup system.
-pub struct BookPopupPlugin;
+/// Plugin that manages the monster compendium system.
+pub struct MonsterCompendiumPlugin;
 
-impl Plugin for BookPopupPlugin {
+impl Plugin for MonsterCompendiumPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<BookListState>().add_systems(
+        app.init_resource::<CompendiumListState>().add_systems(
             Update,
             (
-                handle_book_popup_toggle,
-                handle_book_popup_close,
-                handle_book_navigation,
+                handle_compendium_toggle,
+                handle_compendium_close,
+                handle_compendium_navigation,
                 update_monster_list_display,
-                update_book_mob_sprite,
-                spawn_book_popup.run_if(resource_exists::<SpawnBookPopup>),
+                update_compendium_mob_sprite,
+                spawn_monster_compendium.run_if(resource_exists::<SpawnMonsterCompendium>),
             ),
         );
     }
 }
 
-/// Component marker for the book popup UI.
+/// Component marker for the monster compendium UI.
 #[derive(Component)]
-pub struct BookPopupRoot;
+pub struct MonsterCompendiumRoot;
 
 /// Component marker for monster list items, with their index.
 #[derive(Component)]
 pub struct MonsterListItem(usize);
 
-/// Component marker for the mob sprite display in the book.
+/// Component marker for the mob sprite display in the compendium.
 #[derive(Component)]
-pub struct BookMobSprite;
+pub struct CompendiumMobSprite;
 
-/// Resource tracking the selected monster in the book.
+/// Resource tracking the selected monster in the compendium.
 #[derive(Resource, Default)]
-pub struct BookListState {
+pub struct CompendiumListState {
     pub selected: usize,
 }
 
-/// Marker resource to trigger spawning the book popup.
+/// Marker resource to trigger spawning the monster compendium.
 #[derive(Resource)]
-pub struct SpawnBookPopup;
+pub struct SpawnMonsterCompendium;
 
-/// System to handle opening the book popup with 'b' key.
-fn handle_book_popup_toggle(
+/// System to handle opening the monster compendium with 'b' key.
+fn handle_compendium_toggle(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut active_modal: ResMut<ActiveModal>,
-    mut list_state: ResMut<BookListState>,
-    existing_popup: Query<Entity, With<BookPopupRoot>>,
+    mut list_state: ResMut<CompendiumListState>,
+    existing_compendium: Query<Entity, With<MonsterCompendiumRoot>>,
 ) {
     for action in action_reader.read() {
-        if *action == GameAction::OpenBook {
-            // Close existing popup if open
-            if let Ok(entity) = existing_popup.get_single() {
+        if *action == GameAction::OpenCompendium {
+            // Close existing compendium if open
+            if let Ok(entity) = existing_compendium.get_single() {
                 commands.entity(entity).despawn_recursive();
                 active_modal.modal = None;
             } else if active_modal.modal.is_none() {
                 // Reset selection and trigger spawn
                 list_state.selected = 0;
-                commands.insert_resource(SpawnBookPopup);
-                active_modal.modal = Some(ModalType::Book);
+                commands.insert_resource(SpawnMonsterCompendium);
+                active_modal.modal = Some(ModalType::MonsterCompendium);
             }
         }
     }
 }
 
-/// System to handle closing the book popup with Escape.
-fn handle_book_popup_close(
+/// System to handle closing the monster compendium with Escape.
+fn handle_compendium_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut active_modal: ResMut<ActiveModal>,
-    popup_query: Query<Entity, With<BookPopupRoot>>,
+    compendium_query: Query<Entity, With<MonsterCompendiumRoot>>,
 ) {
     for action in action_reader.read() {
-        if *action == GameAction::CloseModal && active_modal.modal == Some(ModalType::Book) {
-            if let Ok(entity) = popup_query.get_single() {
+        if *action == GameAction::CloseModal && active_modal.modal == Some(ModalType::MonsterCompendium) {
+            if let Ok(entity) = compendium_query.get_single() {
                 commands.entity(entity).despawn_recursive();
                 active_modal.modal = None;
             }
@@ -89,12 +89,12 @@ fn handle_book_popup_close(
 }
 
 /// System to handle up/down navigation in the monster list.
-fn handle_book_navigation(
+fn handle_compendium_navigation(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
-    mut list_state: ResMut<BookListState>,
+    mut list_state: ResMut<CompendiumListState>,
 ) {
-    if active_modal.modal != Some(ModalType::Book) {
+    if active_modal.modal != Some(ModalType::MonsterCompendium) {
         return;
     }
 
@@ -120,7 +120,7 @@ fn handle_book_navigation(
 
 /// System to update monster list item colors based on selection.
 fn update_monster_list_display(
-    list_state: Res<BookListState>,
+    list_state: Res<CompendiumListState>,
     mut items: Query<(&MonsterListItem, &mut TextColor)>,
 ) {
     if !list_state.is_changed() {
@@ -138,10 +138,10 @@ fn update_monster_list_display(
     }
 }
 
-/// System to spawn the book popup UI.
-fn spawn_book_popup(mut commands: Commands, game_sprites: Res<GameSprites>) {
+/// System to spawn the monster compendium UI.
+fn spawn_monster_compendium(mut commands: Commands, game_sprites: Res<GameSprites>) {
     // Remove trigger resource
-    commands.remove_resource::<SpawnBookPopup>();
+    commands.remove_resource::<SpawnMonsterCompendium>();
 
     let Some(ui_all) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
@@ -158,7 +158,7 @@ fn spawn_book_popup(mut commands: Commands, game_sprites: Res<GameSprites>) {
 
     commands
         .entity(overlay)
-        .insert(BookPopupRoot)
+        .insert(MonsterCompendiumRoot)
         .with_children(|parent| {
             // Book container (relative positioning for children)
             parent
@@ -240,7 +240,7 @@ fn spawn_book_popup(mut commands: Commands, game_sprites: Res<GameSprites>) {
                                 ))
                                 .with_children(|slot| {
                                     slot.spawn((
-                                        BookMobSprite,
+                                        CompendiumMobSprite,
                                         Node {
                                             width: Val::Px(64.0),
                                             height: Val::Px(64.0),
@@ -255,12 +255,12 @@ fn spawn_book_popup(mut commands: Commands, game_sprites: Res<GameSprites>) {
 }
 
 /// System to update the mob sprite based on selection.
-fn update_book_mob_sprite(
+fn update_compendium_mob_sprite(
     mut commands: Commands,
-    list_state: Res<BookListState>,
+    list_state: Res<CompendiumListState>,
     mob_sheets: Res<MobSpriteSheets>,
-    query: Query<Entity, With<BookMobSprite>>,
-    added: Query<Entity, Added<BookMobSprite>>,
+    query: Query<Entity, With<CompendiumMobSprite>>,
+    added: Query<Entity, Added<CompendiumMobSprite>>,
 ) {
     let needs_update = list_state.is_changed() || !added.is_empty();
     if !needs_update {

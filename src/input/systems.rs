@@ -78,9 +78,9 @@ fn handle_keyboard_input(
         action_writer.send(GameAction::CloseModal);
     }
 
-    // Book popup - b
+    // Monster compendium - b
     if keyboard.just_pressed(KeyCode::KeyB) {
-        action_writer.send(GameAction::OpenBook);
+        action_writer.send(GameAction::OpenCompendium);
     }
 }
 

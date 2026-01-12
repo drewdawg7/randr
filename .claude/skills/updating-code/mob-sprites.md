@@ -2,7 +2,7 @@
 
 ## Overview
 
-Mob sprites are displayed during combat on the fight screen and in the monster book popup. Each `MobId` can have an associated animated sprite sheet with idle animation support.
+Mob sprites are displayed during combat on the fight screen and in the MonsterCompendium (opened with 'b' key). Each `MobId` can have an associated animated sprite sheet with idle animation support.
 
 ## Adding a New Mob Sprite (with Animation)
 
@@ -63,7 +63,7 @@ Check the Aseprite file for animation tags:
 |------|---------|
 | `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `MobAnimation` component, animation system |
 | `src/screens/fight/ui.rs` | `populate_mob_sprite()` - displays animated sprite in combat |
-| `src/screens/book_popup.rs` | `update_book_mob_sprite()` - displays animated sprite in monster book |
+| `src/screens/monster_compendium.rs` | `update_compendium_mob_sprite()` - displays animated sprite in MonsterCompendium |
 | `assets/sprites/mobs/` | Sprite sheet PNGs and JSON metadata |
 
 ## How It Works
@@ -71,10 +71,15 @@ Check the Aseprite file for animation tags:
 ### Animation System (`MobAnimationPlugin`)
 
 1. **Loading**: `load_mob_sprite_sheets()` runs at `PreStartup`, loading textures and creating `TextureAtlasLayout` for each mob
-2. **Populating**: When a `NeedsMobSprite` or `BookMobSprite` entity is detected, the system inserts:
+2. **Populating**: When a `NeedsMobSprite` or `CompendiumMobSprite` entity is detected, the system inserts:
    - `ImageNode` with the texture atlas
    - `MobAnimation` component with timer and frame config
 3. **Animating**: `animate_mob_sprites()` runs every frame, ticking timers and updating atlas indices
+
+### Markers
+
+- `NeedsMobSprite` - Used in fight screen for combat mob sprites
+- `CompendiumMobSprite` - Used in MonsterCompendium for display sprites
 
 ### Components
 

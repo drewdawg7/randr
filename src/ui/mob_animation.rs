@@ -1,7 +1,7 @@
 //! Mob sprite animation system.
 //!
 //! Provides animated sprite support for mob sprites displayed in combat
-//! and the monster book popup.
+//! and the MonsterCompendium.
 
 use bevy::prelude::*;
 
