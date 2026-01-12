@@ -23,7 +23,7 @@ Follow this workflow for ALL code changes:
 
 
 ## Documentation Index
-...
+- [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 
 
 ## Documentation
