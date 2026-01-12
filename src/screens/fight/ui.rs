@@ -133,7 +133,7 @@ fn spawn_player_side(
                 .spawn((
                     PlayerHealthBar,
                     HealthBarBundle::new(AlignItems::FlexStart),
-                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5)),
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
                 ))
                 .insert(Node {
                     flex_direction: FlexDirection::Column,
@@ -167,7 +167,7 @@ fn spawn_enemy_side(
                 .spawn((
                     EnemyHealthBar,
                     HealthBarBundle::new(AlignItems::FlexEnd),
-                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.5)),
+                    BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
                 ))
                 .insert(Node {
                     flex_direction: FlexDirection::Column,
