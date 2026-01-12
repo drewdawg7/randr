@@ -64,10 +64,10 @@ impl Plugin for StoreTransactionsPlugin {
             .add_systems(
                 Update,
                 (
-                    handle_store_purchase,
-                    handle_store_sell,
-                    handle_storage_withdraw,
-                    handle_storage_deposit,
+                    handle_store_purchase.run_if(on_event::<StorePurchaseEvent>),
+                    handle_store_sell.run_if(on_event::<StoreSellEvent>),
+                    handle_storage_withdraw.run_if(on_event::<StorageWithdrawEvent>),
+                    handle_storage_deposit.run_if(on_event::<StorageDepositEvent>),
                 ),
             );
     }

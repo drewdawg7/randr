@@ -87,10 +87,10 @@ impl Plugin for BlacksmithPlugin {
             .add_systems(
                 Update,
                 (
-                    handle_upgrade_item,
-                    handle_upgrade_quality,
-                    handle_smelt_recipe,
-                    handle_forge_recipe,
+                    handle_upgrade_item.run_if(on_event::<UpgradeItemEvent>),
+                    handle_upgrade_quality.run_if(on_event::<UpgradeQualityEvent>),
+                    handle_smelt_recipe.run_if(on_event::<SmeltRecipeEvent>),
+                    handle_forge_recipe.run_if(on_event::<ForgeRecipeEvent>),
                 ),
             );
     }
