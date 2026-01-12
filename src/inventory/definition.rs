@@ -10,6 +10,9 @@ use crate::stats::StatType;
 
 use super::EquipmentSlot;
 
+/// Map of equipment slots to their equipped items.
+pub type EquipmentMap = HashMap<EquipmentSlot, InventoryItem>;
+
 /// Result of adding an item to inventory.
 #[derive(Debug, Clone)]
 pub struct AddItemResult {
@@ -49,7 +52,7 @@ impl InventoryItem {
 pub struct Inventory {
     pub items: Vec<InventoryItem>,
     max_slots: usize,
-    equipment: HashMap<EquipmentSlot, InventoryItem>,
+    equipment: EquipmentMap,
 }
 
 
@@ -71,11 +74,11 @@ impl Inventory {
         }
     }
 
-    pub fn equipment(&self) -> &HashMap<EquipmentSlot, InventoryItem> {
+    pub fn equipment(&self) -> &EquipmentMap {
         &self.equipment
     }
 
-    pub fn equipment_mut(&mut self) -> &mut HashMap<EquipmentSlot, InventoryItem> {
+    pub fn equipment_mut(&mut self) -> &mut EquipmentMap {
         &mut self.equipment
     }
 
