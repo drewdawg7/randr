@@ -64,6 +64,74 @@ fn handle_smelt_recipe(/* system params */) {
 3. Extend each method on `CraftingOperation` to handle the new variant
 4. Create the event type and handler system following the pattern above
 
+## Upgrade Operation Pattern
+
+Item upgrades (stat and quality) use the `UpgradeOperation` enum in `src/location/blacksmith/enums.rs`. This pattern consolidates the shared logic for finding items in inventory/equipment and applying upgrades.
+
+### UpgradeOperation Enum
+
+```rust
+pub enum UpgradeOperation {
+    /// Upgrade item stats (costs gold)
+    Stat { max_upgrades: i32, base_upgrade_cost: i32 },
+    /// Upgrade item quality (costs QualityUpgradeStone)
+    Quality,
+}
+```
+
+### Execute Method
+
+The `execute` method handles validation, resource consumption, and the upgrade itself:
+
+```rust
+impl UpgradeOperation {
+    pub fn execute(
+        self,
+        player: &mut Player,
+        item: &mut Item,
+    ) -> Result<UpgradeOperationResult, BlacksmithError>
+}
+```
+
+### Result Types
+
+```rust
+pub enum UpgradeOperationResult {
+    StatUpgrade(BlacksmithUpgradeResult),
+    QualityUpgrade(ItemQuality),
+}
+```
+
+### Usage Pattern
+
+For direct item upgrades (e.g., in tests):
+
+```rust
+let operation = UpgradeOperation::Stat {
+    max_upgrades: blacksmith.max_upgrades,
+    base_upgrade_cost: blacksmith.base_upgrade_cost,
+};
+match operation.execute(&mut player, &mut item)? {
+    UpgradeOperationResult::StatUpgrade(result) => Ok(result),
+    UpgradeOperationResult::QualityUpgrade(_) => unreachable!(),
+}
+```
+
+For UUID-based lookups (finding items in inventory/equipment):
+
+```rust
+// In definition.rs - process_player_upgrade handles the find-remove-modify-reinsert pattern
+blacksmith.upgrade_player_item(player, item_uuid)
+blacksmith.upgrade_player_item_quality(player, item_uuid)
+```
+
+### Adding New Upgrade Operations
+
+1. Add new variant to `UpgradeOperation` enum
+2. Add corresponding variant to `UpgradeOperationResult`
+3. Extend the `execute` method to handle the new variant
+4. Add a public method to `Blacksmith` that extracts the specific result type
+
 ## Recipe System
 
 ### Location

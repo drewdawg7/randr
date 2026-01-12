@@ -24,7 +24,7 @@ Follow this workflow for ALL code changes:
 
 
 ## Documentation Index
-- [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, recipe system, `RecipeId::material()`
+- [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, `UpgradeOperation` enum, recipe system, `RecipeId::material()`
 - [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 - [mob-sprites.md](mob-sprites.md) - Adding mob sprites, `SpriteAssets::mob_sprite()`, `populate_mob_sprite` system
 - [ui-nodes.md](ui-nodes.md) - UI node helpers (`row_node`, `column_node`), reducing boilerplate for flex containers
