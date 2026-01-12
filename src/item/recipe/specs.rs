@@ -247,15 +247,32 @@ impl RecipeId {
 
     /// Get the material type for this recipe (for forge filtering)
     pub fn material(&self) -> ForgeMaterial {
-        let name = format!("{:?}", self);
-        if name.starts_with("Copper") {
-            ForgeMaterial::Copper
-        } else if name.starts_with("Tin") {
-            ForgeMaterial::Tin
-        } else if name.starts_with("Bronze") {
-            ForgeMaterial::Bronze
-        } else {
-            ForgeMaterial::Other
+        match self {
+            RecipeId::CopperIngot
+            | RecipeId::CopperSword
+            | RecipeId::CopperHelmet
+            | RecipeId::CopperChestplate
+            | RecipeId::CopperGauntlets
+            | RecipeId::CopperGreaves
+            | RecipeId::CopperLeggings => ForgeMaterial::Copper,
+
+            RecipeId::TinIngot
+            | RecipeId::TinSword
+            | RecipeId::TinHelmet
+            | RecipeId::TinChestplate
+            | RecipeId::TinGauntlets
+            | RecipeId::TinGreaves
+            | RecipeId::TinLeggings => ForgeMaterial::Tin,
+
+            RecipeId::BronzeIngot
+            | RecipeId::BronzeSword
+            | RecipeId::BronzeHelmet
+            | RecipeId::BronzeChestplate
+            | RecipeId::BronzeGauntlets
+            | RecipeId::BronzeGreaves
+            | RecipeId::BronzeLeggings => ForgeMaterial::Bronze,
+
+            RecipeId::BasicHPPotion => ForgeMaterial::Other,
         }
     }
 }
