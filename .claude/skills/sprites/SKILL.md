@@ -42,31 +42,24 @@ assets/sprites/
 ### 3. Use in Code
 
 ```rust
-fn spawn_icon(
-    mut commands: Commands,
-    game_sprites: Res<GameSprites>,
-) {
-    let Some(sheet) = &game_sprites.ui_icons else { return };
+// Spawn functions should be SYSTEMS, not helper functions
+fn spawn_icon(mut commands: Commands, game_sprites: Res<GameSprites>) {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiIcons) else { return };
 
-    // Option 1: Get sprite component
+    // For UI: ImageNode with atlas
+    if let Some(idx) = sheet.get("heart_full") {
+        commands.spawn((
+            ImageNode::from_atlas_image(
+                sheet.texture.clone(),
+                TextureAtlas { layout: sheet.layout.clone(), index: idx },
+            ),
+            Node { width: Val::Px(32.0), height: Val::Px(32.0), ..default() },
+        ));
+    }
+
+    // For world sprites: Sprite component
     if let Some(sprite) = sheet.sprite("heart_full") {
         commands.spawn((sprite, Transform::from_xyz(100.0, 100.0, 0.0)));
-    }
-
-    // Option 2: Custom size (scale 16px to 32px)
-    if let Some(sprite) = sheet.sprite_sized("heart_full", Vec2::splat(32.0)) {
-        commands.spawn((sprite, Transform::from_xyz(150.0, 100.0, 0.0)));
-    }
-
-    // Option 3: Manual atlas control
-    if let Some(index) = sheet.get("heart_full") {
-        commands.spawn((
-            Sprite::from_atlas_image(
-                sheet.texture.clone(),
-                TextureAtlas { layout: sheet.layout.clone(), index },
-            ),
-            Transform::from_xyz(200.0, 100.0, 0.0).with_scale(Vec3::splat(2.0)),
-        ));
     }
 }
 ```
@@ -88,16 +81,12 @@ impl SpriteSheet {
 ### GameSprites Resource
 
 ```rust
-#[derive(Resource, Default)]
-pub struct GameSprites {
-    pub ui_icons: Option<SpriteSheet>,
-    pub ui_buttons: Option<SpriteSheet>,
-    pub book_ui: Option<SpriteSheet>,
-    pub ui_frames: Option<SpriteSheet>,
-    pub ui_bars: Option<SpriteSheet>,
-    pub ui_all: Option<SpriteSheet>,  // Combined UI sprite sheet
-}
+// Access via SpriteSheetKey enum - NOT direct fields
+let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else { return };
+let Some(idx) = sheet.get("Slice_4891") else { return };
 ```
+
+See [game-sprites.md](references/game-sprites.md) for full details on adding new sprite sheets.
 
 ## 9-Slice Scaling
 
@@ -168,45 +157,20 @@ For a 28x28 sprite with ~8px rounded corners, use `BorderRect::square(8.0)`.
 
 ## Adding New Sprite Sheets
 
-### Step 1: Add Field
+1. Place `my_sprite.png` and `my_sprite.json` in `assets/sprites/`
+2. Add variant to `SpriteSheetKey` enum in `src/assets/sprites.rs`
+3. Add to `SpriteSheetKey::all()` array
+4. Add to `SpriteSheetKey::asset_name()` match
 
-```rust
-// In src/assets/sprites.rs
-pub struct GameSprites {
-    // ... existing ...
-    pub my_new_sheet: Option<SpriteSheet>,
-}
-```
+**Important**: Each new sprite should be its own sprite sheet. Don't modify existing sheets.
 
-### Step 2: Load in load_assets
-
-```rust
-fn load_assets(...) {
-    game_sprites.my_new_sheet =
-        GameSprites::load_sheet("my_new_sheet", &asset_server, &mut texture_atlas_layouts);
-}
-```
-
-### Step 3: Place Files
-
-```
-assets/sprites/
-├── my_new_sheet.png
-└── my_new_sheet.json
-```
-
-## Self-Verification Checklist
-
-- [ ] JSON exported with Hash format (not Array)?
-- [ ] Both .png and .json in assets/sprites/?
-- [ ] Field added to GameSprites?
-- [ ] load_assets updated?
-- [ ] Frame names match exactly (case-sensitive)?
+See [game-sprites.md](references/game-sprites.md) for detailed examples and the system pattern for spawn functions.
 
 ## Advanced Topics
 
 For detailed patterns and workflows, see:
 
+- [game-sprites.md](references/game-sprites.md) - **GameSprites resource, SpriteSheetKey, adding new sprites, system patterns**
 - [patterns.md](references/patterns.md) - Marker+system pattern for UI widgets, animation, stateful buttons
 - [aseprite.md](references/aseprite.md) - Grid-aligned vs irregular sprites, JSON formats, finding slice dimensions
 - [troubleshooting.md](references/troubleshooting.md) - Blurry sprites, parse errors, loading issues
