@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use crate::assets::AssetPlugin as GameAssetPlugin;
-use crate::game::{BlacksmithPlugin, CombatPlugin, CraftingPlugin, DungeonPlugin, ItemPlugin, PlayerPlugin, StoragePlugin, StoreTransactionsPlugin, ToastPlugin};
+use crate::game::{BlacksmithPlugin, CombatPlugin, CraftingPlugin, DungeonPlugin, ItemPlugin, PlayerPlugin, StoragePlugin, StorageTransactionsPlugin, ToastPlugin};
+use crate::location::StorePlugin;
 use crate::input::InputPlugin;
 use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
 use crate::save_load::SaveLoadPlugin;
@@ -26,12 +27,13 @@ impl Plugin for GamePlugin {
             InputPlugin,
             PlayerPlugin,
             StoragePlugin,
+            StorePlugin,
             DungeonPlugin,
             ItemPlugin,
             CombatPlugin,
             CraftingPlugin,
             BlacksmithPlugin,
-            StoreTransactionsPlugin,
+            StorageTransactionsPlugin,
             MobPlugin,
             EconomyPlugin,
             SaveLoadPlugin,

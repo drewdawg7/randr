@@ -2,8 +2,6 @@ use bevy::prelude::*;
 
 use crate::screens::town::shared::SelectionState;
 
-use super::constants::{STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
-
 /// Store mode kind - what submenu the player is in.
 /// Flattened to avoid nested state dispatch.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -49,7 +47,7 @@ impl Default for StoreSelections {
         Self {
             menu: SelectionState {
                 selected: 0,
-                count: STORE_MENU_OPTIONS.len(),
+                count: 3, // Buy, Sell, Storage
                 scroll_offset: 0,
                 visible_count: 10,
             },
@@ -59,7 +57,7 @@ impl Default for StoreSelections {
             sell: SelectionState::new(0),
             storage_menu: SelectionState {
                 selected: 0,
-                count: STORAGE_MENU_OPTIONS.len(),
+                count: 2, // View Storage, Deposit Items
                 scroll_offset: 0,
                 visible_count: 10,
             },

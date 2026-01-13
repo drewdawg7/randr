@@ -10,12 +10,12 @@ use super::definition::Store;
 
 impl Default for Store {
     fn default() -> Self {
-        let mut store = Store::new("The Shop");
-        store.add_stock(ItemId::Sword, 1);
-        store.add_stock(ItemId::Dagger, 1);
-        store.add_stock(ItemId::BronzePickaxe, 1);
-        store.add_stock(ItemId::BasicHPPotion, 7);
-        store
+        Store::new("The Shop", vec![
+            (ItemId::Sword, 1),
+            (ItemId::Dagger, 1),
+            (ItemId::BronzePickaxe, 1),
+            (ItemId::BasicHPPotion, 7),
+        ])
     }
 }
 

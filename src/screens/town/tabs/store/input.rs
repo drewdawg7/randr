@@ -1,14 +1,12 @@
 use bevy::prelude::*;
 
-use crate::game::{
-    Storage, StorageDepositEvent, StorageWithdrawEvent, StorePurchaseEvent, StoreSellEvent,
-};
+use crate::game::{Storage, StorageDepositEvent, StorageWithdrawEvent};
 use crate::input::{GameAction, NavigationDirection};
-use crate::screens::town::shared::SelectionState;
 use crate::inventory::Inventory;
+use crate::location::{PurchaseEvent, SellEvent, Store};
+use crate::screens::town::shared::SelectionState;
 
-use super::constants::BUYABLE_ITEMS;
-use super::state::{BuyFocus, StoreModeKind, StoreMode, StoreSelections};
+use super::state::{BuyFocus, StoreMode, StoreModeKind, StoreSelections};
 
 /// Handle input for the Store tab.
 pub fn handle_store_input(
@@ -17,23 +15,26 @@ pub fn handle_store_input(
     mut action_events: EventReader<GameAction>,
     inventory: Res<Inventory>,
     storage: Res<Storage>,
-    mut purchase_events: EventWriter<StorePurchaseEvent>,
-    mut sell_events: EventWriter<StoreSellEvent>,
+    store: Res<Store>,
+    mut purchase_events: EventWriter<PurchaseEvent>,
+    mut sell_events: EventWriter<SellEvent>,
     mut withdraw_events: EventWriter<StorageWithdrawEvent>,
     mut deposit_events: EventWriter<StorageDepositEvent>,
 ) {
     for action in action_events.read() {
         match store_mode.mode {
             StoreModeKind::Menu => {
-                handle_menu_input(&mut store_mode, &mut store_selections, action)
+                handle_menu_input(&mut store_mode, &mut store_selections, &store, action)
             }
             StoreModeKind::Buy => {
                 handle_buy_input(
                     &mut store_mode,
                     &mut store_selections,
                     action,
+                    &store,
                     &inventory,
                     &mut purchase_events,
+                    &mut sell_events,
                 )
             }
             StoreModeKind::Sell => {
@@ -70,6 +71,7 @@ pub fn handle_store_input(
 fn handle_menu_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
+    store: &Store,
     action: &GameAction,
 ) {
     match action {
@@ -82,7 +84,7 @@ fn handle_menu_input(
         GameAction::Select => match store_selections.menu.selected {
             0 => {
                 store_mode.mode = StoreModeKind::Buy;
-                store_selections.buy.set_count(BUYABLE_ITEMS.len());
+                store_selections.buy.set_count(store.inventory.len());
             }
             1 => {
                 store_mode.mode = StoreModeKind::Sell;
@@ -99,12 +101,15 @@ fn handle_menu_input(
 
 /// Handle input for the buy screen with 2D grid navigation.
 /// Space toggles between store and inventory focus.
+/// Enter purchases from store or sells from inventory based on focus.
 fn handle_buy_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
     action: &GameAction,
+    store: &Store,
     inventory: &Inventory,
-    purchase_events: &mut EventWriter<StorePurchaseEvent>,
+    purchase_events: &mut EventWriter<PurchaseEvent>,
+    sell_events: &mut EventWriter<SellEvent>,
 ) {
     let grid_width = 5;
 
@@ -123,22 +128,47 @@ fn handle_buy_input(
             // Navigate within the focused grid
             match store_selections.buy_focus {
                 BuyFocus::Store => {
-                    navigate_grid(&mut store_selections.buy, *dir, BUYABLE_ITEMS.len(), grid_width);
+                    navigate_grid(
+                        &mut store_selections.buy,
+                        *dir,
+                        store.inventory.len(),
+                        grid_width,
+                    );
                 }
                 BuyFocus::Inventory => {
-                    navigate_grid(&mut store_selections.buy_inventory, *dir, inventory.items.len(), grid_width);
+                    navigate_grid(
+                        &mut store_selections.buy_inventory,
+                        *dir,
+                        inventory.items.len(),
+                        grid_width,
+                    );
                 }
             }
         }
         GameAction::Select => {
-            // Only buy from store grid, inventory is view-only
-            if store_selections.buy_focus == BuyFocus::Store {
-                if let Some(buyable) = BUYABLE_ITEMS.get(store_selections.buy.selected) {
-                    purchase_events.send(StorePurchaseEvent {
-                        item_id: buyable.item_id,
-                        price: buyable.price,
-                        item_name: buyable.name.to_string(),
-                    });
+            match store_selections.buy_focus {
+                BuyFocus::Store => {
+                    // Purchase item from store
+                    if store_selections.buy.selected < store.inventory.len() {
+                        purchase_events.send(PurchaseEvent {
+                            index: store_selections.buy.selected,
+                        });
+                    }
+                }
+                BuyFocus::Inventory => {
+                    // Sell item from inventory
+                    if store_selections.buy_inventory.selected < inventory.items.len() {
+                        sell_events.send(SellEvent {
+                            inventory_index: store_selections.buy_inventory.selected,
+                        });
+
+                        // Adjust selection for removed item
+                        let new_count = inventory.items.len().saturating_sub(1);
+                        store_selections.buy_inventory.set_count(new_count);
+                        if store_selections.buy_inventory.selected >= new_count && new_count > 0 {
+                            store_selections.buy_inventory.selected = new_count - 1;
+                        }
+                    }
                 }
             }
         }
@@ -153,7 +183,12 @@ fn handle_buy_input(
 }
 
 /// Helper to navigate within a 2D grid.
-fn navigate_grid(selection: &mut SelectionState, dir: NavigationDirection, count: usize, grid_width: usize) {
+fn navigate_grid(
+    selection: &mut SelectionState,
+    dir: NavigationDirection,
+    count: usize,
+    grid_width: usize,
+) {
     if count == 0 {
         return;
     }
@@ -190,7 +225,7 @@ fn handle_sell_input(
     store_selections: &mut StoreSelections,
     inventory: &Inventory,
     action: &GameAction,
-    sell_events: &mut EventWriter<StoreSellEvent>,
+    sell_events: &mut EventWriter<SellEvent>,
 ) {
     // Update selection count based on current inventory
     store_selections.sell.set_count(inventory.items.len());
@@ -204,7 +239,7 @@ fn handle_sell_input(
         }
         GameAction::Select => {
             if store_selections.sell.selected < inventory.items.len() {
-                sell_events.send(StoreSellEvent {
+                sell_events.send(SellEvent {
                     inventory_index: store_selections.sell.selected,
                 });
 

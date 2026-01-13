@@ -1,18 +1,46 @@
 use bevy::prelude::*;
 
 use crate::assets::{GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
+use crate::economy::WorthGold;
 use crate::game::Storage;
 use crate::inventory::{Inventory, InventoryItem};
-use crate::screens::town::shared::spawn_menu;
-use crate::ui::spawn_navigation_hint;
+use crate::location::Store;
+use crate::screens::town::shared::{spawn_menu, MenuOption};
 use crate::screens::town::TabContent;
-use crate::ui::UiText;
 use crate::stats::StatType;
+use crate::ui::spawn_navigation_hint;
 use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry, StoreListItem};
-use crate::ui::{selection_colors, selection_prefix};
+use crate::ui::{selection_colors, selection_prefix, UiText};
 
-use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
-use super::state::{BuyFocus, StoreModeKind, StoreMode, StoreSelections};
+use super::state::{BuyFocus, StoreMode, StoreModeKind, StoreSelections};
+
+/// Menu options for the store main menu.
+const STORE_MENU_OPTIONS: &[MenuOption] = &[
+    MenuOption {
+        label: "Buy",
+        description: Some("Purchase items"),
+    },
+    MenuOption {
+        label: "Sell",
+        description: Some("Sell your items"),
+    },
+    MenuOption {
+        label: "Storage",
+        description: Some("Access your storage"),
+    },
+];
+
+/// Menu options for the storage submenu.
+const STORAGE_MENU_OPTIONS: &[MenuOption] = &[
+    MenuOption {
+        label: "View Storage",
+        description: Some("View and withdraw stored items"),
+    },
+    MenuOption {
+        label: "Deposit Items",
+        description: Some("Store items from your inventory"),
+    },
+];
 
 /// Marker for the text of a store list item.
 #[derive(Component)]
@@ -21,7 +49,7 @@ pub struct StoreListItemText;
 /// Source of items for the info panel.
 #[derive(Clone, Copy)]
 pub enum InfoPanelSource {
-    /// Display item from store's buyable items
+    /// Display item from store's inventory
     Store { selected_index: usize },
     /// Display item from player's inventory
     Inventory { selected_index: usize },
@@ -41,6 +69,7 @@ pub fn spawn_store_ui(
     store_selections: &StoreSelections,
     inventory: &Inventory,
     storage: &Storage,
+    store: &Store,
     game_sprites: &Res<GameSprites>,
 ) {
     commands.entity(content_entity).with_children(|parent| {
@@ -57,7 +86,9 @@ pub fn spawn_store_ui(
             ))
             .with_children(|content| match store_mode.mode {
                 StoreModeKind::Menu => spawn_menu_ui(content, store_selections),
-                StoreModeKind::Buy => spawn_buy_ui(content, store_selections, inventory, game_sprites),
+                StoreModeKind::Buy => {
+                    spawn_buy_ui(content, store_selections, store, inventory, game_sprites)
+                }
                 StoreModeKind::Sell => spawn_sell_ui(content, store_selections, inventory),
                 StoreModeKind::StorageMenu => spawn_storage_menu_ui(content, store_selections),
                 StoreModeKind::StorageView => {
@@ -73,7 +104,13 @@ pub fn spawn_store_ui(
 /// Spawn the main menu UI.
 fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) {
     // Title
-    parent.spawn(UiText::new("Welcome to the Store").heading().yellow().margin_bottom(10.0).build_with_node());
+    parent.spawn(
+        UiText::new("Welcome to the Store")
+            .heading()
+            .yellow()
+            .margin_bottom(10.0)
+            .build_with_node(),
+    );
 
     // Menu options
     spawn_menu(
@@ -91,13 +128,20 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) 
 fn spawn_buy_ui(
     parent: &mut ChildBuilder,
     store_selections: &StoreSelections,
+    store: &Store,
     inventory: &Inventory,
     game_sprites: &Res<GameSprites>,
 ) {
     let store_focused = store_selections.buy_focus == BuyFocus::Store;
 
     // Title
-    parent.spawn(UiText::new("Buy Items").heading().yellow().margin_bottom(10.0).build_with_node());
+    parent.spawn(
+        UiText::new("Buy Items")
+            .heading()
+            .yellow()
+            .margin_bottom(10.0)
+            .build_with_node(),
+    );
 
     // Main row container with store on far left, inventory on far right
     parent
@@ -116,16 +160,19 @@ fn spawn_buy_ui(
             .with_children(|col| {
                 spawn_info_panel(
                     col,
-                    InfoPanelSource::Store { selected_index: store_selections.buy.selected },
+                    InfoPanelSource::Store {
+                        selected_index: store_selections.buy.selected,
+                    },
                     game_sprites,
                 );
 
-                // Store grid
+                // Store grid - use store inventory
                 col.spawn(ItemGrid {
-                    items: BUYABLE_ITEMS
+                    items: store
+                        .inventory
                         .iter()
-                        .map(|item| ItemGridEntry {
-                            sprite_name: item.item_id.sprite_name().to_string(),
+                        .map(|store_item| ItemGridEntry {
+                            sprite_name: store_item.item_id.sprite_name().to_string(),
                         })
                         .collect(),
                     selected_index: store_selections.buy.selected,
@@ -141,7 +188,9 @@ fn spawn_buy_ui(
             .with_children(|col| {
                 spawn_info_panel(
                     col,
-                    InfoPanelSource::Inventory { selected_index: store_selections.buy_inventory.selected },
+                    InfoPanelSource::Inventory {
+                        selected_index: store_selections.buy_inventory.selected,
+                    },
                     game_sprites,
                 );
 
@@ -163,7 +212,10 @@ fn spawn_buy_ui(
         });
 
     // Navigation hint
-    spawn_navigation_hint(parent, "[↑↓←→] Navigate  [Space] Switch Panel  [Enter] Buy  [Backspace] Back");
+    spawn_navigation_hint(
+        parent,
+        "[↑↓←→] Navigate  [Space] Switch Panel  [Enter] Buy/Sell  [Backspace] Back",
+    );
 }
 
 /// Spawn an info panel with the given source.
@@ -199,9 +251,19 @@ fn spawn_info_panel(
 }
 
 /// Spawn the sell screen UI.
-fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, inventory: &Inventory) {
+fn spawn_sell_ui(
+    parent: &mut ChildBuilder,
+    store_selections: &StoreSelections,
+    inventory: &Inventory,
+) {
     // Title
-    parent.spawn(UiText::new("Sell Items").heading().yellow().margin_bottom(10.0).build_with_node());
+    parent.spawn(
+        UiText::new("Sell Items")
+            .heading()
+            .yellow()
+            .margin_bottom(10.0)
+            .build_with_node(),
+    );
 
     spawn_inventory_list(
         parent,
@@ -209,7 +271,7 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
         store_selections.sell.selected,
         "You have no items to sell.",
         Some(|item: &InventoryItem| {
-            let sell_price = (item.item.gold_value as f32 * 0.5) as i32;
+            let sell_price = item.item.sell_price();
             format!("{} gold", sell_price)
         }),
     );
@@ -221,7 +283,13 @@ fn spawn_sell_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections, 
 /// Spawn the storage menu UI.
 fn spawn_storage_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) {
     // Title
-    parent.spawn(UiText::new("Storage").heading().yellow().margin_bottom(10.0).build_with_node());
+    parent.spawn(
+        UiText::new("Storage")
+            .heading()
+            .yellow()
+            .margin_bottom(10.0)
+            .build_with_node(),
+    );
 
     // Menu options
     spawn_menu(
@@ -242,7 +310,13 @@ fn spawn_storage_view_ui(
     storage: &Storage,
 ) {
     // Title
-    parent.spawn(UiText::new("Storage - View & Withdraw").heading().yellow().margin_bottom(10.0).build_with_node());
+    parent.spawn(
+        UiText::new("Storage - View & Withdraw")
+            .heading()
+            .yellow()
+            .margin_bottom(10.0)
+            .build_with_node(),
+    );
 
     spawn_inventory_list(
         parent,
@@ -263,7 +337,13 @@ fn spawn_storage_deposit_ui(
     inventory: &Inventory,
 ) {
     // Title
-    parent.spawn(UiText::new("Storage - Deposit Items").heading().yellow().margin_bottom(10.0).build_with_node());
+    parent.spawn(
+        UiText::new("Storage - Deposit Items")
+            .heading()
+            .yellow()
+            .margin_bottom(10.0)
+            .build_with_node(),
+    );
 
     spawn_inventory_list(
         parent,
@@ -368,6 +448,7 @@ pub fn populate_store_info_panel(
     mut commands: Commands,
     query: Query<(Entity, &StoreInfoPanel)>,
     inventory: Res<Inventory>,
+    store: Res<Store>,
     game_fonts: Res<GameFonts>,
 ) {
     for (entity, panel) in &query {
@@ -376,52 +457,61 @@ pub fn populate_store_info_panel(
 
         match panel.source {
             InfoPanelSource::Store { selected_index } => {
-                // Get the selected item from BUYABLE_ITEMS
-                let Some(item) = BUYABLE_ITEMS.get(selected_index) else {
+                // Get the selected store item
+                let Some(store_item) = store.inventory.get(selected_index) else {
                     continue;
                 };
 
-                // Get item spec for stats
-                let spec = item.item_id.spec();
+                // Get display item for stats/price
+                let display_item = store_item.display_item();
 
                 // Remove the marker and add children with item details
                 commands
                     .entity(entity)
                     .remove::<StoreInfoPanel>()
                     .with_children(|parent| {
-                        // Item name
-                        parent.spawn((
-                            Text::new(item.name),
-                            game_fonts.pixel_font(24.0),
-                            text_color,
-                        ));
+                        if let Some(item) = display_item {
+                            // Item name
+                            parent.spawn((
+                                Text::new(&item.name),
+                                game_fonts.pixel_font(24.0),
+                                text_color,
+                            ));
 
-                        // Stats (only show non-zero stats)
-                        for stat_type in StatType::all() {
-                            let value = spec.stats.value(*stat_type);
-                            if value > 0 {
-                                let stat_name = match stat_type {
-                                    StatType::Health => "HP",
-                                    StatType::Attack => "ATK",
-                                    StatType::Defense => "DEF",
-                                    StatType::GoldFind => "Gold Find",
-                                    StatType::Mining => "Mining",
-                                    StatType::MagicFind => "Magic Find",
-                                };
-                                parent.spawn((
-                                    Text::new(format!("{}: +{}", stat_name, value)),
-                                    game_fonts.pixel_font(18.0),
-                                    text_color,
-                                ));
+                            // Stats (only show non-zero stats)
+                            for stat_type in StatType::all() {
+                                let value = item.stats.value(*stat_type);
+                                if value > 0 {
+                                    let stat_name = match stat_type {
+                                        StatType::Health => "HP",
+                                        StatType::Attack => "ATK",
+                                        StatType::Defense => "DEF",
+                                        StatType::GoldFind => "Gold Find",
+                                        StatType::Mining => "Mining",
+                                        StatType::MagicFind => "Magic Find",
+                                    };
+                                    parent.spawn((
+                                        Text::new(format!("{}: +{}", stat_name, value)),
+                                        game_fonts.pixel_font(18.0),
+                                        text_color,
+                                    ));
+                                }
                             }
-                        }
 
-                        // Cost with gold icon
-                        parent.spawn(
-                            GoldDisplay::new(item.price)
-                                .with_font_size(18.0)
-                                .with_color(text_color.0),
-                        );
+                            // Cost with gold icon
+                            parent.spawn(
+                                GoldDisplay::new(item.purchase_price())
+                                    .with_font_size(18.0)
+                                    .with_color(text_color.0),
+                            );
+                        } else {
+                            // Out of stock
+                            parent.spawn((
+                                Text::new("Out of Stock"),
+                                game_fonts.pixel_font(18.0),
+                                text_color,
+                            ));
+                        }
                     });
             }
             InfoPanelSource::Inventory { selected_index } => {
@@ -461,14 +551,12 @@ pub fn populate_store_info_panel(
                                 }
                             }
 
-                            // Quantity (if stackable)
-                            if inv_item.quantity > 1 {
-                                parent.spawn((
-                                    Text::new(format!("Qty: {}", inv_item.quantity)),
-                                    game_fonts.pixel_font(18.0),
-                                    text_color,
-                                ));
-                            }
+                            // Sell price
+                            parent.spawn(
+                                GoldDisplay::new(inv_item.item.sell_price())
+                                    .with_font_size(18.0)
+                                    .with_color(text_color.0),
+                            );
                         } else {
                             // Empty inventory slot
                             parent.spawn((

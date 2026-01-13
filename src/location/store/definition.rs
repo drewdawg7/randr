@@ -1,6 +1,7 @@
 use std::fmt::Display;
 use std::time::Duration;
 
+use bevy::prelude::Resource;
 use bevy::time::{Timer, TimerMode};
 
 use crate::{
@@ -15,7 +16,7 @@ use crate::{
 
 use super::store_item::StoreItem;
 
-#[derive(Debug)]
+#[derive(Debug, Resource)]
 pub struct Store {
     location_id: LocationId,
     pub name: String,
@@ -40,28 +41,30 @@ impl Store {
     /// Create a Store from a LocationSpec
     pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &StoreData) -> Self {
         let refresh_interval = spec.refresh_interval.unwrap_or(Duration::from_secs(60));
-        let mut store = Store {
+        let inventory = data
+            .initial_stock
+            .iter()
+            .map(|(item_id, quantity)| StoreItem::new(*item_id, *quantity))
+            .collect();
+        Store {
             location_id,
             name: spec.name.to_string(),
             description: spec.description.to_string(),
-            inventory: Vec::new(),
+            inventory,
             refresh_timer: Timer::new(refresh_interval, TimerMode::Repeating),
-        };
-
-        // Initialize stock from spec
-        for (item_id, quantity) in &data.initial_stock {
-            store.add_stock(*item_id, *quantity);
         }
-
-        store
     }
 
-    pub fn new(name: &str) -> Self {
+    pub fn new(name: &str, initial_stock: Vec<(ItemId, i32)>) -> Self {
+        let inventory = initial_stock
+            .into_iter()
+            .map(|(item_id, quantity)| StoreItem::new(item_id, quantity))
+            .collect();
         Store {
             location_id: LocationId::VillageStore,
             name: name.to_string(),
             description: String::new(),
-            inventory: Vec::new(),
+            inventory,
             refresh_timer: Timer::new(Duration::from_secs(60), TimerMode::Repeating),
         }
     }
@@ -98,24 +101,6 @@ impl Store {
 
     pub fn get_store_item_by_id_mut(&mut self, item_id: ItemId) -> Option<&mut StoreItem> {
         self.inventory.iter_mut().find(|si| si.item_id == item_id)
-    }
-
-    /// Add a stock slot for an item type with the given quantity
-    pub fn add_stock(&mut self, item_id: ItemId, quantity: i32) {
-        match self.get_store_item_by_id_mut(item_id) {
-            Some(store_item) => {
-                // Add more stock to existing slot
-                for _ in 0..quantity {
-                    store_item.items.push(item_id.spawn());
-                }
-                store_item.max_quantity += quantity;
-            }
-            None => {
-                // Create new stock slot
-                let store_item = StoreItem::new(item_id, quantity);
-                self.inventory.push(store_item);
-            }
-        };
     }
 
     /// Add a specific item to the store (e.g., when player sells)

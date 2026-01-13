@@ -10,12 +10,18 @@ pub struct StoreItem {
 }
 
 impl StoreItem {
-    pub fn new(item_id: ItemId, max_quantity: i32) -> Self {
-        // Don't spawn items here - game_state() may not be initialized yet
-        // Call restock() after GameState is fully initialized
+    pub fn new(item_id: ItemId, quantity: i32) -> Self {
+        let max_quantity = quantity;
+        // Equipment only stocks 1 at a time
+        let actual_quantity = if item_id.spec().item_type.is_equipment() {
+            1
+        } else {
+            quantity
+        };
+        let items = (0..actual_quantity).map(|_| item_id.spawn()).collect();
         Self {
             item_id,
-            items: Vec::new(),
+            items,
             max_quantity,
         }
     }

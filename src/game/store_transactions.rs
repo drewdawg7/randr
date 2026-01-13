@@ -1,28 +1,7 @@
 use bevy::prelude::*;
 
-use crate::economy::WorthGold;
 use crate::game::{ItemDeposited, ItemWithdrawn, Storage};
 use crate::inventory::{FindsItems, HasInventory, Inventory, ManagesItems};
-use crate::item::ItemId;
-use crate::player::PlayerGold;
-
-/// Event sent when player attempts to purchase an item from the store.
-#[derive(Event, Debug, Clone)]
-pub struct StorePurchaseEvent {
-    /// The item to purchase
-    pub item_id: ItemId,
-    /// The price to pay
-    pub price: i32,
-    /// Display name for the item
-    pub item_name: String,
-}
-
-/// Event sent when player attempts to sell an item.
-#[derive(Event, Debug, Clone)]
-pub struct StoreSellEvent {
-    /// Index into player's inventory
-    pub inventory_index: usize,
-}
 
 /// Event sent when player attempts to withdraw an item from storage.
 #[derive(Event, Debug, Clone)]
@@ -38,34 +17,26 @@ pub struct StorageDepositEvent {
     pub inventory_index: usize,
 }
 
-/// Result event for store and storage operations.
+/// Result event for storage operations.
 #[derive(Event, Debug, Clone)]
-pub enum StoreTransactionResult {
-    PurchaseSuccess { item_name: String, price: i32 },
-    PurchaseFailedInsufficientGold { need: i32, have: i32 },
-    PurchaseFailedInventoryFull,
-    SellSuccess { item_name: String, price: i32 },
+pub enum StorageTransactionResult {
     WithdrawSuccess { item_name: String },
     WithdrawFailedInventoryFull,
     DepositSuccess { item_name: String },
     DepositFailed { reason: String },
 }
 
-/// Plugin for store transaction events and systems.
-pub struct StoreTransactionsPlugin;
+/// Plugin for storage transaction events and systems.
+pub struct StorageTransactionsPlugin;
 
-impl Plugin for StoreTransactionsPlugin {
+impl Plugin for StorageTransactionsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<StorePurchaseEvent>()
-            .add_event::<StoreSellEvent>()
-            .add_event::<StorageWithdrawEvent>()
+        app.add_event::<StorageWithdrawEvent>()
             .add_event::<StorageDepositEvent>()
-            .add_event::<StoreTransactionResult>()
+            .add_event::<StorageTransactionResult>()
             .add_systems(
                 Update,
                 (
-                    handle_store_purchase.run_if(on_event::<StorePurchaseEvent>),
-                    handle_store_sell.run_if(on_event::<StoreSellEvent>),
                     handle_storage_withdraw.run_if(on_event::<StorageWithdrawEvent>),
                     handle_storage_deposit.run_if(on_event::<StorageDepositEvent>),
                 ),
@@ -73,76 +44,10 @@ impl Plugin for StoreTransactionsPlugin {
     }
 }
 
-/// Handle purchase events from the store.
-fn handle_store_purchase(
-    mut purchase_events: EventReader<StorePurchaseEvent>,
-    mut result_events: EventWriter<StoreTransactionResult>,
-    mut gold: ResMut<PlayerGold>,
-    mut inventory: ResMut<Inventory>,
-) {
-    for event in purchase_events.read() {
-        // Check gold
-        if gold.0 < event.price {
-            result_events.send(StoreTransactionResult::PurchaseFailedInsufficientGold {
-                need: event.price,
-                have: gold.0,
-            });
-            info!("Not enough gold! Need {} but have {}", event.price, gold.0);
-            continue;
-        }
-
-        // Spawn and add to inventory
-        let new_item = event.item_id.spawn();
-
-        match inventory.add_to_inv(new_item) {
-            Ok(_) => {
-                gold.0 -= event.price;
-                result_events.send(StoreTransactionResult::PurchaseSuccess {
-                    item_name: event.item_name.clone(),
-                    price: event.price,
-                });
-                info!("Purchased {} for {} gold", event.item_name, event.price);
-            }
-            Err(_) => {
-                result_events.send(StoreTransactionResult::PurchaseFailedInventoryFull);
-                info!("Inventory full!");
-            }
-        }
-    }
-}
-
-/// Handle sell events.
-fn handle_store_sell(
-    mut sell_events: EventReader<StoreSellEvent>,
-    mut result_events: EventWriter<StoreTransactionResult>,
-    mut gold: ResMut<PlayerGold>,
-    mut inventory: ResMut<Inventory>,
-) {
-    for event in sell_events.read() {
-        let Some(inv_item) = inventory.items.get(event.inventory_index) else {
-            continue;
-        };
-
-        let sell_price = inv_item.item.sell_price();
-        let item_name = inv_item.item.name.clone();
-        let item_id = inv_item.item.item_id;
-
-        // Add gold and remove item
-        gold.0 += sell_price;
-        inventory.decrease_item_quantity(item_id, 1);
-
-        result_events.send(StoreTransactionResult::SellSuccess {
-            item_name: item_name.clone(),
-            price: sell_price,
-        });
-        info!("Sold {} for {} gold", item_name, sell_price);
-    }
-}
-
 /// Handle storage withdraw events.
 fn handle_storage_withdraw(
     mut withdraw_events: EventReader<StorageWithdrawEvent>,
-    mut result_events: EventWriter<StoreTransactionResult>,
+    mut result_events: EventWriter<StorageTransactionResult>,
     mut withdrawn_events: EventWriter<ItemWithdrawn>,
     mut inventory: ResMut<Inventory>,
     mut storage: ResMut<Storage>,
@@ -157,7 +62,7 @@ fn handle_storage_withdraw(
 
         // Check if inventory has room before removing from storage
         if inventory.items.len() >= inventory.max_slots() {
-            result_events.send(StoreTransactionResult::WithdrawFailedInventoryFull);
+            result_events.send(StorageTransactionResult::WithdrawFailedInventoryFull);
             info!("Inventory is full! Cannot withdraw item.");
             continue;
         }
@@ -169,7 +74,7 @@ fn handle_storage_withdraw(
 
         // Add to player inventory (should succeed since we checked capacity)
         if inventory.add_to_inv(inv_item.item).is_ok() {
-            result_events.send(StoreTransactionResult::WithdrawSuccess {
+            result_events.send(StorageTransactionResult::WithdrawSuccess {
                 item_name: item_name.clone(),
             });
             withdrawn_events.send(ItemWithdrawn {
@@ -183,7 +88,7 @@ fn handle_storage_withdraw(
 /// Handle storage deposit events.
 fn handle_storage_deposit(
     mut deposit_events: EventReader<StorageDepositEvent>,
-    mut result_events: EventWriter<StoreTransactionResult>,
+    mut result_events: EventWriter<StorageTransactionResult>,
     mut deposited_events: EventWriter<ItemDeposited>,
     mut inventory: ResMut<Inventory>,
     mut storage: ResMut<Storage>,
@@ -198,7 +103,7 @@ fn handle_storage_deposit(
 
         // Check if storage has room before removing from inventory
         if storage.inventory().items.len() >= storage.inventory().max_slots() {
-            result_events.send(StoreTransactionResult::DepositFailed {
+            result_events.send(StorageTransactionResult::DepositFailed {
                 reason: "Storage is full".to_string(),
             });
             info!("Storage is full! Cannot deposit item.");
@@ -214,7 +119,7 @@ fn handle_storage_deposit(
         storage
             .add_to_inv(inv_item.item)
             .expect("Storage capacity already verified");
-        result_events.send(StoreTransactionResult::DepositSuccess {
+        result_events.send(StorageTransactionResult::DepositSuccess {
             item_name: item_name.clone(),
         });
         deposited_events.send(ItemDeposited {

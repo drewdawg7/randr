@@ -1,4 +1,3 @@
-mod constants;
 mod input;
 mod render;
 mod state;
@@ -8,6 +7,7 @@ use bevy::prelude::*;
 use crate::assets::GameSprites;
 use crate::game::Storage;
 use crate::inventory::Inventory;
+use crate::location::Store;
 use crate::screens::town::shared::{update_menu_selection, MenuOptionItem, MenuOptionText};
 use crate::screens::town::{ContentArea, TabContent, TownTab};
 use crate::ui::update_list_selection;
@@ -50,6 +50,7 @@ fn spawn_store_content(
     store_selections: Res<StoreSelections>,
     inventory: Res<Inventory>,
     storage: Res<Storage>,
+    store: Res<Store>,
     game_sprites: Res<GameSprites>,
 ) {
     let Ok(content_entity) = content_query.get_single() else {
@@ -62,6 +63,7 @@ fn spawn_store_content(
         &store_selections,
         &inventory,
         &storage,
+        &store,
         &game_sprites,
     );
 }
@@ -75,6 +77,7 @@ fn refresh_store_on_mode_change(
     tab_content_query: Query<Entity, With<TabContent>>,
     inventory: Res<Inventory>,
     storage: Res<Storage>,
+    store: Res<Store>,
     game_sprites: Res<GameSprites>,
 ) {
     // Despawn existing content
@@ -93,6 +96,7 @@ fn refresh_store_on_mode_change(
         &store_selections,
         &inventory,
         &storage,
+        &store,
         &game_sprites,
     );
 }
