@@ -1,0 +1,12 @@
+{
+    "frames": {
+        "background": {
+            "frame": {"x": 0, "y": 0, "w": 144, "h": 144},
+            "rotated": false,
+            "trimmed": false
+        }
+    },
+    "meta": {
+        "size": {"w": 144, "h": 144}
+    }
+}

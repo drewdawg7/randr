@@ -177,3 +177,35 @@ impl BookSlotSlice {
         }
     }
 }
+
+/// Slices from the GridSlot sprite sheet.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GridSlotSlice {
+    /// Empty slot background for item grids
+    Slot,
+}
+
+impl GridSlotSlice {
+    /// Returns the string slice name used in sprite sheet lookups.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Slot => "slot",
+        }
+    }
+}
+
+/// Slices from the GridBg sprite sheet.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum GridBgSlice {
+    /// Decorative background box for item grids
+    Background,
+}
+
+impl GridBgSlice {
+    /// Returns the string slice name used in sprite sheet lookups.
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Background => "background",
+        }
+    }
+}

@@ -1,9 +1,9 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameSprites, SpriteSheetKey, UiAllSlice, UiSelectorsSlice};
+use crate::assets::{GameSprites, GridBgSlice, GridSlotSlice, SpriteSheetKey, UiSelectorsSlice};
 
 const CELL_SIZE: f32 = 48.0;
-const GRID_SIZE: usize = 5;
+const GRID_SIZE: usize = 4;
 
 /// Plugin for item grid widget.
 pub struct ItemGridPlugin;
@@ -44,6 +44,10 @@ impl Default for ItemGrid {
     }
 }
 
+/// Marker for the grid container (child of ItemGrid that holds the cells).
+#[derive(Component)]
+pub struct GridContainer;
+
 /// Marker for grid cells with their index.
 #[derive(Component)]
 pub struct GridCell {
@@ -72,10 +76,15 @@ fn on_add_item_grid(
     let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
     let is_focused = item_grid.map(|g| g.is_focused).unwrap_or(true);
 
+    // Get the background sprite with 9-slice scaling
+    let bg_image = game_sprites
+        .get(SpriteSheetKey::GridBg)
+        .and_then(|s| s.image_node_sliced(GridBgSlice::Background.as_str(), 36.0));
+
     // Get the cell background sprite if available
     let cell_image = game_sprites
-        .get(SpriteSheetKey::UiAll)
-        .and_then(|s| s.image_node(UiAllSlice::CellBackground.as_str()));
+        .get(SpriteSheetKey::GridSlot)
+        .and_then(|s| s.image_node(GridSlotSlice::Slot.as_str()));
 
     // Get the selector sprite frames if available
     let selector_data = game_sprites
@@ -83,78 +92,101 @@ fn on_add_item_grid(
         .and_then(|selectors| {
             let idx1 = selectors.get(UiSelectorsSlice::SelectorFrame1.as_str())?;
             let idx2 = selectors.get(UiSelectorsSlice::SelectorFrame2.as_str())?;
-            Some((selectors.image_node(UiSelectorsSlice::SelectorFrame1.as_str())?, [idx1, idx2]))
+            Some((
+                selectors.image_node(UiSelectorsSlice::SelectorFrame1.as_str())?,
+                [idx1, idx2],
+            ))
         });
 
-    commands
-        .entity(entity)
-        .insert(Node {
-            display: Display::Grid,
-            grid_template_columns: RepeatedGridTrack::px(GRID_SIZE as u16, CELL_SIZE),
-            grid_template_rows: RepeatedGridTrack::px(GRID_SIZE as u16, CELL_SIZE),
-            ..default()
-        })
-        .with_children(|grid| {
-            for i in 0..(GRID_SIZE * GRID_SIZE) {
-                let mut cell = grid.spawn((
-                    GridCell { index: i },
-                    Node {
-                        width: Val::Px(CELL_SIZE),
-                        height: Val::Px(CELL_SIZE),
-                        justify_content: JustifyContent::Center,
-                        align_items: AlignItems::Center,
-                        ..default()
-                    },
-                ));
-                if let Some(ref img) = cell_image {
-                    cell.insert(img.clone());
-                }
+    // Set up the ItemGrid entity as the background container with padding
+    let mut item_grid_entity = commands.entity(entity);
+    item_grid_entity.insert(Node {
+        width: Val::Px(380.0),
+        height: Val::Px(380.0),
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        ..default()
+    });
+    if let Some(bg) = bg_image {
+        item_grid_entity.insert(bg);
+    }
 
-                // Add selector sprite if this is the selected cell and grid is focused
-                let is_selected = i == selected_index;
-                if is_selected && is_focused {
-                    if let Some((ref selector_img, frame_indices)) = selector_data {
-                        cell.with_children(|cell_content| {
-                            cell_content.spawn((
-                                GridSelector {
-                                    timer: Timer::from_seconds(0.5, TimerMode::Repeating),
-                                    frame: 0,
-                                    frame_indices,
-                                },
-                                Node {
-                                    position_type: PositionType::Absolute,
-                                    width: Val::Px(CELL_SIZE),
-                                    height: Val::Px(CELL_SIZE),
-                                    ..default()
-                                },
-                                selector_img.clone(),
-                            ));
-                        });
+    // Grid container is a child inside the background
+    item_grid_entity.with_children(|parent| {
+        parent
+            .spawn((
+                GridContainer,
+                Node {
+                    display: Display::Grid,
+                    grid_template_columns: RepeatedGridTrack::px(GRID_SIZE as u16, CELL_SIZE),
+                    grid_template_rows: RepeatedGridTrack::px(GRID_SIZE as u16, CELL_SIZE),
+                    row_gap: Val::Px(4.0),
+                    column_gap: Val::Px(4.0),
+                    ..default()
+                },
+            ))
+            .with_children(|grid| {
+                for i in 0..(GRID_SIZE * GRID_SIZE) {
+                    let mut cell = grid.spawn((
+                        GridCell { index: i },
+                        Node {
+                            width: Val::Px(CELL_SIZE),
+                            height: Val::Px(CELL_SIZE),
+                            justify_content: JustifyContent::Center,
+                            align_items: AlignItems::Center,
+                            ..default()
+                        },
+                    ));
+                    if let Some(ref img) = cell_image {
+                        cell.insert(img.clone());
                     }
-                }
 
-                // Add item sprite if there's an item at this index
-                if let Some(item_grid) = item_grid {
-                    if let Some(entry) = item_grid.items.get(i) {
-                        if let Some(icon_img) = game_sprites
-                            .get(SpriteSheetKey::IconItems)
-                            .and_then(|s| s.image_node(&entry.sprite_name))
-                        {
+                    // Add selector sprite if this is the selected cell and grid is focused
+                    let is_selected = i == selected_index;
+                    if is_selected && is_focused {
+                        if let Some((ref selector_img, frame_indices)) = selector_data {
                             cell.with_children(|cell_content| {
                                 cell_content.spawn((
+                                    GridSelector {
+                                        timer: Timer::from_seconds(0.5, TimerMode::Repeating),
+                                        frame: 0,
+                                        frame_indices,
+                                    },
                                     Node {
-                                        width: Val::Px(32.0),
-                                        height: Val::Px(32.0),
+                                        position_type: PositionType::Absolute,
+                                        width: Val::Px(CELL_SIZE),
+                                        height: Val::Px(CELL_SIZE),
                                         ..default()
                                     },
-                                    icon_img,
+                                    selector_img.clone(),
                                 ));
                             });
                         }
                     }
+
+                    // Add item sprite if there's an item at this index
+                    if let Some(item_grid) = item_grid {
+                        if let Some(entry) = item_grid.items.get(i) {
+                            if let Some(icon_img) = game_sprites
+                                .get(SpriteSheetKey::IconItems)
+                                .and_then(|s| s.image_node(&entry.sprite_name))
+                            {
+                                cell.with_children(|cell_content| {
+                                    cell_content.spawn((
+                                        Node {
+                                            width: Val::Px(32.0),
+                                            height: Val::Px(32.0),
+                                            ..default()
+                                        },
+                                        icon_img,
+                                    ));
+                                });
+                            }
+                        }
+                    }
                 }
-            }
-        });
+            });
+    });
 }
 
 /// Update the grid selector position when selection changes.
@@ -162,17 +194,26 @@ fn update_grid_selector(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     item_grids: Query<(Entity, &ItemGrid, &Children), Changed<ItemGrid>>,
+    grid_containers: Query<&Children, With<GridContainer>>,
     grid_cells: Query<(Entity, &GridCell, &Children)>,
     selectors: Query<Entity, With<GridSelector>>,
 ) {
-    for (grid_entity, item_grid, grid_children) in &item_grids {
+    for (grid_entity, item_grid, item_grid_children) in &item_grids {
         // Skip if the grid entity is being despawned
         if commands.get_entity(grid_entity).is_none() {
             continue;
         }
 
+        // Find the GridContainer child to get the actual grid cells
+        let Some(container_children) = item_grid_children
+            .iter()
+            .find_map(|&child| grid_containers.get(child).ok())
+        else {
+            continue;
+        };
+
         // Remove existing selector from this grid only (check children of grid cells)
-        for &child in grid_children.iter() {
+        for &child in container_children.iter() {
             if let Ok((_, _, cell_children)) = grid_cells.get(child) {
                 for &cell_child in cell_children.iter() {
                     if selectors.contains(cell_child) {
@@ -190,7 +231,7 @@ fn update_grid_selector(
         }
 
         // Find the selected cell and add selector
-        for &child in grid_children.iter() {
+        for &child in container_children.iter() {
             if let Ok((cell_entity, grid_cell, _)) = grid_cells.get(child) {
                 if grid_cell.index == item_grid.selected_index {
                     // Skip if cell entity no longer exists

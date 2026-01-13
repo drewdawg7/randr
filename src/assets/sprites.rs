@@ -61,6 +61,10 @@ pub enum SpriteSheetKey {
     TravelBook,
     /// Book slot sprite
     BookSlot,
+    /// Grid slot sprite (item grid cells)
+    GridSlot,
+    /// Grid background (decorative box behind item grid)
+    GridBg,
 }
 
 impl SpriteSheetKey {
@@ -77,6 +81,8 @@ impl SpriteSheetKey {
             Self::UiSelectors,
             Self::TravelBook,
             Self::BookSlot,
+            Self::GridSlot,
+            Self::GridBg,
         ]
     }
 
@@ -93,6 +99,8 @@ impl SpriteSheetKey {
             Self::UiSelectors => "ui_selectors",
             Self::TravelBook => "travel_book",
             Self::BookSlot => "book_slot",
+            Self::GridSlot => "grid_slot",
+            Self::GridBg => "grid_bg",
         }
     }
 }
