@@ -20,6 +20,9 @@ pub fn setup_town_ui(mut commands: Commands, current_tab: Res<State<TownTab>>) {
             BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         ))
         .with_children(|parent| {
+            // Player stats banner at top
+            parent.spawn(PlayerStats);
+
             parent
                 .spawn((
                     Node {
@@ -31,16 +34,13 @@ pub fn setup_town_ui(mut commands: Commands, current_tab: Res<State<TownTab>>) {
                         column_gap: Val::Px(10.0),
                         ..default()
                     },
-                    BackgroundColor(Color::srgb(0.15, 0.15, 0.15)),
+                    BackgroundColor(Color::srgb(0.12, 0.12, 0.12)),
                 ))
                 .with_children(|header| {
                     for tab in TownTab::all() {
                         spawn_tab_header_item(header, tab, tab == *current_tab.get());
                     }
                 });
-
-            // Player stats banner directly below tabs
-            parent.spawn(PlayerStats);
 
             parent.spawn((
                 ContentArea,
