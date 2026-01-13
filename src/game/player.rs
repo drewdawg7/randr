@@ -50,7 +50,7 @@ impl Plugin for PlayerPlugin {
         let _ = inventory.add_to_inv(ItemId::BasicHPPotion.spawn());
 
         app.init_resource::<PlayerName>()
-            .init_resource::<PlayerGold>()
+            .insert_resource(PlayerGold(100))
             .insert_resource(Progression::new())
             .insert_resource(inventory)
             .insert_resource(default_player_stats())

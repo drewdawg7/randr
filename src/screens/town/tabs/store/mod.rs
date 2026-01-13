@@ -31,9 +31,7 @@ impl Plugin for StoreTabPlugin {
                 Update,
                 (
                     handle_store_input,
-                    // Only respawn on mode changes
-                    refresh_store_on_mode_change.run_if(resource_changed::<StoreMode>),
-                    // Reactive selection updates within each mode
+                    refresh_store_ui,
                     update_store_selection.run_if(resource_changed::<StoreSelections>),
                     populate_store_info_panel,
                 )
@@ -68,8 +66,8 @@ fn spawn_store_content(
     );
 }
 
-/// Refreshes store UI when mode changes.
-fn refresh_store_on_mode_change(
+/// Refreshes store UI when mode or inventory changes.
+fn refresh_store_ui(
     mut commands: Commands,
     store_mode: Res<StoreMode>,
     store_selections: Res<StoreSelections>,
@@ -80,6 +78,15 @@ fn refresh_store_on_mode_change(
     store: Res<Store>,
     game_sprites: Res<GameSprites>,
 ) {
+    // Check if we need to refresh
+    let mode_changed = store_mode.is_changed();
+    let inventory_changed_in_buy =
+        inventory.is_changed() && store_mode.mode == StoreModeKind::Buy;
+
+    if !mode_changed && !inventory_changed_in_buy {
+        return;
+    }
+
     // Despawn existing content
     for entity in &tab_content_query {
         commands.entity(entity).despawn_recursive();

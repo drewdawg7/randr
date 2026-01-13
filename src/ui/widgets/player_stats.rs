@@ -11,13 +11,18 @@ pub struct PlayerStatsPlugin;
 
 impl Plugin for PlayerStatsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(on_add_player_stats);
+        app.add_observer(on_add_player_stats)
+            .add_systems(Update, update_gold_display);
     }
 }
 
 /// Marker for player stats widget. Observer populates with sprites.
 #[derive(Component)]
 pub struct PlayerStats;
+
+/// Marker for the gold text so it can be updated reactively.
+#[derive(Component)]
+pub struct PlayerGoldText;
 
 fn on_add_player_stats(
     trigger: Trigger<OnAdd, PlayerStats>,
@@ -101,7 +106,19 @@ fn on_add_player_stats(
                 }
 
                 // Gold value
-                gold_row.spawn(UiText::new(format!("{}", gold.0)).size(16.0).gold().build());
+                gold_row.spawn((
+                    PlayerGoldText,
+                    UiText::new(format!("{}", gold.0)).size(16.0).gold().build(),
+                ));
             });
     });
+}
+
+/// System to update gold display when PlayerGold resource changes.
+fn update_gold_display(gold: Res<PlayerGold>, mut query: Query<&mut Text, With<PlayerGoldText>>) {
+    if gold.is_changed() {
+        for mut text in query.iter_mut() {
+            **text = format!("{}", gold.0);
+        }
+    }
 }
