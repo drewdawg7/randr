@@ -12,7 +12,7 @@ use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry, StoreListItem};
 use crate::ui::{selection_colors, selection_prefix};
 
 use super::constants::{BUYABLE_ITEMS, STORAGE_MENU_OPTIONS, STORE_MENU_OPTIONS};
-use super::state::{StoreModeKind, StoreMode, StoreSelections};
+use super::state::{BuyFocus, StoreModeKind, StoreMode, StoreSelections};
 
 /// Marker for the text of a store list item.
 #[derive(Component)]
@@ -94,6 +94,8 @@ fn spawn_buy_ui(
     inventory: &Inventory,
     game_sprites: &Res<GameSprites>,
 ) {
+    let store_focused = store_selections.buy_focus == BuyFocus::Store;
+
     // Title
     parent.spawn(UiText::new("Buy Items").heading().yellow().margin_bottom(10.0).build_with_node());
 
@@ -118,7 +120,7 @@ fn spawn_buy_ui(
                     game_sprites,
                 );
 
-                // Store grid (focused)
+                // Store grid
                 col.spawn(ItemGrid {
                     items: BUYABLE_ITEMS
                         .iter()
@@ -127,7 +129,7 @@ fn spawn_buy_ui(
                         })
                         .collect(),
                     selected_index: store_selections.buy.selected,
-                    is_focused: true,
+                    is_focused: store_focused,
                 });
             });
 
@@ -139,11 +141,11 @@ fn spawn_buy_ui(
             .with_children(|col| {
                 spawn_info_panel(
                     col,
-                    InfoPanelSource::Inventory { selected_index: 0 },
+                    InfoPanelSource::Inventory { selected_index: store_selections.buy_inventory.selected },
                     game_sprites,
                 );
 
-                // Inventory grid (unfocused, read-only)
+                // Inventory grid
                 let inventory_entries: Vec<ItemGridEntry> = inventory
                     .items
                     .iter()
@@ -154,14 +156,14 @@ fn spawn_buy_ui(
 
                 col.spawn(ItemGrid {
                     items: inventory_entries,
-                    selected_index: 0,
-                    is_focused: false,
+                    selected_index: store_selections.buy_inventory.selected,
+                    is_focused: !store_focused,
                 });
             });
         });
 
     // Navigation hint
-    spawn_navigation_hint(parent, "[↑↓←→] Navigate  [Enter] Buy  [Backspace] Back");
+    spawn_navigation_hint(parent, "[↑↓←→] Navigate  [Space] Switch Panel  [Enter] Buy  [Backspace] Back");
 }
 
 /// Spawn an info panel with the given source.

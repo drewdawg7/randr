@@ -17,6 +17,14 @@ pub enum StoreModeKind {
     StorageDeposit,
 }
 
+/// Which panel is focused in the buy screen.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
+pub enum BuyFocus {
+    #[default]
+    Store,
+    Inventory,
+}
+
 /// Store mode - tracks navigation state within the tab.
 #[derive(Resource, Default)]
 pub struct StoreMode {
@@ -28,6 +36,8 @@ pub struct StoreMode {
 pub struct StoreSelections {
     pub menu: SelectionState,
     pub buy: SelectionState,
+    pub buy_inventory: SelectionState,
+    pub buy_focus: BuyFocus,
     pub sell: SelectionState,
     pub storage_menu: SelectionState,
     pub storage_view: SelectionState,
@@ -44,6 +54,8 @@ impl Default for StoreSelections {
                 visible_count: 10,
             },
             buy: SelectionState::new(0),
+            buy_inventory: SelectionState::new(0),
+            buy_focus: BuyFocus::default(),
             sell: SelectionState::new(0),
             storage_menu: SelectionState {
                 selected: 0,

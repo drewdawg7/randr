@@ -4,10 +4,11 @@ use crate::game::{
     Storage, StorageDepositEvent, StorageWithdrawEvent, StorePurchaseEvent, StoreSellEvent,
 };
 use crate::input::{GameAction, NavigationDirection};
+use crate::screens::town::shared::SelectionState;
 use crate::inventory::Inventory;
 
 use super::constants::BUYABLE_ITEMS;
-use super::state::{StoreModeKind, StoreMode, StoreSelections};
+use super::state::{BuyFocus, StoreModeKind, StoreMode, StoreSelections};
 
 /// Handle input for the Store tab.
 pub fn handle_store_input(
@@ -31,6 +32,7 @@ pub fn handle_store_input(
                     &mut store_mode,
                     &mut store_selections,
                     action,
+                    &inventory,
                     &mut purchase_events,
                 )
             }
@@ -96,56 +98,89 @@ fn handle_menu_input(
 }
 
 /// Handle input for the buy screen with 2D grid navigation.
+/// Space toggles between store and inventory focus.
 fn handle_buy_input(
     store_mode: &mut StoreMode,
     store_selections: &mut StoreSelections,
     action: &GameAction,
+    inventory: &Inventory,
     purchase_events: &mut EventWriter<StorePurchaseEvent>,
 ) {
-    let items_count = BUYABLE_ITEMS.len();
     let grid_width = 5;
 
+    // Update inventory count for proper navigation bounds
+    store_selections.buy_inventory.set_count(inventory.items.len());
+
     match action {
-        GameAction::Navigate(NavigationDirection::Up) => {
-            // Move up one row
-            if store_selections.buy.selected >= grid_width {
-                store_selections.buy.selected -= grid_width;
-            }
+        GameAction::Mine => {
+            // Toggle focus between store and inventory
+            store_selections.buy_focus = match store_selections.buy_focus {
+                BuyFocus::Store => BuyFocus::Inventory,
+                BuyFocus::Inventory => BuyFocus::Store,
+            };
         }
-        GameAction::Navigate(NavigationDirection::Down) => {
-            // Move down one row
-            if store_selections.buy.selected + grid_width < items_count {
-                store_selections.buy.selected += grid_width;
-            }
-        }
-        GameAction::Navigate(NavigationDirection::Left) => {
-            // Move left one column
-            let col = store_selections.buy.selected % grid_width;
-            if col > 0 {
-                store_selections.buy.selected -= 1;
-            }
-        }
-        GameAction::Navigate(NavigationDirection::Right) => {
-            // Move right one column
-            let col = store_selections.buy.selected % grid_width;
-            if col < grid_width - 1 && store_selections.buy.selected + 1 < items_count {
-                store_selections.buy.selected += 1;
+        GameAction::Navigate(dir) => {
+            // Navigate within the focused grid
+            match store_selections.buy_focus {
+                BuyFocus::Store => {
+                    navigate_grid(&mut store_selections.buy, *dir, BUYABLE_ITEMS.len(), grid_width);
+                }
+                BuyFocus::Inventory => {
+                    navigate_grid(&mut store_selections.buy_inventory, *dir, inventory.items.len(), grid_width);
+                }
             }
         }
         GameAction::Select => {
-            if let Some(buyable) = BUYABLE_ITEMS.get(store_selections.buy.selected) {
-                purchase_events.send(StorePurchaseEvent {
-                    item_id: buyable.item_id,
-                    price: buyable.price,
-                    item_name: buyable.name.to_string(),
-                });
+            // Only buy from store grid, inventory is view-only
+            if store_selections.buy_focus == BuyFocus::Store {
+                if let Some(buyable) = BUYABLE_ITEMS.get(store_selections.buy.selected) {
+                    purchase_events.send(StorePurchaseEvent {
+                        item_id: buyable.item_id,
+                        price: buyable.price,
+                        item_name: buyable.name.to_string(),
+                    });
+                }
             }
         }
         GameAction::Back => {
             store_mode.mode = StoreModeKind::Menu;
             store_selections.buy.reset();
+            store_selections.buy_inventory.reset();
+            store_selections.buy_focus = BuyFocus::Store;
         }
         _ => {}
+    }
+}
+
+/// Helper to navigate within a 2D grid.
+fn navigate_grid(selection: &mut SelectionState, dir: NavigationDirection, count: usize, grid_width: usize) {
+    if count == 0 {
+        return;
+    }
+
+    match dir {
+        NavigationDirection::Up => {
+            if selection.selected >= grid_width {
+                selection.selected -= grid_width;
+            }
+        }
+        NavigationDirection::Down => {
+            if selection.selected + grid_width < count {
+                selection.selected += grid_width;
+            }
+        }
+        NavigationDirection::Left => {
+            let col = selection.selected % grid_width;
+            if col > 0 {
+                selection.selected -= 1;
+            }
+        }
+        NavigationDirection::Right => {
+            let col = selection.selected % grid_width;
+            if col < grid_width - 1 && selection.selected + 1 < count {
+                selection.selected += 1;
+            }
+        }
     }
 }
 
