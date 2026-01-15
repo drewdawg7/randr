@@ -1,0 +1,11 @@
+{
+    "frames": {
+        "Background": {
+            "frame": {"x": 0, "y": 0, "w": 200, "h": 128}
+        }
+    },
+    "meta": {
+        "image": "backgrounds/sunrise.png",
+        "size": {"w": 200, "h": 128}
+    }
+}

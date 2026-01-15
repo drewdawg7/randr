@@ -39,3 +39,7 @@ pub struct NeedsFightBackground;
 /// Marker component indicating the mob sprite needs to be populated.
 #[derive(Component)]
 pub struct NeedsMobSprite;
+
+/// Marker component indicating the fight popup needs to be populated.
+#[derive(Component)]
+pub struct NeedsFightPopup;

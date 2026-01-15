@@ -146,7 +146,8 @@
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/ase/MiniGoblin.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/goblin.png)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/ase/MiniGoblin.aseprite\" --list-tags)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/SlimesAse/MiniSlime.aseprite\" --list-tags)",
-      "Bash(\"$ASEPRITE\":*)"
+      "Bash(\"$ASEPRITE\":*)",
+      "Bash(montage:*)"
     ]
   },
   "enabledMcpjsonServers": [

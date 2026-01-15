@@ -6,13 +6,33 @@ use crate::game::Storage;
 use crate::inventory::{Inventory, InventoryItem};
 use crate::location::Store;
 use crate::screens::town::shared::{spawn_menu, MenuOption};
-use crate::screens::town::TabContent;
+use crate::screens::town::{ContentArea, TabContent};
 use crate::stats::StatType;
 use crate::ui::spawn_navigation_hint;
 use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry, StoreListItem};
 use crate::ui::{selection_colors, selection_prefix, UiText};
 
 use super::state::{BuyFocus, StoreMode, StoreModeKind, StoreSelections};
+
+/// Cached sprites for store UI, populated once when GameSprites loads.
+#[derive(Resource, Default)]
+pub struct StoreUiCache {
+    pub info_panel_bg: Option<ImageNode>,
+}
+
+/// System to populate the store UI cache from GameSprites.
+pub fn cache_store_ui_sprites(
+    mut cache: ResMut<StoreUiCache>,
+    game_sprites: Res<GameSprites>,
+) {
+    if cache.info_panel_bg.is_some() {
+        return;
+    }
+
+    cache.info_panel_bg = game_sprites
+        .get(SpriteSheetKey::UiAll)
+        .and_then(|s| s.image_node_sliced(UiAllSlice::InfoPanelBg.as_str(), 10.0));
+}
 
 /// Menu options for the store main menu.
 const STORE_MENU_OPTIONS: &[MenuOption] = &[
@@ -61,8 +81,73 @@ pub struct StoreInfoPanel {
     pub source: InfoPanelSource,
 }
 
-/// Spawn the store UI based on current mode.
-pub fn spawn_store_ui(
+/// System to spawn store UI content when entering the Store tab.
+pub fn spawn_store_content(
+    mut commands: Commands,
+    content_query: Query<Entity, With<ContentArea>>,
+    store_mode: Res<StoreMode>,
+    store_selections: Res<StoreSelections>,
+    inventory: Res<Inventory>,
+    storage: Res<Storage>,
+    store: Res<Store>,
+    ui_cache: Res<StoreUiCache>,
+) {
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+    spawn_store_ui_inner(
+        &mut commands,
+        content_entity,
+        &store_mode,
+        &store_selections,
+        &inventory,
+        &storage,
+        &store,
+        &ui_cache,
+    );
+}
+
+/// System to refresh store UI when mode or inventory changes.
+pub fn refresh_store_ui(
+    mut commands: Commands,
+    store_mode: Res<StoreMode>,
+    store_selections: Res<StoreSelections>,
+    content_query: Query<Entity, With<ContentArea>>,
+    tab_content_query: Query<Entity, With<TabContent>>,
+    inventory: Res<Inventory>,
+    storage: Res<Storage>,
+    store: Res<Store>,
+    ui_cache: Res<StoreUiCache>,
+) {
+    let mode_changed = store_mode.is_changed();
+    let inventory_changed_in_buy =
+        inventory.is_changed() && store_mode.mode == StoreModeKind::Buy;
+
+    if !mode_changed && !inventory_changed_in_buy {
+        return;
+    }
+
+    for entity in &tab_content_query {
+        commands.entity(entity).despawn_recursive();
+    }
+
+    let Ok(content_entity) = content_query.get_single() else {
+        return;
+    };
+    spawn_store_ui_inner(
+        &mut commands,
+        content_entity,
+        &store_mode,
+        &store_selections,
+        &inventory,
+        &storage,
+        &store,
+        &ui_cache,
+    );
+}
+
+/// Internal helper to spawn store UI.
+fn spawn_store_ui_inner(
     commands: &mut Commands,
     content_entity: Entity,
     store_mode: &StoreMode,
@@ -70,7 +155,7 @@ pub fn spawn_store_ui(
     inventory: &Inventory,
     storage: &Storage,
     store: &Store,
-    game_sprites: &Res<GameSprites>,
+    ui_cache: &StoreUiCache,
 ) {
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -87,7 +172,7 @@ pub fn spawn_store_ui(
             .with_children(|content| match store_mode.mode {
                 StoreModeKind::Menu => spawn_menu_ui(content, store_selections),
                 StoreModeKind::Buy => {
-                    spawn_buy_ui(content, store_selections, store, inventory, game_sprites)
+                    spawn_buy_ui(content, store_selections, store, inventory, ui_cache)
                 }
                 StoreModeKind::Sell => spawn_sell_ui(content, store_selections, inventory),
                 StoreModeKind::StorageMenu => spawn_storage_menu_ui(content, store_selections),
@@ -130,7 +215,7 @@ fn spawn_buy_ui(
     store_selections: &StoreSelections,
     store: &Store,
     inventory: &Inventory,
-    game_sprites: &Res<GameSprites>,
+    ui_cache: &StoreUiCache,
 ) {
     let store_focused = store_selections.buy_focus == BuyFocus::Store;
 
@@ -163,7 +248,7 @@ fn spawn_buy_ui(
                     InfoPanelSource::Store {
                         selected_index: store_selections.buy.selected,
                     },
-                    game_sprites,
+                    ui_cache,
                 );
 
                 // Store grid - use store inventory
@@ -191,7 +276,7 @@ fn spawn_buy_ui(
                     InfoPanelSource::Inventory {
                         selected_index: store_selections.buy_inventory.selected,
                     },
-                    game_sprites,
+                    ui_cache,
                 );
 
                 // Inventory grid
@@ -219,34 +304,27 @@ fn spawn_buy_ui(
 }
 
 /// Spawn an info panel with the given source.
-fn spawn_info_panel(
-    parent: &mut ChildBuilder,
-    source: InfoPanelSource,
-    game_sprites: &Res<GameSprites>,
-) {
+fn spawn_info_panel(parent: &mut ChildBuilder, source: InfoPanelSource, ui_cache: &StoreUiCache) {
     let panel_width = 240.0; // 5 columns × 48px
     let panel_height = 144.0; // 3 rows × 48px
 
-    let panel_image = game_sprites
-        .get(SpriteSheetKey::UiAll)
-        .and_then(|s| s.image_node_sliced(UiAllSlice::InfoPanelBg.as_str(), 10.0));
+    let node = Node {
+        width: Val::Px(panel_width),
+        height: Val::Px(panel_height),
+        margin: UiRect::bottom(Val::Px(10.0)),
+        flex_direction: FlexDirection::Column,
+        justify_content: JustifyContent::Center,
+        align_items: AlignItems::Center,
+        padding: UiRect::all(Val::Px(12.0)),
+        row_gap: Val::Px(4.0),
+        ..default()
+    };
 
-    let mut panel = parent.spawn((
-        StoreInfoPanel { source },
-        Node {
-            width: Val::Px(panel_width),
-            height: Val::Px(panel_height),
-            margin: UiRect::bottom(Val::Px(10.0)),
-            flex_direction: FlexDirection::Column,
-            justify_content: JustifyContent::Center,
-            align_items: AlignItems::Center,
-            padding: UiRect::all(Val::Px(12.0)),
-            row_gap: Val::Px(4.0),
-            ..default()
-        },
-    ));
-    if let Some(img) = panel_image {
-        panel.insert(img);
+    let mut entity = parent.spawn((StoreInfoPanel { source }, node));
+
+    // Insert background image if cached
+    if let Some(bg) = &ui_cache.info_panel_bg {
+        entity.insert(bg.clone());
     }
 }
 

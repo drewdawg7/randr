@@ -10,8 +10,8 @@ use super::input::{handle_player_turn_input, handle_post_combat_input};
 use super::state::FightScreenState;
 use super::ui::{
     cleanup_fight_screen, despawn_post_combat_overlay, populate_fight_background,
-    populate_mob_sprite, reset_fight_state, spawn_fight_screen, spawn_post_combat_overlay,
-    update_combat_visuals, update_enemy_name, SelectedFightBackground,
+    populate_fight_popup, populate_mob_sprite, reset_fight_state, spawn_fight_screen,
+    spawn_post_combat_overlay, update_combat_visuals, update_enemy_name, SelectedFightBackground,
 };
 use crate::ui::init_sprite_health_bars;
 
@@ -61,7 +61,12 @@ impl Plugin for FightPlugin {
             // UI systems
             .add_systems(
                 Update,
-                (init_sprite_health_bars, populate_fight_background, populate_mob_sprite)
+                (
+                    init_sprite_health_bars,
+                    populate_fight_background,
+                    populate_fight_popup,
+                    populate_mob_sprite,
+                )
                     .in_set(FightSystemSet::Ui),
             )
             .add_systems(

@@ -1,10 +1,8 @@
 use bevy::prelude::*;
-use bevy::ui::widget::NodeImageMode;
-use rand::seq::SliceRandom;
 
 use crate::combat::{ActiveCombatResource, CombatPhaseState};
 use crate::game::PlayerName;
-use crate::assets::{GameAssets, GameSprites, SpriteSheetKey};
+use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::ui::{
     update_health_bar, HealthBarBundle, HealthBarNameBundle, HealthBarText, HealthBarTextBundle,
     MobAnimation, MobSpriteSheets, SpriteHealthBar, SpriteHealthBarBundle,
@@ -14,8 +12,8 @@ use crate::ui::{nav_selection_text, MenuIndex};
 
 use super::components::{
     ActionMenuItem, EnemyHealthBar, EnemyNameLabel, FightScreenRoot, NeedsFightBackground,
-    NeedsMobSprite, PlayerHealthBar, PostCombatMenuItem, PostCombatOverlay, CombatResultText,
-    RewardsText,
+    NeedsFightPopup, NeedsMobSprite, PlayerHealthBar, PostCombatMenuItem, PostCombatOverlay,
+    CombatResultText, RewardsText,
 };
 use super::state::FightScreenState;
 
@@ -27,24 +25,21 @@ type PlayerHealthBarQuery<'w, 's> =
 type EnemyHealthBarQuery<'w, 's> =
     Query<'w, 's, Entity, (With<EnemyHealthBar>, Without<PlayerHealthBar>)>;
 
-/// Resource holding the selected fight background for the current fight.
+/// Resource holding the selected fight background name for the current fight.
 #[derive(Resource, Default)]
-pub struct SelectedFightBackground(pub Option<Handle<Image>>);
+pub struct SelectedFightBackground(pub Option<String>);
 
 pub fn spawn_fight_screen(
     mut commands: Commands,
     name: Res<PlayerName>,
     stats: Res<StatSheet>,
     combat_res: Res<ActiveCombatResource>,
-    game_assets: Res<GameAssets>,
     mut selected_bg: ResMut<SelectedFightBackground>,
 ) {
-    // Select a random background
-    selected_bg.0 = game_assets
-        .sprites
-        .fight_backgrounds
-        .choose(&mut rand::thread_rng())
-        .cloned();
+    // Select a random background (1-80)
+    let bg_index = rand::random::<u32>() % 80 + 1;
+    selected_bg.0 = Some(format!("Background_{}", bg_index));
+
     let (player_health, player_max_health, enemy_name, enemy_health, enemy_max_health) =
         if let Some(combat) = combat_res.get() {
             let enemy_info = combat.enemy_info();
@@ -76,33 +71,28 @@ pub fn spawn_fight_screen(
         .with_children(|parent| {
             spawn_combatants_section(parent, name.0, player_health, player_max_health, &enemy_name, enemy_health, enemy_max_health);
 
-            // Action menu popup in bottom right
-            if let Some(popup) = &game_assets.sprites.fight_popup {
-                parent
-                    .spawn((
-                        ImageNode::new(popup.clone()).with_mode(NodeImageMode::Sliced(TextureSlicer {
-                            border: BorderRect::square(8.0),
-                            ..default()
-                        })),
-                        Node {
-                            position_type: PositionType::Absolute,
-                            bottom: Val::Px(20.0),
-                            right: Val::Px(20.0),
-                            width: Val::Px(240.0),
-                            height: Val::Px(160.0),
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::FlexStart,
-                            justify_content: JustifyContent::FlexStart,
-                            row_gap: Val::Px(8.0),
-                            padding: UiRect::left(Val::Px(16.0)),
-                            ..default()
-                        },
-                    ))
-                    .with_children(|popup_parent| {
-                        spawn_action_item(popup_parent, 0, "Attack", true);
-                        spawn_action_item(popup_parent, 1, "Run", false);
-                    });
-            }
+            // Action menu popup in bottom right (populated by system when sprite loads)
+            parent
+                .spawn((
+                    NeedsFightPopup,
+                    Node {
+                        position_type: PositionType::Absolute,
+                        bottom: Val::Px(20.0),
+                        right: Val::Px(20.0),
+                        width: Val::Px(240.0),
+                        height: Val::Px(160.0),
+                        flex_direction: FlexDirection::Column,
+                        align_items: AlignItems::FlexStart,
+                        justify_content: JustifyContent::FlexStart,
+                        row_gap: Val::Px(8.0),
+                        padding: UiRect::left(Val::Px(16.0)),
+                        ..default()
+                    },
+                ))
+                .with_children(|popup_parent| {
+                    spawn_action_item(popup_parent, 0, "Attack", true);
+                    spawn_action_item(popup_parent, 1, "Run", false);
+                });
         });
 }
 
@@ -397,8 +387,15 @@ pub fn populate_fight_background(
     mut commands: Commands,
     query: Query<Entity, With<NeedsFightBackground>>,
     selected_bg: Res<SelectedFightBackground>,
+    game_sprites: Res<GameSprites>,
 ) {
-    let Some(bg) = &selected_bg.0 else {
+    let Some(bg_name) = &selected_bg.0 else {
+        return;
+    };
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::FightBackgrounds) else {
+        return;
+    };
+    let Some(bg) = sheet.image_node(bg_name) else {
         return;
     };
 
@@ -407,7 +404,7 @@ pub fn populate_fight_background(
             .entity(entity)
             .remove::<NeedsFightBackground>()
             .remove::<BackgroundColor>()
-            .insert(ImageNode::new(bg.clone()));
+            .insert(bg.clone());
     }
 }
 
@@ -440,6 +437,27 @@ pub fn populate_mob_sprite(
                 ),
                 MobAnimation::new(&sheet.animation),
             ));
+    }
+}
+
+/// System to populate the fight popup background when the sprite loads.
+pub fn populate_fight_popup(
+    mut commands: Commands,
+    query: Query<Entity, With<NeedsFightPopup>>,
+    game_sprites: Res<GameSprites>,
+) {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::FightPopup) else {
+        return;
+    };
+    let Some(popup) = sheet.image_node_sliced("Popup", 8.0) else {
+        return;
+    };
+
+    for entity in &query {
+        commands
+            .entity(entity)
+            .remove::<NeedsFightPopup>()
+            .insert(popup.clone());
     }
 }
 

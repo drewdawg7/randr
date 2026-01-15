@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameAssets, GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
+use crate::assets::{GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 
@@ -281,9 +281,12 @@ fn populate_randr_title(
 fn populate_menu_background(
     mut commands: Commands,
     query: Query<Entity, With<NeedsBackground>>,
-    game_assets: Res<GameAssets>,
+    game_sprites: Res<GameSprites>,
 ) {
-    let Some(bg) = &game_assets.sprites.menu_background else {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::MenuBackground) else {
+        return;
+    };
+    let Some(bg) = sheet.image_node("Background") else {
         return;
     };
 
@@ -292,7 +295,7 @@ fn populate_menu_background(
             .entity(entity)
             .remove::<NeedsBackground>()
             .remove::<BackgroundColor>()
-            .insert(ImageNode::new(bg.clone()));
+            .insert(bg.clone());
     }
 }
 
