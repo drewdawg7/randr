@@ -19,6 +19,10 @@ impl TileType {
     pub const fn is_solid(&self) -> bool {
         !self.is_walkable()
     }
+
+    pub const fn can_spawn_entity(&self) -> bool {
+        matches!(self, Self::Floor | Self::DoorOpen)
+    }
 }
 
 #[derive(Debug, Clone, Copy)]

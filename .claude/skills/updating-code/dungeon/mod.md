@@ -7,7 +7,8 @@ Data-driven dungeon system at `src/dungeon/`.
 src/dungeon/
     mod.rs              # Re-exports
     tile.rs             # TileType, Tile
-    layout.rs           # DungeonLayout
+    entity.rs           # DungeonEntity enum
+    layout.rs           # DungeonLayout (tiles + entities)
     generator.rs        # LayoutGenerator trait
     rendering.rs        # TileRenderer (logical -> visual)
     layouts/
@@ -40,7 +41,7 @@ pub struct Tile {
 ```
 
 ### DungeonLayout (`layout.rs`)
-2D grid of tiles with entrance/exit positions:
+2D grid of tiles with entrance/exit positions and entities:
 ```rust
 let layout = LayoutId::StartingRoom.layout();
 layout.width();           // Grid width
@@ -48,7 +49,28 @@ layout.height();          // Grid height
 layout.tile_at(x, y);     // Get tile
 layout.is_walkable(x, y); // Check passability
 layout.is_floor(x, y);    // Check floor-like tile
+
+// Entity methods
+layout.spawn_points();    // Get all tiles where entities can spawn
+layout.add_entity(x, y, entity);  // Add entity at position
+layout.entity_at(x, y);   // Get entity at position (if any)
+layout.entities();        // Get all entities
 ```
+
+### DungeonEntity (`entity.rs`)
+Entities that can be placed on tiles:
+```rust
+pub enum DungeonEntity {
+    Chest { variant: u8 },  // variant 0-3 for visual variety
+    // Future: Mob, Trap, etc.
+}
+
+// Get sprite info for rendering
+entity.sprite_sheet_key() // Returns SpriteSheetKey
+entity.sprite_name()      // Returns sprite name in sheet
+```
+
+See [entities.md](entities.md) for detailed entity documentation.
 
 ### LayoutId (`layouts/mod.rs`)
 Registry of predefined layouts:

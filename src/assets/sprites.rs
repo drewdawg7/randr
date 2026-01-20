@@ -29,6 +29,10 @@ pub enum SpriteSheetKey {
     GoldIcon,
     DefaultStatIcon,
     DungeonTileset,
+    Chest1,
+    Chest2,
+    Chest3,
+    Chest4,
 }
 
 impl SpriteSheetKey {
@@ -56,6 +60,10 @@ impl SpriteSheetKey {
             Self::GoldIcon,
             Self::DefaultStatIcon,
             Self::DungeonTileset,
+            Self::Chest1,
+            Self::Chest2,
+            Self::Chest3,
+            Self::Chest4,
         ]
     }
 
@@ -83,6 +91,10 @@ impl SpriteSheetKey {
             Self::GoldIcon => "item_detail_icons/gold_icon",
             Self::DefaultStatIcon => "item_detail_icons/default_stat_icon",
             Self::DungeonTileset => "dungeon_tileset",
+            Self::Chest1 => "dungeon_entities/chest_1",
+            Self::Chest2 => "dungeon_entities/chest_2",
+            Self::Chest3 => "dungeon_entities/chest_3",
+            Self::Chest4 => "dungeon_entities/chest_4",
         }
     }
 }

@@ -1,0 +1,13 @@
+{
+    "frames": {
+        "chest_2": {
+            "frame": {"x": 0, "y": 0, "w": 16, "h": 16},
+            "rotated": false,
+            "trimmed": false
+        }
+    },
+    "meta": {
+        "image": "sprites/dungeon_entities/chest_2.png",
+        "size": {"w": 16, "h": 16}
+    }
+}

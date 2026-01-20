@@ -1,3 +1,4 @@
+use super::entity::DungeonEntity;
 use super::tile::{Tile, TileType};
 
 #[derive(Debug, Clone)]
@@ -7,6 +8,7 @@ pub struct DungeonLayout {
     tiles: Vec<Vec<Tile>>,
     pub entrance: (usize, usize),
     pub exit: Option<(usize, usize)>,
+    entities: Vec<(usize, usize, DungeonEntity)>,
 }
 
 impl DungeonLayout {
@@ -18,6 +20,7 @@ impl DungeonLayout {
             tiles,
             entrance: (0, 0),
             exit: None,
+            entities: Vec::new(),
         }
     }
 
@@ -66,5 +69,27 @@ impl DungeonLayout {
                 .enumerate()
                 .map(move |(x, tile)| (x, y, tile))
         })
+    }
+
+    pub fn spawn_points(&self) -> Vec<(usize, usize)> {
+        self.iter()
+            .filter(|(_, _, tile)| tile.tile_type.can_spawn_entity())
+            .map(|(x, y, _)| (x, y))
+            .collect()
+    }
+
+    pub fn add_entity(&mut self, x: usize, y: usize, entity: DungeonEntity) {
+        self.entities.push((x, y, entity));
+    }
+
+    pub fn entities(&self) -> &[(usize, usize, DungeonEntity)] {
+        &self.entities
+    }
+
+    pub fn entity_at(&self, x: usize, y: usize) -> Option<&DungeonEntity> {
+        self.entities
+            .iter()
+            .find(|(ex, ey, _)| *ex == x && *ey == y)
+            .map(|(_, _, e)| e)
     }
 }

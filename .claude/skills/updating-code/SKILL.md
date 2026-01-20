@@ -26,7 +26,8 @@ Follow this workflow for ALL code changes:
 
 ## Documentation Index
 - [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, `UpgradeOperation` enum, recipe system, `RecipeId::material()`, cached recipe lists (`LazyLock`)
-- [dungeon/mod.md](dungeon/mod.md) - Dungeon data module (`src/dungeon/`), `TileType`, `Tile`, `DungeonLayout`, `LayoutId`, `TileRenderer`, adding new layouts
+- [dungeon/mod.md](dungeon/mod.md) - Dungeon data module (`src/dungeon/`), `TileType`, `Tile`, `DungeonEntity`, `DungeonLayout`, `LayoutId`, `TileRenderer`, entity spawning, adding new layouts
+- [dungeon/entities.md](dungeon/entities.md) - Dungeon entity system, `DungeonEntity` enum, `can_spawn_entity()`, adding new entity types, entity sprite assets
 - [dungeon/ui.md](dungeon/ui.md) - Dungeon tab UI, `DungeonTabPlugin`, CSS Grid rendering, `DungeonTileSlice` enum, tileset assets
 - [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 - [mob-sprites.md](mob-sprites.md) - Adding mob sprites, `SpriteAssets::mob_sprite()`, `populate_mob_sprite` system
