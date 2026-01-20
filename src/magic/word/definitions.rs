@@ -302,11 +302,6 @@ entity_macros::define_data! {
             description: "Open grassland, hunting grounds",
             properties: WordProperties::new().passive(),
         }
-        Dungeon {
-            name: "Dungeon",
-            description: "Dark depths, exploration",
-            properties: WordProperties::new().passive(),
-        }
 
         // ─────────────────────────────────────────────────────────────────────
         // Concept Words

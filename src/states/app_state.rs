@@ -12,10 +12,6 @@ pub struct RequestFightEvent;
 #[derive(Event, Debug, Clone)]
 pub struct RequestMineEvent;
 
-/// Event requesting transition to Dungeon state.
-#[derive(Event, Debug, Clone)]
-pub struct RequestDungeonEvent;
-
 // ============================================================================
 // Application State
 // ============================================================================
@@ -30,7 +26,6 @@ pub enum AppState {
     Fight,
     Profile,
     Mine,
-    Dungeon,
     Keybinds,
 }
 
@@ -65,7 +60,6 @@ impl Plugin for StateTransitionPlugin {
             .init_resource::<PreviousState>()
             .add_event::<RequestFightEvent>()
             .add_event::<RequestMineEvent>()
-            .add_event::<RequestDungeonEvent>()
             .add_systems(
                 StateTransition,
                 track_state_transitions.run_if(state_changed::<AppState>),
@@ -78,7 +72,6 @@ impl Plugin for StateTransitionPlugin {
 fn handle_state_transition_requests(
     mut fight_events: EventReader<RequestFightEvent>,
     mut mine_events: EventReader<RequestMineEvent>,
-    mut dungeon_events: EventReader<RequestDungeonEvent>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
     // Process fight requests
@@ -89,11 +82,6 @@ fn handle_state_transition_requests(
     // Process mine requests
     if mine_events.read().next().is_some() {
         next_state.set(AppState::Mine);
-    }
-
-    // Process dungeon requests
-    if dungeon_events.read().next().is_some() {
-        next_state.set(AppState::Dungeon);
     }
 }
 

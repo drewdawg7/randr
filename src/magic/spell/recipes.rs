@@ -149,24 +149,6 @@ pub static RECIPES: Lazy<Vec<Recipe>> = Lazy::new(|| {
                 effect: PassiveEffect::MobSpawnWeight(MobId::Slime, 5),
             },
         },
-        // Dungeon + Pass + Safe = Dungeon Bypass
-        Recipe {
-            required_words: HashSet::from([WordId::Dungeon, WordId::Pass, WordId::Safe]),
-            effect: ComputedSpell::Passive {
-                name: "Shadow Step".to_string(),
-                description: "You can bypass dungeon rooms without combat".to_string(),
-                effect: PassiveEffect::DungeonBypass,
-            },
-        },
-        // Dungeon + Sight = Dungeon Reveal
-        Recipe {
-            required_words: HashSet::from([WordId::Dungeon, WordId::Sight]),
-            effect: ComputedSpell::Passive {
-                name: "Dungeon Sight".to_string(),
-                description: "All rooms in dungeons are revealed".to_string(),
-                effect: PassiveEffect::DungeonReveal,
-            },
-        },
         // Gold + Find + Power = Bonus Gold Find (+15%)
         Recipe {
             required_words: HashSet::from([WordId::Gold, WordId::Find, WordId::Power]),

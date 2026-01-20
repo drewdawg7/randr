@@ -66,14 +66,6 @@ pub enum PassiveEffect {
     /// Discount percentage on store purchases
     StoreDiscount(i32),
 
-    // ─────────────────────────────────────────────────────────────────────────
-    // Dungeon System
-    // ─────────────────────────────────────────────────────────────────────────
-    /// Allows bypassing dungeon rooms without combat
-    DungeonBypass,
-
-    /// Reveals all rooms in a dungeon
-    DungeonReveal,
 }
 
 impl PassiveEffect {
@@ -113,10 +105,6 @@ impl PassiveEffect {
 
             // Store
             PassiveEffect::StoreDiscount(amount) => format!("{}% store discount", amount),
-
-            // Dungeon
-            PassiveEffect::DungeonBypass => "Can bypass dungeon rooms".to_string(),
-            PassiveEffect::DungeonReveal => "Reveals all dungeon rooms".to_string(),
         }
     }
 

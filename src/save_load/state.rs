@@ -2,7 +2,6 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use uuid::Uuid;
 
-use crate::dungeon::Dungeon;
 use crate::entities::Progression;
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem};
 use crate::item::enums::{ItemQuality, ItemType};
@@ -19,18 +18,16 @@ pub struct GameSaveState {
     pub version: u32,
     pub player: PlayerState,
     pub storage: StorageState,
-    pub dungeon: Option<DungeonState>,
 }
 
 impl GameSaveState {
     pub const CURRENT_VERSION: u32 = 1;
 
-    pub fn from_game(player: &Player, storage: &Storage, dungeon: Option<&Dungeon>) -> Self {
+    pub fn from_game(player: &Player, storage: &Storage) -> Self {
         Self {
             version: Self::CURRENT_VERSION,
             player: PlayerState::from_player(player),
             storage: StorageState::from_storage(storage),
-            dungeon: dungeon.map(DungeonState::from_dungeon),
         }
     }
 
@@ -40,10 +37,6 @@ impl GameSaveState {
 
     pub fn to_storage(&self) -> Storage {
         self.storage.to_storage()
-    }
-
-    pub fn to_dungeon(&self) -> Option<Dungeon> {
-        self.dungeon.as_ref().map(|d| d.to_dungeon())
     }
 }
 
@@ -346,32 +339,6 @@ impl StatInstanceState {
             current_value: self.current_value,
             max_value: self.max_value,
         }
-    }
-}
-
-// Dungeon state (simplified)
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct DungeonState {
-    pub name: String,
-    pub player_position: (i32, i32),
-    pub is_generated: bool,
-    // Rooms are complex with non-serializable types, so we'll skip for now
-    // The dungeon can be regenerated on load
-}
-
-impl DungeonState {
-    fn from_dungeon(dungeon: &Dungeon) -> Self {
-        Self {
-            name: dungeon.name.clone(),
-            player_position: dungeon.player_position,
-            is_generated: dungeon.is_generated,
-        }
-    }
-
-    fn to_dungeon(&self) -> Dungeon {
-        // Return a default dungeon - proper restoration would require
-        // full serialization of dungeon state
-        Dungeon::default()
     }
 }
 

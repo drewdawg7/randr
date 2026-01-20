@@ -1,6 +1,5 @@
 pub mod blacksmith;
 pub mod crafting;
-pub mod dungeon;
 pub mod items;
 pub mod magic;
 pub mod player;
@@ -13,7 +12,6 @@ pub use crate::combat::{
     ActiveCombatResource, AttackPerformed, CombatEnded, CombatPhaseState, CombatPlugin,
     CombatSourceResource, CombatStarted, PlayerDefeat, PlayerVictory,
 };
-pub use dungeon::{DungeonCompleted, DungeonPlugin, DungeonResource, RoomCleared, RoomEntered};
 pub use items::{ItemDropped, ItemEquipped, ItemPickedUp, ItemPlugin, ItemUnequipped, ItemUsed};
 pub use magic::MagicPlugin;
 pub use crate::player::{Player, PlayerGold, PlayerName};

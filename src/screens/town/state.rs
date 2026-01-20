@@ -20,7 +20,6 @@ pub enum TownTab {
     Blacksmith,
     Alchemist,
     Field,
-    Dungeon,
 }
 
 impl TownTab {
@@ -30,17 +29,15 @@ impl TownTab {
             TownTab::Blacksmith => "Blacksmith",
             TownTab::Alchemist => "Alchemist",
             TownTab::Field => "Field",
-            TownTab::Dungeon => "Dungeon",
         }
     }
 
-    pub fn all() -> [TownTab; 5] {
+    pub fn all() -> [TownTab; 4] {
         [
             TownTab::Store,
             TownTab::Blacksmith,
             TownTab::Alchemist,
             TownTab::Field,
-            TownTab::Dungeon,
         ]
     }
 
@@ -49,18 +46,16 @@ impl TownTab {
             TownTab::Store => TownTab::Blacksmith,
             TownTab::Blacksmith => TownTab::Alchemist,
             TownTab::Alchemist => TownTab::Field,
-            TownTab::Field => TownTab::Dungeon,
-            TownTab::Dungeon => TownTab::Store,
+            TownTab::Field => TownTab::Store,
         }
     }
 
     pub fn prev(&self) -> Self {
         match self {
-            TownTab::Store => TownTab::Dungeon,
+            TownTab::Store => TownTab::Field,
             TownTab::Blacksmith => TownTab::Store,
             TownTab::Alchemist => TownTab::Blacksmith,
             TownTab::Field => TownTab::Alchemist,
-            TownTab::Dungeon => TownTab::Field,
         }
     }
 }

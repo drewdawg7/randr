@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::entities::Progression;
-use crate::game::{DungeonResource, Storage};
+use crate::game::Storage;
 use crate::inventory::Inventory;
 use crate::player::{Player, PlayerGold, PlayerName};
 use crate::stats::StatSheet;
@@ -60,7 +60,6 @@ fn try_auto_load(
     mut inventory: ResMut<Inventory>,
     mut stats: ResMut<StatSheet>,
     mut storage: ResMut<Storage>,
-    mut dungeon: ResMut<DungeonResource>,
     mut game_loaded_events: EventWriter<GameLoaded>,
     mut failed_events: EventWriter<SaveLoadFailed>,
 ) {
@@ -74,7 +73,7 @@ fn try_auto_load(
 
     // Try to load the game
     match load_game(None) {
-        Ok((loaded_player, loaded_storage, loaded_dungeon)) => {
+        Ok((loaded_player, loaded_storage)) => {
             // Update resources from loaded player
             name.0 = loaded_player.name;
             gold.0 = loaded_player.gold;
@@ -82,9 +81,6 @@ fn try_auto_load(
             *inventory = loaded_player.inventory;
             *stats = loaded_player.stats;
             *storage = loaded_storage;
-            if let Some(d) = loaded_dungeon {
-                *dungeon = DungeonResource(d);
-            }
 
             info!("Game loaded successfully!");
 
@@ -113,21 +109,14 @@ fn handle_save_event(
     inventory: Res<Inventory>,
     stats: Res<StatSheet>,
     storage: Res<Storage>,
-    dungeon: Res<DungeonResource>,
     mut game_saved_events: EventWriter<GameSaved>,
     mut failed_events: EventWriter<SaveLoadFailed>,
 ) {
     for _ in save_events.read() {
         info!("Saving game...");
 
-        let dungeon_ref = if dungeon.is_generated {
-            Some(&dungeon.0)
-        } else {
-            None
-        };
-
         let player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
-        match save_game(&player, &storage, dungeon_ref, None) {
+        match save_game(&player, &storage, None) {
             Ok(_) => {
                 info!("Game saved successfully!");
                 game_saved_events.send(GameSaved {
@@ -154,7 +143,6 @@ fn handle_load_event(
     mut inventory: ResMut<Inventory>,
     mut stats: ResMut<StatSheet>,
     mut storage: ResMut<Storage>,
-    mut dungeon: ResMut<DungeonResource>,
     mut game_loaded_events: EventWriter<GameLoaded>,
     mut failed_events: EventWriter<SaveLoadFailed>,
 ) {
@@ -162,7 +150,7 @@ fn handle_load_event(
         info!("Loading game...");
 
         match load_game(None) {
-            Ok((loaded_player, loaded_storage, loaded_dungeon)) => {
+            Ok((loaded_player, loaded_storage)) => {
                 // Update resources from loaded player
                 name.0 = loaded_player.name;
                 gold.0 = loaded_player.gold;
@@ -170,9 +158,6 @@ fn handle_load_event(
                 *inventory = loaded_player.inventory;
                 *stats = loaded_player.stats;
                 *storage = loaded_storage;
-                if let Some(d) = loaded_dungeon {
-                    *dungeon = DungeonResource(d);
-                }
 
                 info!("Game loaded successfully!");
 

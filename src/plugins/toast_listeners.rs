@@ -1,9 +1,9 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::game::{
-    BrewingResult, DungeonCompleted, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped,
+    BrewingResult, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped,
     ItemPickedUp, ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerDefeat, PlayerHealed,
-    PlayerLeveledUp, PlayerVictory, RoomCleared, ShowToast,
+    PlayerLeveledUp, PlayerVictory, ShowToast,
 };
 use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, MobSpawned, TransactionCompleted};
 
@@ -31,7 +31,6 @@ impl Plugin for ToastListenersPlugin {
                 listen_item_events,
                 listen_combat_events,
                 listen_economy_events,
-                listen_dungeon_events,
                 listen_brewing_events,
             ),
         );
@@ -216,29 +215,6 @@ fn listen_economy_events(
                 action, event.item.name, event.price
             )));
         }
-    }
-}
-
-/// Listen to dungeon-related events
-fn listen_dungeon_events(
-    mut room_cleared_events: EventReader<RoomCleared>,
-    mut dungeon_completed_events: EventReader<DungeonCompleted>,
-    mut toast_writer: EventWriter<ShowToast>,
-) {
-    // Room cleared
-    for event in room_cleared_events.read() {
-        toast_writer.send(ShowToast::success(format!(
-            "{:?} room cleared at ({}, {})",
-            event.room_type, event.x, event.y
-        )));
-    }
-
-    // Dungeon completed
-    for event in dungeon_completed_events.read() {
-        toast_writer.send(ShowToast::success(format!(
-            "Dungeon '{}' completed! {} rooms cleared",
-            event.dungeon_name, event.rooms_cleared
-        )));
     }
 }
 

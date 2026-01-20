@@ -1,5 +1,4 @@
 mod monster_compendium;
-mod dungeon;
 mod fight;
 mod inventory_modal;
 mod keybinds;
@@ -12,7 +11,6 @@ mod spell_test_modal;
 pub mod town;
 
 pub use monster_compendium::MonsterCompendiumPlugin;
-pub use dungeon::DungeonScreenPlugin;
 pub use fight::FightPlugin;
 pub use inventory_modal::InventoryModalPlugin;
 pub use keybinds::KeybindsPlugin;

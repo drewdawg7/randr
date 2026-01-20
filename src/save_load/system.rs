@@ -2,7 +2,6 @@ use std::fs;
 use std::io;
 use std::path::{Path, PathBuf};
 
-use crate::dungeon::Dungeon;
 use crate::player::Player;
 use crate::storage::Storage;
 use super::state::GameSaveState;
@@ -87,7 +86,6 @@ pub fn get_save_file_path() -> Result<PathBuf, SaveLoadError> {
 pub fn save_game(
     player: &Player,
     storage: &Storage,
-    dungeon: Option<&Dungeon>,
     save_path: Option<&Path>,
 ) -> Result<(), SaveLoadError> {
     let save_path = match save_path {
@@ -96,7 +94,7 @@ pub fn save_game(
     };
 
     // Create the save state
-    let save_state = GameSaveState::from_game(player, storage, dungeon);
+    let save_state = GameSaveState::from_game(player, storage);
 
     // Serialize to JSON with pretty printing
     let json = serde_json::to_string_pretty(&save_state)?;
@@ -111,7 +109,7 @@ pub fn save_game(
 /// Load the game state from a file
 pub fn load_game(
     save_path: Option<&Path>,
-) -> Result<(Player, Storage, Option<Dungeon>), SaveLoadError> {
+) -> Result<(Player, Storage), SaveLoadError> {
     let save_path = match save_path {
         Some(p) => p.to_path_buf(),
         None => get_save_file_path()?,
@@ -137,10 +135,9 @@ pub fn load_game(
     // Convert back to game structures
     let player = save_state.to_player();
     let storage = save_state.to_storage();
-    let dungeon = save_state.to_dungeon();
 
     println!("Game loaded from: {}", save_path.display());
-    Ok((player, storage, dungeon))
+    Ok((player, storage))
 }
 
 /// Check if a save file exists

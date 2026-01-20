@@ -18,15 +18,9 @@ pub struct CombatLogState {
 }
 
 /// Spawns the appropriate mob based on the combat source.
-fn spawn_mob_for_source(combat_source: &CombatSourceResource) -> Mob {
-    match *combat_source {
-        CombatSourceResource::Field => {
-            // For testing: only spawn slimes
-            MobId::Slime.spawn()
-        }
-        CombatSourceResource::Dungeon => MobId::Goblin.spawn(),
-        CombatSourceResource::DungeonBoss => MobId::Dragon.spawn(),
-    }
+fn spawn_mob_for_source(_combat_source: &CombatSourceResource) -> Mob {
+    // For testing: only spawn slimes
+    MobId::Slime.spawn()
 }
 
 /// Sets up a new combat encounter: spawns mob, clears log, and initializes combat state.
@@ -47,13 +41,8 @@ fn setup_new_combat(
 }
 
 /// Returns the app state to transition to when leaving combat.
-fn get_return_state(combat_source: &CombatSourceResource) -> crate::states::AppState {
-    match *combat_source {
-        CombatSourceResource::Field => crate::states::AppState::Town,
-        CombatSourceResource::Dungeon | CombatSourceResource::DungeonBoss => {
-            crate::states::AppState::Dungeon
-        }
-    }
+fn get_return_state(_combat_source: &CombatSourceResource) -> crate::states::AppState {
+    crate::states::AppState::Town
 }
 
 #[derive(Event, Debug, Clone)]

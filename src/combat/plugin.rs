@@ -80,29 +80,11 @@ pub struct PlayerDefeat {
 pub enum CombatSourceResource {
     #[default]
     Field,
-    Dungeon,
-    DungeonBoss,
 }
 
 impl CombatSourceResource {
     pub fn set_field(&mut self) {
         *self = Self::Field;
-    }
-
-    pub fn set_dungeon(&mut self) {
-        *self = Self::Dungeon;
-    }
-
-    pub fn set_dungeon_boss(&mut self) {
-        *self = Self::DungeonBoss;
-    }
-
-    pub fn is_dungeon(&self) -> bool {
-        matches!(self, Self::Dungeon | Self::DungeonBoss)
-    }
-
-    pub fn is_dungeon_boss(&self) -> bool {
-        matches!(self, Self::DungeonBoss)
     }
 }
 

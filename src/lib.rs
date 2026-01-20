@@ -1,6 +1,5 @@
 pub mod assets;
 pub mod chest;
-pub mod dungeon;
 pub mod storage;
 pub mod economy;
 pub mod location;
