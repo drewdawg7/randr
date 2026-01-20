@@ -14,7 +14,7 @@ impl Plugin for MobAnimationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MobSpriteSheets>()
             .add_systems(PreStartup, load_mob_sprite_sheets)
-            .add_systems(Update, animate_mob_sprites);
+            .add_systems(Update, (animate_mob_sprites, populate_dungeon_mob_sprites));
     }
 }
 
@@ -63,6 +63,12 @@ impl MobSpriteSheets {
     fn insert(&mut self, mob_id: MobId, sheet: MobSpriteSheet) {
         self.sheets.insert(mob_id, sheet);
     }
+}
+
+/// Marker component for dungeon mob sprites that need population.
+#[derive(Component)]
+pub struct DungeonMobSprite {
+    pub mob_id: MobId,
 }
 
 /// Component for animated mob sprites.
@@ -172,6 +178,31 @@ fn animate_mob_sprites(time: Res<Time>, mut query: Query<(&mut MobAnimation, &mu
             if let Some(ref mut atlas) = image.texture_atlas {
                 atlas.index = animation.current_frame;
             }
+        }
+    }
+}
+
+/// System to populate dungeon mob sprites with textures and animation.
+fn populate_dungeon_mob_sprites(
+    mut commands: Commands,
+    query: Query<(Entity, &DungeonMobSprite), Added<DungeonMobSprite>>,
+    mob_sheets: Res<MobSpriteSheets>,
+) {
+    for (entity, marker) in &query {
+        if let Some(sheet) = mob_sheets.get(marker.mob_id) {
+            commands
+                .entity(entity)
+                .remove::<DungeonMobSprite>()
+                .insert((
+                    ImageNode::from_atlas_image(
+                        sheet.texture.clone(),
+                        TextureAtlas {
+                            layout: sheet.layout.clone(),
+                            index: sheet.animation.first_frame,
+                        },
+                    ),
+                    MobAnimation::new(&sheet.animation),
+                ));
         }
     }
 }

@@ -61,9 +61,10 @@ Check the Aseprite file for animation tags:
 
 | File | Purpose |
 |------|---------|
-| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `MobAnimation` component, animation system |
+| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `MobAnimation` component, animation systems |
 | `src/screens/fight/ui.rs` | `populate_mob_sprite()` - displays animated sprite in combat |
 | `src/screens/monster_compendium.rs` | `update_compendium_mob_sprite()` - displays animated sprite in MonsterCompendium |
+| `src/screens/town/tabs/dungeon.rs` | Spawns `DungeonMobSprite` markers for mobs in dungeon |
 | `assets/sprites/mobs/` | Sprite sheet PNGs and JSON metadata |
 
 ## How It Works
@@ -80,6 +81,7 @@ Check the Aseprite file for animation tags:
 
 - `NeedsMobSprite` - Used in fight screen for combat mob sprites
 - `CompendiumMobSprite` - Used in MonsterCompendium for display sprites
+- `DungeonMobSprite { mob_id: MobId }` - Used in dungeon tab for mob entities
 
 ### Components
 
@@ -124,6 +126,7 @@ The sprite display containers should be consistent across all locations:
 |----------|----------------|-------------------|------|
 | Fight Screen | 224x224 | 192x192 | `src/screens/fight/ui.rs:204-222` |
 | MonsterCompendium | 112x112 | 96x96 | `src/screens/monster_compendium.rs:233-249` |
+| Dungeon Tab | 48x48 | 48x48 | `src/screens/town/tabs/dungeon.rs` |
 
 ## Legacy Note
 
