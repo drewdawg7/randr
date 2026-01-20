@@ -624,7 +624,7 @@ pub fn populate_central_detail_panel(
                         if let Some(item) = display_item {
                             parent.spawn((
                                 Text::new(&item.name),
-                                TextFont { font_size: 24.0, ..default() },
+                                TextFont { font_size: 18.0, ..default() },
                                 text_color,
                                 Node { position_type: PositionType::Relative, ..default() },
                             ));
@@ -675,7 +675,7 @@ pub fn populate_central_detail_panel(
                         if let Some(inv_item) = inv_item {
                             parent.spawn((
                                 Text::new(&inv_item.item.name),
-                                TextFont { font_size: 24.0, ..default() },
+                                TextFont { font_size: 18.0, ..default() },
                                 text_color,
                                 Node { position_type: PositionType::Relative, ..default() },
                             ));

@@ -40,6 +40,7 @@ fn on_add_central_detail_panel(
         align_items: AlignItems::Center,
         padding: UiRect::all(Val::Px(12.0)),
         row_gap: Val::Px(4.0),
+        overflow: Overflow::clip(),
         ..default()
     });
 
