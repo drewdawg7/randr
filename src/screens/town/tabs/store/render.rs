@@ -606,6 +606,7 @@ pub fn populate_central_detail_panel(
     inventory: Res<Inventory>,
     store: Res<Store>,
     game_sprites: Res<GameSprites>,
+    game_fonts: Res<GameFonts>,
 ) {
     for (entity, panel) in &query {
         let text_color = TextColor(Color::srgb(0.4, 0.25, 0.15));
@@ -626,7 +627,7 @@ pub fn populate_central_detail_panel(
                             // Item name - top margin positions below decorative border
                             parent.spawn((
                                 Text::new(&item.name),
-                                TextFont { font_size: 18.0, ..default() },
+                                game_fonts.pixel_font(18.0),
                                 text_color,
                                 Node {
                                     margin: UiRect { top: Val::Px(36.0), ..default() },
@@ -637,7 +638,7 @@ pub fn populate_central_detail_panel(
                             // Item quality
                             parent.spawn((
                                 Text::new(item.quality.display_name()),
-                                TextFont { font_size: 16.0, ..default() },
+                                game_fonts.pixel_font(16.0),
                                 TextColor(item.quality.color()),
                                 Node { position_type: PositionType::Relative, ..default() },
                             ));
@@ -662,7 +663,7 @@ pub fn populate_central_detail_panel(
                                             }
                                             row.spawn((
                                                 Text::new(format!("{}", value)),
-                                                TextFont { font_size: 18.0, ..default() },
+                                                game_fonts.pixel_font(18.0),
                                                 text_color,
                                             ));
                                         });
@@ -686,14 +687,14 @@ pub fn populate_central_detail_panel(
                                     }
                                     row.spawn((
                                         Text::new(format!("{}", item.purchase_price())),
-                                        TextFont { font_size: 18.0, ..default() },
+                                        game_fonts.pixel_font(18.0),
                                         text_color,
                                     ));
                                 });
                         } else {
                             parent.spawn((
                                 Text::new("Out of Stock"),
-                                TextFont { font_size: 18.0, ..default() },
+                                game_fonts.pixel_font(18.0),
                                 text_color,
                                 Node {
                                     margin: UiRect { top: Val::Px(36.0), ..default() },
@@ -714,7 +715,7 @@ pub fn populate_central_detail_panel(
                             // Item name - top margin positions below decorative border
                             parent.spawn((
                                 Text::new(&inv_item.item.name),
-                                TextFont { font_size: 18.0, ..default() },
+                                game_fonts.pixel_font(18.0),
                                 text_color,
                                 Node {
                                     margin: UiRect { top: Val::Px(36.0), ..default() },
@@ -725,7 +726,7 @@ pub fn populate_central_detail_panel(
                             // Item quality
                             parent.spawn((
                                 Text::new(inv_item.item.quality.display_name()),
-                                TextFont { font_size: 16.0, ..default() },
+                                game_fonts.pixel_font(16.0),
                                 TextColor(inv_item.item.quality.color()),
                                 Node { position_type: PositionType::Relative, ..default() },
                             ));
@@ -750,7 +751,7 @@ pub fn populate_central_detail_panel(
                                             }
                                             row.spawn((
                                                 Text::new(format!("{}", value)),
-                                                TextFont { font_size: 18.0, ..default() },
+                                                game_fonts.pixel_font(18.0),
                                                 text_color,
                                             ));
                                         });
@@ -774,14 +775,14 @@ pub fn populate_central_detail_panel(
                                     }
                                     row.spawn((
                                         Text::new(format!("{}", inv_item.item.sell_price())),
-                                        TextFont { font_size: 18.0, ..default() },
+                                        game_fonts.pixel_font(18.0),
                                         text_color,
                                     ));
                                 });
                         } else {
                             parent.spawn((
                                 Text::new("Empty"),
-                                TextFont { font_size: 18.0, ..default() },
+                                game_fonts.pixel_font(18.0),
                                 text_color,
                                 Node {
                                     margin: UiRect { top: Val::Px(36.0), ..default() },

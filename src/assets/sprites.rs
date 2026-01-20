@@ -393,7 +393,7 @@ fn load_assets(
     mut game_fonts: ResMut<GameFonts>,
     mut pending: ResMut<PendingSpriteSheets>,
 ) {
-    game_fonts.pixel = asset_server.load("fonts/CuteFantasy-5x9.ttf");
+    game_fonts.pixel = asset_server.load("fonts/FantasyRPGtitle.ttf");
 
     for key in SpriteSheetKey::all() {
         let path = format!("sprites/{}.json", key.asset_name());
