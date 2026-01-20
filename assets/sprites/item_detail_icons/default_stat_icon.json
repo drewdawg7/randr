@@ -1,0 +1,13 @@
+{
+    "frames": {
+        "default_stat_icon": {
+            "frame": {"x": 0, "y": 0, "w": 48, "h": 48},
+            "rotated": false,
+            "trimmed": false
+        }
+    },
+    "meta": {
+        "image": "sprites/item_detail_icons/Icon_08_Outline.png",
+        "size": {"w": 48, "h": 48}
+    }
+}

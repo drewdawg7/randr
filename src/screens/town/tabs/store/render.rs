@@ -642,38 +642,54 @@ pub fn populate_central_detail_panel(
                                 Node { position_type: PositionType::Relative, ..default() },
                             ));
 
-                            // Stats
+                            // Stats - all use icon + value format
                             for stat_type in StatType::all() {
                                 let value = item.stats.value(*stat_type);
                                 if value > 0 {
-                                    if *stat_type == StatType::Attack {
-                                        // Attack: icon + value
-                                        spawn_attack_stat_row(parent, value, text_color, &game_sprites);
-                                    } else {
-                                        let stat_name = match stat_type {
-                                            StatType::Health => "HP",
-                                            StatType::Attack => "ATK",
-                                            StatType::Defense => "DEF",
-                                            StatType::GoldFind => "Gold Find",
-                                            StatType::Mining => "Mining",
-                                            StatType::MagicFind => "Magic Find",
-                                        };
-                                        parent.spawn((
-                                            Text::new(format!("{}: +{}", stat_name, value)),
-                                            TextFont { font_size: 18.0, ..default() },
-                                            text_color,
-                                            Node { position_type: PositionType::Relative, ..default() },
-                                        ));
-                                    }
+                                    let icon_slice = ItemDetailIconsSlice::for_stat(*stat_type);
+                                    parent
+                                        .spawn(Node {
+                                            flex_direction: FlexDirection::Row,
+                                            align_items: AlignItems::Center,
+                                            column_gap: Val::Px(4.0),
+                                            ..default()
+                                        })
+                                        .with_children(|row| {
+                                            if let Some(sheet) = game_sprites.get(icon_slice.sprite_sheet_key()) {
+                                                if let Some(img) = sheet.image_node(icon_slice.as_str()) {
+                                                    row.spawn((img, Node::default()));
+                                                }
+                                            }
+                                            row.spawn((
+                                                Text::new(format!("{}", value)),
+                                                TextFont { font_size: 18.0, ..default() },
+                                                text_color,
+                                            ));
+                                        });
                                 }
                             }
 
-                            parent.spawn((
-                                GoldDisplay::new(item.purchase_price())
-                                    .with_font_size(18.0)
-                                    .with_color(text_color.0),
-                                Node { position_type: PositionType::Relative, ..default() },
-                            ));
+                            // Price with gold icon
+                            let gold_slice = ItemDetailIconsSlice::GoldIcon;
+                            parent
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    column_gap: Val::Px(4.0),
+                                    ..default()
+                                })
+                                .with_children(|row| {
+                                    if let Some(sheet) = game_sprites.get(gold_slice.sprite_sheet_key()) {
+                                        if let Some(img) = sheet.image_node(gold_slice.as_str()) {
+                                            row.spawn((img, Node::default()));
+                                        }
+                                    }
+                                    row.spawn((
+                                        Text::new(format!("{}", item.purchase_price())),
+                                        TextFont { font_size: 18.0, ..default() },
+                                        text_color,
+                                    ));
+                                });
                         } else {
                             parent.spawn((
                                 Text::new("Out of Stock"),
@@ -714,38 +730,54 @@ pub fn populate_central_detail_panel(
                                 Node { position_type: PositionType::Relative, ..default() },
                             ));
 
-                            // Stats
+                            // Stats - all use icon + value format
                             for stat_type in StatType::all() {
                                 let value = inv_item.item.stats.value(*stat_type);
                                 if value > 0 {
-                                    if *stat_type == StatType::Attack {
-                                        // Attack: icon + value
-                                        spawn_attack_stat_row(parent, value, text_color, &game_sprites);
-                                    } else {
-                                        let stat_name = match stat_type {
-                                            StatType::Health => "HP",
-                                            StatType::Attack => "ATK",
-                                            StatType::Defense => "DEF",
-                                            StatType::GoldFind => "Gold Find",
-                                            StatType::Mining => "Mining",
-                                            StatType::MagicFind => "Magic Find",
-                                        };
-                                        parent.spawn((
-                                            Text::new(format!("{}: +{}", stat_name, value)),
-                                            TextFont { font_size: 18.0, ..default() },
-                                            text_color,
-                                            Node { position_type: PositionType::Relative, ..default() },
-                                        ));
-                                    }
+                                    let icon_slice = ItemDetailIconsSlice::for_stat(*stat_type);
+                                    parent
+                                        .spawn(Node {
+                                            flex_direction: FlexDirection::Row,
+                                            align_items: AlignItems::Center,
+                                            column_gap: Val::Px(4.0),
+                                            ..default()
+                                        })
+                                        .with_children(|row| {
+                                            if let Some(sheet) = game_sprites.get(icon_slice.sprite_sheet_key()) {
+                                                if let Some(img) = sheet.image_node(icon_slice.as_str()) {
+                                                    row.spawn((img, Node::default()));
+                                                }
+                                            }
+                                            row.spawn((
+                                                Text::new(format!("{}", value)),
+                                                TextFont { font_size: 18.0, ..default() },
+                                                text_color,
+                                            ));
+                                        });
                                 }
                             }
 
-                            parent.spawn((
-                                GoldDisplay::new(inv_item.item.sell_price())
-                                    .with_font_size(18.0)
-                                    .with_color(text_color.0),
-                                Node { position_type: PositionType::Relative, ..default() },
-                            ));
+                            // Sell price with gold icon
+                            let gold_slice = ItemDetailIconsSlice::GoldIcon;
+                            parent
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    align_items: AlignItems::Center,
+                                    column_gap: Val::Px(4.0),
+                                    ..default()
+                                })
+                                .with_children(|row| {
+                                    if let Some(sheet) = game_sprites.get(gold_slice.sprite_sheet_key()) {
+                                        if let Some(img) = sheet.image_node(gold_slice.as_str()) {
+                                            row.spawn((img, Node::default()));
+                                        }
+                                    }
+                                    row.spawn((
+                                        Text::new(format!("{}", inv_item.item.sell_price())),
+                                        TextFont { font_size: 18.0, ..default() },
+                                        text_color,
+                                    ));
+                                });
                         } else {
                             parent.spawn((
                                 Text::new("Empty"),
@@ -761,33 +793,4 @@ pub fn populate_central_detail_panel(
             }
         }
     }
-}
-
-fn spawn_attack_stat_row(
-    parent: &mut ChildBuilder,
-    value: i32,
-    text_color: TextColor,
-    game_sprites: &GameSprites,
-) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Row,
-            align_items: AlignItems::Center,
-            column_gap: Val::Px(4.0),
-            ..default()
-        })
-        .with_children(|row| {
-            // Attack icon (48x48 native size)
-            if let Some(sheet) = game_sprites.get(SpriteSheetKey::ItemDetailIcons) {
-                if let Some(img) = sheet.image_node(ItemDetailIconsSlice::AttackIcon.as_str()) {
-                    row.spawn((img, Node::default()));
-                }
-            }
-            // Value text (no + prefix for attack)
-            row.spawn((
-                Text::new(format!("{}", value)),
-                TextFont { font_size: 18.0, ..default() },
-                text_color,
-            ));
-        });
 }

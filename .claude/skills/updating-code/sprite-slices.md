@@ -25,6 +25,7 @@ let cell = sheet.image_node(UiAllSlice::CellBackground.as_str());  // GOOD
 | `HealthBarSlice` | `UiAll` | Health0-Health100, `for_percent(f32)` helper |
 | `TravelBookSlice` | `TravelBook` | Banner |
 | `BookSlotSlice` | `BookSlot` | Slot |
+| `ItemDetailIconsSlice` | (multiple) | AttackIcon, HealthIcon, DefenseIcon, GoldIcon, DefaultStatIcon |
 
 ## Common Patterns
 
@@ -50,6 +51,9 @@ let idx = sheet.get(slice.as_str())?;
 let heart = sheet.image_node(UiAllSlice::HeartIcon.as_str());
 let gold = sheet.image_node(UiAllSlice::GoldIcon.as_str());
 ```
+
+### Stat icons with ItemDetailIconsSlice
+See [stat-icons.md](stat-icons.md) for full documentation on `ItemDetailIconsSlice`.
 
 ## Adding New Slices
 

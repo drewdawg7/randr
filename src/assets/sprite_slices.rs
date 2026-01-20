@@ -221,15 +221,48 @@ impl DetailPanelSlice {
     ];
 }
 
+use crate::stats::StatType;
+
+use super::SpriteSheetKey;
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ItemDetailIconsSlice {
     AttackIcon,
+    HealthIcon,
+    DefenseIcon,
+    GoldIcon,
+    DefaultStatIcon,
 }
 
 impl ItemDetailIconsSlice {
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::AttackIcon => "attack_icon",
+            Self::HealthIcon => "health_icon",
+            Self::DefenseIcon => "defense_icon",
+            Self::GoldIcon => "gold_icon",
+            Self::DefaultStatIcon => "default_stat_icon",
+        }
+    }
+
+    /// Returns the SpriteSheetKey for this icon slice.
+    pub const fn sprite_sheet_key(self) -> SpriteSheetKey {
+        match self {
+            Self::AttackIcon => SpriteSheetKey::ItemDetailIcons,
+            Self::HealthIcon => SpriteSheetKey::HealthIcon,
+            Self::DefenseIcon => SpriteSheetKey::DefenseIcon,
+            Self::GoldIcon => SpriteSheetKey::GoldIcon,
+            Self::DefaultStatIcon => SpriteSheetKey::DefaultStatIcon,
+        }
+    }
+
+    /// Maps a StatType to its display icon. Reusable across any UI that displays stats.
+    pub fn for_stat(stat_type: StatType) -> Self {
+        match stat_type {
+            StatType::Health => Self::HealthIcon,
+            StatType::Attack => Self::AttackIcon,
+            StatType::Defense => Self::DefenseIcon,
+            _ => Self::DefaultStatIcon, // GoldFind, Mining, MagicFind
         }
     }
 }

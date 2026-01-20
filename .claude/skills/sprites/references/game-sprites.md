@@ -1,5 +1,24 @@
 # GameSprites Resource
 
+## CRITICAL: Never Pass GameSprites as a Parameter
+
+**DO NOT pass `&GameSprites` or `Res<GameSprites>` to helper functions.**
+
+This is an anti-pattern. If you need sprites in spawning logic:
+1. Keep the logic inline within the system that already has `Res<GameSprites>`
+2. Or use the marker+system pattern (see "Spawn Functions Must Be Systems" below)
+
+**BAD:**
+```rust
+fn my_helper(parent: &mut ChildBuilder, game_sprites: &GameSprites) { ... }
+```
+
+**GOOD:**
+```rust
+// Inline within the system
+if let Some(sheet) = game_sprites.get(SpriteSheetKey::X) { ... }
+```
+
 ## Overview
 
 All sprites in this codebase are accessed through `GameSprites`, which stores sprite sheets indexed by `SpriteSheetKey`. **Never use `GameAssets` for sprites** - that's legacy code for standalone images only.

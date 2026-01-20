@@ -24,6 +24,10 @@ pub enum SpriteSheetKey {
     ShopBgSlices,
     DetailPanelBg,
     ItemDetailIcons,
+    HealthIcon,
+    DefenseIcon,
+    GoldIcon,
+    DefaultStatIcon,
 }
 
 impl SpriteSheetKey {
@@ -46,6 +50,10 @@ impl SpriteSheetKey {
             Self::ShopBgSlices,
             Self::DetailPanelBg,
             Self::ItemDetailIcons,
+            Self::HealthIcon,
+            Self::DefenseIcon,
+            Self::GoldIcon,
+            Self::DefaultStatIcon,
         ]
     }
 
@@ -68,6 +76,10 @@ impl SpriteSheetKey {
             Self::ShopBgSlices => "shop_bg_slices",
             Self::DetailPanelBg => "detail_panel_bg",
             Self::ItemDetailIcons => "item_detail_icons/item_detail_icons",
+            Self::HealthIcon => "item_detail_icons/health_icon",
+            Self::DefenseIcon => "item_detail_icons/defense_icon",
+            Self::GoldIcon => "item_detail_icons/gold_icon",
+            Self::DefaultStatIcon => "item_detail_icons/default_stat_icon",
         }
     }
 }
