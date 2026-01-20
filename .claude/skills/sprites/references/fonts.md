@@ -5,7 +5,18 @@
 ```rust
 #[derive(Resource, Default)]
 pub struct GameFonts {
-    pub pixel: Handle<Font>,  // CuteFantasy-5x9 pixel font
+    pub pixel: Handle<Font>,  // FantasyRPGtitle (size 11) font
+}
+
+impl GameFonts {
+    pub fn pixel_font(&self, font_size: f32) -> TextFont {
+        TextFont {
+            font: self.pixel.clone(),
+            font_size,
+            font_smoothing: FontSmoothing::None,
+            ..default()
+        }
+    }
 }
 ```
 
@@ -13,7 +24,24 @@ Access via `Res<GameFonts>` in systems.
 
 ## Using Custom Fonts
 
-### Basic Usage
+### Basic Usage (Recommended)
+
+Use the `pixel_font()` helper method:
+
+```rust
+fn spawn_text(
+    mut commands: Commands,
+    game_fonts: Res<GameFonts>,
+) {
+    commands.spawn((
+        Text::new("Hello"),
+        game_fonts.pixel_font(16.0),
+        TextColor(Color::WHITE),
+    ));
+}
+```
+
+### Manual TextFont (if needed)
 
 ```rust
 fn spawn_text(
@@ -124,7 +152,7 @@ fn load_assets(
     mut game_fonts: ResMut<GameFonts>,
     // ...
 ) {
-    game_fonts.pixel = asset_server.load("fonts/CuteFantasy-5x9.ttf");
+    game_fonts.pixel = asset_server.load("fonts/FantasyRPGtitle.ttf");
     game_fonts.my_new_font = asset_server.load("fonts/MyNewFont.ttf");
 }
 ```
