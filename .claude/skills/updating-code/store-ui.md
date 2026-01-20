@@ -16,6 +16,10 @@ col.spawn(ItemGrid {
 });
 ```
 
+## CentralDetailPanel
+
+Buy screen central panel (`src/ui/widgets/central_detail_panel.rs`) with nine-slice background using `DetailPanelSlice`.
+
 ## StoreInfoPanel
 
 Displays item details above grids using `InfoPanelSource`:

@@ -1,27 +1,3 @@
-//! Sprite loading and management for the game.
-//!
-//! This module provides a system for loading sprite sheets with JSON metadata,
-//! with support for named sprite access via Bevy's async asset pipeline.
-//!
-//! # Usage
-//!
-//! ```ignore
-//! use crate::assets::sprites::SpriteSheetKey;
-//!
-//! // Access sprites by key
-//! if let Some(icons) = game_sprites.get(SpriteSheetKey::UiIcons) {
-//!     if let Some(index) = icons.get("heart_full") {
-//!         commands.spawn((
-//!             Sprite::from_atlas_image(
-//!                 icons.texture.clone(),
-//!                 TextureAtlas { layout: icons.layout.clone(), index },
-//!             ),
-//!             Transform::from_xyz(0.0, 0.0, 0.0),
-//!         ));
-//!     }
-//! }
-//! ```
-
 use bevy::{
     asset::{io::Reader, AssetLoader, LoadContext},
     prelude::*,
@@ -29,50 +5,27 @@ use bevy::{
 use serde::Deserialize;
 use std::collections::HashMap;
 
-// ============================================================================
-// Sprite Sheet Key Enum
-// ============================================================================
-
-/// Keys for identifying sprite sheets.
-///
-/// Add new variants here when adding new sprite sheets to the game.
-/// Remember to also update `SpriteSheetKey::all()`.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SpriteSheetKey {
-    /// UI icons (hearts, stars, items, arrows, etc.)
     UiIcons,
-    /// UI buttons (various sizes and colors)
     UiButtons,
-    /// Book UI elements (frames, backgrounds)
     BookUi,
-    /// UI frames and borders
     UiFrames,
-    /// UI bars (health, mana, progress)
     UiBars,
-    /// Combined UI sprite sheet (Cute Fantasy UI pack)
     UiAll,
-    /// Item icons (potions, weapons, armor, etc.)
     IconItems,
-    /// UI selectors (selection highlights, cursors)
     UiSelectors,
-    /// TravelBook UI elements (banners, panels)
     TravelBook,
-    /// Book slot sprite
     BookSlot,
-    /// Grid slot sprite (item grid cells)
     GridSlot,
-    /// Main menu background image
     MenuBackground,
-    /// Fight action popup background
     FightPopup,
-    /// Fight screen backgrounds (80 variants)
     FightBackgrounds,
-    /// Nine-slice pieces for shop/item grid background (9 slices, 48x48 each)
     ShopBgSlices,
+    DetailPanelBg,
 }
 
 impl SpriteSheetKey {
-    /// Get all sprite sheet keys.
     pub const fn all() -> &'static [Self] {
         &[
             Self::UiIcons,
@@ -90,10 +43,10 @@ impl SpriteSheetKey {
             Self::FightPopup,
             Self::FightBackgrounds,
             Self::ShopBgSlices,
+            Self::DetailPanelBg,
         ]
     }
 
-    /// Get the asset file name (without extension) for this sprite sheet.
     pub const fn asset_name(&self) -> &'static str {
         match self {
             Self::UiIcons => "ui_icons",
@@ -111,45 +64,30 @@ impl SpriteSheetKey {
             Self::FightPopup => "fight_popup",
             Self::FightBackgrounds => "fight_backgrounds",
             Self::ShopBgSlices => "shop_bg_slices",
+            Self::DetailPanelBg => "detail_panel_bg",
         }
     }
 }
 
-// ============================================================================
-// Sprite Sheet Metadata Types (for JSON parsing)
-// ============================================================================
-
-/// Sprite sheet JSON metadata (Hash format).
-///
-/// This represents the structure of sprite sheet JSON files.
 #[derive(Asset, TypePath, Debug, Deserialize)]
 pub struct SpriteSheetMeta {
-    /// Map of frame names to frame data.
     pub frames: HashMap<String, SpriteFrameMeta>,
-    /// Metadata about the sprite sheet.
     pub meta: SpriteSheetInfo,
 }
 
-/// A single frame/sprite in the sheet.
 #[derive(Debug, Deserialize)]
 pub struct SpriteFrameMeta {
-    /// The rectangle defining this frame's position in the sheet.
     pub frame: SpriteRect,
-    /// Whether the frame was rotated during packing.
     #[serde(default)]
     pub rotated: bool,
-    /// Whether the frame was trimmed (transparent pixels removed).
     #[serde(default)]
     pub trimmed: bool,
-    /// Original sprite size before trimming.
     #[serde(rename = "sourceSize")]
     pub source_size: Option<SpriteSize>,
-    /// Sprite position within the original canvas.
     #[serde(rename = "spriteSourceSize")]
     pub sprite_source_size: Option<SpriteRect>,
 }
 
-/// Rectangle coordinates in the sprite sheet.
 #[derive(Debug, Deserialize, Clone, Copy)]
 pub struct SpriteRect {
     pub x: u32,
@@ -158,42 +96,30 @@ pub struct SpriteRect {
     pub h: u32,
 }
 
-/// Metadata about the sprite sheet.
 #[derive(Debug, Deserialize)]
 pub struct SpriteSheetInfo {
-    /// Total size of the sprite sheet image.
     pub size: SpriteSize,
-    /// Original filename (optional).
     #[serde(default)]
     pub image: String,
-    /// Application that created this (optional).
     #[serde(default)]
     pub app: String,
-    /// Scale factor (optional).
     #[serde(default)]
     pub scale: String,
-    /// Slices defined in the sprite sheet (for irregular sprite regions).
     #[serde(default)]
     pub slices: Vec<SpriteSlice>,
 }
 
-/// A slice definition for irregular sprite regions.
 #[derive(Debug, Deserialize)]
 pub struct SpriteSlice {
-    /// Name of the slice.
     pub name: String,
-    /// Keyframes containing bounds for this slice.
     pub keys: Vec<SpriteSliceKey>,
 }
 
-/// A keyframe for a slice, containing its bounds.
 #[derive(Debug, Deserialize)]
 pub struct SpriteSliceKey {
-    /// The bounding rectangle for this slice.
     pub bounds: SpriteRect,
 }
 
-/// Size dimensions.
 #[derive(Debug, Deserialize, Clone, Copy)]
 pub struct SpriteSize {
     pub w: u32,
@@ -201,15 +127,11 @@ pub struct SpriteSize {
 }
 
 impl SpriteSheetMeta {
-    /// Convert this metadata to a Bevy TextureAtlasLayout.
-    ///
-    /// Returns both the layout and a mapping from sprite names to atlas indices.
     pub fn to_layout(&self) -> (TextureAtlasLayout, HashMap<String, usize>) {
         let mut layout =
             TextureAtlasLayout::new_empty(UVec2::new(self.meta.size.w, self.meta.size.h));
         let mut name_to_index = HashMap::new();
 
-        // Sort frames by name for consistent ordering
         let mut frames: Vec<_> = self.frames.iter().collect();
         frames.sort_by_key(|(name, _)| *name);
 
@@ -224,7 +146,6 @@ impl SpriteSheetMeta {
             name_to_index.insert(name.clone(), index);
         }
 
-        // Also add slices (used for irregular sprite regions)
         for slice in &self.meta.slices {
             if let Some(key) = slice.keys.first() {
                 let bounds = &key.bounds;
@@ -243,12 +164,6 @@ impl SpriteSheetMeta {
     }
 }
 
-
-// ============================================================================
-// Asset Loader
-// ============================================================================
-
-/// Error type for sprite sheet loading.
 #[derive(Debug, thiserror::Error)]
 pub enum SpriteSheetLoaderError {
     #[error("Failed to read sprite sheet: {0}")]
@@ -257,7 +172,6 @@ pub enum SpriteSheetLoaderError {
     Parse(#[from] serde_json::Error),
 }
 
-/// Asset loader for sprite sheet JSON metadata.
 #[derive(Default)]
 pub struct SpriteSheetMetaLoader;
 
@@ -282,11 +196,6 @@ impl AssetLoader for SpriteSheetMetaLoader {
     }
 }
 
-// ============================================================================
-// Plugin
-// ============================================================================
-
-/// Plugin that loads and manages game assets.
 pub struct AssetPlugin;
 
 impl Plugin for AssetPlugin {
@@ -301,45 +210,26 @@ impl Plugin for AssetPlugin {
     }
 }
 
-// ============================================================================
-// SpriteSheet (Runtime representation)
-// ============================================================================
-
-/// A loaded sprite sheet with named sprite access.
-///
-/// This struct holds a texture, its atlas layout, and a mapping from
-/// sprite names to their indices in the atlas.
 #[derive(Debug)]
 pub struct SpriteSheet {
-    /// Handle to the sprite sheet texture.
     pub texture: Handle<Image>,
-    /// Handle to the texture atlas layout.
     pub layout: Handle<TextureAtlasLayout>,
-    /// Map from sprite names to atlas indices.
     pub sprites: HashMap<String, usize>,
 }
 
 impl SpriteSheet {
-    /// Get a sprite's atlas index by name.
-    ///
-    /// Returns `None` if no sprite with that name exists.
     pub fn get(&self, name: &str) -> Option<usize> {
         self.sprites.get(name).copied()
     }
 
-    /// Check if a sprite with the given name exists.
     pub fn contains(&self, name: &str) -> bool {
         self.sprites.contains_key(name)
     }
 
-    /// Get all sprite names in this sheet.
     pub fn names(&self) -> impl Iterator<Item = &str> {
         self.sprites.keys().map(|s| s.as_str())
     }
 
-    /// Create a Sprite component for the named sprite.
-    ///
-    /// Returns `None` if the sprite name doesn't exist.
     pub fn sprite(&self, name: &str) -> Option<Sprite> {
         let index = self.get(name)?;
         Some(Sprite::from_atlas_image(
@@ -351,7 +241,6 @@ impl SpriteSheet {
         ))
     }
 
-    /// Create a Sprite component with custom size for the named sprite.
     pub fn sprite_sized(&self, name: &str, size: Vec2) -> Option<Sprite> {
         let index = self.get(name)?;
         let mut sprite = Sprite::from_atlas_image(
@@ -365,10 +254,6 @@ impl SpriteSheet {
         Some(sprite)
     }
 
-    /// Create an ImageNode for the named sprite (UI).
-    ///
-    /// Use this for UI elements that need to display sprites from the atlas.
-    /// Returns `None` if the sprite name doesn't exist.
     pub fn image_node(&self, name: &str) -> Option<ImageNode> {
         let index = self.get(name)?;
         Some(ImageNode::from_atlas_image(
@@ -380,11 +265,6 @@ impl SpriteSheet {
         ))
     }
 
-    /// Create a 9-slice ImageNode for panels/buttons.
-    ///
-    /// 9-slice images stretch the center while preserving border regions,
-    /// perfect for panels, buttons, and frames.
-    /// Returns `None` if the sprite name doesn't exist.
     pub fn image_node_sliced(&self, name: &str, border: f32) -> Option<ImageNode> {
         use bevy::ui::widget::NodeImageMode;
         self.image_node(name).map(|img| {
@@ -396,19 +276,12 @@ impl SpriteSheet {
     }
 }
 
-// ============================================================================
-// GameSprites Resource
-// ============================================================================
-
-/// Resource containing loaded fonts.
 #[derive(Resource, Default)]
 pub struct GameFonts {
-    /// CuteFantasy pixel font (5x9)
     pub pixel: Handle<Font>,
 }
 
 impl GameFonts {
-    /// Create a TextFont for the pixel font with proper settings.
     pub fn pixel_font(&self, font_size: f32) -> TextFont {
         TextFont {
             font: self.pixel.clone(),
@@ -419,52 +292,36 @@ impl GameFonts {
     }
 }
 
-/// Resource containing all loaded sprite sheets.
-///
-/// Sprite sheets are indexed by `SpriteSheetKey` and loaded from
-/// `assets/sprites/` with matching `.json` metadata.
 #[derive(Resource, Default)]
 pub struct GameSprites {
     sheets: HashMap<SpriteSheetKey, SpriteSheet>,
 }
 
 impl GameSprites {
-    /// Get a sprite sheet by key.
-    ///
-    /// Returns `None` if the sprite sheet hasn't been loaded yet.
     pub fn get(&self, key: SpriteSheetKey) -> Option<&SpriteSheet> {
         self.sheets.get(&key)
     }
 
-    /// Insert a sprite sheet.
     fn insert(&mut self, key: SpriteSheetKey, sheet: SpriteSheet) {
         self.sheets.insert(key, sheet);
     }
 
-    /// Check if a sprite sheet is loaded.
     fn contains(&self, key: SpriteSheetKey) -> bool {
         self.sheets.contains_key(&key)
     }
 }
 
-// ============================================================================
-// Async Loading Infrastructure
-// ============================================================================
-
-/// Tracks pending sprite sheet loads.
 #[derive(Resource, Default)]
 struct PendingSpriteSheets {
     handles: HashMap<SpriteSheetKey, Handle<SpriteSheetMeta>>,
 }
 
-/// Build a SpriteSheet from loaded metadata.
 fn build_sprite_sheet(
     meta: &SpriteSheetMeta,
     name: &str,
     asset_server: &AssetServer,
     texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
 ) -> SpriteSheet {
-    // Use the image path from metadata if provided, otherwise fall back to convention
     let png_path = if meta.meta.image.is_empty() {
         format!("sprites/{}.png", name)
     } else {
@@ -487,7 +344,6 @@ fn build_sprite_sheet(
     }
 }
 
-/// System to finalize sprite sheets when their metadata loads.
 fn finalize_sprite_sheets(
     mut events: EventReader<AssetEvent<SpriteSheetMeta>>,
     meta_assets: Res<Assets<SpriteSheetMeta>>,
@@ -517,16 +373,13 @@ fn finalize_sprite_sheets(
     }
 }
 
-/// System to load assets at startup.
 fn load_assets(
     asset_server: Res<AssetServer>,
     mut game_fonts: ResMut<GameFonts>,
     mut pending: ResMut<PendingSpriteSheets>,
 ) {
-    // Load fonts
     game_fonts.pixel = asset_server.load("fonts/CuteFantasy-5x9.ttf");
 
-    // Kick off async sprite sheet loads for all registered sheets
     for key in SpriteSheetKey::all() {
         let path = format!("sprites/{}.json", key.asset_name());
         pending.handles.insert(*key, asset_server.load(&path));
@@ -534,10 +387,6 @@ fn load_assets(
 
     info!("Asset loading initiated");
 }
-
-// ============================================================================
-// Tests
-// ============================================================================
 
 #[cfg(test)]
 mod tests {

@@ -2,7 +2,7 @@ mod alchemist;
 mod blacksmith;
 mod dungeon;
 mod field;
-mod store;
+pub mod store;
 
 use bevy::prelude::*;
 
@@ -10,7 +10,7 @@ pub use alchemist::AlchemistTabPlugin;
 pub use blacksmith::BlacksmithTabPlugin;
 pub use dungeon::DungeonTabPlugin;
 pub use field::FieldTabPlugin;
-pub use store::StoreTabPlugin;
+pub use store::{InfoPanelSource, StoreTabPlugin};
 
 /// Plugin that bundles all tab plugins together.
 pub struct TabsPlugin;

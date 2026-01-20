@@ -147,7 +147,13 @@
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/ase/MiniGoblin.aseprite\" --list-tags)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/SlimesAse/MiniSlime.aseprite\" --list-tags)",
       "Bash(\"$ASEPRITE\":*)",
-      "Bash(montage:*)"
+      "Bash(montage:*)",
+      "Bash(\"$ASEPRITE\" --batch --list-tags --list-layers --list-slices \"/Users/drewstewart/Library/Mobile Documents/com~apple~CloudDocs/randr/assets/sprites/ui/Background boxes/BGbox_01A.aseprite\")",
+      "Bash('ASEPRITE=/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite' $ASEPRITE --batch --data /dev/stdout --format json-hash '/Users/drewstewart/Library/Mobile Documents/com~apple~CloudDocs/randr/assets/sprites/ui/Background boxes/BGbox_01A.aseprite')",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Library/Mobile Documents/com~apple~CloudDocs/randr/assets/sprites/ui/Background boxes/BGbox_01A.aseprite\" --sheet /Users/drewstewart/code/game/assets/sprites/shop_bg_slices.png --sheet-type horizontal --data /Users/drewstewart/code/game/assets/sprites/shop_bg_slices.json --format json-hash)",
+      "Bash(\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" --batch \"/Users/drewstewart/Library/Mobile Documents/com~apple~CloudDocs/randr/assets/sprites/ui/Background boxes/BGbox_08A.aseprite\" --list-slices)",
+      "Bash(\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" --batch \"/Users/drewstewart/Library/Mobile Documents/com~apple~CloudDocs/randr/assets/sprites/ui/Background boxes/BGbox_08A.aseprite\" --list-layers)",
+      "Bash(\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" --batch \"/Users/drewstewart/Library/Mobile Documents/com~apple~CloudDocs/randr/assets/sprites/ui/Background boxes/BGbox_08A.aseprite\" --sheet /Users/drewstewart/code/game/assets/sprites/detail_panel_bg.png --sheet-type horizontal --data /Users/drewstewart/code/game/assets/sprites/detail_panel_bg.json --format json-hash)"
     ]
   },
   "enabledMcpjsonServers": [

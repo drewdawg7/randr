@@ -9,7 +9,7 @@ pub mod modal;
 mod profile;
 mod profile_modal;
 mod spell_test_modal;
-mod town;
+pub mod town;
 
 pub use monster_compendium::MonsterCompendiumPlugin;
 pub use dungeon::DungeonScreenPlugin;
@@ -22,4 +22,4 @@ pub use modal::{ActiveModal, ModalPlugin, ModalType};
 pub use profile::ProfilePlugin;
 pub use profile_modal::ProfileModalPlugin;
 pub use spell_test_modal::SpellTestModalPlugin;
-pub use town::TownPlugin;
+pub use town::{InfoPanelSource, TownPlugin};

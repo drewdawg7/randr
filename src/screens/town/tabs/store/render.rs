@@ -9,7 +9,7 @@ use crate::screens::town::shared::{spawn_menu, MenuOption};
 use crate::screens::town::{ContentArea, TabContent};
 use crate::stats::StatType;
 use crate::ui::spawn_navigation_hint;
-use crate::ui::widgets::{GoldDisplay, ItemGrid, ItemGridEntry, StoreListItem};
+use crate::ui::widgets::{CentralDetailPanel, GoldDisplay, ItemGrid, ItemGridEntry, StoreListItem};
 use crate::ui::{selection_colors, selection_prefix, UiText};
 
 use super::state::{BuyFocus, StoreMode, StoreModeKind, StoreSelections};
@@ -107,7 +107,6 @@ pub fn spawn_store_content(
     );
 }
 
-/// System to refresh store UI when mode or inventory changes.
 pub fn refresh_store_ui(
     mut commands: Commands,
     store_mode: Res<StoreMode>,
@@ -122,8 +121,10 @@ pub fn refresh_store_ui(
     let mode_changed = store_mode.is_changed();
     let inventory_changed_in_buy =
         inventory.is_changed() && store_mode.mode == StoreModeKind::Buy;
+    let selections_changed_in_buy =
+        store_selections.is_changed() && store_mode.mode == StoreModeKind::Buy;
 
-    if !mode_changed && !inventory_changed_in_buy {
+    if !mode_changed && !inventory_changed_in_buy && !selections_changed_in_buy {
         return;
     }
 
@@ -209,17 +210,15 @@ fn spawn_menu_ui(parent: &mut ChildBuilder, store_selections: &StoreSelections) 
     spawn_navigation_hint(parent, "[↑↓] Navigate  [Enter] Select  [←→] Switch Tab");
 }
 
-/// Spawn the buy screen UI.
 fn spawn_buy_ui(
     parent: &mut ChildBuilder,
     store_selections: &StoreSelections,
     store: &Store,
     inventory: &Inventory,
-    ui_cache: &StoreUiCache,
+    _ui_cache: &StoreUiCache,
 ) {
     let store_focused = store_selections.buy_focus == BuyFocus::Store;
 
-    // Title
     parent.spawn(
         UiText::new("Buy Items")
             .heading()
@@ -228,107 +227,60 @@ fn spawn_buy_ui(
             .build_with_node(),
     );
 
-    // Main row container with store on far left, inventory on far right
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Row,
             justify_content: JustifyContent::SpaceBetween,
+            align_items: AlignItems::FlexStart,
             width: Val::Percent(100.0),
+            column_gap: Val::Px(16.0),
             ..default()
         })
         .with_children(|row| {
-            // LEFT COLUMN: Store info panel and grid
-            row.spawn(Node {
-                flex_direction: FlexDirection::Column,
-                ..default()
-            })
-            .with_children(|col| {
-                spawn_info_panel(
-                    col,
-                    InfoPanelSource::Store {
-                        selected_index: store_selections.buy.selected,
-                    },
-                    ui_cache,
-                );
-
-                // Store grid - use store inventory
-                col.spawn(ItemGrid {
-                    items: store
-                        .inventory
-                        .iter()
-                        .map(|store_item| ItemGridEntry {
-                            sprite_name: store_item.item_id.sprite_name().to_string(),
-                        })
-                        .collect(),
-                    selected_index: store_selections.buy.selected,
-                    is_focused: store_focused,
-                });
+            row.spawn(ItemGrid {
+                items: store
+                    .inventory
+                    .iter()
+                    .map(|store_item| ItemGridEntry {
+                        sprite_name: store_item.item_id.sprite_name().to_string(),
+                    })
+                    .collect(),
+                selected_index: store_selections.buy.selected,
+                is_focused: store_focused,
             });
 
-            // RIGHT COLUMN: Inventory info panel and grid
-            row.spawn(Node {
-                flex_direction: FlexDirection::Column,
-                ..default()
-            })
-            .with_children(|col| {
-                spawn_info_panel(
-                    col,
-                    InfoPanelSource::Inventory {
-                        selected_index: store_selections.buy_inventory.selected,
-                    },
-                    ui_cache,
-                );
-
-                // Inventory grid
-                let inventory_entries: Vec<ItemGridEntry> = inventory
-                    .items
-                    .iter()
-                    .map(|inv_item| ItemGridEntry {
-                        sprite_name: inv_item.item.item_id.sprite_name().to_string(),
-                    })
-                    .collect();
-
-                col.spawn(ItemGrid {
-                    items: inventory_entries,
+            let source = if store_focused {
+                InfoPanelSource::Store {
+                    selected_index: store_selections.buy.selected,
+                }
+            } else {
+                InfoPanelSource::Inventory {
                     selected_index: store_selections.buy_inventory.selected,
-                    is_focused: !store_focused,
-                });
+                }
+            };
+            row.spawn(CentralDetailPanel { source });
+
+            let inventory_entries: Vec<ItemGridEntry> = inventory
+                .items
+                .iter()
+                .map(|inv_item| ItemGridEntry {
+                    sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+                })
+                .collect();
+
+            row.spawn(ItemGrid {
+                items: inventory_entries,
+                selected_index: store_selections.buy_inventory.selected,
+                is_focused: !store_focused,
             });
         });
 
-    // Navigation hint
     spawn_navigation_hint(
         parent,
         "[↑↓←→] Navigate  [Space] Switch Panel  [Enter] Buy/Sell  [Backspace] Back",
     );
 }
 
-/// Spawn an info panel with the given source.
-fn spawn_info_panel(parent: &mut ChildBuilder, source: InfoPanelSource, ui_cache: &StoreUiCache) {
-    let panel_width = 240.0; // 5 columns × 48px
-    let panel_height = 144.0; // 3 rows × 48px
-
-    let node = Node {
-        width: Val::Px(panel_width),
-        height: Val::Px(panel_height),
-        margin: UiRect::bottom(Val::Px(10.0)),
-        flex_direction: FlexDirection::Column,
-        justify_content: JustifyContent::Center,
-        align_items: AlignItems::Center,
-        padding: UiRect::all(Val::Px(12.0)),
-        row_gap: Val::Px(4.0),
-        ..default()
-    };
-
-    let mut entity = parent.spawn((StoreInfoPanel { source }, node));
-
-    // Insert background image if cached
-    if let Some(bg) = &ui_cache.info_panel_bg {
-        entity.insert(bg.clone());
-    }
-}
-
-/// Spawn the sell screen UI.
 fn spawn_sell_ui(
     parent: &mut ChildBuilder,
     store_selections: &StoreSelections,
@@ -636,11 +588,130 @@ pub fn populate_store_info_panel(
                                     .with_color(text_color.0),
                             );
                         } else {
-                            // Empty inventory slot
                             parent.spawn((
                                 Text::new("Empty"),
                                 game_fonts.pixel_font(18.0),
                                 text_color,
+                            ));
+                        }
+                    });
+            }
+        }
+    }
+}
+
+pub fn populate_central_detail_panel(
+    mut commands: Commands,
+    query: Query<(Entity, &CentralDetailPanel)>,
+    inventory: Res<Inventory>,
+    store: Res<Store>,
+) {
+    for (entity, panel) in &query {
+        let text_color = TextColor(Color::srgb(0.4, 0.25, 0.15));
+
+        match panel.source {
+            InfoPanelSource::Store { selected_index } => {
+                let Some(store_item) = store.inventory.get(selected_index) else {
+                    continue;
+                };
+
+                let display_item = store_item.display_item();
+
+                commands
+                    .entity(entity)
+                    .remove::<CentralDetailPanel>()
+                    .with_children(|parent| {
+                        if let Some(item) = display_item {
+                            parent.spawn((
+                                Text::new(&item.name),
+                                TextFont { font_size: 24.0, ..default() },
+                                text_color,
+                                Node { position_type: PositionType::Relative, ..default() },
+                            ));
+
+                            for stat_type in StatType::all() {
+                                let value = item.stats.value(*stat_type);
+                                if value > 0 {
+                                    let stat_name = match stat_type {
+                                        StatType::Health => "HP",
+                                        StatType::Attack => "ATK",
+                                        StatType::Defense => "DEF",
+                                        StatType::GoldFind => "Gold Find",
+                                        StatType::Mining => "Mining",
+                                        StatType::MagicFind => "Magic Find",
+                                    };
+                                    parent.spawn((
+                                        Text::new(format!("{}: +{}", stat_name, value)),
+                                        TextFont { font_size: 18.0, ..default() },
+                                        text_color,
+                                        Node { position_type: PositionType::Relative, ..default() },
+                                    ));
+                                }
+                            }
+
+                            parent.spawn((
+                                GoldDisplay::new(item.purchase_price())
+                                    .with_font_size(18.0)
+                                    .with_color(text_color.0),
+                                Node { position_type: PositionType::Relative, ..default() },
+                            ));
+                        } else {
+                            parent.spawn((
+                                Text::new("Out of Stock"),
+                                TextFont { font_size: 18.0, ..default() },
+                                text_color,
+                                Node { position_type: PositionType::Relative, ..default() },
+                            ));
+                        }
+                    });
+            }
+            InfoPanelSource::Inventory { selected_index } => {
+                let inv_item = inventory.items.get(selected_index);
+
+                commands
+                    .entity(entity)
+                    .remove::<CentralDetailPanel>()
+                    .with_children(|parent| {
+                        if let Some(inv_item) = inv_item {
+                            parent.spawn((
+                                Text::new(&inv_item.item.name),
+                                TextFont { font_size: 24.0, ..default() },
+                                text_color,
+                                Node { position_type: PositionType::Relative, ..default() },
+                            ));
+
+                            for stat_type in StatType::all() {
+                                let value = inv_item.item.stats.value(*stat_type);
+                                if value > 0 {
+                                    let stat_name = match stat_type {
+                                        StatType::Health => "HP",
+                                        StatType::Attack => "ATK",
+                                        StatType::Defense => "DEF",
+                                        StatType::GoldFind => "Gold Find",
+                                        StatType::Mining => "Mining",
+                                        StatType::MagicFind => "Magic Find",
+                                    };
+                                    parent.spawn((
+                                        Text::new(format!("{}: +{}", stat_name, value)),
+                                        TextFont { font_size: 18.0, ..default() },
+                                        text_color,
+                                        Node { position_type: PositionType::Relative, ..default() },
+                                    ));
+                                }
+                            }
+
+                            parent.spawn((
+                                GoldDisplay::new(inv_item.item.sell_price())
+                                    .with_font_size(18.0)
+                                    .with_color(text_color.0),
+                                Node { position_type: PositionType::Relative, ..default() },
+                            ));
+                        } else {
+                            parent.spawn((
+                                Text::new("Empty"),
+                                TextFont { font_size: 18.0, ..default() },
+                                text_color,
+                                Node { position_type: PositionType::Relative, ..default() },
                             ));
                         }
                     });

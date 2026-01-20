@@ -1,46 +1,20 @@
-//! Typed sprite slice enums for each sprite sheet.
-//!
-//! These enums provide compile-time safety and semantic naming for sprite slices.
-//! Each enum corresponds to a specific `SpriteSheetKey` and contains variants for
-//! commonly-used slices from that sheet.
-//!
-//! # Usage
-//! ```rust
-//! let cell = sheet.image_node(UiAllSlice::CellBackground.as_str());
-//! let idx = selectors.get(UiSelectorsSlice::SelectorFrame1.as_str())?;
-//! ```
-
-/// Slices from the UiAll sprite sheet (Cute Fantasy UI pack).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UiAllSlice {
-    /// Cell background for grids (Slice_10)
     CellBackground,
-    /// Heart icon for health display (Slice_3013)
     HeartIcon,
-    /// Gold coin icon (Slice_3019)
     GoldIcon,
-    /// "randr" title banner (Slice_3353)
     TitleBanner,
-    /// Info panel background (Slice_2)
     InfoPanelBg,
-    /// Book sprite for compendium (Slice_4891)
     Book,
-    /// Menu button: Town unselected (Slice_295)
     ButtonTown,
-    /// Menu button: Town selected (Slice_329)
     ButtonTownSelected,
-    /// Menu button: Profile unselected (Slice_193)
     ButtonProfile,
-    /// Menu button: Profile selected (Slice_227)
     ButtonProfileSelected,
-    /// Menu button: Quit unselected (Slice_397)
     ButtonQuit,
-    /// Menu button: Quit selected (Slice_431)
     ButtonQuitSelected,
 }
 
 impl UiAllSlice {
-    /// Returns the string slice name used in sprite sheet lookups.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::CellBackground => "Slice_10",
@@ -59,17 +33,13 @@ impl UiAllSlice {
     }
 }
 
-/// Slices from the UiSelectors sprite sheet.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum UiSelectorsSlice {
-    /// Selector animation frame 1 (Slice_61)
     SelectorFrame1,
-    /// Selector animation frame 2 (Slice_91)
     SelectorFrame2,
 }
 
 impl UiSelectorsSlice {
-    /// Returns the string slice name used in sprite sheet lookups.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::SelectorFrame1 => "Slice_61",
@@ -78,36 +48,22 @@ impl UiSelectorsSlice {
     }
 }
 
-/// Health bar slices from UiAll sprite sheet.
-/// Ordered from empty (0%) to full (100%).
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum HealthBarSlice {
-    /// 0% health - empty bar (Slice_2938)
     Health0,
-    /// ~9% health (Slice_2944)
     Health10,
-    /// ~18% health (Slice_2943)
     Health20,
-    /// ~27% health (Slice_2942)
     Health30,
-    /// ~36% health (Slice_2941)
     Health40,
-    /// ~45% health (Slice_2940)
     Health50,
-    /// ~55% health (Slice_2937)
     Health60,
-    /// ~64% health (Slice_2936)
     Health70,
-    /// ~73% health (Slice_2935)
     Health80,
-    /// ~82% health (Slice_2934)
     Health90,
-    /// 91-100% health - full bar (Slice_2933)
     Health100,
 }
 
 impl HealthBarSlice {
-    /// Returns the string slice name used in sprite sheet lookups.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Health0 => "Slice_2938",
@@ -124,13 +80,11 @@ impl HealthBarSlice {
         }
     }
 
-    /// Get the appropriate health bar slice for a percentage (0.0 to 100.0).
     pub fn for_percent(percent: f32) -> Self {
         let index = ((percent / 100.0) * 10.0).round() as usize;
         Self::ALL[index.min(10)]
     }
 
-    /// All health bar slices in order from empty to full.
     pub const ALL: [Self; 11] = [
         Self::Health0,
         Self::Health10,
@@ -146,15 +100,12 @@ impl HealthBarSlice {
     ];
 }
 
-/// Slices from the TravelBook sprite sheet.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum TravelBookSlice {
-    /// Banner background for player stats
     Banner,
 }
 
 impl TravelBookSlice {
-    /// Returns the string slice name used in sprite sheet lookups.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Banner => "banner",
@@ -162,15 +113,12 @@ impl TravelBookSlice {
     }
 }
 
-/// Slices from the BookSlot sprite sheet.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum BookSlotSlice {
-    /// Slot sprite for mob display
     Slot,
 }
 
 impl BookSlotSlice {
-    /// Returns the string slice name used in sprite sheet lookups.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Slot => "slot",
@@ -178,15 +126,12 @@ impl BookSlotSlice {
     }
 }
 
-/// Slices from the GridSlot sprite sheet.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GridSlotSlice {
-    /// Empty slot background for item grids
     Slot,
 }
 
 impl GridSlotSlice {
-    /// Returns the string slice name used in sprite sheet lookups.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::Slot => "slot",
@@ -194,18 +139,6 @@ impl GridSlotSlice {
     }
 }
 
-/// Nine-slice pieces for shop/item grid background.
-///
-/// Frame layout (48x48 each):
-/// - 0: Top-left corner
-/// - 1: Top center (stretch horizontal)
-/// - 2: Top-right corner
-/// - 3: Middle-left (stretch vertical)
-/// - 4: Center (stretch both)
-/// - 5: Middle-right (stretch vertical)
-/// - 6: Bottom-left corner
-/// - 7: Bottom center (stretch horizontal)
-/// - 8: Bottom-right corner
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ShopBgSlice {
     TopLeft,
@@ -220,7 +153,6 @@ pub enum ShopBgSlice {
 }
 
 impl ShopBgSlice {
-    /// Returns the string frame name used in sprite sheet lookups.
     pub const fn as_str(self) -> &'static str {
         match self {
             Self::TopLeft => "BGbox_01A 0.aseprite",
@@ -235,7 +167,47 @@ impl ShopBgSlice {
         }
     }
 
-    /// All slices in grid order (row by row, left to right, top to bottom).
+    pub const ALL: [Self; 9] = [
+        Self::TopLeft,
+        Self::TopCenter,
+        Self::TopRight,
+        Self::MiddleLeft,
+        Self::Center,
+        Self::MiddleRight,
+        Self::BottomLeft,
+        Self::BottomCenter,
+        Self::BottomRight,
+    ];
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DetailPanelSlice {
+    TopLeft,
+    TopCenter,
+    TopRight,
+    MiddleLeft,
+    Center,
+    MiddleRight,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
+}
+
+impl DetailPanelSlice {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::TopLeft => "BGbox_08A 0.aseprite",
+            Self::TopCenter => "BGbox_08A 1.aseprite",
+            Self::TopRight => "BGbox_08A 2.aseprite",
+            Self::MiddleLeft => "BGbox_08A 3.aseprite",
+            Self::Center => "BGbox_08A 4.aseprite",
+            Self::MiddleRight => "BGbox_08A 5.aseprite",
+            Self::BottomLeft => "BGbox_08A 6.aseprite",
+            Self::BottomCenter => "BGbox_08A 7.aseprite",
+            Self::BottomRight => "BGbox_08A 8.aseprite",
+        }
+    }
+
     pub const ALL: [Self; 9] = [
         Self::TopLeft,
         Self::TopCenter,

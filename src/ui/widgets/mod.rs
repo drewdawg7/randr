@@ -1,8 +1,10 @@
+mod central_detail_panel;
 mod gold_display;
 mod item_grid;
 mod list_item;
 mod player_stats;
 
+pub use central_detail_panel::{CentralDetailPanel, CentralDetailPanelPlugin};
 pub use gold_display::{GoldDisplay, GoldDisplayPlugin};
 pub use item_grid::{ItemGrid, ItemGridEntry, ItemGridPlugin};
 pub use list_item::{

@@ -1,10 +1,11 @@
 mod components;
 mod plugin;
-mod shared;
+pub mod shared;
 mod state;
 mod systems;
-mod tabs;
+pub mod tabs;
 
 pub use components::{ContentArea, TabContent};
 pub use plugin::TownPlugin;
 pub use state::TownTab;
+pub use tabs::InfoPanelSource;
