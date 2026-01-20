@@ -61,14 +61,14 @@ pub enum SpriteSheetKey {
     BookSlot,
     /// Grid slot sprite (item grid cells)
     GridSlot,
-    /// Grid background (decorative box behind item grid)
-    GridBg,
     /// Main menu background image
     MenuBackground,
     /// Fight action popup background
     FightPopup,
     /// Fight screen backgrounds (80 variants)
     FightBackgrounds,
+    /// Nine-slice pieces for shop/item grid background (9 slices, 48x48 each)
+    ShopBgSlices,
 }
 
 impl SpriteSheetKey {
@@ -86,10 +86,10 @@ impl SpriteSheetKey {
             Self::TravelBook,
             Self::BookSlot,
             Self::GridSlot,
-            Self::GridBg,
             Self::MenuBackground,
             Self::FightPopup,
             Self::FightBackgrounds,
+            Self::ShopBgSlices,
         ]
     }
 
@@ -107,10 +107,10 @@ impl SpriteSheetKey {
             Self::TravelBook => "travel_book",
             Self::BookSlot => "book_slot",
             Self::GridSlot => "grid_slot",
-            Self::GridBg => "grid_bg",
             Self::MenuBackground => "menu_background",
             Self::FightPopup => "fight_popup",
             Self::FightBackgrounds => "fight_backgrounds",
+            Self::ShopBgSlices => "shop_bg_slices",
         }
     }
 }

@@ -194,18 +194,57 @@ impl GridSlotSlice {
     }
 }
 
-/// Slices from the GridBg sprite sheet.
+/// Nine-slice pieces for shop/item grid background.
+///
+/// Frame layout (48x48 each):
+/// - 0: Top-left corner
+/// - 1: Top center (stretch horizontal)
+/// - 2: Top-right corner
+/// - 3: Middle-left (stretch vertical)
+/// - 4: Center (stretch both)
+/// - 5: Middle-right (stretch vertical)
+/// - 6: Bottom-left corner
+/// - 7: Bottom center (stretch horizontal)
+/// - 8: Bottom-right corner
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum GridBgSlice {
-    /// Decorative background box for item grids
-    Background,
+pub enum ShopBgSlice {
+    TopLeft,
+    TopCenter,
+    TopRight,
+    MiddleLeft,
+    Center,
+    MiddleRight,
+    BottomLeft,
+    BottomCenter,
+    BottomRight,
 }
 
-impl GridBgSlice {
-    /// Returns the string slice name used in sprite sheet lookups.
+impl ShopBgSlice {
+    /// Returns the string frame name used in sprite sheet lookups.
     pub const fn as_str(self) -> &'static str {
         match self {
-            Self::Background => "background",
+            Self::TopLeft => "BGbox_01A 0.aseprite",
+            Self::TopCenter => "BGbox_01A 1.aseprite",
+            Self::TopRight => "BGbox_01A 2.aseprite",
+            Self::MiddleLeft => "BGbox_01A 3.aseprite",
+            Self::Center => "BGbox_01A 4.aseprite",
+            Self::MiddleRight => "BGbox_01A 5.aseprite",
+            Self::BottomLeft => "BGbox_01A 6.aseprite",
+            Self::BottomCenter => "BGbox_01A 7.aseprite",
+            Self::BottomRight => "BGbox_01A 8.aseprite",
         }
     }
+
+    /// All slices in grid order (row by row, left to right, top to bottom).
+    pub const ALL: [Self; 9] = [
+        Self::TopLeft,
+        Self::TopCenter,
+        Self::TopRight,
+        Self::MiddleLeft,
+        Self::Center,
+        Self::MiddleRight,
+        Self::BottomLeft,
+        Self::BottomCenter,
+        Self::BottomRight,
+    ];
 }
