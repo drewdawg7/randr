@@ -26,7 +26,8 @@ Follow this workflow for ALL code changes:
 
 ## Documentation Index
 - [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, `UpgradeOperation` enum, recipe system, `RecipeId::material()`, cached recipe lists (`LazyLock`)
-- [dungeon.md](dungeon.md) - Dungeon tab, `DungeonTileSlice` enum, tile layout with flip_x support, CSS Grid rendering, tileset integration
+- [dungeon/mod.md](dungeon/mod.md) - Dungeon data module (`src/dungeon/`), `TileType`, `Tile`, `DungeonLayout`, `LayoutId`, `TileRenderer`, adding new layouts
+- [dungeon/ui.md](dungeon/ui.md) - Dungeon tab UI, `DungeonTabPlugin`, CSS Grid rendering, `DungeonTileSlice` enum, tileset assets
 - [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 - [mob-sprites.md](mob-sprites.md) - Adding mob sprites, `SpriteAssets::mob_sprite()`, `populate_mob_sprite` system
 - [rust-idioms.md](rust-idioms.md) - Preferred Rust patterns: `map_or` for Option defaults, `let-else` for early returns, Query type aliases for complex Bevy queries, integer safety (`saturating_add`/`saturating_sub`, bounds checking before signed-to-unsigned casts)

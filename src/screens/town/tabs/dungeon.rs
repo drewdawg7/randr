@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
-use crate::assets::{DungeonTileSlice, GameSprites, SpriteSheetKey};
+use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::dungeon::{LayoutId, TileRenderer};
 
 use super::super::{ContentArea, TabContent, TownTab};
 
-/// Plugin for the Dungeon tab.
 pub struct DungeonTabPlugin;
 
 impl Plugin for DungeonTabPlugin {
@@ -13,7 +13,6 @@ impl Plugin for DungeonTabPlugin {
     }
 }
 
-/// Spawns dungeon UI content when entering the Dungeon tab.
 fn spawn_dungeon_content(
     mut commands: Commands,
     content_query: Query<Entity, With<ContentArea>>,
@@ -27,79 +26,9 @@ fn spawn_dungeon_content(
         return;
     };
 
-    // Tile size (original 16x16, scaled up 3x)
     const TILE_SIZE: f32 = 48.0;
 
-    // Define a simple dungeon room layout (8 columns x 6 rows)
-    // Each cell is (DungeonTileSlice, flip_x)
-    let layout: [[(DungeonTileSlice, bool); 8]; 6] = [
-        // Row 0: Top wall
-        [
-            (DungeonTileSlice::SideWall5, true),
-            (DungeonTileSlice::TopWall1, false),
-            (DungeonTileSlice::TopWall2, false),
-            (DungeonTileSlice::TorchWall1, false),
-            (DungeonTileSlice::TopWall3, false),
-            (DungeonTileSlice::TopWall4, false),
-            (DungeonTileSlice::TopWall2, false),
-            (DungeonTileSlice::SideWall5, false),
-        ],
-        // Row 1: Upper middle
-        [
-            (DungeonTileSlice::SideWall6, true),
-            (DungeonTileSlice::FloorTile2, false),
-            (DungeonTileSlice::FloorTile3, false),
-            (DungeonTileSlice::FloorTile4, false),
-            (DungeonTileSlice::FloorTile2, false),
-            (DungeonTileSlice::FloorTile3, false),
-            (DungeonTileSlice::FloorTile4, false),
-            (DungeonTileSlice::SideWall6, false),
-        ],
-        // Row 2: Middle
-        [
-            (DungeonTileSlice::SideWall7, true),
-            (DungeonTileSlice::FloorTile3, false),
-            (DungeonTileSlice::FloorTile4, false),
-            (DungeonTileSlice::FloorTile2, false),
-            (DungeonTileSlice::FloorTile3, false),
-            (DungeonTileSlice::FloorTile4, false),
-            (DungeonTileSlice::FloorTile2, false),
-            (DungeonTileSlice::SideWall7, false),
-        ],
-        // Row 3: Middle
-        [
-            (DungeonTileSlice::SideWall8, true),
-            (DungeonTileSlice::FloorTile4, false),
-            (DungeonTileSlice::FloorTile2, false),
-            (DungeonTileSlice::FloorTile3, false),
-            (DungeonTileSlice::FloorTile4, false),
-            (DungeonTileSlice::FloorTile2, false),
-            (DungeonTileSlice::FloorTile3, false),
-            (DungeonTileSlice::SideWall8, false),
-        ],
-        // Row 4: Lower middle
-        [
-            (DungeonTileSlice::SideWall6, true),
-            (DungeonTileSlice::FloorTile2, false),
-            (DungeonTileSlice::FloorTile3, false),
-            (DungeonTileSlice::FloorTile4, false),
-            (DungeonTileSlice::FloorTile2, false),
-            (DungeonTileSlice::FloorTile3, false),
-            (DungeonTileSlice::FloorTile4, false),
-            (DungeonTileSlice::SideWall6, false),
-        ],
-        // Row 5: Bottom wall
-        [
-            (DungeonTileSlice::BottomRightWall, true),
-            (DungeonTileSlice::BottomWall1, false),
-            (DungeonTileSlice::BottomWall2, false),
-            (DungeonTileSlice::Gate, false),
-            (DungeonTileSlice::BottomWall3, false),
-            (DungeonTileSlice::BottomWall4, false),
-            (DungeonTileSlice::BottomWall2, false),
-            (DungeonTileSlice::BottomRightWall, false),
-        ],
-    ];
+    let layout = LayoutId::StartingRoom.layout();
 
     commands.entity(content_entity).with_children(|parent| {
         parent
@@ -115,28 +44,29 @@ fn spawn_dungeon_content(
                 },
             ))
             .with_children(|content| {
-                // Spawn grid container
                 content
                     .spawn(Node {
                         display: Display::Grid,
-                        grid_template_columns: vec![GridTrack::px(TILE_SIZE); 8],
-                        grid_template_rows: vec![GridTrack::px(TILE_SIZE); 6],
+                        grid_template_columns: vec![GridTrack::px(TILE_SIZE); layout.width()],
+                        grid_template_rows: vec![GridTrack::px(TILE_SIZE); layout.height()],
                         ..default()
                     })
                     .with_children(|grid| {
-                        // Spawn each tile
-                        for row in &layout {
-                            for (tile, flip_x) in row {
+                        for y in 0..layout.height() {
+                            for x in 0..layout.width() {
                                 let mut cell = grid.spawn(Node {
                                     width: Val::Px(TILE_SIZE),
                                     height: Val::Px(TILE_SIZE),
                                     ..default()
                                 });
-                                if let Some(mut img) = sheet.image_node(tile.as_str()) {
-                                    if *flip_x {
-                                        img.flip_x = true;
+                                if let Some((slice, flip_x)) = TileRenderer::resolve(&layout, x, y)
+                                {
+                                    if let Some(mut img) = sheet.image_node(slice.as_str()) {
+                                        if flip_x {
+                                            img.flip_x = true;
+                                        }
+                                        cell.insert(img);
                                     }
-                                    cell.insert(img);
                                 }
                             }
                         }

@@ -11,6 +11,7 @@ pub mod town;
 pub mod ui;
 pub mod entities;
 pub mod combat;
+pub mod dungeon;
 pub mod item;
 pub mod registry;
 pub mod inventory;
