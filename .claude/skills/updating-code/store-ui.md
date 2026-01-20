@@ -76,5 +76,49 @@ GameAction::Select => {
 ## Key Files
 
 - `src/screens/town/tabs/store/input.rs` - Input handling, sends events
-- `src/screens/town/tabs/store/render.rs` - UI rendering, uses Store resource
-- `src/screens/town/tabs/store/state.rs` - BuyFocus, StoreSelections
+- `src/screens/town/tabs/store/state.rs` - BuyFocus, StoreSelections, StoreModeKind
+
+### Render Module Structure
+
+The render logic is split into mode-specific files under `src/screens/town/tabs/store/render/`:
+
+| File | Purpose |
+|------|---------|
+| `mod.rs` | Orchestration (`spawn_store_ui_inner`), types (`InfoPanelSource`, `StoreInfoPanel`, `StoreUiCache`) |
+| `menu.rs` | Main menu UI, `STORE_MENU_OPTIONS` constant |
+| `buy.rs` | Buy screen with dual `ItemGrid` widgets |
+| `sell.rs` | Sell screen with inventory list |
+| `storage.rs` | Storage menu/view/deposit screens, `STORAGE_MENU_OPTIONS` |
+| `helpers.rs` | `spawn_inventory_list` - reusable inventory list widget |
+| `panels.rs` | `populate_store_info_panel`, `populate_central_detail_panel` systems |
+
+### Panel Helper Functions (panels.rs)
+
+Shared helpers for rendering item details with icons:
+
+```rust
+/// Spawn stat rows with icons for each non-zero stat
+fn spawn_stats_with_icons(
+    parent: &mut ChildBuilder,
+    stats: &[(StatType, i32)],
+    game_sprites: &GameSprites,
+    game_fonts: &GameFonts,
+    text_color: TextColor,
+);
+
+/// Spawn a price row with gold icon
+fn spawn_price_row(
+    parent: &mut ChildBuilder,
+    price: i32,
+    game_sprites: &GameSprites,
+    game_fonts: &GameFonts,
+    text_color: TextColor,
+);
+```
+
+### Adding New Store Modes
+
+1. Add variant to `StoreModeKind` in `state.rs`
+2. Create new file in `render/` (e.g., `render/newmode.rs`)
+3. Add match arm in `spawn_store_ui_inner` in `render/mod.rs`
+4. Export from `render/mod.rs` if needed externally
