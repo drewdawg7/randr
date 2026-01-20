@@ -11,6 +11,7 @@ use crate::screens::modal::{
     ActiveModal, ModalType,
 };
 use crate::stats::{HasStats, StatSheet, StatType};
+use crate::ui::widgets::StatRow;
 
 /// Plugin that manages the profile modal system.
 pub struct ProfileModalPlugin;
@@ -143,33 +144,37 @@ fn spawn_stats_column(parent: &mut ChildBuilder, player: &Player) {
             ));
 
             // Name and Level
-            spawn_stat_row(
-                stats,
-                "Name:",
-                player.name,
-                Color::srgb(0.9, 0.9, 0.9),
+            stats.spawn(
+                StatRow::new("Name:", player.name)
+                    .label_width(140.0)
+                    .font_size(22.0)
+                    .label_color(Color::srgb(0.8, 0.8, 0.8))
+                    .value_color(Color::srgb(0.9, 0.9, 0.9)),
             );
-            spawn_stat_row(
-                stats,
-                "Level:",
-                &format!("{}", player.level()),
-                Color::srgb(0.6, 1.0, 0.6),
+            stats.spawn(
+                StatRow::new("Level:", format!("{}", player.level()))
+                    .label_width(140.0)
+                    .font_size(22.0)
+                    .label_color(Color::srgb(0.8, 0.8, 0.8))
+                    .value_color(Color::srgb(0.6, 1.0, 0.6)),
             );
 
             // HP
-            spawn_stat_row(
-                stats,
-                "HP:",
-                &format!("{} / {}", player.hp(), player.max_hp()),
-                Color::srgb(0.95, 0.3, 0.3),
+            stats.spawn(
+                StatRow::new("HP:", format!("{} / {}", player.hp(), player.max_hp()))
+                    .label_width(140.0)
+                    .font_size(22.0)
+                    .label_color(Color::srgb(0.8, 0.8, 0.8))
+                    .value_color(Color::srgb(0.95, 0.3, 0.3)),
             );
 
             // Gold
-            spawn_stat_row(
-                stats,
-                "Gold:",
-                &format!("{}", player.gold()),
-                Color::srgb(1.0, 0.84, 0.0),
+            stats.spawn(
+                StatRow::new("Gold:", format!("{}", player.gold()))
+                    .label_width(140.0)
+                    .font_size(22.0)
+                    .label_color(Color::srgb(0.8, 0.8, 0.8))
+                    .value_color(Color::srgb(1.0, 0.84, 0.0)),
             );
 
             // Separator
@@ -186,40 +191,30 @@ fn spawn_stats_column(parent: &mut ChildBuilder, player: &Player) {
             let defense = player.defense();
             let defense_bonus = player.inventory().sum_equipment_stats(StatType::Defense);
 
+            let attack_row = StatRow::new("Attack:", format!("{}", attack))
+                .label_width(140.0)
+                .font_size(22.0)
+                .label_color(Color::srgb(0.8, 0.8, 0.8))
+                .value_color(Color::srgb(1.0, 0.4, 0.2));
             if attack_bonus > 0 {
-                spawn_stat_row_with_bonus(
-                    stats,
-                    "Attack:",
-                    &format!("{}", attack),
-                    &format!("(+{})", attack_bonus),
-                    Color::srgb(1.0, 0.4, 0.2),
-                    Color::srgb(0.4, 1.0, 0.4),
+                stats.spawn(
+                    attack_row.with_bonus(format!("(+{})", attack_bonus), Color::srgb(0.4, 1.0, 0.4)),
                 );
             } else {
-                spawn_stat_row(
-                    stats,
-                    "Attack:",
-                    &format!("{}", attack),
-                    Color::srgb(1.0, 0.4, 0.2),
-                );
+                stats.spawn(attack_row);
             }
 
+            let defense_row = StatRow::new("Defense:", format!("{}", defense))
+                .label_width(140.0)
+                .font_size(22.0)
+                .label_color(Color::srgb(0.8, 0.8, 0.8))
+                .value_color(Color::srgb(0.4, 0.6, 1.0));
             if defense_bonus > 0 {
-                spawn_stat_row_with_bonus(
-                    stats,
-                    "Defense:",
-                    &format!("{}", defense),
-                    &format!("(+{})", defense_bonus),
-                    Color::srgb(0.4, 0.6, 1.0),
-                    Color::srgb(0.4, 1.0, 0.4),
+                stats.spawn(
+                    defense_row.with_bonus(format!("(+{})", defense_bonus), Color::srgb(0.4, 1.0, 0.4)),
                 );
             } else {
-                spawn_stat_row(
-                    stats,
-                    "Defense:",
-                    &format!("{}", defense),
-                    Color::srgb(0.4, 0.6, 1.0),
-                );
+                stats.spawn(defense_row);
             }
 
             // Separator
@@ -231,23 +226,26 @@ fn spawn_stats_column(parent: &mut ChildBuilder, player: &Player) {
             });
 
             // Additional stats
-            spawn_stat_row(
-                stats,
-                "Gold Find:",
-                &format!("+{}%", player.effective_goldfind()),
-                Color::srgb(1.0, 0.84, 0.0),
+            stats.spawn(
+                StatRow::new("Gold Find:", format!("+{}%", player.effective_goldfind()))
+                    .label_width(140.0)
+                    .font_size(22.0)
+                    .label_color(Color::srgb(0.8, 0.8, 0.8))
+                    .value_color(Color::srgb(1.0, 0.84, 0.0)),
             );
-            spawn_stat_row(
-                stats,
-                "Magic Find:",
-                &format!("+{}%", player.effective_magicfind()),
-                Color::srgb(0.7, 0.4, 1.0),
+            stats.spawn(
+                StatRow::new("Magic Find:", format!("+{}%", player.effective_magicfind()))
+                    .label_width(140.0)
+                    .font_size(22.0)
+                    .label_color(Color::srgb(0.8, 0.8, 0.8))
+                    .value_color(Color::srgb(0.7, 0.4, 1.0)),
             );
-            spawn_stat_row(
-                stats,
-                "Mining:",
-                &format!("{}", player.effective_mining()),
-                Color::srgb(0.7, 0.7, 0.7),
+            stats.spawn(
+                StatRow::new("Mining:", format!("{}", player.effective_mining()))
+                    .label_width(140.0)
+                    .font_size(22.0)
+                    .label_color(Color::srgb(0.8, 0.8, 0.8))
+                    .value_color(Color::srgb(0.7, 0.7, 0.7)),
             );
 
             // Separator
@@ -267,11 +265,12 @@ fn spawn_stats_column(parent: &mut ChildBuilder, player: &Player) {
                 100
             };
 
-            spawn_stat_row(
-                stats,
-                "XP:",
-                &format!("{} / {} ({}%)", xp, xp_needed, xp_percent),
-                Color::srgb(0.8, 0.5, 1.0),
+            stats.spawn(
+                StatRow::new("XP:", format!("{} / {} ({}%)", xp, xp_needed, xp_percent))
+                    .label_width(140.0)
+                    .font_size(22.0)
+                    .label_color(Color::srgb(0.8, 0.8, 0.8))
+                    .value_color(Color::srgb(0.8, 0.5, 1.0)),
             );
 
             // XP Bar
@@ -317,22 +316,18 @@ fn spawn_equipment_column(parent: &mut ChildBuilder, player: &Player) {
             ];
 
             for (slot, label) in slots.iter() {
-                if let Some(inv_item) = player.inventory().equipment().get(slot) {
-                    let item = &inv_item.item;
-                    spawn_equipment_row(
-                        equipment,
-                        label,
-                        &item.name,
-                        item.quality.color(),
-                    );
+                let (item_name, color) = if let Some(inv_item) = player.inventory().equipment().get(slot) {
+                    (inv_item.item.name.clone(), inv_item.item.quality.color())
                 } else {
-                    spawn_equipment_row(
-                        equipment,
-                        label,
-                        "(Empty)",
-                        Color::srgb(0.5, 0.5, 0.5),
-                    );
-                }
+                    ("(Empty)".to_string(), Color::srgb(0.5, 0.5, 0.5))
+                };
+                equipment.spawn(
+                    StatRow::new(*label, item_name)
+                        .label_width(100.0)
+                        .font_size(20.0)
+                        .label_color(Color::srgb(0.7, 0.7, 0.7))
+                        .value_color(color),
+                );
             }
 
             // Separator
@@ -353,133 +348,6 @@ fn spawn_equipment_column(parent: &mut ChildBuilder, player: &Player) {
                     ..default()
                 },
                 TextColor(Color::srgb(0.7, 0.7, 0.7)),
-            ));
-        });
-}
-
-/// Helper to spawn a stat row with label and value.
-fn spawn_stat_row(parent: &mut ChildBuilder, label: &str, value: &str, color: Color) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Row,
-            column_gap: Val::Px(10.0),
-            ..default()
-        })
-        .with_children(|row| {
-            // Label
-            row.spawn((
-                Text::new(label),
-                TextFont {
-                    font_size: 22.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.8, 0.8, 0.8)),
-                Node {
-                    width: Val::Px(140.0),
-                    ..default()
-                },
-            ));
-
-            // Value
-            row.spawn((
-                Text::new(value),
-                TextFont {
-                    font_size: 22.0,
-                    ..default()
-                },
-                TextColor(color),
-            ));
-        });
-}
-
-/// Helper to spawn a stat row with bonus text.
-fn spawn_stat_row_with_bonus(
-    parent: &mut ChildBuilder,
-    label: &str,
-    value: &str,
-    bonus: &str,
-    color: Color,
-    bonus_color: Color,
-) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Row,
-            column_gap: Val::Px(10.0),
-            ..default()
-        })
-        .with_children(|row| {
-            // Label
-            row.spawn((
-                Text::new(label),
-                TextFont {
-                    font_size: 22.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.8, 0.8, 0.8)),
-                Node {
-                    width: Val::Px(140.0),
-                    ..default()
-                },
-            ));
-
-            // Value
-            row.spawn((
-                Text::new(value),
-                TextFont {
-                    font_size: 22.0,
-                    ..default()
-                },
-                TextColor(color),
-            ));
-
-            // Bonus
-            row.spawn((
-                Text::new(format!(" {}", bonus)),
-                TextFont {
-                    font_size: 22.0,
-                    ..default()
-                },
-                TextColor(bonus_color),
-            ));
-        });
-}
-
-/// Helper to spawn an equipment row.
-fn spawn_equipment_row(
-    parent: &mut ChildBuilder,
-    label: &str,
-    item_name: &str,
-    color: Color,
-) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Row,
-            column_gap: Val::Px(10.0),
-            ..default()
-        })
-        .with_children(|row| {
-            // Slot label
-            row.spawn((
-                Text::new(label),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                Node {
-                    width: Val::Px(100.0),
-                    ..default()
-                },
-            ));
-
-            // Item name
-            row.spawn((
-                Text::new(item_name),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(color),
             ));
         });
 }

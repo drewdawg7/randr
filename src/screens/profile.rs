@@ -5,6 +5,7 @@ use crate::game::{PlayerGold, PlayerName};
 use crate::input::GameAction;
 use crate::stats::{HasStats, StatSheet};
 use crate::states::AppState;
+use crate::ui::widgets::StatRow;
 
 /// Plugin that manages the profile/stats screen.
 pub struct ProfilePlugin;
@@ -73,43 +74,53 @@ fn spawn_profile_screen(
                 })
                 .with_children(|parent| {
                     // HP
-                    spawn_stat_row(
-                        parent,
-                        "HP",
-                        &format!("{} / {}", stats.hp(), stats.max_hp()),
-                        Color::srgb(0.9, 0.2, 0.2),
+                    parent.spawn(
+                        StatRow::new("HP:", format!("{} / {}", stats.hp(), stats.max_hp()))
+                            .label_width(150.0)
+                            .font_size(28.0)
+                            .column_gap(15.0)
+                            .label_color(Color::srgb(0.8, 0.8, 0.8))
+                            .value_color(Color::srgb(0.9, 0.2, 0.2)),
                     );
 
                     // Gold
-                    spawn_stat_row(
-                        parent,
-                        "Gold",
-                        &format!("{}", gold.0),
-                        Color::srgb(1.0, 0.84, 0.0),
+                    parent.spawn(
+                        StatRow::new("Gold:", format!("{}", gold.0))
+                            .label_width(150.0)
+                            .font_size(28.0)
+                            .column_gap(15.0)
+                            .label_color(Color::srgb(0.8, 0.8, 0.8))
+                            .value_color(Color::srgb(1.0, 0.84, 0.0)),
                     );
 
                     // Attack
-                    spawn_stat_row(
-                        parent,
-                        "Attack",
-                        &format!("{}", stats.attack()),
-                        Color::srgb(1.0, 0.4, 0.2),
+                    parent.spawn(
+                        StatRow::new("Attack:", format!("{}", stats.attack()))
+                            .label_width(150.0)
+                            .font_size(28.0)
+                            .column_gap(15.0)
+                            .label_color(Color::srgb(0.8, 0.8, 0.8))
+                            .value_color(Color::srgb(1.0, 0.4, 0.2)),
                     );
 
                     // Defense
-                    spawn_stat_row(
-                        parent,
-                        "Defense",
-                        &format!("{}", stats.defense()),
-                        Color::srgb(0.4, 0.6, 1.0),
+                    parent.spawn(
+                        StatRow::new("Defense:", format!("{}", stats.defense()))
+                            .label_width(150.0)
+                            .font_size(28.0)
+                            .column_gap(15.0)
+                            .label_color(Color::srgb(0.8, 0.8, 0.8))
+                            .value_color(Color::srgb(0.4, 0.6, 1.0)),
                     );
 
                     // Level
-                    spawn_stat_row(
-                        parent,
-                        "Level",
-                        &format!("{}", prog.level),
-                        Color::srgb(0.6, 1.0, 0.6),
+                    parent.spawn(
+                        StatRow::new("Level:", format!("{}", prog.level))
+                            .label_width(150.0)
+                            .font_size(28.0)
+                            .column_gap(15.0)
+                            .label_color(Color::srgb(0.8, 0.8, 0.8))
+                            .value_color(Color::srgb(0.6, 1.0, 0.6)),
                     );
 
                     // XP Bar
@@ -160,41 +171,6 @@ fn spawn_profile_screen(
                     margin: UiRect::top(Val::Px(40.0)),
                     ..default()
                 },
-            ));
-        });
-}
-
-/// Helper to spawn a stat row with label and value.
-fn spawn_stat_row(parent: &mut ChildBuilder, label: &str, value: &str, color: Color) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Row,
-            column_gap: Val::Px(15.0),
-            ..default()
-        })
-        .with_children(|parent| {
-            // Label
-            parent.spawn((
-                Text::new(format!("{}:", label)),
-                TextFont {
-                    font_size: 28.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.8, 0.8, 0.8)),
-                Node {
-                    width: Val::Px(150.0),
-                    ..default()
-                },
-            ));
-
-            // Value
-            parent.spawn((
-                Text::new(value),
-                TextFont {
-                    font_size: 28.0,
-                    ..default()
-                },
-                TextColor(color),
             ));
         });
 }

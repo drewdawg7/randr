@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::inventory::Inventory;
 use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
+use crate::ui::widgets::StatRow;
 use crate::ui::{inventory_selection_bg, spawn_modal_hint, UiText};
 
 use super::state::{InventoryItemUI, InventoryModalRoot, InventorySelection, ItemInfo};
@@ -176,36 +177,40 @@ fn spawn_item_details_panel(parent: &mut ChildBuilder, item_info: Option<&ItemIn
                 ));
 
                 // Quality
-                spawn_detail_row(
-                    panel,
-                    "Quality:",
-                    item.quality.display_name(),
-                    Color::srgb(0.9, 0.9, 0.9),
+                panel.spawn(
+                    StatRow::new("Quality:", item.quality.display_name())
+                        .label_width(100.0)
+                        .label_color(Color::srgb(0.7, 0.7, 0.7))
+                        .value_color(Color::srgb(0.9, 0.9, 0.9))
+                        .bottom_margin(8.0),
                 );
 
                 // Item type
-                spawn_detail_row(
-                    panel,
-                    "Type:",
-                    &item.item_type.to_string(),
-                    Color::srgb(0.8, 0.8, 0.8),
+                panel.spawn(
+                    StatRow::new("Type:", item.item_type.to_string())
+                        .label_width(100.0)
+                        .label_color(Color::srgb(0.7, 0.7, 0.7))
+                        .value_color(Color::srgb(0.8, 0.8, 0.8))
+                        .bottom_margin(8.0),
                 );
 
                 // Value
-                spawn_detail_row(
-                    panel,
-                    "Value:",
-                    &format!("{} gold", item.gold_value),
-                    Color::srgb(1.0, 0.84, 0.0),
+                panel.spawn(
+                    StatRow::new("Value:", format!("{} gold", item.gold_value))
+                        .label_width(100.0)
+                        .label_color(Color::srgb(0.7, 0.7, 0.7))
+                        .value_color(Color::srgb(1.0, 0.84, 0.0))
+                        .bottom_margin(8.0),
                 );
 
                 // Upgrades (for equipment)
                 if item.item_type.is_equipment() {
-                    spawn_detail_row(
-                        panel,
-                        "Upgrades:",
-                        &format!("{} / {}", item.num_upgrades, item.max_upgrades),
-                        Color::srgb(0.7, 0.9, 1.0),
+                    panel.spawn(
+                        StatRow::new("Upgrades:", format!("{} / {}", item.num_upgrades, item.max_upgrades))
+                            .label_width(100.0)
+                            .label_color(Color::srgb(0.7, 0.7, 0.7))
+                            .value_color(Color::srgb(0.7, 0.9, 1.0))
+                            .bottom_margin(8.0),
                     );
                 }
 
@@ -267,42 +272,6 @@ fn spawn_item_details_panel(parent: &mut ChildBuilder, item_info: Option<&ItemIn
                     TextColor(Color::srgb(0.6, 0.6, 0.6)),
                 ));
             }
-        });
-}
-
-/// Helper to spawn a detail row with label and value.
-fn spawn_detail_row(parent: &mut ChildBuilder, label: &str, value: &str, color: Color) {
-    parent
-        .spawn(Node {
-            flex_direction: FlexDirection::Row,
-            column_gap: Val::Px(10.0),
-            margin: UiRect::bottom(Val::Px(8.0)),
-            ..default()
-        })
-        .with_children(|row| {
-            // Label
-            row.spawn((
-                Text::new(label),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-                Node {
-                    width: Val::Px(100.0),
-                    ..default()
-                },
-            ));
-
-            // Value
-            row.spawn((
-                Text::new(value),
-                TextFont {
-                    font_size: 20.0,
-                    ..default()
-                },
-                TextColor(color),
-            ));
         });
 }
 

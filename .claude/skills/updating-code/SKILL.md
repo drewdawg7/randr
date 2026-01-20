@@ -37,7 +37,7 @@ Follow this workflow for ALL code changes:
 - [store.md](store.md) - Store module: `Store` resource, `StoreItem`, `PurchaseEvent`/`SellEvent`, `StorePlugin`, purchase/sell flow
 - [store-ui.md](store-ui.md) - Store screen UI: `ItemGrid` widget, `CentralDetailPanel`, `BuyFocus` for dual-grid layouts
 - [ui-nodes.md](ui-nodes.md) - UI node helpers (`row_node`, `column_node`), overflow clipping with `Overflow::clip()`, framed widgets with decorative borders (content positioning)
-- [widgets.md](widgets.md) - UI widgets: `ItemStatsDisplay`, `GoldDisplay`, `ItemGrid`, `CentralDetailPanel`, observer-based widget pattern
+- [widgets.md](widgets.md) - UI widgets: `StatRow`, `IconValueRow`, `ItemStatsDisplay`, `GoldDisplay`, `ItemGrid`, `CentralDetailPanel`, observer-based widget pattern
 
 
 ## Documentation

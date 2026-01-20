@@ -12,7 +12,7 @@ use crate::screens::{
     SpellTestModalPlugin, TownPlugin,
 };
 use crate::states::StateTransitionPlugin;
-use crate::ui::widgets::{CentralDetailPanelPlugin, GoldDisplayPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin};
+use crate::ui::widgets::{CentralDetailPanelPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin, StatRowPlugin};
 use crate::ui::MobAnimationPlugin;
 
 /// Core game plugin that bundles all game systems.
@@ -39,7 +39,7 @@ impl Plugin for GamePlugin {
         ));
 
         // Additional core plugins
-        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, CentralDetailPanelPlugin, ItemStatsDisplayPlugin, MobAnimationPlugin));
+        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, CentralDetailPanelPlugin, ItemStatsDisplayPlugin, StatRowPlugin, IconValueRowPlugin, MobAnimationPlugin));
 
         // Screens and modals
         app.add_plugins((

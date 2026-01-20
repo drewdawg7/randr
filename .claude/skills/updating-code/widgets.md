@@ -2,6 +2,107 @@
 
 Reusable widget components in `src/ui/widgets/`.
 
+## StatRow
+
+Widget for displaying a label-value row with optional bonus text.
+
+**File:** `src/ui/widgets/stat_row.rs`
+
+### Usage
+
+```rust
+use crate::ui::widgets::StatRow;
+
+// Basic usage
+parent.spawn(StatRow::new("Attack:", "12"));
+
+// With bonus text
+parent.spawn(
+    StatRow::new("Attack:", "12")
+        .with_bonus("(+3)", Color::srgb(0.4, 1.0, 0.4))
+);
+
+// Fully customized
+parent.spawn(
+    StatRow::new("HP:", "10/20")
+        .label_width(140.0)
+        .font_size(22.0)
+        .column_gap(10.0)
+        .label_color(Color::srgb(0.8, 0.8, 0.8))
+        .value_color(Color::srgb(0.95, 0.3, 0.3))
+        .bottom_margin(8.0)
+);
+```
+
+### Builder Methods
+
+| Method | Description | Default |
+|--------|-------------|---------|
+| `new(label, value)` | Create with label and value | - |
+| `with_bonus(text, color)` | Add bonus text after value | None |
+| `label_width(f32)` | Width of label column | 120.0 |
+| `font_size(f32)` | Font size for all text | 20.0 |
+| `column_gap(f32)` | Gap between columns | 10.0 |
+| `label_color(Color)` | Label text color | gray (0.75) |
+| `value_color(Color)` | Value text color | white |
+| `bottom_margin(f32)` | Bottom margin on row | None |
+
+### Default Constants
+
+Available in `stat_row::defaults`:
+- `LABEL_WIDTH`: 120.0
+- `FONT_SIZE`: 20.0
+- `COLUMN_GAP`: 10.0
+- `LABEL_COLOR`: gray (0.75, 0.75, 0.75)
+- `VALUE_COLOR`: white
+
+## IconValueRow
+
+Widget for displaying an icon and value in a row.
+
+**File:** `src/ui/widgets/icon_value_row.rs`
+
+### Usage
+
+```rust
+use crate::ui::widgets::IconValueRow;
+use crate::assets::ItemDetailIconsSlice;
+use crate::stats::StatType;
+
+// With a specific icon slice
+parent.spawn(IconValueRow::new(ItemDetailIconsSlice::AttackIcon, "15"));
+
+// For a stat type (auto-selects appropriate icon)
+parent.spawn(IconValueRow::for_stat(StatType::Attack, 15));
+
+// Customized
+parent.spawn(
+    IconValueRow::new(ItemDetailIconsSlice::HealthIcon, "10/20")
+        .icon_size(20.0)
+        .font_size(18.0)
+        .text_color(Color::srgb(0.8, 0.3, 0.3))
+);
+```
+
+### Builder Methods
+
+| Method | Description | Default |
+|--------|-------------|---------|
+| `new(slice, value)` | Create with icon slice and value | - |
+| `for_stat(stat_type, value)` | Create for a stat type (auto-maps icon) | - |
+| `icon_size(f32)` | Icon width/height | 16.0 |
+| `font_size(f32)` | Font size for value text | 18.0 |
+| `column_gap(f32)` | Gap between icon and value | 4.0 |
+| `text_color(Color)` | Value text color | brown (0.4, 0.25, 0.15) |
+
+### Default Constants
+
+Available in `icon_value_row::defaults`:
+- `ICON_SIZE`: 16.0
+- `FONT_SIZE`: 18.0
+- `COLUMN_GAP`: 4.0
+- `TEXT_COLOR`: brown (0.4, 0.25, 0.15)
+
 ## ItemStatsDisplay
 
 Widget for rendering item stats with configurable display modes.
