@@ -29,6 +29,7 @@ impl Plugin for TownPlugin {
             .add_systems(OnExit(TownTab::Blacksmith), cleanup_tab_content)
             .add_systems(OnExit(TownTab::Alchemist), cleanup_tab_content)
             .add_systems(OnExit(TownTab::Field), cleanup_tab_content)
+            .add_systems(OnExit(TownTab::Dungeon), cleanup_tab_content)
             // Input systems
             .add_systems(
                 Update,

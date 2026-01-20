@@ -266,3 +266,124 @@ impl ItemDetailIconsSlice {
         }
     }
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DungeonTileSlice {
+    // Floor tiles
+    FloorTile1,
+    FloorTile2,
+    FloorTile3,
+    FloorTile4,
+    FloorTile5,
+    FloorTile6,
+    FloorTile7,
+    FloorTile8,
+    // Floor edges
+    FloorEdgeTopLeft,
+    FloorEdgeTop1,
+    FloorEdgeTop2,
+    FloorEdgeTopRight,
+    FloorEdgeLeft,
+    FloorEdgeLeft2,
+    FloorEdgeRight1,
+    FloorEdgeRight2,
+    // Top walls
+    TopWall1,
+    TopWall2,
+    TopWall3,
+    TopWall4,
+    // Bottom walls
+    BottomWall1,
+    BottomWall2,
+    BottomWall3,
+    BottomWall4,
+    // Side walls
+    SideWall2,
+    SideWall3,
+    SideWall4,
+    SideWall5,
+    SideWall6,
+    SideWall7,
+    SideWall8,
+    // Wall corners
+    BottomLeftWall,
+    BottomRightWall,
+    WallCornerTopLeft,
+    // Columns
+    WallColumn,
+    WallColumnRed1,
+    WallColumnRed2,
+    WallColumnBlue1,
+    WallColumnBlue2,
+    // Torches
+    TorchWall1,
+    TorchWall2,
+    TorchWall3,
+    TorchWall4,
+    // Special
+    Gate,
+    GateFloor,
+    Stairs,
+}
+
+impl DungeonTileSlice {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            // Floor tiles
+            Self::FloorTile1 => "floor_tile1",
+            Self::FloorTile2 => "floor_tile2",
+            Self::FloorTile3 => "floor_tile3",
+            Self::FloorTile4 => "floor_tile4",
+            Self::FloorTile5 => "floor_tile5",
+            Self::FloorTile6 => "floor_tile6",
+            Self::FloorTile7 => "floor_tile7",
+            Self::FloorTile8 => "floor_tile8",
+            // Floor edges
+            Self::FloorEdgeTopLeft => "floor_edge_topleft",
+            Self::FloorEdgeTop1 => "floor_edge_top1",
+            Self::FloorEdgeTop2 => "floor_edge_top2",
+            Self::FloorEdgeTopRight => "floor_edge_topright",
+            Self::FloorEdgeLeft => "floor_edge_left",
+            Self::FloorEdgeLeft2 => "floor_edge_left2",
+            Self::FloorEdgeRight1 => "floor_edge_right1",
+            Self::FloorEdgeRight2 => "floor_edge_right2",
+            // Top walls
+            Self::TopWall1 => "top_wall_1",
+            Self::TopWall2 => "top_wall_2",
+            Self::TopWall3 => "top_wall_3",
+            Self::TopWall4 => "top_wall_4",
+            // Bottom walls
+            Self::BottomWall1 => "bottom_wall_1",
+            Self::BottomWall2 => "bottom_wall_2",
+            Self::BottomWall3 => "bottom_wall_3",
+            Self::BottomWall4 => "bottom_wall_4",
+            // Side walls
+            Self::SideWall2 => "side_wall_2",
+            Self::SideWall3 => "side_wall_3",
+            Self::SideWall4 => "side_wall_4",
+            Self::SideWall5 => "side_wall_5",
+            Self::SideWall6 => "side_wall_6",
+            Self::SideWall7 => "side_wall_7",
+            Self::SideWall8 => "side_wall_8",
+            // Wall corners
+            Self::BottomLeftWall => "bottom_left_wall",
+            Self::BottomRightWall => "bottom_right_wall",
+            Self::WallCornerTopLeft => "wall_corner_topleft",
+            // Columns
+            Self::WallColumn => "wall_column",
+            Self::WallColumnRed1 => "wall_column_red1",
+            Self::WallColumnRed2 => "wall_column_red2",
+            Self::WallColumnBlue1 => "wall_column_blue1",
+            Self::WallColumnBlue2 => "wall_column_blue2",
+            // Torches
+            Self::TorchWall1 => "torch_wall_1",
+            Self::TorchWall2 => "torch_wall_2",
+            Self::TorchWall3 => "torch_wall_3",
+            Self::TorchWall4 => "torch_wall_4",
+            // Special
+            Self::Gate => "gate",
+            Self::GateFloor => "gate_floor",
+            Self::Stairs => "stairs",
+        }
+    }
+}

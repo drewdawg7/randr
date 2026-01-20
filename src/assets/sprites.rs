@@ -28,6 +28,7 @@ pub enum SpriteSheetKey {
     DefenseIcon,
     GoldIcon,
     DefaultStatIcon,
+    DungeonTileset,
 }
 
 impl SpriteSheetKey {
@@ -54,6 +55,7 @@ impl SpriteSheetKey {
             Self::DefenseIcon,
             Self::GoldIcon,
             Self::DefaultStatIcon,
+            Self::DungeonTileset,
         ]
     }
 
@@ -80,6 +82,7 @@ impl SpriteSheetKey {
             Self::DefenseIcon => "item_detail_icons/defense_icon",
             Self::GoldIcon => "item_detail_icons/gold_icon",
             Self::DefaultStatIcon => "item_detail_icons/default_stat_icon",
+            Self::DungeonTileset => "dungeon_tileset",
         }
     }
 }
