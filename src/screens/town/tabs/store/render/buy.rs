@@ -7,14 +7,13 @@ use crate::ui::widgets::{CentralDetailPanel, ItemGrid, ItemGridEntry};
 use crate::ui::UiText;
 
 use super::super::state::{BuyFocus, StoreSelections};
-use super::{InfoPanelSource, StoreUiCache};
+use super::InfoPanelSource;
 
 pub fn spawn_buy_ui(
     parent: &mut ChildBuilder,
     store_selections: &StoreSelections,
     store: &Store,
     inventory: &Inventory,
-    _ui_cache: &StoreUiCache,
 ) {
     let store_focused = store_selections.buy_focus == BuyFocus::Store;
 

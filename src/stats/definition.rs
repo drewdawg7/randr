@@ -113,6 +113,18 @@ impl StatType {
         &[StatType::Health, StatType::Attack, StatType::Defense, StatType::GoldFind, StatType::Mining, StatType::MagicFind]
     }
 
+    /// Returns the short display name for this stat type.
+    pub fn display_name(self) -> &'static str {
+        match self {
+            StatType::Health => "HP",
+            StatType::Attack => "ATK",
+            StatType::Defense => "DEF",
+            StatType::GoldFind => "Gold Find",
+            StatType::Mining => "Mining",
+            StatType::MagicFind => "Magic Find",
+        }
+    }
+
     /// Creates a StatInstance with both current and max set to base_value.
     /// For Health, max_value is used for capping heals. For other stats,
     /// max_value is unused but set for uniformity.
