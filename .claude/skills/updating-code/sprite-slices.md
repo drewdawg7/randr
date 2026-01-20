@@ -26,6 +26,7 @@ let cell = sheet.image_node(UiAllSlice::CellBackground.as_str());  // GOOD
 | `TravelBookSlice` | `TravelBook` | Banner |
 | `BookSlotSlice` | `BookSlot` | Slot |
 | `ItemDetailIconsSlice` | (multiple) | AttackIcon, HealthIcon, DefenseIcon, GoldIcon, DefaultStatIcon |
+| `DungeonTileSlice` | `DungeonTileset` | FloorTile2-4, TopWall1-4, BottomWall1-4, SideWall2-8, corners, torches, gate |
 
 ## Common Patterns
 
