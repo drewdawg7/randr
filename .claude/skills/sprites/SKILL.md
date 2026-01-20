@@ -130,27 +130,135 @@ See [sprite-slices.md](references/sprite-slices.md) for full documentation.
 
 Use 9-slice to stretch sprites without distorting corners (e.g., UI panels, buttons, frames).
 
-### For UI Nodes (ImageNode)
+### Manual Nine-Slice (Recommended)
+
+Bevy's built-in `ImageScaleMode::Sliced` has issues with atlas textures. Use a **manual 3x3 grid layout approach** instead:
+
+**1. Export from Aseprite as 9 separate frames:**
+```bash
+"$ASEPRITE" --batch input.aseprite \
+  --sheet assets/sprites/my_bg_slices.png \
+  --sheet-type horizontal \
+  --data assets/sprites/my_bg_slices.json \
+  --format json-hash
+```
+
+The frames should be ordered: top-left, top-center, top-right, middle-left, center, middle-right, bottom-left, bottom-center, bottom-right.
+
+**2. Fix the JSON `image` path** (critical!):
+
+Aseprite exports `"image": "my_bg_slices.png"` but the asset loader expects `"image": "sprites/my_bg_slices.png"`. Edit the JSON:
+```json
+"meta": {
+  "image": "sprites/my_bg_slices.png",  // Add sprites/ prefix!
+  ...
+}
+```
+
+**3. Create a slice enum in `src/assets/sprite_slices.rs`:**
+```rust
+pub enum MyBgSlice {
+    TopLeft, TopCenter, TopRight,
+    MiddleLeft, Center, MiddleRight,
+    BottomLeft, BottomCenter, BottomRight,
+}
+
+impl MyBgSlice {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::TopLeft => "frame_0.aseprite",
+            // ... map to Aseprite frame names
+        }
+    }
+
+    pub const ALL: [Self; 9] = [
+        Self::TopLeft, Self::TopCenter, Self::TopRight,
+        Self::MiddleLeft, Self::Center, Self::MiddleRight,
+        Self::BottomLeft, Self::BottomCenter, Self::BottomRight,
+    ];
+}
+```
+
+**4. Spawn as a 3x3 grid layout:**
+```rust
+const SLICE_SIZE: f32 = 48.0;  // Corner/edge size
+
+fn spawn_nine_slice_background(
+    parent: &mut ChildBuilder,
+    game_sprites: &GameSprites,
+    width: f32,
+    height: f32,
+) {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::MyBgSlices) else { return };
+
+    let stretch_width = width - (SLICE_SIZE * 2.0);
+    let stretch_height = height - (SLICE_SIZE * 2.0);
+
+    parent.spawn(Node {
+        position_type: PositionType::Absolute,
+        left: Val::Px(0.0),
+        top: Val::Px(0.0),
+        width: Val::Px(width),
+        height: Val::Px(height),
+        display: Display::Grid,
+        grid_template_columns: vec![
+            GridTrack::px(SLICE_SIZE),
+            GridTrack::px(stretch_width),
+            GridTrack::px(SLICE_SIZE),
+        ],
+        grid_template_rows: vec![
+            GridTrack::px(SLICE_SIZE),
+            GridTrack::px(stretch_height),
+            GridTrack::px(SLICE_SIZE),
+        ],
+        ..default()
+    }).with_children(|grid| {
+        for slice in MyBgSlice::ALL {
+            let (w, h) = match slice {
+                // Corners: fixed size
+                MyBgSlice::TopLeft | MyBgSlice::TopRight
+                | MyBgSlice::BottomLeft | MyBgSlice::BottomRight => (SLICE_SIZE, SLICE_SIZE),
+                // Top/bottom edges: stretch horizontal
+                MyBgSlice::TopCenter | MyBgSlice::BottomCenter => (stretch_width, SLICE_SIZE),
+                // Left/right edges: stretch vertical
+                MyBgSlice::MiddleLeft | MyBgSlice::MiddleRight => (SLICE_SIZE, stretch_height),
+                // Center: stretch both
+                MyBgSlice::Center => (stretch_width, stretch_height),
+            };
+
+            let mut cell = grid.spawn(Node {
+                width: Val::Px(w),
+                height: Val::Px(h),
+                ..default()
+            });
+            if let Some(img) = sheet.image_node(slice.as_str()) {
+                cell.insert(img);
+            }
+        }
+    });
+}
+```
+
+**5. Size the container appropriately:**
+- Calculate grid content size (cells × cell_size + gaps × gap_size)
+- Add padding for the border decorations
+- Example: 4×4 grid of 48px cells with 4px gaps = 204px content, use ~320px container for nice border
+
+### Built-in Sliced Mode (Simple Cases Only)
+
+For non-atlas images or simple cases, Bevy's built-in slicer may work:
 
 ```rust
-use bevy::prelude::*;
 use bevy::ui::widget::NodeImageMode;
 
-// When creating the ImageNode, chain .with_mode()
-let background = ui_all.get("Slice_8").map(|idx| {
-    ImageNode::from_atlas_image(
-        ui_all.texture.clone(),
-        TextureAtlas { layout: ui_all.layout.clone(), index: idx },
-    )
+ImageNode::new(texture_handle)
     .with_mode(NodeImageMode::Sliced(TextureSlicer {
-        border: BorderRect::square(8.0),  // 8px border on all sides
+        border: BorderRect::square(8.0),
         ..default()
     }))
-});
-
-// Insert normally
-commands.entity(entity).insert(background);
 ```
+
+> **Warning**: This does NOT work reliably with `TextureAtlas` images. Use manual nine-slice above.
 
 ### Border Configuration
 
@@ -169,29 +277,6 @@ border: BorderRect {
     bottom: 8.0,
 }
 ```
-
-### Scale Modes
-
-```rust
-TextureSlicer {
-    border: BorderRect::square(8.0),
-    center_scale_mode: SliceScaleMode::Stretch,  // default - stretch center
-    sides_scale_mode: SliceScaleMode::Stretch,   // default - stretch sides
-    max_corner_scale: 1.0,                        // don't scale corners beyond 1x
-}
-
-// For tiling instead of stretching:
-center_scale_mode: SliceScaleMode::Tile { stretch_value: 1.0 }
-```
-
-### Choosing Border Size
-
-The border value should match the corner size in your sprite:
-- Look at the sprite in an image editor
-- Measure the corner radius or decorative corner area
-- Use that as your border value
-
-For a 28x28 sprite with ~8px rounded corners, use `BorderRect::square(8.0)`.
 
 ## Adding New Sprite Sheets
 
