@@ -44,6 +44,28 @@ parent.spawn(column_node(15.0));
 
 Use these helpers when you need a simple row or column container with only a gap setting. If you need additional properties like `padding`, `margin`, `width`, etc., use the full `Node` struct instead.
 
+## Overflow Clipping
+
+**Important:** Bevy UI does NOT clip overflow by default. Child elements can render outside their parent's bounds unless you explicitly set `overflow: Overflow::clip()` on the parent Node.
+
+```rust
+// Container that clips children to its bounds
+Node {
+    width: Val::Px(240.0),
+    height: Val::Px(200.0),
+    overflow: Overflow::clip(),  // Required for clipping!
+    ..default()
+}
+```
+
+Use `Overflow::clip()` for both axes, or `Overflow::clip_x()` / `Overflow::clip_y()` for single-axis clipping.
+
+Examples in codebase:
+- `src/ui/widgets/central_detail_panel.rs` - `Overflow::clip()`
+- `src/screens/spell_test_modal.rs` - `Overflow::clip_y()`
+- `src/screens/inventory_modal/render.rs` - `Overflow::clip_y()`
+- `src/screens/monster_compendium.rs` - `Overflow::clip()`
+
 ## Files Using These Helpers
 
 - `src/ui/widgets/gold_display.rs` - gold amount display row
