@@ -73,3 +73,28 @@ Examples in codebase:
 - `src/screens/keybinds.rs` - category containers
 - `src/screens/dungeon/rest.rs` - action list
 - `src/screens/dungeon/room_entry.rs` - action list
+
+## Framed Widgets with Decorative Borders
+
+Some widgets render decorative borders as absolute-positioned backgrounds (e.g., nine-slice frames). The widget's internal padding is typically small (for general layout), but the decorative border may be much larger.
+
+**The Problem:** If you change `justify_content` to `FlexStart` or add content that starts at the top, it can overlap the decorative border area.
+
+**Wrong approach:** Modifying the widget's internal padding to account for the border. This breaks the widget for other consumers and can cause the frame itself to render incorrectly.
+
+**Correct approach:** Add margin to your content in the consuming code to push it below the decorative border.
+
+```rust
+// In render.rs (the consumer), NOT in the widget itself:
+parent.spawn((
+    Text::new(&item.name),
+    TextFont { font_size: 18.0, ..default() },
+    Node {
+        // Push content below the decorative border
+        margin: UiRect { top: Val::Px(36.0), ..default() },
+        ..default()
+    },
+));
+```
+
+**Key principle:** Reusable widgets should not be modified for specific use cases. Handle positioning in the code that populates the widget's content.

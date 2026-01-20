@@ -23,6 +23,7 @@ pub enum SpriteSheetKey {
     FightBackgrounds,
     ShopBgSlices,
     DetailPanelBg,
+    ItemDetailIcons,
 }
 
 impl SpriteSheetKey {
@@ -44,6 +45,7 @@ impl SpriteSheetKey {
             Self::FightBackgrounds,
             Self::ShopBgSlices,
             Self::DetailPanelBg,
+            Self::ItemDetailIcons,
         ]
     }
 
@@ -65,6 +67,7 @@ impl SpriteSheetKey {
             Self::FightBackgrounds => "fight_backgrounds",
             Self::ShopBgSlices => "shop_bg_slices",
             Self::DetailPanelBg => "detail_panel_bg",
+            Self::ItemDetailIcons => "item_detail_icons/item_detail_icons",
         }
     }
 }

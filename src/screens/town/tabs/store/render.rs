@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
+use crate::assets::{GameFonts, GameSprites, ItemDetailIconsSlice, SpriteSheetKey, UiAllSlice};
 use crate::economy::WorthGold;
 use crate::game::Storage;
 use crate::inventory::{Inventory, InventoryItem};
@@ -605,6 +605,7 @@ pub fn populate_central_detail_panel(
     query: Query<(Entity, &CentralDetailPanel)>,
     inventory: Res<Inventory>,
     store: Res<Store>,
+    game_sprites: Res<GameSprites>,
 ) {
     for (entity, panel) in &query {
         let text_color = TextColor(Color::srgb(0.4, 0.25, 0.15));
@@ -622,30 +623,48 @@ pub fn populate_central_detail_panel(
                     .remove::<CentralDetailPanel>()
                     .with_children(|parent| {
                         if let Some(item) = display_item {
+                            // Item name - top margin positions below decorative border
                             parent.spawn((
                                 Text::new(&item.name),
                                 TextFont { font_size: 18.0, ..default() },
                                 text_color,
+                                Node {
+                                    margin: UiRect { top: Val::Px(36.0), ..default() },
+                                    ..default()
+                                },
+                            ));
+
+                            // Item quality
+                            parent.spawn((
+                                Text::new(item.quality.display_name()),
+                                TextFont { font_size: 16.0, ..default() },
+                                TextColor(item.quality.color()),
                                 Node { position_type: PositionType::Relative, ..default() },
                             ));
 
+                            // Stats
                             for stat_type in StatType::all() {
                                 let value = item.stats.value(*stat_type);
                                 if value > 0 {
-                                    let stat_name = match stat_type {
-                                        StatType::Health => "HP",
-                                        StatType::Attack => "ATK",
-                                        StatType::Defense => "DEF",
-                                        StatType::GoldFind => "Gold Find",
-                                        StatType::Mining => "Mining",
-                                        StatType::MagicFind => "Magic Find",
-                                    };
-                                    parent.spawn((
-                                        Text::new(format!("{}: +{}", stat_name, value)),
-                                        TextFont { font_size: 18.0, ..default() },
-                                        text_color,
-                                        Node { position_type: PositionType::Relative, ..default() },
-                                    ));
+                                    if *stat_type == StatType::Attack {
+                                        // Attack: icon + value
+                                        spawn_attack_stat_row(parent, value, text_color, &game_sprites);
+                                    } else {
+                                        let stat_name = match stat_type {
+                                            StatType::Health => "HP",
+                                            StatType::Attack => "ATK",
+                                            StatType::Defense => "DEF",
+                                            StatType::GoldFind => "Gold Find",
+                                            StatType::Mining => "Mining",
+                                            StatType::MagicFind => "Magic Find",
+                                        };
+                                        parent.spawn((
+                                            Text::new(format!("{}: +{}", stat_name, value)),
+                                            TextFont { font_size: 18.0, ..default() },
+                                            text_color,
+                                            Node { position_type: PositionType::Relative, ..default() },
+                                        ));
+                                    }
                                 }
                             }
 
@@ -660,7 +679,10 @@ pub fn populate_central_detail_panel(
                                 Text::new("Out of Stock"),
                                 TextFont { font_size: 18.0, ..default() },
                                 text_color,
-                                Node { position_type: PositionType::Relative, ..default() },
+                                Node {
+                                    margin: UiRect { top: Val::Px(36.0), ..default() },
+                                    ..default()
+                                },
                             ));
                         }
                     });
@@ -673,30 +695,48 @@ pub fn populate_central_detail_panel(
                     .remove::<CentralDetailPanel>()
                     .with_children(|parent| {
                         if let Some(inv_item) = inv_item {
+                            // Item name - top margin positions below decorative border
                             parent.spawn((
                                 Text::new(&inv_item.item.name),
                                 TextFont { font_size: 18.0, ..default() },
                                 text_color,
+                                Node {
+                                    margin: UiRect { top: Val::Px(36.0), ..default() },
+                                    ..default()
+                                },
+                            ));
+
+                            // Item quality
+                            parent.spawn((
+                                Text::new(inv_item.item.quality.display_name()),
+                                TextFont { font_size: 16.0, ..default() },
+                                TextColor(inv_item.item.quality.color()),
                                 Node { position_type: PositionType::Relative, ..default() },
                             ));
 
+                            // Stats
                             for stat_type in StatType::all() {
                                 let value = inv_item.item.stats.value(*stat_type);
                                 if value > 0 {
-                                    let stat_name = match stat_type {
-                                        StatType::Health => "HP",
-                                        StatType::Attack => "ATK",
-                                        StatType::Defense => "DEF",
-                                        StatType::GoldFind => "Gold Find",
-                                        StatType::Mining => "Mining",
-                                        StatType::MagicFind => "Magic Find",
-                                    };
-                                    parent.spawn((
-                                        Text::new(format!("{}: +{}", stat_name, value)),
-                                        TextFont { font_size: 18.0, ..default() },
-                                        text_color,
-                                        Node { position_type: PositionType::Relative, ..default() },
-                                    ));
+                                    if *stat_type == StatType::Attack {
+                                        // Attack: icon + value
+                                        spawn_attack_stat_row(parent, value, text_color, &game_sprites);
+                                    } else {
+                                        let stat_name = match stat_type {
+                                            StatType::Health => "HP",
+                                            StatType::Attack => "ATK",
+                                            StatType::Defense => "DEF",
+                                            StatType::GoldFind => "Gold Find",
+                                            StatType::Mining => "Mining",
+                                            StatType::MagicFind => "Magic Find",
+                                        };
+                                        parent.spawn((
+                                            Text::new(format!("{}: +{}", stat_name, value)),
+                                            TextFont { font_size: 18.0, ..default() },
+                                            text_color,
+                                            Node { position_type: PositionType::Relative, ..default() },
+                                        ));
+                                    }
                                 }
                             }
 
@@ -711,11 +751,43 @@ pub fn populate_central_detail_panel(
                                 Text::new("Empty"),
                                 TextFont { font_size: 18.0, ..default() },
                                 text_color,
-                                Node { position_type: PositionType::Relative, ..default() },
+                                Node {
+                                    margin: UiRect { top: Val::Px(36.0), ..default() },
+                                    ..default()
+                                },
                             ));
                         }
                     });
             }
         }
     }
+}
+
+fn spawn_attack_stat_row(
+    parent: &mut ChildBuilder,
+    value: i32,
+    text_color: TextColor,
+    game_sprites: &GameSprites,
+) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            column_gap: Val::Px(4.0),
+            ..default()
+        })
+        .with_children(|row| {
+            // Attack icon (48x48 native size)
+            if let Some(sheet) = game_sprites.get(SpriteSheetKey::ItemDetailIcons) {
+                if let Some(img) = sheet.image_node(ItemDetailIconsSlice::AttackIcon.as_str()) {
+                    row.spawn((img, Node::default()));
+                }
+            }
+            // Value text (no + prefix for attack)
+            row.spawn((
+                Text::new(format!("{}", value)),
+                TextFont { font_size: 18.0, ..default() },
+                text_color,
+            ));
+        });
 }

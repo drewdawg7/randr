@@ -36,7 +36,7 @@ fn on_add_central_detail_panel(
         height: Val::Px(panel_height),
         position_type: PositionType::Relative,
         flex_direction: FlexDirection::Column,
-        justify_content: JustifyContent::Center,
+        justify_content: JustifyContent::FlexStart,
         align_items: AlignItems::Center,
         padding: UiRect::all(Val::Px(12.0)),
         row_gap: Val::Px(4.0),

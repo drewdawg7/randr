@@ -32,7 +32,7 @@ Follow this workflow for ALL code changes:
 - [sprite-slices.md](sprite-slices.md) - Typed sprite slice enums (`UiAllSlice`, `HealthBarSlice`, etc.), semantic naming for sprite lookups, `src/assets/sprite_slices.rs`
 - [store.md](store.md) - Store module: `Store` resource, `StoreItem`, `PurchaseEvent`/`SellEvent`, `StorePlugin`, purchase/sell flow
 - [store-ui.md](store-ui.md) - Store screen UI: `ItemGrid` widget, `StoreInfoPanel`, `BuyFocus` for dual-grid layouts
-- [ui-nodes.md](ui-nodes.md) - UI node helpers (`row_node`, `column_node`), overflow clipping with `Overflow::clip()`, reducing boilerplate for flex containers
+- [ui-nodes.md](ui-nodes.md) - UI node helpers (`row_node`, `column_node`), overflow clipping with `Overflow::clip()`, framed widgets with decorative borders (content positioning)
 
 
 ## Documentation

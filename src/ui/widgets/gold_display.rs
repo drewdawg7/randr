@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
+use crate::assets::{GameSprites, SpriteSheetKey, UiAllSlice};
 use crate::ui::row_node;
 
 /// Plugin for gold display widget.
@@ -46,7 +46,6 @@ fn on_add_gold_display(
     mut commands: Commands,
     query: Query<&GoldDisplay>,
     game_sprites: Res<GameSprites>,
-    game_fonts: Res<GameFonts>,
 ) {
     let entity = trigger.entity();
     let Ok(gold_display) = query.get(entity) else {
@@ -79,7 +78,10 @@ fn on_add_gold_display(
             // Amount text
             row.spawn((
                 Text::new(format!("{}", gold_display.amount)),
-                game_fonts.pixel_font(gold_display.font_size),
+                TextFont {
+                    font_size: gold_display.font_size,
+                    ..default()
+                },
                 TextColor(gold_display.text_color),
             ));
         });

@@ -220,3 +220,16 @@ impl DetailPanelSlice {
         Self::BottomRight,
     ];
 }
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ItemDetailIconsSlice {
+    AttackIcon,
+}
+
+impl ItemDetailIconsSlice {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::AttackIcon => "attack_icon",
+        }
+    }
+}
