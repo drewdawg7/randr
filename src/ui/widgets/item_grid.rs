@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
+use super::nine_slice::spawn_nine_slice_panel;
 use crate::assets::{GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
 
 const CELL_SIZE: f32 = 48.0;
 const GRID_SIZE: usize = 4;
-const SLICE_SIZE: f32 = 48.0;
 
 /// Plugin for item grid widget.
 pub struct ItemGridPlugin;
@@ -110,7 +110,7 @@ fn on_add_item_grid(
 
     item_grid_entity.with_children(|parent| {
         // Spawn nine-slice background (absolute positioned behind grid)
-        spawn_nine_slice_background(parent, &game_sprites, grid_width, grid_height);
+        spawn_nine_slice_panel::<ShopBgSlice>(parent, &game_sprites, grid_width, grid_height);
 
         // Grid container on top
         parent
@@ -187,73 +187,6 @@ fn on_add_item_grid(
                 }
             });
     });
-}
-
-/// Spawn a manual nine-slice background using a 3x3 CSS grid.
-fn spawn_nine_slice_background(
-    parent: &mut ChildBuilder,
-    game_sprites: &GameSprites,
-    width: f32,
-    height: f32,
-) {
-    let Some(sheet) = game_sprites.get(SpriteSheetKey::ShopBgSlices) else {
-        return;
-    };
-
-    let stretch_width = width - (SLICE_SIZE * 2.0);
-    let stretch_height = height - (SLICE_SIZE * 2.0);
-
-    parent
-        .spawn(Node {
-            position_type: PositionType::Absolute,
-            left: Val::Px(0.0),
-            top: Val::Px(0.0),
-            width: Val::Px(width),
-            height: Val::Px(height),
-            display: Display::Grid,
-            grid_template_columns: vec![
-                GridTrack::px(SLICE_SIZE),
-                GridTrack::px(stretch_width),
-                GridTrack::px(SLICE_SIZE),
-            ],
-            grid_template_rows: vec![
-                GridTrack::px(SLICE_SIZE),
-                GridTrack::px(stretch_height),
-                GridTrack::px(SLICE_SIZE),
-            ],
-            ..default()
-        })
-        .with_children(|grid| {
-            for slice in ShopBgSlice::ALL {
-                let (w, h) = match slice {
-                    // Corners: fixed size
-                    ShopBgSlice::TopLeft
-                    | ShopBgSlice::TopRight
-                    | ShopBgSlice::BottomLeft
-                    | ShopBgSlice::BottomRight => (SLICE_SIZE, SLICE_SIZE),
-                    // Top/bottom edges: stretch horizontal
-                    ShopBgSlice::TopCenter | ShopBgSlice::BottomCenter => {
-                        (stretch_width, SLICE_SIZE)
-                    }
-                    // Left/right edges: stretch vertical
-                    ShopBgSlice::MiddleLeft | ShopBgSlice::MiddleRight => {
-                        (SLICE_SIZE, stretch_height)
-                    }
-                    // Center: stretch both
-                    ShopBgSlice::Center => (stretch_width, stretch_height),
-                };
-
-                let mut cell = grid.spawn(Node {
-                    width: Val::Px(w),
-                    height: Val::Px(h),
-                    ..default()
-                });
-
-                if let Some(img) = sheet.image_node(slice.as_str()) {
-                    cell.insert(img);
-                }
-            }
-        });
 }
 
 /// Update the grid selector position when selection changes.

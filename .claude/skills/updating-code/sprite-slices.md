@@ -27,6 +27,8 @@ let cell = sheet.image_node(UiAllSlice::CellBackground.as_str());  // GOOD
 | `BookSlotSlice` | `BookSlot` | Slot |
 | `ItemDetailIconsSlice` | (multiple) | AttackIcon, HealthIcon, DefenseIcon, GoldIcon, DefaultStatIcon |
 | `DungeonTileSlice` | `DungeonTileset` | FloorTile2-4, TopWall1-4, BottomWall1-4, SideWall2-8, corners, torches, gate |
+| `ShopBgSlice` | `ShopBgSlices` | TopLeft, TopCenter, TopRight, MiddleLeft, Center, MiddleRight, BottomLeft, BottomCenter, BottomRight (implements `NineSlice`) |
+| `DetailPanelSlice` | `DetailPanelBg` | TopLeft, TopCenter, TopRight, MiddleLeft, Center, MiddleRight, BottomLeft, BottomCenter, BottomRight (implements `NineSlice`) |
 
 ## Common Patterns
 
@@ -55,6 +57,20 @@ let gold = sheet.image_node(UiAllSlice::GoldIcon.as_str());
 
 ### Stat icons with ItemDetailIconsSlice
 See [stat-icons.md](stat-icons.md) for full documentation on `ItemDetailIconsSlice`.
+
+## NineSlice Trait
+
+The `NineSlice` trait enables generic nine-slice panel spawning. Implemented by `ShopBgSlice` and `DetailPanelSlice`.
+
+```rust
+use crate::assets::{NineSlice, ShopBgSlice};
+use crate::ui::widgets::spawn_nine_slice_panel;
+
+// Spawn a nine-slice panel
+spawn_nine_slice_panel::<ShopBgSlice>(parent, &game_sprites, width, height);
+```
+
+See [widgets.md](widgets.md#spawn_nine_slice_panel) for full documentation.
 
 ## Adding New Slices
 

@@ -32,12 +32,12 @@ Follow this workflow for ALL code changes:
 - [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
 - [mob-sprites.md](mob-sprites.md) - Adding mob sprites, `SpriteAssets::mob_sprite()`, `populate_mob_sprite` system
 - [rust-idioms.md](rust-idioms.md) - Preferred Rust patterns: `map_or` for Option defaults, `let-else` for early returns, Query type aliases for complex Bevy queries, integer safety (`saturating_add`/`saturating_sub`, bounds checking before signed-to-unsigned casts)
-- [sprite-slices.md](sprite-slices.md) - Typed sprite slice enums (`UiAllSlice`, `HealthBarSlice`, etc.), semantic naming for sprite lookups, `src/assets/sprite_slices.rs`
+- [sprite-slices.md](sprite-slices.md) - Typed sprite slice enums (`UiAllSlice`, `HealthBarSlice`, etc.), semantic naming for sprite lookups, `NineSlice` trait, `src/assets/sprite_slices.rs`
 - [stat-icons.md](stat-icons.md) - `ItemDetailIconsSlice` enum, `for_stat()` and `sprite_sheet_key()` methods, icon file mappings for stat display
 - [store.md](store.md) - Store module: `Store` resource, `StoreItem`, `PurchaseEvent`/`SellEvent`, `StorePlugin`, purchase/sell flow
 - [store-ui.md](store-ui.md) - Store screen UI: `ItemGrid` widget, `CentralDetailPanel`, `BuyFocus` for dual-grid layouts
 - [ui-nodes.md](ui-nodes.md) - UI node helpers (`row_node`, `column_node`), overflow clipping with `Overflow::clip()`, framed widgets with decorative borders (content positioning)
-- [widgets.md](widgets.md) - UI widgets: `StatRow`, `IconValueRow`, `ItemStatsDisplay`, `GoldDisplay`, `ItemGrid`, `CentralDetailPanel`, observer-based widget pattern
+- [widgets.md](widgets.md) - UI widgets: `StatRow`, `IconValueRow`, `ItemStatsDisplay`, `GoldDisplay`, `ItemGrid`, `CentralDetailPanel`, `spawn_nine_slice_panel`, observer-based widget pattern
 
 
 ## Documentation

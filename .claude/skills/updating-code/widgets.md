@@ -199,6 +199,63 @@ row.spawn(CentralDetailPanel {
 
 The `populate_central_detail_panel` system in `panels.rs` handles rendering item details.
 
+## spawn_nine_slice_panel
+
+Generic helper function for spawning nine-slice panel backgrounds.
+
+**File:** `src/ui/widgets/nine_slice.rs`
+
+### Usage
+
+```rust
+use crate::ui::widgets::spawn_nine_slice_panel;
+use crate::assets::ShopBgSlice;  // or DetailPanelSlice
+
+// Spawn a nine-slice panel background
+parent.with_children(|parent| {
+    spawn_nine_slice_panel::<ShopBgSlice>(parent, &game_sprites, width, height);
+});
+```
+
+### How It Works
+
+The function creates an absolute-positioned 3x3 CSS grid that:
+- Uses corner slices at fixed size (e.g., 48x48)
+- Stretches top/bottom edge slices horizontally
+- Stretches left/right edge slices vertically
+- Stretches center slice in both dimensions
+
+### NineSlice Trait
+
+Types implementing `NineSlice` (in `src/assets/sprite_slices.rs`) can be used with this helper:
+
+```rust
+pub trait NineSlice: Copy {
+    const ALL: [Self; 9];        // Slices in row-major order (TL, TC, TR, ML, C, MR, BL, BC, BR)
+    const SLICE_SIZE: f32;       // Size of corner slices
+    const SHEET_KEY: SpriteSheetKey;  // Sprite sheet to use
+
+    fn as_str(self) -> &'static str;  // Slice name for lookup
+    fn position(self) -> SlicePosition;  // Auto-derived from index
+    fn dimensions(self, stretch_width: f32, stretch_height: f32) -> (f32, f32);
+}
+```
+
+### Implemented Types
+
+| Type | Sheet Key | Slice Size | Used By |
+|------|-----------|------------|---------|
+| `ShopBgSlice` | `ShopBgSlices` | 48.0 | `ItemGrid` |
+| `DetailPanelSlice` | `DetailPanelBg` | 48.0 | `CentralDetailPanel` |
+
+### Adding New Nine-Slice Panels
+
+1. Add slice enum to `src/assets/sprite_slices.rs` with 9 variants
+2. Implement `as_str()` and `const ALL` for the enum
+3. Implement `NineSlice` trait with appropriate `SLICE_SIZE` and `SHEET_KEY`
+4. Export from `src/assets/mod.rs`
+5. Use `spawn_nine_slice_panel::<YourSlice>()` in widgets
+
 ## Adding New Widgets
 
 1. Create file in `src/ui/widgets/`

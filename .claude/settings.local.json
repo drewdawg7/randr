@@ -157,7 +157,8 @@
       "Bash('ASEPRITE=/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite')",
       "Bash($ASEPRITE --batch '/Users/drewstewart/Downloads/2D Dungeon Asset Pack_v5.2/character and tileset/Dungeon_Tileset_v2-sheet.aseprite' --list-slices)",
       "Bash($ASEPRITE --batch '/Users/drewstewart/Downloads/2D Dungeon Asset Pack_v5.2/character and tileset/Dungeon_Tileset_v2-sheet.aseprite' --data /dev/stdout --format json-hash)",
-      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/2D Dungeon Asset Pack_v5.2/character and tileset/Dungeon_Tileset_v2-sheet.aseprite\" --sheet /tmp/dungeon_tileset.png --data /tmp/dungeon_tileset.json --format json-hash)"
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/2D Dungeon Asset Pack_v5.2/character and tileset/Dungeon_Tileset_v2-sheet.aseprite\" --sheet /tmp/dungeon_tileset.png --data /tmp/dungeon_tileset.json --format json-hash)",
+      "Bash(identify:*)"
     ]
   },
   "enabledMcpjsonServers": [

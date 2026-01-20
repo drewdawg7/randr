@@ -180,6 +180,16 @@ impl ShopBgSlice {
     ];
 }
 
+impl NineSlice for ShopBgSlice {
+    const ALL: [Self; 9] = Self::ALL;
+    const SLICE_SIZE: f32 = 48.0;
+    const SHEET_KEY: SpriteSheetKey = SpriteSheetKey::ShopBgSlices;
+
+    fn as_str(self) -> &'static str {
+        Self::as_str(self)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DetailPanelSlice {
     TopLeft,
@@ -221,9 +231,70 @@ impl DetailPanelSlice {
     ];
 }
 
+impl NineSlice for DetailPanelSlice {
+    const ALL: [Self; 9] = Self::ALL;
+    const SLICE_SIZE: f32 = 48.0;
+    const SHEET_KEY: SpriteSheetKey = SpriteSheetKey::DetailPanelBg;
+
+    fn as_str(self) -> &'static str {
+        Self::as_str(self)
+    }
+}
+
 use crate::stats::StatType;
 
 use super::SpriteSheetKey;
+
+/// Position category for a nine-slice panel cell.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SlicePosition {
+    /// Corner cells (fixed size in both dimensions)
+    Corner,
+    /// Top/bottom edge cells (stretch horizontally)
+    TopBottom,
+    /// Left/right edge cells (stretch vertically)
+    LeftRight,
+    /// Center cell (stretch in both dimensions)
+    Center,
+}
+
+/// Trait for nine-slice panel sprite slices.
+///
+/// Implementors provide the 9 slices (in row-major order: TL, TC, TR, ML, C, MR, BL, BC, BR),
+/// the slice size, and the sprite sheet key to use.
+pub trait NineSlice: Copy {
+    /// All 9 slices in row-major order.
+    const ALL: [Self; 9];
+    /// Size of corner slices (edges use this for their fixed dimension).
+    const SLICE_SIZE: f32;
+    /// The sprite sheet key for this nine-slice set.
+    const SHEET_KEY: SpriteSheetKey;
+
+    /// Returns the slice name for sprite lookup.
+    fn as_str(self) -> &'static str;
+
+    /// Returns the position category for this slice based on its index in ALL.
+    fn position(self) -> SlicePosition {
+        let index = Self::ALL.iter().position(|&s| std::mem::discriminant(&s) == std::mem::discriminant(&self)).unwrap_or(0);
+        match index {
+            0 | 2 | 6 | 8 => SlicePosition::Corner,
+            1 | 7 => SlicePosition::TopBottom,
+            3 | 5 => SlicePosition::LeftRight,
+            4 => SlicePosition::Center,
+            _ => SlicePosition::Corner,
+        }
+    }
+
+    /// Computes the dimensions for this slice given the stretch dimensions.
+    fn dimensions(self, stretch_width: f32, stretch_height: f32) -> (f32, f32) {
+        match self.position() {
+            SlicePosition::Corner => (Self::SLICE_SIZE, Self::SLICE_SIZE),
+            SlicePosition::TopBottom => (stretch_width, Self::SLICE_SIZE),
+            SlicePosition::LeftRight => (Self::SLICE_SIZE, stretch_height),
+            SlicePosition::Center => (stretch_width, stretch_height),
+        }
+    }
+}
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ItemDetailIconsSlice {
