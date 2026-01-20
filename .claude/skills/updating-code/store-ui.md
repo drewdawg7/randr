@@ -20,9 +20,7 @@ col.spawn(ItemGrid {
 
 Buy screen central panel (`src/ui/widgets/central_detail_panel.rs`) with nine-slice background using `DetailPanelSlice`.
 
-## StoreInfoPanel
-
-Displays item details above grids using `InfoPanelSource`:
+Uses `InfoPanelSource` to determine which item to display:
 
 ```rust
 pub enum InfoPanelSource {
@@ -31,7 +29,7 @@ pub enum InfoPanelSource {
 }
 ```
 
-The `populate_store_info_panel` system reads from `Res<Store>` and `Res<Inventory>`.
+The `populate_central_detail_panel` system in `panels.rs` renders item details using `ItemStatsDisplay` widget.
 
 ## Focus Toggle for Dual-Grid Layouts
 
@@ -84,37 +82,13 @@ The render logic is split into mode-specific files under `src/screens/town/tabs/
 
 | File | Purpose |
 |------|---------|
-| `mod.rs` | Orchestration (`spawn_store_ui_inner`), types (`InfoPanelSource`, `StoreInfoPanel`, `StoreUiCache`) |
+| `mod.rs` | Orchestration (`spawn_store_ui_inner`), types (`InfoPanelSource`) |
 | `menu.rs` | Main menu UI, `STORE_MENU_OPTIONS` constant |
 | `buy.rs` | Buy screen with dual `ItemGrid` widgets |
 | `sell.rs` | Sell screen with inventory list |
 | `storage.rs` | Storage menu/view/deposit screens, `STORAGE_MENU_OPTIONS` |
 | `helpers.rs` | `spawn_inventory_list` - reusable inventory list widget |
-| `panels.rs` | `populate_store_info_panel`, `populate_central_detail_panel` systems |
-
-### Panel Helper Functions (panels.rs)
-
-Shared helpers for rendering item details with icons:
-
-```rust
-/// Spawn stat rows with icons for each non-zero stat
-fn spawn_stats_with_icons(
-    parent: &mut ChildBuilder,
-    stats: &[(StatType, i32)],
-    game_sprites: &GameSprites,
-    game_fonts: &GameFonts,
-    text_color: TextColor,
-);
-
-/// Spawn a price row with gold icon
-fn spawn_price_row(
-    parent: &mut ChildBuilder,
-    price: i32,
-    game_sprites: &GameSprites,
-    game_fonts: &GameFonts,
-    text_color: TextColor,
-);
-```
+| `panels.rs` | `populate_central_detail_panel` system, item extraction helpers |
 
 ### Adding New Store Modes
 
