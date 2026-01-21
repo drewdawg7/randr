@@ -61,40 +61,88 @@ Check the Aseprite file for animation tags:
 
 | File | Purpose |
 |------|---------|
-| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `MobAnimation` component, animation systems |
-| `src/screens/fight/ui.rs` | `populate_mob_sprite()` - displays animated sprite in combat |
-| `src/screens/monster_compendium.rs` | `update_compendium_mob_sprite()` - displays animated sprite in MonsterCompendium |
-| `src/screens/town/tabs/dungeon.rs` | Spawns `DungeonMobSprite` markers for mobs in dungeon |
+| `src/ui/animation.rs` | `SpriteAnimation` component, `AnimationConfig`, `animate_sprites()` system |
+| `src/ui/sprite_marker.rs` | `SpriteMarker` trait, `SpriteData`, generic `populate_sprite_markers<M>()` system |
+| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `DungeonMobSprite` marker |
+| `src/ui/screens/fight_modal/state.rs` | `FightModalMobSprite` marker with `SpriteMarker` impl |
+| `src/ui/screens/fight/ui.rs` | `populate_mob_sprite()` - displays animated sprite in combat |
+| `src/ui/screens/monster_compendium/render.rs` | `update_compendium_mob_sprite()` - displays animated sprite in MonsterCompendium |
 | `assets/sprites/mobs/` | Sprite sheet PNGs and JSON metadata |
+
+## Sprite Marker System
+
+The codebase uses a **generic sprite marker pattern** to reduce code duplication. See `src/ui/sprite_marker.rs`.
+
+### SpriteMarker Trait
+
+```rust
+pub trait SpriteMarker: Component + Sized {
+    type Resources: SystemParam;
+    fn resolve(&self, resources: &<Self::Resources as SystemParam>::Item<'_, '_>) -> Option<SpriteData>;
+}
+```
+
+### Existing Mob Sprite Markers
+
+| Marker | File | Resource | flip_x |
+|--------|------|----------|--------|
+| `DungeonMobSprite` | `mob_animation.rs` | `MobSpriteSheets` | false |
+| `FightModalMobSprite` | `fight_modal/state.rs` | `MobSpriteSheets` | true |
+
+### Registering a New Mob Sprite Marker
+
+1. Define the marker component with `mob_id` field
+2. Implement `SpriteMarker` trait
+3. Register with `app.register_sprite_marker::<YourMarker>()`
+
+Example:
+```rust
+#[derive(Component)]
+pub struct MyMobSprite {
+    pub mob_id: MobId,
+}
+
+impl SpriteMarker for MyMobSprite {
+    type Resources = Res<'static, MobSpriteSheets>;
+
+    fn resolve(&self, sheets: &Res<MobSpriteSheets>) -> Option<SpriteData> {
+        let sheet = sheets.get(self.mob_id)?;
+        Some(SpriteData {
+            texture: sheet.texture.clone(),
+            layout: sheet.layout.clone(),
+            animation: sheet.animation.clone().into(),
+            flip_x: false,
+        })
+    }
+}
+
+// In plugin:
+app.register_sprite_marker::<MyMobSprite>();
+```
 
 ## How It Works
 
-### Animation System (`MobAnimationPlugin`)
+### Animation System
 
 1. **Loading**: `load_mob_sprite_sheets()` runs at `PreStartup`, loading textures and creating `TextureAtlasLayout` for each mob
-2. **Populating**: When a `NeedsMobSprite` or `CompendiumMobSprite` entity is detected, the system inserts:
-   - `ImageNode` with the texture atlas
-   - `MobAnimation` component with timer and frame config
-3. **Animating**: `animate_mob_sprites()` runs every frame, ticking timers and updating atlas indices
-
-### Markers
-
-- `NeedsMobSprite` - Used in fight screen for combat mob sprites
-- `CompendiumMobSprite` - Used in MonsterCompendium for display sprites
-- `DungeonMobSprite { mob_id: MobId }` - Used in dungeon tab for mob entities
+2. **Populating**: When a marker entity is detected via `Added<M>`, the generic `populate_sprite_markers<M>()` system:
+   - Calls `marker.resolve()` to get sprite data
+   - Removes the marker
+   - Inserts `ImageNode` + `SpriteAnimation`
+3. **Animating**: `animate_sprites()` runs every frame, ticking timers and updating atlas indices for all `SpriteAnimation` components
 
 ### Components
 
 ```rust
-/// Animation configuration for a mob's idle animation.
-pub struct MobAnimationConfig {
-    pub first_frame: usize,    // First frame index
-    pub last_frame: usize,     // Last frame index (inclusive)
-    pub frame_duration: f32,   // Seconds per frame
+/// Unified animation config (converts from MobAnimationConfig)
+pub struct AnimationConfig {
+    pub first_frame: usize,
+    pub last_frame: usize,
+    pub frame_duration: f32,
 }
 
-/// Component for animated mob sprites.
-pub struct MobAnimation {
+/// Unified animation component for all animated sprites
+pub struct SpriteAnimation {
     pub timer: Timer,
     pub current_frame: usize,
     pub first_frame: usize,
@@ -127,7 +175,12 @@ The sprite display containers should be consistent across all locations:
 | Fight Screen | 224x224 | 192x192 | `src/screens/fight/ui.rs:204-222` |
 | MonsterCompendium | 112x112 | 96x96 | `src/screens/monster_compendium.rs:233-249` |
 | Dungeon Tab | 48x48 | 48x48 | `src/screens/town/tabs/dungeon.rs` |
+| Fight Modal | 128x128 | 128x128 | `src/ui/screens/fight_modal/render.rs` |
 
-## Legacy Note
+## Special Cases
 
-The old `SpriteAssets::mob_sprite()` method and static sprite loading in `src/assets/sprites.rs` is no longer used for mobs with animations. The `MobSpriteSheets` resource in `src/ui/mob_animation.rs` is the new source of truth.
+### CompendiumMobSprite
+
+The `CompendiumMobSprite` in `src/ui/screens/monster_compendium/render.rs` does NOT use the `SpriteMarker` trait because it:
+- Doesn't remove the marker (sprite updates dynamically on selection change)
+- Uses `SpriteAnimation::new(&sheet.animation.clone().into())` directly

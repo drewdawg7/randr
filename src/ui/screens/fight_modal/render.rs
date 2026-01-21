@@ -5,12 +5,9 @@ use bevy::prelude::*;
 use crate::assets::{FightBannerSlice, GameSprites};
 use crate::player::PlayerName;
 use crate::ui::widgets::spawn_three_slice_banner;
-use crate::ui::{MobAnimation, MobSpriteSheets, PlayerAnimation, PlayerSpriteSheet};
 
 use super::super::modal::{spawn_modal_overlay, ActiveModal, ModalType};
-use super::state::{
-    FightModalMob, FightModalMobSprite, FightModalPlayerSprite, FightModalRoot, SpawnFightModal,
-};
+use super::state::{FightModalMob, FightModalMobSprite, FightModalPlayerSprite, FightModalRoot, SpawnFightModal};
 
 const SPRITE_SIZE: f32 = 128.0;
 const BANNER_WIDTH: f32 = 160.0;
@@ -112,60 +109,4 @@ pub fn spawn_fight_modal(
                         });
                 });
         });
-}
-
-/// System to populate the player sprite in the fight modal.
-pub fn populate_fight_modal_player_sprite(
-    mut commands: Commands,
-    query: Query<Entity, Added<FightModalPlayerSprite>>,
-    player_sheet: Res<PlayerSpriteSheet>,
-) {
-    if !player_sheet.is_loaded() {
-        return;
-    }
-
-    let texture = player_sheet.texture.as_ref().unwrap().clone();
-    let layout = player_sheet.layout.as_ref().unwrap().clone();
-
-    for entity in &query {
-        commands
-            .entity(entity)
-            .remove::<FightModalPlayerSprite>()
-            .insert((
-                ImageNode::from_atlas_image(
-                    texture.clone(),
-                    TextureAtlas {
-                        layout: layout.clone(),
-                        index: player_sheet.animation.first_frame,
-                    },
-                ),
-                PlayerAnimation::new(&player_sheet.animation),
-            ));
-    }
-}
-
-/// System to populate the mob sprite in the fight modal.
-pub fn populate_fight_modal_mob_sprite(
-    mut commands: Commands,
-    query: Query<(Entity, &FightModalMobSprite), Added<FightModalMobSprite>>,
-    mob_sheets: Res<MobSpriteSheets>,
-) {
-    for (entity, marker) in &query {
-        if let Some(sheet) = mob_sheets.get(marker.mob_id) {
-            let mut image = ImageNode::from_atlas_image(
-                sheet.texture.clone(),
-                TextureAtlas {
-                    layout: sheet.layout.clone(),
-                    index: sheet.animation.first_frame,
-                },
-            );
-            // Flip horizontally to face left (toward the player)
-            image.flip_x = true;
-
-            commands
-                .entity(entity)
-                .remove::<FightModalMobSprite>()
-                .insert((image, MobAnimation::new(&sheet.animation)));
-        }
-    }
 }

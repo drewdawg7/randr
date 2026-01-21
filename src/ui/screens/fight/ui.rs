@@ -5,7 +5,7 @@ use crate::game::PlayerName;
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::ui::{
     update_health_bar, HealthBarBundle, HealthBarNameBundle, HealthBarText, HealthBarTextBundle,
-    MobAnimation, MobSpriteSheets, SpriteHealthBar, SpriteHealthBarBundle,
+    MobSpriteSheets, SpriteAnimation, SpriteHealthBar, SpriteHealthBarBundle,
 };
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::{nav_selection_text, MenuIndex};
@@ -435,7 +435,7 @@ pub fn populate_mob_sprite(
                         index: sheet.animation.first_frame,
                     },
                 ),
-                MobAnimation::new(&sheet.animation),
+                SpriteAnimation::new(&sheet.animation.clone().into()),
             ));
     }
 }

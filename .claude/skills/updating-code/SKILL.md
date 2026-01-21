@@ -37,8 +37,9 @@ Read the relevant doc BEFORE making changes.
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |
-| Mob animations, SpriteAssets::mob_sprite | [mob-sprites.md](mob-sprites.md) |
+| Mob animations, MobSpriteSheets, MobAnimationConfig | [mob-sprites.md](mob-sprites.md) |
 | Option handling, Query aliases, saturating math | [rust-idioms.md](rust-idioms.md) |
+| SpriteMarker trait, SpriteAnimation, sprite population | [sprite-marker.md](sprite-marker.md) |
 | UiAllSlice, HealthBarSlice, NineSlice, ThreeSlice traits | [sprite-slices.md](sprite-slices.md) |
 | ItemDetailIconsSlice, stat display icons | [stat-icons.md](stat-icons.md) |
 | StatRow, ItemGrid, GoldDisplay widgets | [widgets/](widgets/table-of-contents.md) |

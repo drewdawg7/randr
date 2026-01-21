@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::assets::{BookSlotSlice, GameSprites, SpriteSheetKey, UiAllSlice};
 use super::super::modal::spawn_modal_overlay;
-use crate::ui::{MobAnimation, MobSpriteSheets};
+use crate::ui::{MobSpriteSheets, SpriteAnimation};
 
 use super::constants::*;
 use super::state::{
@@ -191,13 +191,13 @@ pub fn update_compendium_mob_sprite(
                         index: sheet.animation.first_frame,
                     },
                 ),
-                MobAnimation::new(&sheet.animation),
+                SpriteAnimation::new(&sheet.animation.clone().into()),
             ));
         } else {
             commands
                 .entity(entity)
                 .remove::<ImageNode>()
-                .remove::<MobAnimation>();
+                .remove::<SpriteAnimation>();
         }
     }
 }

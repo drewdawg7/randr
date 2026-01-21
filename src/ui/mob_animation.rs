@@ -7,6 +7,9 @@ use bevy::prelude::*;
 
 use crate::mob::MobId;
 
+use super::animation::AnimationConfig;
+use super::sprite_marker::{SpriteData, SpriteMarker, SpriteMarkerAppExt};
+
 /// Plugin for mob sprite animations.
 pub struct MobAnimationPlugin;
 
@@ -14,7 +17,7 @@ impl Plugin for MobAnimationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MobSpriteSheets>()
             .add_systems(PreStartup, load_mob_sprite_sheets)
-            .add_systems(Update, (animate_mob_sprites, populate_dungeon_mob_sprites));
+            .register_sprite_marker::<DungeonMobSprite>();
     }
 }
 
@@ -35,6 +38,16 @@ impl Default for MobAnimationConfig {
             first_frame: 0,
             last_frame: 3,
             frame_duration: 0.1,
+        }
+    }
+}
+
+impl From<MobAnimationConfig> for AnimationConfig {
+    fn from(config: MobAnimationConfig) -> Self {
+        Self {
+            first_frame: config.first_frame,
+            last_frame: config.last_frame,
+            frame_duration: config.frame_duration,
         }
     }
 }
@@ -71,35 +84,17 @@ pub struct DungeonMobSprite {
     pub mob_id: MobId,
 }
 
-/// Component for animated mob sprites.
-///
-/// Add this to an entity with an `ImageNode` to animate it.
-#[derive(Component)]
-pub struct MobAnimation {
-    /// Timer for frame advancement
-    pub timer: Timer,
-    /// Current frame index within the animation
-    pub current_frame: usize,
-    /// First frame index
-    pub first_frame: usize,
-    /// Last frame index (inclusive)
-    pub last_frame: usize,
-}
+impl SpriteMarker for DungeonMobSprite {
+    type Resources = Res<'static, MobSpriteSheets>;
 
-impl MobAnimation {
-    /// Create a new mob animation from a configuration.
-    pub fn new(config: &MobAnimationConfig) -> Self {
-        Self {
-            timer: Timer::from_seconds(config.frame_duration, TimerMode::Repeating),
-            current_frame: config.first_frame,
-            first_frame: config.first_frame,
-            last_frame: config.last_frame,
-        }
-    }
-
-    /// Get the current atlas index.
-    pub fn atlas_index(&self) -> usize {
-        self.current_frame
+    fn resolve(&self, sheets: &Res<MobSpriteSheets>) -> Option<SpriteData> {
+        let sheet = sheets.get(self.mob_id)?;
+        Some(SpriteData {
+            texture: sheet.texture.clone(),
+            layout: sheet.layout.clone(),
+            animation: sheet.animation.clone().into(),
+            flip_x: false,
+        })
     }
 }
 
@@ -161,48 +156,4 @@ fn load_mob_sprite_sheets(
     );
 
     info!("Loaded mob sprite sheets for Goblin, Slime, and Dragon");
-}
-
-/// System to animate mob sprites.
-fn animate_mob_sprites(time: Res<Time>, mut query: Query<(&mut MobAnimation, &mut ImageNode)>) {
-    for (mut animation, mut image) in &mut query {
-        animation.timer.tick(time.delta());
-        if animation.timer.just_finished() {
-            // Advance to next frame, wrapping back to first
-            animation.current_frame += 1;
-            if animation.current_frame > animation.last_frame {
-                animation.current_frame = animation.first_frame;
-            }
-
-            // Update the atlas index
-            if let Some(ref mut atlas) = image.texture_atlas {
-                atlas.index = animation.current_frame;
-            }
-        }
-    }
-}
-
-/// System to populate dungeon mob sprites with textures and animation.
-fn populate_dungeon_mob_sprites(
-    mut commands: Commands,
-    query: Query<(Entity, &DungeonMobSprite), Added<DungeonMobSprite>>,
-    mob_sheets: Res<MobSpriteSheets>,
-) {
-    for (entity, marker) in &query {
-        if let Some(sheet) = mob_sheets.get(marker.mob_id) {
-            commands
-                .entity(entity)
-                .remove::<DungeonMobSprite>()
-                .insert((
-                    ImageNode::from_atlas_image(
-                        sheet.texture.clone(),
-                        TextureAtlas {
-                            layout: sheet.layout.clone(),
-                            index: sheet.animation.first_frame,
-                        },
-                    ),
-                    MobAnimation::new(&sheet.animation),
-                ));
-        }
-    }
 }
