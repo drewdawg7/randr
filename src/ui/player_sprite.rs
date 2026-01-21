@@ -21,43 +21,12 @@ impl Plugin for PlayerSpritePlugin {
     }
 }
 
-/// Animation configuration for the player's idle animation.
-#[derive(Debug, Clone)]
-pub struct PlayerAnimationConfig {
-    /// First frame index of the idle animation
-    pub first_frame: usize,
-    /// Last frame index of the idle animation (inclusive)
-    pub last_frame: usize,
-    /// Duration per frame in seconds
-    pub frame_duration: f32,
-}
-
-impl Default for PlayerAnimationConfig {
-    fn default() -> Self {
-        Self {
-            first_frame: 0,
-            last_frame: 3,
-            frame_duration: 0.15,
-        }
-    }
-}
-
-impl From<PlayerAnimationConfig> for AnimationConfig {
-    fn from(config: PlayerAnimationConfig) -> Self {
-        Self {
-            first_frame: config.first_frame,
-            last_frame: config.last_frame,
-            frame_duration: config.frame_duration,
-        }
-    }
-}
-
 /// Resource containing the loaded player sprite sheet.
 #[derive(Resource, Default)]
 pub struct PlayerSpriteSheet {
     pub texture: Option<Handle<Image>>,
     pub layout: Option<Handle<TextureAtlasLayout>>,
-    pub animation: PlayerAnimationConfig,
+    pub animation: AnimationConfig,
 }
 
 impl PlayerSpriteSheet {
@@ -81,7 +50,7 @@ impl SpriteMarker for DungeonPlayerSprite {
         Some(SpriteData {
             texture: sheet.texture.as_ref()?.clone(),
             layout: sheet.layout.as_ref()?.clone(),
-            animation: sheet.animation.clone().into(),
+            animation: sheet.animation.clone(),
             flip_x: false,
         })
     }
@@ -100,7 +69,7 @@ fn load_player_sprite_sheet(
 
     player_sheet.texture = Some(texture);
     player_sheet.layout = Some(layout_handle);
-    player_sheet.animation = PlayerAnimationConfig {
+    player_sheet.animation = AnimationConfig {
         first_frame: 0,
         last_frame: 3,
         frame_duration: 0.15,

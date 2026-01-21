@@ -21,43 +21,12 @@ impl Plugin for MobAnimationPlugin {
     }
 }
 
-/// Animation configuration for a mob's idle animation.
-#[derive(Debug, Clone)]
-pub struct MobAnimationConfig {
-    /// First frame index of the idle animation
-    pub first_frame: usize,
-    /// Last frame index of the idle animation (inclusive)
-    pub last_frame: usize,
-    /// Duration per frame in seconds
-    pub frame_duration: f32,
-}
-
-impl Default for MobAnimationConfig {
-    fn default() -> Self {
-        Self {
-            first_frame: 0,
-            last_frame: 3,
-            frame_duration: 0.1,
-        }
-    }
-}
-
-impl From<MobAnimationConfig> for AnimationConfig {
-    fn from(config: MobAnimationConfig) -> Self {
-        Self {
-            first_frame: config.first_frame,
-            last_frame: config.last_frame,
-            frame_duration: config.frame_duration,
-        }
-    }
-}
-
 /// A loaded mob sprite sheet with animation data.
 #[derive(Debug)]
 pub struct MobSpriteSheet {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,
-    pub animation: MobAnimationConfig,
+    pub animation: AnimationConfig,
 }
 
 /// Resource containing loaded mob sprite sheets.
@@ -92,7 +61,7 @@ impl SpriteMarker for DungeonMobSprite {
         Some(SpriteData {
             texture: sheet.texture.clone(),
             layout: sheet.layout.clone(),
-            animation: sheet.animation.clone().into(),
+            animation: sheet.animation.clone(),
             flip_x: false,
         })
     }
@@ -113,7 +82,7 @@ fn load_mob_sprite_sheets(
         MobSpriteSheet {
             texture: goblin_texture,
             layout: goblin_layout_handle,
-            animation: MobAnimationConfig {
+            animation: AnimationConfig {
                 first_frame: 0,
                 last_frame: 3,
                 frame_duration: 0.2,
@@ -130,7 +99,7 @@ fn load_mob_sprite_sheets(
         MobSpriteSheet {
             texture: slime_texture,
             layout: slime_layout_handle,
-            animation: MobAnimationConfig {
+            animation: AnimationConfig {
                 first_frame: 0,
                 last_frame: 3,
                 frame_duration: 0.25,
@@ -147,7 +116,7 @@ fn load_mob_sprite_sheets(
         MobSpriteSheet {
             texture: dragon_texture,
             layout: dragon_layout_handle,
-            animation: MobAnimationConfig {
+            animation: AnimationConfig {
                 first_frame: 0,
                 last_frame: 3,
                 frame_duration: 0.35,

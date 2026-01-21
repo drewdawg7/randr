@@ -35,7 +35,7 @@ mob_sheets.insert(
     MobSpriteSheet {
         texture: <mob_name>_texture,
         layout: <mob_name>_layout_handle,
-        animation: MobAnimationConfig {
+        animation: AnimationConfig {
             first_frame: 0,  // First frame of idle animation
             last_frame: 3,   // Last frame of idle animation (inclusive)
             frame_duration: 0.2,  // Seconds per frame (0.2-0.25 is typical)
@@ -63,7 +63,7 @@ Check the Aseprite file for animation tags:
 |------|---------|
 | `src/ui/animation.rs` | `SpriteAnimation` component, `AnimationConfig`, `animate_sprites()` system |
 | `src/ui/sprite_marker.rs` | `SpriteMarker` trait, `SpriteData`, generic `populate_sprite_markers<M>()` system |
-| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `DungeonMobSprite` marker |
+| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `MobSpriteSheet`, `DungeonMobSprite` marker |
 | `src/ui/screens/fight_modal/state.rs` | `FightModalMobSprite` marker with `SpriteMarker` impl |
 | `src/ui/screens/fight/ui.rs` | `populate_mob_sprite()` - displays animated sprite in combat |
 | `src/ui/screens/monster_compendium/render.rs` | `update_compendium_mob_sprite()` - displays animated sprite in MonsterCompendium |
@@ -110,7 +110,7 @@ impl SpriteMarker for MyMobSprite {
         Some(SpriteData {
             texture: sheet.texture.clone(),
             layout: sheet.layout.clone(),
-            animation: sheet.animation.clone().into(),
+            animation: sheet.animation.clone(),
             flip_x: false,
         })
     }
@@ -134,7 +134,7 @@ app.register_sprite_marker::<MyMobSprite>();
 ### Components
 
 ```rust
-/// Unified animation config (converts from MobAnimationConfig)
+/// Unified animation config used by all sprite sheets
 pub struct AnimationConfig {
     pub first_frame: usize,
     pub last_frame: usize,
@@ -183,4 +183,4 @@ The sprite display containers should be consistent across all locations:
 
 The `CompendiumMobSprite` in `src/ui/screens/monster_compendium/render.rs` does NOT use the `SpriteMarker` trait because it:
 - Doesn't remove the marker (sprite updates dynamically on selection change)
-- Uses `SpriteAnimation::new(&sheet.animation.clone().into())` directly
+- Uses `SpriteAnimation::new(&sheet.animation)` directly

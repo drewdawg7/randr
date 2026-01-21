@@ -86,7 +86,7 @@ impl SpriteMarker for MySprite {
         Some(SpriteData {
             texture: sheet.texture.clone(),
             layout: sheet.layout.clone(),
-            animation: sheet.animation.clone().into(),
+            animation: sheet.animation.clone(),
             flip_x: false,
         })
     }
@@ -121,17 +121,8 @@ Some sprites need to update dynamically without removing the marker. These shoul
 // Instead, handle directly with SpriteAnimation::new()
 commands.entity(entity).insert((
     ImageNode::from_atlas_image(texture, atlas),
-    SpriteAnimation::new(&config.into()),
+    SpriteAnimation::new(&sheet.animation),
 ));
-```
-
-### Animation Config Conversion
-
-Both `PlayerAnimationConfig` and `MobAnimationConfig` implement `From<T> for AnimationConfig`:
-
-```rust
-let config: AnimationConfig = mob_config.clone().into();
-let animation = SpriteAnimation::new(&config);
 ```
 
 ## Benefits
