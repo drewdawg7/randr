@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::input::GameAction;
+use crate::screens::modal::ActiveModal;
 use crate::states::AppState;
 use crate::ui::widgets::PlayerStats;
 
@@ -94,7 +95,12 @@ pub fn handle_tab_navigation(
     current_tab: Res<State<TownTab>>,
     mut next_tab: ResMut<NextState<TownTab>>,
     mut action_events: EventReader<GameAction>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal.is_some() {
+        return;
+    }
+
     for action in action_events.read() {
         match action {
             GameAction::NextTab => {

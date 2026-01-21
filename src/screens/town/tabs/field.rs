@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::input::{clear_game_action_events, GameAction, NavigationDirection};
+use crate::screens::modal::ActiveModal;
 use crate::states::{AppState, RequestFightEvent, RequestMineEvent};
 use crate::ui::spawn_navigation_hint;
 
@@ -72,7 +73,12 @@ fn handle_field_input(
     mut action_events: EventReader<GameAction>,
     mut fight_events: EventWriter<RequestFightEvent>,
     mut mine_events: EventWriter<RequestMineEvent>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal.is_some() {
+        return;
+    }
+
     for action in action_events.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {

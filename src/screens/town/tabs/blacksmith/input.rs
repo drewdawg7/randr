@@ -6,6 +6,7 @@ use crate::game::{
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::Inventory;
 use crate::item::recipe::RecipeId;
+use crate::screens::modal::ActiveModal;
 
 use super::state::{BlacksmithMode, BlacksmithModeKind, BlacksmithSelections};
 
@@ -19,7 +20,12 @@ pub fn handle_blacksmith_input(
     mut quality_events: EventWriter<UpgradeQualityEvent>,
     mut smelt_events: EventWriter<SmeltRecipeEvent>,
     mut forge_events: EventWriter<ForgeRecipeEvent>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal.is_some() {
+        return;
+    }
+
     for action in action_events.read() {
         match blacksmith_mode.mode {
             BlacksmithModeKind::Menu => {

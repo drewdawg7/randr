@@ -4,6 +4,7 @@ use bevy::prelude::*;
 
 use crate::game::BrewPotionEvent;
 use crate::input::{GameAction, NavigationDirection};
+use crate::screens::modal::ActiveModal;
 
 use super::state::{AlchemistMode, AlchemistModeKind, AlchemistSelections};
 
@@ -13,7 +14,12 @@ pub fn handle_alchemist_input(
     mut alchemist_selections: ResMut<AlchemistSelections>,
     mut action_events: EventReader<GameAction>,
     mut brew_events: EventWriter<BrewPotionEvent>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal.is_some() {
+        return;
+    }
+
     for action in action_events.read() {
         match alchemist_mode.mode {
             AlchemistModeKind::Menu => match action {

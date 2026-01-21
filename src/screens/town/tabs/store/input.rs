@@ -4,6 +4,7 @@ use crate::game::{Storage, StorageDepositEvent, StorageWithdrawEvent};
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::Inventory;
 use crate::location::{PurchaseEvent, SellEvent, Store};
+use crate::screens::modal::ActiveModal;
 use crate::screens::town::shared::SelectionState;
 
 use super::state::{BuyFocus, StoreMode, StoreModeKind, StoreSelections};
@@ -20,7 +21,12 @@ pub fn handle_store_input(
     mut sell_events: EventWriter<SellEvent>,
     mut withdraw_events: EventWriter<StorageWithdrawEvent>,
     mut deposit_events: EventWriter<StorageDepositEvent>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal.is_some() {
+        return;
+    }
+
     for action in action_events.read() {
         match store_mode.mode {
             StoreModeKind::Menu => {
