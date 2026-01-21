@@ -8,6 +8,7 @@ src/dungeon/
     mod.rs              # Re-exports
     tile.rs             # TileType, Tile
     entity.rs           # DungeonEntity enum
+    grid.rs             # GridSize, GridPosition, GridOccupancy
     layout.rs           # DungeonLayout (tiles + entities)
     layout_builder.rs   # LayoutBuilder (declarative layout creation)
     generator.rs        # LayoutGenerator trait
@@ -40,6 +41,57 @@ pub struct Tile {
     pub flip_x: bool,
 }
 ```
+
+### Grid Types (`grid.rs`)
+
+Types for grid-based positioning and multi-cell entity occupancy.
+
+#### GridSize
+Represents entity size in grid cells (supports multi-cell entities like bosses):
+```rust
+use crate::dungeon::GridSize;
+
+let single = GridSize::single();           // 1x1 entity
+let boss = GridSize::new(3, 2);            // 3x2 entity
+boss.cells();                              // 6 total cells
+boss.cell_offsets();                       // Iterator: (0,0), (1,0), (2,0), (0,1), (1,1), (2,1)
+```
+
+#### GridPosition
+Grid position using **top-left anchor convention**:
+```rust
+use crate::dungeon::{GridPosition, GridSize};
+
+let pos = GridPosition::new(5, 3);
+let size = GridSize::new(2, 2);
+pos.occupied_cells(size);  // Iterator: (5,3), (6,3), (5,4), (6,4)
+```
+
+**Anchor convention:** Position specifies top-left cell. Entities expand rightward (+x) and downward (+y).
+
+#### GridOccupancy
+Resource tracking which grid cells are occupied by entities:
+```rust
+use crate::dungeon::{GridOccupancy, GridPosition, GridSize};
+
+let mut occupancy = GridOccupancy::new(10, 10);
+
+let pos = GridPosition::new(2, 2);
+let size = GridSize::new(3, 2);
+
+// Check placement
+occupancy.can_place(pos, size);            // true if all 6 cells free
+
+// Occupy cells
+occupancy.occupy(pos, size, entity);
+occupancy.is_occupied(3, 2);               // true
+occupancy.entity_at(3, 2);                 // Some(entity)
+
+// Vacate cells
+occupancy.vacate(pos, size);
+```
+
+Out-of-bounds coordinates return `false`/`None` rather than panicking.
 
 ### DungeonLayout (`layout.rs`)
 2D grid of tiles with entrance/exit positions and entities:
