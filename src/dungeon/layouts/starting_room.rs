@@ -5,25 +5,30 @@ use crate::dungeon::{DungeonEntity, DungeonLayout, Tile, TileType};
 use crate::mob::MobId;
 
 pub fn create() -> DungeonLayout {
-    const W: usize = 8;
-    const H: usize = 6;
+    const W: usize = 40;
+    const H: usize = 21;
 
     let mut layout = DungeonLayout::new(W, H);
 
     use TileType::*;
 
-    #[rustfmt::skip]
-    let tiles: [[TileType; W]; H] = [
-        [Wall, Wall,  Wall,  Wall,        Wall,  Wall,  Wall,  Wall],
-        [Wall, Floor, Floor, Floor,       Floor, Floor, Floor, Wall],
-        [Wall, Floor, Floor, Floor,       Floor, Floor, Floor, Wall],
-        [Wall, Floor, Floor, Floor,       Floor, Floor, Floor, Wall],
-        [Wall, Floor, Floor, PlayerSpawn, Floor, Floor, Floor, Wall],
-        [Wall, Wall,  Wall,  Exit,        Wall,  Wall,  Wall,  Wall],
-    ];
+    // Generate tiles procedurally: walls on perimeter, floor inside
+    for y in 0..H {
+        for x in 0..W {
+            let tile_type = if y == 0 || y == H - 1 || x == 0 || x == W - 1 {
+                // Perimeter walls, with exit at bottom center
+                if y == H - 1 && x == W / 2 {
+                    Exit
+                } else {
+                    Wall
+                }
+            } else if y == H - 2 && x == W / 2 {
+                // Player spawn above exit
+                PlayerSpawn
+            } else {
+                Floor
+            };
 
-    for (y, row) in tiles.iter().enumerate() {
-        for (x, &tile_type) in row.iter().enumerate() {
             let variant = if matches!(tile_type, Floor | PlayerSpawn) {
                 ((x + y) % 3) as u8
             } else {
@@ -33,8 +38,8 @@ pub fn create() -> DungeonLayout {
         }
     }
 
-    layout.entrance = (3, 4);
-    layout.exit = Some((3, 5));
+    layout.entrance = (W / 2, H - 2);
+    layout.exit = Some((W / 2, H - 1));
 
     // Spawn entities on random floor tiles without overlap
     let mut spawn_points = layout.spawn_points();

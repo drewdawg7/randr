@@ -9,7 +9,7 @@ use crate::ui::widgets::PlayerStats;
 use crate::ui::{DungeonMobSprite, DungeonPlayerSprite};
 
 /// Base tile size in pixels (before scaling).
-pub const BASE_TILE: f32 = 16.0;
+pub const BASE_TILE: f32 = 8.0;
 
 /// Resource tracking current UI scale factor (power of 2: 2, 4, 8, 16).
 #[derive(Resource)]
@@ -21,18 +21,13 @@ impl UiScale {
         BASE_TILE * self.0 as f32
     }
 
-    /// Calculate the largest power-of-2 scale that fits content in available space.
-    pub fn calculate(available_width: f32, available_height: f32, content_tiles_wide: usize, content_tiles_tall: usize) -> u32 {
-        let base_w = content_tiles_wide as f32 * BASE_TILE;
-        let base_h = content_tiles_tall as f32 * BASE_TILE;
-        let max_scale = (available_width / base_w).min(available_height / base_h).floor() as u32;
-
-        // Round down to nearest power of 2
-        match max_scale {
-            0..=1 => 2,
-            2..=3 => 2,
-            4..=7 => 4,
-            8..=15 => 8,
+    /// Calculate power-of-2 scale based on window size.
+    pub fn calculate(window_height: f32) -> u32 {
+        // Scale based on window height to keep tiles a reasonable size
+        match window_height as u32 {
+            0..=400 => 2,
+            401..=800 => 4,
+            801..=1600 => 8,
             _ => 16,
         }
     }
@@ -90,8 +85,8 @@ fn spawn_dungeon_screen(
 
     let layout = LayoutId::StartingRoom.layout();
 
-    // Calculate initial scale based on window size
-    let scale = UiScale::calculate(window.width(), window.height(), layout.width(), layout.height());
+    // Calculate scale based on window size
+    let scale = UiScale::calculate(window.height());
     let tile_size = BASE_TILE * scale as f32;
     commands.insert_resource(UiScale(scale));
 
@@ -124,21 +119,9 @@ fn spawn_dungeon_screen(
             // Player stats banner at top
             parent.spawn(PlayerStats);
 
-            // Content area
+            // Dungeon grid
             parent
-                .spawn(Node {
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    flex_direction: FlexDirection::Column,
-                    padding: UiRect::all(Val::Px(20.0)),
-                    align_items: AlignItems::Center,
-                    justify_content: JustifyContent::Center,
-                    ..default()
-                })
-                .with_children(|content| {
-                    // Dungeon grid
-                    content
-                        .spawn((
+                .spawn((
                             DungeonGrid,
                             Node {
                                 display: Display::Grid,
@@ -226,7 +209,6 @@ fn spawn_dungeon_screen(
                                 }
                             }
                         });
-                });
         });
 }
 
@@ -304,12 +286,7 @@ fn handle_window_resize(
             continue;
         };
 
-        let new_scale = UiScale::calculate(
-            window.width(),
-            window.height(),
-            state.layout.width(),
-            state.layout.height(),
-        );
+        let new_scale = UiScale::calculate(window.height());
 
         if new_scale != scale.0 {
             scale.0 = new_scale;
