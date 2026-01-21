@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 use crate::assets::{FightBannerSlice, GameSprites};
+use crate::player::PlayerName;
 use crate::ui::widgets::spawn_three_slice_banner;
 use crate::ui::{MobAnimation, MobSpriteSheets, PlayerAnimation, PlayerSpriteSheet};
 
@@ -20,6 +21,7 @@ const CONTAINER_HEIGHT: f32 = 250.0; // Increased to accommodate banners
 pub fn spawn_fight_modal(
     mut commands: Commands,
     mob_res: Res<FightModalMob>,
+    player_name: Res<PlayerName>,
     mut active_modal: ResMut<ActiveModal>,
     game_sprites: Res<GameSprites>,
 ) {
@@ -64,6 +66,7 @@ pub fn spawn_fight_modal(
                                 column,
                                 &game_sprites,
                                 BANNER_WIDTH,
+                                Some(player_name.0),
                             );
 
                             // Player sprite (facing right - default orientation)
@@ -92,6 +95,7 @@ pub fn spawn_fight_modal(
                                 column,
                                 &game_sprites,
                                 BANNER_WIDTH,
+                                Some(&mob_res.mob_id.spec().name),
                             );
 
                             // Mob sprite (flipped to face left)
