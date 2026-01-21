@@ -17,36 +17,24 @@ pub enum TownSystemSet {
 pub enum TownTab {
     #[default]
     Store,
-    Blacksmith,
-    Alchemist,
 }
 
 impl TownTab {
     pub fn name(&self) -> &'static str {
         match self {
             TownTab::Store => "Store",
-            TownTab::Blacksmith => "Blacksmith",
-            TownTab::Alchemist => "Alchemist",
         }
     }
 
-    pub fn all() -> [TownTab; 3] {
-        [TownTab::Store, TownTab::Blacksmith, TownTab::Alchemist]
+    pub fn all() -> [TownTab; 1] {
+        [TownTab::Store]
     }
 
     pub fn next(&self) -> Self {
-        match self {
-            TownTab::Store => TownTab::Blacksmith,
-            TownTab::Blacksmith => TownTab::Alchemist,
-            TownTab::Alchemist => TownTab::Store,
-        }
+        TownTab::Store
     }
 
     pub fn prev(&self) -> Self {
-        match self {
-            TownTab::Store => TownTab::Alchemist,
-            TownTab::Blacksmith => TownTab::Store,
-            TownTab::Alchemist => TownTab::Blacksmith,
-        }
+        TownTab::Store
     }
 }

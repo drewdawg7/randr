@@ -26,8 +26,6 @@ impl Plugin for TownPlugin {
             .add_systems(OnExit(AppState::Town), cleanup_town_ui)
             // Cleanup tab content when exiting any tab
             .add_systems(OnExit(TownTab::Store), cleanup_tab_content)
-            .add_systems(OnExit(TownTab::Blacksmith), cleanup_tab_content)
-            .add_systems(OnExit(TownTab::Alchemist), cleanup_tab_content)
             // Input systems
             .add_systems(
                 Update,
