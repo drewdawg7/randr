@@ -43,6 +43,7 @@ Read the relevant doc BEFORE making changes.
 | ItemDetailIconsSlice, stat display icons | [stat-icons.md](stat-icons.md) |
 | StatRow, ItemGrid, GoldDisplay widgets | [widgets/](widgets/table-of-contents.md) |
 | row_node, column_node, overflow, layout | [ui-nodes.md](ui-nodes.md) |
+| Decoupling UI from registries, display structs | [ui-display-data.md](ui-display-data.md) |
 
 
 ## Documentation
