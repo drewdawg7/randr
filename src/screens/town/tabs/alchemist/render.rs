@@ -11,7 +11,7 @@ use crate::ui::{selection_colors, selection_prefix, spawn_navigation_hint, UiTex
 use super::super::super::shared::spawn_menu;
 use super::super::super::TabContent;
 use super::state::{AlchemistMode, AlchemistModeKind, AlchemistSelections};
-use super::ALCHEMIST_MENU_OPTIONS;
+use super::systems::ALCHEMIST_MENU_OPTIONS;
 
 /// Marker for the text of an alchemist recipe item.
 #[derive(Component)]
