@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::inventory::Inventory;
-use crate::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
+use super::super::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::widgets::StatRow;
 use crate::ui::{inventory_selection_bg, spawn_modal_hint, UiText};
 

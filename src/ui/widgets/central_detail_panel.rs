@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use super::nine_slice::spawn_nine_slice_panel;
 use crate::assets::{DetailPanelSlice, GameSprites};
-use crate::screens::InfoPanelSource;
+use crate::ui::screens::InfoPanelSource;
 
 pub struct CentralDetailPanelPlugin;
 

@@ -6,7 +6,7 @@ use crate::inventory::{FindsItems, Inventory, ManagesEquipment};
 use super::render::spawn_inventory_modal;
 use super::state::{InventoryModalRoot, InventorySelection, ItemInfo};
 use super::utils::get_all_inventory_items;
-use crate::screens::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
+use super::super::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
 
 /// System to handle opening/closing the inventory modal with 'i' key.
 pub fn handle_inventory_modal_toggle(

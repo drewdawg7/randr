@@ -6,7 +6,7 @@ use crate::location::StorePlugin;
 use crate::input::InputPlugin;
 use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
 use crate::save_load::SaveLoadPlugin;
-use crate::screens::{
+use crate::ui::screens::{
     DungeonPlugin, MonsterCompendiumPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
     MainMenuPlugin, MinePlugin, ModalPlugin, ProfileModalPlugin, ProfilePlugin,
     SpellTestModalPlugin, TownPlugin,

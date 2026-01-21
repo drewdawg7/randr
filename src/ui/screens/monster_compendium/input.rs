@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
-use crate::screens::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
+use super::super::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
 
 use super::state::{
     CompendiumListState, CompendiumMonsters, MonsterCompendiumRoot, SpawnMonsterCompendium,

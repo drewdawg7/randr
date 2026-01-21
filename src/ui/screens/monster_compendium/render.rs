@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::assets::{BookSlotSlice, GameSprites, SpriteSheetKey, UiAllSlice};
-use crate::screens::modal::spawn_modal_overlay;
+use super::super::modal::spawn_modal_overlay;
 use crate::ui::{MobAnimation, MobSpriteSheets};
 
 use super::constants::*;

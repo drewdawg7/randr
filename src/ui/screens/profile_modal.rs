@@ -6,7 +6,7 @@ use crate::entities::Progression;
 use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, HasInventory, Inventory};
 use crate::player::{Player, PlayerGold, PlayerName};
-use crate::screens::modal::{
+use super::modal::{
     close_modal, create_modal_container, create_modal_instruction, create_modal_title,
     spawn_modal_overlay, toggle_modal, ActiveModal, ModalAction, ModalType,
 };
