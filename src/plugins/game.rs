@@ -7,9 +7,9 @@ use crate::input::InputPlugin;
 use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
 use crate::save_load::SaveLoadPlugin;
 use crate::ui::screens::{
-    DungeonPlugin, MonsterCompendiumPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
-    MainMenuPlugin, MinePlugin, ModalPlugin, ProfileModalPlugin, ProfilePlugin,
-    TownPlugin,
+    DungeonPlugin, FightModalPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
+    MainMenuPlugin, MinePlugin, ModalPlugin, MonsterCompendiumPlugin, ProfileModalPlugin,
+    ProfilePlugin, TownPlugin,
 };
 use crate::states::StateTransitionPlugin;
 use crate::ui::widgets::{CentralDetailPanelPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin, StatRowPlugin};
@@ -53,6 +53,7 @@ impl Plugin for GamePlugin {
             DungeonPlugin,
             MinePlugin,
             FightPlugin,
+            FightModalPlugin,
         ));
 
         app.add_systems(Startup, setup);

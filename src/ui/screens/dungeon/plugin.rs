@@ -5,6 +5,8 @@ use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::dungeon::{DungeonEntity, DungeonLayout, LayoutId, TileRenderer, TileType};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
+use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
+use crate::ui::screens::modal::ActiveModal;
 use crate::ui::widgets::PlayerStats;
 use crate::ui::{DungeonMobSprite, DungeonPlayerSprite};
 
@@ -217,9 +219,15 @@ fn handle_dungeon_movement(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<DungeonState>,
+    active_modal: Res<ActiveModal>,
     player_query: Query<Entity, With<DungeonPlayer>>,
     cell_query: Query<(Entity, &DungeonCell)>,
 ) {
+    // Block movement if any modal is open
+    if active_modal.modal.is_some() {
+        return;
+    }
+
     let Ok(player_entity) = player_query.get_single() else {
         return;
     };
@@ -247,17 +255,30 @@ fn handle_dungeon_movement(
             .map(|t| t.tile_type == TileType::Floor)
             .unwrap_or(false);
 
-        // Check if target tile has no entity
-        let no_entity = state.layout.entity_at(new_x, new_y).is_none();
+        if !is_floor {
+            continue;
+        }
 
-        if is_floor && no_entity {
-            state.player_pos = (new_x, new_y);
+        // Check what entity is at the target tile
+        match state.layout.entity_at(new_x, new_y) {
+            None => {
+                // Empty floor - move player
+                state.player_pos = (new_x, new_y);
 
-            if let Some((cell_entity, _)) = cell_query
-                .iter()
-                .find(|(_, cell)| cell.x == new_x && cell.y == new_y)
-            {
-                commands.entity(player_entity).set_parent(cell_entity);
+                if let Some((cell_entity, _)) = cell_query
+                    .iter()
+                    .find(|(_, cell)| cell.x == new_x && cell.y == new_y)
+                {
+                    commands.entity(player_entity).set_parent(cell_entity);
+                }
+            }
+            Some(DungeonEntity::Mob { mob_id }) => {
+                // Trigger fight modal
+                commands.insert_resource(FightModalMob { mob_id: *mob_id });
+                commands.insert_resource(SpawnFightModal);
+            }
+            Some(DungeonEntity::Chest { .. }) => {
+                // Block movement (chests are obstacles for now)
             }
         }
     }

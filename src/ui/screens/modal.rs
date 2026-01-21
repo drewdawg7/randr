@@ -13,6 +13,7 @@ pub enum ModalType {
     Inventory,
     Keybinds,
     MonsterCompendium,
+    FightModal,
 }
 
 /// Component marker for modal overlay background.
