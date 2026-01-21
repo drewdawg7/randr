@@ -29,9 +29,9 @@ pub struct DungeonPlayer;
 #[derive(Component)]
 struct DungeonRoot;
 
-pub struct DungeonTabPlugin;
+pub struct DungeonPlugin;
 
-impl Plugin for DungeonTabPlugin {
+impl Plugin for DungeonPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Dungeon), spawn_dungeon_screen)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)

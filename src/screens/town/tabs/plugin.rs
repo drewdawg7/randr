@@ -1,8 +1,6 @@
 use bevy::prelude::*;
 
-use super::{
-    AlchemistTabPlugin, BlacksmithTabPlugin, DungeonTabPlugin, FieldTabPlugin, StoreTabPlugin,
-};
+use super::{AlchemistTabPlugin, BlacksmithTabPlugin, FieldTabPlugin, StoreTabPlugin};
 
 /// Plugin that bundles all tab plugins together.
 pub struct TabsPlugin;
@@ -14,7 +12,6 @@ impl Plugin for TabsPlugin {
             BlacksmithTabPlugin,
             AlchemistTabPlugin,
             FieldTabPlugin,
-            DungeonTabPlugin,
         ));
     }
 }

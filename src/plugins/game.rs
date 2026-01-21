@@ -7,7 +7,7 @@ use crate::input::InputPlugin;
 use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
 use crate::save_load::SaveLoadPlugin;
 use crate::screens::{
-    MonsterCompendiumPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
+    DungeonPlugin, MonsterCompendiumPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
     MainMenuPlugin, MinePlugin, ModalPlugin, ProfileModalPlugin, ProfilePlugin,
     SpellTestModalPlugin, TownPlugin,
 };
@@ -51,6 +51,7 @@ impl Plugin for GamePlugin {
             MonsterCompendiumPlugin,
             KeybindsPlugin,
             TownPlugin,
+            DungeonPlugin,
             MinePlugin,
             FightPlugin,
         ));
