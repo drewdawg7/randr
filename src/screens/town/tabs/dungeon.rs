@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
-use crate::dungeon::{DungeonEntity, LayoutId, TileRenderer};
-use crate::ui::DungeonMobSprite;
+use crate::dungeon::{DungeonEntity, LayoutId, TileRenderer, TileType};
+use crate::ui::{DungeonMobSprite, DungeonPlayerSprite};
 
 use super::super::{ContentArea, TabContent, TownTab};
 
@@ -73,6 +73,21 @@ fn spawn_dungeon_content(
                                             }
                                             cell.spawn((
                                                 img,
+                                                Node {
+                                                    position_type: PositionType::Absolute,
+                                                    width: Val::Px(TILE_SIZE),
+                                                    height: Val::Px(TILE_SIZE),
+                                                    ..default()
+                                                },
+                                            ));
+                                        }
+                                    }
+
+                                    // Spawn player sprite at PlayerSpawn tile
+                                    if let Some(tile) = layout.tile_at(x, y) {
+                                        if tile.tile_type == TileType::PlayerSpawn {
+                                            cell.spawn((
+                                                DungeonPlayerSprite,
                                                 Node {
                                                     position_type: PositionType::Absolute,
                                                     width: Val::Px(TILE_SIZE),

@@ -6,13 +6,14 @@ pub enum TileType {
     Exit,
     Door,
     DoorOpen,
+    PlayerSpawn,
 }
 
 impl TileType {
     pub const fn is_walkable(&self) -> bool {
         matches!(
             self,
-            Self::Floor | Self::Entrance | Self::Exit | Self::DoorOpen
+            Self::Floor | Self::Entrance | Self::Exit | Self::DoorOpen | Self::PlayerSpawn
         )
     }
 

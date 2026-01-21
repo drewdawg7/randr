@@ -13,7 +13,7 @@ use crate::screens::{
 };
 use crate::states::StateTransitionPlugin;
 use crate::ui::widgets::{CentralDetailPanelPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin, StatRowPlugin};
-use crate::ui::MobAnimationPlugin;
+use crate::ui::{MobAnimationPlugin, PlayerSpritePlugin};
 
 /// Core game plugin that bundles all game systems.
 pub struct GamePlugin;
@@ -39,7 +39,7 @@ impl Plugin for GamePlugin {
         ));
 
         // Additional core plugins
-        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, CentralDetailPanelPlugin, ItemStatsDisplayPlugin, StatRowPlugin, IconValueRowPlugin, MobAnimationPlugin));
+        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, CentralDetailPanelPlugin, ItemStatsDisplayPlugin, StatRowPlugin, IconValueRowPlugin, MobAnimationPlugin, PlayerSpritePlugin));
 
         // Screens and modals
         app.add_plugins((

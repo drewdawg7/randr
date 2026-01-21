@@ -9,7 +9,9 @@ impl TileRenderer {
         let tile = layout.tile_at(x, y)?;
 
         match tile.tile_type {
-            TileType::Floor | TileType::Entrance => Some(Self::resolve_floor(tile.variant)),
+            TileType::Floor | TileType::Entrance | TileType::PlayerSpawn => {
+                Some(Self::resolve_floor(tile.variant))
+            }
             TileType::Wall => Some(Self::resolve_wall(layout, x, y)),
             TileType::Exit => Some((DungeonTileSlice::Gate, false)),
             TileType::Door => Some((DungeonTileSlice::Gate, false)),

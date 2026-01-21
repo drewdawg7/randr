@@ -14,17 +14,17 @@ pub fn create() -> DungeonLayout {
 
     #[rustfmt::skip]
     let tiles: [[TileType; W]; H] = [
-        [Wall, Wall,  Wall,  Wall, Wall,  Wall,  Wall,  Wall],
-        [Wall, Floor, Floor, Floor, Floor, Floor, Floor, Wall],
-        [Wall, Floor, Floor, Floor, Floor, Floor, Floor, Wall],
-        [Wall, Floor, Floor, Floor, Floor, Floor, Floor, Wall],
-        [Wall, Floor, Floor, Floor, Floor, Floor, Floor, Wall],
-        [Wall, Wall,  Wall,  Exit, Wall,  Wall,  Wall,  Wall],
+        [Wall, Wall,  Wall,  Wall,        Wall,  Wall,  Wall,  Wall],
+        [Wall, Floor, Floor, Floor,       Floor, Floor, Floor, Wall],
+        [Wall, Floor, Floor, Floor,       Floor, Floor, Floor, Wall],
+        [Wall, Floor, Floor, Floor,       Floor, Floor, Floor, Wall],
+        [Wall, Floor, Floor, PlayerSpawn, Floor, Floor, Floor, Wall],
+        [Wall, Wall,  Wall,  Exit,        Wall,  Wall,  Wall,  Wall],
     ];
 
     for (y, row) in tiles.iter().enumerate() {
         for (x, &tile_type) in row.iter().enumerate() {
-            let variant = if tile_type == Floor {
+            let variant = if matches!(tile_type, Floor | PlayerSpawn) {
                 ((x + y) % 3) as u8
             } else {
                 0
@@ -33,7 +33,7 @@ pub fn create() -> DungeonLayout {
         }
     }
 
-    layout.entrance = (4, 3);
+    layout.entrance = (3, 4);
     layout.exit = Some((3, 5));
 
     // Spawn entities on random floor tiles without overlap

@@ -57,7 +57,11 @@ impl DungeonLayout {
             .map(|t| {
                 matches!(
                     t.tile_type,
-                    TileType::Floor | TileType::Entrance | TileType::Exit | TileType::DoorOpen
+                    TileType::Floor
+                        | TileType::Entrance
+                        | TileType::Exit
+                        | TileType::DoorOpen
+                        | TileType::PlayerSpawn
                 )
             })
             .unwrap_or(false)
