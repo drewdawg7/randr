@@ -25,19 +25,24 @@ Follow this workflow for ALL code changes:
 
 
 ## Documentation Index
-- [blacksmith.md](blacksmith.md) - Blacksmith module, crafting helper pattern, `CraftingOperation` enum, `UpgradeOperation` enum, recipe system, `RecipeId::material()`, cached recipe lists (`LazyLock`)
-- [dungeon/mod.md](dungeon/mod.md) - Dungeon data module (`src/dungeon/`), `TileType`, `Tile`, `DungeonEntity`, `DungeonLayout`, `LayoutId`, `TileRenderer`, entity spawning, adding new layouts
-- [dungeon/entities.md](dungeon/entities.md) - Dungeon entity system, `DungeonEntity` enum, `can_spawn_entity()`, adding new entity types, entity sprite assets
-- [dungeon/ui.md](dungeon/ui.md) - Dungeon tab UI, `DungeonTabPlugin`, CSS Grid rendering, `DungeonTileSlice` enum, tileset assets
-- [event-systems.md](event-systems.md) - Event handler patterns, `run_if(on_event::<T>)` requirement, files in `src/game/`
-- [mob-sprites.md](mob-sprites.md) - Adding mob sprites, `SpriteAssets::mob_sprite()`, `populate_mob_sprite` system
-- [rust-idioms.md](rust-idioms.md) - Preferred Rust patterns: `map_or` for Option defaults, `let-else` for early returns, Query type aliases for complex Bevy queries, integer safety (`saturating_add`/`saturating_sub`, bounds checking before signed-to-unsigned casts)
-- [sprite-slices.md](sprite-slices.md) - Typed sprite slice enums (`UiAllSlice`, `HealthBarSlice`, etc.), semantic naming for sprite lookups, `NineSlice` trait, `src/assets/sprite_slices.rs`
-- [stat-icons.md](stat-icons.md) - `ItemDetailIconsSlice` enum, `for_stat()` and `sprite_sheet_key()` methods, icon file mappings for stat display
-- [store.md](store.md) - Store module: `Store` resource, `StoreItem`, `PurchaseEvent`/`SellEvent`, `StorePlugin`, purchase/sell flow
-- [store-ui.md](store-ui.md) - Store screen UI: `ItemGrid` widget, `CentralDetailPanel`, `BuyFocus` for dual-grid layouts
-- [ui-nodes.md](ui-nodes.md) - UI node helpers (`row_node`, `column_node`), overflow clipping with `Overflow::clip()`, framed widgets with decorative borders (content positioning)
-- [widgets.md](widgets.md) - UI widgets: `StatRow`, `IconValueRow`, `ItemStatsDisplay`, `GoldDisplay`, `ItemGrid`, `CentralDetailPanel`, `spawn_nine_slice_panel`, observer-based widget pattern
+
+Read the relevant doc BEFORE making changes.
+
+| When working on... | Read |
+|--------------------|------|
+| Crafting recipes, upgrades, blacksmith | [blacksmith.md](blacksmith.md) |
+| Store buy/sell, Store resource, StoreItem | [store.md](store.md) |
+| Store screen UI, item grids, detail panels | [store-ui.md](store-ui.md) |
+| Dungeon layouts, TileType, DungeonLayout | [dungeon/mod.md](dungeon/mod.md) |
+| DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
+| Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
+| Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |
+| Mob animations, SpriteAssets::mob_sprite | [mob-sprites.md](mob-sprites.md) |
+| Option handling, Query aliases, saturating math | [rust-idioms.md](rust-idioms.md) |
+| UiAllSlice, HealthBarSlice, NineSlice trait | [sprite-slices.md](sprite-slices.md) |
+| ItemDetailIconsSlice, stat display icons | [stat-icons.md](stat-icons.md) |
+| StatRow, ItemGrid, GoldDisplay widgets | [widgets/](widgets/table-of-contents.md) |
+| row_node, column_node, overflow, layout | [ui-nodes.md](ui-nodes.md) |
 
 
 ## Documentation

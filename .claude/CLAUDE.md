@@ -1,24 +1,10 @@
 # Project Guidelines
 
-## Code Change Workflow (Required)
-**IMPORTANT**: YOU MUST USE THE updating-code SKILL.
-**IMPORTANT**: YOU MUST USE THE sprites SKILL FOR SPRITE OR OTHER UI CHANGES
-Follow this workflow for ALL code changes:
-**IMPORTANT**: CREATE NEW BRANCHES EVEN FOR CHANGES NOT RELATED TO GITHUB ISSUES.
+## Code Change Workflow
+**Use the `updating-code` skill for ALL code changes.** It contains the full workflow.
 
-1. **Branch**: Create a new branch with descriptive name (e.g., `feat/add-inventory`)
-2. **Analyze and Research**: Use ast-grep and Rust LSP to understand the codebase. The `rust-codebase-researcher` agent is skilled at this.
-    1. Use the sprites skill when working with sprites or UI. 
-    2. Use the documentation index to quickly find relevant documentation to the issue at hand.
-3. **Ask**: Clarify any ambiguity with the user before proceeding
-4. **Compare**: Check similar functionality in the codebase for patterns
-5. **Make Changes**: Execute your plan
-6. **Test**: Run tests for changed modules only.
-7. **Clean-Up**: Fix any compiler warnings related to your changes
-8. **Verify**: Ask user to verify changes
-9. **Merge**: Commit, merge, and push. No PR necessary.
-10. **Close**: If working on a GitHub issue, close it
-11. **Document**: Update documentation based on the documentation section below.
+**Use the `sprites` skill for sprite or UI changes.**
+
 ## Rust Navigation Rules (MANDATORY)
 
 **NEVER use Grep to search Rust code.** Use these LSP operations instead:

@@ -5,19 +5,11 @@ Event handler systems process Bevy events (e.g., `UpgradeItemEvent`, `StorePurch
 
 ## Required Pattern: run_if with on_event
 
-**All event handler systems MUST use `run_if(on_event::<EventType>)` to avoid running every frame.**
+**All event handler systems MUST use `run_if(on_event::<EventType>)`.**
 
-### Correct
 ```rust
 app.add_event::<MyEvent>()
     .add_systems(Update, handle_my_event.run_if(on_event::<MyEvent>));
-```
-
-### Incorrect
-```rust
-// BAD: Runs every frame even when no events exist
-app.add_event::<MyEvent>()
-    .add_systems(Update, handle_my_event);
 ```
 
 ## Examples

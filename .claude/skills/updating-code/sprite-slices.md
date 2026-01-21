@@ -79,4 +79,4 @@ See [widgets.md](widgets.md#spawn_nine_slice_panel) for full documentation.
 3. Add mapping in `as_str()` method
 4. Update documentation
 
-See sprites skill [sprite-slices.md](../sprites/references/sprite-slices.md) for full enum reference.
+See sprites skill for full enum reference.
