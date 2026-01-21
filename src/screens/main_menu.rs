@@ -182,8 +182,8 @@ fn handle_menu_selection(
         if *action == GameAction::Select {
             match menu_selection.index {
                 0 => {
-                    // Town
-                    next_state.set(AppState::Town);
+                    // Dungeon
+                    next_state.set(AppState::Dungeon);
                 }
                 1 => {
                     // Profile

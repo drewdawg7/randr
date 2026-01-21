@@ -23,6 +23,7 @@ pub enum AppState {
     #[default]
     Menu,
     Town,
+    Dungeon,
     Fight,
     Profile,
     Mine,
