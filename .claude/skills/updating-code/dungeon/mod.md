@@ -9,6 +9,7 @@ src/dungeon/
     tile.rs             # TileType, Tile
     entity.rs           # DungeonEntity enum
     layout.rs           # DungeonLayout (tiles + entities)
+    layout_builder.rs   # LayoutBuilder (declarative layout creation)
     generator.rs        # LayoutGenerator trait
     rendering.rs        # TileRenderer (logical -> visual)
     layouts/
@@ -72,6 +73,28 @@ entity.sprite_name()      // Returns sprite name in sheet
 
 See [entities.md](entities.md) for detailed entity documentation.
 
+### LayoutBuilder (`layout_builder.rs`)
+Declarative builder for creating dungeon layouts:
+```rust
+use crate::dungeon::LayoutBuilder;
+
+let layout = LayoutBuilder::new(40, 21)
+    .entrance(20, 19)  // Interior position (player spawn)
+    .exit(20, 20)      // Bottom wall (stairs/door)
+    .build();
+```
+
+**Builder behavior:**
+- `new(width, height)` - Creates grid with Floor interior, Wall border
+- `entrance(x, y)` - Sets player spawn (must be interior, not on walls)
+- `exit(x, y)` - Sets exit (must be on top or bottom wall)
+- `build()` - Produces `DungeonLayout`, panics if entrance not set
+
+**Automatic features:**
+- 1-tile Wall border around edges
+- Interior filled with Floor tiles
+- Floor variant pattern `((x + y) % 3)` for visual variety
+
 ### LayoutId (`layouts/mod.rs`)
 Registry of predefined layouts:
 ```rust
@@ -98,13 +121,34 @@ Wall rendering uses diagonal floor detection for corners:
 
 ## Adding New Layouts
 
+**Preferred: Use LayoutBuilder** for declarative layout creation:
+
 1. Create `src/dungeon/layouts/my_layout.rs`:
 ```rust
-use crate::dungeon::{DungeonLayout, Tile, TileType};
+use crate::dungeon::{DungeonEntity, DungeonLayout, LayoutBuilder};
+use crate::mob::MobId;
+use rand::seq::SliceRandom;
+use rand::Rng;
 
 pub fn create() -> DungeonLayout {
-    let mut layout = DungeonLayout::new(WIDTH, HEIGHT);
-    // Set tiles...
+    let mut layout = LayoutBuilder::new(30, 20)
+        .entrance(15, 18)  // Player spawn (interior)
+        .exit(15, 19)      // Exit at bottom wall
+        .build();
+
+    // Add entities (manual spawning until SpawnTable is available)
+    let mut spawn_points = layout.spawn_points();
+    let mut rng = rand::thread_rng();
+    spawn_points.shuffle(&mut rng);
+    let mut spawn_iter = spawn_points.into_iter();
+
+    if let Some((x, y)) = spawn_iter.next() {
+        layout.add_entity(x, y, DungeonEntity::Chest { variant: rng.gen_range(0..4) });
+    }
+    if let Some((x, y)) = spawn_iter.next() {
+        layout.add_entity(x, y, DungeonEntity::Mob { mob_id: MobId::Goblin });
+    }
+
     layout
 }
 ```
@@ -125,6 +169,8 @@ impl LayoutId {
     }
 }
 ```
+
+**Note:** Entity spawning is currently manual. SpawnTable (#342) will add declarative entity placement.
 
 ## LayoutGenerator Trait
 For future procedural generation:

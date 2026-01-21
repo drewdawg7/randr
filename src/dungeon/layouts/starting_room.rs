@@ -1,45 +1,17 @@
 use rand::seq::SliceRandom;
 use rand::Rng;
 
-use crate::dungeon::{DungeonEntity, DungeonLayout, Tile, TileType};
+use crate::dungeon::{DungeonEntity, DungeonLayout, LayoutBuilder};
 use crate::mob::MobId;
 
 pub fn create() -> DungeonLayout {
     const W: usize = 40;
     const H: usize = 21;
 
-    let mut layout = DungeonLayout::new(W, H);
-
-    use TileType::*;
-
-    // Generate tiles procedurally: walls on perimeter, floor inside
-    for y in 0..H {
-        for x in 0..W {
-            let tile_type = if y == 0 || y == H - 1 || x == 0 || x == W - 1 {
-                // Perimeter walls, with exit at bottom center
-                if y == H - 1 && x == W / 2 {
-                    Exit
-                } else {
-                    Wall
-                }
-            } else if y == H - 2 && x == W / 2 {
-                // Player spawn above exit
-                PlayerSpawn
-            } else {
-                Floor
-            };
-
-            let variant = if matches!(tile_type, Floor | PlayerSpawn) {
-                ((x + y) % 3) as u8
-            } else {
-                0
-            };
-            layout.set_tile(x, y, Tile::new(tile_type).with_variant(variant));
-        }
-    }
-
-    layout.entrance = (W / 2, H - 2);
-    layout.exit = Some((W / 2, H - 1));
+    let mut layout = LayoutBuilder::new(W, H)
+        .entrance(W / 2, H - 2) // Player spawn above exit
+        .exit(W / 2, H - 1) // Exit at bottom center
+        .build();
 
     // Spawn entities on random floor tiles without overlap
     let mut spawn_points = layout.spawn_points();
