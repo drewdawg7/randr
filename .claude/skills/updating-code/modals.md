@@ -16,8 +16,25 @@ Modals are full-screen UI overlays that block game interaction until closed.
 - `create_modal_title(title)` - Title text bundle
 - `create_modal_section(text, color)` - Section text bundle
 - `create_modal_instruction(text)` - Instruction text bundle
-- `toggle_modal(commands, active_modal, query, modal_type)` - Generic toggle logic (see below)
-- `close_modal(commands, active_modal, query, modal_type)` - Generic close logic (see below)
+
+## Modal Registry System
+
+**File:** `src/ui/modal_registry.rs`
+
+The modal registry provides type-safe commands for toggling modals:
+
+```rust
+use crate::ui::ModalCommands;
+use crate::ui::screens::inventory_modal::InventoryModal;
+
+// Toggle a modal (open if closed, close if open)
+commands.toggle_modal::<InventoryModal>();
+
+// Close a specific modal
+commands.close_modal::<InventoryModal>();
+```
+
+See [modal-registry.md](modal-registry.md) for full documentation.
 
 ## Modal Module Structure
 
@@ -28,7 +45,7 @@ src/ui/screens/my_modal/
 ├── mod.rs        # Module declarations and re-exports only
 ├── plugin.rs     # Plugin struct and impl
 ├── constants.rs  # UI dimension constants
-├── state.rs      # Components, resources, display structs
+├── state.rs      # Components, resources, RegisteredModal impl
 ├── input.rs      # Input handling systems
 └── render.rs     # Spawning and display systems
 ```
@@ -45,30 +62,17 @@ mod render;
 mod state;
 
 pub use plugin::MyModalPlugin;
-```
-
-### constants.rs
-
-Named constants for all UI dimensions:
-
-```rust
-// Container dimensions
-pub const CONTAINER_WIDTH: f32 = 672.0;
-pub const CONTAINER_HEIGHT: f32 = 399.0;
-
-// Typography
-pub const TITLE_FONT_SIZE: f32 = 24.0;
-
-// Colors
-pub const SELECTED_COLOR: Color = Color::srgb(0.5, 0.3, 0.1);
-pub const NORMAL_COLOR: Color = Color::srgb(0.2, 0.15, 0.1);
+pub use state::MyModal;  // Export RegisteredModal type
 ```
 
 ### state.rs
 
-Components and resources:
+Components, resources, and `RegisteredModal` implementation:
 
 ```rust
+use crate::ui::modal_registry::RegisteredModal;
+use crate::ui::screens::modal::ModalType;
+
 /// Component marker for the modal root UI
 #[derive(Component)]
 pub struct MyModalRoot;
@@ -83,10 +87,22 @@ pub struct MyModalSelection {
 #[derive(Resource)]
 pub struct SpawnMyModal;
 
-/// Display data (decoupled from game registries)
-pub struct DisplayEntry {
-    pub name: String,
-    pub id: SomeId,
+/// Type-safe handle for the modal
+pub struct MyModal;
+
+impl RegisteredModal for MyModal {
+    type Root = MyModalRoot;
+    const MODAL_TYPE: ModalType = ModalType::MyModal;
+
+    fn spawn(world: &mut World) {
+        world.resource_mut::<MyModalSelection>().reset();
+        world.insert_resource(SpawnMyModal);
+    }
+
+    // Optional: cleanup when modal closes
+    fn cleanup(world: &mut World) {
+        world.remove_resource::<SomeTemporaryResource>();
+    }
 }
 ```
 
@@ -99,20 +115,22 @@ The input.rs file only needs to handle:
 2. **Internal navigation** - Up/down, select actions within the modal
 
 ```rust
-use crate::ui::screens::modal::{close_modal, ActiveModal, ModalType};
+use crate::ui::screens::modal::{ActiveModal, ModalType};
+use crate::ui::ModalCommands;
 
 /// Close with Escape
 pub fn handle_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    query: Query<Entity, With<MyModalRoot>>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal != Some(ModalType::MyModal) {
+        return;
+    }
+
     for action in action_reader.read() {
         if *action == GameAction::CloseModal {
-            if close_modal(&mut commands, &mut active_modal, &query, ModalType::MyModal) {
-                // Optional: custom cleanup (remove resources, etc.)
-            }
+            commands.close_modal::<MyModal>();
         }
     }
 }
@@ -136,14 +154,6 @@ pub fn handle_navigation(
     }
 }
 ```
-
-#### close_modal Helper
-
-`close_modal<T: Component>(commands, active_modal, modal_query, modal_type) -> bool`
-
-Returns `true` if the modal was closed, `false` if it wasn't active.
-
-Use this for handling `GameAction::CloseModal` (Escape key).
 
 ### render.rs
 
@@ -177,18 +187,27 @@ impl Plugin for MyModalPlugin {
                 handle_close,
                 handle_navigation,
                 update_display,
-                spawn_modal.run_if(resource_exists::<SpawnMyModal>),
+                trigger_spawn_modal.run_if(resource_exists::<SpawnMyModal>),
             ));
     }
+}
+
+fn trigger_spawn_modal(
+    mut commands: Commands,
+    // ... resources needed for spawning
+) {
+    commands.remove_resource::<SpawnMyModal>();
+    spawn_modal(&mut commands, /* ... */);
 }
 ```
 
 ## Examples
 
-| Modal | Files | Notes |
-|-------|-------|-------|
-| Monster Compendium | `src/ui/screens/monster_compendium/` | Book-style with animated mob sprite |
-| Inventory | `src/ui/screens/inventory_modal/` | Two-panel with item details |
+| Modal | Files | RegisteredModal Type |
+|-------|-------|---------------------|
+| Inventory | `src/ui/screens/inventory_modal/` | `InventoryModal` |
+| Profile | `src/ui/screens/profile_modal.rs` | `ProfileModal` |
+| Monster Compendium | `src/ui/screens/monster_compendium/` | `MonsterCompendiumModal` |
 
 ## Input Blocking
 
@@ -216,17 +235,23 @@ Files that implement this pattern:
 ## Adding a New Modal
 
 1. Add variant to `ModalType` enum in `src/ui/screens/modal.rs`
-2. Create module directory structure
-3. Add `GameAction` variant for opening (if needed) in `src/input/actions.rs`
-4. Add handling in `handle_modal_toggle` in `src/navigation/systems.rs`
-5. Configure navigation in `NavigationPlugin` in `src/plugins/game.rs`:
+2. Create module directory structure (see above)
+3. Implement `RegisteredModal` for a `MyModal` struct in `state.rs`
+4. Add spawn trigger resource and system in plugin
+5. Add match arm in `handle_modal_toggle` in `src/navigation/systems.rs`:
+   ```rust
+   ModalType::MyModal => commands.toggle_modal::<MyModal>(),
+   ```
+6. Add `GameAction` variant for opening (if needed) in `src/input/actions.rs`
+7. Configure navigation in `NavigationPlugin` in `src/plugins/game.rs`:
    ```rust
    NavigationPlugin::new()
        .state(AppState::Town)
            .on(GameAction::OpenMyModal, ModalType::MyModal)
        .build()
    ```
-6. Register modal plugin in `src/plugins/game.rs`
-7. Export from `src/ui/screens/mod.rs`
+8. Register modal plugin in `src/plugins/game.rs`
+9. Export `MyModal` from `src/ui/screens/mod.rs`
 
 See [navigation.md](navigation.md) for full navigation system documentation.
+See [modal-registry.md](modal-registry.md) for full modal registry documentation.

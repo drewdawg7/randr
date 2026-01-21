@@ -5,3 +5,4 @@ pub mod state;
 mod utils;
 
 pub use plugin::InventoryModalPlugin;
+pub use state::InventoryModal;

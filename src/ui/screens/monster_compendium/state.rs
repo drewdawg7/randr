@@ -1,6 +1,8 @@
 use bevy::prelude::*;
 
 use crate::mob::MobId;
+use crate::ui::modal_registry::RegisteredModal;
+use crate::ui::screens::modal::ModalType;
 use crate::ui::SelectionState;
 
 /// Component marker for the monster compendium UI.
@@ -76,5 +78,34 @@ impl CompendiumMonsters {
 
     pub fn iter(&self) -> impl Iterator<Item = &MonsterEntry> {
         self.0.iter()
+    }
+}
+
+/// Type-safe handle for the monster compendium modal.
+///
+/// Used with `ModalCommands`:
+/// ```ignore
+/// commands.toggle_modal::<MonsterCompendiumModal>();
+/// commands.close_modal::<MonsterCompendiumModal>();
+/// ```
+pub struct MonsterCompendiumModal;
+
+impl RegisteredModal for MonsterCompendiumModal {
+    type Root = MonsterCompendiumRoot;
+    const MODAL_TYPE: ModalType = ModalType::MonsterCompendium;
+
+    fn spawn(world: &mut World) {
+        // Build monster list and reset selection
+        let monsters = CompendiumMonsters::from_registry();
+        let count = monsters.len();
+
+        world.resource_mut::<CompendiumListState>().count = count;
+        world.resource_mut::<CompendiumListState>().reset();
+        world.insert_resource(monsters);
+        world.insert_resource(SpawnMonsterCompendium);
+    }
+
+    fn cleanup(world: &mut World) {
+        world.remove_resource::<CompendiumMonsters>();
     }
 }

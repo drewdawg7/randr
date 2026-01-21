@@ -49,6 +49,7 @@ Read the relevant doc BEFORE making changes.
 | Decoupling UI from registries, display structs | [ui-display-data.md](ui-display-data.md) |
 | Modal screens, ActiveModal, toggle/close patterns | [modals.md](modals.md) |
 | Modal builder API, SpawnModalExt, ModalBackground | [modal-builder.md](modal-builder.md) |
+| RegisteredModal trait, ModalCommands, toggle_modal | [modal-registry.md](modal-registry.md) |
 | Navigation system, state transitions, NavigationPlugin | [navigation.md](navigation.md) |
 
 

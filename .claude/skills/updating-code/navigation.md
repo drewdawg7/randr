@@ -67,7 +67,7 @@ NavigationPlugin::new()
 
 ## Central Navigation System
 
-The `handle_navigation` system in `src/navigation/systems.rs:22` reads all `GameAction` events and looks up transitions in the `NavigationTable`. For state transitions, it sets the `NextState`. For modal toggles, it dispatches to the appropriate spawn/toggle logic.
+The `handle_navigation` system in `src/navigation/systems.rs` reads all `GameAction` events and looks up transitions in the `NavigationTable`. For state transitions, it sets the `NextState`. For modal toggles, it uses `ModalCommands`:
 
 ```rust
 pub fn handle_navigation(
@@ -75,10 +75,36 @@ pub fn handle_navigation(
     mut action_reader: EventReader<GameAction>,
     current_state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
-    mut active_modal: ResMut<ActiveModal>,
     nav_table: Res<NavigationTable>,
-    // Modal queries and spawn resources...
-)
+) {
+    for action in action_reader.read() {
+        let Some(target) = nav_table.lookup(**current_state, *action) else {
+            continue;
+        };
+
+        match target {
+            NavigationTarget::State(state) => {
+                if **current_state != state {
+                    next_state.set(state);
+                }
+            }
+            NavigationTarget::Modal(modal_type) => {
+                handle_modal_toggle(&mut commands, modal_type);
+            }
+        }
+    }
+}
+
+fn handle_modal_toggle(commands: &mut Commands, modal_type: ModalType) {
+    match modal_type {
+        ModalType::Inventory => commands.toggle_modal::<InventoryModal>(),
+        ModalType::Profile => commands.toggle_modal::<ProfileModal>(),
+        ModalType::MonsterCompendium => commands.toggle_modal::<MonsterCompendiumModal>(),
+        ModalType::Keybinds | ModalType::FightModal => {
+            // Handled differently
+        }
+    }
+}
 ```
 
 ## Adding New Navigation
@@ -106,36 +132,42 @@ NavigationPlugin::new()
 ### Modal Navigation
 
 1. Add the modal type to `ModalType` enum in `src/ui/screens/modal.rs`
-2. Add handling in `handle_modal_toggle` in `src/navigation/systems.rs`
-3. Configure in the builder:
-
-```rust
-NavigationPlugin::new()
-    .state(AppState::Town)
-        .on(GameAction::OpenNewModal, ModalType::NewModal)
-    .build()
-```
+2. Implement `RegisteredModal` for the modal (see [modal-registry.md](modal-registry.md))
+3. Add handling in `handle_modal_toggle` in `src/navigation/systems.rs`:
+   ```rust
+   ModalType::NewModal => commands.toggle_modal::<NewModal>(),
+   ```
+4. Configure in the builder:
+   ```rust
+   NavigationPlugin::new()
+       .state(AppState::Town)
+           .on(GameAction::OpenNewModal, ModalType::NewModal)
+       .build()
+   ```
 
 ## Modal Close Handlers
 
-Modals still maintain their own close handlers (Escape key) since closing requires modal-specific cleanup. The navigation system only handles **opening** modals.
-
-Example close handler pattern (see `modals.md` for full details):
+Modals maintain their own close handlers (Escape key) using `ModalCommands`:
 
 ```rust
 pub fn handle_modal_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    query: Query<Entity, With<MyModalRoot>>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal != Some(ModalType::MyModal) {
+        return;
+    }
+
     for action in action_reader.read() {
         if *action == GameAction::CloseModal {
-            close_modal(&mut commands, &mut active_modal, &query, ModalType::MyModal);
+            commands.close_modal::<MyModal>();
         }
     }
 }
 ```
+
+See [modal-registry.md](modal-registry.md) for full `ModalCommands` documentation.
 
 ## Configuration Location
 
@@ -157,5 +189,6 @@ pub enum NavigationDirection { ... }
 
 - All navigation logic in one declarative configuration
 - Easy to see all possible transitions at a glance
+- Simplified modal toggling via `ModalCommands`
 - Removes duplicate toggle boilerplate from modal input handlers
 - Enables future features like navigation history/back functionality

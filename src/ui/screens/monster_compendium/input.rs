@@ -1,28 +1,24 @@
 use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
-use crate::ui::SelectionState;
+use crate::ui::screens::modal::{ActiveModal, ModalType};
+use crate::ui::{ModalCommands, SelectionState};
 
-use super::super::modal::{close_modal, ActiveModal, ModalType};
-use super::state::{CompendiumListState, CompendiumMonsters, MonsterCompendiumRoot};
+use super::state::{CompendiumListState, CompendiumMonsters, MonsterCompendiumModal};
 
 /// System to handle closing the monster compendium with Escape.
 pub fn handle_compendium_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    compendium_query: Query<Entity, With<MonsterCompendiumRoot>>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal != Some(ModalType::MonsterCompendium) {
+        return;
+    }
+
     for action in action_reader.read() {
-        if *action == GameAction::CloseModal
-            && close_modal(
-                &mut commands,
-                &mut active_modal,
-                &compendium_query,
-                ModalType::MonsterCompendium,
-            )
-        {
-            commands.remove_resource::<CompendiumMonsters>();
+        if *action == GameAction::CloseModal {
+            commands.close_modal::<MonsterCompendiumModal>();
         }
     }
 }

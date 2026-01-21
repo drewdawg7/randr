@@ -2,27 +2,25 @@ use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{FindsItems, Inventory, ManagesEquipment};
-use crate::ui::SelectionState;
+use crate::ui::screens::modal::{ActiveModal, ModalType};
+use crate::ui::{ModalCommands, SelectionState};
 
-use super::state::{InventoryModalRoot, InventorySelection, ItemInfo};
-use super::super::modal::{close_modal, ActiveModal, ModalType};
+use super::state::{InventoryModal, InventorySelection, ItemInfo};
 use super::utils::get_all_inventory_items;
 
 /// System to handle closing the inventory modal with Escape.
 pub fn handle_inventory_modal_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    existing_modal: Query<Entity, With<InventoryModalRoot>>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal != Some(ModalType::Inventory) {
+        return;
+    }
+
     for action in action_reader.read() {
         if *action == GameAction::CloseModal {
-            close_modal(
-                &mut commands,
-                &mut active_modal,
-                &existing_modal,
-                ModalType::Inventory,
-            );
+            commands.close_modal::<InventoryModal>();
         }
     }
 }

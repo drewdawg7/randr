@@ -2,44 +2,88 @@ use bevy::prelude::*;
 
 use crate::combat::{DealsDamage, HasGold};
 use crate::entities::progression::HasProgression;
+use crate::entities::Progression;
 use crate::input::GameAction;
-use crate::inventory::{EquipmentSlot, HasInventory};
-use crate::player::Player;
-use super::modal::{
-    close_modal, create_modal_container, create_modal_instruction, create_modal_title,
-    spawn_modal_overlay, ActiveModal, ModalType,
-};
-use crate::stats::{HasStats, StatType};
+use crate::inventory::{EquipmentSlot, HasInventory, Inventory};
+use crate::player::{Player, PlayerGold, PlayerName};
+use crate::stats::{HasStats, StatSheet, StatType};
+use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::widgets::StatRow;
+use crate::ui::ModalCommands;
+
+use super::modal::{
+    create_modal_container, create_modal_instruction, create_modal_title, spawn_modal_overlay,
+    ActiveModal, ModalType,
+};
 
 /// Plugin that manages the profile modal system.
 pub struct ProfileModalPlugin;
 
 impl Plugin for ProfileModalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(Update, handle_profile_modal_close);
+        app.add_systems(
+            Update,
+            (
+                handle_profile_modal_close,
+                trigger_spawn_profile_modal.run_if(resource_exists::<SpawnProfileModal>),
+            ),
+        );
     }
+}
+
+/// System triggered by `SpawnProfileModal` resource.
+fn trigger_spawn_profile_modal(
+    mut commands: Commands,
+    player_name: Res<PlayerName>,
+    player_gold: Res<PlayerGold>,
+    progression: Res<Progression>,
+    inventory: Res<Inventory>,
+    stats: Res<StatSheet>,
+) {
+    commands.remove_resource::<SpawnProfileModal>();
+    let player = Player::from_resources(&player_name, &player_gold, &progression, &inventory, &stats);
+    spawn_profile_modal(&mut commands, &player);
 }
 
 /// Component marker for the profile modal UI.
 #[derive(Component)]
 pub struct ProfileModalRoot;
 
+/// Marker resource to trigger spawning the profile modal.
+#[derive(Resource)]
+pub struct SpawnProfileModal;
+
+/// Type-safe handle for the profile modal.
+///
+/// Used with `ModalCommands`:
+/// ```ignore
+/// commands.toggle_modal::<ProfileModal>();
+/// commands.close_modal::<ProfileModal>();
+/// ```
+pub struct ProfileModal;
+
+impl RegisteredModal for ProfileModal {
+    type Root = ProfileModalRoot;
+    const MODAL_TYPE: ModalType = ModalType::Profile;
+
+    fn spawn(world: &mut World) {
+        world.insert_resource(SpawnProfileModal);
+    }
+}
+
 /// System to handle closing the profile modal with Escape.
 fn handle_profile_modal_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    modal_query: Query<Entity, With<ProfileModalRoot>>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal != Some(ModalType::Profile) {
+        return;
+    }
+
     for action in action_reader.read() {
         if *action == GameAction::CloseModal {
-            close_modal(
-                &mut commands,
-                &mut active_modal,
-                &modal_query,
-                ModalType::Profile,
-            );
+            commands.close_modal::<ProfileModal>();
         }
     }
 }

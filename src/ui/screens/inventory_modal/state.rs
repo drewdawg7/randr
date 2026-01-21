@@ -2,6 +2,8 @@ use bevy::prelude::*;
 
 use crate::inventory::{EquipmentSlot, InventoryItem};
 use crate::item::Item;
+use crate::ui::modal_registry::RegisteredModal;
+use crate::ui::screens::modal::ModalType;
 use crate::ui::SelectionState;
 
 /// Component marker for the inventory modal UI.
@@ -66,5 +68,29 @@ impl ItemInfo {
 
     pub fn is_equipped(&self) -> bool {
         matches!(self, ItemInfo::Equipped(_, _))
+    }
+}
+
+/// Marker resource to trigger spawning the inventory modal.
+#[derive(Resource)]
+pub struct SpawnInventoryModal;
+
+/// Type-safe handle for the inventory modal.
+///
+/// Used with `ModalCommands`:
+/// ```ignore
+/// commands.toggle_modal::<InventoryModal>();
+/// commands.close_modal::<InventoryModal>();
+/// ```
+pub struct InventoryModal;
+
+impl RegisteredModal for InventoryModal {
+    type Root = InventoryModalRoot;
+    const MODAL_TYPE: ModalType = ModalType::Inventory;
+
+    fn spawn(world: &mut World) {
+        // Reset selection and trigger spawn via resource
+        world.resource_mut::<InventorySelection>().reset();
+        world.insert_resource(SpawnInventoryModal);
     }
 }
