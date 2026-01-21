@@ -5,6 +5,8 @@ use bevy::{
 use serde::Deserialize;
 use std::collections::HashMap;
 
+use crate::ui::{AnimationConfig, SpriteAnimation};
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum SpriteSheetKey {
     UiIcons,
@@ -306,6 +308,49 @@ impl SpriteSheet {
                 ..default()
             }))
         })
+    }
+
+    /// Returns (ImageNode, Node) bundle with sizing for UI sprites.
+    ///
+    /// # Example
+    /// ```ignore
+    /// cell.spawn(sheet.image_bundle("heart", 32.0, 32.0)?);
+    /// ```
+    pub fn image_bundle(&self, name: &str, width: f32, height: f32) -> Option<impl Bundle> {
+        let image_node = self.image_node(name)?;
+        Some((
+            image_node,
+            Node {
+                width: Val::Px(width),
+                height: Val::Px(height),
+                ..default()
+            },
+        ))
+    }
+
+    /// Returns (ImageNode, Node, SpriteAnimation) bundle with animation.
+    ///
+    /// # Example
+    /// ```ignore
+    /// cell.spawn(sheet.image_bundle_animated("chest", 64.0, 64.0, AnimationConfig::default())?);
+    /// ```
+    pub fn image_bundle_animated(
+        &self,
+        name: &str,
+        width: f32,
+        height: f32,
+        config: AnimationConfig,
+    ) -> Option<impl Bundle> {
+        let image_node = self.image_node(name)?;
+        Some((
+            image_node,
+            Node {
+                width: Val::Px(width),
+                height: Val::Px(height),
+                ..default()
+            },
+            SpriteAnimation::new(&config),
+        ))
     }
 }
 

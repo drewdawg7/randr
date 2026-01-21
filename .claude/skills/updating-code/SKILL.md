@@ -40,6 +40,7 @@ Read the relevant doc BEFORE making changes.
 | SelectionState trait, list navigation, focus | [focus.md](focus.md) |
 | Mob animations, MobSpriteSheets, MobAnimationConfig | [mob-sprites.md](mob-sprites.md) |
 | Option handling, Query aliases, saturating math | [rust-idioms.md](rust-idioms.md) |
+| SpriteSheet, GameSprites, image_bundle helpers | [sprites.md](sprites.md) |
 | SpriteMarker trait, SpriteAnimation, sprite population | [sprite-marker.md](sprite-marker.md) |
 | UiAllSlice, HealthBarSlice, NineSlice, ThreeSlice traits | [sprite-slices.md](sprite-slices.md) |
 | ItemDetailIconsSlice, stat display icons | [stat-icons.md](stat-icons.md) |
