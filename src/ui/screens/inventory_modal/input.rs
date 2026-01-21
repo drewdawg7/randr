@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{FindsItems, Inventory, ManagesEquipment};
+use crate::ui::SelectionState;
 
 use super::state::{InventoryModalRoot, InventorySelection, ItemInfo};
 use super::super::modal::{close_modal, ActiveModal, ModalType};

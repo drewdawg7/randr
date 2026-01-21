@@ -1,3 +1,5 @@
+use crate::ui::SelectionState;
+
 /// State for tracking selection in a list.
 #[derive(Default, Clone)]
 pub struct ListState {
@@ -11,6 +13,37 @@ pub struct ListState {
     pub visible_count: usize,
 }
 
+impl SelectionState for ListState {
+    fn selected(&self) -> usize {
+        self.selected
+    }
+
+    fn count(&self) -> usize {
+        self.count
+    }
+
+    fn set_selected(&mut self, index: usize) {
+        self.selected = index;
+    }
+
+    /// Uses wrapping navigation (overrides default clamped behavior).
+    fn up(&mut self) {
+        self.up_wrap();
+        self.update_scroll();
+    }
+
+    /// Uses wrapping navigation (overrides default clamped behavior).
+    fn down(&mut self) {
+        self.down_wrap();
+        self.update_scroll();
+    }
+
+    fn reset(&mut self) {
+        self.selected = 0;
+        self.scroll_offset = 0;
+    }
+}
+
 impl ListState {
     /// Create a new list state with the given item count.
     pub fn new(count: usize) -> Self {
@@ -22,28 +55,6 @@ impl ListState {
         }
     }
 
-    /// Move selection up, wrapping at top.
-    pub fn move_up(&mut self) {
-        if self.count == 0 {
-            return;
-        }
-        if self.selected == 0 {
-            self.selected = self.count.saturating_sub(1);
-        } else {
-            self.selected -= 1;
-        }
-        self.update_scroll();
-    }
-
-    /// Move selection down, wrapping at bottom.
-    pub fn move_down(&mut self) {
-        if self.count == 0 {
-            return;
-        }
-        self.selected = (self.selected + 1) % self.count;
-        self.update_scroll();
-    }
-
     /// Update scroll offset to keep selection visible.
     fn update_scroll(&mut self) {
         if self.selected < self.scroll_offset {
@@ -53,18 +64,10 @@ impl ListState {
         }
     }
 
-    /// Reset selection to first item.
-    pub fn reset(&mut self) {
-        self.selected = 0;
-        self.scroll_offset = 0;
-    }
-
     /// Update the item count.
     pub fn set_count(&mut self, count: usize) {
         self.count = count;
-        if self.selected >= count && count > 0 {
-            self.selected = count - 1;
-        }
+        self.clamp_to_bounds();
         self.update_scroll();
     }
 }

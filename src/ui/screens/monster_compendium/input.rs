@@ -1,8 +1,9 @@
 use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
-use super::super::modal::{close_modal, ActiveModal, ModalType};
+use crate::ui::SelectionState;
 
+use super::super::modal::{close_modal, ActiveModal, ModalType};
 use super::state::{CompendiumListState, CompendiumMonsters, MonsterCompendiumRoot};
 
 /// System to handle closing the monster compendium with Escape.
@@ -38,20 +39,17 @@ pub fn handle_compendium_navigation(
     }
 
     let Some(monsters) = monsters else { return };
-    let count = monsters.len();
+
+    // Update count from monsters resource
+    if list_state.count != monsters.len() {
+        list_state.count = monsters.len();
+    }
+
     for action in action_reader.read() {
         if let GameAction::Navigate(dir) = action {
             match dir {
-                NavigationDirection::Up => {
-                    if list_state.selected > 0 {
-                        list_state.selected -= 1;
-                    }
-                }
-                NavigationDirection::Down => {
-                    if list_state.selected < count.saturating_sub(1) {
-                        list_state.selected += 1;
-                    }
-                }
+                NavigationDirection::Up => list_state.up(),
+                NavigationDirection::Down => list_state.down(),
                 _ => {}
             }
         }

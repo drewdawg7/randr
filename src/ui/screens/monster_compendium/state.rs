@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::mob::MobId;
+use crate::ui::SelectionState;
 
 /// Component marker for the monster compendium UI.
 #[derive(Component)]
@@ -18,6 +19,21 @@ pub struct CompendiumMobSprite;
 #[derive(Resource, Default)]
 pub struct CompendiumListState {
     pub selected: usize,
+    pub count: usize,
+}
+
+impl SelectionState for CompendiumListState {
+    fn selected(&self) -> usize {
+        self.selected
+    }
+
+    fn count(&self) -> usize {
+        self.count
+    }
+
+    fn set_selected(&mut self, index: usize) {
+        self.selected = index;
+    }
 }
 
 /// Marker resource to trigger spawning the monster compendium.

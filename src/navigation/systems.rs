@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::input::GameAction;
 use crate::states::AppState;
 use crate::ui::screens::modal::{toggle_modal, ActiveModal, ModalAction, ModalType};
+use crate::ui::SelectionState;
 
 use super::table::{NavigationTable, NavigationTarget};
 
@@ -121,8 +122,10 @@ fn handle_modal_toggle(
                     commands.remove_resource::<CompendiumMonsters>();
                 }
                 Some(ModalAction::Open) => {
-                    compendium_list_state.selected = 0;
-                    commands.insert_resource(CompendiumMonsters::from_registry());
+                    let monsters = CompendiumMonsters::from_registry();
+                    compendium_list_state.count = monsters.len();
+                    compendium_list_state.reset();
+                    commands.insert_resource(monsters);
                     commands.insert_resource(SpawnMonsterCompendium);
                 }
                 None => {}

@@ -2,10 +2,10 @@ use bevy::prelude::*;
 
 use crate::combat::{PlayerCombatAction, PostCombatAction};
 use crate::input::{GameAction, NavigationDirection};
-use crate::ui::{update_menu_colors, MenuIndex};
+use crate::ui::{update_menu_colors, MenuIndex, SelectionState};
 
 use super::components::{ActionMenuItem, PostCombatMenuItem};
-use super::state::FightScreenState;
+use super::state::{ActionSelection, FightScreenState, PostCombatSelection};
 
 pub fn handle_player_turn_input(
     mut action_reader: EventReader<GameAction>,
@@ -16,11 +16,11 @@ pub fn handle_player_turn_input(
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
-                fight_state.action_up();
+                ActionSelection(&mut fight_state).up();
                 update_action_visuals(&fight_state, &mut action_items);
             }
             GameAction::Navigate(NavigationDirection::Down) => {
-                fight_state.action_down();
+                ActionSelection(&mut fight_state).down();
                 update_action_visuals(&fight_state, &mut action_items);
             }
             GameAction::Select => {
@@ -45,14 +45,14 @@ pub fn handle_post_combat_input(
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Up) => {
-                fight_state.post_combat_up();
+                PostCombatSelection(&mut fight_state).up();
                 update_menu_colors::<PostCombatMenuItem>(
                     fight_state.post_combat_selection,
                     &mut post_combat_items,
                 );
             }
             GameAction::Navigate(NavigationDirection::Down) => {
-                fight_state.post_combat_down();
+                PostCombatSelection(&mut fight_state).down();
                 update_menu_colors::<PostCombatMenuItem>(
                     fight_state.post_combat_selection,
                     &mut post_combat_items,

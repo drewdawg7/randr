@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::inventory::{EquipmentSlot, InventoryItem};
 use crate::item::Item;
+use crate::ui::SelectionState;
 
 /// Component marker for the inventory modal UI.
 #[derive(Component)]
@@ -20,28 +21,24 @@ pub struct InventorySelection {
     pub count: usize,
 }
 
+impl SelectionState for InventorySelection {
+    fn selected(&self) -> usize {
+        self.index
+    }
+
+    fn count(&self) -> usize {
+        self.count
+    }
+
+    fn set_selected(&mut self, index: usize) {
+        self.index = index;
+    }
+}
+
 impl InventorySelection {
-    pub fn up(&mut self) {
-        if self.index > 0 {
-            self.index -= 1;
-        }
-    }
-
-    pub fn down(&mut self) {
-        if self.index + 1 < self.count {
-            self.index += 1;
-        }
-    }
-
-    pub fn reset(&mut self) {
-        self.index = 0;
-    }
-
     pub fn set_count(&mut self, count: usize) {
         self.count = count;
-        if self.index >= count && count > 0 {
-            self.index = count - 1;
-        }
+        self.clamp_to_bounds();
     }
 }
 

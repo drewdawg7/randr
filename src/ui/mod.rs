@@ -1,4 +1,5 @@
 pub mod animation;
+pub mod focus;
 pub mod hints;
 pub mod menu;
 pub mod mob_animation;
@@ -12,6 +13,7 @@ pub mod theme;
 pub mod widgets;
 
 pub use animation::*;
+pub use focus::*;
 pub use hints::*;
 pub use menu::*;
 pub use mob_animation::*;
