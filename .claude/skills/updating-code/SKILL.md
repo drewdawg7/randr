@@ -43,6 +43,7 @@ Read the relevant doc BEFORE making changes.
 | UiAllSlice, HealthBarSlice, NineSlice, ThreeSlice traits | [sprite-slices.md](sprite-slices.md) |
 | ItemDetailIconsSlice, stat display icons | [stat-icons.md](stat-icons.md) |
 | StatRow, ItemGrid, GoldDisplay widgets | [widgets/](widgets/table-of-contents.md) |
+| Row, Column, Stack layout components | [widgets/layout_primitives.md](widgets/layout_primitives.md) |
 | row_node, column_node, overflow, layout | [ui-nodes.md](ui-nodes.md) |
 | Decoupling UI from registries, display structs | [ui-display-data.md](ui-display-data.md) |
 | Modal screens, ActiveModal, toggle/close patterns | [modals.md](modals.md) |

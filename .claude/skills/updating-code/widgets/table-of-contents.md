@@ -6,6 +6,7 @@ Reusable widget components in `src/ui/widgets/`.
 
 | When using... | Read |
 |---------------|------|
+| Row, Column, Stack (layout containers) | [layout_primitives.md](layout_primitives.md) |
 | StatRow (label + value rows) | [stat_row.md](stat_row.md) |
 | IconValueRow (icon + value) | [icon_value_row.md](icon_value_row.md) |
 | ItemStatsDisplay (stat lists) | [item_stats_display.md](item_stats_display.md) |

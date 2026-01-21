@@ -3,6 +3,8 @@
 ## Overview
 The `src/ui/nodes.rs` module provides helper functions for creating common Bevy UI `Node` layouts, reducing boilerplate when spawning row or column containers.
 
+> **Note:** For new code, prefer using the `Row` and `Column` layout components from `src/ui/widgets/`. They provide more flexibility (padding, justify, align, sizing) with a builder API. See [widgets/layout_primitives.md](widgets/layout_primitives.md).
+
 ## Functions
 
 ### `row_node(gap: f32) -> Node`

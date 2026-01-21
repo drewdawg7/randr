@@ -1,4 +1,5 @@
 mod central_detail_panel;
+mod column;
 mod gold_display;
 mod icon_value_row;
 mod item_grid;
@@ -6,11 +7,16 @@ mod item_stats_display;
 mod list_item;
 mod nine_slice;
 mod player_stats;
+mod row;
+mod stack;
 mod stat_row;
 mod three_slice;
 
 pub use central_detail_panel::{CentralDetailPanel, CentralDetailPanelPlugin};
+pub use column::{Column, ColumnPlugin};
 pub use nine_slice::spawn_nine_slice_panel;
+pub use row::{Row, RowPlugin};
+pub use stack::{Stack, StackPlugin};
 pub use three_slice::spawn_three_slice_banner;
 pub use gold_display::{GoldDisplay, GoldDisplayPlugin};
 pub use icon_value_row::{IconSource, IconValueRow, IconValueRowPlugin};
