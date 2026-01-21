@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy::window::WindowResized;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::dungeon::{DungeonEntity, DungeonLayout, LayoutId, TileRenderer, TileType};
@@ -6,6 +7,36 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 use crate::ui::widgets::PlayerStats;
 use crate::ui::{DungeonMobSprite, DungeonPlayerSprite};
+
+/// Base tile size in pixels (before scaling).
+pub const BASE_TILE: f32 = 16.0;
+
+/// Resource tracking current UI scale factor (power of 2: 2, 4, 8, 16).
+#[derive(Resource)]
+pub struct UiScale(pub u32);
+
+impl UiScale {
+    /// Returns the scaled tile size in pixels.
+    pub fn tile_size(&self) -> f32 {
+        BASE_TILE * self.0 as f32
+    }
+
+    /// Calculate the largest power-of-2 scale that fits content in available space.
+    pub fn calculate(available_width: f32, available_height: f32, content_tiles_wide: usize, content_tiles_tall: usize) -> u32 {
+        let base_w = content_tiles_wide as f32 * BASE_TILE;
+        let base_h = content_tiles_tall as f32 * BASE_TILE;
+        let max_scale = (available_width / base_w).min(available_height / base_h).floor() as u32;
+
+        // Round down to nearest power of 2
+        match max_scale {
+            0..=1 => 2,
+            2..=3 => 2,
+            4..=7 => 4,
+            8..=15 => 8,
+            _ => 16,
+        }
+    }
+}
 
 /// Resource tracking dungeon state for player movement.
 #[derive(Resource)]
@@ -29,6 +60,11 @@ pub struct DungeonPlayer;
 #[derive(Component)]
 struct DungeonRoot;
 
+/// Marker for the dungeon grid container.
+#[derive(Component)]
+struct DungeonGrid;
+
+
 pub struct DungeonPlugin;
 
 impl Plugin for DungeonPlugin {
@@ -37,19 +73,27 @@ impl Plugin for DungeonPlugin {
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
                 Update,
-                (handle_dungeon_movement, handle_back_action).run_if(in_state(AppState::Dungeon)),
+                (handle_dungeon_movement, handle_back_action, handle_window_resize)
+                    .run_if(in_state(AppState::Dungeon)),
             );
     }
 }
 
-fn spawn_dungeon_screen(mut commands: Commands, game_sprites: Res<GameSprites>) {
+fn spawn_dungeon_screen(
+    mut commands: Commands,
+    game_sprites: Res<GameSprites>,
+    window: Single<&Window>,
+) {
     let Some(tile_sheet) = game_sprites.get(SpriteSheetKey::DungeonTileset) else {
         return;
     };
 
-    const TILE_SIZE: f32 = 48.0;
-
     let layout = LayoutId::StartingRoom.layout();
+
+    // Calculate initial scale based on window size
+    let scale = UiScale::calculate(window.width(), window.height(), layout.width(), layout.height());
+    let tile_size = BASE_TILE * scale as f32;
+    commands.insert_resource(UiScale(scale));
 
     // Find player spawn position
     let player_pos = layout
@@ -94,22 +138,21 @@ fn spawn_dungeon_screen(mut commands: Commands, game_sprites: Res<GameSprites>) 
                 .with_children(|content| {
                     // Dungeon grid
                     content
-                        .spawn(Node {
-                            display: Display::Grid,
-                            grid_template_columns: vec![GridTrack::px(TILE_SIZE); layout.width()],
-                            grid_template_rows: vec![GridTrack::px(TILE_SIZE); layout.height()],
-                            ..default()
-                        })
+                        .spawn((
+                            DungeonGrid,
+                            Node {
+                                display: Display::Grid,
+                                grid_template_columns: vec![GridTrack::px(tile_size); layout.width()],
+                                grid_template_rows: vec![GridTrack::px(tile_size); layout.height()],
+                                ..default()
+                            },
+                        ))
                         .with_children(|grid| {
                             for y in 0..layout.height() {
                                 for x in 0..layout.width() {
                                     grid.spawn((
                                         DungeonCell { x, y },
-                                        Node {
-                                            width: Val::Px(TILE_SIZE),
-                                            height: Val::Px(TILE_SIZE),
-                                            ..default()
-                                        },
+                                        Node::default(),
                                     ))
                                     .with_children(|cell| {
                                         // Spawn tile background
@@ -126,8 +169,8 @@ fn spawn_dungeon_screen(mut commands: Commands, game_sprites: Res<GameSprites>) 
                                                     img,
                                                     Node {
                                                         position_type: PositionType::Absolute,
-                                                        width: Val::Px(TILE_SIZE),
-                                                        height: Val::Px(TILE_SIZE),
+                                                        width: Val::Percent(100.0),
+                                                        height: Val::Percent(100.0),
                                                         ..default()
                                                     },
                                                 ));
@@ -142,8 +185,8 @@ fn spawn_dungeon_screen(mut commands: Commands, game_sprites: Res<GameSprites>) 
                                                     DungeonPlayerSprite,
                                                     Node {
                                                         position_type: PositionType::Absolute,
-                                                        width: Val::Px(TILE_SIZE),
-                                                        height: Val::Px(TILE_SIZE),
+                                                        width: Val::Percent(100.0),
+                                                        height: Val::Percent(100.0),
                                                         ..default()
                                                     },
                                                 ));
@@ -154,8 +197,8 @@ fn spawn_dungeon_screen(mut commands: Commands, game_sprites: Res<GameSprites>) 
                                         if let Some(entity) = layout.entity_at(x, y) {
                                             let entity_node = Node {
                                                 position_type: PositionType::Absolute,
-                                                width: Val::Px(TILE_SIZE),
-                                                height: Val::Px(TILE_SIZE),
+                                                width: Val::Percent(100.0),
+                                                height: Val::Percent(100.0),
                                                 ..default()
                                             };
 
@@ -249,9 +292,43 @@ fn handle_back_action(
     }
 }
 
+fn handle_window_resize(
+    mut resize_events: EventReader<WindowResized>,
+    windows: Query<&Window>,
+    state: Res<DungeonState>,
+    mut scale: ResMut<UiScale>,
+    mut grid_query: Query<&mut Node, With<DungeonGrid>>,
+) {
+    for event in resize_events.read() {
+        let Ok(window) = windows.get(event.window) else {
+            continue;
+        };
+
+        let new_scale = UiScale::calculate(
+            window.width(),
+            window.height(),
+            state.layout.width(),
+            state.layout.height(),
+        );
+
+        if new_scale != scale.0 {
+            scale.0 = new_scale;
+            let tile_size = BASE_TILE * new_scale as f32;
+
+            if let Ok(mut grid_node) = grid_query.get_single_mut() {
+                grid_node.grid_template_columns =
+                    vec![GridTrack::px(tile_size); state.layout.width()];
+                grid_node.grid_template_rows =
+                    vec![GridTrack::px(tile_size); state.layout.height()];
+            }
+        }
+    }
+}
+
 fn cleanup_dungeon(mut commands: Commands, query: Query<Entity, With<DungeonRoot>>) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
     commands.remove_resource::<DungeonState>();
+    commands.remove_resource::<UiScale>();
 }
