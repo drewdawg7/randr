@@ -1,17 +1,12 @@
 use bevy::prelude::*;
 
-use super::{AlchemistTabPlugin, BlacksmithTabPlugin, FieldTabPlugin, StoreTabPlugin};
+use super::{AlchemistTabPlugin, BlacksmithTabPlugin, StoreTabPlugin};
 
 /// Plugin that bundles all tab plugins together.
 pub struct TabsPlugin;
 
 impl Plugin for TabsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            StoreTabPlugin,
-            BlacksmithTabPlugin,
-            AlchemistTabPlugin,
-            FieldTabPlugin,
-        ));
+        app.add_plugins((StoreTabPlugin, BlacksmithTabPlugin, AlchemistTabPlugin));
     }
 }
