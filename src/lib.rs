@@ -4,7 +4,6 @@ pub mod storage;
 pub mod economy;
 pub mod location;
 pub mod loot;
-pub mod magic;
 pub mod mob;
 pub mod player;
 pub mod town;

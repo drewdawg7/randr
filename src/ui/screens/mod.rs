@@ -9,7 +9,6 @@ mod mine;
 pub mod modal;
 mod profile;
 mod profile_modal;
-mod spell_test_modal;
 pub mod town;
 
 pub use dungeon::DungeonPlugin;
@@ -26,5 +25,4 @@ pub use mine::MinePlugin;
 pub use modal::{ActiveModal, ModalPlugin, ModalType};
 pub use profile::ProfilePlugin;
 pub use profile_modal::ProfileModalPlugin;
-pub use spell_test_modal::SpellTestModalPlugin;
 pub use town::{InfoPanelSource, TownPlugin};

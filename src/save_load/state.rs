@@ -6,8 +6,6 @@ use crate::entities::Progression;
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem};
 use crate::item::enums::{ItemQuality, ItemType};
 use crate::item::{Item, ItemId};
-use crate::magic::tome::Tome;
-use crate::magic::word::WordId;
 use crate::player::Player;
 use crate::stats::{StatInstance, StatSheet, StatType};
 use crate::storage::Storage;
@@ -183,7 +181,6 @@ pub struct ItemState {
     pub stats: StatSheetState,
     pub gold_value: i32,
     pub quality: String,
-    pub tome_data: Option<TomeState>,
 }
 
 impl ItemState {
@@ -202,7 +199,6 @@ impl ItemState {
             stats: StatSheetState::from_sheet(&item.stats),
             gold_value: item.gold_value,
             quality: format!("{:?}", item.quality),
-            tome_data: item.tome_data.as_ref().map(TomeState::from_tome),
         }
     }
 
@@ -221,72 +217,7 @@ impl ItemState {
             stats: self.stats.to_sheet(),
             gold_value: self.gold_value,
             quality: parse_item_quality(&self.quality).unwrap_or(ItemQuality::Normal),
-            tome_data: self.tome_data.as_ref().map(|t| t.to_tome()),
         }
-    }
-}
-
-// Tome state
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct TomeState {
-    pub pages: Vec<Option<PageState>>,
-    pub active_page_index: usize,
-    pub capacity: usize,
-}
-
-impl TomeState {
-    fn from_tome(tome: &Tome) -> Self {
-        Self {
-            pages: tome
-                .pages()
-                .iter()
-                .map(|p| p.as_ref().map(PageState::from_page))
-                .collect(),
-            active_page_index: tome.active_page_index(),
-            capacity: tome.capacity(),
-        }
-    }
-
-    fn to_tome(&self) -> Tome {
-        let mut tome = Tome::new(self.capacity);
-        // Restore pages
-        for (i, page_state) in self.pages.iter().enumerate() {
-            if let Some(page) = page_state {
-                let p = page.to_page();
-                // Skip invalid pages silently
-                let _ = tome.set_page(i, p);
-            }
-        }
-        // Restore active page
-        let _ = tome.set_active_page(self.active_page_index);
-        tome
-    }
-}
-
-// Page state
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct PageState {
-    pub words: Vec<String>,
-}
-
-impl PageState {
-    fn from_page(page: &crate::magic::page::Page) -> Self {
-        Self {
-            words: page.words().iter().map(|w| format!("{:?}", w)).collect(),
-        }
-    }
-
-    fn to_page(&self) -> crate::magic::page::Page {
-        let mut page = crate::magic::page::Page::new();
-        let words: Vec<WordId> = self
-            .words
-            .iter()
-            .filter_map(|s| parse_word_id(s))
-            .collect();
-        if !words.is_empty() {
-            page.inscribe(words);
-        }
-        page
     }
 }
 
@@ -392,10 +323,5 @@ fn parse_item_id(_s: &str) -> Option<ItemId> {
 
 fn parse_item_type(_s: &str) -> Option<ItemType> {
     // This would need proper parsing of ItemType enum
-    None
-}
-
-fn parse_word_id(_s: &str) -> Option<WordId> {
-    // This would need to match all WordId variants
     None
 }

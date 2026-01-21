@@ -1,7 +1,6 @@
 pub mod blacksmith;
 pub mod crafting;
 pub mod items;
-pub mod magic;
 pub mod player;
 pub mod storage;
 pub mod store_transactions;
@@ -13,7 +12,6 @@ pub use crate::combat::{
     CombatSourceResource, CombatStarted, PlayerDefeat, PlayerVictory,
 };
 pub use items::{ItemDropped, ItemEquipped, ItemPickedUp, ItemPlugin, ItemUnequipped, ItemUsed};
-pub use magic::MagicPlugin;
 pub use crate::player::{Player, PlayerGold, PlayerName};
 pub use crate::storage::Storage;
 pub use player::{GoldChanged, PlayerDamaged, PlayerHealed, PlayerLeveledUp, PlayerPlugin};

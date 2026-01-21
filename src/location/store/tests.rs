@@ -37,7 +37,6 @@ fn create_test_item(
         stats: StatSheet::new(),
         gold_value,
         quality: ItemQuality::Normal,
-        tome_data: None,
     }
 }
 

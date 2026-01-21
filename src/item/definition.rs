@@ -1,6 +1,6 @@
 use uuid::Uuid;
 
-use crate::{item::enums::{ItemError, ItemQuality, UpgradeResult}, magic::tome::Tome, stats::{StatSheet, StatType}};
+use crate::{item::enums::{ItemError, ItemQuality, UpgradeResult}, stats::{StatSheet, StatType}};
 
 // ItemId now comes from definitions (macro-generated)
 pub use super::definitions::ItemId;
@@ -21,8 +21,6 @@ pub struct Item {
     pub stats: StatSheet,
     pub gold_value: i32,
     pub quality: ItemQuality,
-    /// Tome-specific data (pages with inscribed words). Only used for tome items.
-    pub tome_data: Option<Tome>,
 }
 
 impl Item {

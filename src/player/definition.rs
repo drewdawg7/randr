@@ -5,8 +5,6 @@ use bevy::prelude::*;
 
 use crate::entities::Progression;
 use crate::inventory::Inventory;
-use crate::magic::effect::PassiveEffect;
-use crate::magic::tome::Tome;
 use crate::stats::{HasStats, StatInstance, StatSheet, StatType};
 
 // =============================================================================
@@ -53,8 +51,7 @@ pub fn default_player_stats() -> StatSheet {
 pub fn effective_magicfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
     let base = stats.value(StatType::MagicFind);
     let equipment = inventory.sum_equipment_stats(StatType::MagicFind);
-    let tome_bonus = tome_magicfind_bonus(inventory);
-    base + equipment + tome_bonus
+    base + equipment
 }
 
 pub fn effective_mining(stats: &StatSheet, inventory: &Inventory) -> i32 {
@@ -66,44 +63,7 @@ pub fn effective_mining(stats: &StatSheet, inventory: &Inventory) -> i32 {
 pub fn effective_goldfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
     let base = stats.value(StatType::GoldFind);
     let equipment = inventory.sum_equipment_stats(StatType::GoldFind);
-    let tome_bonus = tome_goldfind_bonus(inventory);
-    base + equipment + tome_bonus
-}
-
-/// Get all passive effects from the equipped tome
-pub fn tome_passive_effects(inventory: &Inventory) -> Vec<&PassiveEffect> {
-    inventory
-        .equipped_tome()
-        .map(|tome| tome.passive_effects())
-        .unwrap_or_default()
-}
-
-/// Sum tome bonus for a given stat type
-fn sum_tome_bonus(inventory: &Inventory, stat: StatType) -> i32 {
-    tome_passive_effects(inventory)
-        .iter()
-        .filter_map(|e| e.bonus_value(stat))
-        .sum()
-}
-
-/// Calculate passive bonus to attack from tome
-pub fn tome_attack_bonus(inventory: &Inventory) -> i32 {
-    sum_tome_bonus(inventory, StatType::Attack)
-}
-
-/// Calculate passive bonus to defense from tome
-pub fn tome_defense_bonus(inventory: &Inventory) -> i32 {
-    sum_tome_bonus(inventory, StatType::Defense)
-}
-
-/// Calculate passive bonus to gold find from tome
-pub fn tome_goldfind_bonus(inventory: &Inventory) -> i32 {
-    sum_tome_bonus(inventory, StatType::GoldFind)
-}
-
-/// Calculate passive bonus to magic find from tome
-pub fn tome_magicfind_bonus(inventory: &Inventory) -> i32 {
-    sum_tome_bonus(inventory, StatType::MagicFind)
+    base + equipment
 }
 
 // =============================================================================
@@ -172,41 +132,6 @@ impl Player {
         *prog = self.prog.clone();
         *inventory = self.inventory.clone();
         *stats = self.stats.clone();
-    }
-
-    /// Get the equipped tome, if any
-    pub fn equipped_tome(&self) -> Option<&Tome> {
-        self.inventory.equipped_tome()
-    }
-
-    /// Get mutable access to the equipped tome
-    pub fn equipped_tome_mut(&mut self) -> Option<&mut Tome> {
-        self.inventory.equipped_tome_mut()
-    }
-
-    /// Get all passive effects from the equipped tome
-    pub fn tome_passive_effects(&self) -> Vec<&PassiveEffect> {
-        tome_passive_effects(&self.inventory)
-    }
-
-    /// Calculate passive bonus to attack from tome
-    pub fn tome_attack_bonus(&self) -> i32 {
-        tome_attack_bonus(&self.inventory)
-    }
-
-    /// Calculate passive bonus to defense from tome
-    pub fn tome_defense_bonus(&self) -> i32 {
-        tome_defense_bonus(&self.inventory)
-    }
-
-    /// Calculate passive bonus to gold find from tome
-    pub fn tome_goldfind_bonus(&self) -> i32 {
-        tome_goldfind_bonus(&self.inventory)
-    }
-
-    /// Calculate passive bonus to magic find from tome
-    pub fn tome_magicfind_bonus(&self) -> i32 {
-        tome_magicfind_bonus(&self.inventory)
     }
 
     pub fn effective_magicfind(&self) -> i32 {

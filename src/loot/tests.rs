@@ -33,7 +33,6 @@ fn create_test_material(id: ItemId, gold_value: i32) -> Item {
         stats: StatSheet::new(),
         gold_value,
         quality: ItemQuality::Normal,
-        tome_data: None,
     }
 }
 

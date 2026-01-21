@@ -29,7 +29,6 @@ fn create_test_weapon(id: ItemId, attack: i32) -> Item {
         stats: StatSheet::new().with(StatType::Attack, attack),
         gold_value: 100,
         quality: ItemQuality::Normal,
-        tome_data: None,
     }
 }
 
@@ -49,7 +48,6 @@ fn create_test_shield(id: ItemId, defense: i32) -> Item {
         stats: StatSheet::new().with(StatType::Defense, defense),
         gold_value: 80,
         quality: ItemQuality::Normal,
-        tome_data: None,
     }
 }
 
@@ -69,7 +67,6 @@ fn create_test_material(id: ItemId) -> Item {
         stats: StatSheet::new(),
         gold_value: 10,
         quality: ItemQuality::Normal,
-        tome_data: None,
     }
 }
 

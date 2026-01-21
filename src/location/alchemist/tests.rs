@@ -33,7 +33,6 @@ fn create_test_material(id: ItemId) -> Item {
         stats: StatSheet::new(),
         gold_value: 10,
         quality: ItemQuality::Normal,
-        tome_data: None,
     }
 }
 
@@ -64,7 +63,6 @@ fn fill_remaining_inventory(player: &mut Player) {
             stats: StatSheet::new(),
             gold_value: 100,
             quality: ItemQuality::Normal,
-            tome_data: None,
         };
         // Ignore errors - we just want to fill what we can
         let _ = player.add_to_inv(item);

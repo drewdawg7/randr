@@ -69,7 +69,6 @@ fn create_test_item(
         stats,
         gold_value: 10,
         quality,
-        tome_data: None,
     }
 }
 
@@ -115,7 +114,6 @@ fn create_material_item() -> Item {
         stats: StatSheet::new(),
         gold_value: 5,
         quality: ItemQuality::Normal,
-        tome_data: None,
     }
 }
 

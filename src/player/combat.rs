@@ -37,12 +37,12 @@ impl IsKillable for Player {
 
 impl DealsDamage for Player {
     fn equipment_attack_bonus(&self) -> i32 {
-        self.equipment_attack() + self.tome_attack_bonus()
+        self.equipment_attack()
     }
 }
 
 impl Combatant for Player {
     fn effective_defense(&self) -> i32 {
-        self.defense() + self.equipment_defense() + self.tome_defense_bonus()
+        self.defense() + self.equipment_defense()
     }
 }

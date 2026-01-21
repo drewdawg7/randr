@@ -2,7 +2,6 @@ use crate::{
     combat::{ActiveCombat, AttackResult, CombatEntity, Combatant, HasGold, IsKillable},
     entities::progression::HasProgression,
     loot::LootDrop,
-    magic::effect::PassiveEffect,
     player::Player,
 };
 
@@ -42,30 +41,17 @@ pub struct VictoryRewards {
     pub xp_gained: i32,
 }
 
-/// Apply victory rewards to player: gold (with goldfind) and XP (with tome multipliers).
+/// Apply victory rewards to player: gold (with goldfind) and XP.
 /// Returns the calculated gold and XP for display purposes.
 pub fn apply_victory_rewards(player: &mut Player, base_gold: i32, base_xp: i32) -> VictoryRewards {
     // Apply gold with goldfind bonus
     let gold_gained = apply_goldfind(base_gold, player.effective_goldfind());
     player.add_gold(gold_gained);
 
-    // Apply XP with tome passive multiplier
-    let xp_bonus_pct: i32 = player
-        .tome_passive_effects()
-        .iter()
-        .filter_map(|e| {
-            if let PassiveEffect::XPMultiplier(pct) = e {
-                Some(*pct)
-            } else {
-                None
-            }
-        })
-        .sum();
-    let xp_multiplier = 1.0 + (xp_bonus_pct as f64 / 100.0);
-    let xp_gained = (base_xp as f64 * xp_multiplier).round() as i32;
-    player.gain_xp(xp_gained);
+    // Apply XP directly
+    player.gain_xp(base_xp);
 
-    VictoryRewards { gold_gained, xp_gained }
+    VictoryRewards { gold_gained, xp_gained: base_xp }
 }
 
 pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)

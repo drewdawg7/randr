@@ -3,9 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use uuid::Uuid;
 
-use crate::item::{Item, ItemType};
-use crate::item::enums::EquipmentType;
-use crate::magic::tome::Tome;
+use crate::item::Item;
 use crate::stats::StatType;
 
 use super::EquipmentSlot;
@@ -91,34 +89,6 @@ impl Inventory {
             .values()
             .map(|inv_item| inv_item.item.stats.value(stat_type))
             .sum()
-    }
-
-    /// Get the equipped tome's data, if a tome is equipped in the off-hand slot
-    pub fn equipped_tome(&self) -> Option<&Tome> {
-        self.equipment
-            .get(&EquipmentSlot::OffHand)
-            .and_then(|inv_item| {
-                // Check if the equipped item is a tome
-                if let ItemType::Equipment(EquipmentType::Tome) = inv_item.item.item_type {
-                    inv_item.item.tome_data.as_ref()
-                } else {
-                    None
-                }
-            })
-    }
-
-    /// Get mutable access to the equipped tome's data
-    pub fn equipped_tome_mut(&mut self) -> Option<&mut Tome> {
-        self.equipment
-            .get_mut(&EquipmentSlot::OffHand)
-            .and_then(|inv_item| {
-                // Check if the equipped item is a tome
-                if let ItemType::Equipment(EquipmentType::Tome) = inv_item.item.item_type {
-                    inv_item.item.tome_data.as_mut()
-                } else {
-                    None
-                }
-            })
     }
 
     /// Iterate over equipment items in inventory (not equipped items).

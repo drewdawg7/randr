@@ -2,9 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     location::{FieldData, LocationId, LocationSpec},
-    magic::effect::PassiveEffect,
     mob::{Mob, MobId},
-    player::Player,
     utils::weighted_select,
 };
 
@@ -37,19 +35,8 @@ impl Field {
         }
     }
 
-    pub fn spawn_mob(&self, player: &Player) -> Result<Mob, FieldError> {
-        // Start with base weights
-        let mut adjusted_weights = self.mob_weights.clone();
-
-        // Apply MobSpawnWeight passive effects
-        for effect in player.tome_passive_effects() {
-            if let PassiveEffect::MobSpawnWeight(mob_id, weight_mod) = effect {
-                let entry = adjusted_weights.entry(*mob_id).or_insert(0);
-                *entry = (*entry + weight_mod).max(0); // Don't go negative
-            }
-        }
-
-        weighted_select(&adjusted_weights)
+    pub fn spawn_mob(&self) -> Result<Mob, FieldError> {
+        weighted_select(&self.mob_weights)
             .map(|mob_id| mob_id.spawn())
             .ok_or(FieldError::MobSpawnError)
     }

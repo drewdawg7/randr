@@ -6,6 +6,5 @@ mod stats;
 
 pub use definition::{
     default_player_stats, effective_goldfind, effective_magicfind, effective_mining, Player,
-    PlayerGold, PlayerGuard, PlayerName, tome_attack_bonus, tome_defense_bonus,
-    tome_goldfind_bonus, tome_magicfind_bonus, tome_passive_effects,
+    PlayerGold, PlayerGuard, PlayerName,
 };

@@ -62,7 +62,6 @@ Use `Overflow::clip()` for both axes, or `Overflow::clip_x()` / `Overflow::clip_
 
 Examples in codebase:
 - `src/ui/widgets/central_detail_panel.rs` - `Overflow::clip()`
-- `src/screens/spell_test_modal.rs` - `Overflow::clip_y()`
 - `src/screens/inventory_modal/render.rs` - `Overflow::clip_y()`
 - `src/screens/monster_compendium.rs` - `Overflow::clip()`
 

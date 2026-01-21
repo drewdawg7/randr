@@ -4,9 +4,7 @@ use std::time::Duration;
 use bevy::time::{Timer, TimerMode};
 
 use crate::{
-    player::Player,
     location::{LocationId, LocationSpec, MineData},
-    magic::effect::PassiveEffect,
     utils::weighted_select,
 };
 
@@ -67,27 +65,16 @@ impl Mine {
     }
 
     /// Spawn a new rock based on weighted random selection
-    pub fn spawn_rock(&mut self, player: &Player) {
-        // Start with base weights
-        let mut adjusted_weights = self.rock_weights.clone();
-
-        // Apply RockSpawnWeight passive effects
-        for effect in player.tome_passive_effects() {
-            if let PassiveEffect::RockSpawnWeight(rock_id, weight_mod) = effect {
-                let entry = adjusted_weights.entry(*rock_id).or_insert(0);
-                *entry = (*entry + weight_mod).max(0); // Don't go negative
-            }
-        }
-
-        if let Some(rock_id) = weighted_select(&adjusted_weights) {
+    pub fn spawn_rock(&mut self) {
+        if let Some(rock_id) = weighted_select(&self.rock_weights) {
             self.current_rock = Some(rock_id.spawn());
         }
     }
 
     /// Ensure a rock exists, spawning one if needed
-    pub fn ensure_rock_exists(&mut self, player: &Player) {
+    pub fn ensure_rock_exists(&mut self) {
         if self.current_rock.is_none() {
-            self.spawn_rock(player);
+            self.spawn_rock();
         }
     }
 

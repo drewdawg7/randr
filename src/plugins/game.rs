@@ -9,7 +9,7 @@ use crate::save_load::SaveLoadPlugin;
 use crate::ui::screens::{
     DungeonPlugin, MonsterCompendiumPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
     MainMenuPlugin, MinePlugin, ModalPlugin, ProfileModalPlugin, ProfilePlugin,
-    SpellTestModalPlugin, TownPlugin,
+    TownPlugin,
 };
 use crate::states::StateTransitionPlugin;
 use crate::ui::widgets::{CentralDetailPanelPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin, StatRowPlugin};
@@ -47,7 +47,6 @@ impl Plugin for GamePlugin {
             ProfilePlugin,
             ProfileModalPlugin,
             InventoryModalPlugin,
-            SpellTestModalPlugin,
             MonsterCompendiumPlugin,
             KeybindsPlugin,
             TownPlugin,

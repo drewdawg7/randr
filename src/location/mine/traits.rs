@@ -49,8 +49,8 @@ impl Location for Mine {
         Ok(())
     }
 
-    fn on_enter(&mut self, player: &mut Player) {
-        self.ensure_rock_exists(player);
+    fn on_enter(&mut self, _player: &mut Player) {
+        self.ensure_rock_exists();
     }
 
     fn on_exit(&mut self, _player: &mut Player) {

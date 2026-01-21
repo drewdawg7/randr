@@ -100,19 +100,6 @@ entity_macros::define_entity! {
         }
 
         // ─────────────────────────────────────────────────────────────────────
-        // Tomes
-        // ─────────────────────────────────────────────────────────────────────
-        ApprenticeTome {
-            name: String::from("Apprentice Tome"),
-            item_type: ItemType::Equipment(EquipmentType::Tome),
-            quality: Some(ItemQuality::Normal),
-            stats: StatSheet::new(),
-            max_upgrades: 0,
-            max_stack_quantity: 1,
-            gold_value: 50,
-        }
-
-        // ─────────────────────────────────────────────────────────────────────
         // Copper Armor
         // ─────────────────────────────────────────────────────────────────────
         CopperHelmet {
@@ -411,7 +398,6 @@ entity_macros::define_entity! {
 // ─────────────────────────────────────────────────────────────────────────────
 
 use uuid::Uuid;
-use crate::magic::tome::Tome;
 use crate::registry::{RegistryDefaults, SpawnFromSpec};
 use super::definition::Item;
 
@@ -431,12 +417,6 @@ impl ItemSpec {
         let base_stats = self.stats.clone();
         let stats = quality.multiply_stats(&base_stats);
 
-        // Initialize tome_data if this is a tome item
-        let tome_data = match self.item_type {
-            ItemType::Equipment(EquipmentType::Tome) => Some(Tome::standard()),
-            _ => None,
-        };
-
         Item {
             item_uuid: Uuid::new_v4(),
             item_id: id,
@@ -451,7 +431,6 @@ impl ItemSpec {
             base_stats,
             stats,
             quality,
-            tome_data,
         }
     }
 

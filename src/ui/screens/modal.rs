@@ -12,7 +12,6 @@ pub enum ModalType {
     Profile,
     Inventory,
     Keybinds,
-    SpellTest,
     MonsterCompendium,
 }
 
