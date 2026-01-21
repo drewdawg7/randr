@@ -8,7 +8,7 @@ Nine-slice panel for item details in buy screen.
 
 ```rust
 use crate::ui::widgets::CentralDetailPanel;
-use crate::screens::town::tabs::store::InfoPanelSource;
+use crate::ui::screens::InfoPanelSource;
 
 row.spawn(CentralDetailPanel {
     source: InfoPanelSource::Store { selected_index: 0 },

@@ -4,7 +4,7 @@ Modals are full-screen UI overlays that block game interaction until closed.
 
 ## Core Infrastructure
 
-**File:** `src/screens/modal.rs`
+**File:** `src/ui/screens/modal.rs`
 
 ### Resources
 - `ActiveModal` - Tracks which modal is currently open (only one at a time)
@@ -24,7 +24,7 @@ Modals are full-screen UI overlays that block game interaction until closed.
 Modals should be organized as modules with separate files:
 
 ```
-src/screens/my_modal/
+src/ui/screens/my_modal/
 ├── mod.rs        # Module declarations and re-exports only
 ├── plugin.rs     # Plugin struct and impl
 ├── constants.rs  # UI dimension constants
@@ -95,7 +95,7 @@ pub struct DisplayEntry {
 Input handling systems using the generic `toggle_modal` and `close_modal` helpers:
 
 ```rust
-use crate::screens::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
+use crate::ui::screens::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
 
 /// Toggle modal open/close
 pub fn handle_toggle(
@@ -218,8 +218,8 @@ impl Plugin for MyModalPlugin {
 
 | Modal | Files | Notes |
 |-------|-------|-------|
-| Monster Compendium | `src/screens/monster_compendium/` | Book-style with animated mob sprite |
-| Inventory | `src/screens/inventory_modal/` | Two-panel with item details |
+| Monster Compendium | `src/ui/screens/monster_compendium/` | Book-style with animated mob sprite |
+| Inventory | `src/ui/screens/inventory_modal/` | Two-panel with item details |
 
 ## Input Blocking
 
@@ -238,16 +238,16 @@ pub fn handle_tab_input(
 ```
 
 Files that implement this pattern:
-- `src/screens/town/systems.rs` - `handle_tab_navigation`
-- `src/screens/town/tabs/blacksmith/input.rs` - `handle_blacksmith_input`
-- `src/screens/town/tabs/store/input.rs` - `handle_store_input`
-- `src/screens/town/tabs/alchemist/input.rs` - `handle_alchemist_input`
-- `src/screens/town/tabs/field.rs` - `handle_field_input`
+- `src/ui/screens/town/systems.rs` - `handle_tab_navigation`
+- `src/ui/screens/town/tabs/blacksmith/input.rs` - `handle_blacksmith_input`
+- `src/ui/screens/town/tabs/store/input.rs` - `handle_store_input`
+- `src/ui/screens/town/tabs/alchemist/input.rs` - `handle_alchemist_input`
+- `src/ui/screens/town/tabs/field.rs` - `handle_field_input`
 
 ## Adding a New Modal
 
-1. Add variant to `ModalType` enum in `src/screens/modal.rs`
+1. Add variant to `ModalType` enum in `src/ui/screens/modal.rs`
 2. Create module directory structure
 3. Add `GameAction` variant for opening (if needed)
 4. Register plugin in `src/plugins/game.rs`
-5. Export from `src/screens/mod.rs`
+5. Export from `src/ui/screens/mod.rs`
