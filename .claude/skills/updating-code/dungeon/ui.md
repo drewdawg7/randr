@@ -1,9 +1,9 @@
 # Dungeon UI
 
-Dungeon tab rendering at `src/screens/town/tabs/dungeon.rs`.
+Dungeon screen rendering at `src/screens/dungeon/plugin.rs`.
 
-## DungeonTabPlugin
-Renders dungeon layout in the town screen Dungeon tab.
+## DungeonPlugin
+Renders dungeon layout as a top-level screen (AppState::Dungeon).
 
 ```rust
 use crate::dungeon::{LayoutId, TileRenderer};
@@ -51,7 +51,7 @@ Visual tile enum at `src/assets/sprite_slices.rs`:
 - `assets/sprites/dungeon_tileset.json` - Slice metadata
 - Original: `/Users/drewstewart/Downloads/2D Dungeon Asset Pack_v5.2/character and tileset/`
 
-## Tab Registration
-1. `TownTab::Dungeon` variant in `src/screens/town/state.rs`
-2. `DungeonTabPlugin` in `src/screens/town/tabs/dungeon.rs`
-3. Registered in `src/screens/town/tabs/mod.rs`
+## Screen Registration
+1. `DungeonPlugin` in `src/screens/dungeon/plugin.rs`
+2. Registered in `src/plugins/game.rs` (Screens and modals section)
+3. Uses `AppState::Dungeon` state (defined in `src/states/app_state.rs`)
