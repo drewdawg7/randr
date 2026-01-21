@@ -39,7 +39,7 @@ Read the relevant doc BEFORE making changes.
 | Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |
 | Mob animations, SpriteAssets::mob_sprite | [mob-sprites.md](mob-sprites.md) |
 | Option handling, Query aliases, saturating math | [rust-idioms.md](rust-idioms.md) |
-| UiAllSlice, HealthBarSlice, NineSlice trait | [sprite-slices.md](sprite-slices.md) |
+| UiAllSlice, HealthBarSlice, NineSlice, ThreeSlice traits | [sprite-slices.md](sprite-slices.md) |
 | ItemDetailIconsSlice, stat display icons | [stat-icons.md](stat-icons.md) |
 | StatRow, ItemGrid, GoldDisplay widgets | [widgets/](widgets/table-of-contents.md) |
 | row_node, column_node, overflow, layout | [ui-nodes.md](ui-nodes.md) |

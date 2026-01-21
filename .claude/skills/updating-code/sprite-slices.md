@@ -29,6 +29,7 @@ let cell = sheet.image_node(UiAllSlice::CellBackground.as_str());  // GOOD
 | `DungeonTileSlice` | `DungeonTileset` | FloorTile2-4, TopWall1-4, BottomWall1-4, SideWall2-8, corners, torches, gate |
 | `ShopBgSlice` | `ShopBgSlices` | TopLeft, TopCenter, TopRight, MiddleLeft, Center, MiddleRight, BottomLeft, BottomCenter, BottomRight (implements `NineSlice`) |
 | `DetailPanelSlice` | `DetailPanelBg` | TopLeft, TopCenter, TopRight, MiddleLeft, Center, MiddleRight, BottomLeft, BottomCenter, BottomRight (implements `NineSlice`) |
+| `FightBannerSlice` | `FightBannerSlices` | Left, Center, Right (implements `ThreeSlice`) |
 
 ## Common Patterns
 
@@ -70,7 +71,21 @@ use crate::ui::widgets::spawn_nine_slice_panel;
 spawn_nine_slice_panel::<ShopBgSlice>(parent, &game_sprites, width, height);
 ```
 
-See [widgets.md](widgets.md#spawn_nine_slice_panel) for full documentation.
+See [widgets/nine_slice.md](widgets/nine_slice.md) for full documentation.
+
+## ThreeSlice Trait
+
+The `ThreeSlice` trait enables generic 3-slice horizontal banner spawning. Implemented by `FightBannerSlice`.
+
+```rust
+use crate::assets::{ThreeSlice, FightBannerSlice};
+use crate::ui::widgets::spawn_three_slice_banner;
+
+// Spawn a three-slice banner
+spawn_three_slice_banner::<FightBannerSlice>(parent, &game_sprites, width);
+```
+
+See [widgets/three_slice.md](widgets/three_slice.md) for full documentation.
 
 ## Adding New Slices
 

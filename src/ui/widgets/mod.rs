@@ -7,9 +7,11 @@ mod list_item;
 mod nine_slice;
 mod player_stats;
 mod stat_row;
+mod three_slice;
 
 pub use central_detail_panel::{CentralDetailPanel, CentralDetailPanelPlugin};
 pub use nine_slice::spawn_nine_slice_panel;
+pub use three_slice::spawn_three_slice_banner;
 pub use gold_display::{GoldDisplay, GoldDisplayPlugin};
 pub use icon_value_row::{IconSource, IconValueRow, IconValueRowPlugin};
 pub use item_grid::{ItemGrid, ItemGridEntry, ItemGridPlugin};

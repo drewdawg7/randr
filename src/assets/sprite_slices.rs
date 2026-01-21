@@ -296,6 +296,87 @@ pub trait NineSlice: Copy {
     }
 }
 
+/// Position category for a three-slice banner cell.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ThreeSlicePosition {
+    /// Left edge (fixed width)
+    Left,
+    /// Center (stretchable)
+    Center,
+    /// Right edge (fixed width)
+    Right,
+}
+
+/// Trait for horizontal 3-slice sprites (left edge, stretchable center, right edge).
+///
+/// Implementors provide the 3 slices (left, center, right),
+/// the edge width, height, and sprite sheet key.
+pub trait ThreeSlice: Copy {
+    /// All 3 slices in order: left, center, right.
+    const ALL: [Self; 3];
+    /// Width of left/right edge slices (fixed).
+    const EDGE_WIDTH: f32;
+    /// Height of all slices (fixed).
+    const HEIGHT: f32;
+    /// The sprite sheet key for this three-slice set.
+    const SHEET_KEY: SpriteSheetKey;
+
+    /// Returns the slice name for sprite lookup.
+    fn as_str(self) -> &'static str;
+
+    /// Returns the position category for this slice.
+    fn position(self) -> ThreeSlicePosition {
+        let index = Self::ALL
+            .iter()
+            .position(|&s| std::mem::discriminant(&s) == std::mem::discriminant(&self))
+            .unwrap_or(0);
+        match index {
+            0 => ThreeSlicePosition::Left,
+            1 => ThreeSlicePosition::Center,
+            2 => ThreeSlicePosition::Right,
+            _ => ThreeSlicePosition::Left,
+        }
+    }
+
+    /// Computes the width for this slice given the stretch width.
+    fn width(self, stretch_width: f32) -> f32 {
+        match self.position() {
+            ThreeSlicePosition::Left | ThreeSlicePosition::Right => Self::EDGE_WIDTH,
+            ThreeSlicePosition::Center => stretch_width,
+        }
+    }
+}
+
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FightBannerSlice {
+    Left,
+    Center,
+    Right,
+}
+
+impl FightBannerSlice {
+    pub const fn as_str(self) -> &'static str {
+        match self {
+            Self::Left => "LEFT",
+            Self::Center => "CENTER",
+            Self::Right => "RIGHT",
+        }
+    }
+
+    pub const ALL: [Self; 3] = [Self::Left, Self::Center, Self::Right];
+}
+
+impl ThreeSlice for FightBannerSlice {
+    const ALL: [Self; 3] = Self::ALL;
+    const EDGE_WIDTH: f32 = 32.0;
+    const HEIGHT: f32 = 39.0;
+    const SHEET_KEY: SpriteSheetKey = SpriteSheetKey::FightBannerSlices;
+
+    fn as_str(self) -> &'static str {
+        Self::as_str(self)
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ItemDetailIconsSlice {
     AttackIcon,

@@ -2,6 +2,8 @@
 
 use bevy::prelude::*;
 
+use crate::assets::{FightBannerSlice, GameSprites};
+use crate::ui::widgets::spawn_three_slice_banner;
 use crate::ui::{MobAnimation, MobSpriteSheets, PlayerAnimation, PlayerSpriteSheet};
 
 use super::super::modal::{spawn_modal_overlay, ActiveModal, ModalType};
@@ -10,14 +12,16 @@ use super::state::{
 };
 
 const SPRITE_SIZE: f32 = 128.0;
+const BANNER_WIDTH: f32 = 160.0;
 const CONTAINER_WIDTH: f32 = 400.0;
-const CONTAINER_HEIGHT: f32 = 200.0;
+const CONTAINER_HEIGHT: f32 = 250.0; // Increased to accommodate banners
 
 /// System to spawn the fight modal UI.
 pub fn spawn_fight_modal(
     mut commands: Commands,
     mob_res: Res<FightModalMob>,
     mut active_modal: ResMut<ActiveModal>,
+    game_sprites: Res<GameSprites>,
 ) {
     commands.remove_resource::<SpawnFightModal>();
     active_modal.modal = Some(ModalType::FightModal);
@@ -36,8 +40,8 @@ pub fn spawn_fight_modal(
                         height: Val::Px(CONTAINER_HEIGHT),
                         flex_direction: FlexDirection::Row,
                         justify_content: JustifyContent::SpaceBetween,
-                        align_items: AlignItems::Center,
-                        padding: UiRect::axes(Val::Px(10.0), Val::Px(20.0)),
+                        align_items: AlignItems::FlexStart,
+                        padding: UiRect::axes(Val::Px(10.0), Val::Px(15.0)),
                         border: UiRect::all(Val::Px(3.0)),
                         ..default()
                     },
@@ -45,27 +49,63 @@ pub fn spawn_fight_modal(
                     BorderColor(Color::srgb(0.6, 0.5, 0.3)),
                 ))
                 .with_children(|container| {
-                    // Player sprite (left, facing right - default orientation)
-                    container.spawn((
-                        FightModalPlayerSprite,
-                        Node {
-                            width: Val::Px(SPRITE_SIZE),
-                            height: Val::Px(SPRITE_SIZE),
+                    // Player column (banner + sprite)
+                    container
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Center,
+                            justify_content: JustifyContent::FlexStart,
+                            row_gap: Val::Px(4.0),
                             ..default()
-                        },
-                    ));
+                        })
+                        .with_children(|column| {
+                            // Banner above player
+                            spawn_three_slice_banner::<FightBannerSlice>(
+                                column,
+                                &game_sprites,
+                                BANNER_WIDTH,
+                            );
 
-                    // Mob sprite (right, flipped to face left)
-                    container.spawn((
-                        FightModalMobSprite {
-                            mob_id: mob_res.mob_id,
-                        },
-                        Node {
-                            width: Val::Px(SPRITE_SIZE),
-                            height: Val::Px(SPRITE_SIZE),
+                            // Player sprite (facing right - default orientation)
+                            column.spawn((
+                                FightModalPlayerSprite,
+                                Node {
+                                    width: Val::Px(SPRITE_SIZE),
+                                    height: Val::Px(SPRITE_SIZE),
+                                    ..default()
+                                },
+                            ));
+                        });
+
+                    // Mob column (banner + sprite)
+                    container
+                        .spawn(Node {
+                            flex_direction: FlexDirection::Column,
+                            align_items: AlignItems::Center,
+                            justify_content: JustifyContent::FlexStart,
+                            row_gap: Val::Px(4.0),
                             ..default()
-                        },
-                    ));
+                        })
+                        .with_children(|column| {
+                            // Banner above mob
+                            spawn_three_slice_banner::<FightBannerSlice>(
+                                column,
+                                &game_sprites,
+                                BANNER_WIDTH,
+                            );
+
+                            // Mob sprite (flipped to face left)
+                            column.spawn((
+                                FightModalMobSprite {
+                                    mob_id: mob_res.mob_id,
+                                },
+                                Node {
+                                    width: Val::Px(SPRITE_SIZE),
+                                    height: Val::Px(SPRITE_SIZE),
+                                    ..default()
+                                },
+                            ));
+                        });
                 });
         });
 }
