@@ -133,3 +133,43 @@ pub trait LayoutGenerator {
     fn generate(&self) -> DungeonLayout;
 }
 ```
+
+## Player Movement System
+
+Player movement in the dungeon tab is handled in `src/screens/town/tabs/dungeon.rs`.
+
+### Components and Resources
+
+```rust
+// Resource tracking player position and layout
+#[derive(Resource)]
+pub struct DungeonState {
+    pub layout: DungeonLayout,
+    pub player_pos: (usize, usize),
+}
+
+// Marker for grid cells with coordinates
+#[derive(Component)]
+pub struct DungeonCell { pub x: usize, pub y: usize }
+
+// Marker for the player entity
+#[derive(Component)]
+pub struct DungeonPlayer;
+```
+
+### Movement Rules
+- **Only `TileType::Floor` is walkable** (not Entrance, Exit, DoorOpen, PlayerSpawn)
+- Player cannot move onto tiles containing entities (chests, mobs)
+- Arrow keys trigger `GameAction::Navigate(NavigationDirection)` events
+
+### How Movement Works
+1. `handle_dungeon_movement` listens for `GameAction::Navigate` events
+2. Calculates target position from direction
+3. Validates: target must be `TileType::Floor` AND have no entity
+4. Updates `DungeonState.player_pos`
+5. Re-parents player entity to target `DungeonCell` using `commands.entity(player).set_parent(cell)`
+
+### Key Functions
+- `spawn_dungeon_content()` - spawns grid with `DungeonCell` markers, initializes `DungeonState`
+- `handle_dungeon_movement()` - processes arrow key input, validates moves, re-parents player
+- `cleanup_dungeon_state()` - removes `DungeonState` resource on tab exit
