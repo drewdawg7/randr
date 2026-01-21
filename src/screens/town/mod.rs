@@ -7,5 +7,4 @@ pub mod tabs;
 
 pub use components::{ContentArea, TabContent};
 pub use plugin::TownPlugin;
-pub use state::TownTab;
-pub use tabs::InfoPanelSource;
+pub use shared::InfoPanelSource;
