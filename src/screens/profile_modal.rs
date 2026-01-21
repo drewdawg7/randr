@@ -7,8 +7,8 @@ use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, HasInventory, Inventory};
 use crate::player::{Player, PlayerGold, PlayerName};
 use crate::screens::modal::{
-    create_modal_container, create_modal_instruction, create_modal_title, spawn_modal_overlay,
-    ActiveModal, ModalType,
+    close_modal, create_modal_container, create_modal_instruction, create_modal_title,
+    spawn_modal_overlay, toggle_modal, ActiveModal, ModalAction, ModalType,
 };
 use crate::stats::{HasStats, StatSheet, StatType};
 use crate::ui::widgets::StatRow;
@@ -43,21 +43,20 @@ fn handle_profile_modal_toggle(
 ) {
     for action in action_reader.read() {
         if *action == GameAction::OpenProfile {
-            // Close existing modal if open
-            if let Ok(entity) = existing_modal.get_single() {
-                commands.entity(entity).despawn_recursive();
-                active_modal.modal = None;
-            } else {
-                // Open new modal
+            if let Some(ModalAction::Open) = toggle_modal(
+                &mut commands,
+                &mut active_modal,
+                &existing_modal,
+                ModalType::Profile,
+            ) {
                 let player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
                 spawn_profile_modal(&mut commands, &player);
-                active_modal.modal = Some(ModalType::Profile);
             }
         }
     }
 }
 
-/// System to handle closing the profile modal with Escape or 'p' key.
+/// System to handle closing the profile modal with Escape.
 fn handle_profile_modal_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
@@ -65,13 +64,13 @@ fn handle_profile_modal_close(
     modal_query: Query<Entity, With<ProfileModalRoot>>,
 ) {
     for action in action_reader.read() {
-        if matches!(action, GameAction::CloseModal | GameAction::OpenProfile) {
-            if active_modal.modal == Some(ModalType::Profile) {
-                if let Ok(entity) = modal_query.get_single() {
-                    commands.entity(entity).despawn_recursive();
-                    active_modal.modal = None;
-                }
-            }
+        if *action == GameAction::CloseModal {
+            close_modal(
+                &mut commands,
+                &mut active_modal,
+                &modal_query,
+                ModalType::Profile,
+            );
         }
     }
 }

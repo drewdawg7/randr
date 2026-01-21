@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
-use crate::screens::modal::{ActiveModal, ModalType};
+use crate::screens::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
 
 use super::state::{
     CompendiumListState, CompendiumMonsters, MonsterCompendiumRoot, SpawnMonsterCompendium,
@@ -17,17 +17,21 @@ pub fn handle_compendium_toggle(
 ) {
     for action in action_reader.read() {
         if *action == GameAction::OpenCompendium {
-            // Close existing compendium if open
-            if let Ok(entity) = existing_compendium.get_single() {
-                commands.entity(entity).despawn_recursive();
-                commands.remove_resource::<CompendiumMonsters>();
-                active_modal.modal = None;
-            } else if active_modal.modal.is_none() {
-                // Reset selection and trigger spawn
-                list_state.selected = 0;
-                commands.insert_resource(CompendiumMonsters::from_registry());
-                commands.insert_resource(SpawnMonsterCompendium);
-                active_modal.modal = Some(ModalType::MonsterCompendium);
+            match toggle_modal(
+                &mut commands,
+                &mut active_modal,
+                &existing_compendium,
+                ModalType::MonsterCompendium,
+            ) {
+                Some(ModalAction::Closed) => {
+                    commands.remove_resource::<CompendiumMonsters>();
+                }
+                Some(ModalAction::Open) => {
+                    list_state.selected = 0;
+                    commands.insert_resource(CompendiumMonsters::from_registry());
+                    commands.insert_resource(SpawnMonsterCompendium);
+                }
+                None => {}
             }
         }
     }
@@ -42,13 +46,14 @@ pub fn handle_compendium_close(
 ) {
     for action in action_reader.read() {
         if *action == GameAction::CloseModal
-            && active_modal.modal == Some(ModalType::MonsterCompendium)
+            && close_modal(
+                &mut commands,
+                &mut active_modal,
+                &compendium_query,
+                ModalType::MonsterCompendium,
+            )
         {
-            if let Ok(entity) = compendium_query.get_single() {
-                commands.entity(entity).despawn_recursive();
-                commands.remove_resource::<CompendiumMonsters>();
-                active_modal.modal = None;
-            }
+            commands.remove_resource::<CompendiumMonsters>();
         }
     }
 }

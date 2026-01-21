@@ -6,7 +6,7 @@ use crate::inventory::{FindsItems, Inventory, ManagesEquipment};
 use super::render::spawn_inventory_modal;
 use super::state::{InventoryModalRoot, InventorySelection, ItemInfo};
 use super::utils::get_all_inventory_items;
-use crate::screens::modal::{ActiveModal, ModalType};
+use crate::screens::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
 
 /// System to handle opening/closing the inventory modal with 'i' key.
 pub fn handle_inventory_modal_toggle(
@@ -20,24 +20,23 @@ pub fn handle_inventory_modal_toggle(
     for action in action_reader.read() {
         match action {
             GameAction::OpenInventory => {
-                // Toggle: close if open, open if closed
-                if let Ok(entity) = existing_modal.get_single() {
-                    commands.entity(entity).despawn_recursive();
-                    active_modal.modal = None;
-                } else {
+                if let Some(ModalAction::Open) = toggle_modal(
+                    &mut commands,
+                    &mut active_modal,
+                    &existing_modal,
+                    ModalType::Inventory,
+                ) {
                     selection.reset();
                     spawn_inventory_modal(&mut commands, &inventory, &mut selection);
-                    active_modal.modal = Some(ModalType::Inventory);
                 }
             }
             GameAction::CloseModal => {
-                // Close if this modal is open
-                if active_modal.modal == Some(ModalType::Inventory) {
-                    if let Ok(entity) = existing_modal.get_single() {
-                        commands.entity(entity).despawn_recursive();
-                        active_modal.modal = None;
-                    }
-                }
+                close_modal(
+                    &mut commands,
+                    &mut active_modal,
+                    &existing_modal,
+                    ModalType::Inventory,
+                );
             }
             _ => {}
         }

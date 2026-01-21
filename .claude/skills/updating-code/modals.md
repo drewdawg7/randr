@@ -16,6 +16,8 @@ Modals are full-screen UI overlays that block game interaction until closed.
 - `create_modal_title(title)` - Title text bundle
 - `create_modal_section(text, color)` - Section text bundle
 - `create_modal_instruction(text)` - Instruction text bundle
+- `toggle_modal(commands, active_modal, query, modal_type)` - Generic toggle logic (see below)
+- `close_modal(commands, active_modal, query, modal_type)` - Generic close logic (see below)
 
 ## Modal Module Structure
 
@@ -90,9 +92,11 @@ pub struct DisplayEntry {
 
 ### input.rs
 
-Input handling systems:
+Input handling systems using the generic `toggle_modal` and `close_modal` helpers:
 
 ```rust
+use crate::screens::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
+
 /// Toggle modal open/close
 pub fn handle_toggle(
     mut commands: Commands,
@@ -102,14 +106,22 @@ pub fn handle_toggle(
 ) {
     for action in action_reader.read() {
         if *action == GameAction::OpenMyModal {
-            if let Ok(entity) = existing.get_single() {
-                // Close if open
-                commands.entity(entity).despawn_recursive();
-                active_modal.modal = None;
-            } else if active_modal.modal.is_none() {
-                // Open if no modal active
-                commands.insert_resource(SpawnMyModal);
-                active_modal.modal = Some(ModalType::MyModal);
+            match toggle_modal(
+                &mut commands,
+                &mut active_modal,
+                &existing,
+                ModalType::MyModal,
+            ) {
+                Some(ModalAction::Closed) => {
+                    // Optional: custom cleanup (remove resources, etc.)
+                }
+                Some(ModalAction::Open) => {
+                    // Spawn the modal UI
+                    commands.insert_resource(SpawnMyModal);
+                }
+                None => {
+                    // Another modal is active, do nothing
+                }
             }
         }
     }
@@ -124,16 +136,44 @@ pub fn handle_close(
 ) {
     for action in action_reader.read() {
         if *action == GameAction::CloseModal
-            && active_modal.modal == Some(ModalType::MyModal)
+            && close_modal(
+                &mut commands,
+                &mut active_modal,
+                &query,
+                ModalType::MyModal,
+            )
         {
-            if let Ok(entity) = query.get_single() {
-                commands.entity(entity).despawn_recursive();
-                active_modal.modal = None;
-            }
+            // Optional: custom cleanup (remove resources, etc.)
         }
     }
 }
 ```
+
+#### toggle_modal Helper
+
+`toggle_modal<T: Component>(commands, active_modal, modal_query, modal_type) -> Option<ModalAction>`
+
+Returns:
+- `Some(ModalAction::Closed)` - Modal was despawned (was previously open)
+- `Some(ModalAction::Open)` - No modal active, caller should spawn the modal
+- `None` - Another modal is already open, do nothing
+
+The helper handles:
+- Despawning the modal entity via `despawn_recursive()`
+- Clearing `active_modal.modal = None` on close
+- Setting `active_modal.modal = Some(modal_type)` on open
+
+The caller is responsible for:
+- Spawning the modal UI when `ModalAction::Open` is returned
+- Any custom cleanup (removing resources) when `ModalAction::Closed` is returned
+
+#### close_modal Helper
+
+`close_modal<T: Component>(commands, active_modal, modal_query, modal_type) -> bool`
+
+Returns `true` if the modal was closed, `false` if it wasn't active.
+
+Use this for handling `GameAction::CloseModal` (Escape key).
 
 ### render.rs
 
