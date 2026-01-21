@@ -3,42 +3,25 @@ use bevy::prelude::*;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{FindsItems, Inventory, ManagesEquipment};
 
-use super::render::spawn_inventory_modal;
 use super::state::{InventoryModalRoot, InventorySelection, ItemInfo};
+use super::super::modal::{close_modal, ActiveModal, ModalType};
 use super::utils::get_all_inventory_items;
-use super::super::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
 
-/// System to handle opening/closing the inventory modal with 'i' key.
-pub fn handle_inventory_modal_toggle(
+/// System to handle closing the inventory modal with Escape.
+pub fn handle_inventory_modal_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut active_modal: ResMut<ActiveModal>,
-    mut selection: ResMut<InventorySelection>,
-    inventory: Res<Inventory>,
     existing_modal: Query<Entity, With<InventoryModalRoot>>,
 ) {
     for action in action_reader.read() {
-        match action {
-            GameAction::OpenInventory => {
-                if let Some(ModalAction::Open) = toggle_modal(
-                    &mut commands,
-                    &mut active_modal,
-                    &existing_modal,
-                    ModalType::Inventory,
-                ) {
-                    selection.reset();
-                    spawn_inventory_modal(&mut commands, &inventory, &mut selection);
-                }
-            }
-            GameAction::CloseModal => {
-                close_modal(
-                    &mut commands,
-                    &mut active_modal,
-                    &existing_modal,
-                    ModalType::Inventory,
-                );
-            }
-            _ => {}
+        if *action == GameAction::CloseModal {
+            close_modal(
+                &mut commands,
+                &mut active_modal,
+                &existing_modal,
+                ModalType::Inventory,
+            );
         }
     }
 }

@@ -2,16 +2,18 @@ use bevy::prelude::*;
 
 use crate::assets::AssetPlugin as GameAssetPlugin;
 use crate::game::{BlacksmithPlugin, CombatPlugin, CraftingPlugin, ItemPlugin, PlayerPlugin, StoragePlugin, StorageTransactionsPlugin, ToastPlugin};
+use crate::input::{GameAction, InputPlugin};
 use crate::location::StorePlugin;
-use crate::input::InputPlugin;
+use crate::navigation::NavigationPlugin;
 use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
 use crate::save_load::SaveLoadPlugin;
+use crate::states::{AppState, StateTransitionPlugin};
+use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
     DungeonPlugin, FightModalPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
     MainMenuPlugin, MinePlugin, ModalPlugin, MonsterCompendiumPlugin, ProfileModalPlugin,
     ProfilePlugin, TownPlugin,
 };
-use crate::states::StateTransitionPlugin;
 use crate::ui::widgets::{CentralDetailPanelPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin, StatRowPlugin};
 use crate::ui::{MobAnimationPlugin, PlayerSpritePlugin};
 
@@ -25,6 +27,18 @@ impl Plugin for GamePlugin {
             StateTransitionPlugin,
             GameAssetPlugin,
             InputPlugin,
+            NavigationPlugin::new()
+                .state(AppState::Town)
+                    .on(GameAction::OpenInventory, ModalType::Inventory)
+                    .on(GameAction::OpenProfile, ModalType::Profile)
+                    .on(GameAction::OpenCompendium, ModalType::MonsterCompendium)
+                .state(AppState::Dungeon)
+                    .on(GameAction::OpenInventory, ModalType::Inventory)
+                    .on(GameAction::OpenProfile, ModalType::Profile)
+                    .on(GameAction::OpenCompendium, ModalType::MonsterCompendium)
+                .global()
+                    .on(GameAction::OpenKeybinds, AppState::Keybinds)
+                .build(),
             PlayerPlugin,
             StoragePlugin,
             StorePlugin,

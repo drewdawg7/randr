@@ -5,6 +5,7 @@ pub mod economy;
 pub mod location;
 pub mod loot;
 pub mod mob;
+pub mod navigation;
 pub mod player;
 pub mod town;
 pub mod ui;

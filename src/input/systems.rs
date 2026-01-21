@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 use super::actions::{GameAction, NavigationDirection};
-use crate::states::AppState;
 
 /// Plugin that handles keyboard input and emits game action events.
 pub struct InputPlugin;
@@ -10,8 +9,7 @@ impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<GameAction>()
             .add_event::<NavigationDirection>()
-            .add_systems(PreUpdate, handle_keyboard_input)
-            .add_systems(Update, handle_global_keybinds_action);
+            .add_systems(PreUpdate, handle_keyboard_input);
     }
 }
 
@@ -87,18 +85,4 @@ fn handle_keyboard_input(
 /// Clear all pending GameAction events. Use in OnExit to prevent event bleed.
 pub fn clear_game_action_events(mut events: ResMut<Events<GameAction>>) {
     events.clear();
-}
-
-/// Global system to handle OpenKeybinds action from any state.
-/// This allows the keybinds modal to be opened from anywhere in the game.
-fn handle_global_keybinds_action(
-    mut action_reader: EventReader<GameAction>,
-    mut next_state: ResMut<NextState<AppState>>,
-    current_state: Res<State<AppState>>,
-) {
-    for action in action_reader.read() {
-        if *action == GameAction::OpenKeybinds && **current_state != AppState::Keybinds {
-            next_state.set(AppState::Keybinds);
-        }
-    }
 }

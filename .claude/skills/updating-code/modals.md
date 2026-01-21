@@ -92,40 +92,14 @@ pub struct DisplayEntry {
 
 ### input.rs
 
-Input handling systems using the generic `toggle_modal` and `close_modal` helpers:
+**Modal opening is handled by the navigation system** (see [navigation.md](navigation.md)).
+
+The input.rs file only needs to handle:
+1. **Close handler** - Escape key to close the modal
+2. **Internal navigation** - Up/down, select actions within the modal
 
 ```rust
-use crate::ui::screens::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
-
-/// Toggle modal open/close
-pub fn handle_toggle(
-    mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    existing: Query<Entity, With<MyModalRoot>>,
-) {
-    for action in action_reader.read() {
-        if *action == GameAction::OpenMyModal {
-            match toggle_modal(
-                &mut commands,
-                &mut active_modal,
-                &existing,
-                ModalType::MyModal,
-            ) {
-                Some(ModalAction::Closed) => {
-                    // Optional: custom cleanup (remove resources, etc.)
-                }
-                Some(ModalAction::Open) => {
-                    // Spawn the modal UI
-                    commands.insert_resource(SpawnMyModal);
-                }
-                None => {
-                    // Another modal is active, do nothing
-                }
-            }
-        }
-    }
-}
+use crate::ui::screens::modal::{close_modal, ActiveModal, ModalType};
 
 /// Close with Escape
 pub fn handle_close(
@@ -135,37 +109,33 @@ pub fn handle_close(
     query: Query<Entity, With<MyModalRoot>>,
 ) {
     for action in action_reader.read() {
-        if *action == GameAction::CloseModal
-            && close_modal(
-                &mut commands,
-                &mut active_modal,
-                &query,
-                ModalType::MyModal,
-            )
-        {
-            // Optional: custom cleanup (remove resources, etc.)
+        if *action == GameAction::CloseModal {
+            if close_modal(&mut commands, &mut active_modal, &query, ModalType::MyModal) {
+                // Optional: custom cleanup (remove resources, etc.)
+            }
+        }
+    }
+}
+
+/// Handle internal modal navigation
+pub fn handle_navigation(
+    mut action_reader: EventReader<GameAction>,
+    active_modal: Res<ActiveModal>,
+    mut selection: ResMut<MyModalSelection>,
+) {
+    if active_modal.modal != Some(ModalType::MyModal) {
+        return;
+    }
+
+    for action in action_reader.read() {
+        match action {
+            GameAction::Navigate(dir) => { /* update selection */ }
+            GameAction::Select => { /* perform action */ }
+            _ => {}
         }
     }
 }
 ```
-
-#### toggle_modal Helper
-
-`toggle_modal<T: Component>(commands, active_modal, modal_query, modal_type) -> Option<ModalAction>`
-
-Returns:
-- `Some(ModalAction::Closed)` - Modal was despawned (was previously open)
-- `Some(ModalAction::Open)` - No modal active, caller should spawn the modal
-- `None` - Another modal is already open, do nothing
-
-The helper handles:
-- Despawning the modal entity via `despawn_recursive()`
-- Clearing `active_modal.modal = None` on close
-- Setting `active_modal.modal = Some(modal_type)` on open
-
-The caller is responsible for:
-- Spawning the modal UI when `ModalAction::Open` is returned
-- Any custom cleanup (removing resources) when `ModalAction::Closed` is returned
 
 #### close_modal Helper
 
@@ -195,7 +165,7 @@ pub fn spawn_modal(mut commands: Commands, ...) {
 
 ### plugin.rs
 
-Plugin struct:
+Plugin struct (note: no toggle handler, handled by NavigationPlugin):
 
 ```rust
 pub struct MyModalPlugin;
@@ -204,7 +174,6 @@ impl Plugin for MyModalPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MyModalSelection>()
             .add_systems(Update, (
-                handle_toggle,
                 handle_close,
                 handle_navigation,
                 update_display,
@@ -248,6 +217,16 @@ Files that implement this pattern:
 
 1. Add variant to `ModalType` enum in `src/ui/screens/modal.rs`
 2. Create module directory structure
-3. Add `GameAction` variant for opening (if needed)
-4. Register plugin in `src/plugins/game.rs`
-5. Export from `src/ui/screens/mod.rs`
+3. Add `GameAction` variant for opening (if needed) in `src/input/actions.rs`
+4. Add handling in `handle_modal_toggle` in `src/navigation/systems.rs`
+5. Configure navigation in `NavigationPlugin` in `src/plugins/game.rs`:
+   ```rust
+   NavigationPlugin::new()
+       .state(AppState::Town)
+           .on(GameAction::OpenMyModal, ModalType::MyModal)
+       .build()
+   ```
+6. Register modal plugin in `src/plugins/game.rs`
+7. Export from `src/ui/screens/mod.rs`
+
+See [navigation.md](navigation.md) for full navigation system documentation.

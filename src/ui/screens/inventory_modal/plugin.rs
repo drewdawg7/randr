@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::inventory::Inventory;
 
-use super::input::{handle_inventory_modal_input, handle_inventory_modal_toggle};
+use super::input::{handle_inventory_modal_close, handle_inventory_modal_input};
 use super::render::update_inventory_display;
 use super::state::InventorySelection;
 
@@ -14,7 +14,7 @@ impl Plugin for InventoryModalPlugin {
         app.init_resource::<InventorySelection>().add_systems(
             Update,
             (
-                handle_inventory_modal_toggle,
+                handle_inventory_modal_close,
                 handle_inventory_modal_input,
                 update_inventory_display
                     .run_if(resource_changed::<Inventory>.or(resource_changed::<InventorySelection>)),

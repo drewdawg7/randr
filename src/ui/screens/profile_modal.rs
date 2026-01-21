@@ -2,15 +2,14 @@ use bevy::prelude::*;
 
 use crate::combat::{DealsDamage, HasGold};
 use crate::entities::progression::HasProgression;
-use crate::entities::Progression;
 use crate::input::GameAction;
-use crate::inventory::{EquipmentSlot, HasInventory, Inventory};
-use crate::player::{Player, PlayerGold, PlayerName};
+use crate::inventory::{EquipmentSlot, HasInventory};
+use crate::player::Player;
 use super::modal::{
     close_modal, create_modal_container, create_modal_instruction, create_modal_title,
-    spawn_modal_overlay, toggle_modal, ActiveModal, ModalAction, ModalType,
+    spawn_modal_overlay, ActiveModal, ModalType,
 };
-use crate::stats::{HasStats, StatSheet, StatType};
+use crate::stats::{HasStats, StatType};
 use crate::ui::widgets::StatRow;
 
 /// Plugin that manages the profile modal system.
@@ -18,43 +17,13 @@ pub struct ProfileModalPlugin;
 
 impl Plugin for ProfileModalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (handle_profile_modal_toggle, handle_profile_modal_close),
-        );
+        app.add_systems(Update, handle_profile_modal_close);
     }
 }
 
 /// Component marker for the profile modal UI.
 #[derive(Component)]
 pub struct ProfileModalRoot;
-
-/// System to handle opening the profile modal with 'p' key.
-fn handle_profile_modal_toggle(
-    mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    name: Res<PlayerName>,
-    gold: Res<PlayerGold>,
-    progression: Res<Progression>,
-    inventory: Res<Inventory>,
-    stats: Res<StatSheet>,
-    existing_modal: Query<Entity, With<ProfileModalRoot>>,
-) {
-    for action in action_reader.read() {
-        if *action == GameAction::OpenProfile {
-            if let Some(ModalAction::Open) = toggle_modal(
-                &mut commands,
-                &mut active_modal,
-                &existing_modal,
-                ModalType::Profile,
-            ) {
-                let player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
-                spawn_profile_modal(&mut commands, &player);
-            }
-        }
-    }
-}
 
 /// System to handle closing the profile modal with Escape.
 fn handle_profile_modal_close(
@@ -76,7 +45,7 @@ fn handle_profile_modal_close(
 }
 
 /// Spawn the profile modal UI showing player stats and equipped items.
-fn spawn_profile_modal(commands: &mut Commands, player: &Player) {
+pub fn spawn_profile_modal(commands: &mut Commands, player: &Player) {
     let overlay = spawn_modal_overlay(commands);
 
     commands

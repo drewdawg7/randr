@@ -2,14 +2,14 @@ mod dungeon;
 mod fight;
 mod fight_modal;
 pub mod health_bar;
-mod inventory_modal;
+pub mod inventory_modal;
 mod keybinds;
 mod main_menu;
 mod mine;
 pub mod modal;
-mod monster_compendium;
+pub mod monster_compendium;
 mod profile;
-mod profile_modal;
+pub mod profile_modal;
 pub mod town;
 
 pub use dungeon::DungeonPlugin;

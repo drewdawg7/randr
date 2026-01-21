@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::input::{handle_compendium_close, handle_compendium_navigation, handle_compendium_toggle};
+use super::input::{handle_compendium_close, handle_compendium_navigation};
 use super::render::{spawn_monster_compendium, update_compendium_mob_sprite, update_monster_list_display};
 use super::state::{CompendiumListState, SpawnMonsterCompendium};
 
@@ -12,7 +12,6 @@ impl Plugin for MonsterCompendiumPlugin {
         app.init_resource::<CompendiumListState>().add_systems(
             Update,
             (
-                handle_compendium_toggle,
                 handle_compendium_close,
                 handle_compendium_navigation,
                 update_monster_list_display,

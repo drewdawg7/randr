@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 /// Navigation directions for menu/list traversal.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Event)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Event)]
 pub enum NavigationDirection {
     Up,
     Down,
@@ -11,7 +11,7 @@ pub enum NavigationDirection {
 
 /// Game actions that can be triggered by input.
 /// These map to the original keybinds from the terminal UI.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Event)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Event)]
 pub enum GameAction {
     /// Navigation (Arrow keys)
     Navigate(NavigationDirection),

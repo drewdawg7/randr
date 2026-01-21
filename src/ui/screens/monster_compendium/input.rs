@@ -1,41 +1,9 @@
 use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
-use super::super::modal::{close_modal, toggle_modal, ActiveModal, ModalAction, ModalType};
+use super::super::modal::{close_modal, ActiveModal, ModalType};
 
-use super::state::{
-    CompendiumListState, CompendiumMonsters, MonsterCompendiumRoot, SpawnMonsterCompendium,
-};
-
-/// System to handle opening the monster compendium with 'b' key.
-pub fn handle_compendium_toggle(
-    mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    mut list_state: ResMut<CompendiumListState>,
-    existing_compendium: Query<Entity, With<MonsterCompendiumRoot>>,
-) {
-    for action in action_reader.read() {
-        if *action == GameAction::OpenCompendium {
-            match toggle_modal(
-                &mut commands,
-                &mut active_modal,
-                &existing_compendium,
-                ModalType::MonsterCompendium,
-            ) {
-                Some(ModalAction::Closed) => {
-                    commands.remove_resource::<CompendiumMonsters>();
-                }
-                Some(ModalAction::Open) => {
-                    list_state.selected = 0;
-                    commands.insert_resource(CompendiumMonsters::from_registry());
-                    commands.insert_resource(SpawnMonsterCompendium);
-                }
-                None => {}
-            }
-        }
-    }
-}
+use super::state::{CompendiumListState, CompendiumMonsters, MonsterCompendiumRoot};
 
 /// System to handle closing the monster compendium with Escape.
 pub fn handle_compendium_close(
