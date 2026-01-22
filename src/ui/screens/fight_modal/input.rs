@@ -7,11 +7,13 @@ use crate::dungeon::{GridOccupancy, GridSize};
 use crate::entities::Progression;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::Inventory;
+use crate::loot::collect_loot_drops;
 use crate::player::{PlayerGold, PlayerGuard, PlayerName};
 use crate::stats::StatSheet;
 use crate::ui::SelectionState;
 
 use super::super::modal::{close_modal, ActiveModal, ModalType};
+use super::super::victory_modal::{SpawnVictoryModal, VictoryModalData};
 use super::state::{FightModalButton, FightModalButtonSelection, FightModalMob, FightModalRoot};
 
 /// System to handle closing the fight modal.
@@ -88,23 +90,37 @@ pub fn handle_fight_modal_select(
                 if result.target_died {
                     // Apply victory rewards
                     let death_result = fight_mob.mob.on_death(player.effective_magicfind());
-                    apply_victory_rewards(
+                    let rewards = apply_victory_rewards(
                         &mut player,
                         death_result.gold_dropped,
                         death_result.xp_dropped,
                     );
 
+                    // Collect loot into inventory
+                    collect_loot_drops(&mut *player, &death_result.loot_drops);
+
                     // Despawn mob from dungeon and clear occupancy
                     occupancy.vacate(fight_mob.pos, GridSize::single());
                     commands.entity(fight_mob.entity).despawn_recursive();
 
-                    // Close modal
+                    // Close fight modal
                     close_modal(
                         &mut commands,
                         &mut active_modal,
                         &modal_query,
                         ModalType::FightModal,
                     );
+
+                    // Spawn victory modal with results
+                    commands.insert_resource(VictoryModalData {
+                        mob_name: fight_mob.mob.name.clone(),
+                        mob_id: fight_mob.mob_id,
+                        gold_gained: rewards.gold_gained,
+                        xp_gained: rewards.xp_gained,
+                        loot_drops: death_result.loot_drops,
+                    });
+                    commands.insert_resource(SpawnVictoryModal);
+
                     commands.remove_resource::<FightModalMob>();
                     commands.remove_resource::<FightModalButtonSelection>();
                 } else {

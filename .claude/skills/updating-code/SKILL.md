@@ -39,6 +39,7 @@ Read the relevant doc BEFORE making changes.
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Fight modal, dungeon combat, mob encounters | [fight-modal.md](fight-modal.md) |
+| Victory modal, post-fight rewards, loot display | [victory-modal.md](victory-modal.md) |
 | Health bars, HealthBarValues, SpriteHealthBar, HP text | [health-bar.md](health-bar.md) |
 | Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |
 | SelectionState trait, list navigation, focus | [focus.md](focus.md) |

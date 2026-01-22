@@ -13,7 +13,7 @@ use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
     DungeonScreenPlugin, FightModalPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
     MainMenuPlugin, MinePlugin, ModalPlugin, MonsterCompendiumPlugin, ProfileModalPlugin,
-    ProfilePlugin, TownPlugin,
+    ProfilePlugin, TownPlugin, VictoryModalPlugin,
 };
 use crate::ui::widgets::{CentralDetailPanelPlugin, ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin};
 use crate::ui::{MobAnimationPlugin, PlayerSpritePlugin};
@@ -77,6 +77,7 @@ impl Plugin for GamePlugin {
             MinePlugin,
             FightPlugin,
             FightModalPlugin,
+            VictoryModalPlugin,
         ));
 
         app.add_systems(Startup, setup);

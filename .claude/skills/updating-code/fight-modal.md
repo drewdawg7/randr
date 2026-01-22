@@ -55,7 +55,7 @@ Implements `SelectionState` trait for left/right navigation.
 
 3. **Attack Handling** (`input.rs:handle_fight_modal_select`)
    - Enter with OK: Player attacks mob using `combat::attack()`
-   - If mob dies: Apply rewards, despawn mob, close modal
+   - If mob dies: Apply rewards, collect loot, despawn mob, close modal, spawn victory modal
    - If mob survives: Mob counter-attacks player
    - If player dies: Process defeat, close modal
    - Enter with Cancel: Close modal, no combat
@@ -71,11 +71,26 @@ Implements `SelectionState` trait for left/right navigation.
 
 Uses functions from `crate::combat`:
 - `attack(&attacker, &mut defender)` - Execute single attack
-- `apply_victory_rewards(&mut player, gold, xp)` - Grant rewards
+- `apply_victory_rewards(&mut player, gold, xp)` - Grant rewards (returns `VictoryRewards`)
 - `process_defeat(&mut player)` - Handle player death
 - `IsKillable::on_death(magic_find)` - Get mob death rewards
 
+Uses `collect_loot_drops(&mut player, &loot_drops)` from `crate::loot` to add dropped items to inventory.
+
 Uses `PlayerGuard` pattern for auto-writeback of player resources.
+
+## Victory Transition
+
+When mob dies, the fight modal:
+1. Calls `on_death()` → `MobDeathResult { gold_dropped, xp_dropped, loot_drops }`
+2. Calls `apply_victory_rewards()` → `VictoryRewards { gold_gained, xp_gained }`
+3. Calls `collect_loot_drops()` to add loot to inventory
+4. Despawns mob entity and clears occupancy
+5. Closes fight modal
+6. Inserts `VictoryModalData` and `SpawnVictoryModal` resources
+7. Victory modal spawns next frame showing results
+
+See [victory-modal.md](victory-modal.md) for the victory modal implementation.
 
 ## Despawning Mobs
 
@@ -101,6 +116,7 @@ commands.entity(fight_mob.entity).despawn_recursive();
 
 ## Related Documentation
 
+- [victory-modal.md](victory-modal.md) - Victory modal (spawned after mob death)
 - [health-bar.md](health-bar.md) - HealthBarValues, SpriteHealthBar, HP text overlay
 - [modals.md](modals.md) - General modal patterns
 - [focus.md](focus.md) - SelectionState trait
