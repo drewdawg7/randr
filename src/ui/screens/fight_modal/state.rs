@@ -2,7 +2,8 @@
 
 use bevy::prelude::*;
 
-use crate::mob::MobId;
+use crate::dungeon::GridPosition;
+use crate::mob::{Mob, MobId};
 use crate::ui::focus::SelectionState;
 use crate::ui::sprite_marker::{SpriteData, SpriteMarker};
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet};
@@ -55,6 +56,9 @@ impl SpriteMarker for FightModalMobSprite {
 #[derive(Resource)]
 pub struct FightModalMob {
     pub mob_id: MobId,
+    pub mob: Mob,
+    pub pos: GridPosition,
+    pub entity: Entity,
 }
 
 /// Marker resource to trigger spawning the fight modal.

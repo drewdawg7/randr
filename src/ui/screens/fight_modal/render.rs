@@ -2,9 +2,9 @@
 
 use bevy::prelude::*;
 
-use crate::assets::{FightBannerSlice, GameSprites, SpriteSheetKey};
+use crate::assets::{FightBannerSlice, GameSprites, HealthBarSlice, SpriteSheetKey};
 use crate::player::PlayerName;
-use crate::stats::StatSheet;
+use crate::stats::{HasStats, StatSheet};
 use crate::ui::screens::health_bar::SpriteHealthBar;
 use crate::ui::widgets::spawn_three_slice_banner;
 
@@ -206,6 +206,62 @@ pub fn update_button_sprites(
             if let Some(node) = sheet.image_node(sprite_name) {
                 *image = node;
             }
+        }
+    }
+}
+
+/// System to update mob health bar based on FightModalMob state.
+pub fn update_mob_health_bar(
+    fight_mob: Res<FightModalMob>,
+    game_sprites: Res<GameSprites>,
+    mut bar_query: Query<&mut ImageNode, With<FightModalMobHealthBar>>,
+) {
+    if !fight_mob.is_changed() {
+        return;
+    }
+
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
+        return;
+    };
+
+    let Ok(mut image) = bar_query.get_single_mut() else {
+        return;
+    };
+
+    let percent = fight_mob.mob.hp() as f32 / fight_mob.mob.max_hp() as f32 * 100.0;
+    let slice = HealthBarSlice::for_percent(percent);
+
+    if let Some(index) = sheet.get(slice.as_str()) {
+        if let Some(atlas) = &mut image.texture_atlas {
+            atlas.index = index;
+        }
+    }
+}
+
+/// System to update player health bar based on StatSheet.
+pub fn update_player_health_bar(
+    stats: Res<StatSheet>,
+    game_sprites: Res<GameSprites>,
+    mut bar_query: Query<&mut ImageNode, With<FightModalPlayerHealthBar>>,
+) {
+    if !stats.is_changed() {
+        return;
+    }
+
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
+        return;
+    };
+
+    let Ok(mut image) = bar_query.get_single_mut() else {
+        return;
+    };
+
+    let percent = stats.hp() as f32 / stats.max_hp() as f32 * 100.0;
+    let slice = HealthBarSlice::for_percent(percent);
+
+    if let Some(index) = sheet.get(slice.as_str()) {
+        if let Some(atlas) = &mut image.texture_atlas {
+            atlas.index = index;
         }
     }
 }

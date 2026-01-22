@@ -299,17 +299,17 @@ fn all_cells_walkable(layout: Option<&DungeonLayout>, pos: GridPosition, size: G
         .all(|(x, y)| layout.is_walkable(x, y))
 }
 
-/// Check for entity collision and return the collided entity type if any.
+/// Check for entity collision and return the collided entity, its bevy entity, and position.
 fn check_entity_collision(
     occupancy: &GridOccupancy,
     entity_query: &Query<&DungeonEntityMarker>,
     pos: GridPosition,
     size: GridSize,
-) -> Option<DungeonEntity> {
+) -> Option<(DungeonEntity, Entity, GridPosition)> {
     for (x, y) in pos.occupied_cells(size) {
         if let Some(entity) = occupancy.entity_at(x, y) {
             if let Ok(marker) = entity_query.get(entity) {
-                return Some(marker.entity_type.clone());
+                return Some((marker.entity_type.clone(), entity, marker.pos));
             }
         }
     }
@@ -356,7 +356,7 @@ fn handle_dungeon_movement(
         }
 
         // Check for entity collision (any cell player would occupy)
-        if let Some(entity_type) = check_entity_collision(
+        if let Some((entity_type, entity_id, entity_pos)) = check_entity_collision(
             &occupancy,
             &entity_query,
             new_pos,
@@ -364,8 +364,13 @@ fn handle_dungeon_movement(
         ) {
             match entity_type {
                 DungeonEntity::Mob { mob_id, .. } => {
-                    // Trigger fight modal
-                    commands.insert_resource(FightModalMob { mob_id });
+                    // Trigger fight modal with full mob data
+                    commands.insert_resource(FightModalMob {
+                        mob_id,
+                        mob: mob_id.spawn(),
+                        pos: entity_pos,
+                        entity: entity_id,
+                    });
                     commands.insert_resource(SpawnFightModal);
                 }
                 DungeonEntity::Chest { .. } => {

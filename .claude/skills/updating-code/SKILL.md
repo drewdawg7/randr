@@ -38,6 +38,7 @@ Read the relevant doc BEFORE making changes.
 | FloorSpec, FloorId, floor definitions | [dungeon/mod.md](dungeon/mod.md) |
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
+| Fight modal, dungeon combat, mob encounters | [fight-modal.md](fight-modal.md) |
 | Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |
 | SelectionState trait, list navigation, focus | [focus.md](focus.md) |
 | Mob animations, MobSpriteSheets, MobAnimationConfig | [mob-sprites.md](mob-sprites.md) |
