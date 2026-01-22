@@ -1,16 +1,17 @@
 use bevy::prelude::*;
 
 use crate::assets::AssetPlugin as GameAssetPlugin;
+use crate::dungeon::{DungeonPlugin, FloorId};
 use crate::game::{BlacksmithPlugin, CombatPlugin, CraftingPlugin, ItemPlugin, PlayerPlugin, StoragePlugin, StorageTransactionsPlugin, ToastPlugin};
 use crate::input::{GameAction, InputPlugin};
-use crate::location::StorePlugin;
+use crate::location::{LocationId, StorePlugin};
 use crate::navigation::NavigationPlugin;
 use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
 use crate::save_load::SaveLoadPlugin;
 use crate::states::{AppState, StateTransitionPlugin};
 use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
-    DungeonPlugin, FightModalPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
+    DungeonScreenPlugin, FightModalPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
     MainMenuPlugin, MinePlugin, ModalPlugin, MonsterCompendiumPlugin, ProfileModalPlugin,
     ProfilePlugin, TownPlugin,
 };
@@ -39,12 +40,20 @@ impl Plugin for GamePlugin {
                 .global()
                     .on(GameAction::OpenKeybinds, AppState::Keybinds)
                 .build(),
+            DungeonPlugin::new()
+                .location(LocationId::GoblinCave)
+                    .floor(FloorId::GoblinCave1)
+                .build(),
             PlayerPlugin,
             StoragePlugin,
             StorePlugin,
             ItemPlugin,
             CombatPlugin,
             CraftingPlugin,
+        ));
+
+        // Game logic plugins
+        app.add_plugins((
             BlacksmithPlugin,
             StorageTransactionsPlugin,
             MobPlugin,
@@ -64,7 +73,7 @@ impl Plugin for GamePlugin {
             MonsterCompendiumPlugin,
             KeybindsPlugin,
             TownPlugin,
-            DungeonPlugin,
+            DungeonScreenPlugin,
             MinePlugin,
             FightPlugin,
             FightModalPlugin,

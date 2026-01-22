@@ -27,6 +27,7 @@ pub enum LocationData {
     Alchemist(AlchemistData),
     Field(FieldData),
     Mine(MineData),
+    Dungeon(DungeonData),
 }
 
 #[derive(Clone, Debug)]
@@ -54,6 +55,11 @@ pub struct FieldData {
 #[derive(Clone, Debug)]
 pub struct MineData {
     pub rock_weights: HashMap<RockId, i32>,
+}
+
+#[derive(Clone, Debug)]
+pub struct DungeonData {
+    // Dungeon-specific data is managed by DungeonRegistry/DungeonPlugin
 }
 
 // ─────────────────────────────────────────────────────────────────────────────
@@ -143,6 +149,17 @@ entity_macros::define_data! {
                 ]),
             }),
         }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Dungeon Locations
+        // ─────────────────────────────────────────────────────────────────────
+        GoblinCave {
+            name: "Goblin Cave",
+            description: "A dark cave infested with goblins",
+            refresh_interval: None,
+            min_level: None,
+            data: LocationData::Dungeon(DungeonData {}),
+        }
     }
 }
 
@@ -184,6 +201,7 @@ pub enum CraftingSubtype {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum CombatSubtype {
     Field,
+    Dungeon,
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -200,6 +218,7 @@ impl LocationId {
             LocationId::VillageAlchemist => LocationType::Crafting(CraftingSubtype::Alchemist),
             LocationId::VillageField => LocationType::Combat(CombatSubtype::Field),
             LocationId::VillageMine => LocationType::Resource(ResourceSubtype::Mine),
+            LocationId::GoblinCave => LocationType::Combat(CombatSubtype::Dungeon),
         }
     }
 }

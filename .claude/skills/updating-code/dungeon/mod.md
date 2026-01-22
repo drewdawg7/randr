@@ -18,6 +18,7 @@ Dungeon Location (e.g., "Goblin Cave")
 ```
 src/dungeon/
     mod.rs              # Re-exports
+    plugin.rs           # DungeonPlugin, DungeonBuilder, DungeonRegistry
     tile.rs             # TileType, Tile
     entity.rs           # DungeonEntity enum
     grid.rs             # GridSize, GridPosition, GridOccupancy
@@ -35,6 +36,56 @@ src/dungeon/
 ```
 
 ## Core Types
+
+### DungeonPlugin (`plugin.rs`)
+
+Plugin for registering dungeon locations and their floor sequences. Uses a fluent builder API similar to `NavigationPlugin`.
+
+```rust
+use crate::dungeon::{DungeonPlugin, FloorId};
+use crate::location::LocationId;
+
+// In game.rs plugin registration:
+app.add_plugins(
+    DungeonPlugin::new()
+        .location(LocationId::GoblinCave)
+            .floor(FloorId::GoblinCave1)
+            .floor(FloorId::GoblinCave2)
+        .location(LocationId::CrystalMine)
+            .floor(FloorId::CrystalMine1)
+        .build()
+);
+```
+
+**Builder methods:**
+- `DungeonPlugin::new()` - Returns a `DungeonBuilder`
+- `.location(LocationId)` - Sets context for subsequent `.floor()` calls
+- `.floor(FloorId)` - Adds floor to current location (first added = first floor)
+- `.build()` - Returns final `DungeonPlugin` (panics if no locations registered)
+
+### DungeonRegistry (Resource)
+
+Inserted by `DungeonPlugin`, provides runtime floor queries:
+
+```rust
+fn my_system(registry: Res<DungeonRegistry>) {
+    // Get all floors for a location
+    let floors: &[FloorId] = registry.floors(LocationId::GoblinCave);
+
+    // Get next floor (for progression)
+    if let Some(next) = registry.next_floor(LocationId::GoblinCave, FloorId::GoblinCave1) {
+        // next == FloorId::GoblinCave2
+    }
+
+    // Check if floor is the final one
+    let is_boss = registry.is_final_floor(LocationId::GoblinCave, FloorId::GoblinCave2);
+}
+```
+
+**Methods:**
+- `floors(location) -> &[FloorId]` - All floors for a location in order
+- `next_floor(location, current) -> Option<FloorId>` - Next floor after current
+- `is_final_floor(location, floor) -> bool` - Check if this is the last floor
 
 ### TileType (`tile.rs`)
 Logical tile types for gameplay:
@@ -415,3 +466,47 @@ pub struct DungeonPlayer;
 - `spawn_dungeon_content()` - spawns grid with `DungeonCell` markers, initializes `DungeonState`
 - `handle_dungeon_movement()` - processes arrow key input, validates moves, re-parents player
 - `cleanup_dungeon_state()` - removes `DungeonState` resource on tab exit
+
+## Adding a New Dungeon
+
+Complete workflow for adding a new dungeon location:
+
+1. **Add LocationId variant** in `src/location/spec/definitions.rs`:
+```rust
+// In the variants section:
+CrystalMine {
+    name: "Crystal Mine",
+    description: "A mine filled with dangerous crystals",
+    refresh_interval: None,
+    min_level: None,
+    data: LocationData::Dungeon(DungeonData {}),
+}
+```
+
+2. **Update location_type()** in the same file:
+```rust
+LocationId::CrystalMine => LocationType::Combat(CombatSubtype::Dungeon),
+```
+
+3. **Create layout(s)** using LayoutBuilder (see "Adding New Layouts")
+
+4. **Add FloorId variants** in `src/dungeon/floor/definitions.rs`:
+```rust
+CrystalMine1 {
+    name: "Crystal Mine - Floor 1",
+    layout_id: LayoutId::CrystalMineEntrance,
+    spawn_table: SpawnTable::new()
+        .mob(MobId::CrystalGolem, 3)
+        .chest(1..=2),
+}
+```
+
+5. **Register in DungeonPlugin** in `src/plugins/game.rs`:
+```rust
+DungeonPlugin::new()
+    .location(LocationId::GoblinCave)
+        .floor(FloorId::GoblinCave1)
+    .location(LocationId::CrystalMine)  // Add new location
+        .floor(FloorId::CrystalMine1)
+    .build()
+```

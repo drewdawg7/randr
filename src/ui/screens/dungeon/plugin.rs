@@ -71,9 +71,9 @@ pub struct DungeonEntityMarker {
     pub entity_type: DungeonEntity,
 }
 
-pub struct DungeonPlugin;
+pub struct DungeonScreenPlugin;
 
-impl Plugin for DungeonPlugin {
+impl Plugin for DungeonScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(OnEnter(AppState::Dungeon), spawn_dungeon_screen)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)

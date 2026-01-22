@@ -1,3 +1,3 @@
 mod plugin;
 
-pub use plugin::DungeonPlugin;
+pub use plugin::DungeonScreenPlugin;
