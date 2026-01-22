@@ -4,7 +4,7 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 
 use super::entity::DungeonEntity;
-use super::grid::GridSize;
+use super::grid::{GridPosition, GridSize};
 use super::layout::DungeonLayout;
 use crate::mob::MobId;
 
@@ -59,8 +59,7 @@ impl SpawnTable {
             if let Some((x, y)) = spawn_iter.next() {
                 let variant = rng.gen_range(0..4);
                 layout.add_entity(
-                    x,
-                    y,
+                    GridPosition::new(x, y),
                     DungeonEntity::Chest {
                         variant,
                         size: GridSize::single(),
@@ -79,7 +78,7 @@ impl SpawnTable {
             if let Some((x, y)) = spawn_iter.next() {
                 let mob_id = self.weighted_mob_select(rng, total_weight);
                 let size = mob_id.spec().grid_size;
-                layout.add_entity(x, y, DungeonEntity::Mob { mob_id, size });
+                layout.add_entity(GridPosition::new(x, y), DungeonEntity::Mob { mob_id, size });
             }
         }
     }

@@ -1,4 +1,5 @@
 use super::entity::DungeonEntity;
+use super::grid::{GridPosition, GridSize};
 use super::tile::{Tile, TileType};
 
 #[derive(Debug, Clone)]
@@ -8,7 +9,7 @@ pub struct DungeonLayout {
     tiles: Vec<Vec<Tile>>,
     pub entrance: (usize, usize),
     pub exit: Option<(usize, usize)>,
-    entities: Vec<(usize, usize, DungeonEntity)>,
+    entities: Vec<(GridPosition, DungeonEntity)>,
 }
 
 impl DungeonLayout {
@@ -82,18 +83,58 @@ impl DungeonLayout {
             .collect()
     }
 
-    pub fn add_entity(&mut self, x: usize, y: usize, entity: DungeonEntity) {
-        self.entities.push((x, y, entity));
+    pub fn add_entity(&mut self, pos: GridPosition, entity: DungeonEntity) {
+        self.entities.push((pos, entity));
     }
 
-    pub fn entities(&self) -> &[(usize, usize, DungeonEntity)] {
+    pub fn entities(&self) -> &[(GridPosition, DungeonEntity)] {
         &self.entities
     }
 
+    /// Returns the entity occupying the given cell, considering entity sizes.
     pub fn entity_at(&self, x: usize, y: usize) -> Option<&DungeonEntity> {
         self.entities
             .iter()
-            .find(|(ex, ey, _)| *ex == x && *ey == y)
-            .map(|(_, _, e)| e)
+            .find(|(pos, entity)| {
+                pos.occupied_cells(entity.size())
+                    .any(|(cx, cy)| cx == x && cy == y)
+            })
+            .map(|(_, e)| e)
+    }
+
+    /// Find all valid spawn positions for an entity of given size.
+    pub fn spawn_areas(&self, size: GridSize) -> Vec<GridPosition> {
+        let mut valid = Vec::new();
+
+        for y in 0..self.height.saturating_sub(size.height as usize - 1) {
+            for x in 0..self.width.saturating_sub(size.width as usize - 1) {
+                let pos = GridPosition::new(x, y);
+
+                // Check all cells are spawnable floor tiles
+                let all_floor = pos
+                    .occupied_cells(size)
+                    .all(|(cx, cy)| self.is_floor(cx, cy));
+
+                // Check no existing entity occupies these cells
+                let no_overlap = !self
+                    .entities
+                    .iter()
+                    .any(|(epos, entity)| Self::areas_overlap(pos, size, *epos, entity.size()));
+
+                if all_floor && no_overlap {
+                    valid.push(pos);
+                }
+            }
+        }
+        valid
+    }
+
+    fn areas_overlap(p1: GridPosition, s1: GridSize, p2: GridPosition, s2: GridSize) -> bool {
+        let r1 = p1.x + s1.width as usize;
+        let b1 = p1.y + s1.height as usize;
+        let r2 = p2.x + s2.width as usize;
+        let b2 = p2.y + s2.height as usize;
+
+        p1.x < r2 && r1 > p2.x && p1.y < b2 && b1 > p2.y
     }
 }
