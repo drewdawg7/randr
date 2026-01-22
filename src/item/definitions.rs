@@ -558,12 +558,55 @@ impl ItemId {
     /// Get the sprite slice name for this item in the IconItems sprite sheet.
     pub fn sprite_name(&self) -> &'static str {
         match self {
+            // Consumables
             ItemId::BasicHPPotion => "Slice_337",
+            // Weapons
             ItemId::Sword => "Slice_155",
-            ItemId::BasicShield => "Slice_100",
-            ItemId::CopperHelmet => "Slice_101",
             ItemId::Dagger => "Slice_156",
-            _ => "Slice_337", // Default fallback
+            ItemId::TinSword => "Slice_989",
+            ItemId::CopperSword => "Slice_989",
+            ItemId::BronzeSword => "Slice_989",
+            ItemId::BonkStick => "Slice_607",
+            // Shields
+            ItemId::BasicShield => "Slice_100",
+            // Helmets
+            ItemId::CopperHelmet => "Slice_101",
+            ItemId::TinHelmet => "Slice_108",
+            ItemId::BronzeHelmet => "Slice_108",
+            // Chestplates
+            ItemId::CopperChestplate => "Slice_551",
+            ItemId::TinChestplate => "Slice_551",
+            ItemId::BronzeChestplate => "Slice_551",
+            // Gauntlets
+            ItemId::CopperGauntlets => "Slice_558",
+            ItemId::TinGauntlets => "Slice_558",
+            ItemId::BronzeGauntlets => "Slice_558",
+            // Greaves
+            ItemId::CopperGreaves => "Slice_367",
+            ItemId::TinGreaves => "Slice_367",
+            ItemId::BronzeGreaves => "Slice_367",
+            // Leggings
+            ItemId::CopperLeggings => "Slice_42",
+            ItemId::TinLeggings => "Slice_42",
+            ItemId::BronzeLeggings => "Slice_42",
+            // Tools
+            ItemId::BronzePickaxe => "Slice_826",
+            // Accessories
+            ItemId::GoldRing => "Slice_50",
+            ItemId::ImbaRing => "Slice_1009",
+            // Ores
+            ItemId::Coal => "Slice_693",
+            ItemId::CopperOre => "Slice_565",
+            ItemId::TinOre => "Slice_565",
+            // Ingots
+            ItemId::CopperIngot => "Slice_501",
+            ItemId::BronzeIngot => "Slice_501",
+            ItemId::TinIngot => "Slice_565",
+            // Materials
+            ItemId::Cowhide => "Slice_183",
+            ItemId::SlimeGel => "Slice_952",
+            // Upgrade Materials
+            ItemId::QualityUpgradeStone => "Slice_57",
         }
     }
 }
