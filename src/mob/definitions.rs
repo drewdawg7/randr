@@ -11,6 +11,7 @@ use std::collections::HashMap;
 
 use rand::Rng;
 
+use crate::dungeon::GridSize;
 use crate::item::ItemId;
 use crate::loot::LootTable;
 use crate::registry::{RegistryDefaults, SpawnFromSpec};
@@ -31,6 +32,7 @@ entity_macros::define_entity! {
         pub dropped_xp: RangeInclusive<i32>,
         pub quality: MobQuality,
         pub loot: LootTable,
+        pub grid_size: GridSize,
     }
 
     id MobId;
@@ -47,6 +49,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::SlimeGel, 3, 4, 1..=4)
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
+            grid_size: GridSize::single(),
         }
         Cow {
             name: String::from("Cow"),
@@ -59,6 +62,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::Cowhide, 3, 4, 1..=3)
                 .with(ItemId::GoldRing, 1, 1000, 1..=1),
+            grid_size: GridSize::single(),
         }
         Goblin {
             name: String::from("Goblin"),
@@ -72,6 +76,7 @@ entity_macros::define_entity! {
                 .with(ItemId::Sword, 1, 15, 1..=1)
                 .with(ItemId::BasicShield, 1, 15, 1..=1)
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
+            grid_size: GridSize::single(),
         }
         Dragon {
             name: String::from("Dragon"),
@@ -84,6 +89,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
                 .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
+            grid_size: GridSize::new(2, 2),
         }
     }
 }
@@ -160,6 +166,7 @@ impl MobSpec {
             dropped_xp: scale_range(&self.dropped_xp),
             quality: self.quality.clone(),
             loot: self.loot.clone(),
+            grid_size: self.grid_size,
         }
     }
 
@@ -174,6 +181,7 @@ impl MobSpec {
             dropped_xp: self.dropped_xp.clone(),
             quality: self.quality.clone(),
             loot: self.loot.clone(),
+            grid_size: self.grid_size,
         }
     }
 
@@ -188,6 +196,7 @@ impl MobSpec {
             dropped_xp: self.dropped_xp.clone(),
             quality,
             loot: self.loot.clone(),
+            grid_size: self.grid_size,
         }
     }
 }

@@ -199,7 +199,7 @@ fn spawn_dungeon_screen(
                                                         }
                                                     }
                                                 }
-                                                DungeonEntity::Mob { mob_id } => {
+                                                DungeonEntity::Mob { mob_id, .. } => {
                                                     cell.spawn((
                                                         DungeonMobSprite { mob_id: *mob_id },
                                                         entity_node,
@@ -272,7 +272,7 @@ fn handle_dungeon_movement(
                     commands.entity(player_entity).set_parent(cell_entity);
                 }
             }
-            Some(DungeonEntity::Mob { mob_id }) => {
+            Some(DungeonEntity::Mob { mob_id, .. }) => {
                 // Trigger fight modal
                 commands.insert_resource(FightModalMob { mob_id: *mob_id });
                 commands.insert_resource(SpawnFightModal);
