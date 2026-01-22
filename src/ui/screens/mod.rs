@@ -17,8 +17,9 @@ pub use fight::FightPlugin;
 pub use fight_modal::FightModalPlugin;
 pub use monster_compendium::MonsterCompendiumPlugin;
 pub use health_bar::{
-    init_sprite_health_bars, update_health_bar, HealthBar, HealthBarBundle, HealthBarNameBundle,
-    HealthBarText, HealthBarTextBundle, SpriteHealthBar, SpriteHealthBarBundle,
+    init_sprite_health_bars, update_health_bar, update_sprite_health_bar_visuals, HealthBar,
+    HealthBarBundle, HealthBarNameBundle, HealthBarText, HealthBarTextBundle, HealthBarValues,
+    SpriteHealthBar, SpriteHealthBarBundle,
 };
 pub use inventory_modal::InventoryModalPlugin;
 pub use keybinds::KeybindsPlugin;

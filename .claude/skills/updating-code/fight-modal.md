@@ -60,9 +60,12 @@ Implements `SelectionState` trait for left/right navigation.
    - If player dies: Process defeat, close modal
    - Enter with Cancel: Close modal, no combat
 
-4. **Health Bar Updates** (`render.rs`)
-   - `update_mob_health_bar`: Reacts to `FightModalMob` changes
-   - `update_player_health_bar`: Reacts to `StatSheet` changes
+4. **Health Bar Updates** (data → visuals separation)
+   - `update_mob_health_bar` (`render.rs`): Writes mob HP from `FightModalMob` into `HealthBarValues`
+   - `update_player_health_bar` (`render.rs`): Writes player HP from `StatSheet` into `HealthBarValues`
+   - `update_sprite_health_bar_visuals` (`health_bar.rs`): Generic system that reads `HealthBarValues` and updates both the sprite atlas index and the HP text overlay
+   - Health bars are spawned with initial `HealthBarValues` so they display correctly from the first frame
+   - See [health-bar.md](health-bar.md) for the generic health bar system
 
 ## Combat Integration
 
@@ -98,6 +101,7 @@ commands.entity(fight_mob.entity).despawn_recursive();
 
 ## Related Documentation
 
+- [health-bar.md](health-bar.md) - HealthBarValues, SpriteHealthBar, HP text overlay
 - [modals.md](modals.md) - General modal patterns
 - [focus.md](focus.md) - SelectionState trait
 - [dungeon/mod.md](dungeon/mod.md) - Dungeon and grid systems

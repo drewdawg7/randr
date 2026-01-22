@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::ui::screens::health_bar::init_sprite_health_bars;
+use crate::ui::screens::health_bar::{init_sprite_health_bars, update_sprite_health_bar_visuals};
 use crate::ui::SpriteMarkerAppExt;
 
 use super::input::{handle_fight_modal_close, handle_fight_modal_navigation, handle_fight_modal_select};
@@ -28,6 +28,7 @@ impl Plugin for FightModalPlugin {
                     update_mob_health_bar,
                     update_player_health_bar,
                     init_sprite_health_bars,
+                    update_sprite_health_bar_visuals,
                 )
                     .run_if(resource_exists::<FightModalButtonSelection>),
             ),

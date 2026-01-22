@@ -2,10 +2,10 @@
 
 use bevy::prelude::*;
 
-use crate::assets::{FightBannerSlice, GameSprites, HealthBarSlice, SpriteSheetKey};
+use crate::assets::{FightBannerSlice, GameSprites, SpriteSheetKey};
 use crate::player::PlayerName;
 use crate::stats::{HasStats, StatSheet};
-use crate::ui::screens::health_bar::SpriteHealthBar;
+use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBar};
 use crate::ui::widgets::spawn_three_slice_banner;
 
 use super::super::modal::{spawn_modal_overlay, ActiveModal, ModalType};
@@ -31,7 +31,6 @@ pub fn spawn_fight_modal(
     mut active_modal: ResMut<ActiveModal>,
     game_sprites: Res<GameSprites>,
 ) {
-    let _ = &stats; // Used for potential future HP display
     commands.remove_resource::<SpawnFightModal>();
     commands.init_resource::<FightModalButtonSelection>();
     active_modal.modal = Some(ModalType::FightModal);
@@ -81,6 +80,10 @@ pub fn spawn_fight_modal(
                             column.spawn((
                                 FightModalPlayerHealthBar,
                                 SpriteHealthBar,
+                                HealthBarValues {
+                                    current: stats.hp(),
+                                    max: stats.max_hp(),
+                                },
                                 Node {
                                     width: Val::Px(HEALTH_BAR_SIZE.0),
                                     height: Val::Px(HEALTH_BAR_SIZE.1),
@@ -143,6 +146,10 @@ pub fn spawn_fight_modal(
                             column.spawn((
                                 FightModalMobHealthBar,
                                 SpriteHealthBar,
+                                HealthBarValues {
+                                    current: mob_res.mob.hp(),
+                                    max: mob_res.mob.max_hp(),
+                                },
                                 Node {
                                     width: Val::Px(HEALTH_BAR_SIZE.0),
                                     height: Val::Px(HEALTH_BAR_SIZE.1),
@@ -210,54 +217,26 @@ pub fn update_button_sprites(
     }
 }
 
-/// System to update mob health bar based on FightModalMob state.
+/// System to update mob health bar values from FightModalMob state.
 pub fn update_mob_health_bar(
     fight_mob: Res<FightModalMob>,
-    game_sprites: Res<GameSprites>,
-    mut bar_query: Query<&mut ImageNode, With<FightModalMobHealthBar>>,
+    mut bar_query: Query<&mut HealthBarValues, With<FightModalMobHealthBar>>,
 ) {
-    let Ok(mut image) = bar_query.get_single_mut() else {
+    let Ok(mut values) = bar_query.get_single_mut() else {
         return;
     };
-
-    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
-        return;
-    };
-
-    let percent = fight_mob.mob.hp() as f32 / fight_mob.mob.max_hp() as f32 * 100.0;
-    let slice = HealthBarSlice::for_percent(percent);
-
-    if let Some(index) = sheet.get(slice.as_str()) {
-        if let Some(atlas) = &mut image.texture_atlas {
-            if atlas.index != index {
-                atlas.index = index;
-            }
-        }
-    }
+    values.current = fight_mob.mob.hp();
+    values.max = fight_mob.mob.max_hp();
 }
 
-/// System to update player health bar based on StatSheet.
+/// System to update player health bar values from StatSheet.
 pub fn update_player_health_bar(
     stats: Res<StatSheet>,
-    game_sprites: Res<GameSprites>,
-    mut bar_query: Query<&mut ImageNode, With<FightModalPlayerHealthBar>>,
+    mut bar_query: Query<&mut HealthBarValues, With<FightModalPlayerHealthBar>>,
 ) {
-    let Ok(mut image) = bar_query.get_single_mut() else {
+    let Ok(mut values) = bar_query.get_single_mut() else {
         return;
     };
-
-    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
-        return;
-    };
-
-    let percent = stats.hp() as f32 / stats.max_hp() as f32 * 100.0;
-    let slice = HealthBarSlice::for_percent(percent);
-
-    if let Some(index) = sheet.get(slice.as_str()) {
-        if let Some(atlas) = &mut image.texture_atlas {
-            if atlas.index != index {
-                atlas.index = index;
-            }
-        }
-    }
+    values.current = stats.hp();
+    values.max = stats.max_hp();
 }

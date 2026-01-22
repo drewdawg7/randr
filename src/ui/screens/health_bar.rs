@@ -81,6 +81,14 @@ impl HealthBarTextBundle {
 #[derive(Component)]
 pub struct HealthBarText;
 
+/// Component that drives health bar sprite and text updates.
+/// Set `current` and `max` values, and the health bar system handles rendering.
+#[derive(Component)]
+pub struct HealthBarValues {
+    pub current: i32,
+    pub max: i32,
+}
+
 /// Get the sprite slice for a given health percentage.
 fn health_bar_slice(percent: f32) -> HealthBarSlice {
     HealthBarSlice::for_percent(percent)
@@ -112,7 +120,7 @@ impl SpriteHealthBarBundle {
 pub fn init_sprite_health_bars(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
-    query: Query<Entity, (With<SpriteHealthBar>, Without<ImageNode>)>,
+    mut query: Query<(Entity, &mut Node), (With<SpriteHealthBar>, Without<ImageNode>)>,
 ) {
     let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
@@ -132,8 +140,61 @@ pub fn init_sprite_health_bars(
         ..default()
     });
 
-    for entity in &query {
-        commands.entity(entity).insert(image.clone());
+    for (entity, mut node) in &mut query {
+        // Center children so HP text is centered on the bar
+        node.justify_content = JustifyContent::Center;
+        node.align_items = AlignItems::Center;
+
+        commands.entity(entity).insert(image.clone()).with_child((
+            HealthBarText,
+            Text::new(""),
+            TextFont {
+                font_size: 10.0,
+                ..default()
+            },
+            TextColor(Color::WHITE),
+        ));
+    }
+}
+
+/// System to update sprite health bars based on their `HealthBarValues`.
+/// Updates both the atlas index on the `ImageNode` and the `HealthBarText` child.
+pub fn update_sprite_health_bar_visuals(
+    game_sprites: Res<GameSprites>,
+    mut bar_query: Query<
+        (&HealthBarValues, &mut ImageNode, &Children),
+        With<SpriteHealthBar>,
+    >,
+    mut text_query: Query<&mut Text, With<HealthBarText>>,
+) {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
+        return;
+    };
+
+    for (values, mut image, children) in &mut bar_query {
+        let percent = if values.max > 0 {
+            (values.current as f32 / values.max as f32 * 100.0).clamp(0.0, 100.0)
+        } else {
+            0.0
+        };
+        let slice = HealthBarSlice::for_percent(percent);
+
+        if let Some(index) = sheet.get(slice.as_str()) {
+            if let Some(atlas) = &mut image.texture_atlas {
+                if atlas.index != index {
+                    atlas.index = index;
+                }
+            }
+        }
+
+        for child in children.iter() {
+            if let Ok(mut text) = text_query.get_mut(*child) {
+                let hp_str = format!("{} / {}", values.current, values.max);
+                if **text != hp_str {
+                    **text = hp_str;
+                }
+            }
+        }
     }
 }
 
