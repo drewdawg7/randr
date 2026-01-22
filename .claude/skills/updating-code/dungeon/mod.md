@@ -105,11 +105,17 @@ layout.is_walkable(x, y); // Check passability
 layout.is_floor(x, y);    // Check floor-like tile
 
 // Entity methods
-layout.spawn_points();    // Get all tiles where entities can spawn
-layout.add_entity(x, y, entity);  // Add entity at position
-layout.entity_at(x, y);   // Get entity at position (if any)
-layout.entities();        // Get all entities
+layout.spawn_points();              // Get all 1x1 tiles where entities can spawn
+layout.spawn_areas(size);           // Get all valid positions for entity of given size
+layout.add_entity(pos, entity);     // Add entity at GridPosition
+layout.entity_at(x, y);             // Get entity at cell (checks multi-cell entities)
+layout.entities();                  // Get all entities as &[(GridPosition, DungeonEntity)]
 ```
+
+**Multi-cell entity support:**
+- `entity_at(x, y)` checks if any entity occupies the cell, including multi-cell entities
+- `spawn_areas(size)` finds all positions where an entity of given size fits without overlapping
+- Entities are stored with `GridPosition` (top-left anchor)
 
 ### DungeonEntity (`entity.rs`)
 Entities that can be placed on tiles:

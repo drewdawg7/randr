@@ -42,7 +42,11 @@ Each variant includes a `size: GridSize` field indicating how many grid cells th
 Mobs that already exist in `MobSpriteSheets` (see `src/ui/mob_animation.rs`) automatically work in dungeons. Just spawn them:
 
 ```rust
-layout.add_entity(x, y, DungeonEntity::Mob { mob_id: MobId::Dragon });
+use crate::dungeon::GridPosition;
+
+let mob_id = MobId::Dragon;
+let size = mob_id.spec().grid_size;
+layout.add_entity(GridPosition::new(x, y), DungeonEntity::Mob { mob_id, size });
 ```
 
 The `DungeonMobSprite` marker and `populate_dungeon_mob_sprites` system handle the rest.
