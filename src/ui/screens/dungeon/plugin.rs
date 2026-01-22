@@ -2,7 +2,10 @@ use bevy::prelude::*;
 use bevy::window::WindowResized;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
-use crate::dungeon::{DungeonEntity, DungeonLayout, LayoutId, TileRenderer, TileType};
+use crate::dungeon::{
+    DungeonEntity, DungeonLayout, GridOccupancy, GridPosition, GridSize, LayoutId, TileRenderer,
+    TileType,
+};
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
@@ -18,11 +21,6 @@ pub const BASE_TILE: f32 = 8.0;
 pub struct UiScale(pub u32);
 
 impl UiScale {
-    /// Returns the scaled tile size in pixels.
-    pub fn tile_size(&self) -> f32 {
-        BASE_TILE * self.0 as f32
-    }
-
     /// Calculate power-of-2 scale based on window size.
     pub fn calculate(window_height: f32) -> u32 {
         // Scale based on window height to keep tiles a reasonable size
@@ -61,13 +59,17 @@ struct DungeonRoot;
 #[derive(Component)]
 struct DungeonGrid;
 
-/// Marker for the entity overlay layer (renders on top of tiles).
-#[derive(Component)]
-struct EntityOverlay;
-
-/// Marker for the container holding both grid and overlay.
+/// Marker for the container holding the dungeon grid.
 #[derive(Component)]
 struct DungeonContainer;
+
+/// Marker for entities placed on the dungeon grid with grid span positioning.
+#[derive(Component)]
+pub struct DungeonEntityMarker {
+    pub pos: GridPosition,
+    pub size: GridSize,
+    pub entity_type: DungeonEntity,
+}
 
 pub struct DungeonPlugin;
 
@@ -112,6 +114,9 @@ fn spawn_dungeon_screen(
         player_pos,
     });
 
+    // Initialize grid occupancy and populate with entities
+    let mut occupancy = GridOccupancy::new(layout.width(), layout.height());
+
     // Calculate grid dimensions in pixels
     let grid_width = tile_size * layout.width() as f32;
     let grid_height = tile_size * layout.height() as f32;
@@ -132,7 +137,7 @@ fn spawn_dungeon_screen(
             // Player stats banner at top
             parent.spawn(PlayerStats);
 
-            // Container for grid + overlay (relative positioning context)
+            // Container for the dungeon grid
             parent
                 .spawn((
                     DungeonContainer,
@@ -143,7 +148,7 @@ fn spawn_dungeon_screen(
                     },
                 ))
                 .with_children(|container| {
-                    // Dungeon grid (tiles only)
+                    // Dungeon grid (tiles + entities using grid spans)
                     container
                         .spawn((
                             DungeonGrid,
@@ -155,14 +160,18 @@ fn spawn_dungeon_screen(
                             },
                         ))
                         .with_children(|grid| {
+                            // Spawn tile backgrounds first (z-index 0 by default)
                             for y in 0..layout.height() {
                                 for x in 0..layout.width() {
                                     grid.spawn((
                                         DungeonCell { x, y },
-                                        Node::default(),
+                                        Node {
+                                            grid_column: GridPlacement::start(x as i16 + 1),
+                                            grid_row: GridPlacement::start(y as i16 + 1),
+                                            ..default()
+                                        },
                                     ))
                                     .with_children(|cell| {
-                                        // Spawn tile background only
                                         if let Some((slice, flip_x)) =
                                             TileRenderer::resolve(&layout, x, y)
                                         {
@@ -186,53 +195,29 @@ fn spawn_dungeon_screen(
                                     });
                                 }
                             }
-                        });
 
-                    // Entity overlay (renders on top of all tiles)
-                    container
-                        .spawn((
-                            EntityOverlay,
-                            Node {
-                                position_type: PositionType::Absolute,
-                                width: Val::Px(grid_width),
-                                height: Val::Px(grid_height),
-                                ..default()
-                            },
-                        ))
-                        .with_children(|overlay| {
-                            // Spawn player at its position
-                            let (px, py) = player_pos;
-                            overlay.spawn((
-                                DungeonPlayer,
-                                DungeonPlayerSprite,
-                                Node {
-                                    position_type: PositionType::Absolute,
-                                    left: Val::Px(px as f32 * tile_size),
-                                    top: Val::Px(py as f32 * tile_size),
-                                    width: Val::Px(tile_size),
-                                    height: Val::Px(tile_size),
-                                    ..default()
-                                },
-                            ));
-
-                            // Spawn entities at their anchor positions
+                            // Spawn entities using grid spans (z-indexed by Y position)
                             for (pos, entity) in layout.entities() {
                                 let size = entity.size();
-                                let x_px = pos.x as f32 * tile_size;
-                                let y_px = pos.y as f32 * tile_size;
-                                let w_px = tile_size * size.width as f32;
-                                let h_px = tile_size * size.height as f32;
+                                let width_px = size.width as f32 * tile_size;
+                                let height_px = size.height as f32 * tile_size;
 
+                                // GridPlacement uses 1-indexed columns/rows
                                 let entity_node = Node {
-                                    position_type: PositionType::Absolute,
-                                    left: Val::Px(x_px),
-                                    top: Val::Px(y_px),
-                                    width: Val::Px(w_px),
-                                    height: Val::Px(h_px),
+                                    grid_column: GridPlacement::start_span(
+                                        pos.x as i16 + 1,
+                                        size.width as u16,
+                                    ),
+                                    grid_row: GridPlacement::start_span(
+                                        pos.y as i16 + 1,
+                                        size.height as u16,
+                                    ),
+                                    width: Val::Px(width_px),
+                                    height: Val::Px(height_px),
                                     ..default()
                                 };
 
-                                match entity {
+                                let bevy_entity = match entity {
                                     DungeonEntity::Chest { .. } => {
                                         if let Some(entity_sheet) =
                                             game_sprites.get(entity.sprite_sheet_key())
@@ -240,21 +225,64 @@ fn spawn_dungeon_screen(
                                             if let Some(img) =
                                                 entity_sheet.image_node(entity.sprite_name())
                                             {
-                                                overlay.spawn((img, entity_node));
+                                                Some(grid.spawn((
+                                                    DungeonEntityMarker {
+                                                        pos: *pos,
+                                                        size,
+                                                        entity_type: entity.clone(),
+                                                    },
+                                                    z_for_entity(pos.y),
+                                                    img,
+                                                    entity_node,
+                                                )).id())
+                                            } else {
+                                                None
                                             }
+                                        } else {
+                                            None
                                         }
                                     }
                                     DungeonEntity::Mob { mob_id, .. } => {
-                                        overlay.spawn((
+                                        Some(grid.spawn((
+                                            DungeonEntityMarker {
+                                                pos: *pos,
+                                                size,
+                                                entity_type: entity.clone(),
+                                            },
                                             DungeonMobSprite { mob_id: *mob_id },
+                                            z_for_entity(pos.y),
                                             entity_node,
-                                        ));
+                                        )).id())
                                     }
+                                };
+
+                                // Populate occupancy with spawned entity
+                                if let Some(bevy_entity) = bevy_entity {
+                                    occupancy.occupy(*pos, size, bevy_entity);
                                 }
                             }
+
+                            // Spawn player using grid span (high z-index to render on top)
+                            let (px, py) = player_pos;
+                            grid.spawn((
+                                DungeonPlayer,
+                                DungeonPlayerSprite,
+                                // Player renders above all entities
+                                ZIndex(py as i32 + 100),
+                                Node {
+                                    grid_column: GridPlacement::start_span(px as i16 + 1, 1),
+                                    grid_row: GridPlacement::start_span(py as i16 + 1, 1),
+                                    width: Val::Px(tile_size),
+                                    height: Val::Px(tile_size),
+                                    ..default()
+                                },
+                            ));
                         });
                 });
         });
+
+    // Insert grid occupancy resource
+    commands.insert_resource(occupancy);
 }
 
 /// Handle arrow key movement in the dungeon.
@@ -262,7 +290,6 @@ fn handle_dungeon_movement(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<DungeonState>,
-    scale: Res<UiScale>,
     active_modal: Res<ActiveModal>,
     mut player_query: Query<&mut Node, With<DungeonPlayer>>,
 ) {
@@ -274,8 +301,6 @@ fn handle_dungeon_movement(
     let Ok(mut player_node) = player_query.get_single_mut() else {
         return;
     };
-
-    let tile_size = scale.tile_size();
 
     for action in action_reader.read() {
         let GameAction::Navigate(direction) = action else {
@@ -307,10 +332,10 @@ fn handle_dungeon_movement(
         // Check what entity is at the target tile
         match state.layout.entity_at(new_x, new_y) {
             None => {
-                // Empty floor - move player by updating position
+                // Empty floor - move player by updating grid placement
                 state.player_pos = (new_x, new_y);
-                player_node.left = Val::Px(new_x as f32 * tile_size);
-                player_node.top = Val::Px(new_y as f32 * tile_size);
+                player_node.grid_column = GridPlacement::start_span(new_x as i16 + 1, 1);
+                player_node.grid_row = GridPlacement::start_span(new_y as i16 + 1, 1);
             }
             Some(DungeonEntity::Mob { mob_id, .. }) => {
                 // Trigger fight modal
@@ -341,9 +366,9 @@ fn handle_window_resize(
     state: Res<DungeonState>,
     mut scale: ResMut<UiScale>,
     mut grid_query: Query<&mut Node, With<DungeonGrid>>,
-    mut container_query: Query<&mut Node, (With<DungeonContainer>, Without<DungeonGrid>, Without<EntityOverlay>, Without<DungeonPlayer>)>,
-    mut overlay_query: Query<&mut Node, (With<EntityOverlay>, Without<DungeonGrid>, Without<DungeonContainer>, Without<DungeonPlayer>)>,
-    mut player_query: Query<&mut Node, (With<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>, Without<EntityOverlay>)>,
+    mut container_query: Query<&mut Node, (With<DungeonContainer>, Without<DungeonGrid>, Without<DungeonPlayer>)>,
+    mut player_query: Query<&mut Node, (With<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>)>,
+    mut entity_query: Query<(&DungeonEntityMarker, &mut Node), (Without<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>)>,
 ) {
     for event in resize_events.read() {
         let Ok(window) = windows.get(event.window) else {
@@ -358,7 +383,7 @@ fn handle_window_resize(
             let grid_width = tile_size * state.layout.width() as f32;
             let grid_height = tile_size * state.layout.height() as f32;
 
-            // Update grid
+            // Update grid track sizes
             if let Ok(mut grid_node) = grid_query.get_single_mut() {
                 grid_node.grid_template_columns =
                     vec![GridTrack::px(tile_size); state.layout.width()];
@@ -366,31 +391,30 @@ fn handle_window_resize(
                     vec![GridTrack::px(tile_size); state.layout.height()];
             }
 
-            // Update container
+            // Update container dimensions
             if let Ok(mut container_node) = container_query.get_single_mut() {
                 container_node.width = Val::Px(grid_width);
                 container_node.height = Val::Px(grid_height);
             }
 
-            // Update overlay
-            if let Ok(mut overlay_node) = overlay_query.get_single_mut() {
-                overlay_node.width = Val::Px(grid_width);
-                overlay_node.height = Val::Px(grid_height);
-            }
-
-            // Update player position
+            // Update player size (grid placement handles position automatically)
             if let Ok(mut player_node) = player_query.get_single_mut() {
-                let (px, py) = state.player_pos;
-                player_node.left = Val::Px(px as f32 * tile_size);
-                player_node.top = Val::Px(py as f32 * tile_size);
                 player_node.width = Val::Px(tile_size);
                 player_node.height = Val::Px(tile_size);
             }
 
-            // Note: Entity positions would also need updating here for full resize support
-            // For now, entities use fixed positions from spawn time
+            // Update entity sizes based on their grid size
+            for (marker, mut entity_node) in entity_query.iter_mut() {
+                entity_node.width = Val::Px(marker.size.width as f32 * tile_size);
+                entity_node.height = Val::Px(marker.size.height as f32 * tile_size);
+            }
         }
     }
+}
+
+/// Calculate z-index for entities based on Y position (higher Y = rendered on top).
+fn z_for_entity(y: usize) -> ZIndex {
+    ZIndex(y as i32)
 }
 
 fn cleanup_dungeon(mut commands: Commands, query: Query<Entity, With<DungeonRoot>>) {
@@ -399,4 +423,5 @@ fn cleanup_dungeon(mut commands: Commands, query: Query<Entity, With<DungeonRoot
     }
     commands.remove_resource::<DungeonState>();
     commands.remove_resource::<UiScale>();
+    commands.remove_resource::<GridOccupancy>();
 }
