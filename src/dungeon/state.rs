@@ -6,6 +6,7 @@ use bevy::prelude::*;
 
 use crate::dungeon::{DungeonLayout, DungeonRegistry, FloorId, GridPosition, GridSize};
 use crate::location::LocationId;
+use crate::ui::ENTITY_GRID_SIZE;
 
 /// Resource tracking runtime dungeon state and player progression.
 ///
@@ -111,8 +112,8 @@ impl DungeonState {
             .find(|(_, _, tile)| tile.tile_type == crate::dungeon::TileType::PlayerSpawn)
             .map_or(GridPosition::default(), |(x, y, _)| GridPosition::new(x, y));
 
-        // Player occupies 2x2 cells to match mob sizes
-        self.player_size = GridSize::new(2, 2);
+        // Player grid size matches ENTITY_GRID_SIZE constant
+        self.player_size = GridSize::new(ENTITY_GRID_SIZE, ENTITY_GRID_SIZE);
 
         self.layout = Some(layout);
         self.layout.as_ref()

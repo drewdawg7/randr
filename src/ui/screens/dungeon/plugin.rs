@@ -14,8 +14,19 @@ use crate::ui::screens::modal::ActiveModal;
 use crate::ui::widgets::PlayerStats;
 use crate::ui::{DungeonMobSprite, DungeonPlayerSprite};
 
-/// Base tile size in pixels (before scaling).
-pub const BASE_TILE: f32 = 8.0;
+/// Scale factor for dungeon tiles (1.0 = original, 1.5 = 1.5x bigger, 2.0 = 2x bigger).
+/// Changing this adjusts both tile size and layout dimensions.
+pub const DUNGEON_SCALE: f32 = 1.5;
+
+/// Grid size for entities (player and mobs). Must be a positive integer.
+/// Use 2 for normal scale, 1 for 2x scale.
+pub const ENTITY_GRID_SIZE: u8 = 2;
+
+/// Base tile size before dungeon scaling (original sprite size / 2).
+const BASE_TILE_UNSCALED: f32 = 8.0;
+
+/// Actual tile size used for rendering (BASE_TILE_UNSCALED * DUNGEON_SCALE).
+pub const BASE_TILE: f32 = BASE_TILE_UNSCALED * DUNGEON_SCALE;
 
 /// Resource tracking current UI scale factor (power of 2: 2, 4, 8, 16).
 #[derive(Resource)]

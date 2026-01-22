@@ -16,6 +16,7 @@ use crate::item::ItemId;
 use crate::loot::LootTable;
 use crate::registry::{RegistryDefaults, SpawnFromSpec};
 use crate::stats::{StatInstance, StatSheet, StatType};
+use crate::ui::ENTITY_GRID_SIZE;
 
 use super::definition::Mob;
 
@@ -49,7 +50,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::SlimeGel, 3, 4, 1..=4)
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
-            grid_size: GridSize::new(2, 2),
+            grid_size: GridSize::new(ENTITY_GRID_SIZE, ENTITY_GRID_SIZE),
         }
         Cow {
             name: String::from("Cow"),
@@ -62,7 +63,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::Cowhide, 3, 4, 1..=3)
                 .with(ItemId::GoldRing, 1, 1000, 1..=1),
-            grid_size: GridSize::new(2, 2),
+            grid_size: GridSize::new(ENTITY_GRID_SIZE, ENTITY_GRID_SIZE),
         }
         Goblin {
             name: String::from("Goblin"),
@@ -76,7 +77,7 @@ entity_macros::define_entity! {
                 .with(ItemId::Sword, 1, 15, 1..=1)
                 .with(ItemId::BasicShield, 1, 15, 1..=1)
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
-            grid_size: GridSize::new(2, 2),
+            grid_size: GridSize::new(ENTITY_GRID_SIZE, ENTITY_GRID_SIZE),
         }
         Dragon {
             name: String::from("Dragon"),
@@ -89,7 +90,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
                 .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
-            grid_size: GridSize::new(2, 2),
+            grid_size: GridSize::new(ENTITY_GRID_SIZE, ENTITY_GRID_SIZE),
         }
     }
 }
