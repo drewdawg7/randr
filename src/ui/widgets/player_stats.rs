@@ -12,7 +12,7 @@ pub struct PlayerStatsPlugin;
 impl Plugin for PlayerStatsPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(on_add_player_stats)
-            .add_systems(Update, update_gold_display);
+            .add_systems(Update, (update_gold_display, update_hp_display, update_xp_display));
     }
 }
 
@@ -23,6 +23,14 @@ pub struct PlayerStats;
 /// Marker for the gold text so it can be updated reactively.
 #[derive(Component)]
 pub struct PlayerGoldText;
+
+/// Marker for the HP text so it can be updated reactively.
+#[derive(Component)]
+pub struct PlayerHpText;
+
+/// Marker for the XP/Level text so it can be updated reactively.
+#[derive(Component)]
+pub struct PlayerXpText;
 
 fn on_add_player_stats(
     trigger: Trigger<OnAdd, PlayerStats>,
@@ -75,11 +83,15 @@ fn on_add_player_stats(
                 }
 
                 // HP values
-                hp_row.spawn(UiText::new(format!("{}/{}", hp, max_hp)).size(16.0).red().build());
+                hp_row.spawn((
+                    PlayerHpText,
+                    UiText::new(format!("{}/{}", hp, max_hp)).size(16.0).red().build(),
+                ));
             });
 
         // Level & XP
-        stats_node.spawn(
+        stats_node.spawn((
+            PlayerXpText,
             UiText::new(format!(
                 "Level: {}  XP: {}/{}",
                 progression.level,
@@ -89,7 +101,7 @@ fn on_add_player_stats(
             .size(16.0)
             .green()
             .build(),
-        );
+        ));
 
         // Gold row with coin icon + value
         stats_node
@@ -119,6 +131,34 @@ fn update_gold_display(gold: Res<PlayerGold>, mut query: Query<&mut Text, With<P
     if gold.is_changed() {
         for mut text in query.iter_mut() {
             **text = format!("{}", gold.0);
+        }
+    }
+}
+
+/// System to update HP display when StatSheet resource changes.
+fn update_hp_display(stats: Res<StatSheet>, mut query: Query<&mut Text, With<PlayerHpText>>) {
+    if stats.is_changed() {
+        let hp = stats.value(StatType::Health);
+        let max_hp = stats.max_value(StatType::Health);
+        for mut text in query.iter_mut() {
+            **text = format!("{}/{}", hp, max_hp);
+        }
+    }
+}
+
+/// System to update XP/Level display when Progression resource changes.
+fn update_xp_display(
+    progression: Res<Progression>,
+    mut query: Query<&mut Text, With<PlayerXpText>>,
+) {
+    if progression.is_changed() {
+        for mut text in query.iter_mut() {
+            **text = format!(
+                "Level: {}  XP: {}/{}",
+                progression.level,
+                progression.xp,
+                Progression::xp_to_next_level(progression.level)
+            );
         }
     }
 }
