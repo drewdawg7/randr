@@ -290,12 +290,13 @@ Declarative entity spawning with weighted mob selection and multi-cell entity su
 use crate::dungeon::SpawnTable;
 use crate::mob::MobId;
 
-// Floor with weighted mob spawns and random chest count
+// Floor with weighted mob spawns, chests, and stairs
 let spawn_table = SpawnTable::new()
     .mob(MobId::Goblin, 5)   // 5/8 chance per mob spawn (uses Goblin's grid_size)
     .mob(MobId::Slime, 3)    // 3/8 chance per mob spawn (uses Slime's grid_size)
     .mob_count(3..=5)        // Spawn 3-5 mobs total
-    .chest(1..=2);           // Spawn 1 or 2 chests (always 1x1)
+    .chest(1..=2)            // Spawn 1 or 2 chests (always 1x1)
+    .stairs(1..=1);          // Spawn 1 stairs (always 1x1, advances floor)
 
 // Apply manually if not using LayoutBuilder
 spawn_table.apply(&mut layout, &mut rand::thread_rng());
@@ -316,12 +317,15 @@ let treasure = SpawnTable::new().chest(5..=8);
 - `mob(MobId, weight)` - Adds mob type with weight; size auto-loaded from `MobSpec`
 - `mob_count(range)` - Sets mob count range (e.g., `2..=4`)
 - `chest(range)` - Sets chest count range (e.g., `1..=2`), always 1x1
+- `stairs(range)` - Sets stairs count range (e.g., `1..=1`), always 1x1
 - `apply(&mut layout, &mut rng)` - Applies spawns to layout
 
 **Algorithm:**
 1. Spawns random chest count (range) first, each with variant 0-3
    - Uses `layout.spawn_areas(GridSize::single())` to find valid 1x1 positions
-2. Spawns random mob count using weighted selection from entries
+2. Spawns random stairs count (range), always 1x1
+   - Uses `layout.spawn_areas(GridSize::single())` to find valid positions
+3. Spawns random mob count using weighted selection from entries
    - Uses `layout.spawn_areas(entry.size)` to find valid positions for each mob's size
    - Entities never overlap due to `spawn_areas()` checking existing entities
 
@@ -517,6 +521,7 @@ pub struct DungeonPlayer;
 - Arrow keys trigger `GameAction::Navigate(NavigationDirection)` events
 - Colliding with a mob triggers the fight modal
 - Colliding with a chest blocks movement (chests are obstacles)
+- Colliding with stairs advances to a new floor (`AdvanceFloor` resource → `advance_floor_system`)
 
 ### Multi-Cell Collision Detection
 
@@ -561,6 +566,7 @@ fn check_entity_collision(
 - `handle_dungeon_movement()` - processes arrow key input, validates via occupancy, handles collisions
 - `all_cells_walkable()` - checks if all player destination cells are walkable tiles
 - `check_entity_collision()` - uses `GridOccupancy` to detect entity at any destination cell
+- `advance_floor_system()` - triggered by `AdvanceFloor` resource; despawns UI, increments `floor_index`, regenerates layout, respawns dungeon screen
 - `cleanup_dungeon()` - calls `state.exit_dungeon()`, removes `UiScale` and `GridOccupancy` resources
 
 ## Adding a New Dungeon

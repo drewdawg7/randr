@@ -14,6 +14,7 @@ Entities that can be spawned on dungeon tiles.
 pub enum DungeonEntity {
     Chest { variant: u8, size: GridSize },  // 4 visual variants (0-3)
     Mob { mob_id: MobId, size: GridSize },  // Any mob type (Goblin, Slime, etc.)
+    Stairs { size: GridSize },              // Advances player to next floor
 }
 ```
 
@@ -36,6 +37,13 @@ Each variant includes a `size: GridSize` field indicating how many grid cells th
 - Spawn with `DungeonMobSprite { mob_id }` marker
 - `populate_dungeon_mob_sprites()` system populates sprite + animation
 - Reuses `MobSpriteSheets` and `MobAnimation` from mob compendium
+
+### Stairs Entity
+- Uses `SpriteSheetKey::DungeonTileset` with slice `"stairs"` (`DungeonTileSlice::Stairs`)
+- Always 1x1 (`GridSize::single()`)
+- On collision: inserts `AdvanceFloor` resource, triggering `advance_floor_system`
+- `advance_floor_system` despawns current dungeon UI, increments `floor_index`, calls `load_floor_layout()`, and respawns the dungeon screen with a fresh layout
+- Spawned via `SpawnTable::stairs(count_range)` (e.g., `.stairs(1..=1)`)
 
 ## Adding New Mob Types
 
