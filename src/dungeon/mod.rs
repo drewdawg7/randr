@@ -1,4 +1,5 @@
 pub mod entity;
+pub mod floor;
 pub mod generator;
 pub mod grid;
 pub mod layout;
@@ -9,6 +10,7 @@ pub mod spawn;
 pub mod tile;
 
 pub use entity::DungeonEntity;
+pub use floor::{FloorId, FloorSpec};
 pub use generator::LayoutGenerator;
 pub use grid::{GridOccupancy, GridPosition, GridSize};
 pub use layout::DungeonLayout;

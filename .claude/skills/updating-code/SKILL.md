@@ -34,6 +34,7 @@ Read the relevant doc BEFORE making changes.
 | Store buy/sell, Store resource, StoreItem | [store.md](store.md) |
 | Store screen UI, item grids, detail panels | [store-ui.md](store-ui.md) |
 | Dungeon layouts, TileType, DungeonLayout | [dungeon/mod.md](dungeon/mod.md) |
+| FloorSpec, FloorId, floor definitions | [dungeon/mod.md](dungeon/mod.md) |
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |

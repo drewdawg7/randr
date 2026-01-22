@@ -2,6 +2,18 @@
 
 Data-driven dungeon system at `src/dungeon/`.
 
+## Conceptual Hierarchy
+
+```
+Dungeon Location (e.g., "Goblin Cave")
+  └── Floor (e.g., "Floor 1", "Boss Floor")
+       └── Layout (the tile grid + entities)
+```
+
+- **Location**: A dungeon destination (registered in `DungeonPlugin`)
+- **Floor**: One level within a dungeon, with its own layout and spawns (defined by `FloorSpec`/`FloorId`)
+- **Layout**: The actual tile grid and entity placement (defined by `LayoutId`)
+
 ## File Structure
 ```
 src/dungeon/
@@ -14,6 +26,9 @@ src/dungeon/
     spawn.rs            # SpawnTable (declarative entity spawning)
     generator.rs        # LayoutGenerator trait
     rendering.rs        # TileRenderer (logical -> visual)
+    floor/
+        mod.rs          # Re-exports FloorSpec, FloorId
+        definitions.rs  # define_data! macro invocation
     layouts/
         mod.rs          # LayoutId enum
         starting_room.rs
@@ -206,6 +221,40 @@ pub enum LayoutId {
 let layout = LayoutId::StartingRoom.layout();
 ```
 
+### FloorSpec and FloorId (`floor/definitions.rs`)
+
+Static floor specifications using the `define_data!` macro pattern. A floor ties together a layout, spawn rules, and metadata.
+
+```rust
+use crate::dungeon::{FloorId, FloorSpec};
+
+// Get floor info
+let floor = FloorId::GoblinCave1;
+let spec = floor.spec();
+
+// Access floor data
+println!("Floor: {}", spec.name);          // "Goblin Cave - Floor 1"
+let layout_id = spec.layout_id;            // LayoutId to generate layout
+let spawns = &spec.spawn_table;            // SpawnTable for this floor
+
+// Generate layout for this floor
+let layout = spec.layout_id.layout();
+
+// Iterate all floors
+for floor_id in FloorId::ALL {
+    println!("{}", floor_id.spec().name);
+}
+```
+
+**FloorSpec fields:**
+- `name: &'static str` - Display name (e.g., "Goblin Cave - Floor 1")
+- `layout_id: LayoutId` - Reference to the layout definition
+- `spawn_table: SpawnTable` - Entity spawn rules for this floor
+
+**Generated API:**
+- `FloorId::spec(&self) -> &'static FloorSpec` - Get the spec for a floor
+- `FloorId::ALL` - Slice of all floor variants
+
 ### TileRenderer (`rendering.rs`)
 Maps logical `TileType` to visual `DungeonTileSlice` with adjacency-aware wall selection:
 ```rust
@@ -274,6 +323,50 @@ LayoutBuilder::new(20, 15)
     .spawn(SpawnTable::new().chest(5..=8))
     .build()
 ```
+
+## Adding New Floors
+
+Add floor variants to `src/dungeon/floor/definitions.rs`:
+
+```rust
+entity_macros::define_data! {
+    spec FloorSpec {
+        pub name: &'static str,
+        pub layout_id: LayoutId,
+        pub spawn_table: SpawnTable,
+    }
+
+    id FloorId;
+
+    variants {
+        GoblinCave1 {
+            name: "Goblin Cave - Floor 1",
+            layout_id: LayoutId::StartingRoom,
+            spawn_table: SpawnTable::new()
+                .mob(MobId::Goblin, 5)
+                .mob(MobId::Slime, 3)
+                .mob_count(3..=5)
+                .chest(1..=2),
+        }
+        // Add new floors here
+        GoblinCave2 {
+            name: "Goblin Cave - Floor 2",
+            layout_id: LayoutId::StartingRoom,  // Use appropriate LayoutId
+            spawn_table: SpawnTable::new()
+                .mob(MobId::Goblin, 8)
+                .mob(MobId::Slime, 5)
+                .mob_count(4..=6)
+                .chest(2..=3),
+        }
+    }
+}
+```
+
+**Guidelines:**
+- Each floor references a `LayoutId` for its tile grid
+- The `spawn_table` defines what entities spawn (separate from layout's default spawns)
+- Floor names should follow pattern: "Location Name - Floor N"
+- Boss floors can use `SpawnTable::empty()` for manual boss placement
 
 ## LayoutGenerator Trait
 For future procedural generation:
