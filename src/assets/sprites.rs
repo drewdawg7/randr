@@ -36,6 +36,7 @@ pub enum SpriteSheetKey {
     Chest3,
     Chest4,
     FightBannerSlices,
+    OkButton,
 }
 
 impl SpriteSheetKey {
@@ -68,6 +69,7 @@ impl SpriteSheetKey {
             Self::Chest3,
             Self::Chest4,
             Self::FightBannerSlices,
+            Self::OkButton,
         ]
     }
 
@@ -100,6 +102,7 @@ impl SpriteSheetKey {
             Self::Chest3 => "dungeon_entities/chest_3",
             Self::Chest4 => "dungeon_entities/chest_4",
             Self::FightBannerSlices => "fight_banner_slices",
+            Self::OkButton => "ok_button",
         }
     }
 }

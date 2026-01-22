@@ -2,7 +2,7 @@
 
 use bevy::prelude::*;
 
-use crate::assets::{FightBannerSlice, GameSprites};
+use crate::assets::{FightBannerSlice, GameSprites, SpriteSheetKey};
 use crate::player::PlayerName;
 use crate::ui::widgets::spawn_three_slice_banner;
 
@@ -13,6 +13,7 @@ const SPRITE_SIZE: f32 = 128.0;
 const BANNER_WIDTH: f32 = 160.0;
 const CONTAINER_WIDTH: f32 = 400.0;
 const CONTAINER_HEIGHT: f32 = 250.0; // Increased to accommodate banners
+const BUTTON_SIZE: (f32, f32) = (48.0, 24.0);
 
 /// System to spawn the fight modal UI.
 pub fn spawn_fight_modal(
@@ -75,6 +76,13 @@ pub fn spawn_fight_modal(
                                     ..default()
                                 },
                             ));
+
+                            // OK button below player sprite
+                            if let Some(sheet) = game_sprites.get(SpriteSheetKey::OkButton) {
+                                if let Some(bundle) = sheet.image_bundle("ok_button", BUTTON_SIZE.0, BUTTON_SIZE.1) {
+                                    column.spawn(bundle);
+                                }
+                            }
                         });
 
                     // Mob column (banner + sprite)
