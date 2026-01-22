@@ -34,7 +34,7 @@ impl GridSize {
 }
 
 /// Grid position with top-left anchor convention.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub struct GridPosition {
     pub x: usize,
     pub y: usize,

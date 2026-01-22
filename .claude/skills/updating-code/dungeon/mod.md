@@ -19,6 +19,7 @@ Dungeon Location (e.g., "Goblin Cave")
 src/dungeon/
     mod.rs              # Re-exports
     plugin.rs           # DungeonPlugin, DungeonBuilder, DungeonRegistry
+    state.rs            # DungeonState (runtime state + progression)
     tile.rs             # TileType, Tile
     entity.rs           # DungeonEntity enum
     grid.rs             # GridSize, GridPosition, GridOccupancy
@@ -86,6 +87,62 @@ fn my_system(registry: Res<DungeonRegistry>) {
 - `floors(location) -> &[FloorId]` - All floors for a location in order
 - `next_floor(location, current) -> Option<FloorId>` - Next floor after current
 - `is_final_floor(location, floor) -> bool` - Check if this is the last floor
+
+### DungeonState (Resource, `state.rs`)
+
+Tracks runtime dungeon state and player progression. Combines:
+- **Progression tracking**: Which dungeon/floor the player is on, which floors have been cleared
+- **Runtime state**: Current layout and player position
+
+```rust
+use crate::dungeon::{DungeonState, DungeonRegistry};
+use crate::location::LocationId;
+
+fn my_system(
+    mut state: ResMut<DungeonState>,
+    registry: Res<DungeonRegistry>,
+) {
+    // Enter a dungeon (sets current_location, current_floor, floor_index)
+    state.enter_dungeon(LocationId::GoblinCave, &registry);
+
+    // Load the layout for the current floor (sets layout, player_pos, player_size)
+    state.load_floor_layout();
+
+    // Check if on final floor
+    if state.is_current_floor_final(&registry) {
+        // Boss floor!
+    }
+
+    // Advance to next floor after clearing (marks current as cleared)
+    if let Some(next_floor) = state.advance_floor(&registry) {
+        state.load_floor_layout();
+    } else {
+        // Dungeon complete!
+        state.exit_dungeon();
+    }
+
+    // Check if a floor has been cleared
+    let cleared = state.is_floor_cleared(FloorId::GoblinCave1);
+}
+```
+
+**Fields:**
+- `current_location: Option<LocationId>` - Active dungeon (None if not in dungeon)
+- `current_floor: Option<FloorId>` - Active floor (None if not in dungeon)
+- `floor_index: usize` - 0-indexed position in location's floor sequence
+- `cleared_floors: HashSet<FloorId>` - Set of floors player has cleared
+- `layout: Option<DungeonLayout>` - Current floor layout (None until loaded)
+- `player_pos: GridPosition` - Player's grid position
+- `player_size: GridSize` - Player's grid size (default 1x1)
+
+**Methods:**
+- `enter_dungeon(location, registry)` - Begin dungeon run at first floor
+- `load_floor_layout() -> Option<&DungeonLayout>` - Load layout for current floor
+- `advance_floor(registry) -> Option<FloorId>` - Move to next floor, mark current as cleared
+- `is_current_floor_final(registry) -> bool` - Check if on last floor
+- `exit_dungeon()` - Leave dungeon (clears runtime state, preserves cleared_floors)
+- `is_floor_cleared(floor) -> bool` - Check if specific floor has been cleared
+- `is_in_dungeon() -> bool` - Check if currently in a dungeon
 
 ### TileType (`tile.rs`)
 Logical tile types for gameplay:
@@ -439,15 +496,9 @@ Player movement in the dungeon is handled in `src/ui/screens/dungeon/plugin.rs`.
 
 ### Components and Resources
 
-```rust
-// Resource tracking player position, size, and layout
-#[derive(Resource)]
-pub struct DungeonState {
-    pub layout: DungeonLayout,
-    pub player_pos: GridPosition,
-    pub player_size: GridSize,  // Supports future multi-cell player
-}
+The UI uses `DungeonState` from `crate::dungeon` (see above) for player position and layout. Additional UI-specific components:
 
+```rust
 // Marker for grid cells with coordinates
 #[derive(Component)]
 pub struct DungeonCell { pub x: usize, pub y: usize }
@@ -472,8 +523,9 @@ pub struct DungeonPlayer;
 Movement validation checks **all cells** the player would occupy:
 
 ```rust
-// Check if all destination cells are walkable
-fn all_cells_walkable(layout: &DungeonLayout, pos: GridPosition, size: GridSize) -> bool {
+// Check if all destination cells are walkable (layout is Option<&DungeonLayout>)
+fn all_cells_walkable(layout: Option<&DungeonLayout>, pos: GridPosition, size: GridSize) -> bool {
+    let Some(layout) = layout else { return false };
     pos.occupied_cells(size)
         .all(|(x, y)| layout.is_walkable(x, y))
 }
@@ -497,19 +549,19 @@ fn check_entity_collision(
 ### How Movement Works
 1. `handle_dungeon_movement` listens for `GameAction::Navigate` events
 2. Calculates target position from direction as `GridPosition`
-3. Validates all destination cells are walkable via `all_cells_walkable()`
+3. Validates all destination cells are walkable via `all_cells_walkable(state.layout.as_ref(), ...)`
 4. Checks for entity collisions via `GridOccupancy` using `check_entity_collision()`
 5. If collision with mob: triggers fight modal
 6. If collision with chest: blocks movement
-7. If no collision: updates `GridOccupancy` (vacate old, occupy new), updates `DungeonState.player_pos`
+7. If no collision: updates `GridOccupancy` (vacate old, occupy new), updates `state.player_pos`
 8. Updates player grid placement via `grid_column`/`grid_row` Node properties
 
 ### Key Functions
-- `spawn_dungeon_screen()` - spawns grid, entities, player, initializes `DungeonState` and `GridOccupancy`
+- `spawn_dungeon_screen()` - enters dungeon, loads floor layout, spawns grid/entities/player, initializes `GridOccupancy`
 - `handle_dungeon_movement()` - processes arrow key input, validates via occupancy, handles collisions
 - `all_cells_walkable()` - checks if all player destination cells are walkable tiles
 - `check_entity_collision()` - uses `GridOccupancy` to detect entity at any destination cell
-- `cleanup_dungeon()` - removes `DungeonState`, `UiScale`, and `GridOccupancy` resources
+- `cleanup_dungeon()` - calls `state.exit_dungeon()`, removes `UiScale` and `GridOccupancy` resources
 
 ## Adding a New Dungeon
 

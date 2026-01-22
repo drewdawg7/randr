@@ -3,9 +3,10 @@ use bevy::window::WindowResized;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::dungeon::{
-    DungeonEntity, DungeonLayout, GridOccupancy, GridPosition, GridSize, LayoutId, TileRenderer,
-    TileType,
+    DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState, GridOccupancy, GridPosition,
+    GridSize, TileRenderer,
 };
+use crate::location::LocationId;
 use crate::input::{GameAction, NavigationDirection};
 use crate::states::AppState;
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
@@ -33,13 +34,6 @@ impl UiScale {
     }
 }
 
-/// Resource tracking dungeon state for player movement.
-#[derive(Resource)]
-pub struct DungeonState {
-    pub layout: DungeonLayout,
-    pub player_pos: GridPosition,
-    pub player_size: GridSize,
-}
 
 /// Marker component for grid cells with their coordinates.
 #[derive(Component)]
@@ -90,34 +84,34 @@ fn spawn_dungeon_screen(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     window: Single<&Window>,
+    registry: Res<DungeonRegistry>,
+    mut state: ResMut<DungeonState>,
 ) {
     let Some(tile_sheet) = game_sprites.get(SpriteSheetKey::DungeonTileset) else {
         return;
     };
 
-    let layout = LayoutId::StartingRoom.layout();
+    // If not already in a dungeon, enter the first available dungeon
+    // (This is temporary until there's a dungeon selection system)
+    if !state.is_in_dungeon() {
+        state.enter_dungeon(LocationId::GoblinCave, &registry);
+    }
+
+    // Load the layout for the current floor
+    state.load_floor_layout();
+
+    let Some(layout) = state.layout.as_ref() else {
+        return;
+    };
 
     // Calculate scale based on window size
     let scale = UiScale::calculate(window.height());
     let tile_size = BASE_TILE * scale as f32;
     commands.insert_resource(UiScale(scale));
 
-    // Find player spawn position
-    let player_pos = layout
-        .iter()
-        .find(|(_, _, tile)| tile.tile_type == TileType::PlayerSpawn)
-        .map(|(x, y, _)| GridPosition::new(x, y))
-        .unwrap_or(GridPosition::new(0, 0));
-
-    // Player is 1x1 for now (supports future multi-cell player)
-    let player_size = GridSize::single();
-
-    // Insert dungeon state resource
-    commands.insert_resource(DungeonState {
-        layout: layout.clone(),
-        player_pos,
-        player_size,
-    });
+    // Get player position and size from state (set by load_floor_layout)
+    let player_pos = state.player_pos;
+    let player_size = state.player_size;
 
     // Initialize grid occupancy and populate with entities
     let mut occupancy = GridOccupancy::new(layout.width(), layout.height());
@@ -297,7 +291,10 @@ fn spawn_dungeon_screen(
 }
 
 /// Check if all destination cells are walkable floor tiles.
-fn all_cells_walkable(layout: &DungeonLayout, pos: GridPosition, size: GridSize) -> bool {
+fn all_cells_walkable(layout: Option<&DungeonLayout>, pos: GridPosition, size: GridSize) -> bool {
+    let Some(layout) = layout else {
+        return false;
+    };
     pos.occupied_cells(size)
         .all(|(x, y)| layout.is_walkable(x, y))
 }
@@ -354,7 +351,7 @@ fn handle_dungeon_movement(
         );
 
         // Check if all destination cells are walkable
-        if !all_cells_walkable(&state.layout, new_pos, state.player_size) {
+        if !all_cells_walkable(state.layout.as_ref(), new_pos, state.player_size) {
             continue;
         }
 
@@ -410,6 +407,10 @@ fn handle_window_resize(
     mut player_query: Query<&mut Node, (With<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>)>,
     mut entity_query: Query<(&DungeonEntityMarker, &mut Node), (Without<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>)>,
 ) {
+    let Some(layout) = state.layout.as_ref() else {
+        return;
+    };
+
     for event in resize_events.read() {
         let Ok(window) = windows.get(event.window) else {
             continue;
@@ -420,15 +421,13 @@ fn handle_window_resize(
         if new_scale != scale.0 {
             scale.0 = new_scale;
             let tile_size = BASE_TILE * new_scale as f32;
-            let grid_width = tile_size * state.layout.width() as f32;
-            let grid_height = tile_size * state.layout.height() as f32;
+            let grid_width = tile_size * layout.width() as f32;
+            let grid_height = tile_size * layout.height() as f32;
 
             // Update grid track sizes
             if let Ok(mut grid_node) = grid_query.get_single_mut() {
-                grid_node.grid_template_columns =
-                    vec![GridTrack::px(tile_size); state.layout.width()];
-                grid_node.grid_template_rows =
-                    vec![GridTrack::px(tile_size); state.layout.height()];
+                grid_node.grid_template_columns = vec![GridTrack::px(tile_size); layout.width()];
+                grid_node.grid_template_rows = vec![GridTrack::px(tile_size); layout.height()];
             }
 
             // Update container dimensions
@@ -457,11 +456,16 @@ fn z_for_entity(y: usize) -> ZIndex {
     ZIndex(y as i32)
 }
 
-fn cleanup_dungeon(mut commands: Commands, query: Query<Entity, With<DungeonRoot>>) {
+fn cleanup_dungeon(
+    mut commands: Commands,
+    query: Query<Entity, With<DungeonRoot>>,
+    mut state: ResMut<DungeonState>,
+) {
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
-    commands.remove_resource::<DungeonState>();
+    // Exit dungeon (clears runtime state but preserves cleared_floors)
+    state.exit_dungeon();
     commands.remove_resource::<UiScale>();
     commands.remove_resource::<GridOccupancy>();
 }

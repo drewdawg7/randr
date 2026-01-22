@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 
-use crate::dungeon::FloorId;
+use crate::dungeon::{DungeonState, FloorId};
 use crate::location::LocationId;
 
 /// Resource providing runtime access to dungeon floor configurations.
@@ -49,7 +49,8 @@ pub struct DungeonPlugin {
 
 impl Plugin for DungeonPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(self.registry.clone());
+        app.insert_resource(self.registry.clone())
+            .init_resource::<DungeonState>();
     }
 }
 

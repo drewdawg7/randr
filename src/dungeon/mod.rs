@@ -8,6 +8,7 @@ pub mod layouts;
 pub mod plugin;
 pub mod rendering;
 pub mod spawn;
+pub mod state;
 pub mod tile;
 
 pub use entity::DungeonEntity;
@@ -20,4 +21,5 @@ pub use layouts::LayoutId;
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry};
 pub use rendering::TileRenderer;
 pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
+pub use state::DungeonState;
 pub use tile::{Tile, TileType};

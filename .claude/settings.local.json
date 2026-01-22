@@ -168,7 +168,8 @@
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Library/Mobile Documents/com~apple~CloudDocs/randr/assets/sprites/ui/Title banners/BannerSmall_01C-export.aseprite\" --sheet /tmp/banner_slices.png --data /tmp/banner_slices.json --format json-hash)",
       "Bash(git -C /Users/drewstewart/code/game log --oneline -20)",
       "Bash(git -C /Users/drewstewart/code/game show 3be8455:src/)",
-      "Bash(git -C /Users/drewstewart/code/game show 3be8455 --stat)"
+      "Bash(git -C /Users/drewstewart/code/game show 3be8455 --stat)",
+      "Bash(git pull:*)"
     ]
   },
   "enabledMcpjsonServers": [
