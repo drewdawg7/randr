@@ -7,6 +7,7 @@ use super::grid::GridSize;
 pub enum DungeonEntity {
     Chest { variant: u8, size: GridSize },
     Mob { mob_id: MobId, size: GridSize },
+    Stairs { size: GridSize },
 }
 
 impl DungeonEntity {
@@ -15,6 +16,7 @@ impl DungeonEntity {
         match self {
             Self::Chest { size, .. } => *size,
             Self::Mob { size, .. } => *size,
+            Self::Stairs { size } => *size,
         }
     }
 
@@ -29,6 +31,7 @@ impl DungeonEntity {
                 _ => SpriteSheetKey::Chest4,
             },
             Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
+            Self::Stairs { .. } => SpriteSheetKey::DungeonTileset,
         }
     }
 
@@ -43,6 +46,7 @@ impl DungeonEntity {
                 _ => "chest_4",
             },
             Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
+            Self::Stairs { .. } => "stairs",
         }
     }
 

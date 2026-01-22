@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy::window::WindowResized;
 
-use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::assets::{DungeonTileSlice, GameSprites, SpriteSheetKey};
 use crate::dungeon::{
     DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState, GridOccupancy, GridPosition,
     GridSize, TileRenderer,
@@ -85,7 +85,12 @@ impl Plugin for DungeonScreenPlugin {
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
                 Update,
-                (handle_dungeon_movement, handle_back_action, handle_window_resize)
+                (
+                    handle_dungeon_movement,
+                    handle_back_action,
+                    handle_window_resize,
+                    advance_floor_system.run_if(resource_exists::<AdvanceFloor>),
+                )
                     .run_if(in_state(AppState::Dungeon)),
             );
     }
@@ -264,6 +269,24 @@ fn spawn_dungeon_screen(
                                             entity_node,
                                         )).id())
                                     }
+                                    DungeonEntity::Stairs { .. } => {
+                                        if let Some(img) =
+                                            tile_sheet.image_node(DungeonTileSlice::Stairs.as_str())
+                                        {
+                                            Some(grid.spawn((
+                                                DungeonEntityMarker {
+                                                    pos: *pos,
+                                                    size,
+                                                    entity_type: entity.clone(),
+                                                },
+                                                z_for_entity(pos.y),
+                                                img,
+                                                entity_node,
+                                            )).id())
+                                        } else {
+                                            None
+                                        }
+                                    }
                                 };
 
                                 // Populate occupancy with spawned entity (center cell only for collision)
@@ -387,6 +410,9 @@ fn handle_dungeon_movement(
                 DungeonEntity::Chest { .. } => {
                     // Block movement (chests are obstacles for now)
                 }
+                DungeonEntity::Stairs { .. } => {
+                    commands.insert_resource(AdvanceFloor);
+                }
             }
             continue;
         }
@@ -484,4 +510,221 @@ fn cleanup_dungeon(
     state.exit_dungeon();
     commands.remove_resource::<UiScale>();
     commands.remove_resource::<GridOccupancy>();
+}
+
+/// Resource that triggers advancing to the next dungeon floor.
+#[derive(Resource)]
+struct AdvanceFloor;
+
+fn advance_floor_system(
+    mut commands: Commands,
+    game_sprites: Res<GameSprites>,
+    window: Single<&Window>,
+    mut state: ResMut<DungeonState>,
+    root_query: Query<Entity, With<DungeonRoot>>,
+) {
+    commands.remove_resource::<AdvanceFloor>();
+
+    // Despawn current dungeon UI
+    for entity in &root_query {
+        commands.entity(entity).despawn_recursive();
+    }
+    commands.remove_resource::<UiScale>();
+    commands.remove_resource::<GridOccupancy>();
+
+    // Advance to a new floor (uses same layout template for now)
+    state.floor_index += 1;
+    state.load_floor_layout();
+
+    let Some(tile_sheet) = game_sprites.get(SpriteSheetKey::DungeonTileset) else {
+        return;
+    };
+    let Some(layout) = state.layout.as_ref() else {
+        return;
+    };
+
+    let scale = UiScale::calculate(window.height());
+    let tile_size = BASE_TILE * scale as f32;
+    commands.insert_resource(UiScale(scale));
+
+    let player_pos = state.player_pos;
+    let player_size = state.player_size;
+    let mut occupancy = GridOccupancy::new(layout.width(), layout.height());
+    let grid_width = tile_size * layout.width() as f32;
+    let grid_height = tile_size * layout.height() as f32;
+
+    commands
+        .spawn((
+            DungeonRoot,
+            Node {
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                flex_direction: FlexDirection::Column,
+                ..default()
+            },
+            BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
+        ))
+        .with_children(|parent| {
+            parent.spawn(PlayerStats);
+
+            parent
+                .spawn((
+                    DungeonContainer,
+                    Node {
+                        width: Val::Px(grid_width),
+                        height: Val::Px(grid_height),
+                        ..default()
+                    },
+                ))
+                .with_children(|container| {
+                    container
+                        .spawn((
+                            DungeonGrid,
+                            Node {
+                                display: Display::Grid,
+                                grid_template_columns: vec![GridTrack::px(tile_size); layout.width()],
+                                grid_template_rows: vec![GridTrack::px(tile_size); layout.height()],
+                                ..default()
+                            },
+                        ))
+                        .with_children(|grid| {
+                            for y in 0..layout.height() {
+                                for x in 0..layout.width() {
+                                    grid.spawn((
+                                        DungeonCell { x, y },
+                                        Node {
+                                            grid_column: GridPlacement::start(x as i16 + 1),
+                                            grid_row: GridPlacement::start(y as i16 + 1),
+                                            ..default()
+                                        },
+                                    ))
+                                    .with_children(|cell| {
+                                        if let Some((slice, flip_x)) =
+                                            TileRenderer::resolve(layout, x, y)
+                                        {
+                                            if let Some(mut img) =
+                                                tile_sheet.image_node(slice.as_str())
+                                            {
+                                                if flip_x {
+                                                    img.flip_x = true;
+                                                }
+                                                cell.spawn((
+                                                    img,
+                                                    Node {
+                                                        position_type: PositionType::Absolute,
+                                                        width: Val::Percent(100.0),
+                                                        height: Val::Percent(100.0),
+                                                        ..default()
+                                                    },
+                                                ));
+                                            }
+                                        }
+                                    });
+                                }
+                            }
+
+                            for (pos, entity) in layout.entities() {
+                                let size = entity.size();
+                                let width_px = size.width as f32 * tile_size;
+                                let height_px = size.height as f32 * tile_size;
+
+                                let entity_node = Node {
+                                    grid_column: GridPlacement::start_span(
+                                        pos.x as i16 + 1,
+                                        size.width as u16,
+                                    ),
+                                    grid_row: GridPlacement::start_span(
+                                        pos.y as i16 + 1,
+                                        size.height as u16,
+                                    ),
+                                    width: Val::Px(width_px),
+                                    height: Val::Px(height_px),
+                                    ..default()
+                                };
+
+                                let bevy_entity = match entity {
+                                    DungeonEntity::Chest { .. } => {
+                                        if let Some(entity_sheet) =
+                                            game_sprites.get(entity.sprite_sheet_key())
+                                        {
+                                            if let Some(img) =
+                                                entity_sheet.image_node(entity.sprite_name())
+                                            {
+                                                Some(grid.spawn((
+                                                    DungeonEntityMarker {
+                                                        pos: *pos,
+                                                        size,
+                                                        entity_type: *entity,
+                                                    },
+                                                    z_for_entity(pos.y),
+                                                    img,
+                                                    entity_node,
+                                                )).id())
+                                            } else {
+                                                None
+                                            }
+                                        } else {
+                                            None
+                                        }
+                                    }
+                                    DungeonEntity::Mob { mob_id, .. } => {
+                                        Some(grid.spawn((
+                                            DungeonEntityMarker {
+                                                pos: *pos,
+                                                size,
+                                                entity_type: *entity,
+                                            },
+                                            DungeonMobSprite { mob_id: *mob_id },
+                                            z_for_entity(pos.y),
+                                            entity_node,
+                                        )).id())
+                                    }
+                                    DungeonEntity::Stairs { .. } => {
+                                        if let Some(img) =
+                                            tile_sheet.image_node(DungeonTileSlice::Stairs.as_str())
+                                        {
+                                            Some(grid.spawn((
+                                                DungeonEntityMarker {
+                                                    pos: *pos,
+                                                    size,
+                                                    entity_type: *entity,
+                                                },
+                                                z_for_entity(pos.y),
+                                                img,
+                                                entity_node,
+                                            )).id())
+                                        } else {
+                                            None
+                                        }
+                                    }
+                                };
+
+                                if let Some(bevy_entity) = bevy_entity {
+                                    let center_pos = GridPosition::new(
+                                        pos.x + size.width as usize / 2,
+                                        pos.y + size.height as usize / 2,
+                                    );
+                                    occupancy.occupy(center_pos, GridSize::single(), bevy_entity);
+                                }
+                            }
+
+                            let player_entity = grid.spawn((
+                                DungeonPlayer,
+                                DungeonPlayerSprite,
+                                ZIndex(player_pos.y as i32 + 100),
+                                Node {
+                                    grid_column: GridPlacement::start_span(player_pos.x as i16 + 1, player_size.width as u16),
+                                    grid_row: GridPlacement::start_span(player_pos.y as i16 + 1, player_size.height as u16),
+                                    width: Val::Px(tile_size * player_size.width as f32),
+                                    height: Val::Px(tile_size * player_size.height as f32),
+                                    ..default()
+                                },
+                            )).id();
+
+                            occupancy.occupy(player_pos, player_size, player_entity);
+                        });
+                });
+        });
+
+    commands.insert_resource(occupancy);
 }

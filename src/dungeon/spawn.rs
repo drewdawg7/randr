@@ -27,6 +27,7 @@ pub struct SpawnTable {
     entries: Vec<SpawnEntry>,
     mob_count: RangeInclusive<u32>,
     chest_count: RangeInclusive<u32>,
+    stairs_count: RangeInclusive<u32>,
 }
 
 impl Default for SpawnTable {
@@ -41,6 +42,7 @@ impl SpawnTable {
             entries: Vec::new(),
             mob_count: 0..=0,
             chest_count: 0..=0,
+            stairs_count: 0..=0,
         }
     }
 
@@ -70,6 +72,12 @@ impl SpawnTable {
         self
     }
 
+    /// Add stairs count range (always 1x1).
+    pub fn stairs(mut self, count: RangeInclusive<u32>) -> Self {
+        self.stairs_count = count;
+        self
+    }
+
     pub fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) {
         // 1. Spawn chests first (1x1, prioritize)
         let chest_count = rng.gen_range(self.chest_count.clone());
@@ -87,7 +95,21 @@ impl SpawnTable {
             }
         }
 
-        // 2. Spawn mobs by weighted selection
+        // 2. Spawn stairs (1x1)
+        let stairs_count = rng.gen_range(self.stairs_count.clone());
+        for _ in 0..stairs_count {
+            let areas = layout.spawn_areas(GridSize::single());
+            if let Some(&pos) = areas.choose(rng) {
+                layout.add_entity(
+                    pos,
+                    DungeonEntity::Stairs {
+                        size: GridSize::single(),
+                    },
+                );
+            }
+        }
+
+        // 3. Spawn mobs by weighted selection
         let total_weight: u32 = self.entries.iter().map(|e| e.weight).sum();
         if total_weight == 0 {
             return;
