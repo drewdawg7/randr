@@ -19,5 +19,5 @@ pub use layout_builder::LayoutBuilder;
 pub use layouts::LayoutId;
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry};
 pub use rendering::TileRenderer;
-pub use spawn::SpawnTable;
+pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
 pub use tile::{Tile, TileType};

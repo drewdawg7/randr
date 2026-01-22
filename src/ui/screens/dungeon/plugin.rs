@@ -37,7 +37,8 @@ impl UiScale {
 #[derive(Resource)]
 pub struct DungeonState {
     pub layout: DungeonLayout,
-    pub player_pos: (usize, usize),
+    pub player_pos: GridPosition,
+    pub player_size: GridSize,
 }
 
 /// Marker component for grid cells with their coordinates.
@@ -105,13 +106,17 @@ fn spawn_dungeon_screen(
     let player_pos = layout
         .iter()
         .find(|(_, _, tile)| tile.tile_type == TileType::PlayerSpawn)
-        .map(|(x, y, _)| (x, y))
-        .unwrap_or((0, 0));
+        .map(|(x, y, _)| GridPosition::new(x, y))
+        .unwrap_or(GridPosition::new(0, 0));
+
+    // Player is 1x1 for now (supports future multi-cell player)
+    let player_size = GridSize::single();
 
     // Insert dungeon state resource
     commands.insert_resource(DungeonState {
         layout: layout.clone(),
         player_pos,
+        player_size,
     });
 
     // Initialize grid occupancy and populate with entities
@@ -256,27 +261,33 @@ fn spawn_dungeon_screen(
                                     }
                                 };
 
-                                // Populate occupancy with spawned entity
+                                // Populate occupancy with spawned entity (center cell only for collision)
                                 if let Some(bevy_entity) = bevy_entity {
-                                    occupancy.occupy(*pos, size, bevy_entity);
+                                    let center_pos = GridPosition::new(
+                                        pos.x + size.width as usize / 2,
+                                        pos.y + size.height as usize / 2,
+                                    );
+                                    occupancy.occupy(center_pos, GridSize::single(), bevy_entity);
                                 }
                             }
 
                             // Spawn player using grid span (high z-index to render on top)
-                            let (px, py) = player_pos;
-                            grid.spawn((
+                            let player_entity = grid.spawn((
                                 DungeonPlayer,
                                 DungeonPlayerSprite,
                                 // Player renders above all entities
-                                ZIndex(py as i32 + 100),
+                                ZIndex(player_pos.y as i32 + 100),
                                 Node {
-                                    grid_column: GridPlacement::start_span(px as i16 + 1, 1),
-                                    grid_row: GridPlacement::start_span(py as i16 + 1, 1),
-                                    width: Val::Px(tile_size),
-                                    height: Val::Px(tile_size),
+                                    grid_column: GridPlacement::start_span(player_pos.x as i16 + 1, player_size.width as u16),
+                                    grid_row: GridPlacement::start_span(player_pos.y as i16 + 1, player_size.height as u16),
+                                    width: Val::Px(tile_size * player_size.width as f32),
+                                    height: Val::Px(tile_size * player_size.height as f32),
                                     ..default()
                                 },
-                            ));
+                            )).id();
+
+                            // Add player to occupancy grid
+                            occupancy.occupy(player_pos, player_size, player_entity);
                         });
                 });
         });
@@ -285,22 +296,45 @@ fn spawn_dungeon_screen(
     commands.insert_resource(occupancy);
 }
 
+/// Check if all destination cells are walkable floor tiles.
+fn all_cells_walkable(layout: &DungeonLayout, pos: GridPosition, size: GridSize) -> bool {
+    pos.occupied_cells(size)
+        .all(|(x, y)| layout.is_walkable(x, y))
+}
+
+/// Check for entity collision and return the collided entity type if any.
+fn check_entity_collision(
+    occupancy: &GridOccupancy,
+    entity_query: &Query<&DungeonEntityMarker>,
+    pos: GridPosition,
+    size: GridSize,
+) -> Option<DungeonEntity> {
+    for (x, y) in pos.occupied_cells(size) {
+        if let Some(entity) = occupancy.entity_at(x, y) {
+            if let Ok(marker) = entity_query.get(entity) {
+                return Some(marker.entity_type.clone());
+            }
+        }
+    }
+    None
+}
+
 /// Handle arrow key movement in the dungeon.
 fn handle_dungeon_movement(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<DungeonState>,
+    mut occupancy: ResMut<GridOccupancy>,
     active_modal: Res<ActiveModal>,
-    mut player_query: Query<&mut Node, With<DungeonPlayer>>,
+    player_query: Single<(Entity, &mut Node), With<DungeonPlayer>>,
+    entity_query: Query<&DungeonEntityMarker>,
 ) {
     // Block movement if any modal is open
     if active_modal.modal.is_some() {
         return;
     }
 
-    let Ok(mut player_node) = player_query.get_single_mut() else {
-        return;
-    };
+    let (player_entity, mut player_node) = player_query.into_inner();
 
     for action in action_reader.read() {
         let GameAction::Navigate(direction) = action else {
@@ -314,38 +348,44 @@ fn handle_dungeon_movement(
             NavigationDirection::Right => (1, 0),
         };
 
-        let (cur_x, cur_y) = state.player_pos;
-        let new_x = (cur_x as i32 + dx).max(0) as usize;
-        let new_y = (cur_y as i32 + dy).max(0) as usize;
+        let new_pos = GridPosition::new(
+            (state.player_pos.x as i32 + dx).max(0) as usize,
+            (state.player_pos.y as i32 + dy).max(0) as usize,
+        );
 
-        // Check if target tile is a Floor
-        let is_floor = state
-            .layout
-            .tile_at(new_x, new_y)
-            .map(|t| t.tile_type == TileType::Floor)
-            .unwrap_or(false);
-
-        if !is_floor {
+        // Check if all destination cells are walkable
+        if !all_cells_walkable(&state.layout, new_pos, state.player_size) {
             continue;
         }
 
-        // Check what entity is at the target tile
-        match state.layout.entity_at(new_x, new_y) {
-            None => {
-                // Empty floor - move player by updating grid placement
-                state.player_pos = (new_x, new_y);
-                player_node.grid_column = GridPlacement::start_span(new_x as i16 + 1, 1);
-                player_node.grid_row = GridPlacement::start_span(new_y as i16 + 1, 1);
+        // Check for entity collision (any cell player would occupy)
+        if let Some(entity_type) = check_entity_collision(
+            &occupancy,
+            &entity_query,
+            new_pos,
+            state.player_size,
+        ) {
+            match entity_type {
+                DungeonEntity::Mob { mob_id, .. } => {
+                    // Trigger fight modal
+                    commands.insert_resource(FightModalMob { mob_id });
+                    commands.insert_resource(SpawnFightModal);
+                }
+                DungeonEntity::Chest { .. } => {
+                    // Block movement (chests are obstacles for now)
+                }
             }
-            Some(DungeonEntity::Mob { mob_id, .. }) => {
-                // Trigger fight modal
-                commands.insert_resource(FightModalMob { mob_id: *mob_id });
-                commands.insert_resource(SpawnFightModal);
-            }
-            Some(DungeonEntity::Chest { .. }) => {
-                // Block movement (chests are obstacles for now)
-            }
+            continue;
         }
+
+        // Update occupancy: vacate old position, occupy new position
+        occupancy.vacate(state.player_pos, state.player_size);
+        occupancy.occupy(new_pos, state.player_size, player_entity);
+
+        // Update state and visual position
+        state.player_pos = new_pos;
+        player_node.grid_column = GridPlacement::start_span(new_pos.x as i16 + 1, state.player_size.width as u16);
+        player_node.grid_row = GridPlacement::start_span(new_pos.y as i16 + 1, state.player_size.height as u16);
     }
 }
 
@@ -399,8 +439,8 @@ fn handle_window_resize(
 
             // Update player size (grid placement handles position automatically)
             if let Ok(mut player_node) = player_query.get_single_mut() {
-                player_node.width = Val::Px(tile_size);
-                player_node.height = Val::Px(tile_size);
+                player_node.width = Val::Px(tile_size * state.player_size.width as f32);
+                player_node.height = Val::Px(tile_size * state.player_size.height as f32);
             }
 
             // Update entity sizes based on their grid size

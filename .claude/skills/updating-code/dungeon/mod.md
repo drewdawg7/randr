@@ -228,17 +228,17 @@ let layout = LayoutBuilder::new(40, 21)
 - Spawn table applied automatically if set
 
 ### SpawnTable (`spawn.rs`)
-Declarative entity spawning with weighted mob selection:
+Declarative entity spawning with weighted mob selection and multi-cell entity support:
 ```rust
 use crate::dungeon::SpawnTable;
 use crate::mob::MobId;
 
 // Floor with weighted mob spawns and random chest count
 let spawn_table = SpawnTable::new()
-    .mob(MobId::Goblin, 5)   // 5/8 chance per mob spawn
-    .mob(MobId::Slime, 3)    // 3/8 chance per mob spawn
+    .mob(MobId::Goblin, 5)   // 5/8 chance per mob spawn (uses Goblin's grid_size)
+    .mob(MobId::Slime, 3)    // 3/8 chance per mob spawn (uses Slime's grid_size)
     .mob_count(3..=5)        // Spawn 3-5 mobs total
-    .chest(1..=2);           // Spawn 1 or 2 chests
+    .chest(1..=2);           // Spawn 1 or 2 chests (always 1x1)
 
 // Apply manually if not using LayoutBuilder
 spawn_table.apply(&mut layout, &mut rand::thread_rng());
@@ -250,17 +250,23 @@ let boss_spawns = SpawnTable::empty();
 let treasure = SpawnTable::new().chest(5..=8);
 ```
 
+**Types:**
+- `SpawnEntityType` - Enum for spawn entry types (`Mob(MobId)`)
+- `SpawnEntry` - Entry with `entity_type`, `weight`, and `size` fields
+
 **Methods:**
 - `new()` / `empty()` - Creates empty spawn table
-- `mob(MobId, weight)` - Adds mob type with relative spawn weight
+- `mob(MobId, weight)` - Adds mob type with weight; size auto-loaded from `MobSpec`
 - `mob_count(range)` - Sets mob count range (e.g., `2..=4`)
-- `chest(range)` - Sets chest count range (e.g., `1..=2`)
+- `chest(range)` - Sets chest count range (e.g., `1..=2`), always 1x1
 - `apply(&mut layout, &mut rng)` - Applies spawns to layout
 
 **Algorithm:**
-1. Shuffles all valid spawn points from `layout.spawn_points()`
-2. Spawns random chest count (range) first, each with variant 0-3
-3. Spawns random mob count using weighted selection from registered mobs
+1. Spawns random chest count (range) first, each with variant 0-3
+   - Uses `layout.spawn_areas(GridSize::single())` to find valid 1x1 positions
+2. Spawns random mob count using weighted selection from entries
+   - Uses `layout.spawn_areas(entry.size)` to find valid positions for each mob's size
+   - Entities never overlap due to `spawn_areas()` checking existing entities
 
 ### LayoutId (`layouts/mod.rs`)
 Registry of predefined layouts:
@@ -429,16 +435,17 @@ pub trait LayoutGenerator {
 
 ## Player Movement System
 
-Player movement in the dungeon tab is handled in `src/screens/town/tabs/dungeon.rs`.
+Player movement in the dungeon is handled in `src/ui/screens/dungeon/plugin.rs`.
 
 ### Components and Resources
 
 ```rust
-// Resource tracking player position and layout
+// Resource tracking player position, size, and layout
 #[derive(Resource)]
 pub struct DungeonState {
     pub layout: DungeonLayout,
-    pub player_pos: (usize, usize),
+    pub player_pos: GridPosition,
+    pub player_size: GridSize,  // Supports future multi-cell player
 }
 
 // Marker for grid cells with coordinates
@@ -448,24 +455,61 @@ pub struct DungeonCell { pub x: usize, pub y: usize }
 // Marker for the player entity
 #[derive(Component)]
 pub struct DungeonPlayer;
+
+// Resource tracking cell occupancy (separate from DungeonState)
+// See GridOccupancy in grid.rs
 ```
 
 ### Movement Rules
-- **Only `TileType::Floor` is walkable** (not Entrance, Exit, DoorOpen, PlayerSpawn)
-- Player cannot move onto tiles containing entities (chests, mobs)
+- **Only walkable tiles** via `layout.is_walkable(x, y)` (Floor tiles)
+- Player cannot move onto cells occupied by entities (checked via `GridOccupancy`)
 - Arrow keys trigger `GameAction::Navigate(NavigationDirection)` events
+- Colliding with a mob triggers the fight modal
+- Colliding with a chest blocks movement (chests are obstacles)
+
+### Multi-Cell Collision Detection
+
+Movement validation checks **all cells** the player would occupy:
+
+```rust
+// Check if all destination cells are walkable
+fn all_cells_walkable(layout: &DungeonLayout, pos: GridPosition, size: GridSize) -> bool {
+    pos.occupied_cells(size)
+        .all(|(x, y)| layout.is_walkable(x, y))
+}
+
+// Check for entity collision at any cell player would occupy
+fn check_entity_collision(
+    occupancy: &GridOccupancy,
+    entity_query: &Query<&DungeonEntityMarker>,
+    pos: GridPosition,
+    size: GridSize,
+) -> Option<DungeonEntity> {
+    for (x, y) in pos.occupied_cells(size) {
+        if let Some(entity) = occupancy.entity_at(x, y) {
+            // Return the entity type for collision handling
+        }
+    }
+    None
+}
+```
 
 ### How Movement Works
 1. `handle_dungeon_movement` listens for `GameAction::Navigate` events
-2. Calculates target position from direction
-3. Validates: target must be `TileType::Floor` AND have no entity
-4. Updates `DungeonState.player_pos`
-5. Re-parents player entity to target `DungeonCell` using `commands.entity(player).set_parent(cell)`
+2. Calculates target position from direction as `GridPosition`
+3. Validates all destination cells are walkable via `all_cells_walkable()`
+4. Checks for entity collisions via `GridOccupancy` using `check_entity_collision()`
+5. If collision with mob: triggers fight modal
+6. If collision with chest: blocks movement
+7. If no collision: updates `GridOccupancy` (vacate old, occupy new), updates `DungeonState.player_pos`
+8. Updates player grid placement via `grid_column`/`grid_row` Node properties
 
 ### Key Functions
-- `spawn_dungeon_content()` - spawns grid with `DungeonCell` markers, initializes `DungeonState`
-- `handle_dungeon_movement()` - processes arrow key input, validates moves, re-parents player
-- `cleanup_dungeon_state()` - removes `DungeonState` resource on tab exit
+- `spawn_dungeon_screen()` - spawns grid, entities, player, initializes `DungeonState` and `GridOccupancy`
+- `handle_dungeon_movement()` - processes arrow key input, validates via occupancy, handles collisions
+- `all_cells_walkable()` - checks if all player destination cells are walkable tiles
+- `check_entity_collision()` - uses `GridOccupancy` to detect entity at any destination cell
+- `cleanup_dungeon()` - removes `DungeonState`, `UiScale`, and `GridOccupancy` resources
 
 ## Adding a New Dungeon
 

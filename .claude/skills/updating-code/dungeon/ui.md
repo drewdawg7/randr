@@ -88,11 +88,19 @@ overlay.spawn((
 ```
 
 ## Player Movement
-Player movement updates `left`/`top` values directly:
+Player movement updates grid placement based on `GridPosition` and `GridSize`:
 ```rust
-player_node.left = Val::Px(new_x as f32 * tile_size);
-player_node.top = Val::Px(new_y as f32 * tile_size);
+// Update occupancy grid
+occupancy.vacate(state.player_pos, state.player_size);
+occupancy.occupy(new_pos, state.player_size, player_entity);
+
+// Update state and visual grid placement
+state.player_pos = new_pos;
+player_node.grid_column = GridPlacement::start_span(new_pos.x as i16 + 1, state.player_size.width as u16);
+player_node.grid_row = GridPlacement::start_span(new_pos.y as i16 + 1, state.player_size.height as u16);
 ```
+
+Movement validation uses `GridOccupancy` for multi-cell collision detection. See [mod.md](mod.md) for details.
 
 ## Window Resize
 `handle_window_resize` updates:
