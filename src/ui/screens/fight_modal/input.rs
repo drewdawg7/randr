@@ -2,10 +2,11 @@
 
 use bevy::prelude::*;
 
-use crate::input::GameAction;
+use crate::input::{GameAction, NavigationDirection};
+use crate::ui::SelectionState;
 
 use super::super::modal::{close_modal, ActiveModal, ModalType};
-use super::state::{FightModalMob, FightModalRoot};
+use super::state::{FightModalButtonSelection, FightModalMob, FightModalRoot};
 
 /// System to handle closing the fight modal.
 pub fn handle_fight_modal_close(
@@ -24,6 +25,21 @@ pub fn handle_fight_modal_close(
             )
         {
             commands.remove_resource::<FightModalMob>();
+            commands.remove_resource::<FightModalButtonSelection>();
+        }
+    }
+}
+
+/// System to handle left/right button navigation.
+pub fn handle_fight_modal_navigation(
+    mut action_reader: EventReader<GameAction>,
+    mut selection: ResMut<FightModalButtonSelection>,
+) {
+    for action in action_reader.read() {
+        match action {
+            GameAction::Navigate(NavigationDirection::Left) => selection.up(),
+            GameAction::Navigate(NavigationDirection::Right) => selection.down(),
+            _ => {}
         }
     }
 }

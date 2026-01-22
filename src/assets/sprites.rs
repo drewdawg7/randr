@@ -37,6 +37,9 @@ pub enum SpriteSheetKey {
     Chest4,
     FightBannerSlices,
     OkButton,
+    OkButtonSelected,
+    CancelButton,
+    CancelButtonSelected,
 }
 
 impl SpriteSheetKey {
@@ -70,6 +73,9 @@ impl SpriteSheetKey {
             Self::Chest4,
             Self::FightBannerSlices,
             Self::OkButton,
+            Self::OkButtonSelected,
+            Self::CancelButton,
+            Self::CancelButtonSelected,
         ]
     }
 
@@ -103,6 +109,9 @@ impl SpriteSheetKey {
             Self::Chest4 => "dungeon_entities/chest_4",
             Self::FightBannerSlices => "fight_banner_slices",
             Self::OkButton => "ok_button",
+            Self::OkButtonSelected => "ok_button_selected",
+            Self::CancelButton => "cancel_button",
+            Self::CancelButtonSelected => "cancel_button_selected",
         }
     }
 }

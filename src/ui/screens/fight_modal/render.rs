@@ -7,13 +7,17 @@ use crate::player::PlayerName;
 use crate::ui::widgets::spawn_three_slice_banner;
 
 use super::super::modal::{spawn_modal_overlay, ActiveModal, ModalType};
-use super::state::{FightModalMob, FightModalMobSprite, FightModalPlayerSprite, FightModalRoot, SpawnFightModal};
+use super::state::{
+    FightModalButton, FightModalButtonSelection, FightModalCancelButton, FightModalMob,
+    FightModalMobSprite, FightModalOkButton, FightModalPlayerSprite, FightModalRoot,
+    SpawnFightModal,
+};
 
 const SPRITE_SIZE: f32 = 128.0;
 const BANNER_WIDTH: f32 = 160.0;
 const CONTAINER_WIDTH: f32 = 400.0;
 const CONTAINER_HEIGHT: f32 = 250.0; // Increased to accommodate banners
-const BUTTON_SIZE: (f32, f32) = (48.0, 24.0);
+const BUTTON_SIZE: (f32, f32) = (27.0, 19.5);
 
 /// System to spawn the fight modal UI.
 pub fn spawn_fight_modal(
@@ -24,6 +28,7 @@ pub fn spawn_fight_modal(
     game_sprites: Res<GameSprites>,
 ) {
     commands.remove_resource::<SpawnFightModal>();
+    commands.init_resource::<FightModalButtonSelection>();
     active_modal.modal = Some(ModalType::FightModal);
 
     let overlay = spawn_modal_overlay(&mut commands);
@@ -77,12 +82,27 @@ pub fn spawn_fight_modal(
                                 },
                             ));
 
-                            // OK button below player sprite
-                            if let Some(sheet) = game_sprites.get(SpriteSheetKey::OkButton) {
-                                if let Some(bundle) = sheet.image_bundle("ok_button", BUTTON_SIZE.0, BUTTON_SIZE.1) {
-                                    column.spawn(bundle);
-                                }
-                            }
+                            // Button row below player sprite
+                            column
+                                .spawn(Node {
+                                    flex_direction: FlexDirection::Row,
+                                    column_gap: Val::Px(2.0),
+                                    ..default()
+                                })
+                                .with_children(|row| {
+                                    // OK button (left) - starts selected
+                                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::OkButtonSelected) {
+                                        if let Some(bundle) = sheet.image_bundle("ok_button_selected", BUTTON_SIZE.0, BUTTON_SIZE.1) {
+                                            row.spawn((FightModalOkButton, bundle));
+                                        }
+                                    }
+                                    // Cancel button (right) - starts unselected
+                                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::CancelButton) {
+                                        if let Some(bundle) = sheet.image_bundle("cancel_button", BUTTON_SIZE.0, BUTTON_SIZE.1) {
+                                            row.spawn((FightModalCancelButton, bundle));
+                                        }
+                                    }
+                                });
                         });
 
                     // Mob column (banner + sprite)
@@ -117,4 +137,48 @@ pub fn spawn_fight_modal(
                         });
                 });
         });
+}
+
+/// System to update button sprites based on selection state.
+pub fn update_button_sprites(
+    selection: Res<FightModalButtonSelection>,
+    game_sprites: Res<GameSprites>,
+    mut ok_query: Query<&mut ImageNode, (With<FightModalOkButton>, Without<FightModalCancelButton>)>,
+    mut cancel_query: Query<&mut ImageNode, (With<FightModalCancelButton>, Without<FightModalOkButton>)>,
+) {
+    if !selection.is_changed() {
+        return;
+    }
+
+    let ok_selected = selection.selected == FightModalButton::Ok;
+
+    // Update OK button
+    if let Ok(mut image) = ok_query.get_single_mut() {
+        let key = if ok_selected {
+            SpriteSheetKey::OkButtonSelected
+        } else {
+            SpriteSheetKey::OkButton
+        };
+        let sprite_name = if ok_selected { "ok_button_selected" } else { "ok_button" };
+        if let Some(sheet) = game_sprites.get(key) {
+            if let Some(node) = sheet.image_node(sprite_name) {
+                *image = node;
+            }
+        }
+    }
+
+    // Update Cancel button
+    if let Ok(mut image) = cancel_query.get_single_mut() {
+        let key = if ok_selected {
+            SpriteSheetKey::CancelButton
+        } else {
+            SpriteSheetKey::CancelButtonSelected
+        };
+        let sprite_name = if ok_selected { "cancel_button" } else { "cancel_button_selected" };
+        if let Some(sheet) = game_sprites.get(key) {
+            if let Some(node) = sheet.image_node(sprite_name) {
+                *image = node;
+            }
+        }
+    }
 }

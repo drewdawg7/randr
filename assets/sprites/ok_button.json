@@ -1,6 +1,6 @@
 {
   "frames": {
-    "ok_button": { "frame": {"x": 0, "y": 0, "w": 96, "h": 48} }
+    "ok_button": { "frame": {"x": 0, "y": 0, "w": 54, "h": 39} }
   },
-  "meta": { "size": {"w": 96, "h": 48} }
+  "meta": { "size": {"w": 54, "h": 39} }
 }
