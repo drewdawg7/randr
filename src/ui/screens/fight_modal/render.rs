@@ -4,29 +4,34 @@ use bevy::prelude::*;
 
 use crate::assets::{FightBannerSlice, GameSprites, SpriteSheetKey};
 use crate::player::PlayerName;
+use crate::stats::StatSheet;
+use crate::ui::screens::health_bar::SpriteHealthBar;
 use crate::ui::widgets::spawn_three_slice_banner;
 
 use super::super::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use super::state::{
     FightModalButton, FightModalButtonSelection, FightModalCancelButton, FightModalMob,
-    FightModalMobSprite, FightModalOkButton, FightModalPlayerSprite, FightModalRoot,
-    SpawnFightModal,
+    FightModalMobHealthBar, FightModalMobSprite, FightModalOkButton, FightModalPlayerHealthBar,
+    FightModalPlayerSprite, FightModalRoot, SpawnFightModal,
 };
 
 const SPRITE_SIZE: f32 = 128.0;
 const BANNER_WIDTH: f32 = 160.0;
 const CONTAINER_WIDTH: f32 = 400.0;
-const CONTAINER_HEIGHT: f32 = 250.0; // Increased to accommodate banners
+const CONTAINER_HEIGHT: f32 = 270.0; // Increased to accommodate health bars
 const BUTTON_SIZE: (f32, f32) = (27.0, 19.5);
+const HEALTH_BAR_SIZE: (f32, f32) = (120.0, 16.0);
 
 /// System to spawn the fight modal UI.
 pub fn spawn_fight_modal(
     mut commands: Commands,
     mob_res: Res<FightModalMob>,
     player_name: Res<PlayerName>,
+    stats: Res<StatSheet>,
     mut active_modal: ResMut<ActiveModal>,
     game_sprites: Res<GameSprites>,
 ) {
+    let _ = &stats; // Used for potential future HP display
     commands.remove_resource::<SpawnFightModal>();
     commands.init_resource::<FightModalButtonSelection>();
     active_modal.modal = Some(ModalType::FightModal);
@@ -71,6 +76,17 @@ pub fn spawn_fight_modal(
                                 BANNER_WIDTH,
                                 Some(player_name.0),
                             );
+
+                            // Health bar
+                            column.spawn((
+                                FightModalPlayerHealthBar,
+                                SpriteHealthBar,
+                                Node {
+                                    width: Val::Px(HEALTH_BAR_SIZE.0),
+                                    height: Val::Px(HEALTH_BAR_SIZE.1),
+                                    ..default()
+                                },
+                            ));
 
                             // Player sprite (facing right - default orientation)
                             column.spawn((
@@ -122,6 +138,17 @@ pub fn spawn_fight_modal(
                                 BANNER_WIDTH,
                                 Some(&mob_res.mob_id.spec().name),
                             );
+
+                            // Health bar
+                            column.spawn((
+                                FightModalMobHealthBar,
+                                SpriteHealthBar,
+                                Node {
+                                    width: Val::Px(HEALTH_BAR_SIZE.0),
+                                    height: Val::Px(HEALTH_BAR_SIZE.1),
+                                    ..default()
+                                },
+                            ));
 
                             // Mob sprite (flipped to face left)
                             column.spawn((

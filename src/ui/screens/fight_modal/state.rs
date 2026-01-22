@@ -102,3 +102,11 @@ pub struct FightModalOkButton;
 /// Marker component for the Cancel button.
 #[derive(Component)]
 pub struct FightModalCancelButton;
+
+/// Marker for player health bar in fight modal.
+#[derive(Component)]
+pub struct FightModalPlayerHealthBar;
+
+/// Marker for mob health bar in fight modal.
+#[derive(Component)]
+pub struct FightModalMobHealthBar;
