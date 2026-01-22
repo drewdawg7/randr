@@ -97,20 +97,52 @@ In `src/screens/town/tabs/dungeon.rs`, add match arm in entity rendering.
 
 ## Entity Rendering Architecture
 
+Entities render in an **overlay layer** on top of tiles to support multi-cell sprites:
+
 ```
-Dungeon Tab (dungeon.rs)           Mob Animation (mob_animation.rs)
+DungeonContainer
+├── DungeonGrid (tiles only)
+│   └── DungeonCell → Tile background
+└── EntityOverlay (renders on top)
+    ├── Player sprite
+    └── Entity sprites (Chest, Mob)
+```
+
+### Why Overlay?
+Without the overlay, multi-cell entities would be hidden behind neighboring tiles due to z-order (later grid cells render on top of earlier cells' overflow).
+
+### Entity Positioning
+Entities use absolute pixel positioning based on GridSize:
+```rust
+let size = entity.size();
+overlay.spawn((
+    DungeonMobSprite { mob_id },
+    Node {
+        position_type: PositionType::Absolute,
+        left: Val::Px(pos.x as f32 * tile_size),
+        top: Val::Px(pos.y as f32 * tile_size),
+        width: Val::Px(tile_size * size.width as f32),
+        height: Val::Px(tile_size * size.height as f32),
+        ..default()
+    },
+));
+```
+
+### Sprite Population Flow
+```
+EntityOverlay                      Mob Animation (mob_animation.rs)
 ┌─────────────────────────┐        ┌──────────────────────────────┐
-│ spawn_dungeon_content() │        │ populate_dungeon_mob_sprites │
+│ spawn entities:         │        │ populate_sprite_markers      │
 │   Chest → ImageNode     │        │   DungeonMobSprite marker    │
 │   Mob → DungeonMobSprite│───────>│   + MobSpriteSheets lookup   │
-│         marker only     │        │   = ImageNode + MobAnimation │
+│         marker only     │        │   = ImageNode + SpriteAnim   │
 └─────────────────────────┘        └──────────────────────────────┘
        No sprite knowledge              Handles sprite loading
 ```
 
 ### Key Components
 - `DungeonMobSprite { mob_id: MobId }` - Marker component in `src/ui/mob_animation.rs`
-- `populate_dungeon_mob_sprites()` - System that detects `Added<DungeonMobSprite>` and inserts sprite
+- `populate_sprite_markers()` - Generic system that detects `Added<DungeonMobSprite>` and inserts sprite
 
 ## Spawning Entities in Layouts
 

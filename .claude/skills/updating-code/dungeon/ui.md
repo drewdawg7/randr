@@ -1,6 +1,6 @@
 # Dungeon UI
 
-Dungeon screen rendering at `src/screens/dungeon/plugin.rs`.
+Dungeon screen rendering at `src/ui/screens/dungeon/plugin.rs`.
 
 ## DungeonPlugin
 Renders dungeon layout as a top-level screen (AppState::Dungeon).
@@ -19,17 +19,89 @@ for y in 0..layout.height() {
 }
 ```
 
+## UI Architecture
+
+The dungeon uses an **entity overlay** pattern to support multi-cell sprites:
+
+```
+DungeonRoot
+├── PlayerStats
+└── DungeonContainer (fixed pixel size)
+    ├── DungeonGrid (CSS Grid - tiles only)
+    │   └── DungeonCell (x, y)
+    │       └── Tile background (ImageNode)
+    └── EntityOverlay (absolute positioned, same size as grid)
+        ├── Player sprite (absolute: left/top in pixels)
+        └── Entity sprites (absolute: left/top, width/height based on GridSize)
+```
+
+### Why Entity Overlay?
+Multi-cell entities (2x2, 4x4) need to render ON TOP of all tiles. Without the overlay:
+- Grid cells spawn in order (0,0), (1,0)...
+- An entity at (5,3) overflows into neighboring cells
+- Later cells' tile backgrounds render ON TOP of the overflow
+- Result: entity hidden behind tiles
+
+The overlay solves this by rendering ALL entities after ALL tiles.
+
+### Key Components
+- `DungeonContainer` - Holds grid and overlay, sets pixel dimensions
+- `DungeonGrid` - CSS Grid containing only tile backgrounds
+- `EntityOverlay` - Absolute positioned layer for player + entities
+- `DungeonCell` - Grid cell marker (coordinates stored but unused after refactor)
+
 ## CSS Grid Rendering
 ```rust
-const TILE_SIZE: f32 = 48.0; // 16px * 3x scale
+let tile_size = BASE_TILE * scale as f32; // BASE_TILE = 8.0
 
-content.spawn(Node {
-    display: Display::Grid,
-    grid_template_columns: vec![GridTrack::px(TILE_SIZE); layout.width()],
-    grid_template_rows: vec![GridTrack::px(TILE_SIZE); layout.height()],
-    ..default()
-})
+container.spawn((
+    DungeonGrid,
+    Node {
+        display: Display::Grid,
+        grid_template_columns: vec![GridTrack::px(tile_size); layout.width()],
+        grid_template_rows: vec![GridTrack::px(tile_size); layout.height()],
+        ..default()
+    },
+))
 ```
+
+## Entity Positioning
+Entities use absolute pixel positioning within the overlay:
+```rust
+let size = entity.size();
+let x_px = pos.x as f32 * tile_size;
+let y_px = pos.y as f32 * tile_size;
+let w_px = tile_size * size.width as f32;
+let h_px = tile_size * size.height as f32;
+
+overlay.spawn((
+    DungeonMobSprite { mob_id },
+    Node {
+        position_type: PositionType::Absolute,
+        left: Val::Px(x_px),
+        top: Val::Px(y_px),
+        width: Val::Px(w_px),
+        height: Val::Px(h_px),
+        ..default()
+    },
+));
+```
+
+## Player Movement
+Player movement updates `left`/`top` values directly:
+```rust
+player_node.left = Val::Px(new_x as f32 * tile_size);
+player_node.top = Val::Px(new_y as f32 * tile_size);
+```
+
+## Window Resize
+`handle_window_resize` updates:
+1. Grid track sizes
+2. Container dimensions
+3. Overlay dimensions
+4. Player position and size
+
+Note: Entity positions are not updated on resize (set at spawn time).
 
 ## DungeonTileSlice
 Visual tile enum at `src/assets/sprite_slices.rs`:
@@ -52,6 +124,6 @@ Visual tile enum at `src/assets/sprite_slices.rs`:
 - Original: `/Users/drewstewart/Downloads/2D Dungeon Asset Pack_v5.2/character and tileset/`
 
 ## Screen Registration
-1. `DungeonPlugin` in `src/screens/dungeon/plugin.rs`
+1. `DungeonPlugin` in `src/ui/screens/dungeon/plugin.rs`
 2. Registered in `src/plugins/game.rs` (Screens and modals section)
 3. Uses `AppState::Dungeon` state (defined in `src/states/app_state.rs`)
