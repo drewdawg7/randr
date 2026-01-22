@@ -178,12 +178,13 @@ fn spawn_dungeon_screen(
                                             }
                                         }
 
-                                        // Spawn entity if present
-                                        if let Some(entity) = layout.entity_at(x, y) {
+                                        // Spawn entity if this is its anchor position
+                                        if let Some(entity) = layout.entity_anchored_at(x, y) {
+                                            let size = entity.size();
                                             let entity_node = Node {
                                                 position_type: PositionType::Absolute,
-                                                width: Val::Percent(100.0),
-                                                height: Val::Percent(100.0),
+                                                width: Val::Percent(100.0 * size.width as f32),
+                                                height: Val::Percent(100.0 * size.height as f32),
                                                 ..default()
                                             };
 

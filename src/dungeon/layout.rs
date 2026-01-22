@@ -102,6 +102,15 @@ impl DungeonLayout {
             .map(|(_, e)| e)
     }
 
+    /// Returns the entity only if (x, y) is its anchor (top-left) position.
+    /// Use this for rendering to avoid drawing multi-cell entities multiple times.
+    pub fn entity_anchored_at(&self, x: usize, y: usize) -> Option<&DungeonEntity> {
+        self.entities
+            .iter()
+            .find(|(pos, _)| pos.x == x && pos.y == y)
+            .map(|(_, e)| e)
+    }
+
     /// Find all valid spawn positions for an entity of given size.
     pub fn spawn_areas(&self, size: GridSize) -> Vec<GridPosition> {
         let mut valid = Vec::new();
