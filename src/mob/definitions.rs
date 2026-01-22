@@ -49,7 +49,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::SlimeGel, 3, 4, 1..=4)
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
-            grid_size: GridSize::new(4, 4),
+            grid_size: GridSize::new(2, 2),
         }
         Cow {
             name: String::from("Cow"),
@@ -62,7 +62,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::Cowhide, 3, 4, 1..=3)
                 .with(ItemId::GoldRing, 1, 1000, 1..=1),
-            grid_size: GridSize::new(4, 4),
+            grid_size: GridSize::new(2, 2),
         }
         Goblin {
             name: String::from("Goblin"),
@@ -76,7 +76,7 @@ entity_macros::define_entity! {
                 .with(ItemId::Sword, 1, 15, 1..=1)
                 .with(ItemId::BasicShield, 1, 15, 1..=1)
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
-            grid_size: GridSize::new(4, 4),
+            grid_size: GridSize::new(2, 2),
         }
         Dragon {
             name: String::from("Dragon"),
@@ -89,7 +89,7 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
                 .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
-            grid_size: GridSize::new(4, 4),
+            grid_size: GridSize::new(2, 2),
         }
     }
 }

@@ -111,8 +111,8 @@ impl DungeonState {
             .find(|(_, _, tile)| tile.tile_type == crate::dungeon::TileType::PlayerSpawn)
             .map_or(GridPosition::default(), |(x, y, _)| GridPosition::new(x, y));
 
-        // Default to single-cell player
-        self.player_size = GridSize::single();
+        // Player occupies 2x2 cells to match mob sizes
+        self.player_size = GridSize::new(2, 2);
 
         self.layout = Some(layout);
         self.layout.as_ref()
