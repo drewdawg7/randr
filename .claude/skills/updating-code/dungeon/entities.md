@@ -12,10 +12,17 @@ Entities that can be spawned on dungeon tiles.
 ### DungeonEntity Enum (`src/dungeon/entity.rs`)
 ```rust
 pub enum DungeonEntity {
-    Chest { variant: u8 },  // 4 visual variants (0-3)
-    Mob { mob_id: MobId },  // Any mob type (Goblin, Slime, etc.)
+    Chest { variant: u8, size: GridSize },  // 4 visual variants (0-3)
+    Mob { mob_id: MobId, size: GridSize },  // Any mob type (Goblin, Slime, etc.)
 }
 ```
+
+Each variant includes a `size: GridSize` field indicating how many grid cells the entity occupies. Access via `entity.size()`.
+
+### Grid Size
+- `GridSize::single()` - 1x1 cell (default for most entities)
+- `GridSize::new(w, h)` - Custom size (e.g., 2x2 for bosses)
+- Mobs get their size from `MobSpec::grid_size` (see `src/mob/definitions.rs`)
 
 ## Entity Types
 
@@ -46,11 +53,12 @@ The `DungeonMobSprite` marker and `populate_dungeon_mob_sprites` system handle t
 In `src/dungeon/entity.rs`:
 ```rust
 pub enum DungeonEntity {
-    Chest { variant: u8 },
-    Mob { mob_id: MobId },
-    Trap { variant: u8 },  // New static entity
+    Chest { variant: u8, size: GridSize },
+    Mob { mob_id: MobId, size: GridSize },
+    Trap { variant: u8, size: GridSize },  // New static entity
 }
 ```
+Update the `size()` method to handle the new variant.
 
 ### Step 2: Add Sprite Assets
 Create sprite sheet in `assets/sprites/dungeon_entities/`:
@@ -65,9 +73,17 @@ In `src/dungeon/entity.rs`:
 ```rust
 pub fn sprite_sheet_key(&self) -> SpriteSheetKey {
     match self {
-        Self::Chest { variant } => ...,
+        Self::Chest { variant, .. } => ...,
         Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
         Self::Trap { .. } => SpriteSheetKey::Trap,
+    }
+}
+
+pub fn size(&self) -> GridSize {
+    match self {
+        Self::Chest { size, .. } => *size,
+        Self::Mob { size, .. } => *size,
+        Self::Trap { size, .. } => *size,
     }
 }
 ```
@@ -111,17 +127,22 @@ LayoutBuilder::new(40, 21)
 
 **Manual spawning** (for special cases):
 ```rust
-use crate::dungeon::DungeonEntity;
+use crate::dungeon::{DungeonEntity, GridSize};
 use crate::mob::MobId;
 
 // Specific positions (e.g., boss placement)
-layout.add_entity(20, 10, DungeonEntity::Mob { mob_id: MobId::Dragon });
+let mob_id = MobId::Dragon;
+let size = mob_id.spec().grid_size;
+layout.add_entity(20, 10, DungeonEntity::Mob { mob_id, size });
 
 // Random positions with shuffle
 let mut spawn_points = layout.spawn_points();
 spawn_points.shuffle(&mut rng);
 for (x, y) in spawn_points.into_iter().take(3) {
-    layout.add_entity(x, y, DungeonEntity::Chest { variant: rng.gen_range(0..4) });
+    layout.add_entity(x, y, DungeonEntity::Chest {
+        variant: rng.gen_range(0..4),
+        size: GridSize::single(),
+    });
 }
 ```
 
