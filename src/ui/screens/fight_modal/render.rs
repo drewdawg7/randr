@@ -216,15 +216,11 @@ pub fn update_mob_health_bar(
     game_sprites: Res<GameSprites>,
     mut bar_query: Query<&mut ImageNode, With<FightModalMobHealthBar>>,
 ) {
-    if !fight_mob.is_changed() {
-        return;
-    }
-
-    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
+    let Ok(mut image) = bar_query.get_single_mut() else {
         return;
     };
 
-    let Ok(mut image) = bar_query.get_single_mut() else {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
     };
 
@@ -233,7 +229,9 @@ pub fn update_mob_health_bar(
 
     if let Some(index) = sheet.get(slice.as_str()) {
         if let Some(atlas) = &mut image.texture_atlas {
-            atlas.index = index;
+            if atlas.index != index {
+                atlas.index = index;
+            }
         }
     }
 }
@@ -244,15 +242,11 @@ pub fn update_player_health_bar(
     game_sprites: Res<GameSprites>,
     mut bar_query: Query<&mut ImageNode, With<FightModalPlayerHealthBar>>,
 ) {
-    if !stats.is_changed() {
-        return;
-    }
-
-    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
+    let Ok(mut image) = bar_query.get_single_mut() else {
         return;
     };
 
-    let Ok(mut image) = bar_query.get_single_mut() else {
+    let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
     };
 
@@ -261,7 +255,9 @@ pub fn update_player_health_bar(
 
     if let Some(index) = sheet.get(slice.as_str()) {
         if let Some(atlas) = &mut image.texture_atlas {
-            atlas.index = index;
+            if atlas.index != index {
+                atlas.index = index;
+            }
         }
     }
 }
