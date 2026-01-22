@@ -94,26 +94,34 @@ Dungeon Tab (dungeon.rs)           Mob Animation (mob_animation.rs)
 
 ## Spawning Entities in Layouts
 
-Example from `layouts/starting_room.rs` with collision prevention:
+**Preferred: Use SpawnTable** for declarative entity spawning:
 ```rust
-use rand::seq::SliceRandom;
+use crate::dungeon::{LayoutBuilder, SpawnTable};
+use crate::mob::MobId;
+
+LayoutBuilder::new(40, 21)
+    .entrance(20, 19)
+    .exit(20, 20)
+    .spawn(SpawnTable::new()
+        .mob(MobId::Goblin, 3)   // Weight 3 (more common)
+        .mob(MobId::Slime, 2)    // Weight 2 (less common)
+        .chest(1..=2))           // 1-2 chests randomly
+    .build()
+```
+
+**Manual spawning** (for special cases):
+```rust
 use crate::dungeon::DungeonEntity;
 use crate::mob::MobId;
 
-// Shuffle spawn points to get random positions without overlap
+// Specific positions (e.g., boss placement)
+layout.add_entity(20, 10, DungeonEntity::Mob { mob_id: MobId::Dragon });
+
+// Random positions with shuffle
 let mut spawn_points = layout.spawn_points();
 spawn_points.shuffle(&mut rng);
-let mut spawn_iter = spawn_points.into_iter();
-
-// Spawn entities (each on unique tile)
-if let Some((x, y)) = spawn_iter.next() {
+for (x, y) in spawn_points.into_iter().take(3) {
     layout.add_entity(x, y, DungeonEntity::Chest { variant: rng.gen_range(0..4) });
-}
-if let Some((x, y)) = spawn_iter.next() {
-    layout.add_entity(x, y, DungeonEntity::Mob { mob_id: MobId::Goblin });
-}
-if let Some((x, y)) = spawn_iter.next() {
-    layout.add_entity(x, y, DungeonEntity::Mob { mob_id: MobId::Slime });
 }
 ```
 

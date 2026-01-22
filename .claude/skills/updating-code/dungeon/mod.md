@@ -11,6 +11,7 @@ src/dungeon/
     grid.rs             # GridSize, GridPosition, GridOccupancy
     layout.rs           # DungeonLayout (tiles + entities)
     layout_builder.rs   # LayoutBuilder (declarative layout creation)
+    spawn.rs            # SpawnTable (declarative entity spawning)
     generator.rs        # LayoutGenerator trait
     rendering.rs        # TileRenderer (logical -> visual)
     layouts/
@@ -128,11 +129,16 @@ See [entities.md](entities.md) for detailed entity documentation.
 ### LayoutBuilder (`layout_builder.rs`)
 Declarative builder for creating dungeon layouts:
 ```rust
-use crate::dungeon::LayoutBuilder;
+use crate::dungeon::{LayoutBuilder, SpawnTable};
+use crate::mob::MobId;
 
 let layout = LayoutBuilder::new(40, 21)
     .entrance(20, 19)  // Interior position (player spawn)
     .exit(20, 20)      // Bottom wall (stairs/door)
+    .spawn(SpawnTable::new()
+        .mob(MobId::Goblin, 3)
+        .mob(MobId::Slime, 2)
+        .chest(1..=2))
     .build();
 ```
 
@@ -140,12 +146,49 @@ let layout = LayoutBuilder::new(40, 21)
 - `new(width, height)` - Creates grid with Floor interior, Wall border
 - `entrance(x, y)` - Sets player spawn (must be interior, not on walls)
 - `exit(x, y)` - Sets exit (must be on top or bottom wall)
+- `spawn(SpawnTable)` - Sets entity spawn rules (applied during build)
 - `build()` - Produces `DungeonLayout`, panics if entrance not set
 
 **Automatic features:**
 - 1-tile Wall border around edges
 - Interior filled with Floor tiles
 - Floor variant pattern `((x + y) % 3)` for visual variety
+- Spawn table applied automatically if set
+
+### SpawnTable (`spawn.rs`)
+Declarative entity spawning with weighted mob selection:
+```rust
+use crate::dungeon::SpawnTable;
+use crate::mob::MobId;
+
+// Floor with weighted mob spawns and random chest count
+let spawn_table = SpawnTable::new()
+    .mob(MobId::Goblin, 5)   // 5/8 chance per mob spawn
+    .mob(MobId::Slime, 3)    // 3/8 chance per mob spawn
+    .mob_count(3..=5)        // Spawn 3-5 mobs total
+    .chest(1..=2);           // Spawn 1 or 2 chests
+
+// Apply manually if not using LayoutBuilder
+spawn_table.apply(&mut layout, &mut rand::thread_rng());
+
+// Empty spawn table for boss rooms (no random spawns)
+let boss_spawns = SpawnTable::empty();
+
+// Treasure room (only chests, no mobs)
+let treasure = SpawnTable::new().chest(5..=8);
+```
+
+**Methods:**
+- `new()` / `empty()` - Creates empty spawn table
+- `mob(MobId, weight)` - Adds mob type with relative spawn weight
+- `mob_count(range)` - Sets mob count range (e.g., `2..=4`)
+- `chest(range)` - Sets chest count range (e.g., `1..=2`)
+- `apply(&mut layout, &mut rng)` - Applies spawns to layout
+
+**Algorithm:**
+1. Shuffles all valid spawn points from `layout.spawn_points()`
+2. Spawns random chest count (range) first, each with variant 0-3
+3. Spawns random mob count using weighted selection from registered mobs
 
 ### LayoutId (`layouts/mod.rs`)
 Registry of predefined layouts:
@@ -173,35 +216,22 @@ Wall rendering uses diagonal floor detection for corners:
 
 ## Adding New Layouts
 
-**Preferred: Use LayoutBuilder** for declarative layout creation:
+**Preferred: Use LayoutBuilder with SpawnTable** for declarative layout creation:
 
 1. Create `src/dungeon/layouts/my_layout.rs`:
 ```rust
-use crate::dungeon::{DungeonEntity, DungeonLayout, LayoutBuilder};
+use crate::dungeon::{DungeonLayout, LayoutBuilder, SpawnTable};
 use crate::mob::MobId;
-use rand::seq::SliceRandom;
-use rand::Rng;
 
 pub fn create() -> DungeonLayout {
-    let mut layout = LayoutBuilder::new(30, 20)
+    LayoutBuilder::new(30, 20)
         .entrance(15, 18)  // Player spawn (interior)
         .exit(15, 19)      // Exit at bottom wall
-        .build();
-
-    // Add entities (manual spawning until SpawnTable is available)
-    let mut spawn_points = layout.spawn_points();
-    let mut rng = rand::thread_rng();
-    spawn_points.shuffle(&mut rng);
-    let mut spawn_iter = spawn_points.into_iter();
-
-    if let Some((x, y)) = spawn_iter.next() {
-        layout.add_entity(x, y, DungeonEntity::Chest { variant: rng.gen_range(0..4) });
-    }
-    if let Some((x, y)) = spawn_iter.next() {
-        layout.add_entity(x, y, DungeonEntity::Mob { mob_id: MobId::Goblin });
-    }
-
-    layout
+        .spawn(SpawnTable::new()
+            .mob(MobId::Goblin, 3)
+            .mob(MobId::Slime, 2)
+            .chest(1..=2))
+        .build()
 }
 ```
 
@@ -222,7 +252,22 @@ impl LayoutId {
 }
 ```
 
-**Note:** Entity spawning is currently manual. SpawnTable (#342) will add declarative entity placement.
+**Special layout patterns:**
+```rust
+// Boss room - no random spawns, handle specially
+LayoutBuilder::new(40, 30)
+    .entrance(20, 28)
+    .exit(20, 0)
+    .spawn(SpawnTable::empty())  // Explicit: no random spawns
+    .build()
+
+// Treasure room - only chests
+LayoutBuilder::new(20, 15)
+    .entrance(10, 13)
+    .exit(10, 14)
+    .spawn(SpawnTable::new().chest(5..=8))
+    .build()
+```
 
 ## LayoutGenerator Trait
 For future procedural generation:

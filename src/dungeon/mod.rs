@@ -5,6 +5,7 @@ pub mod layout;
 pub mod layout_builder;
 pub mod layouts;
 pub mod rendering;
+pub mod spawn;
 pub mod tile;
 
 pub use entity::DungeonEntity;
@@ -14,4 +15,5 @@ pub use layout::DungeonLayout;
 pub use layout_builder::LayoutBuilder;
 pub use layouts::LayoutId;
 pub use rendering::TileRenderer;
+pub use spawn::SpawnTable;
 pub use tile::{Tile, TileType};

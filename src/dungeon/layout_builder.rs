@@ -13,6 +13,7 @@
 //! ```
 
 use super::layout::DungeonLayout;
+use super::spawn::SpawnTable;
 use super::tile::{Tile, TileType};
 
 /// A builder for creating dungeon layouts declaratively.
@@ -24,6 +25,7 @@ pub struct LayoutBuilder {
     height: usize,
     entrance: Option<(usize, usize)>,
     exit: Option<(usize, usize)>,
+    spawn_table: Option<SpawnTable>,
 }
 
 impl LayoutBuilder {
@@ -45,6 +47,7 @@ impl LayoutBuilder {
             height,
             entrance: None,
             exit: None,
+            spawn_table: None,
         }
     }
 
@@ -87,7 +90,32 @@ impl LayoutBuilder {
         self
     }
 
+    /// Sets a spawn table to apply when building the layout.
+    ///
+    /// The spawn table defines what entities should spawn on valid spawn points.
+    /// It is applied automatically during `build()`.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// LayoutBuilder::new(30, 20)
+    ///     .entrance(15, 18)
+    ///     .exit(15, 19)
+    ///     .spawn(SpawnTable::new()
+    ///         .mob(MobId::Goblin, 3)
+    ///         .mob(MobId::Slime, 2)
+    ///         .chest(1..=2))
+    ///     .build()
+    /// ```
+    pub fn spawn(mut self, spawn_table: SpawnTable) -> Self {
+        self.spawn_table = Some(spawn_table);
+        self
+    }
+
     /// Consumes the builder and produces the final `DungeonLayout`.
+    ///
+    /// If a spawn table was set via `spawn()`, it is applied automatically
+    /// using `rand::thread_rng()`.
     ///
     /// # Panics
     ///
@@ -141,6 +169,11 @@ impl LayoutBuilder {
         if let Some((x, y)) = self.exit {
             layout.set_tile(x, y, Tile::new(TileType::Exit));
             layout.exit = Some((x, y));
+        }
+
+        // Apply spawn table if set
+        if let Some(spawn_table) = self.spawn_table {
+            spawn_table.apply(&mut layout, &mut rand::thread_rng());
         }
 
         layout
