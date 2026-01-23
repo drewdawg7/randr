@@ -203,7 +203,24 @@ Arrow keys support key-repeat: pressing once emits a single `Navigate` event, ho
 3. **While held**: Emit events each time the repeating timer fires
 4. **Key released**: Reset state
 
-The repeat applies globally (dungeon movement, menu scrolling, etc.) since it's in the input system.
+The repeat applies to menu scrolling and other UI contexts. **Dungeon movement bypasses the key repeat system** — see below.
+
+### Dungeon Movement: Held-Key Bypass
+
+Dungeon movement (`handle_dungeon_movement`) does NOT rely on key repeat for continuous movement. Instead, it reads `Res<ButtonInput<KeyCode>>` directly via `held_direction()`. When interpolation finishes and a key is still held, the next movement starts immediately on the next frame — no 0.3s delay.
+
+```rust
+// Prefer events (initial press), fall back to held keys (continuous movement)
+let direction = action_reader
+    .read()
+    .find_map(|a| match a {
+        GameAction::Navigate(dir) => Some(*dir),
+        _ => None,
+    })
+    .or_else(|| held_direction(&keyboard));
+```
+
+This gives seamless tile-to-tile movement without pauses.
 
 ### Handling Multiple Keys
 

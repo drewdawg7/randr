@@ -22,9 +22,9 @@ pub enum DungeonEntity {
 Each variant includes a `size: GridSize` field indicating how many grid cells the entity occupies. Access via `entity.size()`.
 
 ### Grid Size
-- `GridSize::single()` - 1x1 cell (default for most entities)
-- `GridSize::new(w, h)` - Custom size (e.g., 2x2 for bosses)
-- Mobs get their size from `MobSpec::grid_size` (see `src/mob/definitions.rs`)
+- All entities are 1x1 in the logical grid (`GridSize::single()`)
+- Visual sprite size is controlled independently via `ENTITY_VISUAL_SCALE` (mobs render at 2x tile size, static entities at 1x)
+- `GridSize::new(w, h)` exists for future multi-cell entities but is not currently used
 
 ## EntityRenderData (`src/dungeon/entity.rs`)
 
@@ -141,11 +141,11 @@ Unified handler for mining/opening adjacent entities (chests and rocks).
   - `DungeonEntity::Rock { rock_type, .. }` → "{type} Rock Mined!"
 
 ### Adjacency Detection: `find_adjacent_minable()`
-For player at `(px, py)` with size `(w, h)`, checks border cells:
-- Top row: `(px..px+w, py-1)`
-- Bottom row: `(px..px+w, py+h)`
-- Left column: `(px-1, py..py+h)`
-- Right column: `(px+w, py..py+h)`
+For the 1x1 player at `(px, py)`, checks 4 cardinal neighbors:
+- Up: `(px, py-1)`
+- Down: `(px, py+1)`
+- Left: `(px-1, py)`
+- Right: `(px+1, py)`
 
 Each cell is checked in `GridOccupancy` for an entity, then the entity is queried for `DungeonEntityMarker` to confirm it's a `DungeonEntity::Chest` or `DungeonEntity::Rock`.
 
@@ -225,33 +225,39 @@ No changes needed in the renderer — it already handles all `SpriteSheet` varia
 
 ## Entity Rendering Architecture
 
-Entities render within the **DungeonGrid** using grid spans and Z-ordering:
+Entities render within the **EntityLayer** (absolute-positioned overlay):
 
 ```
-DungeonGrid (CSS Grid)
-├── DungeonCell (x, y) → Tile background
-├── Entity sprites (grid spans + ZIndex by Y)
-└── Player sprite (grid span + ZIndex(y + 100))
+DungeonContainer
+├── DungeonGrid (CSS Grid — tiles only)
+└── EntityLayer (position: absolute)
+    ├── Entity sprites (absolute left/top + ZIndex by Y)
+    └── Player sprite (absolute left/top + ZIndex(y + 100))
 ```
 
 ### Z-Order Strategy
 - Entities use `ZIndex(y)` so lower entities render on top of higher ones
 - Player uses `ZIndex(player_pos.y + 100)` to always render above entities
-- This avoids overflow issues since grid spans claim the correct cells
 
 ### Entity Positioning
-Entities use grid-span placement based on GridSize:
+Entities use absolute pixel positioning within EntityLayer:
 ```rust
-let size = entity.size();
-grid.spawn((
-    DungeonEntityMarker { pos, size, entity_type },
+let visual_size = match entity.render_data() {
+    EntityRenderData::AnimatedMob { .. } => ENTITY_VISUAL_SCALE * tile_size,
+    _ => tile_size,
+};
+let offset = -(visual_size - tile_size) / 2.0;
+
+layer.spawn((
+    DungeonEntityMarker { pos: *pos, entity_type: *entity },
     z_for_entity(pos.y),
     image_node,
     Node {
-        grid_column: GridPlacement::start_span(pos.x as i16 + 1, size.width as u16),
-        grid_row: GridPlacement::start_span(pos.y as i16 + 1, size.height as u16),
-        width: Val::Px(tile_size * size.width as f32),
-        height: Val::Px(tile_size * size.height as f32),
+        position_type: PositionType::Absolute,
+        left: Val::Px(pos.x as f32 * tile_size + offset),
+        top: Val::Px(pos.y as f32 * tile_size + offset),
+        width: Val::Px(visual_size),
+        height: Val::Px(visual_size),
         ..default()
     },
 ));

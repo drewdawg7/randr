@@ -24,7 +24,7 @@ for y in 0..layout.height() {
 All dungeon rendering is driven by the `DungeonFloor` component. Spawning it triggers an `OnAdd` observer that:
 1. Calculates `UiScale` from window dimensions
 2. Inserts `UiScale` resource
-3. Builds the full UI hierarchy (root, stats, container, grid, tiles, entities, player)
+3. Builds the full UI hierarchy (root, stats, container, tile grid, entity layer)
 4. Populates and inserts `GridOccupancy` resource
 5. Despawns the trigger entity (consumed)
 
@@ -44,7 +44,7 @@ commands.spawn(DungeonFloor {
 
 ### System Functions
 
-Both `spawn_dungeon_screen` and `advance_floor_system` are now ~10-15 lines of pure state management:
+Both `spawn_dungeon_screen` and `advance_floor_system` are ~10-15 lines of pure state management:
 
 ```rust
 // spawn_dungeon_screen: enters dungeon, loads layout, spawns DungeonFloor
@@ -70,31 +70,48 @@ fn advance_floor_system(mut commands: Commands, mut state: ResMut<DungeonState>,
 
 ## UI Architecture
 
-The dungeon uses **grid-span z-ordering** for entities:
+The dungeon uses a **two-layer system**: a CSS Grid for static tiles and an absolute-positioned overlay for entities/player:
 
 ```
 DungeonRoot
 ├── PlayerStats
 └── DungeonContainer (fixed pixel size)
-    └── DungeonGrid (CSS Grid)
-        ├── DungeonCell (x, y) - tile backgrounds
-        │   └── Tile background (ImageNode)
-        ├── Entity sprites (grid spans + ZIndex by Y position)
-        └── Player sprite (grid span + high ZIndex)
+    ├── DungeonGrid (CSS Grid — tiles only)
+    │   └── DungeonCell → Tile background (ImageNode)
+    └── EntityLayer (position: absolute, same size as grid)
+        ├── Entity nodes (position: absolute, left/top pixels)
+        └── Player node (position: absolute, left/top pixels, interpolated)
 ```
+
+### Why Two Layers
+- CSS Grid snaps items to cells — no in-between state for smooth movement
+- Tile backgrounds are static and benefit from grid layout
+- Entities and player need sub-cell pixel positioning for smooth interpolation
 
 ### Entity Z-Ordering
 Entities use `ZIndex(y)` so entities lower on the grid render on top of entities above them. The player uses `ZIndex(player_pos.y + 100)` to always render above entities.
 
 ### Key Components
 - `DungeonFloor` - Trigger component: spawning it renders the floor via observer
-- `DungeonContainer` - Holds the grid, sets pixel dimensions
-- `DungeonGrid` - CSS Grid containing tiles, entities, and player
-- `DungeonCell` - Grid cell marker (coordinates stored but unused after refactor)
+- `DungeonContainer` - Holds the grid and entity layer, sets pixel dimensions
+- `DungeonGrid` - CSS Grid containing only tile backgrounds
+- `EntityLayer` - Absolute-positioned overlay for entities and player
+- `DungeonCell` - Unit struct marker for grid cells
+- `SmoothPosition` - Pixel interpolation component (current/target/moving)
 
-## CSS Grid Rendering
+## Constants
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `DUNGEON_SCALE` | 1.5 | Scale factor for dungeon tiles |
+| `BASE_TILE_UNSCALED` | 8.0 | Original sprite size / 2 |
+| `BASE_TILE` | 12.0 | BASE_TILE_UNSCALED * DUNGEON_SCALE |
+| `MOVE_SPEED` | 6.0 | Tiles per second (movement speed) |
+| `ENTITY_VISUAL_SCALE` | 2.0 | Visual size multiplier for player/mobs |
+
+## CSS Grid Rendering (Tiles Only)
 ```rust
-let tile_size = BASE_TILE * scale as f32; // BASE_TILE = 8.0
+let tile_size = BASE_TILE * scale as f32; // BASE_TILE = 12.0
 
 container.spawn((
     DungeonGrid,
@@ -107,50 +124,112 @@ container.spawn((
 ))
 ```
 
-## Entity Positioning
-Entities use grid-span placement within the DungeonGrid:
-```rust
-let size = entity.size();
-let width_px = size.width as f32 * tile_size;
-let height_px = size.height as f32 * tile_size;
+## Entity Positioning (Absolute)
 
-grid.spawn((
-    DungeonEntityMarker { pos: *pos, size, entity_type: *entity },
-    z_for_entity(pos.y),  // ZIndex(y) for z-ordering
+Entities are positioned absolutely within the EntityLayer using pixel coordinates:
+```rust
+let visual_size = match entity.render_data() {
+    EntityRenderData::AnimatedMob { .. } => ENTITY_VISUAL_SCALE * tile_size,  // 2x for mobs
+    _ => tile_size,  // 1x for chests, rocks, stairs
+};
+let offset = -(visual_size - tile_size) / 2.0;  // Center on grid cell
+let left = pos.x as f32 * tile_size + offset;
+let top = pos.y as f32 * tile_size + offset;
+
+layer.spawn((
+    DungeonEntityMarker { pos: *pos, entity_type: *entity },
+    z_for_entity(pos.y),
     image_node,
     Node {
-        grid_column: GridPlacement::start_span(pos.x as i16 + 1, size.width as u16),
-        grid_row: GridPlacement::start_span(pos.y as i16 + 1, size.height as u16),
-        width: Val::Px(width_px),
-        height: Val::Px(height_px),
+        position_type: PositionType::Absolute,
+        left: Val::Px(left),
+        top: Val::Px(top),
+        width: Val::Px(visual_size),
+        height: Val::Px(visual_size),
         ..default()
     },
 ));
 ```
 
-## Player Movement
-Player movement updates grid placement based on `GridPosition` and `GridSize`:
-```rust
-// Update occupancy grid
-occupancy.vacate(state.player_pos, state.player_size);
-occupancy.occupy(new_pos, state.player_size, player_entity);
+### Visual Sizing
+- **Player/Mobs**: `ENTITY_VISUAL_SCALE * tile_size` (2x tile size) — centered on grid cell with negative offset
+- **Chests/Rocks/Stairs**: `tile_size` (1x) — exact grid cell size, no offset
 
-// Update state and visual grid placement
-state.player_pos = new_pos;
-player_node.grid_column = GridPlacement::start_span(new_pos.x as i16 + 1, state.player_size.width as u16);
-player_node.grid_row = GridPlacement::start_span(new_pos.y as i16 + 1, state.player_size.height as u16);
+### Grid Size
+All entities are 1x1 in the logical grid (`GridSize::single()`). Visual sprite size is controlled independently via `ENTITY_VISUAL_SCALE`. The old `ENTITY_GRID_SIZE` constant has been removed.
+
+## Smooth Movement System
+
+### SmoothPosition Component
+```rust
+#[derive(Component)]
+pub struct SmoothPosition {
+    pub current: Vec2,   // Current pixel position (interpolated each frame)
+    pub target: Vec2,    // Target pixel position (set on movement)
+    pub moving: bool,    // Whether currently animating toward target
+}
 ```
 
-Movement validation uses `GridOccupancy` for multi-cell collision detection. See [mod.md](mod.md) for details.
+### Interpolation System (`interpolate_positions`)
+Runs each frame, moves `current` toward `target` at constant speed:
+```rust
+let speed = MOVE_SPEED * tile_size;  // pixels per second
+let step = speed * time.delta_secs();
+pos.current += delta.normalize() * step.min(distance);
+// Snap when distance < 0.5px
+```
+
+### Movement Flow
+1. `handle_dungeon_movement` determines direction from events or held keys
+2. If `smooth_pos.moving`, input is blocked (one tile at a time)
+3. On valid move: update `DungeonState.player_pos`, `GridOccupancy`, set `smooth_pos.target`
+4. `interpolate_positions` smoothly moves sprite each frame
+5. When interpolation completes, next held-key input is accepted immediately
+
+### Held-Key Detection
+The movement handler bypasses the key repeat system for continuous movement:
+```rust
+// Prefer events (for initial press), fall back to held keys
+let direction = action_reader
+    .read()
+    .find_map(|a| match a {
+        GameAction::Navigate(dir) => Some(*dir),
+        _ => None,
+    })
+    .or_else(|| held_direction(&keyboard));
+```
+This eliminates the 0.3s initial repeat delay between tile movements.
+
+### Walk Animation
+- Animation only switches to walk frames on first movement (not reset on subsequent moves)
+- `PlayerWalkTimer` (0.3s) keeps walk animation playing between consecutive moves
+- Walk animation: frames 13-18, 0.08s/frame, looping
+- Reverts to idle 0.3s after last movement completes
+
+## Player Movement (Code)
+```rust
+// Update logical state
+occupancy.vacate(state.player_pos, state.player_size);
+occupancy.occupy(new_pos, state.player_size, player_entity);
+state.player_pos = new_pos;
+
+// Set interpolation target (replaces grid placement)
+let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
+smooth_pos.target = Vec2::new(
+    new_pos.x as f32 * tile_size + entity_offset,
+    new_pos.y as f32 * tile_size + entity_offset,
+);
+smooth_pos.moving = true;
+```
 
 ## Window Resize
 `handle_window_resize` updates:
 1. Grid track sizes (columns and rows)
 2. Container dimensions (width and height)
-3. Player size (width and height based on grid size)
-4. Entity sizes (width and height based on their GridSize)
-
-Grid placement (column/row spans) handles position automatically on resize.
+3. EntityLayer dimensions (width and height)
+4. Player `SmoothPosition` (recalculate current/target from grid pos)
+5. Player node (left, top, width, height)
+6. Entity nodes (left, top, width, height based on entity type)
 
 ## DungeonTileSlice
 Visual tile enum at `src/assets/sprite_slices.rs`:

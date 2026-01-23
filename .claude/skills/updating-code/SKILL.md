@@ -39,6 +39,8 @@ Read the relevant doc BEFORE making changes.
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
 | DungeonCommands, entity despawning, occupancy vacate | [dungeon/entities.md](dungeon/entities.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
+| Dungeon movement, SmoothPosition, interpolation | [dungeon/ui.md](dungeon/ui.md) |
+| EntityLayer, entity absolute positioning | [dungeon/ui.md](dungeon/ui.md) |
 | Animated tiles, torch walls, TorchWall | [dungeon/ui.md](dungeon/ui.md) |
 | Fight screen UI, action menu, post-combat overlay | [fight-screen.md](fight-screen.md) |
 | Fight modal, dungeon combat, mob encounters | [fight-modal.md](fight-modal.md) |

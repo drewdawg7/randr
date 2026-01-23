@@ -124,14 +124,21 @@ Sprites can switch between animations at runtime by mutating `SpriteAnimation` f
 ### Pattern: Timer-Based Animation Switch
 
 1. **Add alternate `AnimationConfig`** to the sprite sheet resource (e.g., `PlayerSpriteSheet::walk_animation`)
-2. **Add a timer component** (e.g., `PlayerWalkTimer(Timer)`) to the entity
-3. **On trigger** (e.g., successful movement), update `SpriteAnimation` fields and reset the timer:
+2. **Add a timer component** (e.g., `PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once))`) to the entity
+3. **On trigger** (e.g., successful movement), switch animation only if not already walking, then reset timer:
    ```rust
-   anim.first_frame = sheet.walk_animation.first_frame;
-   anim.last_frame = sheet.walk_animation.last_frame;
-   anim.current_frame = sheet.walk_animation.first_frame;
-   walk_timer.0.reset();
+   let already_walking = anim.first_frame == sheet.walk_animation.first_frame;
+   if !already_walking {
+       anim.first_frame = sheet.walk_animation.first_frame;
+       anim.last_frame = sheet.walk_animation.last_frame;
+       anim.current_frame = sheet.walk_animation.first_frame;
+       anim.frame_duration = sheet.walk_animation.frame_duration;
+       anim.synchronized = false;
+       anim.timer = Timer::from_seconds(sheet.walk_animation.frame_duration, TimerMode::Repeating);
+   }
+   walk_timer.0.reset();  // Always reset to keep animation alive during continuous movement
    ```
+   **Important**: Don't reset `current_frame` if already walking — this prevents choppy animation during held-key movement.
 4. **Revert system** ticks the timer and switches back to idle when it expires:
    ```rust
    fn revert_player_idle(time, sheet, query: Query<(&mut PlayerWalkTimer, &mut SpriteAnimation)>) {
@@ -142,6 +149,10 @@ Sprites can switch between animations at runtime by mutating `SpriteAnimation` f
        }
    }
    ```
+
+### Walk Animation Config
+- Frames 13-18, `frame_duration: 0.08`, looping, not synchronized
+- `PlayerWalkTimer`: 0.3s — slightly longer than one tile movement (~0.167s at 6 tiles/sec) to prevent idle flicker between consecutive moves
 
 ### Player Attack Animation (Fight Modal)
 
