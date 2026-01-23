@@ -25,15 +25,17 @@ use crate::ui::{DungeonMobSprite, DungeonPlayerSprite};
 /// Changing this adjusts both tile size and layout dimensions.
 pub const DUNGEON_SCALE: f32 = 1.5;
 
-/// Grid size for entities (player and mobs). Must be a positive integer.
-/// Use 2 for normal scale, 1 for 2x scale.
-pub const ENTITY_GRID_SIZE: u8 = 2;
-
 /// Base tile size before dungeon scaling (original sprite size / 2).
 const BASE_TILE_UNSCALED: f32 = 8.0;
 
 /// Actual tile size used for rendering (BASE_TILE_UNSCALED * DUNGEON_SCALE).
 pub const BASE_TILE: f32 = BASE_TILE_UNSCALED * DUNGEON_SCALE;
+
+/// Movement speed in tiles per second.
+const MOVE_SPEED: f32 = 6.0;
+
+/// Visual scale for player/mob sprites relative to tile size.
+const ENTITY_VISUAL_SCALE: f32 = 2.0;
 
 /// Resource tracking current UI scale factor (power of 2: 2, 4, 8, 16).
 #[derive(Resource)]
@@ -53,12 +55,24 @@ impl UiScale {
 }
 
 
-/// Marker component for grid cells with their coordinates.
+/// Tracks smooth pixel-based visual position for dungeon entities.
 #[derive(Component)]
-pub struct DungeonCell {
-    pub x: usize,
-    pub y: usize,
+pub struct SmoothPosition {
+    /// Current pixel position (interpolated each frame).
+    pub current: Vec2,
+    /// Target pixel position (set on movement).
+    pub target: Vec2,
+    /// Whether currently animating toward target.
+    pub moving: bool,
 }
+
+/// Marker for the absolute-positioned entity/player overlay layer.
+#[derive(Component)]
+struct EntityLayer;
+
+/// Marker component for grid cells.
+#[derive(Component)]
+pub struct DungeonCell;
 
 /// Marker component for the player entity in the dungeon.
 #[derive(Component)]
@@ -76,11 +90,10 @@ struct DungeonGrid;
 #[derive(Component)]
 struct DungeonContainer;
 
-/// Marker for entities placed on the dungeon grid with grid span positioning.
+/// Marker for entities placed on the dungeon grid.
 #[derive(Component)]
 pub struct DungeonEntityMarker {
     pub pos: GridPosition,
-    pub size: GridSize,
     pub entity_type: DungeonEntity,
 }
 
@@ -106,11 +119,13 @@ impl Plugin for DungeonScreenPlugin {
                 Update,
                 (
                     handle_dungeon_movement,
+                    interpolate_positions,
                     handle_mine_interaction,
                     handle_back_action,
                     handle_window_resize,
                     advance_floor_system.run_if(resource_exists::<AdvanceFloor>),
                 )
+                    .chain()
                     .run_if(in_state(AppState::Dungeon)),
             );
     }
@@ -174,6 +189,7 @@ fn on_add_dungeon_floor(
                     },
                 ))
                 .with_children(|container| {
+                    // Tile layer: CSS Grid for static tile backgrounds
                     container
                         .spawn((
                             DungeonGrid,
@@ -185,11 +201,10 @@ fn on_add_dungeon_floor(
                             },
                         ))
                         .with_children(|grid| {
-                            // Spawn tile backgrounds
                             for y in 0..layout.height() {
                                 for x in 0..layout.width() {
                                     grid.spawn((
-                                        DungeonCell { x, y },
+                                        DungeonCell,
                                         Node {
                                             grid_column: GridPlacement::start(x as i16 + 1),
                                             grid_row: GridPlacement::start(y as i16 + 1),
@@ -254,30 +269,45 @@ fn on_add_dungeon_floor(
                                     });
                                 }
                             }
+                        });
 
-                            // Spawn entities using grid spans (z-indexed by Y position)
+                    // Entity layer: absolute-positioned overlay for entities + player
+                    let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_size;
+                    let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
+
+                    container
+                        .spawn((
+                            EntityLayer,
+                            Node {
+                                position_type: PositionType::Absolute,
+                                width: Val::Px(grid_width),
+                                height: Val::Px(grid_height),
+                                ..default()
+                            },
+                        ))
+                        .with_children(|layer| {
+                            // Spawn entities with absolute positioning
                             for (pos, entity) in layout.entities() {
                                 let size = entity.size();
-                                let width_px = size.width as f32 * tile_size;
-                                let height_px = size.height as f32 * tile_size;
+                                let visual_size = match entity.render_data() {
+                                    EntityRenderData::AnimatedMob { .. } => entity_sprite_size,
+                                    _ => tile_size,
+                                };
+                                let offset = -(visual_size - tile_size) / 2.0;
+                                let left = pos.x as f32 * tile_size + offset;
+                                let top = pos.y as f32 * tile_size + offset;
 
                                 let entity_node = Node {
-                                    grid_column: GridPlacement::start_span(
-                                        pos.x as i16 + 1,
-                                        size.width as u16,
-                                    ),
-                                    grid_row: GridPlacement::start_span(
-                                        pos.y as i16 + 1,
-                                        size.height as u16,
-                                    ),
-                                    width: Val::Px(width_px),
-                                    height: Val::Px(height_px),
+                                    position_type: PositionType::Absolute,
+                                    left: Val::Px(left),
+                                    top: Val::Px(top),
+                                    width: Val::Px(visual_size),
+                                    height: Val::Px(visual_size),
                                     ..default()
                                 };
 
                                 let marker = DungeonEntityMarker {
                                     pos: *pos,
-                                    size,
                                     entity_type: *entity,
                                 };
 
@@ -285,7 +315,7 @@ fn on_add_dungeon_floor(
                                     EntityRenderData::SpriteSheet { sheet_key, sprite_name } => {
                                         game_sprites.get(sheet_key)
                                             .and_then(|sheet| sheet.image_node(sprite_name))
-                                            .map(|img| grid.spawn((
+                                            .map(|img| layer.spawn((
                                                 marker,
                                                 z_for_entity(pos.y),
                                                 img,
@@ -293,7 +323,7 @@ fn on_add_dungeon_floor(
                                             )).id())
                                     }
                                     EntityRenderData::AnimatedMob { mob_id } => {
-                                        Some(grid.spawn((
+                                        Some(layer.spawn((
                                             marker,
                                             DungeonMobSprite { mob_id },
                                             z_for_entity(pos.y),
@@ -303,25 +333,32 @@ fn on_add_dungeon_floor(
                                 };
 
                                 if let Some(bevy_entity) = bevy_entity {
-                                    let center_pos = GridPosition::new(
-                                        pos.x + size.width as usize / 2,
-                                        pos.y + size.height as usize / 2,
-                                    );
-                                    occupancy.occupy(center_pos, GridSize::single(), bevy_entity);
+                                    occupancy.occupy(*pos, size, bevy_entity);
                                 }
                             }
 
-                            // Spawn player (high z-index to render on top)
-                            let player_entity = grid.spawn((
+                            // Spawn player with absolute positioning + SmoothPosition
+                            let player_px = Vec2::new(
+                                player_pos.x as f32 * tile_size + entity_offset,
+                                player_pos.y as f32 * tile_size + entity_offset,
+                            );
+
+                            let player_entity = layer.spawn((
                                 DungeonPlayer,
                                 DungeonPlayerSprite,
-                                PlayerWalkTimer(Timer::from_seconds(0.6, TimerMode::Once)),
+                                PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
+                                SmoothPosition {
+                                    current: player_px,
+                                    target: player_px,
+                                    moving: false,
+                                },
                                 ZIndex(player_pos.y as i32 + 100),
                                 Node {
-                                    grid_column: GridPlacement::start_span(player_pos.x as i16 + 1, player_size.width as u16),
-                                    grid_row: GridPlacement::start_span(player_pos.y as i16 + 1, player_size.height as u16),
-                                    width: Val::Px(tile_size * player_size.width as f32),
-                                    height: Val::Px(tile_size * player_size.height as f32),
+                                    position_type: PositionType::Absolute,
+                                    left: Val::Px(player_px.x),
+                                    top: Val::Px(player_px.y),
+                                    width: Val::Px(entity_sprite_size),
+                                    height: Val::Px(entity_sprite_size),
                                     ..default()
                                 },
                             )).id();
@@ -388,9 +425,11 @@ fn handle_dungeon_movement(
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<DungeonState>,
     mut occupancy: ResMut<GridOccupancy>,
+    scale: Res<UiScale>,
+    keyboard: Res<ButtonInput<KeyCode>>,
     active_modal: Res<ActiveModal>,
     sheet: Res<PlayerSpriteSheet>,
-    mut player_query: Query<(Entity, &mut Node, &mut ImageNode, &mut SpriteAnimation, &mut PlayerWalkTimer), With<DungeonPlayer>>,
+    mut player_query: Query<(Entity, &mut SmoothPosition, &mut ImageNode, &mut SpriteAnimation, &mut PlayerWalkTimer), With<DungeonPlayer>>,
     entity_query: Query<&DungeonEntityMarker>,
 ) {
     // Block movement if any modal is open
@@ -398,87 +437,147 @@ fn handle_dungeon_movement(
         return;
     }
 
-    let Ok((player_entity, mut player_node, mut player_image, mut anim, mut walk_timer)) = player_query.get_single_mut() else {
+    let Ok((player_entity, mut smooth_pos, mut player_image, mut anim, mut walk_timer)) = player_query.get_single_mut() else {
         return;
     };
 
-    for action in action_reader.read() {
-        let GameAction::Navigate(direction) = action else {
-            continue;
-        };
+    // Block new movement while animating
+    if smooth_pos.moving {
+        return;
+    }
 
-        let (dx, dy): (i32, i32) = match direction {
-            NavigationDirection::Up => (0, -1),
-            NavigationDirection::Down => (0, 1),
-            NavigationDirection::Left => (-1, 0),
-            NavigationDirection::Right => (1, 0),
-        };
+    // Determine direction: prefer events (for initial press), fall back to held keys
+    let direction = action_reader
+        .read()
+        .find_map(|a| match a {
+            GameAction::Navigate(dir) => Some(*dir),
+            _ => None,
+        })
+        .or_else(|| held_direction(&keyboard));
 
-        let new_pos = GridPosition::new(
-            (state.player_pos.x as i32 + dx).max(0) as usize,
-            (state.player_pos.y as i32 + dy).max(0) as usize,
-        );
+    let Some(direction) = direction else {
+        return;
+    };
 
-        // Check if all destination cells are walkable
-        if !all_cells_walkable(state.layout.as_ref(), new_pos, state.player_size) {
-            continue;
-        }
+    let (dx, dy): (i32, i32) = match direction {
+        NavigationDirection::Up => (0, -1),
+        NavigationDirection::Down => (0, 1),
+        NavigationDirection::Left => (-1, 0),
+        NavigationDirection::Right => (1, 0),
+    };
 
-        // Check for entity collision (any cell player would occupy)
-        if let Some((entity_type, entity_id, entity_pos)) = check_entity_collision(
-            &occupancy,
-            &entity_query,
-            new_pos,
-            state.player_size,
-        ) {
-            match entity_type {
-                DungeonEntity::Mob { mob_id, .. } => {
-                    // Trigger fight modal with full mob data
-                    commands.insert_resource(FightModalMob {
-                        mob_id,
-                        mob: mob_id.spawn(),
-                        pos: entity_pos,
-                        entity: entity_id,
-                    });
-                    commands.insert_resource(SpawnFightModal);
-                }
-                DungeonEntity::Chest { .. } => {
-                    // Block movement (chests are obstacles)
-                }
-                DungeonEntity::Rock { .. } => {
-                    // Block movement (rocks are obstacles)
-                }
-                DungeonEntity::Stairs { .. } => {
-                    commands.insert_resource(AdvanceFloor);
-                }
+    let new_pos = GridPosition::new(
+        (state.player_pos.x as i32 + dx).max(0) as usize,
+        (state.player_pos.y as i32 + dy).max(0) as usize,
+    );
+
+    // Check if all destination cells are walkable
+    if !all_cells_walkable(state.layout.as_ref(), new_pos, state.player_size) {
+        return;
+    }
+
+    // Check for entity collision (any cell player would occupy)
+    if let Some((entity_type, entity_id, entity_pos)) = check_entity_collision(
+        &occupancy,
+        &entity_query,
+        new_pos,
+        state.player_size,
+    ) {
+        match entity_type {
+            DungeonEntity::Mob { mob_id, .. } => {
+                commands.insert_resource(FightModalMob {
+                    mob_id,
+                    mob: mob_id.spawn(),
+                    pos: entity_pos,
+                    entity: entity_id,
+                });
+                commands.insert_resource(SpawnFightModal);
             }
-            continue;
+            DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. } => {}
+            DungeonEntity::Stairs { .. } => {
+                commands.insert_resource(AdvanceFloor);
+            }
         }
+        return;
+    }
 
-        // Update occupancy: vacate old position, occupy new position
-        occupancy.vacate(state.player_pos, state.player_size);
-        occupancy.occupy(new_pos, state.player_size, player_entity);
+    // Update logical state
+    occupancy.vacate(state.player_pos, state.player_size);
+    occupancy.occupy(new_pos, state.player_size, player_entity);
+    state.player_pos = new_pos;
 
-        // Update state and visual position
-        state.player_pos = new_pos;
-        player_node.grid_column = GridPlacement::start_span(new_pos.x as i16 + 1, state.player_size.width as u16);
-        player_node.grid_row = GridPlacement::start_span(new_pos.y as i16 + 1, state.player_size.height as u16);
+    // Set interpolation target
+    let tile_size = BASE_TILE * scale.0 as f32;
+    let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_size;
+    let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
+    smooth_pos.target = Vec2::new(
+        new_pos.x as f32 * tile_size + entity_offset,
+        new_pos.y as f32 * tile_size + entity_offset,
+    );
+    smooth_pos.moving = true;
 
-        // Flip sprite based on horizontal direction
-        match direction {
-            NavigationDirection::Left => player_image.flip_x = true,
-            NavigationDirection::Right => player_image.flip_x = false,
-            _ => {}
-        }
+    // Flip sprite based on horizontal direction
+    match direction {
+        NavigationDirection::Left => player_image.flip_x = true,
+        NavigationDirection::Right => player_image.flip_x = false,
+        _ => {}
+    }
 
-        // Switch to walk animation and reset timer
+    // Switch to walk animation (don't reset frame if already walking)
+    let already_walking = anim.first_frame == sheet.walk_animation.first_frame;
+    if !already_walking {
         anim.first_frame = sheet.walk_animation.first_frame;
         anim.last_frame = sheet.walk_animation.last_frame;
         anim.current_frame = sheet.walk_animation.first_frame;
         anim.frame_duration = sheet.walk_animation.frame_duration;
         anim.synchronized = false;
         anim.timer = Timer::from_seconds(sheet.walk_animation.frame_duration, TimerMode::Repeating);
-        walk_timer.0.reset();
+    }
+    walk_timer.0.reset();
+}
+
+/// Check which arrow key is currently held (if any).
+fn held_direction(keyboard: &ButtonInput<KeyCode>) -> Option<NavigationDirection> {
+    if keyboard.pressed(KeyCode::ArrowLeft) {
+        Some(NavigationDirection::Left)
+    } else if keyboard.pressed(KeyCode::ArrowRight) {
+        Some(NavigationDirection::Right)
+    } else if keyboard.pressed(KeyCode::ArrowUp) {
+        Some(NavigationDirection::Up)
+    } else if keyboard.pressed(KeyCode::ArrowDown) {
+        Some(NavigationDirection::Down)
+    } else {
+        None
+    }
+}
+
+/// Interpolates entity positions smoothly toward their targets each frame.
+fn interpolate_positions(
+    time: Res<Time>,
+    scale: Res<UiScale>,
+    mut query: Query<(&mut SmoothPosition, &mut Node)>,
+) {
+    let tile_size = BASE_TILE * scale.0 as f32;
+    let speed = MOVE_SPEED * tile_size;
+
+    for (mut pos, mut node) in &mut query {
+        if !pos.moving {
+            continue;
+        }
+
+        let delta = pos.target - pos.current;
+        let distance = delta.length();
+
+        if distance < 0.5 {
+            pos.current = pos.target;
+            pos.moving = false;
+        } else {
+            let step = speed * time.delta_secs();
+            pos.current += delta.normalize() * step.min(distance);
+        }
+
+        node.left = Val::Px(pos.current.x);
+        node.top = Val::Px(pos.current.y);
     }
 }
 
@@ -552,7 +651,7 @@ fn handle_mine_interaction(
 }
 
 /// Find an adjacent minable entity (chest or rock) to the player's current position.
-/// Returns the bevy Entity, GridPosition, and DungeonEntity type if found.
+/// Checks the 4 cardinal directions from the player's 1x1 cell.
 fn find_adjacent_minable(
     state: &DungeonState,
     occupancy: &GridOccupancy,
@@ -560,36 +659,19 @@ fn find_adjacent_minable(
 ) -> Option<(Entity, GridPosition, DungeonEntity)> {
     let px = state.player_pos.x;
     let py = state.player_pos.y;
-    let w = state.player_size.width as usize;
-    let h = state.player_size.height as usize;
 
-    // Collect adjacent cells (border around player's occupied area)
-    let mut adjacent_cells = Vec::new();
+    let adjacent_cells: [(i32, i32); 4] = [
+        (px as i32, py as i32 - 1), // up
+        (px as i32, py as i32 + 1), // down
+        (px as i32 - 1, py as i32), // left
+        (px as i32 + 1, py as i32), // right
+    ];
 
-    // Top row (y = py - 1)
-    if py > 0 {
-        for x in px..px + w {
-            adjacent_cells.push((x, py - 1));
-        }
-    }
-    // Bottom row (y = py + h)
-    for x in px..px + w {
-        adjacent_cells.push((x, py + h));
-    }
-    // Left column (x = px - 1)
-    if px > 0 {
-        for y in py..py + h {
-            adjacent_cells.push((px - 1, y));
-        }
-    }
-    // Right column (x = px + w)
-    for y in py..py + h {
-        adjacent_cells.push((px + w, y));
-    }
-
-    // Check each adjacent cell for a minable entity (chest or rock)
     for (x, y) in adjacent_cells {
-        if let Some(entity) = occupancy.entity_at(x, y) {
+        if x < 0 || y < 0 {
+            continue;
+        }
+        if let Some(entity) = occupancy.entity_at(x as usize, y as usize) {
             if let Ok(marker) = entity_query.get(entity) {
                 if matches!(marker.entity_type, DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. }) {
                     return Some((entity, marker.pos, marker.entity_type));
@@ -618,9 +700,10 @@ fn handle_window_resize(
     state: Res<DungeonState>,
     mut scale: ResMut<UiScale>,
     mut grid_query: Query<&mut Node, With<DungeonGrid>>,
-    mut container_query: Query<&mut Node, (With<DungeonContainer>, Without<DungeonGrid>, Without<DungeonPlayer>)>,
-    mut player_query: Query<&mut Node, (With<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>)>,
-    mut entity_query: Query<(&DungeonEntityMarker, &mut Node), (Without<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>)>,
+    mut container_query: Query<&mut Node, (With<DungeonContainer>, Without<DungeonGrid>, Without<DungeonPlayer>, Without<EntityLayer>)>,
+    mut layer_query: Query<&mut Node, (With<EntityLayer>, Without<DungeonGrid>, Without<DungeonContainer>, Without<DungeonPlayer>)>,
+    mut player_query: Query<(&mut Node, &mut SmoothPosition), (With<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>, Without<EntityLayer>)>,
+    mut entity_query: Query<(&DungeonEntityMarker, &mut Node), (Without<DungeonPlayer>, Without<DungeonGrid>, Without<DungeonContainer>, Without<EntityLayer>)>,
 ) {
     let Some(layout) = state.layout.as_ref() else {
         return;
@@ -651,16 +734,41 @@ fn handle_window_resize(
                 container_node.height = Val::Px(grid_height);
             }
 
-            // Update player size (grid placement handles position automatically)
-            if let Ok(mut player_node) = player_query.get_single_mut() {
-                player_node.width = Val::Px(tile_size * state.player_size.width as f32);
-                player_node.height = Val::Px(tile_size * state.player_size.height as f32);
+            // Update entity layer dimensions
+            if let Ok(mut layer_node) = layer_query.get_single_mut() {
+                layer_node.width = Val::Px(grid_width);
+                layer_node.height = Val::Px(grid_height);
             }
 
-            // Update entity sizes based on their grid size
+            // Update player position and size
+            if let Ok((mut player_node, mut smooth_pos)) = player_query.get_single_mut() {
+                let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_size;
+                let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
+                let new_px = Vec2::new(
+                    state.player_pos.x as f32 * tile_size + entity_offset,
+                    state.player_pos.y as f32 * tile_size + entity_offset,
+                );
+                smooth_pos.current = new_px;
+                smooth_pos.target = new_px;
+                smooth_pos.moving = false;
+                player_node.left = Val::Px(new_px.x);
+                player_node.top = Val::Px(new_px.y);
+                player_node.width = Val::Px(entity_sprite_size);
+                player_node.height = Val::Px(entity_sprite_size);
+            }
+
+            // Update entity positions and sizes
+            let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_size;
             for (marker, mut entity_node) in entity_query.iter_mut() {
-                entity_node.width = Val::Px(marker.size.width as f32 * tile_size);
-                entity_node.height = Val::Px(marker.size.height as f32 * tile_size);
+                let visual_size = match marker.entity_type {
+                    DungeonEntity::Mob { .. } => entity_sprite_size,
+                    _ => tile_size,
+                };
+                let offset = -(visual_size - tile_size) / 2.0;
+                entity_node.left = Val::Px(marker.pos.x as f32 * tile_size + offset);
+                entity_node.top = Val::Px(marker.pos.y as f32 * tile_size + offset);
+                entity_node.width = Val::Px(visual_size);
+                entity_node.height = Val::Px(visual_size);
             }
         }
     }

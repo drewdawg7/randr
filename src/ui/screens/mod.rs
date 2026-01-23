@@ -13,7 +13,7 @@ pub mod profile_modal;
 pub mod town;
 pub mod results_modal;
 
-pub use dungeon::{DungeonScreenPlugin, DUNGEON_SCALE, ENTITY_GRID_SIZE};
+pub use dungeon::{DungeonScreenPlugin, DUNGEON_SCALE};
 pub use fight::FightPlugin;
 pub use fight_modal::FightModalPlugin;
 pub use monster_compendium::MonsterCompendiumPlugin;
