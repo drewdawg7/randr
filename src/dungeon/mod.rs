@@ -1,3 +1,4 @@
+pub mod commands;
 pub mod entity;
 pub mod floor;
 pub mod generator;
@@ -11,6 +12,7 @@ pub mod spawn;
 pub mod state;
 pub mod tile;
 
+pub use commands::DungeonCommands;
 pub use entity::{DungeonEntity, EntityRenderData};
 pub use floor::{FloorId, FloorSpec};
 pub use generator::LayoutGenerator;

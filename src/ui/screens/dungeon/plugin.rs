@@ -5,8 +5,8 @@ use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::chest::Chest;
 use crate::rock::{Rock, RockType};
 use crate::dungeon::{
-    DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState, EntityRenderData, GridOccupancy,
-    GridPosition, GridSize, TileRenderer, TileType,
+    DungeonCommands, DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState,
+    EntityRenderData, GridOccupancy, GridPosition, GridSize, TileRenderer, TileType,
 };
 use crate::ui::AnimationConfig;
 use crate::inventory::Inventory;
@@ -466,7 +466,7 @@ fn handle_mine_interaction(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     state: Res<DungeonState>,
-    mut occupancy: ResMut<GridOccupancy>,
+    occupancy: Res<GridOccupancy>,
     active_modal: Res<ActiveModal>,
     stats: Res<StatSheet>,
     mut inventory: ResMut<Inventory>,
@@ -514,8 +514,7 @@ fn handle_mine_interaction(
         collect_loot_drops(&mut *inventory, &loot_drops);
 
         // Despawn entity from dungeon
-        occupancy.vacate(entity_pos, GridSize::single());
-        commands.entity(entity_id).despawn_recursive();
+        commands.despawn_dungeon_entity(entity_id, entity_pos, GridSize::single());
 
         // Show results modal
         commands.insert_resource(ResultsModalData {
