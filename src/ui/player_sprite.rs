@@ -16,7 +16,7 @@ impl Plugin for PlayerSpritePlugin {
 
         app.init_resource::<PlayerSpriteSheet>()
             .add_systems(PreStartup, load_player_sprite_sheet)
-            .add_systems(Update, (animate_sprites, revert_player_idle))
+            .add_systems(Update, (animate_sprites, revert_player_idle, revert_attack_idle))
             .register_sprite_marker::<DungeonPlayerSprite>();
     }
 }
@@ -28,6 +28,7 @@ pub struct PlayerSpriteSheet {
     pub layout: Option<Handle<TextureAtlasLayout>>,
     pub animation: AnimationConfig,
     pub walk_animation: AnimationConfig,
+    pub attack_animation: AnimationConfig,
 }
 
 impl PlayerSpriteSheet {
@@ -41,6 +42,11 @@ impl PlayerSpriteSheet {
 /// When the timer expires, the player reverts to idle animation.
 #[derive(Component)]
 pub struct PlayerWalkTimer(pub Timer);
+
+/// Timer component that tracks how long the attack animation should play.
+/// When the timer expires, the player reverts to idle animation.
+#[derive(Component)]
+pub struct PlayerAttackTimer(pub Timer);
 
 /// Marker component for dungeon player sprites that need population.
 #[derive(Component)]
@@ -87,8 +93,31 @@ fn load_player_sprite_sheet(
         frame_duration: 0.1,
         looping: true,
     };
+    player_sheet.attack_animation = AnimationConfig {
+        first_frame: 39,
+        last_frame: 47,
+        frame_duration: 0.08,
+        looping: false,
+    };
 
     info!("Loaded player sprite sheet: MiniLightningWarrior");
+}
+
+/// Reverts the player sprite to idle animation when the attack timer expires.
+fn revert_attack_idle(
+    time: Res<Time>,
+    sheet: Res<PlayerSpriteSheet>,
+    mut query: Query<(&mut PlayerAttackTimer, &mut SpriteAnimation)>,
+) {
+    for (mut timer, mut anim) in &mut query {
+        timer.0.tick(time.delta());
+        if timer.0.just_finished() {
+            anim.first_frame = sheet.animation.first_frame;
+            anim.last_frame = sheet.animation.last_frame;
+            anim.current_frame = sheet.animation.first_frame;
+            anim.looping = true;
+        }
+    }
 }
 
 /// Reverts the player sprite to idle animation when the walk timer expires.

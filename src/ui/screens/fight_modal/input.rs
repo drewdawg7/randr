@@ -10,7 +10,7 @@ use crate::inventory::Inventory;
 use crate::loot::collect_loot_drops;
 use crate::player::{PlayerGold, PlayerGuard, PlayerName};
 use crate::stats::StatSheet;
-use crate::ui::SelectionState;
+use crate::ui::{PlayerAttackTimer, PlayerSpriteSheet, SelectionState, SpriteAnimation};
 
 use super::super::modal::{close_modal, ActiveModal, ModalType};
 use super::super::results_modal::{ResultsModalData, ResultsSprite, SpawnResultsModal};
@@ -66,6 +66,8 @@ pub fn handle_fight_modal_select(
     mut inventory: ResMut<Inventory>,
     mut stats: ResMut<StatSheet>,
     mut active_modal: ResMut<ActiveModal>,
+    sheet: Res<PlayerSpriteSheet>,
+    mut sprite_query: Query<(&mut SpriteAnimation, &mut PlayerAttackTimer)>,
     modal_query: Query<Entity, With<FightModalRoot>>,
 ) {
     for action in action_reader.read() {
@@ -86,6 +88,15 @@ pub fn handle_fight_modal_select(
 
                 // Player attacks mob
                 let result = attack(&*player, &mut fight_mob.mob);
+
+                // Switch to attack animation
+                if let Ok((mut anim, mut attack_timer)) = sprite_query.get_single_mut() {
+                    anim.first_frame = sheet.attack_animation.first_frame;
+                    anim.last_frame = sheet.attack_animation.last_frame;
+                    anim.current_frame = sheet.attack_animation.first_frame;
+                    anim.looping = false;
+                    attack_timer.0.reset();
+                }
 
                 if result.target_died {
                     // Apply victory rewards

@@ -9,6 +9,8 @@ use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBar};
 use crate::ui::widgets::spawn_three_slice_banner;
 
 use super::super::modal::{spawn_modal_overlay, ActiveModal, ModalType};
+use crate::ui::PlayerAttackTimer;
+
 use super::state::{
     FightModalButton, FightModalButtonSelection, FightModalCancelButton, FightModalMob,
     FightModalMobHealthBar, FightModalMobSprite, FightModalOkButton, FightModalPlayerHealthBar,
@@ -94,6 +96,7 @@ pub fn spawn_fight_modal(
                             // Player sprite (facing right - default orientation)
                             column.spawn((
                                 FightModalPlayerSprite,
+                                PlayerAttackTimer(Timer::from_seconds(0.72, TimerMode::Once)),
                                 Node {
                                     width: Val::Px(SPRITE_SIZE),
                                     height: Val::Px(SPRITE_SIZE),
