@@ -11,7 +11,7 @@ pub mod spawn;
 pub mod state;
 pub mod tile;
 
-pub use entity::DungeonEntity;
+pub use entity::{DungeonEntity, EntityRenderData};
 pub use floor::{FloorId, FloorSpec};
 pub use generator::LayoutGenerator;
 pub use grid::{GridOccupancy, GridPosition, GridSize};

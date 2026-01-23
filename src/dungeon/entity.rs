@@ -12,6 +12,17 @@ pub enum DungeonEntity {
     Rock { rock_type: RockType, size: GridSize },
 }
 
+/// Describes how a DungeonEntity should be rendered in the grid.
+pub enum EntityRenderData {
+    /// Static sprite from a named sprite sheet.
+    SpriteSheet {
+        sheet_key: SpriteSheetKey,
+        sprite_name: &'static str,
+    },
+    /// Animated mob sprite using the SpriteMarker observer system.
+    AnimatedMob { mob_id: MobId },
+}
+
 impl DungeonEntity {
     /// Returns the grid size for this entity.
     pub fn size(&self) -> GridSize {
@@ -23,25 +34,22 @@ impl DungeonEntity {
         }
     }
 
-    /// Returns the sprite sheet key for static entities.
-    /// Panics if called on a Mob entity (use `mob_id()` instead).
-    pub fn sprite_sheet_key(&self) -> SpriteSheetKey {
+    /// Returns rendering data for this entity.
+    pub fn render_data(&self) -> EntityRenderData {
         match self {
-            Self::Chest { .. } => SpriteSheetKey::Chests,
-            Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
-            Self::Stairs { .. } => SpriteSheetKey::DungeonTileset,
-            Self::Rock { .. } => SpriteSheetKey::Rocks,
-        }
-    }
-
-    /// Returns the sprite name for static entities.
-    /// Panics if called on a Mob entity (use `mob_id()` instead).
-    pub fn sprite_name(&self) -> &'static str {
-        match self {
-            Self::Chest { .. } => "Slice_1",
-            Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
-            Self::Stairs { .. } => "stairs",
-            Self::Rock { rock_type, .. } => rock_type.sprite_name(),
+            Self::Chest { .. } => EntityRenderData::SpriteSheet {
+                sheet_key: SpriteSheetKey::Chests,
+                sprite_name: "Slice_1",
+            },
+            Self::Rock { rock_type, .. } => EntityRenderData::SpriteSheet {
+                sheet_key: SpriteSheetKey::Rocks,
+                sprite_name: rock_type.sprite_name(),
+            },
+            Self::Stairs { .. } => EntityRenderData::SpriteSheet {
+                sheet_key: SpriteSheetKey::DungeonTileset,
+                sprite_name: "stairs",
+            },
+            Self::Mob { mob_id, .. } => EntityRenderData::AnimatedMob { mob_id: *mob_id },
         }
     }
 

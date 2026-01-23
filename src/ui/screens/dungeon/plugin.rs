@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 use bevy::window::WindowResized;
 
-use crate::assets::{DungeonTileSlice, GameSprites, SpriteSheetKey};
+use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::chest::Chest;
 use crate::rock::{Rock, RockType};
 use crate::dungeon::{
-    DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState, GridOccupancy, GridPosition,
-    GridSize, TileRenderer, TileType,
+    DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState, EntityRenderData, GridOccupancy,
+    GridPosition, GridSize, TileRenderer, TileType,
 };
 use crate::ui::AnimationConfig;
 use crate::inventory::Inventory;
@@ -251,88 +251,30 @@ fn render_dungeon_floor(commands: &mut Commands, ctx: &DungeonRenderContext) -> 
                                     ..default()
                                 };
 
-                                let bevy_entity = match entity {
-                                    DungeonEntity::Chest { .. } => {
-                                        if let Some(entity_sheet) =
-                                            game_sprites.get(entity.sprite_sheet_key())
-                                        {
-                                            if let Some(img) =
-                                                entity_sheet.image_node(entity.sprite_name())
-                                            {
-                                                Some(grid.spawn((
-                                                    DungeonEntityMarker {
-                                                        pos: *pos,
-                                                        size,
-                                                        entity_type: entity.clone(),
-                                                    },
-                                                    z_for_entity(pos.y),
-                                                    img,
-                                                    entity_node,
-                                                )).id())
-                                            } else {
-                                                None
-                                            }
-                                        } else {
-                                            None
-                                        }
+                                let marker = DungeonEntityMarker {
+                                    pos: *pos,
+                                    size,
+                                    entity_type: *entity,
+                                };
+
+                                let bevy_entity = match entity.render_data() {
+                                    EntityRenderData::SpriteSheet { sheet_key, sprite_name } => {
+                                        game_sprites.get(sheet_key)
+                                            .and_then(|sheet| sheet.image_node(sprite_name))
+                                            .map(|img| grid.spawn((
+                                                marker,
+                                                z_for_entity(pos.y),
+                                                img,
+                                                entity_node,
+                                            )).id())
                                     }
-                                    DungeonEntity::Mob { mob_id, .. } => {
+                                    EntityRenderData::AnimatedMob { mob_id } => {
                                         Some(grid.spawn((
-                                            DungeonEntityMarker {
-                                                pos: *pos,
-                                                size,
-                                                entity_type: entity.clone(),
-                                            },
-                                            DungeonMobSprite { mob_id: *mob_id },
+                                            marker,
+                                            DungeonMobSprite { mob_id },
                                             z_for_entity(pos.y),
                                             entity_node,
                                         )).id())
-                                    }
-                                    DungeonEntity::Stairs { .. } => {
-                                        if let Some(tile_sheet) = tile_sheet.as_ref() {
-                                            if let Some(img) =
-                                                tile_sheet.image_node(DungeonTileSlice::Stairs.as_str())
-                                            {
-                                                Some(grid.spawn((
-                                                    DungeonEntityMarker {
-                                                        pos: *pos,
-                                                        size,
-                                                        entity_type: entity.clone(),
-                                                    },
-                                                    z_for_entity(pos.y),
-                                                    img,
-                                                    entity_node,
-                                                )).id())
-                                            } else {
-                                                None
-                                            }
-                                        } else {
-                                            None
-                                        }
-                                    }
-                                    DungeonEntity::Rock { .. } => {
-                                        if let Some(entity_sheet) =
-                                            game_sprites.get(entity.sprite_sheet_key())
-                                        {
-                                            if let Some(img) =
-                                                entity_sheet.image_node(entity.sprite_name())
-                                            {
-                                                Some(grid.spawn((
-                                                    DungeonEntityMarker {
-                                                        pos: *pos,
-                                                        size,
-                                                        entity_type: entity.clone(),
-                                                    },
-                                                    z_for_entity(pos.y),
-                                                    img,
-                                                    entity_node,
-                                                )).id())
-                                            } else {
-                                                None
-                                            }
-                                        } else {
-                                            None
-                                        }
                                     }
                                 };
 
