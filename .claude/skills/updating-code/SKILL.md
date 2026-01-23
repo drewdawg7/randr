@@ -40,6 +40,7 @@ Read the relevant doc BEFORE making changes.
 | DungeonCommands, entity despawning, occupancy vacate | [dungeon/entities.md](dungeon/entities.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Animated tiles, torch walls, TorchWall | [dungeon/ui.md](dungeon/ui.md) |
+| Fight screen UI, action menu, post-combat overlay | [fight-screen.md](fight-screen.md) |
 | Fight modal, dungeon combat, mob encounters | [fight-modal.md](fight-modal.md) |
 | Results modal, post-fight/chest rewards, loot display | [results-modal.md](results-modal.md) |
 | Chest interaction, adjacency detection, chest loot | [dungeon/entities.md](dungeon/entities.md) |

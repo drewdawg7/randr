@@ -6,12 +6,13 @@ use crate::inventory::Inventory;
 use crate::stats::StatSheet;
 use crate::states::AppState;
 
+use super::actions::{despawn_post_combat_overlay, reset_fight_state, spawn_post_combat_overlay};
 use super::input::{handle_player_turn_input, handle_post_combat_input};
+use super::spawn::spawn_fight_screen;
 use super::state::FightScreenState;
-use super::ui::{
-    cleanup_fight_screen, despawn_post_combat_overlay, populate_fight_background,
-    populate_fight_popup, populate_mob_sprite, reset_fight_state, spawn_fight_screen,
-    spawn_post_combat_overlay, update_combat_visuals, update_enemy_name, SelectedFightBackground,
+use super::systems::{
+    cleanup_fight_screen, populate_fight_background, populate_fight_popup, populate_mob_sprite,
+    update_combat_visuals, update_enemy_name, SelectedFightBackground,
 };
 use crate::ui::init_sprite_health_bars;
 

@@ -4,6 +4,7 @@ use crate::combat::{PlayerCombatAction, PostCombatAction};
 use crate::input::{GameAction, NavigationDirection};
 use crate::ui::{update_menu_colors, MenuIndex, SelectionState};
 
+use super::actions::update_action_visuals;
 use super::components::{ActionMenuItem, PostCombatMenuItem};
 use super::state::{ActionSelection, FightScreenState, PostCombatSelection};
 
@@ -72,20 +73,3 @@ pub fn handle_post_combat_input(
     }
 }
 
-fn update_action_visuals(
-    state: &FightScreenState,
-    items: &mut Query<(&MenuIndex, &mut TextColor, &mut Text), With<ActionMenuItem>>,
-) {
-    let labels = ["Attack", "Run"];
-    for (menu_index, mut color, mut text) in items.iter_mut() {
-        let selected = menu_index.0 == state.action_selection;
-        let suffix = if selected { " <" } else { "" };
-        let text_color = if selected {
-            Color::srgb(0.15, 0.1, 0.05)
-        } else {
-            Color::srgb(0.4, 0.35, 0.3)
-        };
-        *color = TextColor(text_color);
-        **text = format!("{}{}", labels[menu_index.0], suffix);
-    }
-}
