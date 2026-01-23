@@ -170,7 +170,12 @@
       "Bash(git -C /Users/drewstewart/code/game show 3be8455:src/)",
       "Bash(git -C /Users/drewstewart/code/game show 3be8455 --stat)",
       "Bash(git pull:*)",
-      "Bash(magick:*)"
+      "Bash(magick:*)",
+      "Bash(git -C /Users/drewstewart/code/game checkout main)",
+      "Bash(git -C /Users/drewstewart/code/game merge refactor/inventory-modal-item-grid)",
+      "Bash(git -C /Users/drewstewart/code/game push)",
+      "Bash(git -C /Users/drewstewart/code/game add:*)",
+      "Bash(git -C /Users/drewstewart/code/game commit -m \"docs: add inventory modal documentation\")"
     ]
   },
   "enabledMcpjsonServers": [
