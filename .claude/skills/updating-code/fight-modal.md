@@ -55,6 +55,7 @@ Implements `SelectionState` trait for left/right navigation.
 
 3. **Attack Handling** (`input.rs:handle_fight_modal_select`)
    - Enter with OK: Player attacks mob using `combat::attack()`
+   - Triggers attack animation (frames 39-47) on player sprite via `PlayerAttackTimer`
    - If mob dies: Apply rewards, collect loot, despawn mob, close modal, spawn results modal
    - If mob survives: Mob counter-attacks player
    - If player dies: Process defeat, close modal
