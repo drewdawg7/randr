@@ -24,12 +24,7 @@ impl DungeonEntity {
     /// Panics if called on a Mob entity (use `mob_id()` instead).
     pub fn sprite_sheet_key(&self) -> SpriteSheetKey {
         match self {
-            Self::Chest { variant, .. } => match variant % 4 {
-                0 => SpriteSheetKey::Chest1,
-                1 => SpriteSheetKey::Chest2,
-                2 => SpriteSheetKey::Chest3,
-                _ => SpriteSheetKey::Chest4,
-            },
+            Self::Chest { .. } => SpriteSheetKey::Chests,
             Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
             Self::Stairs { .. } => SpriteSheetKey::DungeonTileset,
         }
@@ -39,12 +34,7 @@ impl DungeonEntity {
     /// Panics if called on a Mob entity (use `mob_id()` instead).
     pub fn sprite_name(&self) -> &'static str {
         match self {
-            Self::Chest { variant, .. } => match variant % 4 {
-                0 => "chest_1",
-                1 => "chest_2",
-                2 => "chest_3",
-                _ => "chest_4",
-            },
+            Self::Chest { .. } => "Slice_1",
             Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
             Self::Stairs { .. } => "stairs",
         }
