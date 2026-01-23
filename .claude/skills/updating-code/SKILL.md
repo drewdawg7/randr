@@ -67,6 +67,7 @@ Read the relevant doc BEFORE making changes.
 
 ## Documentation
 - Upon completion of a code change, documentation must be added to the updating-code skill.
+- **ALWAYS use the `update_docs.py` script** (via Bash) to write/edit documentation files. This avoids per-file permission prompts.
 - Each module should get its own file in .claude/updating-code. If a file starts to get close to 500 lines, create a subdirectory, break out the file, and place them all the subdirectory.
 - If any new files are created, update the documentation index above. The goal of the documentation index is to make it easy to find relevant code or guidance in the future.
 - Use examples, file names, function names, etc in the document to keep research quick and efficient.
@@ -75,3 +76,44 @@ Read the relevant doc BEFORE making changes.
 - When new files are added or files are changed update the documentation index.
 - Even if the change is consistent with existing coding patterns, it should still be added to the documentation to ensure similar changes are consistent in the future.
 - Consider if the documentation should be placed in multiple places. i.e., updating how blacksmith recipes work should go into blacksmith.md, and also possibly a recipes.md file.
+
+### update_docs.py Usage
+
+Script location: `.claude/scripts/update_docs.py`
+Paths are relative to `.claude/skills/updating-code/` by default.
+
+```bash
+# Write an entire file (creates dirs if needed)
+python3 .claude/scripts/update_docs.py write <file> "<content>"
+
+# Replace first unique occurrence of old with new
+python3 .claude/scripts/update_docs.py replace <file> "<old>" "<new>"
+
+# Replace ALL occurrences of old with new
+python3 .claude/scripts/update_docs.py replace_all <file> "<old>" "<new>"
+
+# Append content to end of file
+python3 .claude/scripts/update_docs.py append <file> "<content>"
+
+# Insert content immediately after a marker string
+python3 .claude/scripts/update_docs.py insert_after <file> "<marker>" "<content>"
+```
+
+Examples:
+```bash
+# Write a new doc file
+python3 .claude/scripts/update_docs.py write new-feature.md "# New Feature
+## Overview
+..."
+
+# Update a section in an existing doc
+python3 .claude/scripts/update_docs.py replace mob-sprites.md \
+  "| \`Goblin\` | \`goblin.png\`" \
+  "| \`Goblin\` | \`goblin.png\` (updated)"
+
+# Add a new row to the documentation index
+python3 .claude/scripts/update_docs.py insert_after SKILL.md \
+  "| Player stats banner" \
+  "
+| New feature, new system | [new-feature.md](new-feature.md) |"
+```

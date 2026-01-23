@@ -175,7 +175,15 @@
       "Bash(git -C /Users/drewstewart/code/game merge refactor/inventory-modal-item-grid)",
       "Bash(git -C /Users/drewstewart/code/game push)",
       "Bash(git -C /Users/drewstewart/code/game add:*)",
-      "Bash(git -C /Users/drewstewart/code/game commit -m \"docs: add inventory modal documentation\")"
+      "Bash(git -C /Users/drewstewart/code/game commit -m \"docs: add inventory modal documentation\")",
+      "Bash(convert:*)",
+      "Bash(brew list:*)",
+      "Bash(brew install:*)",
+      "Bash(for f in /Users/drewstewart/Downloads/sprites_no_outline/*.png)",
+      "Bash(\"$ASEPRITE\" --batch --help)",
+      "Bash(\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" --batch --version)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniGoblin.aseprite\" --sheet-type horizontal --sheet /Users/drewstewart/code/game/assets/sprites/mobs/goblin.png --data /Users/drewstewart/code/game/assets/sprites/mobs/goblin.json --format json-array)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniBigSlime.aseprite\" --sheet-type horizontal --sheet /Users/drewstewart/code/game/assets/sprites/mobs/slime.png --data /Users/drewstewart/code/game/assets/sprites/mobs/slime.json --format json-array)"
     ]
   },
   "enabledMcpjsonServers": [
