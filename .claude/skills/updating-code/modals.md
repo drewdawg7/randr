@@ -111,29 +111,13 @@ impl RegisteredModal for MyModal {
 **Modal opening is handled by the navigation system** (see [navigation.md](navigation.md)).
 
 The input.rs file only needs to handle:
-1. **Close handler** - Escape key to close the modal
-2. **Internal navigation** - Up/down, select actions within the modal
+1. **Internal navigation** - Up/down, select actions within the modal
+
+Close handling is automatic via `modal_close_system::<MyModal>` registered in the plugin.
+See [modal-registry.md](modal-registry.md) for details.
 
 ```rust
 use crate::ui::screens::modal::{ActiveModal, ModalType};
-use crate::ui::ModalCommands;
-
-/// Close with Escape
-pub fn handle_close(
-    mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
-) {
-    if active_modal.modal != Some(ModalType::MyModal) {
-        return;
-    }
-
-    for action in action_reader.read() {
-        if *action == GameAction::CloseModal {
-            commands.close_modal::<MyModal>();
-        }
-    }
-}
 
 /// Handle internal modal navigation
 pub fn handle_navigation(
@@ -178,13 +162,15 @@ pub fn spawn_modal(mut commands: Commands, ...) {
 Plugin struct (note: no toggle handler, handled by NavigationPlugin):
 
 ```rust
+use crate::ui::modal_registry::modal_close_system;
+
 pub struct MyModalPlugin;
 
 impl Plugin for MyModalPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MyModalSelection>()
             .add_systems(Update, (
-                handle_close,
+                modal_close_system::<MyModal>,
                 handle_navigation,
                 update_display,
                 trigger_spawn_modal.run_if(resource_exists::<SpawnMyModal>),

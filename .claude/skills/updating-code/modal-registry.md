@@ -118,25 +118,23 @@ fn trigger_spawn_modal(
 
 ## Close Handlers
 
-Modal close handlers now use `commands.close_modal::<M>()`:
+Use the generic `modal_close_system::<M>` instead of writing per-modal close handlers:
 
 ```rust
-pub fn handle_close(
-    mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
-) {
-    if active_modal.modal != Some(ModalType::MyModal) {
-        return;
-    }
+use crate::ui::modal_registry::modal_close_system;
 
-    for action in action_reader.read() {
-        if *action == GameAction::CloseModal {
-            commands.close_modal::<MyModal>();
-        }
-    }
-}
+// In your plugin:
+app.add_systems(Update, (
+    modal_close_system::<MyModal>,
+    // ... other systems
+));
 ```
+
+The generic system (defined in `src/ui/modal_registry.rs`) listens for `GameAction::CloseModal`
+and calls `commands.close_modal::<M>()` when the modal is active.
+
+**Note:** Modals with custom close logic (e.g., fight modal which removes extra resources,
+results modal which closes on both Select and CloseModal) should still use custom handlers.
 
 ## Navigation System Integration
 
