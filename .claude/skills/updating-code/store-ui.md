@@ -16,9 +16,9 @@ col.spawn(ItemGrid {
 });
 ```
 
-## CentralDetailPanel
+## ItemDetailPane
 
-Buy screen central panel (`src/ui/widgets/central_detail_panel.rs`) with nine-slice background using `DetailPanelSlice`.
+Buy screen central panel (`src/ui/widgets/item_detail_pane.rs`) with nine-slice background using `DetailPanelSlice`.
 
 Uses `InfoPanelSource` to determine which item to display:
 
@@ -29,7 +29,7 @@ pub enum InfoPanelSource {
 }
 ```
 
-The `populate_central_detail_panel` system in `panels.rs` renders item details using `ItemStatsDisplay` widget.
+The store's populate system in `panels.rs` renders item details using `ItemStatsDisplay` widget.
 
 ## Focus Toggle for Dual-Grid Layouts
 

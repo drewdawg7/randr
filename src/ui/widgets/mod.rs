@@ -1,4 +1,4 @@
-mod central_detail_panel;
+mod item_detail_pane;
 mod column;
 mod gold_display;
 mod icon_value_row;
@@ -12,7 +12,7 @@ mod stack;
 mod stat_row;
 mod three_slice;
 
-pub use central_detail_panel::{CentralDetailPanel, CentralDetailPanelPlugin};
+pub use item_detail_pane::{ItemDetailPane, ItemDetailPaneContent, ItemDetailPanePlugin};
 pub use column::{Column, ColumnPlugin};
 pub use nine_slice::spawn_nine_slice_panel;
 pub use row::{Row, RowPlugin};

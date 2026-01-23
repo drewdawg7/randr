@@ -12,7 +12,7 @@ Reusable widget components in `src/ui/widgets/`.
 | ItemStatsDisplay (stat lists) | [item_stats_display.md](item_stats_display.md) |
 | GoldDisplay (gold with coin icon) | [gold_display.md](gold_display.md) |
 | ItemGrid (5x5 item grid) | [item_grid.md](item_grid.md) |
-| CentralDetailPanel (item details) | [central_detail_panel.md](central_detail_panel.md) |
+| ItemDetailPane (item details panel) | [item_detail_pane.md](item_detail_pane.md) |
 | spawn_nine_slice_panel (nine-slice backgrounds) | [nine_slice.md](nine_slice.md) |
 | spawn_three_slice_banner (3-slice horizontal banners) | [three_slice.md](three_slice.md) |
 
