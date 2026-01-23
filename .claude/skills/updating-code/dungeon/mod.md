@@ -535,6 +535,32 @@ pub struct DungeonPlayer;
 // See GridOccupancy in grid.rs
 ```
 
+### DungeonRenderContext and render_dungeon_floor
+
+All dungeon floor rendering is done through a single shared function:
+
+```rust
+/// All parameters needed to render a dungeon floor.
+struct DungeonRenderContext<'a> {
+    layout: &'a DungeonLayout,
+    tile_size: f32,
+    player_pos: GridPosition,
+    player_size: GridSize,
+    game_sprites: &'a GameSprites,
+}
+
+/// Spawns the full dungeon UI hierarchy and returns GridOccupancy.
+fn render_dungeon_floor(commands: &mut Commands, ctx: &DungeonRenderContext) -> GridOccupancy
+```
+
+Both `spawn_dungeon_screen` and `advance_floor_system` construct a `DungeonRenderContext` and call `render_dungeon_floor`. The function handles:
+1. Spawning `DungeonRoot` with `PlayerStats`
+2. Building `DungeonContainer` and `DungeonGrid` with CSS Grid
+3. Tile loop: `TorchWall` animation vs `TileRenderer::resolve` for static tiles
+4. Entity loop: matching on `DungeonEntity` variants (Chest, Mob, Stairs, Rock)
+5. Player spawn with `DungeonPlayer` + `DungeonPlayerSprite`
+6. Populating and returning `GridOccupancy`
+
 ### Movement Rules
 - **Only walkable tiles** via `layout.is_walkable(x, y)` (Floor tiles)
 - Player cannot move onto cells occupied by entities (checked via `GridOccupancy`)
@@ -582,11 +608,12 @@ fn check_entity_collision(
 8. Updates player grid placement via `grid_column`/`grid_row` Node properties
 
 ### Key Functions
-- `spawn_dungeon_screen()` - enters dungeon, loads floor layout, spawns grid/entities/player, initializes `GridOccupancy`
+- `spawn_dungeon_screen()` - enters dungeon, loads floor layout, calls `render_dungeon_floor()`
+- `render_dungeon_floor()` - shared function that spawns the full dungeon UI hierarchy (root, stats, grid, tiles, entities, player) and returns `GridOccupancy`
 - `handle_dungeon_movement()` - processes arrow key input, validates via occupancy, handles collisions
 - `all_cells_walkable()` - checks if all player destination cells are walkable tiles
 - `check_entity_collision()` - uses `GridOccupancy` to detect entity at any destination cell
-- `advance_floor_system()` - triggered by `AdvanceFloor` resource; despawns UI, increments `floor_index`, regenerates layout, respawns dungeon screen
+- `advance_floor_system()` - triggered by `AdvanceFloor` resource; despawns UI, increments `floor_index`, regenerates layout, calls `render_dungeon_floor()`
 - `cleanup_dungeon()` - calls `state.exit_dungeon()`, removes `UiScale` and `GridOccupancy` resources
 
 ## Adding a New Dungeon

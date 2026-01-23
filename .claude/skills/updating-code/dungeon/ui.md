@@ -145,11 +145,11 @@ The door on the back wall (`TileType::Door`) renders as `Gate` (decorative entra
 
 - `SpriteSheetKey::TorchWall` - 3-frame torch wall animation (`torch_wall.json`, references `dungeon_tileset.png`)
 
-Both `spawn_dungeon_screen` and `advance_floor_system` check `tile.tile_type` before calling `TileRenderer::resolve`. For torch tiles, they use `image_bundle_animated()` with `AnimationConfig { first_frame: 0, last_frame: 2, frame_duration: 0.4 }`.
+The shared `render_dungeon_floor()` function handles both torch and regular tile rendering. It checks `tile.tile_type` before calling `TileRenderer::resolve`. For torch tiles, it uses `image_bundle_animated()` with `AnimationConfig { first_frame: 0, last_frame: 2, frame_duration: 0.4 }`.
 
 `TileRenderer::resolve()` returns `None` for `TorchWall` since it bypasses the static slice system.
 
-**Important:** Any tile rendering loop (initial spawn or floor advance) must include the `TorchWall` match arm. Using only `TileRenderer::resolve()` will skip torches since it returns `None` for them.
+**Important:** Any tile rendering loop must include the `TorchWall` match arm. Using only `TileRenderer::resolve()` will skip torches since it returns `None` for them.
 
 ### Flip Convention
 - Left walls: `flip_x = true`
