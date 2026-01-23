@@ -96,7 +96,7 @@ fn load_player_sprite_sheet(
     player_sheet.attack_animation = AnimationConfig {
         first_frame: 39,
         last_frame: 47,
-        frame_duration: 0.08,
+        frame_duration: 0.06,
         looping: false,
     };
 

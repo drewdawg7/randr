@@ -96,7 +96,7 @@ pub fn spawn_fight_modal(
                             // Player sprite (facing right - default orientation)
                             column.spawn((
                                 FightModalPlayerSprite,
-                                PlayerAttackTimer(Timer::from_seconds(0.72, TimerMode::Once)),
+                                PlayerAttackTimer(Timer::from_seconds(0.54, TimerMode::Once)),
                                 Node {
                                     width: Val::Px(SPRITE_SIZE),
                                     height: Val::Px(SPRITE_SIZE),
