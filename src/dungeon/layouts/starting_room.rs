@@ -12,8 +12,8 @@ pub fn create() -> DungeonLayout {
     let h = (ORIGINAL_H as f32 / DUNGEON_SCALE) as usize;
 
     LayoutBuilder::new(w, h)
-        .entrance(w / 2, h - 2) // Player spawn above exit
-        .exit(w / 2, h - 1) // Exit at bottom center
+        .entrance(w / 2, 1) // Player spawn in front of door
+        .door(w / 2, 0) // Decorative door on back wall
         .torches(2..=4)
         .spawn(
             SpawnTable::new()

@@ -152,12 +152,14 @@ pub enum TileType {
     Floor,      // Walkable
     Entrance,   // Player spawn
     Exit,       // Stairs/door
-    Door,       // Closed door
+    Door,       // Decorative door on back wall (impassable, renders as Gate)
     DoorOpen,   // Open door
-    PlayerSpawn,// Player spawn point
+    PlayerSpawn,// Player spawn point (renders as GateFloor)
     TorchWall,  // Animated torch on back wall (impassable)
 }
 ```
+
+**Door tiles**: `Door` is impassable. Placed on the back wall (y=0) by `LayoutBuilder::door(x, y)`. Rendered as `Gate` sprite. Used as a decorative entrance the player came from.
 
 **Torch tiles**: `TorchWall` is impassable (wall behavior). Rendered with a 3-frame animated sprite from `SpriteSheetKey::TorchWall`. Placed randomly on back wall (y=0) by `LayoutBuilder::torches(range)`.
 
@@ -266,19 +268,22 @@ use crate::dungeon::{LayoutBuilder, SpawnTable};
 use crate::mob::MobId;
 
 let layout = LayoutBuilder::new(40, 21)
-    .entrance(20, 19)  // Interior position (player spawn)
-    .exit(20, 20)      // Bottom wall (stairs/door)
+    .entrance(20, 1)   // Player spawn in front of door
+    .door(20, 0)       // Decorative door on back wall
+    .torches(2..=4)
     .spawn(SpawnTable::new()
         .mob(MobId::Goblin, 3)
         .mob(MobId::Slime, 2)
-        .chest(1..=2))
+        .chest(1..=2)
+        .stairs(1..=1))
     .build();
 ```
 
 **Builder behavior:**
 - `new(width, height)` - Creates grid with Floor interior, Wall border
-- `entrance(x, y)` - Sets player spawn (must be interior, not on walls)
+- `entrance(x, y)` - Sets player spawn (must be interior, not on walls); rendered as `GateFloor`
 - `exit(x, y)` - Sets exit (must be on top or bottom wall)
+- `door(x, y)` - Sets decorative door on back wall (y=0, impassable `TileType::Door`)
 - `torches(range)` - Sets torch count range (e.g., `2..=4`), placed randomly on back wall
 - `spawn(SpawnTable)` - Sets entity spawn rules (applied during build)
 - `build()` - Produces `DungeonLayout`, panics if entrance not set
@@ -286,8 +291,8 @@ let layout = LayoutBuilder::new(40, 21)
 **Automatic features:**
 - 1-tile Wall border around edges
 - Interior filled with Floor tiles
-- Floor variant pattern `((x + y) % 3)` for visual variety
-- Torches placed randomly on back wall (y=0) if set, avoiding corners and exit
+- Floor variants randomized: 75% `Slice_73`, 25% split among `FloorTile2/3/4` and `Slice_83`
+- Torches placed randomly on back wall (y=0) if set, avoiding corners, exit, and door
 - Spawn table applied automatically if set
 
 ### SpawnTable (`spawn.rs`)
@@ -390,7 +395,13 @@ if let Some((slice, flip_x)) = TileRenderer::resolve(&layout, x, y) {
 }
 ```
 
-Wall rendering uses diagonal floor detection for corners:
+**Floor rendering:**
+- `PlayerSpawn` → always `GateFloor`
+- `Floor`/`Entrance` → checks for adjacent walls (floor edge) first, then falls back to randomized floor variant
+- Floor edges detected for top/left/right walls; bottom edge uses `Slice_74`/`Slice_84` alternating
+- See [ui.md](ui.md) "Floor Edge Rendering" for full details
+
+**Wall rendering** uses diagonal floor detection for corners:
 - Top-left corner: walls right/below, floor diagonally at (x+1, y+1)
 - Top-right corner: walls left/below, floor diagonally at (x-1, y+1)
 - Bottom-left corner: walls right/above, floor diagonally at (x+1, y-1)

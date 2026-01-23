@@ -9,8 +9,13 @@ impl TileRenderer {
         let tile = layout.tile_at(x, y)?;
 
         match tile.tile_type {
-            TileType::Floor | TileType::Entrance | TileType::PlayerSpawn => {
-                Some(Self::resolve_floor(tile.variant))
+            TileType::PlayerSpawn => Some((DungeonTileSlice::GateFloor, false)),
+            TileType::Floor | TileType::Entrance => {
+                if let Some(edge) = Self::resolve_floor_edge(layout, x, y) {
+                    Some(edge)
+                } else {
+                    Some(Self::resolve_floor(tile.variant))
+                }
             }
             TileType::Wall => Some(Self::resolve_wall(layout, x, y)),
             TileType::Exit => Some((DungeonTileSlice::Gate, false)),
@@ -21,12 +26,77 @@ impl TileRenderer {
     }
 
     fn resolve_floor(variant: u8) -> (DungeonTileSlice, bool) {
-        let slice = match variant % 3 {
-            0 => DungeonTileSlice::FloorTile2,
-            1 => DungeonTileSlice::FloorTile3,
-            _ => DungeonTileSlice::FloorTile4,
+        let slice = match variant % 5 {
+            0 => DungeonTileSlice::FloorTileAlt1,
+            1 => DungeonTileSlice::FloorTile2,
+            2 => DungeonTileSlice::FloorTile3,
+            3 => DungeonTileSlice::FloorTile4,
+            _ => DungeonTileSlice::FloorTileAlt3,
         };
         (slice, false)
+    }
+
+    fn resolve_floor_edge(
+        layout: &DungeonLayout,
+        x: usize,
+        y: usize,
+    ) -> Option<(DungeonTileSlice, bool)> {
+        let wall_above = y == 0 || !layout.is_floor(x, y - 1);
+        let wall_left = x == 0 || !layout.is_floor(x - 1, y);
+        let wall_right = x >= layout.width() - 1 || !layout.is_floor(x + 1, y);
+
+        // Corners first
+        if wall_above && wall_left {
+            return Some((DungeonTileSlice::FloorEdgeTopLeft, false));
+        }
+        if wall_above && wall_right {
+            return Some((DungeonTileSlice::FloorEdgeTopRight, false));
+        }
+
+        // Top edge
+        if wall_above {
+            let slice = if x.is_multiple_of(2) {
+                DungeonTileSlice::FloorEdgeTop1
+            } else {
+                DungeonTileSlice::FloorEdgeTop2
+            };
+            return Some((slice, false));
+        }
+
+        // Left edge
+        if wall_left {
+            let wall_below = y >= layout.height() - 1 || !layout.is_floor(x, y + 1);
+            let slice = if wall_below {
+                DungeonTileSlice::FloorEdgeLeft2
+            } else {
+                DungeonTileSlice::FloorEdgeLeft
+            };
+            return Some((slice, false));
+        }
+
+        // Right edge
+        if wall_right {
+            let wall_below = y >= layout.height() - 1 || !layout.is_floor(x, y + 1);
+            let slice = if wall_below {
+                DungeonTileSlice::FloorEdgeRight2
+            } else {
+                DungeonTileSlice::FloorEdgeRight1
+            };
+            return Some((slice, false));
+        }
+
+        // Bottom edge (inner tiles only, not corners handled by left/right edges)
+        let wall_below = y >= layout.height() - 1 || !layout.is_floor(x, y + 1);
+        if wall_below {
+            let slice = if x.is_multiple_of(2) {
+                DungeonTileSlice::FloorTileAlt2
+            } else {
+                DungeonTileSlice::FloorTileAlt4
+            };
+            return Some((slice, false));
+        }
+
+        None
     }
 
     fn resolve_wall(layout: &DungeonLayout, x: usize, y: usize) -> (DungeonTileSlice, bool) {

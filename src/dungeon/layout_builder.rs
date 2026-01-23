@@ -30,6 +30,7 @@ pub struct LayoutBuilder {
     height: usize,
     entrance: Option<(usize, usize)>,
     exit: Option<(usize, usize)>,
+    door: Option<(usize, usize)>,
     spawn_table: Option<SpawnTable>,
     torch_count: Option<RangeInclusive<u8>>,
 }
@@ -53,6 +54,7 @@ impl LayoutBuilder {
             height,
             entrance: None,
             exit: None,
+            door: None,
             spawn_table: None,
             torch_count: None,
         }
@@ -94,6 +96,19 @@ impl LayoutBuilder {
     pub fn exit(mut self, x: usize, y: usize) -> Self {
         self.validate_wall_position(x, y, "exit");
         self.exit = Some((x, y));
+        self
+    }
+
+    /// Sets a decorative door on the back (top) wall.
+    ///
+    /// This tile becomes `TileType::Door` (impassable).
+    ///
+    /// # Panics
+    ///
+    /// Panics if the position is not on the back wall (y=0).
+    pub fn door(mut self, x: usize, y: usize) -> Self {
+        assert!(y == 0, "door must be on back wall (y=0), got y={}", y);
+        self.door = Some((x, y));
         self
     }
 
@@ -156,6 +171,7 @@ impl LayoutBuilder {
             .expect("LayoutBuilder: entrance must be set before calling build()");
 
         let mut layout = DungeonLayout::new(self.width, self.height);
+        let mut rng = rand::thread_rng();
 
         // Fill grid with walls on perimeter, floor inside
         for y in 0..self.height {
@@ -169,9 +185,13 @@ impl LayoutBuilder {
                     TileType::Floor
                 };
 
-                // Apply floor variant pattern for visual variety
+                // Randomize floor variant for visual variety (75% Slice_73, 25% others)
                 let variant = if tile_type == TileType::Floor {
-                    ((x + y) % 3) as u8
+                    if rng.gen_range(0u8..4) < 3 {
+                        0 // FloorTileAlt1 (Slice_73)
+                    } else {
+                        rng.gen_range(1u8..5) // Other floor tiles
+                    }
                 } else {
                     0
                 };
@@ -182,8 +202,8 @@ impl LayoutBuilder {
 
         // Set entrance (PlayerSpawn)
         let (ex, ey) = entrance;
-        let variant = ((ex + ey) % 3) as u8;
-        layout.set_tile(ex, ey, Tile::new(TileType::PlayerSpawn).with_variant(variant));
+        let spawn_variant = if rng.gen_range(0u8..4) < 3 { 0 } else { rng.gen_range(1u8..5) };
+        layout.set_tile(ex, ey, Tile::new(TileType::PlayerSpawn).with_variant(spawn_variant));
         layout.entrance = entrance;
 
         // Set exit if provided
@@ -192,15 +212,20 @@ impl LayoutBuilder {
             layout.exit = Some((x, y));
         }
 
+        // Set door if provided
+        if let Some((x, y)) = self.door {
+            layout.set_tile(x, y, Tile::new(TileType::Door));
+        }
+
         // Place torches on back wall if set
         if let Some(torch_range) = self.torch_count {
-            let mut rng = rand::thread_rng();
             let count = rng.gen_range(torch_range) as usize;
 
-            // Collect valid back-wall positions (not corners, not exit)
+            // Collect valid back-wall positions (not corners, not exit, not door)
             let exit_x = self.exit.map(|(x, _)| x);
+            let door_x = self.door.map(|(x, _)| x);
             let mut positions: Vec<usize> = (1..self.width - 1)
-                .filter(|x| Some(*x) != exit_x)
+                .filter(|x| Some(*x) != exit_x && Some(*x) != door_x)
                 .collect();
             positions.shuffle(&mut rng);
 
@@ -211,7 +236,7 @@ impl LayoutBuilder {
 
         // Apply spawn table if set
         if let Some(spawn_table) = self.spawn_table {
-            spawn_table.apply(&mut layout, &mut rand::thread_rng());
+            spawn_table.apply(&mut layout, &mut rng);
         }
 
         layout

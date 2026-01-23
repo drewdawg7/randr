@@ -430,6 +430,11 @@ pub enum DungeonTileSlice {
     FloorTile6,
     FloorTile7,
     FloorTile8,
+    // Floor tile alternates (more variety)
+    FloorTileAlt1,
+    FloorTileAlt2,
+    FloorTileAlt3,
+    FloorTileAlt4,
     // Floor edges
     FloorEdgeTopLeft,
     FloorEdgeTop1,
@@ -490,6 +495,11 @@ impl DungeonTileSlice {
             Self::FloorTile6 => "floor_tile6",
             Self::FloorTile7 => "floor_tile7",
             Self::FloorTile8 => "floor_tile8",
+            // Floor tile alternates
+            Self::FloorTileAlt1 => "Slice_73",
+            Self::FloorTileAlt2 => "Slice_74",
+            Self::FloorTileAlt3 => "Slice_83",
+            Self::FloorTileAlt4 => "Slice_84",
             // Floor edges
             Self::FloorEdgeTopLeft => "floor_edge_topleft",
             Self::FloorEdgeTop1 => "floor_edge_top1",
