@@ -62,9 +62,9 @@ fn load_player_sprite_sheet(
     mut layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut player_sheet: ResMut<PlayerSpriteSheet>,
 ) {
-    // Viking Swordman: 35 frames total, 32x32 each, idle is frames 0-3
-    let texture: Handle<Image> = asset_server.load("sprites/player/viking_swordman.png");
-    let layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 35, 1, None, None);
+    // MiniLightningWarrior: 13x8 grid of 32x32, idle is slices 0-3
+    let texture: Handle<Image> = asset_server.load("sprites/player/lightning_warrior.png");
+    let layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 13, 8, None, None);
     let layout_handle = layouts.add(layout);
 
     player_sheet.texture = Some(texture);
@@ -76,5 +76,5 @@ fn load_player_sprite_sheet(
         looping: true,
     };
 
-    info!("Loaded player sprite sheet: Viking Swordman");
+    info!("Loaded player sprite sheet: MiniLightningWarrior");
 }
