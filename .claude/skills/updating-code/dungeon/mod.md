@@ -535,31 +535,36 @@ pub struct DungeonPlayer;
 // See GridOccupancy in grid.rs
 ```
 
-### DungeonRenderContext and render_dungeon_floor
+### DungeonFloor Observer
 
-All dungeon floor rendering is done through a single shared function:
+All dungeon floor rendering is driven by the `DungeonFloor` component and its `OnAdd` observer (`on_add_dungeon_floor`):
 
 ```rust
-/// All parameters needed to render a dungeon floor.
-struct DungeonRenderContext<'a> {
-    layout: &'a DungeonLayout,
-    tile_size: f32,
-    player_pos: GridPosition,
-    player_size: GridSize,
-    game_sprites: &'a GameSprites,
+/// Declarative dungeon floor component. Spawning triggers the observer.
+#[derive(Component)]
+pub struct DungeonFloor {
+    pub layout: DungeonLayout,
+    pub player_pos: GridPosition,
+    pub player_size: GridSize,
 }
 
-/// Spawns the full dungeon UI hierarchy and returns GridOccupancy.
-fn render_dungeon_floor(commands: &mut Commands, ctx: &DungeonRenderContext) -> GridOccupancy
+// Usage: just spawn the component
+commands.spawn(DungeonFloor {
+    layout: layout.clone(),
+    player_pos: state.player_pos,
+    player_size: state.player_size,
+});
 ```
 
-Both `spawn_dungeon_screen` and `advance_floor_system` construct a `DungeonRenderContext` and call `render_dungeon_floor`. The function handles:
-1. Spawning `DungeonRoot` with `PlayerStats`
-2. Building `DungeonContainer` and `DungeonGrid` with CSS Grid
-3. Tile loop: `TorchWall` animation vs `TileRenderer::resolve` for static tiles
-4. Entity loop: matching on `DungeonEntity` variants (Chest, Mob, Stairs, Rock)
-5. Player spawn with `DungeonPlayer` + `DungeonPlayerSprite`
-6. Populating and returning `GridOccupancy`
+The observer handles:
+1. Calculating `UiScale` from window dimensions and inserting it as a resource
+2. Spawning `DungeonRoot` with `PlayerStats`
+3. Building `DungeonContainer` and `DungeonGrid` with CSS Grid
+4. Tile loop: `TorchWall` animation vs `TileRenderer::resolve` for static tiles
+5. Entity loop: matching on `EntityRenderData` variants (SpriteSheet, AnimatedMob)
+6. Player spawn with `DungeonPlayer` + `DungeonPlayerSprite`
+7. Populating and inserting `GridOccupancy` as a resource
+8. Despawning the trigger entity (consumed)
 
 ### Movement Rules
 - **Only walkable tiles** via `layout.is_walkable(x, y)` (Floor tiles)
@@ -608,12 +613,12 @@ fn check_entity_collision(
 8. Updates player grid placement via `grid_column`/`grid_row` Node properties
 
 ### Key Functions
-- `spawn_dungeon_screen()` - enters dungeon, loads floor layout, calls `render_dungeon_floor()`
-- `render_dungeon_floor()` - shared function that spawns the full dungeon UI hierarchy (root, stats, grid, tiles, entities, player) and returns `GridOccupancy`
+- `spawn_dungeon_screen()` - enters dungeon, loads floor layout, spawns `DungeonFloor` component
+- `on_add_dungeon_floor()` - observer that renders the full dungeon UI hierarchy and populates resources
 - `handle_dungeon_movement()` - processes arrow key input, validates via occupancy, handles collisions
 - `all_cells_walkable()` - checks if all player destination cells are walkable tiles
 - `check_entity_collision()` - uses `GridOccupancy` to detect entity at any destination cell
-- `advance_floor_system()` - triggered by `AdvanceFloor` resource; despawns UI, increments `floor_index`, regenerates layout, calls `render_dungeon_floor()`
+- `advance_floor_system()` - triggered by `AdvanceFloor` resource; despawns UI, increments `floor_index`, regenerates layout, spawns `DungeonFloor`
 - `cleanup_dungeon()` - calls `state.exit_dungeon()`, removes `UiScale` and `GridOccupancy` resources
 
 ## Adding a New Dungeon

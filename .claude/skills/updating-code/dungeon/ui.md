@@ -2,7 +2,7 @@
 
 Dungeon screen rendering at `src/ui/screens/dungeon/plugin.rs`.
 
-## DungeonPlugin
+## DungeonScreenPlugin
 Renders dungeon layout as a top-level screen (AppState::Dungeon).
 
 ```rust
@@ -19,35 +19,77 @@ for y in 0..layout.height() {
 }
 ```
 
+## DungeonFloor Observer
+
+All dungeon rendering is driven by the `DungeonFloor` component. Spawning it triggers an `OnAdd` observer that:
+1. Calculates `UiScale` from window dimensions
+2. Inserts `UiScale` resource
+3. Builds the full UI hierarchy (root, stats, container, grid, tiles, entities, player)
+4. Populates and inserts `GridOccupancy` resource
+5. Despawns the trigger entity (consumed)
+
+### Usage
+
+```rust
+use crate::ui::screens::dungeon::plugin::DungeonFloor;
+use crate::dungeon::{DungeonLayout, GridPosition, GridSize};
+
+// Spawn a dungeon floor (observer handles all rendering)
+commands.spawn(DungeonFloor {
+    layout: layout.clone(),
+    player_pos: state.player_pos,
+    player_size: state.player_size,
+});
+```
+
+### System Functions
+
+Both `spawn_dungeon_screen` and `advance_floor_system` are now ~10-15 lines of pure state management:
+
+```rust
+// spawn_dungeon_screen: enters dungeon, loads layout, spawns DungeonFloor
+fn spawn_dungeon_screen(mut commands: Commands, registry: Res<DungeonRegistry>, mut state: ResMut<DungeonState>) {
+    if !state.is_in_dungeon() { state.enter_dungeon(LocationId::GoblinCave, &registry); }
+    state.load_floor_layout();
+    let Some(layout) = state.layout.clone() else { return; };
+    commands.spawn(DungeonFloor { layout, player_pos: state.player_pos, player_size: state.player_size });
+}
+
+// advance_floor_system: cleans up, advances state, spawns DungeonFloor
+fn advance_floor_system(mut commands: Commands, mut state: ResMut<DungeonState>, root_query: Query<Entity, With<DungeonRoot>>) {
+    commands.remove_resource::<AdvanceFloor>();
+    for entity in &root_query { commands.entity(entity).despawn_recursive(); }
+    commands.remove_resource::<UiScale>();
+    commands.remove_resource::<GridOccupancy>();
+    state.floor_index += 1;
+    state.load_floor_layout();
+    let Some(layout) = state.layout.clone() else { return; };
+    commands.spawn(DungeonFloor { layout, player_pos: state.player_pos, player_size: state.player_size });
+}
+```
+
 ## UI Architecture
 
-The dungeon uses an **entity overlay** pattern to support multi-cell sprites:
+The dungeon uses **grid-span z-ordering** for entities:
 
 ```
 DungeonRoot
 ├── PlayerStats
 └── DungeonContainer (fixed pixel size)
-    ├── DungeonGrid (CSS Grid - tiles only)
-    │   └── DungeonCell (x, y)
-    │       └── Tile background (ImageNode)
-    └── EntityOverlay (absolute positioned, same size as grid)
-        ├── Player sprite (absolute: left/top in pixels)
-        └── Entity sprites (absolute: left/top, width/height based on GridSize)
+    └── DungeonGrid (CSS Grid)
+        ├── DungeonCell (x, y) - tile backgrounds
+        │   └── Tile background (ImageNode)
+        ├── Entity sprites (grid spans + ZIndex by Y position)
+        └── Player sprite (grid span + high ZIndex)
 ```
 
-### Why Entity Overlay?
-Multi-cell entities (2x2, 4x4) need to render ON TOP of all tiles. Without the overlay:
-- Grid cells spawn in order (0,0), (1,0)...
-- An entity at (5,3) overflows into neighboring cells
-- Later cells' tile backgrounds render ON TOP of the overflow
-- Result: entity hidden behind tiles
-
-The overlay solves this by rendering ALL entities after ALL tiles.
+### Entity Z-Ordering
+Entities use `ZIndex(y)` so entities lower on the grid render on top of entities above them. The player uses `ZIndex(player_pos.y + 100)` to always render above entities.
 
 ### Key Components
-- `DungeonContainer` - Holds grid and overlay, sets pixel dimensions
-- `DungeonGrid` - CSS Grid containing only tile backgrounds
-- `EntityOverlay` - Absolute positioned layer for player + entities
+- `DungeonFloor` - Trigger component: spawning it renders the floor via observer
+- `DungeonContainer` - Holds the grid, sets pixel dimensions
+- `DungeonGrid` - CSS Grid containing tiles, entities, and player
 - `DungeonCell` - Grid cell marker (coordinates stored but unused after refactor)
 
 ## CSS Grid Rendering
@@ -66,22 +108,21 @@ container.spawn((
 ```
 
 ## Entity Positioning
-Entities use absolute pixel positioning within the overlay:
+Entities use grid-span placement within the DungeonGrid:
 ```rust
 let size = entity.size();
-let x_px = pos.x as f32 * tile_size;
-let y_px = pos.y as f32 * tile_size;
-let w_px = tile_size * size.width as f32;
-let h_px = tile_size * size.height as f32;
+let width_px = size.width as f32 * tile_size;
+let height_px = size.height as f32 * tile_size;
 
-overlay.spawn((
-    DungeonMobSprite { mob_id },
+grid.spawn((
+    DungeonEntityMarker { pos: *pos, size, entity_type: *entity },
+    z_for_entity(pos.y),  // ZIndex(y) for z-ordering
+    image_node,
     Node {
-        position_type: PositionType::Absolute,
-        left: Val::Px(x_px),
-        top: Val::Px(y_px),
-        width: Val::Px(w_px),
-        height: Val::Px(h_px),
+        grid_column: GridPlacement::start_span(pos.x as i16 + 1, size.width as u16),
+        grid_row: GridPlacement::start_span(pos.y as i16 + 1, size.height as u16),
+        width: Val::Px(width_px),
+        height: Val::Px(height_px),
         ..default()
     },
 ));
@@ -104,12 +145,12 @@ Movement validation uses `GridOccupancy` for multi-cell collision detection. See
 
 ## Window Resize
 `handle_window_resize` updates:
-1. Grid track sizes
-2. Container dimensions
-3. Overlay dimensions
-4. Player position and size
+1. Grid track sizes (columns and rows)
+2. Container dimensions (width and height)
+3. Player size (width and height based on grid size)
+4. Entity sizes (width and height based on their GridSize)
 
-Note: Entity positions are not updated on resize (set at spawn time).
+Grid placement (column/row spans) handles position automatically on resize.
 
 ## DungeonTileSlice
 Visual tile enum at `src/assets/sprite_slices.rs`:

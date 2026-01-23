@@ -186,30 +186,31 @@ No changes needed in the renderer — it already handles all `SpriteSheet` varia
 
 ## Entity Rendering Architecture
 
-Entities render in an **overlay layer** on top of tiles to support multi-cell sprites:
+Entities render within the **DungeonGrid** using grid spans and Z-ordering:
 
 ```
-DungeonContainer
-├── DungeonGrid (tiles only)
-│   └── DungeonCell → Tile background
-└── EntityOverlay (renders on top)
-    ├── Player sprite
-    └── Entity sprites (Chest, Mob)
+DungeonGrid (CSS Grid)
+├── DungeonCell (x, y) → Tile background
+├── Entity sprites (grid spans + ZIndex by Y)
+└── Player sprite (grid span + ZIndex(y + 100))
 ```
 
-### Why Overlay?
-Without the overlay, multi-cell entities would be hidden behind neighboring tiles due to z-order (later grid cells render on top of earlier cells' overflow).
+### Z-Order Strategy
+- Entities use `ZIndex(y)` so lower entities render on top of higher ones
+- Player uses `ZIndex(player_pos.y + 100)` to always render above entities
+- This avoids overflow issues since grid spans claim the correct cells
 
 ### Entity Positioning
-Entities use absolute pixel positioning based on GridSize:
+Entities use grid-span placement based on GridSize:
 ```rust
 let size = entity.size();
-overlay.spawn((
-    DungeonMobSprite { mob_id },
+grid.spawn((
+    DungeonEntityMarker { pos, size, entity_type },
+    z_for_entity(pos.y),
+    image_node,
     Node {
-        position_type: PositionType::Absolute,
-        left: Val::Px(pos.x as f32 * tile_size),
-        top: Val::Px(pos.y as f32 * tile_size),
+        grid_column: GridPlacement::start_span(pos.x as i16 + 1, size.width as u16),
+        grid_row: GridPlacement::start_span(pos.y as i16 + 1, size.height as u16),
         width: Val::Px(tile_size * size.width as f32),
         height: Val::Px(tile_size * size.height as f32),
         ..default()
@@ -219,14 +220,14 @@ overlay.spawn((
 
 ### Sprite Population Flow
 ```
-EntityOverlay                      Mob Animation (mob_animation.rs)
-┌─────────────────────────┐        ┌──────────────────────────────┐
-│ spawn entities:         │        │ populate_sprite_markers      │
-│   Chest → ImageNode     │        │   DungeonMobSprite marker    │
-│   Mob → DungeonMobSprite│───────>│   + MobSpriteSheets lookup   │
-│         marker only     │        │   = ImageNode + SpriteAnim   │
-└─────────────────────────┘        └──────────────────────────────┘
-       No sprite knowledge              Handles sprite loading
+DungeonGrid (on_add_dungeon_floor)    Mob Animation (mob_animation.rs)
+┌─────────────────────────────┐       ┌──────────────────────────────┐
+│ spawn entities:             │       │ populate_sprite_markers      │
+│   SpriteSheet → ImageNode   │       │   DungeonMobSprite marker    │
+│   AnimatedMob →             │──────>│   + MobSpriteSheets lookup   │
+│     DungeonMobSprite marker │       │   = ImageNode + SpriteAnim   │
+└─────────────────────────────┘       └──────────────────────────────┘
+       Uses EntityRenderData               Handles sprite loading
 ```
 
 ### Key Components

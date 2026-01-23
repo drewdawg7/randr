@@ -84,11 +84,23 @@ pub struct DungeonEntityMarker {
     pub entity_type: DungeonEntity,
 }
 
+/// Declarative dungeon floor component.
+/// Spawning this triggers an observer that builds the full dungeon UI hierarchy,
+/// calculates UiScale, and populates GridOccupancy. The trigger entity is despawned
+/// after rendering (consumed by observer).
+#[derive(Component)]
+pub struct DungeonFloor {
+    pub layout: DungeonLayout,
+    pub player_pos: GridPosition,
+    pub player_size: GridSize,
+}
+
 pub struct DungeonScreenPlugin;
 
 impl Plugin for DungeonScreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Dungeon), spawn_dungeon_screen)
+        app.add_observer(on_add_dungeon_floor)
+            .add_systems(OnEnter(AppState::Dungeon), spawn_dungeon_screen)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
                 Update,
@@ -104,28 +116,39 @@ impl Plugin for DungeonScreenPlugin {
     }
 }
 
-/// All parameters needed to render a dungeon floor.
-struct DungeonRenderContext<'a> {
-    layout: &'a DungeonLayout,
-    tile_size: f32,
-    player_pos: GridPosition,
-    player_size: GridSize,
-    game_sprites: &'a GameSprites,
-}
+/// Observer that renders a complete dungeon floor when a `DungeonFloor` component is spawned.
+/// Handles UiScale calculation, UI hierarchy creation, tile/entity/player spawning,
+/// and GridOccupancy population. The trigger entity is despawned after rendering.
+fn on_add_dungeon_floor(
+    trigger: Trigger<OnAdd, DungeonFloor>,
+    mut commands: Commands,
+    query: Query<&DungeonFloor>,
+    game_sprites: Res<GameSprites>,
+    window: Single<&Window>,
+) {
+    let entity = trigger.entity();
+    let Ok(floor) = query.get(entity) else {
+        return;
+    };
 
-/// Spawns the full dungeon UI hierarchy (root, stats, grid, tiles, entities, player)
-/// and returns the populated GridOccupancy resource.
-fn render_dungeon_floor(commands: &mut Commands, ctx: &DungeonRenderContext) -> GridOccupancy {
-    let mut occupancy = GridOccupancy::new(ctx.layout.width(), ctx.layout.height());
-    let grid_width = ctx.tile_size * ctx.layout.width() as f32;
-    let grid_height = ctx.tile_size * ctx.layout.height() as f32;
+    let layout = floor.layout.clone();
+    let player_pos = floor.player_pos;
+    let player_size = floor.player_size;
 
-    let tile_sheet = ctx.game_sprites.get(SpriteSheetKey::DungeonTileset);
-    let layout = ctx.layout;
-    let tile_size = ctx.tile_size;
-    let player_pos = ctx.player_pos;
-    let player_size = ctx.player_size;
-    let game_sprites = ctx.game_sprites;
+    // Despawn the trigger entity (consumed)
+    commands.entity(entity).despawn();
+
+    // Calculate scale from window dimensions
+    let scale = UiScale::calculate(window.height());
+    let tile_size = BASE_TILE * scale as f32;
+    commands.insert_resource(UiScale(scale));
+
+    // Build occupancy
+    let mut occupancy = GridOccupancy::new(layout.width(), layout.height());
+    let grid_width = tile_size * layout.width() as f32;
+    let grid_height = tile_size * layout.height() as f32;
+
+    let tile_sheet = game_sprites.get(SpriteSheetKey::DungeonTileset);
 
     commands
         .spawn((
@@ -204,7 +227,7 @@ fn render_dungeon_floor(commands: &mut Commands, ctx: &DungeonRenderContext) -> 
                                             _ => {
                                                 if let Some(tile_sheet) = tile_sheet.as_ref() {
                                                     if let Some((slice, flip_x)) =
-                                                        TileRenderer::resolve(layout, x, y)
+                                                        TileRenderer::resolve(&layout, x, y)
                                                     {
                                                         if let Some(mut img) =
                                                             tile_sheet.image_node(slice.as_str())
@@ -306,13 +329,11 @@ fn render_dungeon_floor(commands: &mut Commands, ctx: &DungeonRenderContext) -> 
                 });
         });
 
-    occupancy
+    commands.insert_resource(occupancy);
 }
 
 fn spawn_dungeon_screen(
     mut commands: Commands,
-    game_sprites: Res<GameSprites>,
-    window: Single<&Window>,
     registry: Res<DungeonRegistry>,
     mut state: ResMut<DungeonState>,
 ) {
@@ -322,23 +343,15 @@ fn spawn_dungeon_screen(
 
     state.load_floor_layout();
 
-    let Some(layout) = state.layout.as_ref() else {
+    let Some(layout) = state.layout.clone() else {
         return;
     };
 
-    let scale = UiScale::calculate(window.height());
-    let tile_size = BASE_TILE * scale as f32;
-    commands.insert_resource(UiScale(scale));
-
-    let ctx = DungeonRenderContext {
+    commands.spawn(DungeonFloor {
         layout,
-        tile_size,
         player_pos: state.player_pos,
         player_size: state.player_size,
-        game_sprites: &game_sprites,
-    };
-    let occupancy = render_dungeon_floor(&mut commands, &ctx);
-    commands.insert_resource(occupancy);
+    });
 }
 
 /// Check if all destination cells are walkable floor tiles.
@@ -658,8 +671,6 @@ struct AdvanceFloor;
 
 fn advance_floor_system(
     mut commands: Commands,
-    game_sprites: Res<GameSprites>,
-    window: Single<&Window>,
     mut state: ResMut<DungeonState>,
     root_query: Query<Entity, With<DungeonRoot>>,
 ) {
@@ -674,21 +685,13 @@ fn advance_floor_system(
     state.floor_index += 1;
     state.load_floor_layout();
 
-    let Some(layout) = state.layout.as_ref() else {
+    let Some(layout) = state.layout.clone() else {
         return;
     };
 
-    let scale = UiScale::calculate(window.height());
-    let tile_size = BASE_TILE * scale as f32;
-    commands.insert_resource(UiScale(scale));
-
-    let ctx = DungeonRenderContext {
+    commands.spawn(DungeonFloor {
         layout,
-        tile_size,
         player_pos: state.player_pos,
         player_size: state.player_size,
-        game_sprites: &game_sprites,
-    };
-    let occupancy = render_dungeon_floor(&mut commands, &ctx);
-    commands.insert_resource(occupancy);
+    });
 }
