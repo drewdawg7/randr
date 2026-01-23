@@ -77,7 +77,7 @@ commands.insert_resource(SpawnResultsModal);
 ## UI Layout
 
 Uses `Modal::new().title(&data.title).size(300, 0)` with a Column containing:
-1. Sprite (128x128, if `ResultsSprite::Mob`)
+1. Sprite (128x128, if `ResultsSprite::Mob`) - plays **death animation** (once, stops on last frame) if available, falls back to idle loop
 2. Subtitle (24px white, if present)
 3. Gold gained (22px gold color, if present)
 4. XP gained (22px light blue, if present)

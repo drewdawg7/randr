@@ -208,6 +208,7 @@ fn spawn_dungeon_screen(
                                                         first_frame: 0,
                                                         last_frame: 2,
                                                         frame_duration: 0.4,
+                                                        looping: true,
                                                     };
                                                     if let Some(bundle) =
                                                         torch_sheet.image_bundle_animated(
@@ -797,6 +798,7 @@ fn advance_floor_system(
                                                         first_frame: 0,
                                                         last_frame: 2,
                                                         frame_duration: 0.4,
+                                                        looping: true,
                                                     };
                                                     if let Some(bundle) =
                                                         torch_sheet.image_bundle_animated(

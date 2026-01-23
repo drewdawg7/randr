@@ -27,6 +27,7 @@ pub struct MobSpriteSheet {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,
     pub animation: AnimationConfig,
+    pub death_animation: Option<AnimationConfig>,
 }
 
 /// Resource containing loaded mob sprite sheets.
@@ -73,9 +74,9 @@ fn load_mob_sprite_sheets(
     mut layouts: ResMut<Assets<TextureAtlasLayout>>,
     mut mob_sheets: ResMut<MobSpriteSheets>,
 ) {
-    // Goblin: 27 frames total, 32x32 each, idle is frames 0-3
+    // Goblin: 6x6 grid of 32x32, idle is slices 0-3, death is slices 30-33
     let goblin_texture: Handle<Image> = asset_server.load("sprites/mobs/goblin.png");
-    let goblin_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 27, 1, None, None);
+    let goblin_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 6, None, None);
     let goblin_layout_handle = layouts.add(goblin_layout);
     mob_sheets.insert(
         MobId::Goblin,
@@ -86,13 +87,20 @@ fn load_mob_sprite_sheets(
                 first_frame: 0,
                 last_frame: 3,
                 frame_duration: 0.2,
+                looping: true,
             },
+            death_animation: Some(AnimationConfig {
+                first_frame: 30,
+                last_frame: 33,
+                frame_duration: 0.15,
+                looping: false,
+            }),
         },
     );
 
-    // Slime: 18 frames total, 32x32 each, idle is frames 0-3
+    // Slime: 8x6 grid of 32x32, idle is slices 0-3, death is slices 40-44
     let slime_texture: Handle<Image> = asset_server.load("sprites/mobs/slime.png");
-    let slime_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 18, 1, None, None);
+    let slime_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 8, 6, None, None);
     let slime_layout_handle = layouts.add(slime_layout);
     mob_sheets.insert(
         MobId::Slime,
@@ -103,7 +111,14 @@ fn load_mob_sprite_sheets(
                 first_frame: 0,
                 last_frame: 3,
                 frame_duration: 0.25,
+                looping: true,
             },
+            death_animation: Some(AnimationConfig {
+                first_frame: 40,
+                last_frame: 44,
+                frame_duration: 0.15,
+                looping: false,
+            }),
         },
     );
 
@@ -120,7 +135,9 @@ fn load_mob_sprite_sheets(
                 first_frame: 0,
                 last_frame: 3,
                 frame_duration: 0.35,
+                looping: true,
             },
+            death_animation: None,
         },
     );
 

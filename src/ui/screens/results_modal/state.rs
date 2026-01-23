@@ -28,10 +28,14 @@ impl SpriteMarker for ResultsModalMobSprite {
 
     fn resolve(&self, sheets: &Res<MobSpriteSheets>) -> Option<SpriteData> {
         let sheet = sheets.get(self.mob_id)?;
+        let animation = sheet
+            .death_animation
+            .clone()
+            .unwrap_or_else(|| sheet.animation.clone());
         Some(SpriteData {
             texture: sheet.texture.clone(),
             layout: sheet.layout.clone(),
-            animation: sheet.animation.clone().into(),
+            animation,
             flip_x: false,
         })
     }

@@ -2,33 +2,38 @@
 
 ## Overview
 
-Mob sprites are displayed during combat on the fight screen and in the MonsterCompendium (opened with 'b' key). Each `MobId` can have an associated animated sprite sheet with idle animation support.
+Mob sprites are displayed during combat on the fight screen, MonsterCompendium (opened with 'b' key), and the results/victory modal. Each `MobId` can have an associated animated sprite sheet with idle and optional death animation support.
 
 ## Adding a New Mob Sprite (with Animation)
 
-When adding a new mob sprite, **always include the idle animation if it exists** in the Aseprite file.
+When adding a new mob sprite, **always include the idle animation if it exists** in the Aseprite file. Include death animation if available.
 
 ### 1. Export the Sprite Sheet
 
-Export all frames as a horizontal sprite sheet with JSON metadata:
+Mob sprite sheets are grid-based PNGs exported from Aseprite files that use **slices** (named 32x32 rectangular regions). Export the full grid:
 
 ```bash
 ASEPRITE="/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite"
-"$ASEPRITE" --batch "input.aseprite" \
-  --sheet assets/sprites/mobs/<mob_name>.png \
-  --data assets/sprites/mobs/<mob_name>.json \
-  --format json-hash \
-  --sheet-type horizontal
+"$ASEPRITE" --batch "input.aseprite" --save-as assets/sprites/mobs/<mob_name>.png
 ```
+
+Slices are numbered left-to-right, top-to-bottom. Common row layout:
+| Row | Animation | Typical Slices (6-col) |
+|-----|-----------|----------------------|
+| 0 | Idle | 0-3 |
+| 1 | Walk/Run | 6-9 |
+| 2 | Attack | 12-17 |
+| 3 | Hurt | 18-21 |
+| 4 | Death | 24-27 or 30-33 |
 
 ### 2. Register the Sprite Sheet in `MobSpriteSheets`
 
 Add the mob to `load_mob_sprite_sheets()` in `src/ui/mob_animation.rs`:
 
 ```rust
-// <MobName>: <total_frames> frames total, 32x32 each, idle is frames <first>-<last>
+// <MobName>: <cols>x<rows> grid of 32x32, idle slices <first>-<last>, death slices <first>-<last>
 let <mob_name>_texture: Handle<Image> = asset_server.load("sprites/mobs/<mob_name>.png");
-let <mob_name>_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), <total_frames>, 1, None, None);
+let <mob_name>_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), <cols>, <rows>, None, None);
 let <mob_name>_layout_handle = layouts.add(<mob_name>_layout);
 mob_sheets.insert(
     MobId::<MobName>,
@@ -36,26 +41,35 @@ mob_sheets.insert(
         texture: <mob_name>_texture,
         layout: <mob_name>_layout_handle,
         animation: AnimationConfig {
-            first_frame: 0,  // First frame of idle animation
-            last_frame: 3,   // Last frame of idle animation (inclusive)
-            frame_duration: 0.2,  // Seconds per frame (0.2-0.25 is typical)
+            first_frame: 0,
+            last_frame: 3,
+            frame_duration: 0.2,
+            looping: true,
         },
+        death_animation: Some(AnimationConfig {
+            first_frame: 30,  // First slice of death animation
+            last_frame: 33,   // Last slice (inclusive)
+            frame_duration: 0.15,
+            looping: false,   // Play once, stop on last frame
+        }),
     },
 );
 ```
 
-### 3. Determine Animation Frame Range
+### 3. Determine Animation Slice Ranges
 
-Check the Aseprite file for animation tags:
-- The **idle** animation is typically the first few frames (e.g., frames 0-3)
-- Look at the timeline tags in Aseprite to identify the idle range
-- Frame indices are zero-based
+Slice indices correspond to grid cells numbered left-to-right, top-to-bottom:
+- For a 6-column grid: row N starts at slice `N * 6`
+- For an 8-column grid: row N starts at slice `N * 8`
+- The **idle** animation is typically row 0 (slices 0-3)
+- The **death** animation row varies by sprite pack
 
 ### 4. Frame Duration Guidelines
 
-- `0.2` seconds - Normal/fast animations (goblin)
-- `0.25` seconds - Slower, bouncier animations (slime)
-- Adjust based on how the animation looks in-game
+- `0.15` seconds - Death animations (quick, plays once)
+- `0.2` seconds - Normal/fast idle (goblin)
+- `0.25` seconds - Slower, bouncier idle (slime)
+- `0.35` seconds - Large/slow creatures (dragon)
 
 ## Key Files
 
@@ -84,10 +98,11 @@ pub trait SpriteMarker: Component + Sized {
 
 ### Existing Mob Sprite Markers
 
-| Marker | File | Resource | flip_x |
-|--------|------|----------|--------|
-| `DungeonMobSprite` | `mob_animation.rs` | `MobSpriteSheets` | false |
-| `FightModalMobSprite` | `fight_modal/state.rs` | `MobSpriteSheets` | true |
+| Marker | File | Resource | flip_x | Animation |
+|--------|------|----------|--------|-----------|
+| `DungeonMobSprite` | `mob_animation.rs` | `MobSpriteSheets` | false | idle |
+| `FightModalMobSprite` | `fight_modal/state.rs` | `MobSpriteSheets` | true | idle |
+| `ResultsModalMobSprite` | `results_modal/state.rs` | `MobSpriteSheets` | false | death (fallback: idle) |
 
 ### Registering a New Mob Sprite Marker
 
@@ -139,6 +154,7 @@ pub struct AnimationConfig {
     pub first_frame: usize,
     pub last_frame: usize,
     pub frame_duration: f32,
+    pub looping: bool,  // If false, stops on last frame
 }
 
 /// Unified animation component for all animated sprites
@@ -147,16 +163,17 @@ pub struct SpriteAnimation {
     pub current_frame: usize,
     pub first_frame: usize,
     pub last_frame: usize,
+    pub looping: bool,
 }
 ```
 
 ## Currently Supported Mobs
 
-| MobId | Sprite Sheet | Frame Size | Total Frames | Idle Range | Frame Duration |
-|-------|-------------|------------|--------------|------------|----------------|
-| `Goblin` | `goblin.png` | 32x32 | 27 | 0-3 | 0.2s |
-| `Slime` | `slime.png` | 32x32 | 18 | 0-3 | 0.25s |
-| `Dragon` | `dragon.png` | 64x32 | 66 | 0-3 | 0.35s |
+| MobId | Sprite Sheet | Frame Size | Grid | Idle Range | Death Range | Idle Duration |
+|-------|-------------|------------|------|------------|-------------|---------------|
+| `Goblin` | `goblin.png` | 32x32 | 6x6 | 0-3 | 30-33 | 0.2s |
+| `Slime` | `slime.png` | 32x32 | 8x6 | 0-3 | 40-44 | 0.25s |
+| `Dragon` | `dragon.png` | 64x32 | 66x1 | 0-3 | None | 0.35s |
 
 ### Non-Square Sprites
 
@@ -165,6 +182,12 @@ For sprites with non-square dimensions (like Dragon at 64x32), use `UVec2::new(w
 ```rust
 let dragon_layout = TextureAtlasLayout::from_grid(UVec2::new(64, 32), 66, 1, None, None);
 ```
+
+### Death Animations
+
+Death animations are stored as `death_animation: Option<AnimationConfig>` in `MobSpriteSheet`. They use `looping: false` to play once and stop on the final frame.
+
+The results modal (`ResultsModalMobSprite`) automatically uses the death animation if available, falling back to idle. Other sprite markers (fight modal, dungeon, compendium) continue to use the idle animation.
 
 ### Sprite Display Sizes
 

@@ -73,6 +73,7 @@ fn load_player_sprite_sheet(
         first_frame: 0,
         last_frame: 3,
         frame_duration: 0.15,
+        looping: true,
     };
 
     info!("Loaded player sprite sheet: Viking Swordman");

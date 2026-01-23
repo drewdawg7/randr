@@ -13,6 +13,8 @@ pub struct AnimationConfig {
     pub last_frame: usize,
     /// Duration per frame in seconds
     pub frame_duration: f32,
+    /// Whether the animation loops (default true). If false, stops on last frame.
+    pub looping: bool,
 }
 
 impl Default for AnimationConfig {
@@ -21,6 +23,7 @@ impl Default for AnimationConfig {
             first_frame: 0,
             last_frame: 3,
             frame_duration: 0.15,
+            looping: true,
         }
     }
 }
@@ -39,6 +42,8 @@ pub struct SpriteAnimation {
     pub first_frame: usize,
     /// Last frame index (inclusive)
     pub last_frame: usize,
+    /// Whether the animation loops
+    pub looping: bool,
 }
 
 impl SpriteAnimation {
@@ -49,6 +54,7 @@ impl SpriteAnimation {
             current_frame: config.first_frame,
             first_frame: config.first_frame,
             last_frame: config.last_frame,
+            looping: config.looping,
         }
     }
 }
@@ -58,13 +64,14 @@ pub fn animate_sprites(time: Res<Time>, mut query: Query<(&mut SpriteAnimation, 
     for (mut animation, mut image) in &mut query {
         animation.timer.tick(time.delta());
         if animation.timer.just_finished() {
-            // Advance to next frame, wrapping back to first
-            animation.current_frame += 1;
-            if animation.current_frame > animation.last_frame {
-                animation.current_frame = animation.first_frame;
+            if animation.current_frame >= animation.last_frame {
+                if animation.looping {
+                    animation.current_frame = animation.first_frame;
+                }
+            } else {
+                animation.current_frame += 1;
             }
 
-            // Update the atlas index
             if let Some(ref mut atlas) = image.texture_atlas {
                 atlas.index = animation.current_frame;
             }
