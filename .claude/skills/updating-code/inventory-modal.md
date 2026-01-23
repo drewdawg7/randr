@@ -1,24 +1,26 @@
 # Inventory Modal
 
-Modal displaying the player's inventory items as an `ItemGrid` with an `ItemDetailPane` showing selected item details.
+Modal displaying the player's equipment and backpack items as two `ItemGrid` widgets with an `ItemDetailPane` showing selected item details.
 
 ## Files
 
 ```
 src/ui/screens/inventory_modal/
 ├── mod.rs      # Module declarations, re-exports InventoryModalPlugin + InventoryModal
-├── plugin.rs   # InventoryModalPlugin: close, navigation, populate, and spawn trigger
-├── state.rs    # InventoryModalRoot, SpawnInventoryModal, InventoryModal (RegisteredModal)
-├── input.rs    # handle_inventory_modal_close + handle_inventory_modal_navigation
-└── render.rs   # spawn_inventory_modal, populate_item_detail_pane, get_ordered_items
+├── plugin.rs   # InventoryModalPlugin: close, tab, navigation, populate, and spawn trigger
+├── state.rs    # InventoryModalRoot, EquipmentGrid, BackpackGrid, SpawnInventoryModal, InventoryModal
+├── input.rs    # handle_inventory_modal_close, handle_inventory_modal_tab, handle_inventory_modal_navigation
+└── render.rs   # spawn_inventory_modal, populate_item_detail_pane, get_equipment_items, get_backpack_items
 ```
 
 ## Behavior
 
-- **Open**: Press `I` in town → shows a 4x4 `ItemGrid` (left) and `ItemDetailPane` (right) in a horizontal row
+- **Open**: Press `I` in town → shows equipment grid (3x3, left), backpack grid (4x4, middle), and detail pane (right)
 - **Close**: Press `Escape` or `I` again
-- **Selection**: Animated selector sprite highlights the currently selected cell (`is_focused: true`)
-- **Navigation**: Arrow keys move selection within the grid; detail pane updates reactively
+- **Tab**: Toggles focus between equipment and backpack grids
+- **Selection**: Animated selector sprite highlights the currently selected cell in the focused grid
+- **Navigation**: Arrow keys move selection within the focused grid; detail pane updates reactively
+- **Equip/Unequip**: Enter key equips (backpack) or unequips (equipment) the selected item
 - **No modal container**: Uses `spawn_modal_overlay` directly (no Modal builder)
 
 ## Layout Structure
@@ -26,7 +28,8 @@ src/ui/screens/inventory_modal/
 ```
 InventoryModalRoot (overlay)
 └── Row (flex_direction: Row, column_gap: 16px)
-    ├── ItemGrid (4x4, 320x320px)
+    ├── ItemGrid (3x3, 268x268px) + EquipmentGrid marker — focused by default
+    ├── ItemGrid (4x4, 320x320px) + BackpackGrid marker
     └── ItemDetailPane (240x288px, nine-slice background)
         ├── Nine-slice panels (DetailPanelSlice, 48px borders)
         └── ItemDetailPaneContent (absolute, inset 48px, 144x192px)
@@ -36,49 +39,96 @@ InventoryModalRoot (overlay)
             └── ItemStatsDisplay (14px, icon+value mode)
 ```
 
-## Grid Navigation
+## Dual Grid System
 
-The `handle_inventory_modal_navigation` system handles arrow key input:
+The inventory modal uses two separate `ItemGrid` instances distinguished by marker components:
+
+- **`EquipmentGrid`** (3x3): Shows equipped items in slot order (Weapon, OffHand, Ring, Tool, Head, Chest, Hands, Feet, Legs). Only populated slots have item sprites.
+- **`BackpackGrid`** (4x4): Shows non-equipped backpack items.
+
+### Tab Switching
+
+`handle_inventory_modal_tab` listens for `GameAction::NextTab` and toggles `is_focused` between the two grids. The `update_grid_selector` system in `ItemGridPlugin` reactively shows/hides the animated selector.
+
+### Query Patterns
+
+Because both grids have `&mut ItemGrid`, queries must use `Without<>` filters to avoid Bevy's query conflict panic:
 
 ```rust
-// 4x4 grid layout (indices):
-// 0  1  2  3
-// 4  5  6  7
-// 8  9 10 11
-// 12 13 14 15
-
-const GRID_SIZE: usize = 4;
-
-// Navigation: row/col derived from selected_index
-// Left:  col > 0 → index - 1
-// Right: col < 3 → index + 1
-// Up:    row > 0 → index - 4
-// Down:  row < 3 → index + 4
-// All moves clamped to item_count (cannot navigate to empty cells)
+mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
+mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ```
 
-The system directly mutates `ItemGrid.selected_index`, which triggers the `update_grid_selector` system in `ItemGridPlugin` to move the animated selector sprite reactively.
+## Grid Navigation
 
-## Item Display Order
+The `handle_inventory_modal_navigation` system handles arrow key input on the focused grid:
 
-The `get_ordered_items` helper (in `render.rs`) returns items in display order:
+```rust
+// Navigation uses grid.grid_size for row/col calculations:
+// row = current / grid_size
+// col = current % grid_size
+// Moves clamped to item_count (cannot navigate to empty cells)
 
-1. Equipped items first (iterates all `EquipmentSlot`s)
-2. Backpack items second (from `inventory.get_inventory_items()`)
+fn navigate_grid(grid: &mut ItemGrid, direction: NavigationDirection) {
+    let gs = grid.grid_size;
+    // Left:  col > 0 → index - 1
+    // Right: col < gs-1 → index + 1
+    // Up:    row > 0 → index - gs
+    // Down:  row < gs-1 → index + gs
+}
+```
 
-Each item is converted to `ItemGridEntry { sprite_name }` using `item.item_id.sprite_name()`.
+## Equip/Unequip (Enter Key)
+
+`handle_inventory_modal_select` handles `GameAction::Select`:
+
+- **Equipment grid focused**: Unequips the selected item back to backpack
+  - Maps `selected_index` to the Nth *populated* `EquipmentSlot` (since empty slots are skipped by `get_equipment_items`)
+  - Calls `inventory.unequip_item(slot)` — silently fails if backpack is full
+- **Backpack grid focused**: Equips the selected item
+  - Only acts on items where `item_type.equipment_slot()` returns `Some(slot)`
+  - Calls `inventory.equip_from_inventory(uuid, slot)` — automatically swaps if slot is occupied
+  - Non-equipment items (materials, consumables) are ignored
+
+After any change, `refresh_grids()` rebuilds both grids' `items` vectors and clamps `selected_index`. The `ItemGridPlugin`'s `update_grid_items` system then reactively updates the cell sprites.
+
+### Slot Mapping for Equipment Grid
+
+Since `get_equipment_items()` only returns populated slots, the index-to-slot mapping requires filtering:
+
+```rust
+let equipped_slots: Vec<EquipmentSlot> = EquipmentSlot::all()
+    .iter()
+    .copied()
+    .filter(|slot| inventory.get_equipped_item(*slot).is_some())
+    .collect();
+// equipped_slots[selected_index] gives the actual EquipmentSlot
+```
+
+## Item Helpers
+
+Two helpers in `render.rs` provide items for each grid:
+
+```rust
+/// Equipment items in slot order (only populated slots).
+pub fn get_equipment_items(inventory: &Inventory) -> Vec<&InventoryItem>
+
+/// Backpack (non-equipped) items.
+pub fn get_backpack_items(inventory: &Inventory) -> Vec<&InventoryItem>
+```
 
 ## Detail Pane Population
 
 The `populate_item_detail_pane` system runs every frame and checks if the pane needs updating:
 
-1. Reads `ItemGrid.selected_index`
-2. Compares against current `ItemDetailPane.source` index
-3. On mismatch (or first frame with no children), updates content:
+1. Queries both grids, finds the one with `is_focused == true`
+2. Builds an `InfoPanelSource` (`Equipment` or `Inventory`) with the focused grid's `selected_index`
+3. Compares against current `pane.source` (uses `PartialEq`)
+4. On mismatch (or first frame with no children), updates content:
    - Despawns existing `ItemDetailPaneContent` children
-   - Looks up item via `get_ordered_items` at the selected index
+   - Looks up item via `get_equipment_items` or `get_backpack_items` at `selected_index`
    - Spawns: item name, item type, quality label, and `ItemStatsDisplay`
-4. Guards: if `selected_index >= ordered_items.len()`, clears content (no crash on empty cells)
+5. Guards: if `selected_index >= items.len()`, clears content (no crash on empty cells)
 
 ## Key Types
 
@@ -86,29 +136,23 @@ The `populate_item_detail_pane` system runs every frame and checks if the pane n
 |------|------|
 | `InventoryModal` | `RegisteredModal` impl, used with `commands.toggle_modal::<InventoryModal>()` |
 | `InventoryModalRoot` | Marker component on the modal overlay entity |
+| `EquipmentGrid` | Marker component on the 3x3 equipment grid entity |
+| `BackpackGrid` | Marker component on the 4x4 backpack grid entity |
 | `SpawnInventoryModal` | Trigger resource inserted by `InventoryModal::spawn()` |
 
 ## Render Pattern
 
 ```rust
 pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
-    let ordered = get_ordered_items(inventory);
-    let items: Vec<ItemGridEntry> = ordered.iter().map(|inv_item| ItemGridEntry {
-        sprite_name: inv_item.item.item_id.sprite_name().to_string(),
-    }).collect();
+    let equipment_entries = get_equipment_items(inventory).iter().map(/* ... */).collect();
+    let backpack_entries = get_backpack_items(inventory).iter().map(/* ... */).collect();
 
     let overlay = spawn_modal_overlay(commands);
     commands.entity(overlay).insert(InventoryModalRoot).with_children(|parent| {
-        parent.spawn(Node {
-            flex_direction: FlexDirection::Row,
-            column_gap: Val::Px(16.0),
-            align_items: AlignItems::FlexStart,
-            ..default()
-        }).with_children(|row| {
-            row.spawn(ItemGrid { items, selected_index: 0, is_focused: true });
-            row.spawn(ItemDetailPane {
-                source: InfoPanelSource::Inventory { selected_index: 0 },
-            });
+        parent.spawn(Node { flex_direction: Row, column_gap: 16px, ... }).with_children(|row| {
+            row.spawn((EquipmentGrid, ItemGrid { items: equipment_entries, grid_size: 3, is_focused: true, .. }));
+            row.spawn((BackpackGrid, ItemGrid { items: backpack_entries, grid_size: 4, is_focused: false, .. }));
+            row.spawn(ItemDetailPane { source: InfoPanelSource::Inventory { selected_index: 0 } });
         });
     });
 }
@@ -119,6 +163,8 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
 | System | Schedule | Run Condition |
 |--------|----------|---------------|
 | `handle_inventory_modal_close` | Update | Always (guards on ActiveModal) |
+| `handle_inventory_modal_tab` | Update | Always (guards on ActiveModal) |
 | `handle_inventory_modal_navigation` | Update | Always (guards on ActiveModal) |
+| `handle_inventory_modal_select` | Update | Always (guards on ActiveModal) |
 | `populate_item_detail_pane` | Update | Always (guards internally on query results) |
 | `trigger_spawn_inventory_modal` | Update | `resource_exists::<SpawnInventoryModal>` |

@@ -14,7 +14,7 @@ impl Plugin for ItemGridPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(on_add_item_grid)
             // Run in PostUpdate to avoid race with UI refresh systems in Update
-            .add_systems(PostUpdate, (update_grid_selector, animate_grid_selector));
+            .add_systems(PostUpdate, (update_grid_items, update_grid_selector, animate_grid_selector).chain());
     }
 }
 
@@ -179,6 +179,7 @@ fn on_add_item_grid(
                             {
                                 cell.with_children(|cell_content| {
                                     cell_content.spawn((
+                                        GridItemSprite,
                                         Node {
                                             width: Val::Px(32.0),
                                             height: Val::Px(32.0),
@@ -193,6 +194,67 @@ fn on_add_item_grid(
                 }
             });
     });
+}
+
+/// Marker for item sprites inside grid cells (to distinguish from selector sprites).
+#[derive(Component)]
+struct GridItemSprite;
+
+/// Update the item sprites in grid cells when the items list changes.
+fn update_grid_items(
+    mut commands: Commands,
+    game_sprites: Res<GameSprites>,
+    item_grids: Query<(&ItemGrid, &Children), Changed<ItemGrid>>,
+    grid_containers: Query<&Children, With<GridContainer>>,
+    grid_cells: Query<(Entity, &GridCell, Option<&Children>)>,
+    item_sprites: Query<Entity, With<GridItemSprite>>,
+) {
+    for (item_grid, item_grid_children) in &item_grids {
+        // Find the GridContainer child
+        let Some(container_children) = item_grid_children
+            .iter()
+            .find_map(|&child| grid_containers.get(child).ok())
+        else {
+            continue;
+        };
+
+        for &child in container_children.iter() {
+            let Ok((cell_entity, grid_cell, cell_children)) = grid_cells.get(child) else {
+                continue;
+            };
+
+            // Remove existing item sprites from this cell
+            if let Some(children) = cell_children {
+                for &cell_child in children.iter() {
+                    if item_sprites.contains(cell_child) {
+                        if commands.get_entity(cell_child).is_some() {
+                            commands.entity(cell_child).despawn_recursive();
+                        }
+                    }
+                }
+            }
+
+            // Add item sprite if there's an item at this cell index
+            if let Some(entry) = item_grid.items.get(grid_cell.index) {
+                if let Some(icon_img) = game_sprites
+                    .get(SpriteSheetKey::IconItems)
+                    .and_then(|s| s.image_node(&entry.sprite_name))
+                {
+                    commands.entity(cell_entity).with_children(|cell_content| {
+                        cell_content.spawn((
+                            GridItemSprite,
+                            Node {
+                                width: Val::Px(32.0),
+                                height: Val::Px(32.0),
+                                ..default()
+                            },
+                            icon_img,
+                        ));
+                    });
+                }
+            }
+        }
+    }
 }
 
 /// Update the grid selector position when selection changes.

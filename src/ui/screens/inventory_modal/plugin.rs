@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::inventory::Inventory;
 
-use super::input::{handle_inventory_modal_close, handle_inventory_modal_navigation, handle_inventory_modal_tab};
+use super::input::{handle_inventory_modal_close, handle_inventory_modal_navigation, handle_inventory_modal_select, handle_inventory_modal_tab};
 use super::render::{populate_item_detail_pane, spawn_inventory_modal};
 use super::state::SpawnInventoryModal;
 
@@ -17,6 +17,7 @@ impl Plugin for InventoryModalPlugin {
                 handle_inventory_modal_close,
                 handle_inventory_modal_tab,
                 handle_inventory_modal_navigation,
+                handle_inventory_modal_select,
                 populate_item_detail_pane,
                 trigger_spawn_inventory_modal.run_if(resource_exists::<SpawnInventoryModal>),
             ),
