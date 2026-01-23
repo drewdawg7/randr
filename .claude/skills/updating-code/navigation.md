@@ -185,6 +185,30 @@ pub enum GameAction { ... }
 pub enum NavigationDirection { ... }
 ```
 
+## Key Repeat for Navigation
+
+Arrow keys support key-repeat: pressing once emits a single `Navigate` event, holding emits repeated events after an initial delay. Implemented in `src/input/systems.rs` via `NavigationRepeatState`.
+
+### Constants
+
+| Constant | Value | Purpose |
+|----------|-------|---------|
+| `REPEAT_INITIAL_DELAY` | 0.3s | Delay before repeating starts |
+| `REPEAT_INTERVAL` | 0.1s | Interval between repeated events |
+
+### How It Works
+
+1. **`just_pressed`**: Emit `Navigate` immediately, start initial delay timer (Once mode)
+2. **Initial delay expires**: Emit one event, switch to repeating timer (Repeating mode)
+3. **While held**: Emit events each time the repeating timer fires
+4. **Key released**: Reset state
+
+The repeat applies globally (dungeon movement, menu scrolling, etc.) since it's in the input system.
+
+### Handling Multiple Keys
+
+If a new arrow key is pressed while another is held, the new direction takes over immediately (fresh press resets the repeat state).
+
 ## Benefits
 
 - All navigation logic in one declarative configuration

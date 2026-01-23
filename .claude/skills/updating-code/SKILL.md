@@ -63,6 +63,8 @@ Read the relevant doc BEFORE making changes.
 | Modal builder API, SpawnModalExt, ModalBackground | [modal-builder.md](modal-builder.md) |
 | RegisteredModal trait, ModalCommands, toggle_modal | [modal-registry.md](modal-registry.md) |
 | Navigation system, state transitions, NavigationPlugin | [navigation.md](navigation.md) |
+| Key repeat, InputPlugin, arrow key hold behavior | [navigation.md](navigation.md) |
+| Player walk animation, sprite flip, PlayerWalkTimer | [sprite-marker.md](sprite-marker.md) |
 | Inventory modal, ItemGrid display, inventory UI | [inventory-modal.md](inventory-modal.md) |
 | Player stats banner, HP/XP/Gold HUD, reactive text | [player-stats.md](player-stats.md) |
 
