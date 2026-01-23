@@ -1,5 +1,6 @@
 pub mod assets;
 pub mod chest;
+pub mod rock;
 pub mod storage;
 pub mod economy;
 pub mod location;

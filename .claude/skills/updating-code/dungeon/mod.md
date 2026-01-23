@@ -318,6 +318,7 @@ let treasure = SpawnTable::new().chest(5..=8);
 - `mob_count(range)` - Sets mob count range (e.g., `2..=4`)
 - `chest(range)` - Sets chest count range (e.g., `1..=2`), always 1x1
 - `stairs(range)` - Sets stairs count range (e.g., `1..=1`), always 1x1
+- `rock(range)` - Sets rock count range (e.g., `2..=4`), always 1x1, random RockType
 - `apply(&mut layout, &mut rng)` - Applies spawns to layout
 
 **Algorithm:**
@@ -325,7 +326,9 @@ let treasure = SpawnTable::new().chest(5..=8);
    - Uses `layout.spawn_areas(GridSize::single())` to find valid 1x1 positions
 2. Spawns random stairs count (range), always 1x1
    - Uses `layout.spawn_areas(GridSize::single())` to find valid positions
-3. Spawns random mob count using weighted selection from entries
+3. Spawns random rock count (range), random RockType (equal weight Copper/Coal/Tin)
+   - Uses `layout.spawn_areas(GridSize::single())` to find valid positions
+4. Spawns random mob count using weighted selection from entries
    - Uses `layout.spawn_areas(entry.size)` to find valid positions for each mob's size
    - Entities never overlap due to `spawn_areas()` checking existing entities
 

@@ -1,5 +1,6 @@
 use crate::assets::SpriteSheetKey;
 use crate::mob::MobId;
+use crate::rock::RockType;
 
 use super::grid::GridSize;
 
@@ -8,6 +9,7 @@ pub enum DungeonEntity {
     Chest { variant: u8, size: GridSize },
     Mob { mob_id: MobId, size: GridSize },
     Stairs { size: GridSize },
+    Rock { rock_type: RockType, size: GridSize },
 }
 
 impl DungeonEntity {
@@ -17,6 +19,7 @@ impl DungeonEntity {
             Self::Chest { size, .. } => *size,
             Self::Mob { size, .. } => *size,
             Self::Stairs { size } => *size,
+            Self::Rock { size, .. } => *size,
         }
     }
 
@@ -27,6 +30,7 @@ impl DungeonEntity {
             Self::Chest { .. } => SpriteSheetKey::Chests,
             Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
             Self::Stairs { .. } => SpriteSheetKey::DungeonTileset,
+            Self::Rock { .. } => SpriteSheetKey::Rocks,
         }
     }
 
@@ -37,6 +41,7 @@ impl DungeonEntity {
             Self::Chest { .. } => "Slice_1",
             Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
             Self::Stairs { .. } => "stairs",
+            Self::Rock { rock_type, .. } => rock_type.sprite_name(),
         }
     }
 

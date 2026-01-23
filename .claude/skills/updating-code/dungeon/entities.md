@@ -12,9 +12,10 @@ Entities that can be spawned on dungeon tiles.
 ### DungeonEntity Enum (`src/dungeon/entity.rs`)
 ```rust
 pub enum DungeonEntity {
-    Chest { variant: u8, size: GridSize },  // Uses chests sprite sheet (Slice_1)
-    Mob { mob_id: MobId, size: GridSize },  // Any mob type (Goblin, Slime, etc.)
-    Stairs { size: GridSize },              // Advances player to next floor
+    Chest { variant: u8, size: GridSize },        // Uses chests sprite sheet (Slice_1)
+    Mob { mob_id: MobId, size: GridSize },        // Any mob type (Goblin, Slime, etc.)
+    Stairs { size: GridSize },                    // Advances player to next floor
+    Rock { rock_type: RockType, size: GridSize }, // Minable rocks (copper, coal, tin)
 }
 ```
 
@@ -40,6 +41,19 @@ Each variant includes a `size: GridSize` field indicating how many grid cells th
 - `populate_dungeon_mob_sprites()` system populates sprite + animation
 - Reuses `MobSpriteSheets` and `MobAnimation` from mob compendium
 
+### Rock Entity
+- Uses `SpriteSheetKey::Rocks` with slice from `RockType::sprite_name()`
+- Three types: `RockType::Copper` ("copper_rock"), `RockType::Coal` ("coal_tin_rock"), `RockType::Tin` ("coal_tin_rock")
+- Coal and Tin share the same sprite (icon 859), Copper uses a different one (icon 858)
+- Always 1x1 (`GridSize::single()`)
+- Blocks movement (obstacles, like chests)
+- Mined via Space key when adjacent → shows results modal with ore drops
+- Rock module: `src/rock/` (definition, enums, traits)
+- `Rock::new(rock_type)` creates a rock with appropriate loot table
+- Implements `HasLoot` trait for `roll_drops(magic_find)`
+- Spawned via `SpawnTable::rock(count_range)` (e.g., `.rock(2..=4)`)
+- Loot: Copper → CopperOre (1-3), Coal → Coal (1-2), Tin → TinOre (1-3)
+
 ### Stairs Entity
 - Uses `SpriteSheetKey::DungeonTileset` with slice `"stairs"` (`DungeonTileSlice::Stairs`)
 - Always 1x1 (`GridSize::single()`)
@@ -47,29 +61,36 @@ Each variant includes a `size: GridSize` field indicating how many grid cells th
 - `advance_floor_system` despawns current dungeon UI, increments `floor_index`, calls `load_floor_layout()`, and respawns the dungeon screen with a fresh layout
 - Spawned via `SpawnTable::stairs(count_range)` (e.g., `.stairs(1..=1)`)
 
-## Chest Interaction (`src/ui/screens/dungeon/plugin.rs`)
+## Mine Interaction (`src/ui/screens/dungeon/plugin.rs`)
+
+Unified handler for mining/opening adjacent entities (chests and rocks).
 
 ### Behavior
-- Chests block movement (player stops when colliding)
-- When player is adjacent to a chest and presses Space (`GameAction::Mine`), the chest opens
-- Loot is rolled from the chest's `LootTable` via `HasLoot::roll_drops(magic_find)`
-- Loot is added to player inventory via `collect_loot_drops()`
-- Chest is despawned from the grid (occupancy vacated, entity despawned)
-- Results modal shows "Chest Opened!" with loot items
+- Chests and rocks block movement (player stops when colliding)
+- When player is adjacent to a chest or rock and presses Space (`GameAction::Mine`):
+  - Loot is rolled via `HasLoot::roll_drops(magic_find)`
+  - Loot is added to player inventory via `collect_loot_drops()`
+  - Entity is despawned from the grid (occupancy vacated, entity despawned)
+  - Results modal shows loot items
 
-### Key System: `handle_chest_interaction`
+### Key System: `handle_mine_interaction`
 - Gated on `in_state(AppState::Dungeon)` and only runs when no modal is open
 - Listens for `GameAction::Mine` (Space key)
-- Uses `find_adjacent_chest()` helper for adjacency detection
+- Uses `find_adjacent_minable()` helper for adjacency detection
+- Matches on entity type to determine loot source and modal title:
+  - `DungeonEntity::Chest` → "Chest Opened!"
+  - `DungeonEntity::Rock { rock_type, .. }` → "{type} Rock Mined!"
 
-### Adjacency Detection: `find_adjacent_chest()`
+### Adjacency Detection: `find_adjacent_minable()`
 For player at `(px, py)` with size `(w, h)`, checks border cells:
 - Top row: `(px..px+w, py-1)`
 - Bottom row: `(px..px+w, py+h)`
 - Left column: `(px-1, py..py+h)`
 - Right column: `(px+w, py..py+h)`
 
-Each cell is checked in `GridOccupancy` for an entity, then the entity is queried for `DungeonEntityMarker` to confirm it's a `DungeonEntity::Chest`.
+Each cell is checked in `GridOccupancy` for an entity, then the entity is queried for `DungeonEntityMarker` to confirm it's a `DungeonEntity::Chest` or `DungeonEntity::Rock`.
+
+Returns `(Entity, GridPosition, DungeonEntity)` tuple.
 
 ### Chest Definition (`src/chest/`)
 ```rust
@@ -81,6 +102,17 @@ pub struct Chest {
 - `Default::default()` creates a chest with a predefined loot table
 - Implements `HasLoot` trait for `roll_drops(magic_find)`
 - Default loot: GoldRing (1/3), BronzeChestplate (1/4), BronzeIngot (1/2), QualityUpgradeStone (1/3), BasicHPPotion (1/1)
+
+### Rock Definition (`src/rock/`)
+```rust
+pub struct Rock {
+    pub rock_type: RockType,
+    pub loot: LootTable,
+}
+```
+- `Rock::new(rock_type)` creates a rock with type-specific loot table
+- Implements `HasLoot` trait for `roll_drops(magic_find)`
+- Loot tables: Copper → CopperOre (1/1, qty 1-3), Coal → Coal (1/1, qty 1-2), Tin → TinOre (1/1, qty 1-3)
 
 ## Adding New Mob Types
 
@@ -202,7 +234,8 @@ LayoutBuilder::new(40, 21)
     .spawn(SpawnTable::new()
         .mob(MobId::Goblin, 3)   // Weight 3 (more common)
         .mob(MobId::Slime, 2)    // Weight 2 (less common)
-        .chest(1..=2))           // 1-2 chests randomly
+        .chest(1..=2)            // 1-2 chests randomly
+        .rock(2..=4))            // 2-4 rocks randomly (random type)
     .build()
 ```
 
@@ -234,8 +267,12 @@ Located in `assets/sprites/dungeon_entities/`:
 - `chests.png` / `chests.json` - Full chests sprite sheet (128x96, 43 slices)
   - Currently uses `Slice_1` (16x14 brown chest at x:32, y:1)
   - Other slices available for future chest variants
+- `rocks.png` / `rocks.json` - Rock sprite sheet (64x32, 2 slices)
+  - `copper_rock` - Copper rock icon (icon858.png, x:0, y:0, 32x32)
+  - `coal_tin_rock` - Coal/tin rock icon (icon859.png, x:32, y:0, 32x32)
 
-Source: `16x16 Assorted RPG Icons/chests.{png,json}`
+Source (chests): `16x16 Assorted RPG Icons/chests.{png,json}`
+Source (rocks): `icons_8.13.20/fullcolor/individual_32x32/icon858.png`, `icon859.png`
 
 ### Animated Mob Sprites
 Located in `assets/sprites/mobs/` (shared with combat/compendium):

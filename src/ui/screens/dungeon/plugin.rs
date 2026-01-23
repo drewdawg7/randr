@@ -3,6 +3,7 @@ use bevy::window::WindowResized;
 
 use crate::assets::{DungeonTileSlice, GameSprites, SpriteSheetKey};
 use crate::chest::Chest;
+use crate::rock::{Rock, RockType};
 use crate::dungeon::{
     DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState, GridOccupancy, GridPosition,
     GridSize, TileRenderer,
@@ -92,7 +93,7 @@ impl Plugin for DungeonScreenPlugin {
                 Update,
                 (
                     handle_dungeon_movement,
-                    handle_chest_interaction,
+                    handle_mine_interaction,
                     handle_back_action,
                     handle_window_resize,
                     advance_floor_system.run_if(resource_exists::<AdvanceFloor>),
@@ -293,6 +294,30 @@ fn spawn_dungeon_screen(
                                             None
                                         }
                                     }
+                                    DungeonEntity::Rock { .. } => {
+                                        if let Some(entity_sheet) =
+                                            game_sprites.get(entity.sprite_sheet_key())
+                                        {
+                                            if let Some(img) =
+                                                entity_sheet.image_node(entity.sprite_name())
+                                            {
+                                                Some(grid.spawn((
+                                                    DungeonEntityMarker {
+                                                        pos: *pos,
+                                                        size,
+                                                        entity_type: entity.clone(),
+                                                    },
+                                                    z_for_entity(pos.y),
+                                                    img,
+                                                    entity_node,
+                                                )).id())
+                                            } else {
+                                                None
+                                            }
+                                        } else {
+                                            None
+                                        }
+                                    }
                                 };
 
                                 // Populate occupancy with spawned entity (center cell only for collision)
@@ -414,7 +439,10 @@ fn handle_dungeon_movement(
                     commands.insert_resource(SpawnFightModal);
                 }
                 DungeonEntity::Chest { .. } => {
-                    // Block movement (chests are obstacles for now)
+                    // Block movement (chests are obstacles)
+                }
+                DungeonEntity::Rock { .. } => {
+                    // Block movement (rocks are obstacles)
                 }
                 DungeonEntity::Stairs { .. } => {
                     commands.insert_resource(AdvanceFloor);
@@ -434,8 +462,8 @@ fn handle_dungeon_movement(
     }
 }
 
-/// Handle space key to open adjacent chests.
-fn handle_chest_interaction(
+/// Handle space key to mine adjacent rocks or open adjacent chests.
+fn handle_mine_interaction(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     state: Res<DungeonState>,
@@ -455,28 +483,44 @@ fn handle_chest_interaction(
             continue;
         }
 
-        // Find an adjacent chest entity
-        let Some((entity_id, entity_pos)) =
-            find_adjacent_chest(&state, &occupancy, &entity_query)
+        // Find an adjacent minable entity (chest or rock)
+        let Some((entity_id, entity_pos, entity_type)) =
+            find_adjacent_minable(&state, &occupancy, &entity_query)
         else {
             continue;
         };
 
-        // Roll loot from chest
-        let chest = Chest::default();
         let magic_find = stats.value(StatType::MagicFind);
-        let loot_drops = chest.roll_drops(magic_find);
+
+        let (title, loot_drops) = match entity_type {
+            DungeonEntity::Chest { .. } => {
+                let chest = Chest::default();
+                let drops = chest.roll_drops(magic_find);
+                ("Chest Opened!".to_string(), drops)
+            }
+            DungeonEntity::Rock { rock_type, .. } => {
+                let rock = Rock::new(rock_type);
+                let drops = rock.roll_drops(magic_find);
+                let rock_name = match rock_type {
+                    RockType::Copper => "Copper Rock",
+                    RockType::Coal => "Coal Rock",
+                    RockType::Tin => "Tin Rock",
+                };
+                (format!("{} Mined!", rock_name), drops)
+            }
+            _ => continue,
+        };
 
         // Collect loot into inventory
         collect_loot_drops(&mut *inventory, &loot_drops);
 
-        // Despawn chest from dungeon
+        // Despawn entity from dungeon
         occupancy.vacate(entity_pos, GridSize::single());
         commands.entity(entity_id).despawn_recursive();
 
         // Show results modal
         commands.insert_resource(ResultsModalData {
-            title: "Chest Opened!".to_string(),
+            title,
             subtitle: None,
             sprite: None,
             gold_gained: None,
@@ -488,13 +532,13 @@ fn handle_chest_interaction(
     }
 }
 
-/// Find an adjacent chest entity to the player's current position.
-/// Returns the bevy Entity and GridPosition of the chest if found.
-fn find_adjacent_chest(
+/// Find an adjacent minable entity (chest or rock) to the player's current position.
+/// Returns the bevy Entity, GridPosition, and DungeonEntity type if found.
+fn find_adjacent_minable(
     state: &DungeonState,
     occupancy: &GridOccupancy,
     entity_query: &Query<&DungeonEntityMarker>,
-) -> Option<(Entity, GridPosition)> {
+) -> Option<(Entity, GridPosition, DungeonEntity)> {
     let px = state.player_pos.x;
     let py = state.player_pos.y;
     let w = state.player_size.width as usize;
@@ -524,12 +568,12 @@ fn find_adjacent_chest(
         adjacent_cells.push((px + w, y));
     }
 
-    // Check each adjacent cell for a chest entity
+    // Check each adjacent cell for a minable entity (chest or rock)
     for (x, y) in adjacent_cells {
         if let Some(entity) = occupancy.entity_at(x, y) {
             if let Ok(marker) = entity_query.get(entity) {
-                if matches!(marker.entity_type, DungeonEntity::Chest { .. }) {
-                    return Some((entity, marker.pos));
+                if matches!(marker.entity_type, DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. }) {
+                    return Some((entity, marker.pos, marker.entity_type));
                 }
             }
         }
@@ -803,6 +847,30 @@ fn advance_floor_system(
                                                 img,
                                                 entity_node,
                                             )).id())
+                                        } else {
+                                            None
+                                        }
+                                    }
+                                    DungeonEntity::Rock { .. } => {
+                                        if let Some(entity_sheet) =
+                                            game_sprites.get(entity.sprite_sheet_key())
+                                        {
+                                            if let Some(img) =
+                                                entity_sheet.image_node(entity.sprite_name())
+                                            {
+                                                Some(grid.spawn((
+                                                    DungeonEntityMarker {
+                                                        pos: *pos,
+                                                        size,
+                                                        entity_type: *entity,
+                                                    },
+                                                    z_for_entity(pos.y),
+                                                    img,
+                                                    entity_node,
+                                                )).id())
+                                            } else {
+                                                None
+                                            }
                                         } else {
                                             None
                                         }

@@ -7,6 +7,7 @@ use super::entity::DungeonEntity;
 use super::grid::GridSize;
 use super::layout::DungeonLayout;
 use crate::mob::MobId;
+use crate::rock::RockType;
 
 /// Type of entity that can be spawned.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -28,6 +29,7 @@ pub struct SpawnTable {
     mob_count: RangeInclusive<u32>,
     chest_count: RangeInclusive<u32>,
     stairs_count: RangeInclusive<u32>,
+    rock_count: RangeInclusive<u32>,
 }
 
 impl Default for SpawnTable {
@@ -43,6 +45,7 @@ impl SpawnTable {
             mob_count: 0..=0,
             chest_count: 0..=0,
             stairs_count: 0..=0,
+            rock_count: 0..=0,
         }
     }
 
@@ -78,6 +81,12 @@ impl SpawnTable {
         self
     }
 
+    /// Add rock count range (always 1x1).
+    pub fn rock(mut self, count: RangeInclusive<u32>) -> Self {
+        self.rock_count = count;
+        self
+    }
+
     pub fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) {
         // 1. Spawn chests first (1x1, prioritize)
         let chest_count = rng.gen_range(self.chest_count.clone());
@@ -109,7 +118,27 @@ impl SpawnTable {
             }
         }
 
-        // 3. Spawn mobs by weighted selection
+        // 3. Spawn rocks (1x1)
+        let rock_count = rng.gen_range(self.rock_count.clone());
+        for _ in 0..rock_count {
+            let areas = layout.spawn_areas(GridSize::single());
+            if let Some(&pos) = areas.choose(rng) {
+                let rock_type = match rng.gen_range(0..3u8) {
+                    0 => RockType::Copper,
+                    1 => RockType::Coal,
+                    _ => RockType::Tin,
+                };
+                layout.add_entity(
+                    pos,
+                    DungeonEntity::Rock {
+                        rock_type,
+                        size: GridSize::single(),
+                    },
+                );
+            }
+        }
+
+        // 4. Spawn mobs by weighted selection
         let total_weight: u32 = self.entries.iter().map(|e| e.weight).sum();
         if total_weight == 0 {
             return;
@@ -232,5 +261,34 @@ mod tests {
         SpawnTable::empty().apply(&mut layout, &mut rng);
 
         assert!(layout.entities().is_empty());
+    }
+
+    #[test]
+    fn spawn_table_applies_rocks() {
+        let mut rng = rand::thread_rng();
+        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+
+        SpawnTable::new().rock(2..=2).apply(&mut layout, &mut rng);
+
+        let rocks: Vec<_> = layout
+            .entities()
+            .iter()
+            .filter(|(_, e)| matches!(e, DungeonEntity::Rock { .. }))
+            .collect();
+        assert_eq!(rocks.len(), 2);
+    }
+
+    #[test]
+    fn rocks_are_1x1_size() {
+        let mut rng = rand::thread_rng();
+        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+
+        SpawnTable::new().rock(3..=3).apply(&mut layout, &mut rng);
+
+        for (_, entity) in layout.entities() {
+            if matches!(entity, DungeonEntity::Rock { .. }) {
+                assert_eq!(entity.size(), GridSize::single());
+            }
+        }
     }
 }

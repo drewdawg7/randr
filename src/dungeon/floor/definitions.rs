@@ -28,7 +28,8 @@ entity_macros::define_data! {
                 .mob(MobId::Slime, 3)
                 .mob_count(3..=5)
                 .chest(1..=2)
-                .stairs(1..=1),
+                .stairs(1..=1)
+                .rock(2..=4),
         }
     }
 }

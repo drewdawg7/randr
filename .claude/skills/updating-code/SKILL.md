@@ -41,6 +41,7 @@ Read the relevant doc BEFORE making changes.
 | Fight modal, dungeon combat, mob encounters | [fight-modal.md](fight-modal.md) |
 | Results modal, post-fight/chest rewards, loot display | [results-modal.md](results-modal.md) |
 | Chest interaction, adjacency detection, chest loot | [dungeon/entities.md](dungeon/entities.md) |
+| Rock mining, RockType, rock loot, mine interaction | [dungeon/entities.md](dungeon/entities.md) |
 | Health bars, HealthBarValues, SpriteHealthBar, HP text | [health-bar.md](health-bar.md) |
 | Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |
 | SelectionState trait, list navigation, focus | [focus.md](focus.md) |
