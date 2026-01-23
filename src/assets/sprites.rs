@@ -38,6 +38,7 @@ pub enum SpriteSheetKey {
     OkButtonSelected,
     CancelButton,
     CancelButtonSelected,
+    TorchWall,
 }
 
 impl SpriteSheetKey {
@@ -72,6 +73,7 @@ impl SpriteSheetKey {
             Self::OkButtonSelected,
             Self::CancelButton,
             Self::CancelButtonSelected,
+            Self::TorchWall,
         ]
     }
 
@@ -106,6 +108,7 @@ impl SpriteSheetKey {
             Self::OkButtonSelected => "ok_button_selected",
             Self::CancelButton => "cancel_button",
             Self::CancelButtonSelected => "cancel_button_selected",
+            Self::TorchWall => "torch_wall",
         }
     }
 }

@@ -16,6 +16,7 @@ impl TileRenderer {
             TileType::Exit => Some((DungeonTileSlice::Gate, false)),
             TileType::Door => Some((DungeonTileSlice::Gate, false)),
             TileType::DoorOpen => Some((DungeonTileSlice::GateFloor, false)),
+            TileType::TorchWall => None,
         }
     }
 

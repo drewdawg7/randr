@@ -7,6 +7,7 @@ pub enum TileType {
     Door,
     DoorOpen,
     PlayerSpawn,
+    TorchWall,
 }
 
 impl TileType {

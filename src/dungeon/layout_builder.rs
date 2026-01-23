@@ -12,6 +12,11 @@
 //!     .build();
 //! ```
 
+use std::ops::RangeInclusive;
+
+use rand::seq::SliceRandom;
+use rand::Rng;
+
 use super::layout::DungeonLayout;
 use super::spawn::SpawnTable;
 use super::tile::{Tile, TileType};
@@ -26,6 +31,7 @@ pub struct LayoutBuilder {
     entrance: Option<(usize, usize)>,
     exit: Option<(usize, usize)>,
     spawn_table: Option<SpawnTable>,
+    torch_count: Option<RangeInclusive<u8>>,
 }
 
 impl LayoutBuilder {
@@ -48,6 +54,7 @@ impl LayoutBuilder {
             entrance: None,
             exit: None,
             spawn_table: None,
+            torch_count: None,
         }
     }
 
@@ -112,6 +119,20 @@ impl LayoutBuilder {
         self
     }
 
+    /// Sets the number of torch walls to place randomly on the back (top) wall.
+    ///
+    /// Torches are placed on the top wall (y=0), avoiding corners and the exit.
+    ///
+    /// # Example
+    ///
+    /// ```ignore
+    /// .torches(2..=4)  // 2-4 torches on the back wall
+    /// ```
+    pub fn torches(mut self, count: RangeInclusive<u8>) -> Self {
+        self.torch_count = Some(count);
+        self
+    }
+
     /// Consumes the builder and produces the final `DungeonLayout`.
     ///
     /// If a spawn table was set via `spawn()`, it is applied automatically
@@ -169,6 +190,23 @@ impl LayoutBuilder {
         if let Some((x, y)) = self.exit {
             layout.set_tile(x, y, Tile::new(TileType::Exit));
             layout.exit = Some((x, y));
+        }
+
+        // Place torches on back wall if set
+        if let Some(torch_range) = self.torch_count {
+            let mut rng = rand::thread_rng();
+            let count = rng.gen_range(torch_range) as usize;
+
+            // Collect valid back-wall positions (not corners, not exit)
+            let exit_x = self.exit.map(|(x, _)| x);
+            let mut positions: Vec<usize> = (1..self.width - 1)
+                .filter(|x| Some(*x) != exit_x)
+                .collect();
+            positions.shuffle(&mut rng);
+
+            for &x in positions.iter().take(count) {
+                layout.set_tile(x, 0, Tile::new(TileType::TorchWall));
+            }
         }
 
         // Apply spawn table if set

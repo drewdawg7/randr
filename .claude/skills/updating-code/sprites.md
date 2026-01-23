@@ -116,3 +116,25 @@ pub struct AnimationConfig {
 | `image_bundle_animated()` | Animated UI sprites with fixed size |
 | `sprite()` | 2D world sprites |
 | `sprite_sized()` | 2D world sprites with custom size |
+
+## Shared Image Sprite Sheets
+
+Multiple sprite sheet JSONs can reference the same image file via `meta.image`. This is useful for creating animation subsets from a larger tileset without duplicating the PNG:
+
+```json
+{
+  "frames": {},
+  "meta": {
+    "image": "sprites/dungeon_tileset.png",
+    "size": { "w": 160, "h": 160 },
+    "slices": [
+      { "name": "frame_1", "keys": [{ "frame": 0, "bounds": {"x": 0, "y": 128, "w": 16, "h": 16 } }] },
+      { "name": "frame_2", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 128, "w": 16, "h": 16 } }] }
+    ]
+  }
+}
+```
+
+This gives contiguous atlas indices (0, 1, ...) for the subset, making `SpriteAnimation` work correctly even when the source frames aren't contiguous in the original tileset.
+
+**Used by:** `SpriteSheetKey::TorchWall` (3-frame torch animation from `dungeon_tileset.png`).

@@ -118,7 +118,18 @@ Visual tile enum at `src/assets/sprite_slices.rs`:
 - Bottom walls: `BottomWall1-4`
 - Side walls: `SideWall5-8`
 - Corners: `BottomRightWall` (use flip_x for left corners), `SideWall5` (top corners)
+- Torches: `TorchWall1-4` (static variants; animated rendering uses separate sprite sheets)
 - Special: `Gate`, `GateFloor`, `Stairs`
+
+## Animated Tiles (Torches)
+
+`TileType::TorchWall` tiles are rendered with animation instead of static `DungeonTileSlice` variants. They use a separate sprite sheet:
+
+- `SpriteSheetKey::TorchWall` - 3-frame torch wall animation (`torch_wall.json`, references `dungeon_tileset.png`)
+
+The rendering code in `spawn_dungeon_screen` checks `tile.tile_type` before calling `TileRenderer::resolve`. For torch tiles, it uses `image_bundle_animated()` with `AnimationConfig { first_frame: 0, last_frame: 2, frame_duration: 0.2 }`.
+
+`TileRenderer::resolve()` returns `None` for `TorchWall` since it bypasses the static slice system.
 
 ### Flip Convention
 - Left walls: `flip_x = true`

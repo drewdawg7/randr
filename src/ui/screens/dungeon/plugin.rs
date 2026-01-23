@@ -6,8 +6,9 @@ use crate::chest::Chest;
 use crate::rock::{Rock, RockType};
 use crate::dungeon::{
     DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState, GridOccupancy, GridPosition,
-    GridSize, TileRenderer,
+    GridSize, TileRenderer, TileType,
 };
+use crate::ui::AnimationConfig;
 use crate::inventory::Inventory;
 use crate::location::LocationId;
 use crate::input::{GameAction, NavigationDirection};
@@ -194,24 +195,54 @@ fn spawn_dungeon_screen(
                                         },
                                     ))
                                     .with_children(|cell| {
-                                        if let Some((slice, flip_x)) =
-                                            TileRenderer::resolve(&layout, x, y)
-                                        {
-                                            if let Some(mut img) =
-                                                tile_sheet.image_node(slice.as_str())
-                                            {
-                                                if flip_x {
-                                                    img.flip_x = true;
+                                        let tile_type = layout
+                                            .tile_at(x, y)
+                                            .map(|t| t.tile_type);
+
+                                        match tile_type {
+                                            Some(TileType::TorchWall) => {
+                                                if let Some(torch_sheet) =
+                                                    game_sprites.get(SpriteSheetKey::TorchWall)
+                                                {
+                                                    let config = AnimationConfig {
+                                                        first_frame: 0,
+                                                        last_frame: 2,
+                                                        frame_duration: 0.2,
+                                                    };
+                                                    if let Some(bundle) =
+                                                        torch_sheet.image_bundle_animated(
+                                                            "torch_1",
+                                                            tile_size,
+                                                            tile_size,
+                                                            config,
+                                                        )
+                                                    {
+                                                        cell.spawn(bundle);
+                                                    }
                                                 }
-                                                cell.spawn((
-                                                    img,
-                                                    Node {
-                                                        position_type: PositionType::Absolute,
-                                                        width: Val::Percent(100.0),
-                                                        height: Val::Percent(100.0),
-                                                        ..default()
-                                                    },
-                                                ));
+                                            }
+                                            _ => {
+                                                if let Some((slice, flip_x)) =
+                                                    TileRenderer::resolve(&layout, x, y)
+                                                {
+                                                    if let Some(mut img) =
+                                                        tile_sheet.image_node(slice.as_str())
+                                                    {
+                                                        if flip_x {
+                                                            img.flip_x = true;
+                                                        }
+                                                        cell.spawn((
+                                                            img,
+                                                            Node {
+                                                                position_type:
+                                                                    PositionType::Absolute,
+                                                                width: Val::Percent(100.0),
+                                                                height: Val::Percent(100.0),
+                                                                ..default()
+                                                            },
+                                                        ));
+                                                    }
+                                                }
                                             }
                                         }
                                     });

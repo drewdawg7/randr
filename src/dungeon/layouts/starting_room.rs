@@ -14,6 +14,7 @@ pub fn create() -> DungeonLayout {
     LayoutBuilder::new(w, h)
         .entrance(w / 2, h - 2) // Player spawn above exit
         .exit(w / 2, h - 1) // Exit at bottom center
+        .torches(2..=4)
         .spawn(
             SpawnTable::new()
                 .mob(MobId::Goblin, 1)

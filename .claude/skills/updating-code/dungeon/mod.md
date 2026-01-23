@@ -148,14 +148,18 @@ fn my_system(
 Logical tile types for gameplay:
 ```rust
 pub enum TileType {
-    Wall,      // Impassable
-    Floor,     // Walkable
-    Entrance,  // Player spawn
-    Exit,      // Stairs/door
-    Door,      // Closed door
-    DoorOpen,  // Open door
+    Wall,       // Impassable
+    Floor,      // Walkable
+    Entrance,   // Player spawn
+    Exit,       // Stairs/door
+    Door,       // Closed door
+    DoorOpen,   // Open door
+    PlayerSpawn,// Player spawn point
+    TorchWall,  // Animated torch on back wall (impassable)
 }
 ```
+
+**Torch tiles**: `TorchWall` is impassable (wall behavior). Rendered with a 3-frame animated sprite from `SpriteSheetKey::TorchWall`. Placed randomly on back wall (y=0) by `LayoutBuilder::torches(range)`.
 
 ### Tile (`tile.rs`)
 ```rust
@@ -275,6 +279,7 @@ let layout = LayoutBuilder::new(40, 21)
 - `new(width, height)` - Creates grid with Floor interior, Wall border
 - `entrance(x, y)` - Sets player spawn (must be interior, not on walls)
 - `exit(x, y)` - Sets exit (must be on top or bottom wall)
+- `torches(range)` - Sets torch count range (e.g., `2..=4`), placed randomly on back wall
 - `spawn(SpawnTable)` - Sets entity spawn rules (applied during build)
 - `build()` - Produces `DungeonLayout`, panics if entrance not set
 
@@ -282,6 +287,7 @@ let layout = LayoutBuilder::new(40, 21)
 - 1-tile Wall border around edges
 - Interior filled with Floor tiles
 - Floor variant pattern `((x + y) % 3)` for visual variety
+- Torches placed randomly on back wall (y=0) if set, avoiding corners and exit
 - Spawn table applied automatically if set
 
 ### SpawnTable (`spawn.rs`)
