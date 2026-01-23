@@ -13,7 +13,7 @@ use crate::stats::StatSheet;
 use crate::ui::SelectionState;
 
 use super::super::modal::{close_modal, ActiveModal, ModalType};
-use super::super::victory_modal::{SpawnVictoryModal, VictoryModalData};
+use super::super::results_modal::{ResultsModalData, ResultsSprite, SpawnResultsModal};
 use super::state::{FightModalButton, FightModalButtonSelection, FightModalMob, FightModalRoot};
 
 /// System to handle closing the fight modal.
@@ -111,15 +111,16 @@ pub fn handle_fight_modal_select(
                         ModalType::FightModal,
                     );
 
-                    // Spawn victory modal with results
-                    commands.insert_resource(VictoryModalData {
-                        mob_name: fight_mob.mob.name.clone(),
-                        mob_id: fight_mob.mob_id,
-                        gold_gained: rewards.gold_gained,
-                        xp_gained: rewards.xp_gained,
+                    // Spawn results modal with victory data
+                    commands.insert_resource(ResultsModalData {
+                        title: "Victory!".to_string(),
+                        subtitle: Some(fight_mob.mob.name.clone()),
+                        sprite: Some(ResultsSprite::Mob(fight_mob.mob_id)),
+                        gold_gained: Some(rewards.gold_gained),
+                        xp_gained: Some(rewards.xp_gained),
                         loot_drops: death_result.loot_drops,
                     });
-                    commands.insert_resource(SpawnVictoryModal);
+                    commands.insert_resource(SpawnResultsModal);
 
                     commands.remove_resource::<FightModalMob>();
                     commands.remove_resource::<FightModalButtonSelection>();

@@ -2,15 +2,20 @@ use bevy::prelude::*;
 use bevy::window::WindowResized;
 
 use crate::assets::{DungeonTileSlice, GameSprites, SpriteSheetKey};
+use crate::chest::Chest;
 use crate::dungeon::{
     DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState, GridOccupancy, GridPosition,
     GridSize, TileRenderer,
 };
+use crate::inventory::Inventory;
 use crate::location::LocationId;
 use crate::input::{GameAction, NavigationDirection};
+use crate::loot::{collect_loot_drops, HasLoot};
 use crate::states::AppState;
+use crate::stats::{StatSheet, StatType};
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
 use crate::ui::screens::modal::ActiveModal;
+use crate::ui::screens::results_modal::{ResultsModalData, SpawnResultsModal};
 use crate::ui::widgets::PlayerStats;
 use crate::ui::{DungeonMobSprite, DungeonPlayerSprite};
 
@@ -87,6 +92,7 @@ impl Plugin for DungeonScreenPlugin {
                 Update,
                 (
                     handle_dungeon_movement,
+                    handle_chest_interaction,
                     handle_back_action,
                     handle_window_resize,
                     advance_floor_system.run_if(resource_exists::<AdvanceFloor>),
@@ -426,6 +432,110 @@ fn handle_dungeon_movement(
         player_node.grid_column = GridPlacement::start_span(new_pos.x as i16 + 1, state.player_size.width as u16);
         player_node.grid_row = GridPlacement::start_span(new_pos.y as i16 + 1, state.player_size.height as u16);
     }
+}
+
+/// Handle space key to open adjacent chests.
+fn handle_chest_interaction(
+    mut commands: Commands,
+    mut action_reader: EventReader<GameAction>,
+    state: Res<DungeonState>,
+    mut occupancy: ResMut<GridOccupancy>,
+    active_modal: Res<ActiveModal>,
+    stats: Res<StatSheet>,
+    mut inventory: ResMut<Inventory>,
+    entity_query: Query<&DungeonEntityMarker>,
+) {
+    // Block interaction if any modal is open
+    if active_modal.modal.is_some() {
+        return;
+    }
+
+    for action in action_reader.read() {
+        if *action != GameAction::Mine {
+            continue;
+        }
+
+        // Find an adjacent chest entity
+        let Some((entity_id, entity_pos)) =
+            find_adjacent_chest(&state, &occupancy, &entity_query)
+        else {
+            continue;
+        };
+
+        // Roll loot from chest
+        let chest = Chest::default();
+        let magic_find = stats.value(StatType::MagicFind);
+        let loot_drops = chest.roll_drops(magic_find);
+
+        // Collect loot into inventory
+        collect_loot_drops(&mut *inventory, &loot_drops);
+
+        // Despawn chest from dungeon
+        occupancy.vacate(entity_pos, GridSize::single());
+        commands.entity(entity_id).despawn_recursive();
+
+        // Show results modal
+        commands.insert_resource(ResultsModalData {
+            title: "Chest Opened!".to_string(),
+            subtitle: None,
+            sprite: None,
+            gold_gained: None,
+            xp_gained: None,
+            loot_drops,
+        });
+        commands.insert_resource(SpawnResultsModal);
+        break;
+    }
+}
+
+/// Find an adjacent chest entity to the player's current position.
+/// Returns the bevy Entity and GridPosition of the chest if found.
+fn find_adjacent_chest(
+    state: &DungeonState,
+    occupancy: &GridOccupancy,
+    entity_query: &Query<&DungeonEntityMarker>,
+) -> Option<(Entity, GridPosition)> {
+    let px = state.player_pos.x;
+    let py = state.player_pos.y;
+    let w = state.player_size.width as usize;
+    let h = state.player_size.height as usize;
+
+    // Collect adjacent cells (border around player's occupied area)
+    let mut adjacent_cells = Vec::new();
+
+    // Top row (y = py - 1)
+    if py > 0 {
+        for x in px..px + w {
+            adjacent_cells.push((x, py - 1));
+        }
+    }
+    // Bottom row (y = py + h)
+    for x in px..px + w {
+        adjacent_cells.push((x, py + h));
+    }
+    // Left column (x = px - 1)
+    if px > 0 {
+        for y in py..py + h {
+            adjacent_cells.push((px - 1, y));
+        }
+    }
+    // Right column (x = px + w)
+    for y in py..py + h {
+        adjacent_cells.push((px + w, y));
+    }
+
+    // Check each adjacent cell for a chest entity
+    for (x, y) in adjacent_cells {
+        if let Some(entity) = occupancy.entity_at(x, y) {
+            if let Ok(marker) = entity_query.get(entity) {
+                if matches!(marker.entity_type, DungeonEntity::Chest { .. }) {
+                    return Some((entity, marker.pos));
+                }
+            }
+        }
+    }
+
+    None
 }
 
 fn handle_back_action(

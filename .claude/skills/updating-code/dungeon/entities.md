@@ -47,6 +47,41 @@ Each variant includes a `size: GridSize` field indicating how many grid cells th
 - `advance_floor_system` despawns current dungeon UI, increments `floor_index`, calls `load_floor_layout()`, and respawns the dungeon screen with a fresh layout
 - Spawned via `SpawnTable::stairs(count_range)` (e.g., `.stairs(1..=1)`)
 
+## Chest Interaction (`src/ui/screens/dungeon/plugin.rs`)
+
+### Behavior
+- Chests block movement (player stops when colliding)
+- When player is adjacent to a chest and presses Space (`GameAction::Mine`), the chest opens
+- Loot is rolled from the chest's `LootTable` via `HasLoot::roll_drops(magic_find)`
+- Loot is added to player inventory via `collect_loot_drops()`
+- Chest is despawned from the grid (occupancy vacated, entity despawned)
+- Results modal shows "Chest Opened!" with loot items
+
+### Key System: `handle_chest_interaction`
+- Gated on `in_state(AppState::Dungeon)` and only runs when no modal is open
+- Listens for `GameAction::Mine` (Space key)
+- Uses `find_adjacent_chest()` helper for adjacency detection
+
+### Adjacency Detection: `find_adjacent_chest()`
+For player at `(px, py)` with size `(w, h)`, checks border cells:
+- Top row: `(px..px+w, py-1)`
+- Bottom row: `(px..px+w, py+h)`
+- Left column: `(px-1, py..py+h)`
+- Right column: `(px+w, py..py+h)`
+
+Each cell is checked in `GridOccupancy` for an entity, then the entity is queried for `DungeonEntityMarker` to confirm it's a `DungeonEntity::Chest`.
+
+### Chest Definition (`src/chest/`)
+```rust
+pub struct Chest {
+    pub loot: LootTable,
+    pub is_locked: bool,
+}
+```
+- `Default::default()` creates a chest with a predefined loot table
+- Implements `HasLoot` trait for `roll_drops(magic_find)`
+- Default loot: GoldRing (1/3), BronzeChestplate (1/4), BronzeIngot (1/2), QualityUpgradeStone (1/3), BasicHPPotion (1/1)
+
 ## Adding New Mob Types
 
 Mobs that already exist in `MobSpriteSheets` (see `src/ui/mob_animation.rs`) automatically work in dungeons. Just spawn them:

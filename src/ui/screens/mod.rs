@@ -11,7 +11,7 @@ pub mod monster_compendium;
 mod profile;
 pub mod profile_modal;
 pub mod town;
-pub mod victory_modal;
+pub mod results_modal;
 
 pub use dungeon::{DungeonScreenPlugin, DUNGEON_SCALE, ENTITY_GRID_SIZE};
 pub use fight::FightPlugin;
@@ -30,4 +30,4 @@ pub use modal::{ActiveModal, ModalPlugin, ModalType};
 pub use profile::ProfilePlugin;
 pub use profile_modal::ProfileModalPlugin;
 pub use town::{InfoPanelSource, TownPlugin};
-pub use victory_modal::VictoryModalPlugin;
+pub use results_modal::ResultsModalPlugin;

@@ -47,8 +47,8 @@ fn handle_modal_toggle(commands: &mut Commands, modal_type: ModalType) {
         ModalType::Inventory => commands.toggle_modal::<InventoryModal>(),
         ModalType::Profile => commands.toggle_modal::<ProfileModal>(),
         ModalType::MonsterCompendium => commands.toggle_modal::<MonsterCompendiumModal>(),
-        ModalType::Keybinds | ModalType::FightModal | ModalType::VictoryModal => {
-            // Keybinds is a state transition, FightModal/VictoryModal are combat-specific
+        ModalType::Keybinds | ModalType::FightModal | ModalType::ResultsModal => {
+            // Keybinds is a state transition, FightModal/ResultsModal are spawned programmatically
         }
     }
 }

@@ -55,7 +55,7 @@ Implements `SelectionState` trait for left/right navigation.
 
 3. **Attack Handling** (`input.rs:handle_fight_modal_select`)
    - Enter with OK: Player attacks mob using `combat::attack()`
-   - If mob dies: Apply rewards, collect loot, despawn mob, close modal, spawn victory modal
+   - If mob dies: Apply rewards, collect loot, despawn mob, close modal, spawn results modal
    - If mob survives: Mob counter-attacks player
    - If player dies: Process defeat, close modal
    - Enter with Cancel: Close modal, no combat
@@ -87,10 +87,10 @@ When mob dies, the fight modal:
 3. Calls `collect_loot_drops()` to add loot to inventory
 4. Despawns mob entity and clears occupancy
 5. Closes fight modal
-6. Inserts `VictoryModalData` and `SpawnVictoryModal` resources
-7. Victory modal spawns next frame showing results
+6. Inserts `ResultsModalData` and `SpawnResultsModal` resources
+7. Results modal spawns next frame showing "Victory!" with gold, XP, and loot
 
-See [victory-modal.md](victory-modal.md) for the victory modal implementation.
+See [results-modal.md](results-modal.md) for the results modal implementation.
 
 ## Despawning Mobs
 
@@ -116,7 +116,7 @@ commands.entity(fight_mob.entity).despawn_recursive();
 
 ## Related Documentation
 
-- [victory-modal.md](victory-modal.md) - Victory modal (spawned after mob death)
+- [results-modal.md](results-modal.md) - Results modal (spawned after mob death or chest opening)
 - [health-bar.md](health-bar.md) - HealthBarValues, SpriteHealthBar, HP text overlay
 - [modals.md](modals.md) - General modal patterns
 - [focus.md](focus.md) - SelectionState trait
