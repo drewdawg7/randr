@@ -26,23 +26,43 @@ Each variant includes a `size: GridSize` field indicating how many grid cells th
 - `GridSize::new(w, h)` - Custom size (e.g., 2x2 for bosses)
 - Mobs get their size from `MobSpec::grid_size` (see `src/mob/definitions.rs`)
 
+## EntityRenderData (`src/dungeon/entity.rs`)
+
+All entity rendering is driven by `DungeonEntity::render_data()`, which returns an `EntityRenderData` enum:
+
+```rust
+pub enum EntityRenderData {
+    /// Static sprite from a named sprite sheet (Chests, Rocks, DungeonTileset).
+    SpriteSheet {
+        sheet_key: SpriteSheetKey,
+        sprite_name: &'static str,
+    },
+    /// Animated mob sprite using the SpriteMarker observer system.
+    AnimatedMob { mob_id: MobId },
+}
+```
+
+The render loop in `render_dungeon_floor()` uses this to spawn entities with only 2 match arms:
+- `SpriteSheet` → looks up `game_sprites.get(sheet_key)` and spawns an `ImageNode`
+- `AnimatedMob` → spawns a `DungeonMobSprite { mob_id }` marker (populated by observer)
+
+Adding a new entity type only requires:
+1. Adding the variant to `DungeonEntity`
+2. Adding a case to `render_data()`
+
 ## Entity Types
 
 ### Static Entities (Chest)
-- Use `SpriteSheetKey::Chests` and `GameSprites` for rendering
-- `sprite_sheet_key()` returns `SpriteSheetKey::Chests`
-- `sprite_name()` returns `"Slice_1"` (all variants use the same slice)
-- Rendered directly as `ImageNode` in dungeon.rs
+- `render_data()` returns `SpriteSheet { Chests, "Slice_1" }`
 - Sprite sheet: `assets/sprites/dungeon_entities/chests.{png,json}` (128x96, 43 slices)
 
 ### Animated Entities (Mob)
-- Use marker component pattern for decoupled rendering
-- Spawn with `DungeonMobSprite { mob_id }` marker
-- `populate_dungeon_mob_sprites()` system populates sprite + animation
+- `render_data()` returns `AnimatedMob { mob_id }`
+- `DungeonMobSprite` marker triggers `populate_sprite_markers()` observer
 - Reuses `MobSpriteSheets` and `MobAnimation` from mob compendium
 
 ### Rock Entity
-- Uses `SpriteSheetKey::Rocks` with slice from `RockType::sprite_name()`
+- `render_data()` returns `SpriteSheet { Rocks, rock_type.sprite_name() }`
 - Three types: `RockType::Copper` ("copper_rock"), `RockType::Coal` ("coal_tin_rock"), `RockType::Tin` ("coal_tin_rock")
 - Coal and Tin share the same sprite (icon 859), Copper uses a different one (icon 858)
 - Always 1x1 (`GridSize::single()`)
@@ -55,7 +75,7 @@ Each variant includes a `size: GridSize` field indicating how many grid cells th
 - Loot: Copper → CopperOre (1-3), Coal → Coal (1-2), Tin → TinOre (1-3)
 
 ### Stairs Entity
-- Uses `SpriteSheetKey::DungeonTileset` with slice `"stairs"` (`DungeonTileSlice::Stairs`)
+- `render_data()` returns `SpriteSheet { DungeonTileset, "stairs" }`
 - Always 1x1 (`GridSize::single()`)
 - On collision: inserts `AdvanceFloor` resource, triggering `advance_floor_system`
 - `advance_floor_system` despawns current dungeon UI, increments `floor_index`, calls `load_floor_layout()`, and respawns the dungeon screen with a fresh layout
@@ -139,7 +159,7 @@ pub enum DungeonEntity {
     Trap { variant: u8, size: GridSize },  // New static entity
 }
 ```
-Update the `size()` method to handle the new variant.
+Update `size()` and `render_data()` methods.
 
 ### Step 2: Add Sprite Assets
 Create sprite sheet in `assets/sprites/dungeon_entities/`:
@@ -149,28 +169,20 @@ Create sprite sheet in `assets/sprites/dungeon_entities/`:
 ### Step 3: Add SpriteSheetKey
 In `src/assets/sprites.rs`, add to `SpriteSheetKey` enum and `asset_name()`.
 
-### Step 4: Update Entity Methods
-In `src/dungeon/entity.rs`:
+### Step 4: Add render_data() Arm
+In `src/dungeon/entity.rs`, add the new variant to `render_data()`:
 ```rust
-pub fn sprite_sheet_key(&self) -> SpriteSheetKey {
+pub fn render_data(&self) -> EntityRenderData {
     match self {
-        Self::Chest { .. } => SpriteSheetKey::Chests,
-        Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
-        Self::Trap { .. } => SpriteSheetKey::Trap,
-    }
-}
-
-pub fn size(&self) -> GridSize {
-    match self {
-        Self::Chest { size, .. } => *size,
-        Self::Mob { size, .. } => *size,
-        Self::Trap { size, .. } => *size,
+        // ...existing arms...
+        Self::Trap { .. } => EntityRenderData::SpriteSheet {
+            sheet_key: SpriteSheetKey::Trap,
+            sprite_name: "trap_sprite",
+        },
     }
 }
 ```
-
-### Step 5: Update Rendering
-In `src/screens/town/tabs/dungeon.rs`, add match arm in entity rendering.
+No changes needed in the renderer — it already handles all `SpriteSheet` variants generically.
 
 ## Entity Rendering Architecture
 
