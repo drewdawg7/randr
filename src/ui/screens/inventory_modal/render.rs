@@ -172,6 +172,15 @@ pub fn populate_item_detail_pane(
             TextColor(item.quality.color()),
         ));
 
+        // Quantity
+        if inv_item.quantity > 1 {
+            parent.spawn((
+                Text::new(format!("Qty: {}", inv_item.quantity)),
+                game_fonts.pixel_font(14.0),
+                TextColor(Color::srgb(0.3, 0.8, 0.3)),
+            ));
+        }
+
         // Stats display
         let stats: Vec<_> = item
             .stats
