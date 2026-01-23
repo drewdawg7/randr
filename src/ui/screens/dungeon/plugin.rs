@@ -389,7 +389,7 @@ fn handle_dungeon_movement(
     mut occupancy: ResMut<GridOccupancy>,
     active_modal: Res<ActiveModal>,
     sheet: Res<PlayerSpriteSheet>,
-    mut player_query: Query<(Entity, &mut Node, &mut SpriteAnimation, &mut PlayerWalkTimer), With<DungeonPlayer>>,
+    mut player_query: Query<(Entity, &mut Node, &mut ImageNode, &mut SpriteAnimation, &mut PlayerWalkTimer), With<DungeonPlayer>>,
     entity_query: Query<&DungeonEntityMarker>,
 ) {
     // Block movement if any modal is open
@@ -397,7 +397,7 @@ fn handle_dungeon_movement(
         return;
     }
 
-    let Ok((player_entity, mut player_node, mut anim, mut walk_timer)) = player_query.get_single_mut() else {
+    let Ok((player_entity, mut player_node, mut player_image, mut anim, mut walk_timer)) = player_query.get_single_mut() else {
         return;
     };
 
@@ -462,6 +462,13 @@ fn handle_dungeon_movement(
         state.player_pos = new_pos;
         player_node.grid_column = GridPlacement::start_span(new_pos.x as i16 + 1, state.player_size.width as u16);
         player_node.grid_row = GridPlacement::start_span(new_pos.y as i16 + 1, state.player_size.height as u16);
+
+        // Flip sprite based on horizontal direction
+        match direction {
+            NavigationDirection::Left => player_image.flip_x = true,
+            NavigationDirection::Right => player_image.flip_x = false,
+            _ => {}
+        }
 
         // Switch to walk animation and reset timer
         anim.first_frame = sheet.walk_animation.first_frame;
