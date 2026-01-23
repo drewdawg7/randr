@@ -88,12 +88,14 @@ fn load_mob_sprite_sheets(
                 last_frame: 3,
                 frame_duration: 0.2,
                 looping: true,
+                synchronized: true,
             },
             death_animation: Some(AnimationConfig {
                 first_frame: 30,
                 last_frame: 33,
                 frame_duration: 0.15,
                 looping: false,
+                synchronized: false,
             }),
         },
     );
@@ -112,12 +114,14 @@ fn load_mob_sprite_sheets(
                 last_frame: 3,
                 frame_duration: 0.25,
                 looping: true,
+                synchronized: true,
             },
             death_animation: Some(AnimationConfig {
                 first_frame: 40,
                 last_frame: 44,
                 frame_duration: 0.15,
                 looping: false,
+                synchronized: false,
             }),
         },
     );
@@ -136,6 +140,7 @@ fn load_mob_sprite_sheets(
                 last_frame: 3,
                 frame_duration: 0.35,
                 looping: true,
+                synchronized: true,
             },
             death_animation: None,
         },

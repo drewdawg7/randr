@@ -11,6 +11,7 @@ fn main() {
                     primary_window: Some(Window {
                         title: "R&R".into(),
                         resolution: (1280., 720.).into(),
+                        present_mode: bevy::window::PresentMode::AutoVsync,
                         ..default()
                     }),
                     ..default()

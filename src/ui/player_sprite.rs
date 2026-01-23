@@ -12,11 +12,21 @@ pub struct PlayerSpritePlugin;
 
 impl Plugin for PlayerSpritePlugin {
     fn build(&self, app: &mut App) {
-        use super::animation::animate_sprites;
+        use super::animation::{animate_sprites, tick_animation_clock, AnimationClock};
 
         app.init_resource::<PlayerSpriteSheet>()
+            .init_resource::<AnimationClock>()
             .add_systems(PreStartup, load_player_sprite_sheet)
-            .add_systems(Update, (animate_sprites, revert_player_idle, revert_attack_idle))
+            .add_systems(
+                Update,
+                (
+                    tick_animation_clock,
+                    animate_sprites,
+                    revert_player_idle,
+                    revert_attack_idle,
+                )
+                    .chain(),
+            )
             .register_sprite_marker::<DungeonPlayerSprite>();
     }
 }
@@ -86,18 +96,21 @@ fn load_player_sprite_sheet(
         last_frame: 3,
         frame_duration: 0.15,
         looping: true,
+        synchronized: true,
     };
     player_sheet.walk_animation = AnimationConfig {
         first_frame: 13,
         last_frame: 18,
         frame_duration: 0.1,
         looping: true,
+        synchronized: false,
     };
     player_sheet.attack_animation = AnimationConfig {
         first_frame: 39,
         last_frame: 47,
         frame_duration: 0.06,
         looping: false,
+        synchronized: false,
     };
 
     info!("Loaded player sprite sheet: MiniLightningWarrior");
@@ -115,7 +128,9 @@ fn revert_attack_idle(
             anim.first_frame = sheet.animation.first_frame;
             anim.last_frame = sheet.animation.last_frame;
             anim.current_frame = sheet.animation.first_frame;
+            anim.frame_duration = sheet.animation.frame_duration;
             anim.looping = true;
+            anim.synchronized = true;
         }
     }
 }
@@ -132,6 +147,8 @@ fn revert_player_idle(
             anim.first_frame = sheet.animation.first_frame;
             anim.last_frame = sheet.animation.last_frame;
             anim.current_frame = sheet.animation.first_frame;
+            anim.frame_duration = sheet.animation.frame_duration;
+            anim.synchronized = true;
         }
     }
 }

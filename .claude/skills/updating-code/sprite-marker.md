@@ -46,8 +46,14 @@ pub struct SpriteAnimation {
     pub current_frame: usize,
     pub first_frame: usize,
     pub last_frame: usize,
+    pub looping: bool,
+    pub frame_duration: f32,
+    pub synchronized: bool,
 }
 ```
+
+- `synchronized: true` — frame derived from global `AnimationClock` (all same-config animations stay in phase)
+- `synchronized: false` — per-entity timer (for triggered animations like walk/attack/death)
 
 ## Existing Implementations
 

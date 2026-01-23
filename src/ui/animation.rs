@@ -1,8 +1,18 @@
 //! Unified sprite animation system.
 //!
 //! Provides a single animation component and system for all animated sprites.
+//! Synchronized animations use a global `AnimationClock` to stay in phase.
 
 use bevy::prelude::*;
+
+/// Global animation clock for synchronized looping animations.
+///
+/// All synchronized animations with the same frame_duration will be in phase,
+/// regardless of when they were spawned.
+#[derive(Resource, Default)]
+pub struct AnimationClock {
+    pub elapsed: f32,
+}
 
 /// Configuration for a sprite animation.
 #[derive(Debug, Clone)]
@@ -15,6 +25,9 @@ pub struct AnimationConfig {
     pub frame_duration: f32,
     /// Whether the animation loops (default true). If false, stops on last frame.
     pub looping: bool,
+    /// If true, animation phase is derived from the global AnimationClock
+    /// so all animations with the same config stay in sync.
+    pub synchronized: bool,
 }
 
 impl Default for AnimationConfig {
@@ -24,6 +37,7 @@ impl Default for AnimationConfig {
             last_frame: 3,
             frame_duration: 0.15,
             looping: true,
+            synchronized: true,
         }
     }
 }
@@ -34,7 +48,7 @@ impl Default for AnimationConfig {
 /// a range of atlas frames.
 #[derive(Component)]
 pub struct SpriteAnimation {
-    /// Timer for frame advancement
+    /// Timer for frame advancement (used by non-synchronized animations)
     pub timer: Timer,
     /// Current frame index within the animation
     pub current_frame: usize,
@@ -44,6 +58,10 @@ pub struct SpriteAnimation {
     pub last_frame: usize,
     /// Whether the animation loops
     pub looping: bool,
+    /// Duration per frame in seconds (stored for clock-based calculation)
+    pub frame_duration: f32,
+    /// Whether this animation is synchronized to the global clock
+    pub synchronized: bool,
 }
 
 impl SpriteAnimation {
@@ -55,23 +73,54 @@ impl SpriteAnimation {
             first_frame: config.first_frame,
             last_frame: config.last_frame,
             looping: config.looping,
+            frame_duration: config.frame_duration,
+            synchronized: config.synchronized,
         }
     }
 }
 
-/// System to animate all sprites with `SpriteAnimation` component.
-pub fn animate_sprites(time: Res<Time>, mut query: Query<(&mut SpriteAnimation, &mut ImageNode)>) {
-    for (mut animation, mut image) in &mut query {
-        animation.timer.tick(time.delta());
-        if animation.timer.just_finished() {
-            if animation.current_frame >= animation.last_frame {
-                if animation.looping {
-                    animation.current_frame = animation.first_frame;
-                }
-            } else {
-                animation.current_frame += 1;
-            }
+/// System to tick the global animation clock.
+pub fn tick_animation_clock(time: Res<Time>, mut clock: ResMut<AnimationClock>) {
+    clock.elapsed += time.delta_secs();
+}
 
+/// System to animate all sprites with `SpriteAnimation` component.
+pub fn animate_sprites(
+    time: Res<Time>,
+    clock: Res<AnimationClock>,
+    mut query: Query<(&mut SpriteAnimation, &mut ImageNode)>,
+) {
+    for (mut animation, mut image) in &mut query {
+        let prev_frame = animation.current_frame;
+
+        if animation.synchronized && animation.looping {
+            // Derive frame from global clock so all same-config animations stay in phase
+            let frame_count = animation.last_frame - animation.first_frame + 1;
+            let total_frames_elapsed =
+                (clock.elapsed / animation.frame_duration) as usize;
+            animation.current_frame =
+                animation.first_frame + (total_frames_elapsed % frame_count);
+        } else {
+            // Per-entity timer for non-synchronized or non-looping animations
+            animation.timer.tick(time.delta());
+            let times_finished = animation.timer.times_finished_this_tick();
+            if times_finished == 0 {
+                continue;
+            }
+            for _ in 0..times_finished {
+                if animation.current_frame >= animation.last_frame {
+                    if animation.looping {
+                        animation.current_frame = animation.first_frame;
+                    } else {
+                        break;
+                    }
+                } else {
+                    animation.current_frame += 1;
+                }
+            }
+        }
+
+        if animation.current_frame != prev_frame {
             if let Some(ref mut atlas) = image.texture_atlas {
                 atlas.index = animation.current_frame;
             }

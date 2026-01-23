@@ -183,7 +183,14 @@
       "Bash(\"$ASEPRITE\" --batch --help)",
       "Bash(\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" --batch --version)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniGoblin.aseprite\" --sheet-type horizontal --sheet /Users/drewstewart/code/game/assets/sprites/mobs/goblin.png --data /Users/drewstewart/code/game/assets/sprites/mobs/goblin.json --format json-array)",
-      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniBigSlime.aseprite\" --sheet-type horizontal --sheet /Users/drewstewart/code/game/assets/sprites/mobs/slime.png --data /Users/drewstewart/code/game/assets/sprites/mobs/slime.json --format json-array)"
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniBigSlime.aseprite\" --sheet-type horizontal --sheet /Users/drewstewart/code/game/assets/sprites/mobs/slime.png --data /Users/drewstewart/code/game/assets/sprites/mobs/slime.json --format json-array)",
+      "Bash(git -C /Users/drewstewart/code/game remote get-url:*)",
+      "Bash(unrar:*)",
+      "Bash(7z --help:*)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --data /dev/stdout --format json-array)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --data /dev/stdout --format json-array --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --data /tmp/sprite_data.json --format json-array --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/player/lightning_warrior.png)"
     ]
   },
   "enabledMcpjsonServers": [

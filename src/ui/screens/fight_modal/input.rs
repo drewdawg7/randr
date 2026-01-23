@@ -94,7 +94,10 @@ pub fn handle_fight_modal_select(
                     anim.first_frame = sheet.attack_animation.first_frame;
                     anim.last_frame = sheet.attack_animation.last_frame;
                     anim.current_frame = sheet.attack_animation.first_frame;
+                    anim.frame_duration = sheet.attack_animation.frame_duration;
                     anim.looping = false;
+                    anim.synchronized = false;
+                    anim.timer = Timer::from_seconds(sheet.attack_animation.frame_duration, TimerMode::Repeating);
                     attack_timer.0.reset();
                 }
 

@@ -211,6 +211,7 @@ fn on_add_dungeon_floor(
                                                         last_frame: 2,
                                                         frame_duration: 0.4,
                                                         looping: true,
+                                                        synchronized: true,
                                                     };
                                                     if let Some(bundle) =
                                                         torch_sheet.image_bundle_animated(
@@ -314,7 +315,7 @@ fn on_add_dungeon_floor(
                             let player_entity = grid.spawn((
                                 DungeonPlayer,
                                 DungeonPlayerSprite,
-                                PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
+                                PlayerWalkTimer(Timer::from_seconds(0.6, TimerMode::Once)),
                                 ZIndex(player_pos.y as i32 + 100),
                                 Node {
                                     grid_column: GridPlacement::start_span(player_pos.x as i16 + 1, player_size.width as u16),
@@ -474,6 +475,9 @@ fn handle_dungeon_movement(
         anim.first_frame = sheet.walk_animation.first_frame;
         anim.last_frame = sheet.walk_animation.last_frame;
         anim.current_frame = sheet.walk_animation.first_frame;
+        anim.frame_duration = sheet.walk_animation.frame_duration;
+        anim.synchronized = false;
+        anim.timer = Timer::from_seconds(sheet.walk_animation.frame_duration, TimerMode::Repeating);
         walk_timer.0.reset();
     }
 }
