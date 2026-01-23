@@ -1,8 +1,7 @@
 mod input;
 mod plugin;
-pub mod render;
-pub mod state;
-mod utils;
+mod render;
+mod state;
 
 pub use plugin::InventoryModalPlugin;
 pub use state::InventoryModal;
