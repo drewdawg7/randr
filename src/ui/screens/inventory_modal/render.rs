@@ -34,7 +34,7 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
             parent.spawn(ItemGrid {
                 items,
                 selected_index: 0,
-                is_focused: false,
+                is_focused: true,
             });
         });
 }

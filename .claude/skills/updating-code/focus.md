@@ -37,10 +37,11 @@ pub trait SelectionState {
 
 | Resource | File | Navigation | Notes |
 |----------|------|------------|-------|
-| `InventorySelection` | `inventory_modal/state.rs` | Clamped | Uses default `up()`/`down()` |
 | `CompendiumListState` | `monster_compendium/state.rs` | Clamped | Added `count` field |
 | `ListState` | `town/shared/list_widget.rs` | Wrapping | Overrides `up()`/`down()` with wrapping + scroll |
 | `FightScreenState` | `fight/state.rs` | Clamped | Uses wrapper types (see below) |
+
+**Note:** The inventory modal uses 2D grid navigation directly on the `ItemGrid` component (not `SelectionState`). See [inventory-modal.md](inventory-modal.md).
 
 ### FightScreenState Wrappers
 
