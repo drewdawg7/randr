@@ -12,7 +12,7 @@ Entities that can be spawned on dungeon tiles.
 ### DungeonEntity Enum (`src/dungeon/entity.rs`)
 ```rust
 pub enum DungeonEntity {
-    Chest { variant: u8, size: GridSize },  // 4 visual variants (0-3)
+    Chest { variant: u8, size: GridSize },  // Uses chests sprite sheet (Slice_1)
     Mob { mob_id: MobId, size: GridSize },  // Any mob type (Goblin, Slime, etc.)
     Stairs { size: GridSize },              // Advances player to next floor
 }
@@ -28,9 +28,11 @@ Each variant includes a `size: GridSize` field indicating how many grid cells th
 ## Entity Types
 
 ### Static Entities (Chest)
-- Use `SpriteSheetKey` and `GameSprites` for rendering
-- Methods: `sprite_sheet_key()`, `sprite_name()`
+- Use `SpriteSheetKey::Chests` and `GameSprites` for rendering
+- `sprite_sheet_key()` returns `SpriteSheetKey::Chests`
+- `sprite_name()` returns `"Slice_1"` (all variants use the same slice)
 - Rendered directly as `ImageNode` in dungeon.rs
+- Sprite sheet: `assets/sprites/dungeon_entities/chests.{png,json}` (128x96, 43 slices)
 
 ### Animated Entities (Mob)
 - Use marker component pattern for decoupled rendering
@@ -85,7 +87,7 @@ In `src/dungeon/entity.rs`:
 ```rust
 pub fn sprite_sheet_key(&self) -> SpriteSheetKey {
     match self {
-        Self::Chest { variant, .. } => ...,
+        Self::Chest { .. } => SpriteSheetKey::Chests,
         Self::Mob { .. } => panic!("Mob entities use DungeonMobSprite marker"),
         Self::Trap { .. } => SpriteSheetKey::Trap,
     }
@@ -194,12 +196,11 @@ for (x, y) in spawn_points.into_iter().take(3) {
 
 ### Static Sprites
 Located in `assets/sprites/dungeon_entities/`:
-- `chest_1.png` / `chest_1.json` - Chest variant 1
-- `chest_2.png` / `chest_2.json` - Chest variant 2
-- `chest_3.png` / `chest_3.json` - Chest variant 3
-- `chest_4.png` / `chest_4.json` - Chest variant 4
+- `chests.png` / `chests.json` - Full chests sprite sheet (128x96, 43 slices)
+  - Currently uses `Slice_1` (16x14 brown chest at x:32, y:1)
+  - Other slices available for future chest variants
 
-Source: `2D Pixel Dungeon Asset Pack/items and trap_animation/chest/`
+Source: `16x16 Assorted RPG Icons/chests.{png,json}`
 
 ### Animated Mob Sprites
 Located in `assets/sprites/mobs/` (shared with combat/compendium):
