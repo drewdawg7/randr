@@ -18,6 +18,7 @@ Dungeon Location (e.g., "Goblin Cave")
 ```
 src/dungeon/
     mod.rs              # Re-exports
+    commands.rs         # DungeonCommands extension trait (despawn entities)
     plugin.rs           # DungeonPlugin, DungeonBuilder, DungeonRegistry
     state.rs            # DungeonState (runtime state + progression)
     tile.rs             # TileType, Tile

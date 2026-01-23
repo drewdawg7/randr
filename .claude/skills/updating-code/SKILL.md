@@ -37,6 +37,7 @@ Read the relevant doc BEFORE making changes.
 | DungeonPlugin, DungeonRegistry, location floors | [dungeon/mod.md](dungeon/mod.md) |
 | FloorSpec, FloorId, floor definitions | [dungeon/mod.md](dungeon/mod.md) |
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
+| DungeonCommands, entity despawning, occupancy vacate | [dungeon/entities.md](dungeon/entities.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Animated tiles, torch walls, TorchWall | [dungeon/ui.md](dungeon/ui.md) |
 | Fight modal, dungeon combat, mob encounters | [fight-modal.md](fight-modal.md) |

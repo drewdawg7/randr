@@ -81,6 +81,45 @@ Adding a new entity type only requires:
 - `advance_floor_system` despawns current dungeon UI, increments `floor_index`, calls `load_floor_layout()`, and respawns the dungeon screen with a fresh layout
 - Spawned via `SpawnTable::stairs(count_range)` (e.g., `.stairs(1..=1)`)
 
+## DungeonCommands Extension Trait (`src/dungeon/commands.rs`)
+
+Commands extension for dungeon entity lifecycle operations. Follows the same pattern as `ModalCommands` in `src/ui/modal_registry.rs`.
+
+### Usage
+```rust
+use crate::dungeon::DungeonCommands;
+
+// Despawn entity and vacate its occupancy grid cells
+commands.despawn_dungeon_entity(entity_id, entity_pos, GridSize::single());
+```
+
+### How It Works
+- Queues a `DespawnDungeonEntity` command that runs during command application
+- Safely gets `GridOccupancy` resource and calls `vacate(pos, size)`
+- Safely gets entity and calls `despawn_recursive()`
+- Guards against missing resource or already-despawned entities
+
+### Benefits
+- Systems no longer need `ResMut<GridOccupancy>` just for despawning (can use `Res<GridOccupancy>`)
+- Impossible to forget vacating occupancy when despawning
+- Single call replaces two-step pattern:
+  ```rust
+  // Before:
+  occupancy.vacate(entity_pos, GridSize::single());
+  commands.entity(entity_id).despawn_recursive();
+
+  // After:
+  commands.despawn_dungeon_entity(entity_id, entity_pos, GridSize::single());
+  ```
+
+### When to Use
+Use `despawn_dungeon_entity` whenever removing a dungeon entity from the grid:
+- Mining rocks
+- Opening chests
+- Defeating mobs (future)
+- Opening doors (future)
+- Triggering traps (future)
+
 ## Mine Interaction (`src/ui/screens/dungeon/plugin.rs`)
 
 Unified handler for mining/opening adjacent entities (chests and rocks).
@@ -90,7 +129,7 @@ Unified handler for mining/opening adjacent entities (chests and rocks).
 - When player is adjacent to a chest or rock and presses Space (`GameAction::Mine`):
   - Loot is rolled via `HasLoot::roll_drops(magic_find)`
   - Loot is added to player inventory via `collect_loot_drops()`
-  - Entity is despawned from the grid (occupancy vacated, entity despawned)
+  - Entity is despawned via `commands.despawn_dungeon_entity()` (vacates occupancy + despawns)
   - Results modal shows loot items
 
 ### Key System: `handle_mine_interaction`
