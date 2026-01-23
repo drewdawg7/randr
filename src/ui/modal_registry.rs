@@ -17,6 +17,7 @@ use std::marker::PhantomData;
 use bevy::ecs::world::Command;
 use bevy::prelude::*;
 
+use crate::input::GameAction;
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 
 /// Trait for modal types that can be toggled via commands.
@@ -89,6 +90,27 @@ impl<M: RegisteredModal> Command for ToggleModalCommand<M> {
                 world.resource_mut::<ActiveModal>().modal = Some(M::MODAL_TYPE);
                 M::spawn(world);
             }
+        }
+    }
+}
+
+/// Generic close handler system for any `RegisteredModal`.
+///
+/// Listens for `GameAction::CloseModal` and closes the modal if it's active.
+/// Register as `modal_close_system::<MyModal>` in your plugin instead of
+/// writing a per-modal close handler.
+pub fn modal_close_system<M: RegisteredModal>(
+    mut commands: Commands,
+    mut action_reader: EventReader<GameAction>,
+    active_modal: Res<ActiveModal>,
+) {
+    if active_modal.modal != Some(M::MODAL_TYPE) {
+        return;
+    }
+
+    for action in action_reader.read() {
+        if *action == GameAction::CloseModal {
+            commands.close_modal::<M>();
         }
     }
 }

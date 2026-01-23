@@ -4,27 +4,9 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{EquipmentSlot, Inventory, ManagesEquipment};
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::{ItemGrid, ItemGridEntry};
-use crate::ui::ModalCommands;
 
 use super::render::{get_backpack_items, get_equipment_items};
-use super::state::{BackpackGrid, EquipmentGrid, InventoryModal};
-
-/// System to handle closing the inventory modal with Escape.
-pub fn handle_inventory_modal_close(
-    mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
-) {
-    if active_modal.modal != Some(ModalType::Inventory) {
-        return;
-    }
-
-    for action in action_reader.read() {
-        if *action == GameAction::CloseModal {
-            commands.close_modal::<InventoryModal>();
-        }
-    }
-}
+use super::state::{BackpackGrid, EquipmentGrid};
 
 /// System to handle Tab key toggling focus between equipment and backpack grids.
 pub fn handle_inventory_modal_tab(

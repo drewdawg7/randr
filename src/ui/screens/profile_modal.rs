@@ -3,17 +3,15 @@ use bevy::prelude::*;
 use crate::combat::{DealsDamage, HasGold};
 use crate::entities::progression::HasProgression;
 use crate::entities::Progression;
-use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, HasInventory, Inventory};
 use crate::player::{Player, PlayerGold, PlayerName};
 use crate::stats::{HasStats, StatSheet, StatType};
-use crate::ui::modal_registry::RegisteredModal;
+use crate::ui::modal_registry::{modal_close_system, RegisteredModal};
 use crate::ui::widgets::StatRow;
-use crate::ui::ModalCommands;
 
 use super::modal::{
     create_modal_container, create_modal_instruction, create_modal_title, spawn_modal_overlay,
-    ActiveModal, ModalType,
+    ModalType,
 };
 
 /// Plugin that manages the profile modal system.
@@ -24,7 +22,7 @@ impl Plugin for ProfileModalPlugin {
         app.add_systems(
             Update,
             (
-                handle_profile_modal_close,
+                modal_close_system::<ProfileModal>,
                 trigger_spawn_profile_modal.run_if(resource_exists::<SpawnProfileModal>),
             ),
         );
@@ -68,23 +66,6 @@ impl RegisteredModal for ProfileModal {
 
     fn spawn(world: &mut World) {
         world.insert_resource(SpawnProfileModal);
-    }
-}
-
-/// System to handle closing the profile modal with Escape.
-fn handle_profile_modal_close(
-    mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
-) {
-    if active_modal.modal != Some(ModalType::Profile) {
-        return;
-    }
-
-    for action in action_reader.read() {
-        if *action == GameAction::CloseModal {
-            commands.close_modal::<ProfileModal>();
-        }
     }
 }
 
