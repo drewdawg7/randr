@@ -7,6 +7,14 @@ use crate::ui::screens::modal::ModalType;
 #[derive(Component)]
 pub struct InventoryModalRoot;
 
+/// Marker for the equipment grid (3x3).
+#[derive(Component)]
+pub struct EquipmentGrid;
+
+/// Marker for the backpack grid (4x4).
+#[derive(Component)]
+pub struct BackpackGrid;
+
 /// Marker resource to trigger spawning the inventory modal.
 #[derive(Resource)]
 pub struct SpawnInventoryModal;

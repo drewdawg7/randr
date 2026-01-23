@@ -4,7 +4,8 @@ use super::nine_slice::spawn_nine_slice_panel;
 use crate::assets::{GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
 
 const CELL_SIZE: f32 = 48.0;
-const GRID_SIZE: usize = 4;
+const GAP: f32 = 4.0;
+const NINE_SLICE_INSET: f32 = 58.0;
 
 /// Plugin for item grid widget.
 pub struct ItemGridPlugin;
@@ -27,12 +28,14 @@ pub struct ItemGridEntry {
 /// Item grid widget with optional items to display.
 #[derive(Component)]
 pub struct ItemGrid {
-    /// Items to display in the grid cells (up to 25)
+    /// Items to display in the grid cells
     pub items: Vec<ItemGridEntry>,
     /// Currently selected cell index
     pub selected_index: usize,
     /// Whether this grid is focused (shows selector)
     pub is_focused: bool,
+    /// Number of columns/rows in the grid (e.g., 3 for 3x3, 4 for 4x4)
+    pub grid_size: usize,
 }
 
 impl Default for ItemGrid {
@@ -41,6 +44,7 @@ impl Default for ItemGrid {
             items: Vec::new(),
             selected_index: 0,
             is_focused: true,
+            grid_size: 4,
         }
     }
 }
@@ -76,6 +80,7 @@ fn on_add_item_grid(
     let item_grid = item_grids.get(entity).ok();
     let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
     let is_focused = item_grid.map(|g| g.is_focused).unwrap_or(true);
+    let grid_size = item_grid.map(|g| g.grid_size).unwrap_or(4);
 
     // Get the cell background sprite if available
     let cell_image = game_sprites
@@ -94,8 +99,9 @@ fn on_add_item_grid(
             ))
         });
 
-    let grid_width = 320.0;
-    let grid_height = 320.0;
+    let content_size = grid_size as f32 * CELL_SIZE + (grid_size - 1) as f32 * GAP;
+    let grid_width = content_size + 2.0 * NINE_SLICE_INSET;
+    let grid_height = grid_width;
 
     // Set up the ItemGrid entity as the container
     let mut item_grid_entity = commands.entity(entity);
@@ -118,15 +124,15 @@ fn on_add_item_grid(
                 GridContainer,
                 Node {
                     display: Display::Grid,
-                    grid_template_columns: RepeatedGridTrack::px(GRID_SIZE as u16, CELL_SIZE),
-                    grid_template_rows: RepeatedGridTrack::px(GRID_SIZE as u16, CELL_SIZE),
-                    row_gap: Val::Px(4.0),
-                    column_gap: Val::Px(4.0),
+                    grid_template_columns: RepeatedGridTrack::px(grid_size as u16, CELL_SIZE),
+                    grid_template_rows: RepeatedGridTrack::px(grid_size as u16, CELL_SIZE),
+                    row_gap: Val::Px(GAP),
+                    column_gap: Val::Px(GAP),
                     ..default()
                 },
             ))
             .with_children(|grid| {
-                for i in 0..(GRID_SIZE * GRID_SIZE) {
+                for i in 0..(grid_size * grid_size) {
                     let mut cell = grid.spawn((
                         GridCell { index: i },
                         Node {
