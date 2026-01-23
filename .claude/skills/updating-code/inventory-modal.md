@@ -36,6 +36,7 @@ InventoryModalRoot (overlay)
             ├── Item name (16px, quality-colored)
             ├── Item type (14px, gray)
             ├── Quality label (14px, quality-colored)
+            ├── Quantity "Qty: X" (14px, green, only if qty > 1)
             └── ItemStatsDisplay (14px, icon+value mode)
 ```
 
@@ -127,7 +128,7 @@ The `populate_item_detail_pane` system runs every frame and checks if the pane n
 4. On mismatch (or first frame with no children), updates content:
    - Despawns existing `ItemDetailPaneContent` children
    - Looks up item via `get_equipment_items` or `get_backpack_items` at `selected_index`
-   - Spawns: item name, item type, quality label, and `ItemStatsDisplay`
+   - Spawns: item name, item type, quality label, quantity (if > 1), and `ItemStatsDisplay`
 5. Guards: if `selected_index >= items.len()`, clears content (no crash on empty cells)
 
 ## Key Types
