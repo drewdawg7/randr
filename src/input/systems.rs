@@ -2,6 +2,29 @@ use bevy::prelude::*;
 
 use super::actions::{GameAction, NavigationDirection};
 
+/// Initial delay before key repeat starts (seconds).
+const REPEAT_INITIAL_DELAY: f32 = 0.3;
+/// Interval between repeated navigation events while held (seconds).
+const REPEAT_INTERVAL: f32 = 0.1;
+
+/// Tracks key-repeat state for arrow key navigation.
+#[derive(Resource)]
+struct NavigationRepeatState {
+    direction: Option<NavigationDirection>,
+    timer: Timer,
+    repeating: bool,
+}
+
+impl Default for NavigationRepeatState {
+    fn default() -> Self {
+        Self {
+            direction: None,
+            timer: Timer::from_seconds(REPEAT_INITIAL_DELAY, TimerMode::Once),
+            repeating: false,
+        }
+    }
+}
+
 /// Plugin that handles keyboard input and emits game action events.
 pub struct InputPlugin;
 
@@ -9,28 +32,74 @@ impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
         app.add_event::<GameAction>()
             .add_event::<NavigationDirection>()
+            .init_resource::<NavigationRepeatState>()
             .add_systems(PreUpdate, handle_keyboard_input);
+    }
+}
+
+/// Map a key code to a navigation direction.
+fn key_to_direction(key: KeyCode) -> Option<NavigationDirection> {
+    match key {
+        KeyCode::ArrowUp => Some(NavigationDirection::Up),
+        KeyCode::ArrowDown => Some(NavigationDirection::Down),
+        KeyCode::ArrowLeft => Some(NavigationDirection::Left),
+        KeyCode::ArrowRight => Some(NavigationDirection::Right),
+        _ => None,
+    }
+}
+
+/// Map a navigation direction back to a key code.
+fn direction_to_key(dir: NavigationDirection) -> KeyCode {
+    match dir {
+        NavigationDirection::Up => KeyCode::ArrowUp,
+        NavigationDirection::Down => KeyCode::ArrowDown,
+        NavigationDirection::Left => KeyCode::ArrowLeft,
+        NavigationDirection::Right => KeyCode::ArrowRight,
     }
 }
 
 /// System that reads keyboard input and emits GameAction events.
 /// Keyboard-only - no mouse input per the rewrite spec.
 fn handle_keyboard_input(
+    time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
+    mut repeat: ResMut<NavigationRepeatState>,
     mut action_writer: EventWriter<GameAction>,
 ) {
-    // Navigation - Arrow keys
-    if keyboard.just_pressed(KeyCode::ArrowUp) {
-        action_writer.send(GameAction::Navigate(NavigationDirection::Up));
+    // Navigation - Arrow keys with key repeat
+    let mut new_press = None;
+    for key in keyboard.get_just_pressed() {
+        if let Some(dir) = key_to_direction(*key) {
+            new_press = Some(dir);
+        }
     }
-    if keyboard.just_pressed(KeyCode::ArrowDown) {
-        action_writer.send(GameAction::Navigate(NavigationDirection::Down));
-    }
-    if keyboard.just_pressed(KeyCode::ArrowLeft) {
-        action_writer.send(GameAction::Navigate(NavigationDirection::Left));
-    }
-    if keyboard.just_pressed(KeyCode::ArrowRight) {
-        action_writer.send(GameAction::Navigate(NavigationDirection::Right));
+
+    if let Some(dir) = new_press {
+        // Fresh key press: emit immediately and start initial delay
+        action_writer.send(GameAction::Navigate(dir));
+        repeat.direction = Some(dir);
+        repeat.timer = Timer::from_seconds(REPEAT_INITIAL_DELAY, TimerMode::Once);
+        repeat.repeating = false;
+    } else if let Some(dir) = repeat.direction {
+        // Check if the held key is still pressed
+        if keyboard.pressed(direction_to_key(dir)) {
+            repeat.timer.tick(time.delta());
+            if repeat.timer.just_finished() && !repeat.repeating {
+                // Initial delay elapsed, emit first repeat and switch to repeat interval
+                repeat.repeating = true;
+                repeat.timer = Timer::from_seconds(REPEAT_INTERVAL, TimerMode::Repeating);
+                action_writer.send(GameAction::Navigate(dir));
+            } else if repeat.repeating {
+                // Emit repeated events
+                for _ in 0..repeat.timer.times_finished_this_tick() {
+                    action_writer.send(GameAction::Navigate(dir));
+                }
+            }
+        } else {
+            // Key released, reset state
+            repeat.direction = None;
+            repeat.repeating = false;
+        }
     }
 
     // Select/confirm - Enter
