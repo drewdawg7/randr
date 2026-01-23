@@ -8,7 +8,7 @@ use crate::dungeon::{
     DungeonCommands, DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState,
     EntityRenderData, GridOccupancy, GridPosition, GridSize, TileRenderer, TileType,
 };
-use crate::ui::AnimationConfig;
+use crate::ui::{AnimationConfig, PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 use crate::inventory::Inventory;
 use crate::location::LocationId;
 use crate::input::{GameAction, NavigationDirection};
@@ -314,6 +314,7 @@ fn on_add_dungeon_floor(
                             let player_entity = grid.spawn((
                                 DungeonPlayer,
                                 DungeonPlayerSprite,
+                                PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
                                 ZIndex(player_pos.y as i32 + 100),
                                 Node {
                                     grid_column: GridPlacement::start_span(player_pos.x as i16 + 1, player_size.width as u16),
@@ -387,7 +388,8 @@ fn handle_dungeon_movement(
     mut state: ResMut<DungeonState>,
     mut occupancy: ResMut<GridOccupancy>,
     active_modal: Res<ActiveModal>,
-    player_query: Single<(Entity, &mut Node), With<DungeonPlayer>>,
+    sheet: Res<PlayerSpriteSheet>,
+    mut player_query: Query<(Entity, &mut Node, &mut SpriteAnimation, &mut PlayerWalkTimer), With<DungeonPlayer>>,
     entity_query: Query<&DungeonEntityMarker>,
 ) {
     // Block movement if any modal is open
@@ -395,7 +397,9 @@ fn handle_dungeon_movement(
         return;
     }
 
-    let (player_entity, mut player_node) = player_query.into_inner();
+    let Ok((player_entity, mut player_node, mut anim, mut walk_timer)) = player_query.get_single_mut() else {
+        return;
+    };
 
     for action in action_reader.read() {
         let GameAction::Navigate(direction) = action else {
@@ -458,6 +462,12 @@ fn handle_dungeon_movement(
         state.player_pos = new_pos;
         player_node.grid_column = GridPlacement::start_span(new_pos.x as i16 + 1, state.player_size.width as u16);
         player_node.grid_row = GridPlacement::start_span(new_pos.y as i16 + 1, state.player_size.height as u16);
+
+        // Switch to walk animation and reset timer
+        anim.first_frame = sheet.walk_animation.first_frame;
+        anim.last_frame = sheet.walk_animation.last_frame;
+        anim.current_frame = sheet.walk_animation.first_frame;
+        walk_timer.0.reset();
     }
 }
 

@@ -4,7 +4,7 @@
 
 use bevy::prelude::*;
 
-use super::animation::AnimationConfig;
+use super::animation::{AnimationConfig, SpriteAnimation};
 use super::sprite_marker::{SpriteData, SpriteMarker, SpriteMarkerAppExt};
 
 /// Plugin for player sprite animations.
@@ -16,7 +16,7 @@ impl Plugin for PlayerSpritePlugin {
 
         app.init_resource::<PlayerSpriteSheet>()
             .add_systems(PreStartup, load_player_sprite_sheet)
-            .add_systems(Update, animate_sprites)
+            .add_systems(Update, (animate_sprites, revert_player_idle))
             .register_sprite_marker::<DungeonPlayerSprite>();
     }
 }
@@ -27,6 +27,7 @@ pub struct PlayerSpriteSheet {
     pub texture: Option<Handle<Image>>,
     pub layout: Option<Handle<TextureAtlasLayout>>,
     pub animation: AnimationConfig,
+    pub walk_animation: AnimationConfig,
 }
 
 impl PlayerSpriteSheet {
@@ -35,6 +36,11 @@ impl PlayerSpriteSheet {
         self.texture.is_some() && self.layout.is_some()
     }
 }
+
+/// Timer component that tracks how long the walk animation should play.
+/// When the timer expires, the player reverts to idle animation.
+#[derive(Component)]
+pub struct PlayerWalkTimer(pub Timer);
 
 /// Marker component for dungeon player sprites that need population.
 #[derive(Component)]
@@ -75,6 +81,28 @@ fn load_player_sprite_sheet(
         frame_duration: 0.15,
         looping: true,
     };
+    player_sheet.walk_animation = AnimationConfig {
+        first_frame: 13,
+        last_frame: 18,
+        frame_duration: 0.1,
+        looping: true,
+    };
 
     info!("Loaded player sprite sheet: MiniLightningWarrior");
+}
+
+/// Reverts the player sprite to idle animation when the walk timer expires.
+fn revert_player_idle(
+    time: Res<Time>,
+    sheet: Res<PlayerSpriteSheet>,
+    mut query: Query<(&mut PlayerWalkTimer, &mut SpriteAnimation)>,
+) {
+    for (mut timer, mut anim) in &mut query {
+        timer.0.tick(time.delta());
+        if timer.0.just_finished() {
+            anim.first_frame = sheet.animation.first_frame;
+            anim.last_frame = sheet.animation.last_frame;
+            anim.current_frame = sheet.animation.first_frame;
+        }
+    }
 }

@@ -111,6 +111,36 @@ impl Plugin for MyPlugin {
 4. **Population**: Removes marker, inserts `ImageNode` + `SpriteAnimation`
 5. **Animation**: `animate_sprites()` updates all `SpriteAnimation` components
 
+## Runtime Animation Switching
+
+Sprites can switch between animations at runtime by mutating `SpriteAnimation` fields directly. This is used for the player walk animation:
+
+### Pattern: Timer-Based Animation Switch
+
+1. **Add alternate `AnimationConfig`** to the sprite sheet resource (e.g., `PlayerSpriteSheet::walk_animation`)
+2. **Add a timer component** (e.g., `PlayerWalkTimer(Timer)`) to the entity
+3. **On trigger** (e.g., successful movement), update `SpriteAnimation` fields and reset the timer:
+   ```rust
+   anim.first_frame = sheet.walk_animation.first_frame;
+   anim.last_frame = sheet.walk_animation.last_frame;
+   anim.current_frame = sheet.walk_animation.first_frame;
+   walk_timer.0.reset();
+   ```
+4. **Revert system** ticks the timer and switches back to idle when it expires:
+   ```rust
+   fn revert_player_idle(time, sheet, query: Query<(&mut PlayerWalkTimer, &mut SpriteAnimation)>) {
+       timer.0.tick(time.delta());
+       if timer.0.just_finished() {
+           anim.first_frame = sheet.animation.first_frame;
+           // ...
+       }
+   }
+   ```
+
+### Key Files
+- `src/ui/player_sprite.rs` — `PlayerWalkTimer`, `revert_player_idle`, `walk_animation` field
+- `src/ui/screens/dungeon/plugin.rs` — animation switch in `handle_dungeon_movement`
+
 ## Special Cases
 
 ### Dynamic Sprites (CompendiumMobSprite)
