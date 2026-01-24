@@ -175,6 +175,7 @@ pub struct SpriteAnimation {
 | `Slime` | `slime.png` | 32x32 | 8x6 | 0-3 | 40-44 | 0.25s |
 | `Dragon` | `dragon.png` | 64x32 | 66x1 | 0-3 | None | 0.35s |
 | `BlackDragon` | `black_dragon.png` | 64x32 | 16x7 | 2-5 | 98-103 | 0.35s |
+| `Merchant` | `merchant.png` | 32x32 | 23x1 | 0-3 | None | 0.15s |
 
 ### Non-Square Sprites
 

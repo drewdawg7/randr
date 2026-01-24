@@ -14,6 +14,7 @@ Entities that can be spawned on dungeon tiles.
 pub enum DungeonEntity {
     Chest { variant: u8, size: GridSize },        // Uses chests sprite sheet (Slice_1)
     Mob { mob_id: MobId, size: GridSize },        // Any mob type (Goblin, Slime, etc.)
+    Npc { mob_id: MobId, size: GridSize },        // Non-combat entities (blocks movement)
     Stairs { size: GridSize },                    // Advances player to next floor
     Rock { rock_type: RockType, size: GridSize }, // Minable rocks (copper, coal, tin)
 }
@@ -80,6 +81,15 @@ Adding a new entity type only requires:
 - On collision: inserts `AdvanceFloor` resource, triggering `advance_floor_system`
 - `advance_floor_system` despawns current dungeon UI, increments `floor_index`, calls `load_floor_layout()`, and respawns the dungeon screen with a fresh layout
 - Spawned via `SpawnTable::stairs(count_range)` (e.g., `.stairs(1..=1)`)
+
+### NPC Entity
+- `render_data()` returns `AnimatedMob { mob_id }` (reuses mob sprite system)
+- Uses any `MobId` that has a registered sprite sheet in `MobSpriteSheets`
+- Always 1x1 (`GridSize::single()`)
+- Blocks movement like Chest/Rock (no combat triggered)
+- Spawned via `SpawnTable::npc(mob_id, count_range)` (e.g., `.npc(MobId::Merchant, 1..=1)`)
+- Collision handling in `handle_dungeon_movement()` treats NPCs same as Chest/Rock (empty match arm)
+- Current NPCs: `MobId::Merchant` (sprite: `merchant.png`, 23x1 grid of 32x32, idle frames 0-3)
 
 ## DungeonCommands Extension Trait (`src/dungeon/commands.rs`)
 
@@ -296,6 +306,7 @@ LayoutBuilder::new(40, 21)
         .mob(MobId::Slime, 2)         // Weight 2 (less common)
         .mob_count(3..=5)             // 3-5 total weighted mobs
         .guaranteed_mob(MobId::BlackDragon, 1)  // Exactly 1, always spawned
+        .npc(MobId::Merchant, 1..=1)  // 1 NPC (blocks movement, no combat)
         .chest(1..=2)                 // 1-2 chests randomly
         .rock(2..=4))                 // 2-4 rocks randomly (random type)
     .build()
@@ -343,9 +354,11 @@ Source (rocks): `icons_8.13.20/fullcolor/individual_32x32/icon858.png`, `icon859
 
 ### Animated Mob Sprites
 Located in `assets/sprites/mobs/` (shared with combat/compendium):
-- `goblin.png` - 27 frames, idle 0-3
-- `slime.png` - 18 frames, idle 0-3
-- `dragon.png` - 66 frames, idle 0-3
+- `goblin.png` - 6x6 grid of 32x32, idle 0-3
+- `slime.png` - 8x6 grid of 32x32, idle 0-3
+- `dragon.png` - 66x1 grid of 64x32, idle 0-3
+- `black_dragon.png` - 16x7 grid of 64x32, idle 2-5
+- `merchant.png` - 23x1 grid of 32x32, idle 0-3 (NPC only, no combat)
 
 See [mob-sprites.md](../mob-sprites.md) for adding new mob sprites.
 
