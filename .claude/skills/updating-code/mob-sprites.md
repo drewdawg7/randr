@@ -174,6 +174,7 @@ pub struct SpriteAnimation {
 | `Goblin` | `goblin.png` | 32x32 | 6x6 | 0-3 | 30-33 | 0.2s |
 | `Slime` | `slime.png` | 32x32 | 8x6 | 0-3 | 40-44 | 0.25s |
 | `Dragon` | `dragon.png` | 64x32 | 66x1 | 0-3 | None | 0.35s |
+| `BlackDragon` | `black_dragon.png` | 64x32 | 16x7 | 2-5 | 98-103 | 0.35s |
 
 ### Non-Square Sprites
 
@@ -182,6 +183,8 @@ For sprites with non-square dimensions (like Dragon at 64x32), use `UVec2::new(w
 ```rust
 let dragon_layout = TextureAtlasLayout::from_grid(UVec2::new(64, 32), 66, 1, None, None);
 ```
+
+The `frame_size: UVec2` field on `MobSpriteSheet` must match the grid cell dimensions. This is used by the dungeon renderer to compute the correct aspect ratio for the entity node (non-square frames render wider/taller as needed rather than being squished into a square).
 
 ### Death Animations
 

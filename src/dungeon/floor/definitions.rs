@@ -27,6 +27,7 @@ entity_macros::define_data! {
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
                 .mob_count(3..=5)
+                .guaranteed_mob(MobId::BlackDragon, 1)
                 .chest(1..=2)
                 .stairs(1..=1)
                 .rock(2..=4),

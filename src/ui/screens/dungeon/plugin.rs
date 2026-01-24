@@ -19,7 +19,7 @@ use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
 use crate::ui::screens::modal::ActiveModal;
 use crate::ui::screens::results_modal::{ResultsModalData, SpawnResultsModal};
 use crate::ui::widgets::PlayerStats;
-use crate::ui::{DungeonMobSprite, DungeonPlayerSprite};
+use crate::ui::{DungeonMobSprite, DungeonPlayerSprite, MobSpriteSheets};
 
 /// Scale factor for dungeon tiles (1.0 = original, 1.5 = 1.5x bigger, 2.0 = 2x bigger).
 /// Changing this adjusts both tile size and layout dimensions.
@@ -139,6 +139,7 @@ fn on_add_dungeon_floor(
     mut commands: Commands,
     query: Query<&DungeonFloor>,
     game_sprites: Res<GameSprites>,
+    mob_sheets: Res<MobSpriteSheets>,
     window: Single<&Window>,
 ) {
     let entity = trigger.entity();
@@ -289,20 +290,28 @@ fn on_add_dungeon_floor(
                             // Spawn entities with absolute positioning
                             for (pos, entity) in layout.entities() {
                                 let size = entity.size();
-                                let visual_size = match entity.render_data() {
-                                    EntityRenderData::AnimatedMob { .. } => entity_sprite_size,
-                                    _ => tile_size,
+                                let (visual_width, visual_height) = match entity.render_data() {
+                                    EntityRenderData::AnimatedMob { mob_id } => {
+                                        let frame_size = mob_sheets
+                                            .get(mob_id)
+                                            .map(|s| s.frame_size)
+                                            .unwrap_or(UVec2::splat(32));
+                                        let aspect = frame_size.x as f32 / frame_size.y as f32;
+                                        (entity_sprite_size * aspect, entity_sprite_size)
+                                    }
+                                    _ => (tile_size, tile_size),
                                 };
-                                let offset = -(visual_size - tile_size) / 2.0;
-                                let left = pos.x as f32 * tile_size + offset;
-                                let top = pos.y as f32 * tile_size + offset;
+                                let offset_x = -(visual_width - tile_size) / 2.0;
+                                let offset_y = -(visual_height - tile_size) / 2.0;
+                                let left = pos.x as f32 * tile_size + offset_x;
+                                let top = pos.y as f32 * tile_size + offset_y;
 
                                 let entity_node = Node {
                                     position_type: PositionType::Absolute,
                                     left: Val::Px(left),
                                     top: Val::Px(top),
-                                    width: Val::Px(visual_size),
-                                    height: Val::Px(visual_size),
+                                    width: Val::Px(visual_width),
+                                    height: Val::Px(visual_height),
                                     ..default()
                                 };
 
@@ -698,6 +707,7 @@ fn handle_window_resize(
     mut resize_events: EventReader<WindowResized>,
     windows: Query<&Window>,
     state: Res<DungeonState>,
+    mob_sheets: Res<MobSpriteSheets>,
     mut scale: ResMut<UiScale>,
     mut grid_query: Query<&mut Node, With<DungeonGrid>>,
     mut container_query: Query<&mut Node, (With<DungeonContainer>, Without<DungeonGrid>, Without<DungeonPlayer>, Without<EntityLayer>)>,
@@ -760,15 +770,23 @@ fn handle_window_resize(
             // Update entity positions and sizes
             let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_size;
             for (marker, mut entity_node) in entity_query.iter_mut() {
-                let visual_size = match marker.entity_type {
-                    DungeonEntity::Mob { .. } => entity_sprite_size,
-                    _ => tile_size,
+                let (visual_width, visual_height) = match marker.entity_type {
+                    DungeonEntity::Mob { mob_id, .. } => {
+                        let frame_size = mob_sheets
+                            .get(mob_id)
+                            .map(|s| s.frame_size)
+                            .unwrap_or(UVec2::splat(32));
+                        let aspect = frame_size.x as f32 / frame_size.y as f32;
+                        (entity_sprite_size * aspect, entity_sprite_size)
+                    }
+                    _ => (tile_size, tile_size),
                 };
-                let offset = -(visual_size - tile_size) / 2.0;
-                entity_node.left = Val::Px(marker.pos.x as f32 * tile_size + offset);
-                entity_node.top = Val::Px(marker.pos.y as f32 * tile_size + offset);
-                entity_node.width = Val::Px(visual_size);
-                entity_node.height = Val::Px(visual_size);
+                let offset_x = -(visual_width - tile_size) / 2.0;
+                let offset_y = -(visual_height - tile_size) / 2.0;
+                entity_node.left = Val::Px(marker.pos.x as f32 * tile_size + offset_x);
+                entity_node.top = Val::Px(marker.pos.y as f32 * tile_size + offset_y);
+                entity_node.width = Val::Px(visual_width);
+                entity_node.height = Val::Px(visual_height);
             }
         }
     }

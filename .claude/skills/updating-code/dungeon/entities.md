@@ -281,6 +281,8 @@ DungeonGrid (on_add_dungeon_floor)    Mob Animation (mob_animation.rs)
 
 ## Spawning Entities in Layouts
 
+**Important:** Spawn tables are applied via `LayoutBuilder::spawn()` inside each layout's `create()` function (e.g., `src/dungeon/layouts/starting_room.rs`). The `FloorSpec.spawn_table` field in `src/dungeon/floor/definitions.rs` is currently **not applied at runtime** — only the spawn table passed to `LayoutBuilder` takes effect.
+
 **Preferred: Use SpawnTable** for declarative entity spawning:
 ```rust
 use crate::dungeon::{LayoutBuilder, SpawnTable};
@@ -290,12 +292,19 @@ LayoutBuilder::new(40, 21)
     .entrance(20, 19)
     .exit(20, 20)
     .spawn(SpawnTable::new()
-        .mob(MobId::Goblin, 3)   // Weight 3 (more common)
-        .mob(MobId::Slime, 2)    // Weight 2 (less common)
-        .chest(1..=2)            // 1-2 chests randomly
-        .rock(2..=4))            // 2-4 rocks randomly (random type)
+        .mob(MobId::Goblin, 3)        // Weight 3 (more common)
+        .mob(MobId::Slime, 2)         // Weight 2 (less common)
+        .mob_count(3..=5)             // 3-5 total weighted mobs
+        .guaranteed_mob(MobId::BlackDragon, 1)  // Exactly 1, always spawned
+        .chest(1..=2)                 // 1-2 chests randomly
+        .rock(2..=4))                 // 2-4 rocks randomly (random type)
     .build()
 ```
+
+### Guaranteed vs Weighted Mobs
+
+- `.mob(id, weight)` + `.mob_count(range)` — spawns N mobs chosen randomly by weight
+- `.guaranteed_mob(id, count)` — spawns exactly `count` of this mob (before weighted selection), guaranteed every time
 
 **Manual spawning** (for special cases):
 ```rust

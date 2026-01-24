@@ -28,6 +28,8 @@ pub struct MobSpriteSheet {
     pub layout: Handle<TextureAtlasLayout>,
     pub animation: AnimationConfig,
     pub death_animation: Option<AnimationConfig>,
+    /// Frame dimensions in pixels (used for aspect ratio in rendering).
+    pub frame_size: UVec2,
 }
 
 /// Resource containing loaded mob sprite sheets.
@@ -97,6 +99,7 @@ fn load_mob_sprite_sheets(
                 looping: false,
                 synchronized: false,
             }),
+            frame_size: UVec2::splat(32),
         },
     );
 
@@ -123,6 +126,7 @@ fn load_mob_sprite_sheets(
                 looping: false,
                 synchronized: false,
             }),
+            frame_size: UVec2::splat(32),
         },
     );
 
@@ -143,8 +147,36 @@ fn load_mob_sprite_sheets(
                 synchronized: true,
             },
             death_animation: None,
+            frame_size: UVec2::new(64, 32),
         },
     );
 
-    info!("Loaded mob sprite sheets for Goblin, Slime, and Dragon");
+    // Black Dragon: 16x7 grid of 64x32, idle is frames 2-5, death is frames 98-103
+    let black_dragon_texture: Handle<Image> = asset_server.load("sprites/mobs/black_dragon.png");
+    let black_dragon_layout = TextureAtlasLayout::from_grid(UVec2::new(64, 32), 16, 7, None, None);
+    let black_dragon_layout_handle = layouts.add(black_dragon_layout);
+    mob_sheets.insert(
+        MobId::BlackDragon,
+        MobSpriteSheet {
+            texture: black_dragon_texture,
+            layout: black_dragon_layout_handle,
+            animation: AnimationConfig {
+                first_frame: 2,
+                last_frame: 5,
+                frame_duration: 0.35,
+                looping: true,
+                synchronized: true,
+            },
+            death_animation: Some(AnimationConfig {
+                first_frame: 98,
+                last_frame: 103,
+                frame_duration: 0.15,
+                looping: false,
+                synchronized: false,
+            }),
+            frame_size: UVec2::new(64, 32),
+        },
+    );
+
+    info!("Loaded mob sprite sheets for Goblin, Slime, Dragon, and Black Dragon");
 }

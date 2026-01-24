@@ -91,6 +91,19 @@ entity_macros::define_entity! {
                 .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
             grid_size: GridSize::single(),
         }
+        BlackDragon {
+            name: String::from("Black Dragon"),
+            quality: MobQuality::Boss,
+            max_health: 550..=750,
+            attack: 55..=75,
+            defense: 35..=55,
+            dropped_gold: 300..=400,
+            dropped_xp: 550..=800,
+            loot: LootTable::new()
+                .with(ItemId::GoldRing, 1, 100, 1..=1)
+                .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
+            grid_size: GridSize::single(),
+        }
     }
 }
 

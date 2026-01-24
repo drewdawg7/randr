@@ -30,6 +30,7 @@ pub struct SpawnTable {
     chest_count: RangeInclusive<u32>,
     stairs_count: RangeInclusive<u32>,
     rock_count: RangeInclusive<u32>,
+    guaranteed_mobs: Vec<(MobId, u32)>,
 }
 
 impl Default for SpawnTable {
@@ -46,6 +47,7 @@ impl SpawnTable {
             chest_count: 0..=0,
             stairs_count: 0..=0,
             rock_count: 0..=0,
+            guaranteed_mobs: Vec::new(),
         }
     }
 
@@ -84,6 +86,12 @@ impl SpawnTable {
     /// Add rock count range (always 1x1).
     pub fn rock(mut self, count: RangeInclusive<u32>) -> Self {
         self.rock_count = count;
+        self
+    }
+
+    /// Guarantee exactly `count` of this mob spawn on the floor (before weighted selection).
+    pub fn guaranteed_mob(mut self, mob_id: MobId, count: u32) -> Self {
+        self.guaranteed_mobs.push((mob_id, count));
         self
     }
 
@@ -138,7 +146,18 @@ impl SpawnTable {
             }
         }
 
-        // 4. Spawn mobs by weighted selection
+        // 4. Spawn guaranteed mobs
+        for (mob_id, count) in &self.guaranteed_mobs {
+            let size = mob_id.spec().grid_size;
+            for _ in 0..*count {
+                let areas = layout.spawn_areas(size);
+                if let Some(&pos) = areas.choose(rng) {
+                    layout.add_entity(pos, DungeonEntity::Mob { mob_id: *mob_id, size });
+                }
+            }
+        }
+
+        // 5. Spawn mobs by weighted selection
         let total_weight: u32 = self.entries.iter().map(|e| e.weight).sum();
         if total_weight == 0 {
             return;
