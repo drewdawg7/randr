@@ -15,7 +15,9 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::loot::{collect_loot_drops, HasLoot};
 use crate::states::AppState;
 use crate::stats::{StatSheet, StatType};
+use crate::mob::MobId;
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
+use crate::ui::screens::merchant_modal::{MerchantStock, SpawnMerchantModal};
 use crate::ui::screens::modal::ActiveModal;
 use crate::ui::screens::results_modal::{ResultsModalData, SpawnResultsModal};
 use crate::ui::widgets::PlayerStats;
@@ -590,7 +592,7 @@ fn interpolate_positions(
     }
 }
 
-/// Handle space key to mine adjacent rocks or open adjacent chests.
+/// Handle space key to interact with adjacent entities (NPCs, chests, rocks).
 fn handle_mine_interaction(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
@@ -609,6 +611,21 @@ fn handle_mine_interaction(
     for action in action_reader.read() {
         if *action != GameAction::Mine {
             continue;
+        }
+
+        // First check for adjacent NPC
+        if let Some((_, _, mob_id)) = find_adjacent_npc(&state, &occupancy, &entity_query) {
+            // Handle NPC interaction based on type
+            match mob_id {
+                MobId::Merchant => {
+                    commands.insert_resource(MerchantStock::generate());
+                    commands.insert_resource(SpawnMerchantModal);
+                }
+                _ => {
+                    // Other NPCs - could add dialogue system later
+                }
+            }
+            break;
         }
 
         // Find an adjacent minable entity (chest or rock)
@@ -684,6 +701,39 @@ fn find_adjacent_minable(
             if let Ok(marker) = entity_query.get(entity) {
                 if matches!(marker.entity_type, DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. }) {
                     return Some((entity, marker.pos, marker.entity_type));
+                }
+            }
+        }
+    }
+
+    None
+}
+
+/// Find an adjacent NPC to the player's current position.
+/// Checks the 4 cardinal directions from the player's 1x1 cell.
+fn find_adjacent_npc(
+    state: &DungeonState,
+    occupancy: &GridOccupancy,
+    entity_query: &Query<&DungeonEntityMarker>,
+) -> Option<(Entity, GridPosition, MobId)> {
+    let px = state.player_pos.x;
+    let py = state.player_pos.y;
+
+    let adjacent_cells: [(i32, i32); 4] = [
+        (px as i32, py as i32 - 1), // up
+        (px as i32, py as i32 + 1), // down
+        (px as i32 - 1, py as i32), // left
+        (px as i32 + 1, py as i32), // right
+    ];
+
+    for (x, y) in adjacent_cells {
+        if x < 0 || y < 0 {
+            continue;
+        }
+        if let Some(entity) = occupancy.entity_at(x as usize, y as usize) {
+            if let Ok(marker) = entity_query.get(entity) {
+                if let DungeonEntity::Npc { mob_id, .. } = marker.entity_type {
+                    return Some((entity, marker.pos, mob_id));
                 }
             }
         }

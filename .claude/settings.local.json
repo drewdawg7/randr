@@ -190,7 +190,13 @@
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --data /dev/stdout --format json-array)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --data /dev/stdout --format json-array --list-slices)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --data /tmp/sprite_data.json --format json-array --list-slices)",
-      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/player/lightning_warrior.png)"
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniLightningWarrior-Sheet.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/player/lightning_warrior.png)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniBlackDragon-Sheet.aseprite\" --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniBlackDragon-Sheet.aseprite\" --data /dev/stdout --format json-hash --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniBlackDragon-Sheet.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/black_dragon.png)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniNobleMan.aseprite\" --list-tags)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniNobleMan.aseprite\" --list-layers)",
+      "Bash(\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniNobleMan.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/merchant.png)"
     ]
   },
   "enabledMcpjsonServers": [

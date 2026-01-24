@@ -12,8 +12,8 @@ use crate::states::{AppState, StateTransitionPlugin};
 use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
     DungeonScreenPlugin, FightModalPlugin, FightPlugin, InventoryModalPlugin, KeybindsPlugin,
-    MainMenuPlugin, MinePlugin, ModalPlugin, MonsterCompendiumPlugin, ProfileModalPlugin,
-    ProfilePlugin, ResultsModalPlugin, TownPlugin,
+    MainMenuPlugin, MerchantModalPlugin, MinePlugin, ModalPlugin, MonsterCompendiumPlugin,
+    ProfileModalPlugin, ProfilePlugin, ResultsModalPlugin, TownPlugin,
 };
 use crate::ui::widgets::{ItemDetailPanePlugin, ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin};
 use crate::ui::{MobAnimationPlugin, PlayerSpritePlugin};
@@ -70,6 +70,7 @@ impl Plugin for GamePlugin {
             ProfilePlugin,
             ProfileModalPlugin,
             InventoryModalPlugin,
+            MerchantModalPlugin,
             MonsterCompendiumPlugin,
             KeybindsPlugin,
             TownPlugin,

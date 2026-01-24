@@ -5,6 +5,7 @@ pub mod health_bar;
 pub mod inventory_modal;
 mod keybinds;
 mod main_menu;
+pub mod merchant_modal;
 mod mine;
 pub mod modal;
 pub mod monster_compendium;
@@ -25,6 +26,7 @@ pub use health_bar::{
 pub use inventory_modal::InventoryModalPlugin;
 pub use keybinds::KeybindsPlugin;
 pub use main_menu::MainMenuPlugin;
+pub use merchant_modal::MerchantModalPlugin;
 pub use mine::MinePlugin;
 pub use modal::{ActiveModal, ModalPlugin, ModalType};
 pub use profile::ProfilePlugin;
