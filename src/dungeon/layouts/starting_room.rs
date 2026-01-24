@@ -21,6 +21,7 @@ pub fn create() -> DungeonLayout {
                 .mob(MobId::Slime, 1)
                 .mob_count(2..=2)
                 .guaranteed_mob(MobId::BlackDragon, 1)
+                .npc(MobId::Merchant, 1..=1)
                 .chest(1..=1)
                 .stairs(1..=1)
                 .rock(2..=4),

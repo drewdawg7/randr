@@ -31,6 +31,7 @@ pub struct SpawnTable {
     stairs_count: RangeInclusive<u32>,
     rock_count: RangeInclusive<u32>,
     guaranteed_mobs: Vec<(MobId, u32)>,
+    npc_spawns: Vec<(MobId, RangeInclusive<u32>)>,
 }
 
 impl Default for SpawnTable {
@@ -48,6 +49,7 @@ impl SpawnTable {
             stairs_count: 0..=0,
             rock_count: 0..=0,
             guaranteed_mobs: Vec::new(),
+            npc_spawns: Vec::new(),
         }
     }
 
@@ -92,6 +94,12 @@ impl SpawnTable {
     /// Guarantee exactly `count` of this mob spawn on the floor (before weighted selection).
     pub fn guaranteed_mob(mut self, mob_id: MobId, count: u32) -> Self {
         self.guaranteed_mobs.push((mob_id, count));
+        self
+    }
+
+    /// Add NPC spawns (blocks movement, no combat).
+    pub fn npc(mut self, mob_id: MobId, count: RangeInclusive<u32>) -> Self {
+        self.npc_spawns.push((mob_id, count));
         self
     }
 
@@ -146,7 +154,24 @@ impl SpawnTable {
             }
         }
 
-        // 4. Spawn guaranteed mobs
+        // 4. Spawn NPCs (before guaranteed mobs)
+        for (mob_id, count_range) in &self.npc_spawns {
+            let count = rng.gen_range(count_range.clone());
+            for _ in 0..count {
+                let areas = layout.spawn_areas(GridSize::single());
+                if let Some(&pos) = areas.choose(rng) {
+                    layout.add_entity(
+                        pos,
+                        DungeonEntity::Npc {
+                            mob_id: *mob_id,
+                            size: GridSize::single(),
+                        },
+                    );
+                }
+            }
+        }
+
+        // 5. Spawn guaranteed mobs
         for (mob_id, count) in &self.guaranteed_mobs {
             let size = mob_id.spec().grid_size;
             for _ in 0..*count {
@@ -157,7 +182,7 @@ impl SpawnTable {
             }
         }
 
-        // 5. Spawn mobs by weighted selection
+        // 6. Spawn mobs by weighted selection
         let total_weight: u32 = self.entries.iter().map(|e| e.weight).sum();
         if total_weight == 0 {
             return;

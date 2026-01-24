@@ -502,7 +502,7 @@ fn handle_dungeon_movement(
                 });
                 commands.insert_resource(SpawnFightModal);
             }
-            DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. } => {}
+            DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. } | DungeonEntity::Npc { .. } => {}
             DungeonEntity::Stairs { .. } => {
                 commands.insert_resource(AdvanceFloor);
             }

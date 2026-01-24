@@ -104,6 +104,17 @@ entity_macros::define_entity! {
                 .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
             grid_size: GridSize::single(),
         }
+        Merchant {
+            name: String::from("Merchant"),
+            quality: MobQuality::Normal,
+            max_health: 1..=1,
+            attack: 0..=0,
+            defense: 0..=0,
+            dropped_gold: 0..=0,
+            dropped_xp: 0..=0,
+            loot: LootTable::new(),
+            grid_size: GridSize::single(),
+        }
     }
 }
 

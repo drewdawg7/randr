@@ -178,5 +178,26 @@ fn load_mob_sprite_sheets(
         },
     );
 
-    info!("Loaded mob sprite sheets for Goblin, Slime, Dragon, and Black Dragon");
+    // Merchant: 23x1 grid of 32x32, idle is frames 0-3
+    let merchant_texture: Handle<Image> = asset_server.load("sprites/mobs/merchant.png");
+    let merchant_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 23, 1, None, None);
+    let merchant_layout_handle = layouts.add(merchant_layout);
+    mob_sheets.insert(
+        MobId::Merchant,
+        MobSpriteSheet {
+            texture: merchant_texture,
+            layout: merchant_layout_handle,
+            animation: AnimationConfig {
+                first_frame: 0,
+                last_frame: 3,
+                frame_duration: 0.15,
+                looping: true,
+                synchronized: true,
+            },
+            death_animation: None,
+            frame_size: UVec2::splat(32),
+        },
+    );
+
+    info!("Loaded mob sprite sheets for Goblin, Slime, Dragon, Black Dragon, and Merchant");
 }
