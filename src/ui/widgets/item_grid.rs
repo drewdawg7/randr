@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use super::nine_slice::spawn_nine_slice_panel;
-use crate::assets::{GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
+use crate::assets::{GameFonts, GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
 use crate::input::NavigationDirection;
 
 const CELL_SIZE: f32 = 48.0;
@@ -24,6 +24,8 @@ impl Plugin for ItemGridPlugin {
 pub struct ItemGridEntry {
     /// Slice name in icon_items sprite sheet (e.g., "Slice_337")
     pub sprite_name: String,
+    /// Quantity to display (only shown if > 1)
+    pub quantity: u32,
 }
 
 /// Item grid widget with optional items to display.
@@ -100,6 +102,7 @@ fn on_add_item_grid(
     trigger: Trigger<OnAdd, ItemGrid>,
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
+    game_fonts: Res<GameFonts>,
     item_grids: Query<&ItemGrid>,
 ) {
     let entity = trigger.entity();
@@ -213,6 +216,15 @@ fn on_add_item_grid(
                                         },
                                         icon_img,
                                     ));
+
+                                    // Spawn quantity text with outline if quantity > 1
+                                    if entry.quantity > 1 {
+                                        spawn_outlined_quantity_text(
+                                            cell_content,
+                                            &game_fonts,
+                                            entry.quantity,
+                                        );
+                                    }
                                 });
                             }
                         }
@@ -226,14 +238,76 @@ fn on_add_item_grid(
 #[derive(Component)]
 struct GridItemSprite;
 
+/// Marker for quantity text inside grid cells.
+#[derive(Component)]
+struct GridItemQuantityText;
+
+/// Spawn quantity text with a black outline effect.
+/// Creates shadow text entities at 8 offsets around the main white text.
+fn spawn_outlined_quantity_text(
+    parent: &mut ChildBuilder,
+    game_fonts: &GameFonts,
+    quantity: u32,
+) {
+    let text = quantity.to_string();
+    let font_size = 14.0;
+
+    // Container for the outlined text
+    parent
+        .spawn((
+            GridItemQuantityText,
+            Node {
+                position_type: PositionType::Absolute,
+                right: Val::Px(2.0),
+                bottom: Val::Px(0.0),
+                ..default()
+            },
+        ))
+        .with_children(|text_container| {
+            // Shadow layers (black outline) - 8 directions
+            let offsets = [
+                (-1.0, -1.0),
+                (0.0, -1.0),
+                (1.0, -1.0),
+                (-1.0, 0.0),
+                (1.0, 0.0),
+                (-1.0, 1.0),
+                (0.0, 1.0),
+                (1.0, 1.0),
+            ];
+            for (x, y) in offsets {
+                text_container.spawn((
+                    Text::new(&text),
+                    game_fonts.pixel_font(font_size),
+                    TextColor(Color::BLACK),
+                    Node {
+                        position_type: PositionType::Absolute,
+                        left: Val::Px(x),
+                        top: Val::Px(y),
+                        ..default()
+                    },
+                ));
+            }
+
+            // Main white text on top
+            text_container.spawn((
+                Text::new(&text),
+                game_fonts.pixel_font(font_size),
+                TextColor(Color::WHITE),
+            ));
+        });
+}
+
 /// Update the item sprites in grid cells when the items list changes.
 fn update_grid_items(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
+    game_fonts: Res<GameFonts>,
     item_grids: Query<(&ItemGrid, &Children), Changed<ItemGrid>>,
     grid_containers: Query<&Children, With<GridContainer>>,
     grid_cells: Query<(Entity, &GridCell, Option<&Children>)>,
     item_sprites: Query<Entity, With<GridItemSprite>>,
+    quantity_texts: Query<Entity, With<GridItemQuantityText>>,
 ) {
     for (item_grid, item_grid_children) in &item_grids {
         // Find the GridContainer child
@@ -249,10 +323,10 @@ fn update_grid_items(
                 continue;
             };
 
-            // Remove existing item sprites from this cell
+            // Remove existing item sprites and quantity text from this cell
             if let Some(children) = cell_children {
                 for &cell_child in children.iter() {
-                    if item_sprites.contains(cell_child) {
+                    if item_sprites.contains(cell_child) || quantity_texts.contains(cell_child) {
                         if commands.get_entity(cell_child).is_some() {
                             commands.entity(cell_child).despawn_recursive();
                         }
@@ -276,6 +350,15 @@ fn update_grid_items(
                             },
                             icon_img,
                         ));
+
+                        // Spawn quantity text with outline if quantity > 1
+                        if entry.quantity > 1 {
+                            spawn_outlined_quantity_text(
+                                cell_content,
+                                &game_fonts,
+                                entry.quantity,
+                            );
+                        }
                     });
                 }
             }

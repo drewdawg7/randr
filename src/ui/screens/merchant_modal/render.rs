@@ -19,6 +19,7 @@ pub fn get_merchant_stock_entries(stock: &MerchantStock) -> Vec<ItemGridEntry> {
         .filter_map(|store_item| {
             store_item.display_item().map(|item| ItemGridEntry {
                 sprite_name: item.item_id.sprite_name().to_string(),
+                quantity: store_item.quantity() as u32,
             })
         })
         .collect()
@@ -31,6 +32,7 @@ pub fn get_player_inventory_entries(inventory: &Inventory) -> Vec<ItemGridEntry>
         .iter()
         .map(|inv_item| ItemGridEntry {
             sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+            quantity: inv_item.quantity,
         })
         .collect()
 }

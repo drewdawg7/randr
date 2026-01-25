@@ -125,6 +125,7 @@ fn refresh_grids(
             .iter()
             .map(|inv_item| ItemGridEntry {
                 sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+                quantity: inv_item.quantity,
             })
             .collect();
         if !eq_grid.items.is_empty() {
@@ -139,6 +140,7 @@ fn refresh_grids(
             .iter()
             .map(|inv_item| ItemGridEntry {
                 sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+                quantity: inv_item.quantity,
             })
             .collect();
         if !bp_grid.items.is_empty() {

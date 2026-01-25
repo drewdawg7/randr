@@ -28,6 +28,7 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
         .iter()
         .map(|inv_item| ItemGridEntry {
             sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+            quantity: inv_item.quantity,
         })
         .collect();
 
@@ -35,6 +36,7 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
         .iter()
         .map(|inv_item| ItemGridEntry {
             sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+            quantity: inv_item.quantity,
         })
         .collect();
 
