@@ -16,6 +16,7 @@ pub enum ModalType {
     FightModal,
     ResultsModal,
     MerchantModal,
+    ForgeModal,
 }
 
 /// Component marker for modal overlay background.

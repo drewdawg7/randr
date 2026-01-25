@@ -48,6 +48,7 @@ Read the relevant doc BEFORE making changes.
 | Chest interaction, adjacency detection, chest loot | [dungeon/entities.md](dungeon/entities.md) |
 | Rock mining, RockType, rock loot, mine interaction | [dungeon/entities.md](dungeon/entities.md) |
 | Crafting stations, Forge, CraftingStationType | [dungeon/crafting-stations.md](dungeon/crafting-stations.md) |
+| Forge modal, smelting UI, ForgeCraftingState | [forge-modal.md](forge-modal.md) |
 | Health bars, HealthBarValues, SpriteHealthBar, HP text | [health-bar.md](health-bar.md) |
 | Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |
 | SelectionState trait, list navigation, focus | [focus.md](focus.md) |

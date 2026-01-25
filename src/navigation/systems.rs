@@ -8,6 +8,7 @@ use crate::ui::ModalCommands;
 use super::table::{NavigationTable, NavigationTarget};
 
 // Import registered modal types
+use crate::ui::screens::forge_modal::ForgeModal;
 use crate::ui::screens::inventory_modal::InventoryModal;
 use crate::ui::screens::merchant_modal::MerchantModal;
 use crate::ui::screens::monster_compendium::MonsterCompendiumModal;
@@ -49,6 +50,7 @@ fn handle_modal_toggle(commands: &mut Commands, modal_type: ModalType) {
         ModalType::Profile => commands.toggle_modal::<ProfileModal>(),
         ModalType::MonsterCompendium => commands.toggle_modal::<MonsterCompendiumModal>(),
         ModalType::MerchantModal => commands.toggle_modal::<MerchantModal>(),
+        ModalType::ForgeModal => commands.toggle_modal::<ForgeModal>(),
         ModalType::Keybinds | ModalType::FightModal | ModalType::ResultsModal => {
             // Keybinds is a state transition, FightModal/ResultsModal are spawned programmatically
         }

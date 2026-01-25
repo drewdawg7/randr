@@ -3,6 +3,7 @@ use bevy::window::WindowResized;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::chest::Chest;
+use crate::crafting_station::{CraftingStationType, ForgeCraftingState};
 use crate::rock::{Rock, RockType};
 use crate::dungeon::{
     DungeonCommands, DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState,
@@ -17,6 +18,7 @@ use crate::states::AppState;
 use crate::stats::{StatSheet, StatType};
 use crate::mob::MobId;
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
+use crate::ui::screens::forge_modal::{ActiveForgeEntity, ForgeModalState, SpawnForgeModal};
 use crate::ui::screens::merchant_modal::{MerchantStock, SpawnMerchantModal};
 use crate::ui::screens::modal::ActiveModal;
 use crate::ui::screens::results_modal::{ResultsModalData, SpawnResultsModal};
@@ -336,12 +338,19 @@ fn on_add_dungeon_floor(
                                     EntityRenderData::SpriteSheet { sheet_key, sprite_name } => {
                                         game_sprites.get(sheet_key)
                                             .and_then(|sheet| sheet.image_node(sprite_name))
-                                            .map(|img| layer.spawn((
-                                                marker,
-                                                z_for_entity(pos.y),
-                                                img,
-                                                entity_node,
-                                            )).id())
+                                            .map(|img| {
+                                                let mut entity_cmd = layer.spawn((
+                                                    marker,
+                                                    z_for_entity(pos.y),
+                                                    img,
+                                                    entity_node,
+                                                ));
+                                                // Add ForgeCraftingState to forge entities
+                                                if matches!(entity, DungeonEntity::CraftingStation { station_type: CraftingStationType::Forge, .. }) {
+                                                    entity_cmd.insert(ForgeCraftingState::default());
+                                                }
+                                                entity_cmd.id()
+                                            })
                                     }
                                     EntityRenderData::AnimatedMob { mob_id } => {
                                         Some(layer.spawn((
@@ -614,7 +623,6 @@ fn handle_mine_interaction(
     active_modal: Res<ActiveModal>,
     stats: Res<StatSheet>,
     mut inventory: ResMut<Inventory>,
-    game_sprites: Res<GameSprites>,
     entity_query: Query<&DungeonEntityMarker>,
     forge_query: Query<&ForgeActiveTimer>,
 ) {
@@ -647,28 +655,14 @@ fn handle_mine_interaction(
         if let Some((entity_id, _, _)) =
             find_adjacent_crafting_station(&state, &occupancy, &entity_query)
         {
-            // Only start animation if not already active
+            // Only open modal if forge is not already crafting
             if forge_query.get(entity_id).is_err() {
-                // Get the sprite sheet to find frame indices
-                if let Some(sheet) = game_sprites.get(SpriteSheetKey::Forge) {
-                    if let (Some(first), Some(last)) =
-                        (sheet.get("forge_1_active1"), sheet.get("forge_1_active3"))
-                    {
-                        // Add animation component
-                        let config = AnimationConfig {
-                            first_frame: first,
-                            last_frame: last,
-                            frame_duration: 0.1,
-                            looping: true,
-                            synchronized: false,
-                        };
-                        commands.entity(entity_id).insert((
-                            SpriteAnimation::new(&config),
-                            ForgeActiveTimer(Timer::from_seconds(5.0, TimerMode::Once)),
-                        ));
-                    }
-                }
+                // Open forge modal - insert all required resources
+                commands.insert_resource(ActiveForgeEntity(entity_id));
+                commands.insert_resource(ForgeModalState::default());
+                commands.insert_resource(SpawnForgeModal);
             }
+            // If forge is crafting (has ForgeActiveTimer), don't open modal
             break;
         }
 
@@ -820,15 +814,21 @@ fn find_adjacent_crafting_station(
 }
 
 /// System to revert forge to idle animation after the active timer expires.
+/// Also completes the crafting process, converting ore+coal to ingots.
 fn revert_forge_idle(
     mut commands: Commands,
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
-    mut query: Query<(Entity, &mut ForgeActiveTimer, &mut ImageNode)>,
+    mut query: Query<(Entity, &mut ForgeActiveTimer, &mut ImageNode, Option<&mut ForgeCraftingState>)>,
 ) {
-    for (entity, mut timer, mut image) in &mut query {
+    for (entity, mut timer, mut image, forge_state) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
+            // Complete crafting if forge has crafting state
+            if let Some(mut state) = forge_state {
+                state.complete_crafting();
+            }
+
             // Revert to idle sprite
             if let Some(sheet) = game_sprites.get(SpriteSheetKey::Forge) {
                 if let Some(idle_idx) = sheet.get("forge_1_idle") {

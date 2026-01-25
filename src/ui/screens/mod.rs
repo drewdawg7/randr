@@ -1,6 +1,7 @@
 mod dungeon;
 mod fight;
 mod fight_modal;
+pub mod forge_modal;
 pub mod health_bar;
 pub mod inventory_modal;
 mod keybinds;
@@ -17,6 +18,7 @@ pub mod results_modal;
 pub use dungeon::{DungeonScreenPlugin, DUNGEON_SCALE};
 pub use fight::FightPlugin;
 pub use fight_modal::FightModalPlugin;
+pub use forge_modal::ForgeModalPlugin;
 pub use monster_compendium::MonsterCompendiumPlugin;
 pub use health_bar::{
     init_sprite_health_bars, update_health_bar, update_sprite_health_bar_visuals, HealthBar,

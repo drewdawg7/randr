@@ -45,9 +45,11 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        // Create inventory with initial HP potion for testing
+        // Create inventory with initial items for testing
         let mut inventory = Inventory::new();
         let _ = inventory.add_to_inv(ItemId::BasicHPPotion.spawn());
+        let _ = inventory.add_to_inv(ItemId::Coal.spawn());
+        let _ = inventory.add_to_inv(ItemId::CopperOre.spawn());
 
         app.init_resource::<PlayerName>()
             .insert_resource(PlayerGold(100))
