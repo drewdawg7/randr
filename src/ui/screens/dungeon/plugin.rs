@@ -99,6 +99,11 @@ pub struct DungeonEntityMarker {
     pub entity_type: DungeonEntity,
 }
 
+/// Timer component for forge active animation.
+/// When present, forge plays active animation. Removed when timer expires.
+#[derive(Component)]
+pub struct ForgeActiveTimer(pub Timer);
+
 /// Declarative dungeon floor component.
 /// Spawning this triggers an observer that builds the full dungeon UI hierarchy,
 /// calculates UiScale, and populates GridOccupancy. The trigger entity is despawned
@@ -126,6 +131,7 @@ impl Plugin for DungeonScreenPlugin {
                     handle_back_action,
                     handle_window_resize,
                     advance_floor_system.run_if(resource_exists::<AdvanceFloor>),
+                    revert_forge_idle,
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon)),
@@ -599,7 +605,7 @@ fn interpolate_positions(
     }
 }
 
-/// Handle space key to interact with adjacent entities (NPCs, chests, rocks).
+/// Handle space key to interact with adjacent entities (NPCs, chests, rocks, forges).
 fn handle_mine_interaction(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
@@ -608,7 +614,9 @@ fn handle_mine_interaction(
     active_modal: Res<ActiveModal>,
     stats: Res<StatSheet>,
     mut inventory: ResMut<Inventory>,
+    game_sprites: Res<GameSprites>,
     entity_query: Query<&DungeonEntityMarker>,
+    forge_query: Query<&ForgeActiveTimer>,
 ) {
     // Block interaction if any modal is open
     if active_modal.modal.is_some() {
@@ -630,6 +638,35 @@ fn handle_mine_interaction(
                 }
                 _ => {
                     // Other NPCs - could add dialogue system later
+                }
+            }
+            break;
+        }
+
+        // Check for adjacent crafting station (forge)
+        if let Some((entity_id, _, _)) =
+            find_adjacent_crafting_station(&state, &occupancy, &entity_query)
+        {
+            // Only start animation if not already active
+            if forge_query.get(entity_id).is_err() {
+                // Get the sprite sheet to find frame indices
+                if let Some(sheet) = game_sprites.get(SpriteSheetKey::Forge) {
+                    if let (Some(first), Some(last)) =
+                        (sheet.get("forge_1_active1"), sheet.get("forge_1_active3"))
+                    {
+                        // Add animation component
+                        let config = AnimationConfig {
+                            first_frame: first,
+                            last_frame: last,
+                            frame_duration: 0.1,
+                            looping: true,
+                            synchronized: false,
+                        };
+                        commands.entity(entity_id).insert((
+                            SpriteAnimation::new(&config),
+                            ForgeActiveTimer(Timer::from_seconds(5.0, TimerMode::Once)),
+                        ));
+                    }
                 }
             }
             break;
@@ -747,6 +784,64 @@ fn find_adjacent_npc(
     }
 
     None
+}
+
+/// Find an adjacent crafting station to the player's current position.
+/// Checks the 4 cardinal directions from the player's 1x1 cell.
+fn find_adjacent_crafting_station(
+    state: &DungeonState,
+    occupancy: &GridOccupancy,
+    entity_query: &Query<&DungeonEntityMarker>,
+) -> Option<(Entity, GridPosition, DungeonEntity)> {
+    let px = state.player_pos.x;
+    let py = state.player_pos.y;
+
+    let adjacent_cells: [(i32, i32); 4] = [
+        (px as i32, py as i32 - 1), // up
+        (px as i32, py as i32 + 1), // down
+        (px as i32 - 1, py as i32), // left
+        (px as i32 + 1, py as i32), // right
+    ];
+
+    for (x, y) in adjacent_cells {
+        if x < 0 || y < 0 {
+            continue;
+        }
+        if let Some(entity) = occupancy.entity_at(x as usize, y as usize) {
+            if let Ok(marker) = entity_query.get(entity) {
+                if matches!(marker.entity_type, DungeonEntity::CraftingStation { .. }) {
+                    return Some((entity, marker.pos, marker.entity_type));
+                }
+            }
+        }
+    }
+
+    None
+}
+
+/// System to revert forge to idle animation after the active timer expires.
+fn revert_forge_idle(
+    mut commands: Commands,
+    time: Res<Time>,
+    game_sprites: Res<GameSprites>,
+    mut query: Query<(Entity, &mut ForgeActiveTimer, &mut ImageNode)>,
+) {
+    for (entity, mut timer, mut image) in &mut query {
+        timer.0.tick(time.delta());
+        if timer.0.just_finished() {
+            // Revert to idle sprite
+            if let Some(sheet) = game_sprites.get(SpriteSheetKey::Forge) {
+                if let Some(idle_idx) = sheet.get("forge_1_idle") {
+                    if let Some(ref mut atlas) = image.texture_atlas {
+                        atlas.index = idle_idx;
+                    }
+                }
+            }
+            // Remove timer and animation components
+            commands.entity(entity).remove::<ForgeActiveTimer>();
+            commands.entity(entity).remove::<SpriteAnimation>();
+        }
+    }
 }
 
 fn handle_back_action(
