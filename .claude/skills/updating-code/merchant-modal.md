@@ -70,7 +70,7 @@ Uses `spawn_modal_overlay` directly (no Modal builder):
 **Selling** (when MerchantPlayerGrid focused):
 - Skip locked items
 - Add gold via `PlayerGold::add()`
-- Remove item via `inventory.remove_item()`
+- Decrease quantity by 1 via `inventory.decrease_item_quantity()` (removes item when quantity reaches 0)
 
 ## Detail Pane Population
 
@@ -81,10 +81,15 @@ Uses `spawn_modal_overlay` directly (no Modal builder):
 
 ## Stock Generation
 
-`MerchantStock::generate()` creates random stock from a pool:
-- Potions (3-8 qty)
-- Basic weapons (1 qty)
-- Ores (5-15 qty)
-- Ingots (1-5 qty)
+`MerchantStock::generate()` creates random stock from a pool of 35 items:
+- Consumables: BasicHPPotion (3-8 qty)
+- Weapons: Sword, Dagger, TinSword, CopperSword, BronzeSword (1 qty each)
+- Shields: BasicShield (1 qty)
+- Armor sets: Full Copper, Tin, and Bronze armor (helmet, chestplate, gauntlets, greaves, leggings) (1 qty each)
+- Tools: BronzePickaxe (1 qty)
+- Accessories: GoldRing (1 qty)
+- Ores: CopperOre, TinOre, Coal (5-15 qty each)
+- Ingots: CopperIngot, TinIngot (2-5 qty), BronzeIngot (1-3 qty)
+- Materials: Cowhide, SlimeGel (3-8 qty each)
 
-Selects 6-10 random items from the pool.
+Selects 8-12 random items from the pool.
