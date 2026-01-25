@@ -31,7 +31,8 @@ pub struct SpawnTable {
     chest_count: RangeInclusive<u32>,
     stairs_count: RangeInclusive<u32>,
     rock_count: RangeInclusive<u32>,
-    crafting_station_count: RangeInclusive<u32>,
+    forge_count: RangeInclusive<u32>,
+    anvil_count: RangeInclusive<u32>,
     guaranteed_mobs: Vec<(MobId, u32)>,
     npc_spawns: Vec<(MobId, RangeInclusive<u32>)>,
 }
@@ -50,7 +51,8 @@ impl SpawnTable {
             chest_count: 0..=0,
             stairs_count: 0..=0,
             rock_count: 0..=0,
-            crafting_station_count: 0..=0,
+            forge_count: 0..=0,
+            anvil_count: 0..=0,
             guaranteed_mobs: Vec::new(),
             npc_spawns: Vec::new(),
         }
@@ -96,7 +98,13 @@ impl SpawnTable {
 
     /// Add forge count range (always 1x1).
     pub fn forge(mut self, count: RangeInclusive<u32>) -> Self {
-        self.crafting_station_count = count;
+        self.forge_count = count;
+        self
+    }
+
+    /// Add anvil count range (always 1x1).
+    pub fn anvil(mut self, count: RangeInclusive<u32>) -> Self {
+        self.anvil_count = count;
         self
     }
 
@@ -163,15 +171,30 @@ impl SpawnTable {
             }
         }
 
-        // 4. Spawn crafting stations (1x1)
-        let station_count = rng.gen_range(self.crafting_station_count.clone());
-        for _ in 0..station_count {
+        // 4. Spawn forges (1x1)
+        let forge_count = rng.gen_range(self.forge_count.clone());
+        for _ in 0..forge_count {
             let areas = layout.spawn_areas(GridSize::single());
             if let Some(&pos) = areas.choose(rng) {
                 layout.add_entity(
                     pos,
                     DungeonEntity::CraftingStation {
                         station_type: CraftingStationType::Forge,
+                        size: GridSize::single(),
+                    },
+                );
+            }
+        }
+
+        // 4b. Spawn anvils (1x1)
+        let anvil_count = rng.gen_range(self.anvil_count.clone());
+        for _ in 0..anvil_count {
+            let areas = layout.spawn_areas(GridSize::single());
+            if let Some(&pos) = areas.choose(rng) {
+                layout.add_entity(
+                    pos,
+                    DungeonEntity::CraftingStation {
+                        station_type: CraftingStationType::Anvil,
                         size: GridSize::single(),
                     },
                 );

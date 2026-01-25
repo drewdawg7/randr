@@ -1,3 +1,4 @@
+pub mod anvil_modal;
 mod dungeon;
 mod fight;
 mod fight_modal;
@@ -15,6 +16,7 @@ pub mod profile_modal;
 pub mod town;
 pub mod results_modal;
 
+pub use anvil_modal::AnvilModalPlugin;
 pub use dungeon::{DungeonScreenPlugin, DUNGEON_SCALE};
 pub use fight::FightPlugin;
 pub use fight_modal::FightModalPlugin;

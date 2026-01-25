@@ -3,14 +3,14 @@ use bevy::window::WindowResized;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::chest::Chest;
-use crate::crafting_station::{CraftingStationType, ForgeCraftingState};
+use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
 use crate::rock::{Rock, RockType};
 use crate::dungeon::{
     DungeonCommands, DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState,
     EntityRenderData, GridOccupancy, GridPosition, GridSize, TileRenderer, TileType,
 };
 use crate::ui::{AnimationConfig, PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
-use crate::inventory::Inventory;
+use crate::inventory::{Inventory, ManagesItems};
 use crate::location::LocationId;
 use crate::input::{GameAction, NavigationDirection};
 use crate::loot::{collect_loot_drops, HasLoot};
@@ -18,6 +18,7 @@ use crate::states::AppState;
 use crate::stats::{StatSheet, StatType};
 use crate::mob::MobId;
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
+use crate::ui::screens::anvil_modal::{ActiveAnvilEntity, AnvilModalState, SpawnAnvilModal};
 use crate::ui::screens::forge_modal::{ActiveForgeEntity, ForgeModalState, SpawnForgeModal};
 use crate::ui::screens::merchant_modal::{MerchantStock, SpawnMerchantModal};
 use crate::ui::screens::modal::ActiveModal;
@@ -106,6 +107,11 @@ pub struct DungeonEntityMarker {
 #[derive(Component)]
 pub struct ForgeActiveTimer(pub Timer);
 
+/// Timer component for anvil active animation.
+/// When present, anvil plays active animation. Removed when timer expires.
+#[derive(Component)]
+pub struct AnvilActiveTimer(pub Timer);
+
 /// Declarative dungeon floor component.
 /// Spawning this triggers an observer that builds the full dungeon UI hierarchy,
 /// calculates UiScale, and populates GridOccupancy. The trigger entity is despawned
@@ -134,6 +140,7 @@ impl Plugin for DungeonScreenPlugin {
                     handle_window_resize,
                     advance_floor_system.run_if(resource_exists::<AdvanceFloor>),
                     revert_forge_idle,
+                    revert_anvil_idle,
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon)),
@@ -309,9 +316,15 @@ fn on_add_dungeon_floor(
                                         let aspect = frame_size.x as f32 / frame_size.y as f32;
                                         (entity_sprite_size * aspect, entity_sprite_size)
                                     }
-                                    EntityRenderData::SpriteSheet { sheet_key: SpriteSheetKey::Forge, .. } => {
-                                        // Forge renders at 2x tile size like mobs
-                                        (entity_sprite_size, entity_sprite_size)
+                                    EntityRenderData::SpriteSheet { sheet_key: SpriteSheetKey::CraftingStations, sprite_name } => {
+                                        // Size based on actual sprite dimensions
+                                        if sprite_name.starts_with("anvil") {
+                                            // Anvil is 32x16 (2:1 aspect) - render at 2x tile width, 1x tile height
+                                            (entity_sprite_size, tile_size)
+                                        } else {
+                                            // Forge is 32x49 - render at 2x tile size
+                                            (entity_sprite_size, entity_sprite_size)
+                                        }
                                     }
                                     _ => (tile_size, tile_size),
                                 };
@@ -345,9 +358,15 @@ fn on_add_dungeon_floor(
                                                     img,
                                                     entity_node,
                                                 ));
-                                                // Add ForgeCraftingState to forge entities
-                                                if matches!(entity, DungeonEntity::CraftingStation { station_type: CraftingStationType::Forge, .. }) {
-                                                    entity_cmd.insert(ForgeCraftingState::default());
+                                                // Add crafting state to crafting station entities
+                                                match entity {
+                                                    DungeonEntity::CraftingStation { station_type: CraftingStationType::Forge, .. } => {
+                                                        entity_cmd.insert(ForgeCraftingState::default());
+                                                    }
+                                                    DungeonEntity::CraftingStation { station_type: CraftingStationType::Anvil, .. } => {
+                                                        entity_cmd.insert(AnvilCraftingState::default());
+                                                    }
+                                                    _ => {}
                                                 }
                                                 entity_cmd.id()
                                             })
@@ -625,6 +644,7 @@ fn handle_mine_interaction(
     mut inventory: ResMut<Inventory>,
     entity_query: Query<&DungeonEntityMarker>,
     forge_query: Query<&ForgeActiveTimer>,
+    anvil_query: Query<&AnvilActiveTimer>,
 ) {
     // Block interaction if any modal is open
     if active_modal.modal.is_some() {
@@ -651,18 +671,30 @@ fn handle_mine_interaction(
             break;
         }
 
-        // Check for adjacent crafting station (forge)
-        if let Some((entity_id, _, _)) =
+        // Check for adjacent crafting station (forge or anvil)
+        if let Some((entity_id, _, entity_type)) =
             find_adjacent_crafting_station(&state, &occupancy, &entity_query)
         {
-            // Only open modal if forge is not already crafting
-            if forge_query.get(entity_id).is_err() {
-                // Open forge modal - insert all required resources
-                commands.insert_resource(ActiveForgeEntity(entity_id));
-                commands.insert_resource(ForgeModalState::default());
-                commands.insert_resource(SpawnForgeModal);
+            if let DungeonEntity::CraftingStation { station_type, .. } = entity_type {
+                match station_type {
+                    CraftingStationType::Forge => {
+                        // Only open modal if forge is not already crafting
+                        if forge_query.get(entity_id).is_err() {
+                            commands.insert_resource(ActiveForgeEntity(entity_id));
+                            commands.insert_resource(ForgeModalState::default());
+                            commands.insert_resource(SpawnForgeModal);
+                        }
+                    }
+                    CraftingStationType::Anvil => {
+                        // Only open modal if anvil is not already crafting
+                        if anvil_query.get(entity_id).is_err() {
+                            commands.insert_resource(ActiveAnvilEntity(entity_id));
+                            commands.insert_resource(AnvilModalState::default());
+                            commands.insert_resource(SpawnAnvilModal);
+                        }
+                    }
+                }
             }
-            // If forge is crafting (has ForgeActiveTimer), don't open modal
             break;
         }
 
@@ -830,7 +862,7 @@ fn revert_forge_idle(
             }
 
             // Revert to idle sprite
-            if let Some(sheet) = game_sprites.get(SpriteSheetKey::Forge) {
+            if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
                 if let Some(idle_idx) = sheet.get("forge_1_idle") {
                     if let Some(ref mut atlas) = image.texture_atlas {
                         atlas.index = idle_idx;
@@ -839,6 +871,42 @@ fn revert_forge_idle(
             }
             // Remove timer and animation components
             commands.entity(entity).remove::<ForgeActiveTimer>();
+            commands.entity(entity).remove::<SpriteAnimation>();
+        }
+    }
+}
+
+/// Tick anvil animation timer. On expiry: complete crafting, add item to inventory, revert sprite.
+fn revert_anvil_idle(
+    mut commands: Commands,
+    time: Res<Time>,
+    game_sprites: Res<GameSprites>,
+    mut inventory: ResMut<Inventory>,
+    mut query: Query<(Entity, &mut AnvilActiveTimer, &mut ImageNode, Option<&mut AnvilCraftingState>)>,
+) {
+    for (entity, mut timer, mut image, anvil_state) in &mut query {
+        timer.0.tick(time.delta());
+        if timer.0.just_finished() {
+            // Complete crafting if anvil has crafting state
+            if let Some(mut state) = anvil_state {
+                if let Some(recipe_id) = state.complete_crafting() {
+                    // Add crafted item to inventory
+                    let spec = recipe_id.spec();
+                    let item = spec.output.spawn();
+                    let _ = inventory.add_to_inv(item);
+                }
+            }
+
+            // Revert to idle sprite
+            if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
+                if let Some(idle_idx) = sheet.get("anvil_idle") {
+                    if let Some(ref mut atlas) = image.texture_atlas {
+                        atlas.index = idle_idx;
+                    }
+                }
+            }
+            // Remove timer and animation components
+            commands.entity(entity).remove::<AnvilActiveTimer>();
             commands.entity(entity).remove::<SpriteAnimation>();
         }
     }

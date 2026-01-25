@@ -42,7 +42,7 @@ pub enum SpriteSheetKey {
     TinSword,
     CopperSword,
     BronzeSword,
-    Forge,
+    CraftingStations,
 }
 
 impl SpriteSheetKey {
@@ -81,7 +81,7 @@ impl SpriteSheetKey {
             Self::TinSword,
             Self::CopperSword,
             Self::BronzeSword,
-            Self::Forge,
+            Self::CraftingStations,
         ]
     }
 
@@ -120,7 +120,7 @@ impl SpriteSheetKey {
             Self::TinSword => "tin_sword",
             Self::CopperSword => "copper_sword",
             Self::BronzeSword => "bronze_sword",
-            Self::Forge => "dungeon_entities/forge",
+            Self::CraftingStations => "dungeon_entities/crafting_stations",
         }
     }
 }

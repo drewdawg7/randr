@@ -25,7 +25,8 @@ pub fn create() -> DungeonLayout {
                 .chest(1..=1)
                 .stairs(1..=1)
                 .rock(2..=4)
-                .forge(1..=1),
+                .forge(1..=1)
+                .anvil(1..=1),
         )
         .build()
 }

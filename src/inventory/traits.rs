@@ -70,6 +70,16 @@ pub trait ManagesItems: HasInventory {
         self.inventory().items.iter().position(|inv_item| inv_item.uuid() == uuid)
     }
 
+    /// Count total quantity of an item across inventory (not equipment).
+    fn count_item(&self, item_id: ItemId) -> u32 {
+        self.inventory()
+            .items
+            .iter()
+            .filter(|i| i.item.item_id == item_id)
+            .map(|i| i.quantity)
+            .sum()
+    }
+
     /// Decrease item quantity, removing if it reaches zero.
     /// Searches both inventory items and equipment.
     fn decrease_item_quantity(&mut self, item_id: ItemId, amount: u32) {

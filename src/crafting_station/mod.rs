@@ -2,11 +2,13 @@
 
 use bevy::prelude::*;
 
+use crate::item::recipe::RecipeId;
 use crate::item::ItemId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum CraftingStationType {
     Forge,
+    Anvil,
 }
 
 /// Crafting state attached to forge entities.
@@ -21,6 +23,28 @@ pub struct ForgeCraftingState {
     pub product_slot: Option<(ItemId, u32)>,
     /// Whether crafting is currently in progress
     pub is_crafting: bool,
+}
+
+/// Crafting state attached to anvil entities.
+/// Tracks the selected recipe and whether crafting is in progress.
+#[derive(Component, Default, Clone)]
+pub struct AnvilCraftingState {
+    /// The recipe currently being crafted
+    pub selected_recipe: Option<RecipeId>,
+    /// Whether crafting is currently in progress
+    pub is_crafting: bool,
+}
+
+impl AnvilCraftingState {
+    /// Complete crafting: returns the output ItemId and resets state.
+    pub fn complete_crafting(&mut self) -> Option<RecipeId> {
+        if !self.is_crafting {
+            return None;
+        }
+        let recipe = self.selected_recipe.take();
+        self.is_crafting = false;
+        recipe
+    }
 }
 
 impl ForgeCraftingState {
@@ -66,6 +90,7 @@ impl CraftingStationType {
     pub fn sprite_name(&self) -> &'static str {
         match self {
             Self::Forge => "forge_1_idle",
+            Self::Anvil => "anvil_idle",
         }
     }
 
@@ -73,6 +98,7 @@ impl CraftingStationType {
     pub fn display_name(&self) -> &'static str {
         match self {
             Self::Forge => "Forge",
+            Self::Anvil => "Anvil",
         }
     }
 }

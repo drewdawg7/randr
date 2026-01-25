@@ -55,7 +55,7 @@ impl DungeonEntity {
                 sprite_name: "stairs",
             },
             Self::CraftingStation { station_type, .. } => EntityRenderData::SpriteSheet {
-                sheet_key: SpriteSheetKey::Forge,
+                sheet_key: SpriteSheetKey::CraftingStations,
                 sprite_name: station_type.sprite_name(),
             },
             Self::Mob { mob_id, .. } => EntityRenderData::AnimatedMob { mob_id: *mob_id },

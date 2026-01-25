@@ -1,0 +1,33 @@
+{ "frames": {
+   "Forge Sprite Sheet-export.aseprite": {
+    "frame": { "x": 0, "y": 0, "w": 384, "h": 512 },
+    "rotated": false,
+    "trimmed": false,
+    "spriteSourceSize": { "x": 0, "y": 0, "w": 384, "h": 512 },
+    "sourceSize": { "w": 384, "h": 512 },
+    "duration": 100
+   }
+ },
+ "meta": {
+  "app": "https://www.aseprite.org/",
+  "version": "1.3.16.1-arm64",
+  "image": "sprites/dungeon_entities/crafting_stations.png",
+  "format": "RGBA8888",
+  "size": { "w": 384, "h": 512 },
+  "scale": "1",
+  "slices": [
+   { "name": "forge_1_idle", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 16, "w": 32, "h": 49 } }] },
+   { "name": "forge_1_active1", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 80, "w": 33, "h": 48 } }] },
+   { "name": "forge_1_active2", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 79, "y": 80, "w": 34, "h": 49 } }] },
+   { "name": "forge_1_active_3", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 144, "y": 80, "w": 32, "h": 48 } }] },
+   { "name": "forge_1_active3", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 208, "y": 80, "w": 32, "h": 48 } }] },
+   { "name": "anvil_idle", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 432, "w": 32, "h": 16 } }] },
+   { "name": "anvil_active1", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 16, "y": 480, "w": 32, "h": 32 } }] },
+   { "name": "anvil_active2", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 80, "y": 480, "w": 32, "h": 32 } }] },
+   { "name": "anvil_active3", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 144, "y": 480, "w": 32, "h": 32 } }] },
+   { "name": "anvil_active_4", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 208, "y": 480, "w": 32, "h": 32 } }] },
+   { "name": "anvil_active_5", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 272, "y": 480, "w": 32, "h": 32 } }] },
+   { "name": "anvil_active_6", "color": "#0000ffff", "keys": [{ "frame": 0, "bounds": {"x": 336, "y": 480, "w": 32, "h": 32 } }] }
+  ]
+ }
+}
