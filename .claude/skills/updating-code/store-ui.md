@@ -4,7 +4,7 @@ UI for the store screen in `src/screens/town/tabs/store/`.
 
 ## ItemGrid Widget
 
-The `ItemGrid` widget (`src/ui/widgets/item_grid.rs`) displays a 5x5 grid of items.
+The `ItemGrid` widget (`src/ui/widgets/item_grid.rs`) displays a grid of items with configurable size.
 
 ```rust
 col.spawn(ItemGrid {
@@ -13,8 +13,25 @@ col.spawn(ItemGrid {
     }).collect(),
     selected_index: store_selections.buy.selected,
     is_focused: true,
+    grid_size: 5,  // 5x5 grid
 });
 ```
+
+### Grid Navigation
+
+Use `ItemGrid::navigate()` for 2D grid navigation. Allows navigation to all grid slots including empty ones:
+
+```rust
+if let GameAction::Navigate(direction) = action {
+    if let Ok(mut grid) = grids.get_single_mut() {
+        if grid.is_focused {
+            grid.navigate(*direction);
+        }
+    }
+}
+```
+
+The `navigate()` method handles boundary checking based on `grid_size` (not item count), so the selector can move to empty cells.
 
 ## ItemDetailPane
 

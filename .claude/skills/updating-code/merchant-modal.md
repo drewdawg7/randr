@@ -22,6 +22,7 @@ src/ui/screens/merchant_modal/
 | `MerchantPlayerGrid` | state.rs | Marker for player's ItemGrid |
 | `MerchantStock` | state.rs | Resource holding `Vec<StoreItem>` |
 | `SpawnMerchantModal` | state.rs | Trigger resource |
+| `MerchantDetailRefresh` | state.rs | Trigger resource for detail pane refresh |
 | `MerchantModal` | state.rs | RegisteredModal implementation |
 
 ## Spawning the Modal
@@ -78,6 +79,17 @@ Uses `spawn_modal_overlay` directly (no Modal builder):
 - Checks which grid is focused
 - Updates `ItemDetailPane.source` accordingly
 - Populates `ItemDetailPaneContent` with item name, type, quality, quantity, price, stats
+
+### Forcing Detail Pane Refresh
+
+After buy/sell transactions, the detail pane needs to refresh even when the selected index hasn't changed (the item at that slot may have changed). Use `MerchantDetailRefresh` resource:
+
+```rust
+// In handle_merchant_modal_select after a successful transaction:
+commands.insert_resource(MerchantDetailRefresh);
+```
+
+The `populate_merchant_detail_pane` system checks for this resource and forces an update when present, then removes it.
 
 ## Stock Generation
 
