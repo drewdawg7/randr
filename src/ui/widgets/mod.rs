@@ -6,6 +6,7 @@ mod item_grid;
 mod item_stats_display;
 mod list_item;
 mod nine_slice;
+mod outlined_text;
 mod player_stats;
 mod row;
 mod stack;
@@ -26,5 +27,6 @@ pub use list_item::{
     AlchemistMarker, AlchemistRecipeItem, BlacksmithListItem, BlacksmithMarker,
     SelectableListItem, StoreListItem, StoreMarker,
 };
+pub use outlined_text::{OutlinedText, OutlinedTextPlugin};
 pub use player_stats::{PlayerStats, PlayerStatsPlugin};
 pub use stat_row::{StatRow, StatRowPlugin};

@@ -16,7 +16,7 @@ use crate::ui::screens::{
     ModalPlugin, MonsterCompendiumPlugin, ProfileModalPlugin, ProfilePlugin, ResultsModalPlugin,
     TownPlugin,
 };
-use crate::ui::widgets::{ItemDetailPanePlugin, ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin};
+use crate::ui::widgets::{ItemDetailPanePlugin, ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, OutlinedTextPlugin, PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin};
 use crate::ui::{MobAnimationPlugin, PlayerSpritePlugin};
 
 /// Core game plugin that bundles all game systems.
@@ -63,7 +63,8 @@ impl Plugin for GamePlugin {
         ));
 
         // Additional core plugins
-        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, ItemDetailPanePlugin, ItemStatsDisplayPlugin, StatRowPlugin, IconValueRowPlugin, MobAnimationPlugin, PlayerSpritePlugin, RowPlugin, ColumnPlugin, StackPlugin));
+        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, ItemDetailPanePlugin, ItemStatsDisplayPlugin));
+        app.add_plugins((OutlinedTextPlugin, StatRowPlugin, IconValueRowPlugin, MobAnimationPlugin, PlayerSpritePlugin, RowPlugin, ColumnPlugin, StackPlugin));
 
         // Screens and modals
         app.add_plugins((

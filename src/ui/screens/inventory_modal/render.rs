@@ -2,9 +2,10 @@ use bevy::prelude::*;
 
 use crate::assets::GameFonts;
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem, ManagesEquipment, ManagesItems};
+use crate::stats::StatType;
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemStatsDisplay};
+use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemStatsDisplay, OutlinedText};
 
 use super::state::{BackpackGrid, EquipmentGrid, InventoryModalRoot};
 
@@ -17,6 +18,32 @@ pub fn get_equipment_items(inventory: &Inventory) -> Vec<&InventoryItem> {
         .collect()
 }
 
+/// Gets comparison stats from the equipped item in the same slot as the given item.
+/// Returns None if the item is not equipment, or Some(empty vec) if slot is empty.
+fn get_comparison_stats(
+    item: &crate::item::Item,
+    inventory: &Inventory,
+) -> Option<Vec<(StatType, i32)>> {
+    // Only compare equipment items
+    let slot = item.item_type.equipment_slot()?;
+
+    // Get equipped item stats (empty vec if slot is empty)
+    let comparison: Vec<_> = inventory
+        .get_equipped_item(slot)
+        .map(|equipped| {
+            equipped
+                .item
+                .stats
+                .stats()
+                .iter()
+                .map(|(t, si)| (*t, si.current_value))
+                .collect()
+        })
+        .unwrap_or_default();
+
+    Some(comparison)
+}
+
 /// Returns backpack (non-equipped) items.
 pub fn get_backpack_items(inventory: &Inventory) -> Vec<&InventoryItem> {
     inventory.get_inventory_items().iter().collect()
@@ -27,6 +54,7 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
     let equipment_entries: Vec<ItemGridEntry> = get_equipment_items(inventory)
         .iter()
         .map(|inv_item| ItemGridEntry {
+            sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
             sprite_name: inv_item.item.item_id.sprite_name().to_string(),
             quantity: inv_item.quantity,
         })
@@ -35,6 +63,7 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
     let backpack_entries: Vec<ItemGridEntry> = get_backpack_items(inventory)
         .iter()
         .map(|inv_item| ItemGridEntry {
+            sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
             sprite_name: inv_item.item.item_id.sprite_name().to_string(),
             quantity: inv_item.quantity,
         })
@@ -153,12 +182,12 @@ pub fn populate_item_detail_pane(
 
     // Spawn item details
     commands.entity(content_entity).with_children(|parent| {
-        // Item name (quality-colored)
-        parent.spawn((
-            Text::new(&item.name),
-            game_fonts.pixel_font(16.0),
-            TextColor(item.quality.color()),
-        ));
+        // Item name (quality-colored with black outline)
+        parent.spawn(
+            OutlinedText::new(&item.name)
+                .with_font_size(16.0)
+                .with_color(item.quality.color()),
+        );
 
         // Item type
         parent.spawn((
@@ -183,7 +212,7 @@ pub fn populate_item_detail_pane(
             ));
         }
 
-        // Stats display
+        // Stats display with comparison for backpack items
         let stats: Vec<_> = item
             .stats
             .stats()
@@ -191,11 +220,18 @@ pub fn populate_item_detail_pane(
             .map(|(t, si)| (*t, si.current_value))
             .collect();
         if !stats.is_empty() {
-            parent.spawn(
-                ItemStatsDisplay::from_stats_iter(stats)
-                    .with_font_size(14.0)
-                    .with_color(Color::srgb(0.85, 0.85, 0.85)),
-            );
+            let mut display = ItemStatsDisplay::from_stats_iter(stats)
+                .with_font_size(14.0)
+                .with_color(Color::srgb(0.85, 0.85, 0.85));
+
+            // Add comparison for backpack items (not for already-equipped items)
+            if matches!(source, InfoPanelSource::Inventory { .. }) {
+                if let Some(comparison) = get_comparison_stats(item, &inventory) {
+                    display = display.with_comparison(comparison);
+                }
+            }
+
+            parent.spawn(display);
         }
     });
 }

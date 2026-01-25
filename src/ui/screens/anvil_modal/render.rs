@@ -7,7 +7,7 @@ use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
 use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemGrid, ItemGridEntry};
+use crate::ui::widgets::{ItemDetailPane, ItemGrid, ItemGridEntry, OutlinedText};
 
 use super::state::{
     AnvilModalRoot, AnvilModalState, AnvilPlayerGrid, AnvilRecipeGrid, SpawnAnvilModal,
@@ -198,16 +198,17 @@ pub fn populate_anvil_detail_pane(
                 let spec = recipe_id.spec();
                 let output_item = spec.output.spawn();
 
-                // Recipe name
-                parent.spawn((
-                    Text::new(spec.name),
-                    game_fonts.pixel_font(16.0),
-                    TextColor(if can_craft {
-                        Color::srgb(0.3, 0.9, 0.3)
-                    } else {
-                        Color::srgb(0.6, 0.6, 0.6)
-                    }),
-                ));
+                // Recipe name (with black outline)
+                let name_color = if can_craft {
+                    Color::srgb(0.3, 0.9, 0.3)
+                } else {
+                    Color::srgb(0.6, 0.6, 0.6)
+                };
+                parent.spawn(
+                    OutlinedText::new(spec.name)
+                        .with_font_size(16.0)
+                        .with_color(name_color),
+                );
 
                 // Output item type
                 parent.spawn((
@@ -269,12 +270,12 @@ pub fn populate_anvil_detail_pane(
             RecipeOrItem::Item { item_id, quantity } => {
                 let item = item_id.spawn();
 
-                // Item name
-                parent.spawn((
-                    Text::new(&item.name),
-                    game_fonts.pixel_font(16.0),
-                    TextColor(item.quality.color()),
-                ));
+                // Item name (with black outline)
+                parent.spawn(
+                    OutlinedText::new(&item.name)
+                        .with_font_size(16.0)
+                        .with_color(item.quality.color()),
+                );
 
                 // Item type
                 parent.spawn((

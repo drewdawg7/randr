@@ -30,7 +30,7 @@ fn on_add_item_detail_pane(
     let entity = trigger.entity();
     let _panel = panels.get(entity).ok();
 
-    let panel_width = 240.0;
+    let panel_width = 280.0;
     let panel_height = 288.0;
 
     let mut panel_entity = commands.entity(entity);
@@ -49,7 +49,7 @@ fn on_add_item_detail_pane(
                 position_type: PositionType::Absolute,
                 left: Val::Px(48.0),
                 top: Val::Px(48.0),
-                width: Val::Px(144.0),   // 240 - 2*48
+                width: Val::Px(184.0),   // 280 - 2*48
                 height: Val::Px(192.0),  // 288 - 2*48
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::FlexStart,

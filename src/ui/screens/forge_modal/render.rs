@@ -6,7 +6,7 @@ use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemStatsDisplay};
+use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemStatsDisplay, OutlinedText};
 
 use super::state::{
     ActiveForgeEntity, ForgeModalRoot, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex,
@@ -542,12 +542,12 @@ pub fn populate_forge_item_detail_pane(
 
     // Spawn item details
     commands.entity(content_entity).with_children(|parent| {
-        // Item name (quality-colored)
-        parent.spawn((
-            Text::new(&item.name),
-            game_fonts.pixel_font(16.0),
-            TextColor(item.quality.color()),
-        ));
+        // Item name (quality-colored with black outline)
+        parent.spawn(
+            OutlinedText::new(&item.name)
+                .with_font_size(16.0)
+                .with_color(item.quality.color()),
+        );
 
         // Item type
         parent.spawn((
