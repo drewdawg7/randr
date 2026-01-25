@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::economy::WorthGold;
 use crate::input::{GameAction, NavigationDirection};
-use crate::inventory::{FindsItems, Inventory, ManagesItems};
+use crate::inventory::{Inventory, ManagesItems};
 use crate::player::PlayerGold;
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::ItemGrid;
@@ -126,12 +126,12 @@ pub fn handle_merchant_modal_select(
                 // Don't sell locked items
                 if !inv_item.item.is_locked {
                     let sell_price = inv_item.item.sell_price();
-                    let uuid = inv_item.uuid();
+                    let item_id = inv_item.item.item_id;
 
                     // Add gold
                     player_gold.add(sell_price);
-                    // Remove item
-                    inventory.remove_item(uuid);
+                    // Decrease quantity by 1 (removes item if quantity reaches 0)
+                    inventory.decrease_item_quantity(item_id, 1);
                 }
             }
         }

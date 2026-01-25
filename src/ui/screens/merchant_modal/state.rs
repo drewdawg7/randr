@@ -31,13 +31,39 @@ impl MerchantStock {
 
         // Pool of items the merchant can sell
         let pool: Vec<(ItemId, i32)> = vec![
-            // Potions (higher quantities)
+            // Consumables
             (ItemId::BasicHPPotion, rng.gen_range(3..=8)),
             // Basic weapons
             (ItemId::Sword, 1),
             (ItemId::Dagger, 1),
+            (ItemId::TinSword, 1),
+            (ItemId::CopperSword, 1),
+            (ItemId::BronzeSword, 1),
+            // Shields
             (ItemId::BasicShield, 1),
-            // Ores (random selection)
+            // Copper armor
+            (ItemId::CopperHelmet, 1),
+            (ItemId::CopperChestplate, 1),
+            (ItemId::CopperGauntlets, 1),
+            (ItemId::CopperGreaves, 1),
+            (ItemId::CopperLeggings, 1),
+            // Tin armor
+            (ItemId::TinHelmet, 1),
+            (ItemId::TinChestplate, 1),
+            (ItemId::TinGauntlets, 1),
+            (ItemId::TinGreaves, 1),
+            (ItemId::TinLeggings, 1),
+            // Bronze armor
+            (ItemId::BronzeHelmet, 1),
+            (ItemId::BronzeChestplate, 1),
+            (ItemId::BronzeGauntlets, 1),
+            (ItemId::BronzeGreaves, 1),
+            (ItemId::BronzeLeggings, 1),
+            // Tools
+            (ItemId::BronzePickaxe, 1),
+            // Accessories
+            (ItemId::GoldRing, 1),
+            // Ores
             (ItemId::CopperOre, rng.gen_range(5..=15)),
             (ItemId::TinOre, rng.gen_range(5..=15)),
             (ItemId::Coal, rng.gen_range(5..=15)),
@@ -45,10 +71,13 @@ impl MerchantStock {
             (ItemId::CopperIngot, rng.gen_range(2..=5)),
             (ItemId::TinIngot, rng.gen_range(2..=5)),
             (ItemId::BronzeIngot, rng.gen_range(1..=3)),
+            // Materials
+            (ItemId::Cowhide, rng.gen_range(3..=8)),
+            (ItemId::SlimeGel, rng.gen_range(3..=8)),
         ];
 
-        // Randomly select 6-10 items from the pool
-        let num_items = rng.gen_range(6..=10).min(pool.len());
+        // Randomly select 8-12 items from the pool
+        let num_items = rng.gen_range(8..=12).min(pool.len());
         let mut selected_indices: Vec<usize> = (0..pool.len()).collect();
 
         // Shuffle and take first num_items
