@@ -301,6 +301,10 @@ fn on_add_dungeon_floor(
                                         let aspect = frame_size.x as f32 / frame_size.y as f32;
                                         (entity_sprite_size * aspect, entity_sprite_size)
                                     }
+                                    EntityRenderData::SpriteSheet { sheet_key: SpriteSheetKey::Forge, .. } => {
+                                        // Forge renders at 2x tile size like mobs
+                                        (entity_sprite_size, entity_sprite_size)
+                                    }
                                     _ => (tile_size, tile_size),
                                 };
                                 let offset_x = -(visual_width - tile_size) / 2.0;
@@ -504,7 +508,10 @@ fn handle_dungeon_movement(
                 });
                 commands.insert_resource(SpawnFightModal);
             }
-            DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. } | DungeonEntity::Npc { .. } => {}
+            DungeonEntity::Chest { .. }
+            | DungeonEntity::Rock { .. }
+            | DungeonEntity::Npc { .. }
+            | DungeonEntity::CraftingStation { .. } => {}
             DungeonEntity::Stairs { .. } => {
                 commands.insert_resource(AdvanceFloor);
             }

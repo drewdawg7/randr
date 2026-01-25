@@ -31,7 +31,8 @@ entity_macros::define_data! {
                 .npc(MobId::Merchant, 1..=1)
                 .chest(1..=2)
                 .stairs(1..=1)
-                .rock(2..=4),
+                .rock(2..=4)
+                .forge(1..=1),
         }
     }
 }

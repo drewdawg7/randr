@@ -47,6 +47,7 @@ Read the relevant doc BEFORE making changes.
 | Results modal, post-fight/chest rewards, loot display | [results-modal.md](results-modal.md) |
 | Chest interaction, adjacency detection, chest loot | [dungeon/entities.md](dungeon/entities.md) |
 | Rock mining, RockType, rock loot, mine interaction | [dungeon/entities.md](dungeon/entities.md) |
+| Crafting stations, Forge, CraftingStationType | [dungeon/crafting-stations.md](dungeon/crafting-stations.md) |
 | Health bars, HealthBarValues, SpriteHealthBar, HP text | [health-bar.md](health-bar.md) |
 | Event handlers, run_if(on_event::<T>) | [event-systems.md](event-systems.md) |
 | SelectionState trait, list navigation, focus | [focus.md](focus.md) |

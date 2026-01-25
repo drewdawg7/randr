@@ -1,4 +1,5 @@
 use crate::assets::SpriteSheetKey;
+use crate::crafting_station::CraftingStationType;
 use crate::mob::MobId;
 use crate::rock::RockType;
 
@@ -11,6 +12,7 @@ pub enum DungeonEntity {
     Npc { mob_id: MobId, size: GridSize },
     Stairs { size: GridSize },
     Rock { rock_type: RockType, size: GridSize },
+    CraftingStation { station_type: CraftingStationType, size: GridSize },
 }
 
 /// Describes how a DungeonEntity should be rendered in the grid.
@@ -33,6 +35,7 @@ impl DungeonEntity {
             Self::Npc { size, .. } => *size,
             Self::Stairs { size } => *size,
             Self::Rock { size, .. } => *size,
+            Self::CraftingStation { size, .. } => *size,
         }
     }
 
@@ -50,6 +53,10 @@ impl DungeonEntity {
             Self::Stairs { .. } => EntityRenderData::SpriteSheet {
                 sheet_key: SpriteSheetKey::DungeonTileset,
                 sprite_name: "stairs",
+            },
+            Self::CraftingStation { station_type, .. } => EntityRenderData::SpriteSheet {
+                sheet_key: SpriteSheetKey::Forge,
+                sprite_name: station_type.sprite_name(),
             },
             Self::Mob { mob_id, .. } => EntityRenderData::AnimatedMob { mob_id: *mob_id },
             Self::Npc { mob_id, .. } => EntityRenderData::AnimatedMob { mob_id: *mob_id },

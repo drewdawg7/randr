@@ -24,7 +24,8 @@ pub fn create() -> DungeonLayout {
                 .npc(MobId::Merchant, 1..=1)
                 .chest(1..=1)
                 .stairs(1..=1)
-                .rock(2..=4),
+                .rock(2..=4)
+                .forge(1..=1),
         )
         .build()
 }

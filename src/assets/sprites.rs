@@ -39,6 +39,10 @@ pub enum SpriteSheetKey {
     CancelButton,
     CancelButtonSelected,
     TorchWall,
+    TinSword,
+    CopperSword,
+    BronzeSword,
+    Forge,
 }
 
 impl SpriteSheetKey {
@@ -74,6 +78,10 @@ impl SpriteSheetKey {
             Self::CancelButton,
             Self::CancelButtonSelected,
             Self::TorchWall,
+            Self::TinSword,
+            Self::CopperSword,
+            Self::BronzeSword,
+            Self::Forge,
         ]
     }
 
@@ -109,6 +117,10 @@ impl SpriteSheetKey {
             Self::CancelButton => "cancel_button",
             Self::CancelButtonSelected => "cancel_button_selected",
             Self::TorchWall => "torch_wall",
+            Self::TinSword => "tin_sword",
+            Self::CopperSword => "copper_sword",
+            Self::BronzeSword => "bronze_sword",
+            Self::Forge => "dungeon_entities/forge",
         }
     }
 }
