@@ -1,6 +1,6 @@
 # ItemGrid
 
-Configurable NxN grid for displaying items with animated selection highlight.
+Configurable NxN grid for displaying items with animated selection highlight and quantity text.
 
 **File:** `src/ui/widgets/item_grid.rs`
 
@@ -9,10 +9,20 @@ Configurable NxN grid for displaying items with animated selection highlight.
 ```rust
 #[derive(Component)]
 pub struct ItemGrid {
-    pub items: Vec<ItemGridEntry>,   // Items to display (sprites)
+    pub items: Vec<ItemGridEntry>,   // Items to display (sprites + quantities)
     pub selected_index: usize,       // Currently selected cell index
     pub is_focused: bool,            // Whether selector is visible (default: true)
     pub grid_size: usize,            // Columns/rows (default: 4, e.g. 3 for 3x3)
+}
+```
+
+## ItemGridEntry
+
+```rust
+#[derive(Clone)]
+pub struct ItemGridEntry {
+    pub sprite_name: String,  // Slice name in icon_items sprite sheet
+    pub quantity: u32,        // Quantity to display (only shown if > 1)
 }
 ```
 
@@ -23,20 +33,32 @@ use crate::ui::widgets::{ItemGrid, ItemGridEntry};
 
 // 4x4 grid (default)
 parent.spawn(ItemGrid {
-    items: vec![ItemGridEntry { sprite_name: "sword".to_string() }],
+    items: vec![ItemGridEntry {
+        sprite_name: "sword".to_string(),
+        quantity: 1,  // Won't show quantity text
+    }],
     selected_index: 0,
     is_focused: true,
     grid_size: 4,
 });
 
-// 3x3 grid (e.g. equipment)
+// Stackable items show quantity in bottom-right corner
 parent.spawn(ItemGrid {
-    items: vec![],
+    items: vec![ItemGridEntry {
+        sprite_name: "potion".to_string(),
+        quantity: 5,  // Shows "5" with black outline
+    }],
     selected_index: 0,
-    is_focused: false,
-    grid_size: 3,
+    is_focused: true,
+    grid_size: 4,
 });
 ```
+
+## Quantity Display
+
+- Quantities > 1 displayed as white text (14px) with black outline in bottom-right corner
+- Uses `spawn_outlined_quantity_text()` helper which creates 8 shadow layers for outline effect
+- Positioned at `right: 2px, bottom: 0px`
 
 ## Size Calculation
 
@@ -78,10 +100,10 @@ mut bp: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ## Reactive Item Updates
 
 Changing the `items` field on an existing `ItemGrid` triggers the `update_grid_items` system (runs in `PostUpdate` on `Changed<ItemGrid>`). This system:
-1. Despawns all existing `GridItemSprite` children from each cell
-2. Re-spawns item sprites matching the current `items` vector
+1. Despawns all existing `GridItemSprite` and `GridItemQuantityText` children from each cell
+2. Re-spawns item sprites and quantity text matching the current `items` vector
 
-This enables live updates (e.g., equip/unequip) without rebuilding the entire grid.
+This enables live updates (e.g., equip/unequip, buy/sell) without rebuilding the entire grid.
 
 ## Internal Components (private)
 
@@ -91,6 +113,7 @@ This enables live updates (e.g., equip/unequip) without rebuilding the entire gr
 | `GridCell { index }` | Marker on each cell with its position |
 | `GridSelector` | Animation state on the selector sprite |
 | `GridItemSprite` | Marker on item icon sprites (for update/despawn) |
+| `GridItemQuantityText` | Marker on quantity text container (for update/despawn) |
 
 ## Plugin
 
