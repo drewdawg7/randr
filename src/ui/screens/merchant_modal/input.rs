@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 
 use crate::economy::WorthGold;
-use crate::input::{GameAction, NavigationDirection};
+use crate::input::GameAction;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::player::PlayerGold;
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::ItemGrid;
 
 use super::render::{get_merchant_stock_entries, get_player_inventory_entries};
-use super::state::{MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
+use super::state::{MerchantDetailRefresh, MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
 
 /// System to handle Tab key toggling focus between merchant stock and player inventory grids.
 pub fn handle_merchant_modal_tab(
@@ -52,13 +52,13 @@ pub fn handle_merchant_modal_navigation(
         if let GameAction::Navigate(direction) = action {
             if let Ok(mut grid) = stock_grids.get_single_mut() {
                 if grid.is_focused {
-                    navigate_grid(&mut grid, *direction);
+                    grid.navigate(*direction);
                     continue;
                 }
             }
             if let Ok(mut grid) = player_grids.get_single_mut() {
                 if grid.is_focused {
-                    navigate_grid(&mut grid, *direction);
+                    grid.navigate(*direction);
                 }
             }
         }
@@ -67,6 +67,7 @@ pub fn handle_merchant_modal_navigation(
 
 /// System to handle Enter key for buying/selling items.
 pub fn handle_merchant_modal_select(
+    mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
     mut player_gold: ResMut<PlayerGold>,
@@ -93,6 +94,8 @@ pub fn handle_merchant_modal_select(
             .map(|g| g.is_focused)
             .unwrap_or(false);
 
+        let mut transaction_occurred = false;
+
         if stock_focused {
             // BUY: Purchase item from merchant
             let selected = stock_grids.get_single().unwrap().selected_index;
@@ -112,6 +115,7 @@ pub fn handle_merchant_modal_select(
                                 player_gold.subtract(price);
                                 // Add to inventory
                                 let _ = inventory.add_to_inv(purchased_item);
+                                transaction_occurred = true;
                             }
                         }
                     }
@@ -132,12 +136,16 @@ pub fn handle_merchant_modal_select(
                     player_gold.add(sell_price);
                     // Decrease quantity by 1 (removes item if quantity reaches 0)
                     inventory.decrease_item_quantity(item_id, 1);
+                    transaction_occurred = true;
                 }
             }
         }
 
-        // Refresh both grids with updated data
-        refresh_grids(stock, &inventory, &mut stock_grids, &mut player_grids);
+        // Only refresh grids and detail pane when a transaction actually occurred
+        if transaction_occurred {
+            refresh_grids(stock, &inventory, &mut stock_grids, &mut player_grids);
+            commands.insert_resource(MerchantDetailRefresh);
+        }
     }
 }
 
@@ -166,26 +174,3 @@ fn refresh_grids(
     }
 }
 
-fn navigate_grid(grid: &mut ItemGrid, direction: NavigationDirection) {
-    let gs = grid.grid_size;
-    let item_count = grid.items.len();
-    if item_count == 0 {
-        return;
-    }
-
-    let current = grid.selected_index;
-    let row = current / gs;
-    let col = current % gs;
-
-    let new_index = match direction {
-        NavigationDirection::Left if col > 0 => current - 1,
-        NavigationDirection::Right if col < gs - 1 => current + 1,
-        NavigationDirection::Up if row > 0 => current - gs,
-        NavigationDirection::Down if row < gs - 1 => current + gs,
-        _ => current,
-    };
-
-    if new_index < item_count {
-        grid.selected_index = new_index;
-    }
-}

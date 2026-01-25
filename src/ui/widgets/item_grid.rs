@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use super::nine_slice::spawn_nine_slice_panel;
 use crate::assets::{GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
+use crate::input::NavigationDirection;
 
 const CELL_SIZE: f32 = 48.0;
 const GAP: f32 = 4.0;
@@ -45,6 +46,31 @@ impl Default for ItemGrid {
             selected_index: 0,
             is_focused: true,
             grid_size: 4,
+        }
+    }
+}
+
+impl ItemGrid {
+    /// Navigate the grid selection in the given direction.
+    /// Allows navigation to all grid slots, including empty ones.
+    pub fn navigate(&mut self, direction: NavigationDirection) {
+        let gs = self.grid_size;
+        let total_slots = gs * gs;
+
+        let current = self.selected_index;
+        let row = current / gs;
+        let col = current % gs;
+
+        let new_index = match direction {
+            NavigationDirection::Left if col > 0 => current - 1,
+            NavigationDirection::Right if col < gs - 1 => current + 1,
+            NavigationDirection::Up if row > 0 => current - gs,
+            NavigationDirection::Down if row < gs - 1 => current + gs,
+            _ => current,
+        };
+
+        if new_index < total_slots {
+            self.selected_index = new_index;
         }
     }
 }
@@ -263,7 +289,7 @@ fn update_grid_selector(
     game_sprites: Res<GameSprites>,
     item_grids: Query<(Entity, &ItemGrid, &Children), Changed<ItemGrid>>,
     grid_containers: Query<&Children, With<GridContainer>>,
-    grid_cells: Query<(Entity, &GridCell, &Children)>,
+    grid_cells: Query<(Entity, &GridCell, Option<&Children>)>,
     selectors: Query<Entity, With<GridSelector>>,
 ) {
     for (grid_entity, item_grid, item_grid_children) in &item_grids {
@@ -282,7 +308,7 @@ fn update_grid_selector(
 
         // Remove existing selector from this grid only (check children of grid cells)
         for &child in container_children.iter() {
-            if let Ok((_, _, cell_children)) = grid_cells.get(child) {
+            if let Ok((_, _, Some(cell_children))) = grid_cells.get(child) {
                 for &cell_child in cell_children.iter() {
                     if selectors.contains(cell_child) {
                         if commands.get_entity(cell_child).is_some() {

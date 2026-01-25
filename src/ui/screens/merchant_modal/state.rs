@@ -103,6 +103,10 @@ impl MerchantStock {
 #[derive(Resource)]
 pub struct SpawnMerchantModal;
 
+/// Marker resource to force detail pane refresh after buy/sell transactions.
+#[derive(Resource)]
+pub struct MerchantDetailRefresh;
+
 /// Type-safe handle for the merchant modal.
 ///
 /// Used with `ModalCommands`:

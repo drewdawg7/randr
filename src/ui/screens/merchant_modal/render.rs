@@ -7,7 +7,9 @@ use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemStatsDisplay};
 
-use super::state::{MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
+use super::state::{
+    MerchantDetailRefresh, MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid,
+};
 
 /// Convert merchant stock to grid entries for display.
 pub fn get_merchant_stock_entries(stock: &MerchantStock) -> Vec<ItemGridEntry> {
@@ -100,6 +102,7 @@ pub fn populate_merchant_detail_pane(
     game_fonts: Res<GameFonts>,
     stock: Option<Res<MerchantStock>>,
     inventory: Res<Inventory>,
+    refresh_trigger: Option<Res<MerchantDetailRefresh>>,
     stock_grids: Query<&ItemGrid, With<MerchantStockGrid>>,
     player_grids: Query<&ItemGrid, With<MerchantPlayerGrid>>,
     mut panes: Query<&mut ItemDetailPane>,
@@ -108,6 +111,12 @@ pub fn populate_merchant_detail_pane(
     let Some(stock) = stock else {
         return;
     };
+
+    // Consume the refresh trigger if present
+    let force_refresh = refresh_trigger.is_some();
+    if force_refresh {
+        commands.remove_resource::<MerchantDetailRefresh>();
+    }
 
     // Determine which grid is focused and build the appropriate source
     let source = if let Ok(grid) = stock_grids.get_single() {
@@ -138,7 +147,7 @@ pub fn populate_merchant_detail_pane(
 
     // Check if we need to update
     let needs_initial = children.is_none();
-    if pane.source == source && !needs_initial {
+    if pane.source == source && !needs_initial && !force_refresh {
         return;
     }
 
