@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use super::nine_slice::spawn_nine_slice_panel;
 use crate::assets::{GameFonts, GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
 use crate::input::NavigationDirection;
+use crate::ui::focus::{FocusPanel, FocusState};
 
 const CELL_SIZE: f32 = 48.0;
 const GAP: f32 = 4.0;
@@ -37,8 +38,6 @@ pub struct ItemGrid {
     pub items: Vec<ItemGridEntry>,
     /// Currently selected cell index
     pub selected_index: usize,
-    /// Whether this grid is focused (shows selector)
-    pub is_focused: bool,
     /// Number of columns/rows in the grid (e.g., 3 for 3x3, 4 for 4x4)
     pub grid_size: usize,
 }
@@ -48,11 +47,15 @@ impl Default for ItemGrid {
         Self {
             items: Vec::new(),
             selected_index: 0,
-            is_focused: true,
             grid_size: 4,
         }
     }
 }
+
+/// Marker component that associates an ItemGrid with a FocusPanel.
+/// The selector is shown when FocusState.focused matches this panel.
+#[derive(Component)]
+pub struct ItemGridFocusPanel(pub FocusPanel);
 
 impl ItemGrid {
     /// Navigate the grid selection in the given direction.
@@ -105,13 +108,20 @@ fn on_add_item_grid(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     game_fonts: Res<GameFonts>,
-    item_grids: Query<&ItemGrid>,
+    focus_state: Option<Res<FocusState>>,
+    item_grids: Query<(&ItemGrid, Option<&ItemGridFocusPanel>)>,
 ) {
     let entity = trigger.entity();
-    let item_grid = item_grids.get(entity).ok();
+    let (item_grid, focus_panel) = item_grids.get(entity).ok().unzip();
     let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
-    let is_focused = item_grid.map(|g| g.is_focused).unwrap_or(true);
     let grid_size = item_grid.map(|g| g.grid_size).unwrap_or(4);
+
+    // Determine if this grid is focused by checking FocusState
+    let is_focused = focus_panel
+        .flatten()
+        .zip(focus_state.as_ref())
+        .map(|(panel, state)| state.is_focused(panel.0))
+        .unwrap_or(false);
 
     // Get the cell background sprite if available
     let cell_image = game_sprites
@@ -368,16 +378,31 @@ fn update_grid_items(
     }
 }
 
-/// Update the grid selector position when selection changes.
+/// Update the grid selector position when selection or focus changes.
 fn update_grid_selector(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
-    item_grids: Query<(Entity, &ItemGrid, &Children), Changed<ItemGrid>>,
+    focus_state: Option<Res<FocusState>>,
+    item_grids: Query<(Entity, Ref<ItemGrid>, Option<&ItemGridFocusPanel>, &Children)>,
     grid_containers: Query<&Children, With<GridContainer>>,
     grid_cells: Query<(Entity, &GridCell, Option<&Children>)>,
     selectors: Query<Entity, With<GridSelector>>,
 ) {
-    for (grid_entity, item_grid, item_grid_children) in &item_grids {
+    // Only run when FocusState exists and changes, or when ItemGrid changes
+    let focus_changed = focus_state.as_ref().map(|s| s.is_changed()).unwrap_or(false);
+
+    for (grid_entity, item_grid, focus_panel, item_grid_children) in &item_grids {
+        // Check if this grid is focused
+        let is_focused = focus_panel
+            .zip(focus_state.as_ref())
+            .map(|(panel, state)| state.is_focused(panel.0))
+            .unwrap_or(false);
+
+        // Skip if neither focus nor grid changed
+        if !focus_changed && !item_grid.is_changed() {
+            continue;
+        }
+
         // Skip if the grid entity is being despawned
         if commands.get_entity(grid_entity).is_none() {
             continue;
@@ -405,7 +430,7 @@ fn update_grid_selector(
         }
 
         // Only add selector if grid is focused
-        if !item_grid.is_focused {
+        if !is_focused {
             continue;
         }
 

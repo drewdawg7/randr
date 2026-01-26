@@ -4,35 +4,35 @@ use crate::economy::WorthGold;
 use crate::input::GameAction;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::player::PlayerGold;
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::ItemGrid;
 
 use super::render::{get_merchant_stock_entries, get_player_inventory_entries};
-use super::state::{MerchantDetailRefresh, MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
+use super::state::{MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
 
 /// System to handle Tab key toggling focus between merchant stock and player inventory grids.
 pub fn handle_merchant_modal_tab(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
-    mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
-    mut player_grids: Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
+    mut focus_state: Option<ResMut<FocusState>>,
 ) {
     if active_modal.modal != Some(ModalType::MerchantModal) {
         return;
     }
 
+    let Some(ref mut focus_state) = focus_state else {
+        return;
+    };
+
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            let Ok(mut stock_grid) = stock_grids.get_single_mut() else {
-                return;
-            };
-            let stock_was_focused = stock_grid.is_focused;
-            stock_grid.is_focused = !stock_was_focused;
-
-            let Ok(mut player_grid) = player_grids.get_single_mut() else {
-                return;
-            };
-            player_grid.is_focused = stock_was_focused;
+            // Toggle between merchant stock and player inventory
+            if focus_state.is_focused(FocusPanel::MerchantStock) {
+                focus_state.set_focus(FocusPanel::PlayerInventory);
+            } else {
+                focus_state.set_focus(FocusPanel::MerchantStock);
+            }
         }
     }
 }
@@ -41,6 +41,7 @@ pub fn handle_merchant_modal_tab(
 pub fn handle_merchant_modal_navigation(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
+    focus_state: Option<Res<FocusState>>,
     mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
     mut player_grids: Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
 ) {
@@ -48,16 +49,18 @@ pub fn handle_merchant_modal_navigation(
         return;
     }
 
+    let Some(focus_state) = focus_state else {
+        return;
+    };
+
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
-            if let Ok(mut grid) = stock_grids.get_single_mut() {
-                if grid.is_focused {
+            if focus_state.is_focused(FocusPanel::MerchantStock) {
+                if let Ok(mut grid) = stock_grids.get_single_mut() {
                     grid.navigate(*direction);
-                    continue;
                 }
-            }
-            if let Ok(mut grid) = player_grids.get_single_mut() {
-                if grid.is_focused {
+            } else if focus_state.is_focused(FocusPanel::PlayerInventory) {
+                if let Ok(mut grid) = player_grids.get_single_mut() {
                     grid.navigate(*direction);
                 }
             }
@@ -67,9 +70,9 @@ pub fn handle_merchant_modal_navigation(
 
 /// System to handle Enter key for buying/selling items.
 pub fn handle_merchant_modal_select(
-    mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
+    focus_state: Option<Res<FocusState>>,
     mut player_gold: ResMut<PlayerGold>,
     mut inventory: ResMut<Inventory>,
     mut stock: Option<ResMut<MerchantStock>>,
@@ -80,6 +83,10 @@ pub fn handle_merchant_modal_select(
         return;
     }
 
+    let Some(focus_state) = focus_state else {
+        return;
+    };
+
     let Some(ref mut stock) = stock else {
         return;
     };
@@ -89,10 +96,7 @@ pub fn handle_merchant_modal_select(
             continue;
         }
 
-        let stock_focused = stock_grids
-            .get_single()
-            .map(|g| g.is_focused)
-            .unwrap_or(false);
+        let stock_focused = focus_state.is_focused(FocusPanel::MerchantStock);
 
         let mut transaction_occurred = false;
 
@@ -141,10 +145,10 @@ pub fn handle_merchant_modal_select(
             }
         }
 
-        // Only refresh grids and detail pane when a transaction actually occurred
+        // Only refresh grids when a transaction actually occurred
+        // The detail pane will refresh automatically via FocusState change detection
         if transaction_occurred {
             refresh_grids(stock, &inventory, &mut stock_grids, &mut player_grids);
-            commands.insert_resource(MerchantDetailRefresh);
         }
     }
 }

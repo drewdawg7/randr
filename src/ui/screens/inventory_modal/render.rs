@@ -3,9 +3,10 @@ use bevy::prelude::*;
 use crate::assets::GameFonts;
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem, ManagesEquipment, ManagesItems};
 use crate::stats::StatType;
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemStatsDisplay, OutlinedText};
+use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
 
 use super::state::{BackpackGrid, EquipmentGrid, InventoryModalRoot};
 
@@ -51,6 +52,11 @@ pub fn get_backpack_items(inventory: &Inventory) -> Vec<&InventoryItem> {
 
 /// Spawn the inventory modal UI with an equipment grid, backpack grid, and detail pane.
 pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
+    // Initialize focus on equipment grid
+    commands.insert_resource(FocusState {
+        focused: Some(FocusPanel::EquipmentGrid),
+    });
+
     let equipment_entries: Vec<ItemGridEntry> = get_equipment_items(inventory)
         .iter()
         .map(|inv_item| ItemGridEntry {
@@ -85,25 +91,25 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
                     // Equipment grid (3x3) - focused by default
                     row.spawn((
                         EquipmentGrid,
+                        ItemGridFocusPanel(FocusPanel::EquipmentGrid),
                         ItemGrid {
                             items: equipment_entries,
                             selected_index: 0,
-                            is_focused: true,
                             grid_size: 3,
                         },
                     ));
                     // Backpack grid (4x4)
                     row.spawn((
                         BackpackGrid,
+                        ItemGridFocusPanel(FocusPanel::BackpackGrid),
                         ItemGrid {
                             items: backpack_entries,
                             selected_index: 0,
-                            is_focused: false,
                             grid_size: 4,
                         },
                     ));
                     row.spawn(ItemDetailPane {
-                        source: InfoPanelSource::Inventory { selected_index: 0 },
+                        source: InfoPanelSource::Equipment { selected_index: 0 },
                     });
                 });
         });
@@ -115,22 +121,25 @@ pub fn populate_item_detail_pane(
     mut commands: Commands,
     game_fonts: Res<GameFonts>,
     inventory: Res<Inventory>,
+    focus_state: Option<Res<FocusState>>,
     equipment_grids: Query<&ItemGrid, With<EquipmentGrid>>,
     backpack_grids: Query<&ItemGrid, With<BackpackGrid>>,
     mut panes: Query<&mut ItemDetailPane>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
+    let Some(focus_state) = focus_state else {
+        return;
+    };
+
     // Determine which grid is focused and build the appropriate source
-    let source = if let Ok(grid) = equipment_grids.get_single() {
-        if grid.is_focused {
+    let source = if focus_state.is_focused(FocusPanel::EquipmentGrid) {
+        if let Ok(grid) = equipment_grids.get_single() {
             InfoPanelSource::Equipment { selected_index: grid.selected_index }
-        } else if let Ok(bp_grid) = backpack_grids.get_single() {
-            InfoPanelSource::Inventory { selected_index: bp_grid.selected_index }
         } else {
             return;
         }
-    } else if let Ok(grid) = backpack_grids.get_single() {
-        if grid.is_focused {
+    } else if focus_state.is_focused(FocusPanel::BackpackGrid) {
+        if let Ok(grid) = backpack_grids.get_single() {
             InfoPanelSource::Inventory { selected_index: grid.selected_index }
         } else {
             return;

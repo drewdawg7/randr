@@ -5,12 +5,13 @@ use bevy::prelude::*;
 use crate::assets::{GameFonts, GameSprites};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemGrid, ItemGridEntry, OutlinedText};
+use crate::ui::widgets::{ItemDetailPane, ItemGrid, ItemGridEntry, ItemGridFocusPanel, OutlinedText};
 
 use super::state::{
-    AnvilModalRoot, AnvilModalState, AnvilPlayerGrid, AnvilRecipeGrid, SpawnAnvilModal,
+    AnvilModalRoot, AnvilPlayerGrid, AnvilRecipeGrid, SpawnAnvilModal,
 };
 
 /// Convert forging recipes to grid entries for display.
@@ -52,11 +53,15 @@ pub fn spawn_anvil_modal(
     _game_sprites: Res<GameSprites>,
     _game_fonts: Res<GameFonts>,
     inventory: Res<Inventory>,
-    modal_state: Res<AnvilModalState>,
     mut active_modal: ResMut<ActiveModal>,
 ) {
     commands.remove_resource::<SpawnAnvilModal>();
     active_modal.modal = Some(ModalType::AnvilModal);
+
+    // Initialize focus on recipe grid (default)
+    commands.insert_resource(FocusState {
+        focused: Some(FocusPanel::RecipeGrid),
+    });
 
     let recipe_entries = get_recipe_entries(&inventory);
     let player_entries = get_player_inventory_entries(&inventory);
@@ -77,10 +82,10 @@ pub fn spawn_anvil_modal(
                     // Recipe grid (left side) - focused by default
                     row.spawn((
                         AnvilRecipeGrid,
+                        ItemGridFocusPanel(FocusPanel::RecipeGrid),
                         ItemGrid {
                             items: recipe_entries,
                             selected_index: 0,
-                            is_focused: !modal_state.recipes_focused,
                             grid_size: 5,
                         },
                     ));
@@ -88,17 +93,17 @@ pub fn spawn_anvil_modal(
                     // Player inventory grid (5x5)
                     row.spawn((
                         AnvilPlayerGrid,
+                        ItemGridFocusPanel(FocusPanel::AnvilInventory),
                         ItemGrid {
                             items: player_entries,
                             selected_index: 0,
-                            is_focused: modal_state.recipes_focused,
                             grid_size: 5,
                         },
                     ));
 
-                    // Item detail pane (right side)
+                    // Item detail pane (right side) - use Recipe source for initial
                     row.spawn(ItemDetailPane {
-                        source: InfoPanelSource::Inventory { selected_index: 0 },
+                        source: InfoPanelSource::Recipe { selected_index: 0 },
                     });
                 });
         });
@@ -109,13 +114,13 @@ pub fn populate_anvil_detail_pane(
     mut commands: Commands,
     game_fonts: Res<GameFonts>,
     inventory: Res<Inventory>,
-    modal_state: Option<Res<AnvilModalState>>,
+    focus_state: Option<Res<FocusState>>,
     recipe_grids: Query<&ItemGrid, With<AnvilRecipeGrid>>,
     player_grids: Query<&ItemGrid, With<AnvilPlayerGrid>>,
     mut panes: Query<&mut ItemDetailPane>,
     content_query: Query<(Entity, Option<&Children>), With<crate::ui::widgets::ItemDetailPaneContent>>,
 ) {
-    let Some(modal_state) = modal_state else {
+    let Some(focus_state) = focus_state else {
         return;
     };
 
@@ -127,15 +132,16 @@ pub fn populate_anvil_detail_pane(
         return;
     };
 
+    // Force refresh when FocusState changes
+    let focus_changed = focus_state.is_changed();
+
     // Determine source based on focus
     let (source, detail_info): (InfoPanelSource, Option<RecipeOrItem>) =
-        if !modal_state.recipes_focused {
-            // Recipe grid focused
+        if focus_state.is_focused(FocusPanel::RecipeGrid) {
+            // Recipe grid focused - use new InfoPanelSource::Recipe variant
             let grid = recipe_grids.get_single().ok();
             let selected_index = grid.map(|g| g.selected_index).unwrap_or(0);
-            let source = InfoPanelSource::Inventory {
-                selected_index: selected_index + 2000,
-            }; // Offset for recipes
+            let source = InfoPanelSource::Recipe { selected_index };
 
             let recipes = RecipeId::all_forging_recipes();
             let recipe_info = recipes.get(selected_index).map(|recipe_id| {
@@ -151,7 +157,7 @@ pub fn populate_anvil_detail_pane(
             });
 
             (source, recipe_info)
-        } else {
+        } else if focus_state.is_focused(FocusPanel::AnvilInventory) {
             // Player inventory focused
             let grid = player_grids.get_single().ok();
             let selected_index = grid.map(|g| g.selected_index).unwrap_or(0);
@@ -166,11 +172,13 @@ pub fn populate_anvil_detail_pane(
                 });
 
             (source, item_info)
+        } else {
+            return;
         };
 
-    // Check if we need to update
+    // Check if we need to update (update on source change, first render, or focus change)
     let needs_initial = children.is_none();
-    if pane.source == source && !needs_initial {
+    if pane.source == source && !needs_initial && !focus_changed {
         return;
     }
 

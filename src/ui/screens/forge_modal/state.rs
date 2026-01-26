@@ -56,22 +56,11 @@ impl ForgeSlotIndex {
     }
 }
 
-/// Tracks which panel is focused and selection state.
-#[derive(Resource)]
+/// Tracks forge slot selection state.
+#[derive(Resource, Default)]
 pub struct ForgeModalState {
-    /// True if crafting slots focused, false if inventory focused
-    pub crafting_focused: bool,
-    /// Currently selected forge slot (when crafting_focused)
+    /// Currently selected forge slot (when FocusPanel::ForgeCraftingSlots is focused)
     pub selected_slot: ForgeSlotIndex,
-}
-
-impl Default for ForgeModalState {
-    fn default() -> Self {
-        Self {
-            crafting_focused: false,
-            selected_slot: ForgeSlotIndex::Coal,
-        }
-    }
 }
 
 /// Resource to track which forge entity the modal is operating on.

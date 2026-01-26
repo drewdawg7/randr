@@ -4,4 +4,4 @@ mod render;
 pub mod state;
 
 pub use plugin::ForgeModalPlugin;
-pub use state::{ActiveForgeEntity, ForgeModal, ForgeModalState, SpawnForgeModal};
+pub use state::{ActiveForgeEntity, ForgeModal, ForgeModalState, ForgeSlotIndex, SpawnForgeModal};

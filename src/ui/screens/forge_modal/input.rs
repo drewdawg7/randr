@@ -4,6 +4,7 @@ use crate::crafting_station::ForgeCraftingState;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::ItemGrid;
 
@@ -16,25 +17,21 @@ use super::state::{
 pub fn handle_forge_modal_tab(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
-    mut modal_state: Option<ResMut<ForgeModalState>>,
-    mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
+    focus_state: Option<ResMut<FocusState>>,
 ) {
     if active_modal.modal != Some(ModalType::ForgeModal) {
         return;
     }
 
-    let Some(ref mut modal_state) = modal_state else {
-        return;
-    };
+    let Some(mut focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            // Toggle focus
-            modal_state.crafting_focused = !modal_state.crafting_focused;
-
-            // Update ItemGrid focus state
-            if let Ok(mut grid) = player_grids.get_single_mut() {
-                grid.is_focused = !modal_state.crafting_focused;
+            // Toggle between crafting slots and inventory
+            if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
+                focus_state.set_focus(FocusPanel::ForgeInventory);
+            } else {
+                focus_state.set_focus(FocusPanel::ForgeCraftingSlots);
             }
         }
     }
@@ -44,6 +41,7 @@ pub fn handle_forge_modal_tab(
 pub fn handle_forge_modal_navigation(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
+    focus_state: Option<Res<FocusState>>,
     mut modal_state: Option<ResMut<ForgeModalState>>,
     mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
 ) {
@@ -51,24 +49,24 @@ pub fn handle_forge_modal_navigation(
         return;
     }
 
-    let Some(ref mut modal_state) = modal_state else {
-        return;
-    };
+    let Some(focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
-            if modal_state.crafting_focused {
+            if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
                 // Navigate within crafting slots (horizontal only)
-                match direction {
-                    NavigationDirection::Left => {
-                        modal_state.selected_slot = modal_state.selected_slot.prev();
+                if let Some(ref mut modal_state) = modal_state {
+                    match direction {
+                        NavigationDirection::Left => {
+                            modal_state.selected_slot = modal_state.selected_slot.prev();
+                        }
+                        NavigationDirection::Right => {
+                            modal_state.selected_slot = modal_state.selected_slot.next();
+                        }
+                        _ => {}
                     }
-                    NavigationDirection::Right => {
-                        modal_state.selected_slot = modal_state.selected_slot.next();
-                    }
-                    _ => {}
                 }
-            } else {
+            } else if focus_state.is_focused(FocusPanel::ForgeInventory) {
                 // Navigate within player inventory grid
                 if let Ok(mut grid) = player_grids.get_single_mut() {
                     grid.navigate(*direction);
@@ -83,6 +81,7 @@ pub fn handle_forge_modal_select(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
+    focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
     active_forge: Option<Res<ActiveForgeEntity>>,
     mut inventory: ResMut<Inventory>,
@@ -92,6 +91,8 @@ pub fn handle_forge_modal_select(
     if active_modal.modal != Some(ModalType::ForgeModal) {
         return;
     }
+
+    let Some(focus_state) = focus_state else { return };
 
     let Some(modal_state) = modal_state else {
         return;
@@ -112,7 +113,7 @@ pub fn handle_forge_modal_select(
 
         let mut transfer_occurred = false;
 
-        if modal_state.crafting_focused {
+        if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
             // Crafting slots focused - take items back or collect product
             match modal_state.selected_slot {
                 ForgeSlotIndex::Coal => {

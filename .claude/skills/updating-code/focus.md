@@ -6,7 +6,141 @@ Unified trait-based system for managing selection state across UI screens and mo
 
 ## Overview
 
-The focus system provides a single `SelectionState` trait that standardizes navigation logic across all screens. Instead of each state struct duplicating `up()`, `down()`, `reset()` methods, they implement the trait and get consistent behavior.
+The focus system provides:
+1. **SelectionState trait** - Standardizes navigation logic for single-list screens
+2. **FocusPanel/FocusState** - Centralized focus tracking for multi-panel modals
+
+## Multi-Panel Focus Management
+
+For modals with multiple focusable panels (inventory, merchant, forge, anvil), use the centralized `FocusPanel` enum and `FocusState` resource.
+
+### FocusPanel Enum
+
+```rust
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FocusPanel {
+    // Inventory modal
+    EquipmentGrid,
+    BackpackGrid,
+    // Merchant modal
+    MerchantStock,
+    PlayerInventory,
+    // Forge modal
+    ForgeCraftingSlots,
+    ForgeInventory,
+    // Anvil modal
+    RecipeGrid,
+    AnvilInventory,
+}
+```
+
+### FocusState Resource
+
+```rust
+#[derive(Resource, Default)]
+pub struct FocusState {
+    pub focused: Option<FocusPanel>,
+}
+
+impl FocusState {
+    pub fn set_focus(&mut self, panel: FocusPanel);
+    pub fn clear(&mut self);
+    pub fn is_focused(&self, panel: FocusPanel) -> bool;
+}
+```
+
+### Usage Pattern
+
+**Important:** Use `Option<Res<FocusState>>` or `Option<ResMut<FocusState>>` since the resource only exists when a modal is open.
+
+```rust
+pub fn handle_modal_tab(
+    mut action_reader: EventReader<GameAction>,
+    active_modal: Res<ActiveModal>,
+    focus_state: Option<ResMut<FocusState>>,
+) {
+    if active_modal.modal != Some(ModalType::MyModal) {
+        return;
+    }
+
+    let Some(mut focus_state) = focus_state else { return };
+
+    for action in action_reader.read() {
+        if *action == GameAction::NextTab {
+            if focus_state.is_focused(FocusPanel::PanelA) {
+                focus_state.set_focus(FocusPanel::PanelB);
+            } else {
+                focus_state.set_focus(FocusPanel::PanelA);
+            }
+        }
+    }
+}
+```
+
+### ItemGridFocusPanel Marker
+
+Associate an `ItemGrid` with a `FocusPanel` to enable selector visibility based on focus:
+
+```rust
+#[derive(Component)]
+pub struct ItemGridFocusPanel(pub FocusPanel);
+
+// When spawning a grid:
+commands.spawn((
+    ItemGrid { items, selected_index: 0, grid_size: 4 },
+    ItemGridFocusPanel(FocusPanel::BackpackGrid),
+    // ...
+));
+```
+
+The `update_grid_selector` system automatically shows/hides selectors based on `FocusState`.
+
+### Modal Spawn/Cleanup
+
+Insert `FocusState` when spawning a modal, remove it on cleanup:
+
+```rust
+// In spawn system:
+commands.insert_resource(FocusState::default());
+focus_state.set_focus(FocusPanel::DefaultPanel);
+
+// In cleanup system:
+commands.remove_resource::<FocusState>();
+```
+
+### Change Detection for Detail Panes
+
+Use `is_changed()` to refresh detail panes when focus changes:
+
+```rust
+pub fn update_detail_pane(
+    focus_state: Option<Res<FocusState>>,
+    // ...
+) {
+    let Some(focus_state) = focus_state else { return };
+
+    if !focus_state.is_changed() {
+        return;
+    }
+
+    // Refresh detail pane based on which panel is focused
+}
+```
+
+### Modals Using FocusState
+
+| Modal | Panels | Default Focus |
+|-------|--------|---------------|
+| Inventory | EquipmentGrid, BackpackGrid | EquipmentGrid |
+| Merchant | MerchantStock, PlayerInventory | MerchantStock |
+| Forge | ForgeCraftingSlots, ForgeInventory | ForgeCraftingSlots |
+| Anvil | RecipeGrid, AnvilInventory | RecipeGrid |
+
+---
+
+## SelectionState Trait
+
+For single-list screens, the `SelectionState` trait standardizes navigation logic. Instead of each state struct duplicating `up()`, `down()`, `reset()` methods, they implement the trait and get consistent behavior.
 
 ## Core Trait
 
@@ -164,7 +298,34 @@ These only run when the state resource changes (`is_changed()`).
 | `src/ui/screens/town/shared/mod.rs` | Removed `SelectionState` alias |
 | `src/navigation/systems.rs` | Import trait for `reset()` |
 
+## Files Changed in Issue #373 (FocusState)
+
+| File | Change |
+|------|--------|
+| `src/ui/focus.rs` | Added `FocusPanel` enum and `FocusState` resource |
+| `src/ui/widgets/item_grid.rs` | Removed `is_focused`, added `ItemGridFocusPanel` marker |
+| `src/ui/widgets/mod.rs` | Export `ItemGridFocusPanel` |
+| `src/ui/screens/town/shared/mod.rs` | Extended `InfoPanelSource` with ForgeSlot, Recipe, None variants |
+| `src/ui/screens/inventory_modal/input.rs` | Use `Option<Res/ResMut<FocusState>>` |
+| `src/ui/screens/inventory_modal/render.rs` | Use FocusState for selector visibility |
+| `src/ui/screens/merchant_modal/input.rs` | Use `Option<Res/ResMut<FocusState>>` |
+| `src/ui/screens/merchant_modal/render.rs` | Use FocusState, removed MerchantDetailRefresh |
+| `src/ui/screens/merchant_modal/state.rs` | Removed `MerchantDetailRefresh` resource |
+| `src/ui/screens/forge_modal/input.rs` | Use `Option<Res/ResMut<FocusState>>` |
+| `src/ui/screens/forge_modal/render.rs` | Use FocusState |
+| `src/ui/screens/forge_modal/state.rs` | Removed `crafting_focused` field |
+| `src/ui/screens/forge_modal/mod.rs` | Export `ForgeSlotIndex` |
+| `src/ui/screens/anvil_modal/input.rs` | Use `Option<Res/ResMut<FocusState>>` |
+| `src/ui/screens/anvil_modal/render.rs` | Use FocusState |
+| `src/ui/screens/anvil_modal/state.rs` | Removed `AnvilModalState` |
+| `src/ui/screens/anvil_modal/plugin.rs` | Removed AnvilModalState cleanup |
+| `src/ui/screens/dungeon/plugin.rs` | Removed AnvilModalState usage |
+
 ## Related Documentation
 
 - [modals.md](modals.md) - Modal screen patterns
 - [navigation.md](navigation.md) - Navigation system
+- [inventory-modal.md](inventory-modal.md) - Inventory modal implementation
+- [merchant-modal.md](merchant-modal.md) - Merchant modal implementation
+- [forge-modal.md](forge-modal.md) - Forge modal implementation
+- [anvil-modal.md](anvil-modal.md) - Anvil modal implementation

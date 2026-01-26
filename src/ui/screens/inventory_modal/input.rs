@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, Inventory, ManagesEquipment};
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::{ItemGrid, ItemGridEntry};
 
@@ -12,25 +13,22 @@ use super::state::{BackpackGrid, EquipmentGrid};
 pub fn handle_inventory_modal_tab(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
-    mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
-    mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
+    focus_state: Option<ResMut<FocusState>>,
 ) {
     if active_modal.modal != Some(ModalType::Inventory) {
         return;
     }
 
+    let Some(mut focus_state) = focus_state else { return };
+
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            let Ok(mut eq_grid) = equipment_grids.get_single_mut() else {
-                return;
-            };
-            let eq_was_focused = eq_grid.is_focused;
-            eq_grid.is_focused = !eq_was_focused;
-
-            let Ok(mut bp_grid) = backpack_grids.get_single_mut() else {
-                return;
-            };
-            bp_grid.is_focused = eq_was_focused;
+            // Toggle between equipment and backpack grids
+            if focus_state.is_focused(FocusPanel::EquipmentGrid) {
+                focus_state.set_focus(FocusPanel::BackpackGrid);
+            } else {
+                focus_state.set_focus(FocusPanel::EquipmentGrid);
+            }
         }
     }
 }
@@ -39,6 +37,7 @@ pub fn handle_inventory_modal_tab(
 pub fn handle_inventory_modal_navigation(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
+    focus_state: Option<Res<FocusState>>,
     mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
     mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ) {
@@ -46,16 +45,16 @@ pub fn handle_inventory_modal_navigation(
         return;
     }
 
+    let Some(focus_state) = focus_state else { return };
+
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
-            if let Ok(mut grid) = equipment_grids.get_single_mut() {
-                if grid.is_focused {
+            if focus_state.is_focused(FocusPanel::EquipmentGrid) {
+                if let Ok(mut grid) = equipment_grids.get_single_mut() {
                     grid.navigate(*direction);
-                    continue;
                 }
-            }
-            if let Ok(mut grid) = backpack_grids.get_single_mut() {
-                if grid.is_focused {
+            } else if focus_state.is_focused(FocusPanel::BackpackGrid) {
+                if let Ok(mut grid) = backpack_grids.get_single_mut() {
                     grid.navigate(*direction);
                 }
             }
@@ -67,6 +66,7 @@ pub fn handle_inventory_modal_navigation(
 pub fn handle_inventory_modal_select(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
+    focus_state: Option<Res<FocusState>>,
     mut inventory: ResMut<Inventory>,
     mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
     mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
@@ -75,15 +75,14 @@ pub fn handle_inventory_modal_select(
         return;
     }
 
+    let Some(focus_state) = focus_state else { return };
+
     for action in action_reader.read() {
         if *action != GameAction::Select {
             continue;
         }
 
-        let eq_focused = equipment_grids
-            .get_single()
-            .map(|g| g.is_focused)
-            .unwrap_or(false);
+        let eq_focused = focus_state.is_focused(FocusPanel::EquipmentGrid);
 
         if eq_focused {
             // UNEQUIP: find the slot for the selected equipment item
@@ -152,4 +151,3 @@ fn refresh_grids(
         }
     }
 }
-

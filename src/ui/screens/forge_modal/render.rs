@@ -4,9 +4,10 @@ use crate::assets::{GameFonts, GameSprites, GridSlotSlice, SpriteSheetKey, UiSel
 use crate::crafting_station::ForgeCraftingState;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemStatsDisplay, OutlinedText};
+use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
 
 use super::state::{
     ActiveForgeEntity, ForgeModalRoot, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex,
@@ -66,6 +67,11 @@ pub fn spawn_forge_modal(
     commands.remove_resource::<SpawnForgeModal>();
     active_modal.modal = Some(ModalType::ForgeModal);
 
+    // Initialize focus on player inventory (default)
+    commands.insert_resource(FocusState {
+        focused: Some(FocusPanel::ForgeInventory),
+    });
+
     let player_entries = get_player_inventory_entries(&inventory);
 
     // Get forge crafting state
@@ -96,10 +102,10 @@ pub fn spawn_forge_modal(
                     // Player inventory grid (5x5) - focused by default
                     row.spawn((
                         ForgePlayerGrid,
+                        ItemGridFocusPanel(FocusPanel::ForgeInventory),
                         ItemGrid {
                             items: player_entries,
                             selected_index: 0,
-                            is_focused: !modal_state.crafting_focused,
                             grid_size: 5,
                         },
                     ));
@@ -118,12 +124,13 @@ fn spawn_crafting_slots(
     game_sprites: &GameSprites,
     game_fonts: &GameFonts,
     forge_state: Option<&ForgeCraftingState>,
-    modal_state: &ForgeModalState,
+    _modal_state: &ForgeModalState,
 ) {
     // Calculate dimensions for the slots container
     let slots_width = 3.0 * SLOT_SIZE + 2.0 * SLOT_GAP + 32.0; // Extra padding
     let slots_height = SLOT_SIZE + 40.0; // Room for labels
 
+    // Selector is not shown initially - update_forge_slot_selector will add it when needed
     parent
         .spawn((
             ForgeSlotsGrid,
@@ -148,7 +155,7 @@ fn spawn_crafting_slots(
                     ..default()
                 })
                 .with_children(|slot_row| {
-                    // Coal slot
+                    // Coal slot (not selected initially since inventory is focused)
                     spawn_slot(
                         slot_row,
                         game_sprites,
@@ -156,7 +163,7 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Coal,
                         "Coal",
                         forge_state.and_then(|s| s.coal_slot),
-                        modal_state.crafting_focused && modal_state.selected_slot == ForgeSlotIndex::Coal,
+                        false,
                     );
 
                     // Ore slot
@@ -167,7 +174,7 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Ore,
                         "Ore",
                         forge_state.and_then(|s| s.ore_slot),
-                        modal_state.crafting_focused && modal_state.selected_slot == ForgeSlotIndex::Ore,
+                        false,
                     );
 
                     // Product slot
@@ -178,7 +185,7 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Product,
                         "Ingot",
                         forge_state.and_then(|s| s.product_slot),
-                        modal_state.crafting_focused && modal_state.selected_slot == ForgeSlotIndex::Product,
+                        false,
                     );
                 });
         });
@@ -421,10 +428,11 @@ pub fn refresh_forge_slots(
     }
 }
 
-/// Update forge slot selector position when modal state changes.
+/// Update forge slot selector position when modal state or focus changes.
 pub fn update_forge_slot_selector(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
+    focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
     slot_cells: Query<(Entity, &ForgeSlotCell, Option<&Children>)>,
     selectors: Query<Entity, With<ForgeSlotSelector>>,
@@ -447,7 +455,12 @@ pub fn update_forge_slot_selector(
     }
 
     // Only add selector if crafting slots are focused
-    if !modal_state.crafting_focused {
+    let crafting_focused = focus_state
+        .as_ref()
+        .map(|s| s.is_focused(FocusPanel::ForgeCraftingSlots))
+        .unwrap_or(false);
+
+    if !crafting_focused {
         return;
     }
 
@@ -468,6 +481,7 @@ pub fn populate_forge_item_detail_pane(
     mut commands: Commands,
     game_fonts: Res<GameFonts>,
     inventory: Res<Inventory>,
+    focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
     active_forge: Option<Res<ActiveForgeEntity>>,
     forge_state_query: Query<&ForgeCraftingState>,
@@ -475,6 +489,10 @@ pub fn populate_forge_item_detail_pane(
     mut panes: Query<&mut ItemDetailPane>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
+    let Some(focus_state) = focus_state else {
+        return;
+    };
+
     let Some(modal_state) = modal_state else {
         return;
     };
@@ -487,11 +505,13 @@ pub fn populate_forge_item_detail_pane(
         return;
     };
 
+    // Force refresh when FocusState changes
+    let focus_changed = focus_state.is_changed();
+
     // Determine source and get item info based on focus
-    let (source, item_info): (InfoPanelSource, Option<(ItemId, u32)>) = if modal_state.crafting_focused {
-        // Get item from forge slot
-        let slot_index = modal_state.selected_slot.as_index();
-        let source = InfoPanelSource::Inventory { selected_index: slot_index + 1000 }; // Offset to differentiate
+    let (source, item_info): (InfoPanelSource, Option<(ItemId, u32)>) = if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
+        // Get item from forge slot - use new InfoPanelSource::ForgeSlot
+        let source = InfoPanelSource::ForgeSlot { slot: modal_state.selected_slot };
 
         let item_info = active_forge
             .as_ref()
@@ -503,7 +523,7 @@ pub fn populate_forge_item_detail_pane(
             });
 
         (source, item_info)
-    } else {
+    } else if focus_state.is_focused(FocusPanel::ForgeInventory) {
         // Get item from inventory
         let grid = player_grids.get_single().ok();
         let selected_index = grid.map(|g| g.selected_index).unwrap_or(0);
@@ -515,11 +535,13 @@ pub fn populate_forge_item_detail_pane(
             .map(|inv_item| (inv_item.item.item_id, inv_item.quantity));
 
         (source, item_info)
+    } else {
+        return;
     };
 
-    // Check if we need to update
+    // Check if we need to update (update on source change, first render, or focus change)
     let needs_initial = children.is_none();
-    if pane.source == source && !needs_initial {
+    if pane.source == source && !needs_initial && !focus_changed {
         return;
     }
 

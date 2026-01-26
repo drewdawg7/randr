@@ -18,7 +18,7 @@ use crate::states::AppState;
 use crate::stats::{StatSheet, StatType};
 use crate::mob::MobId;
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
-use crate::ui::screens::anvil_modal::{ActiveAnvilEntity, AnvilModalState, SpawnAnvilModal};
+use crate::ui::screens::anvil_modal::{ActiveAnvilEntity, SpawnAnvilModal};
 use crate::ui::screens::forge_modal::{ActiveForgeEntity, ForgeModalState, SpawnForgeModal};
 use crate::ui::screens::merchant_modal::{MerchantStock, SpawnMerchantModal};
 use crate::ui::screens::modal::ActiveModal;
@@ -689,7 +689,6 @@ fn handle_mine_interaction(
                         // Only open modal if anvil is not already crafting
                         if anvil_query.get(entity_id).is_err() {
                             commands.insert_resource(ActiveAnvilEntity(entity_id));
-                            commands.insert_resource(AnvilModalState::default());
                             commands.insert_resource(SpawnAnvilModal);
                         }
                     }

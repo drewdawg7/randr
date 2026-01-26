@@ -6,41 +6,34 @@ use crate::crafting_station::AnvilCraftingState;
 use crate::input::GameAction;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::ItemGrid;
 
 use super::render::{get_player_inventory_entries, get_recipe_entries};
 use super::state::{
-    ActiveAnvilEntity, AnvilModalState, AnvilPlayerGrid, AnvilRecipeGrid, AnvilRecipeRefresh,
+    ActiveAnvilEntity, AnvilPlayerGrid, AnvilRecipeGrid, AnvilRecipeRefresh,
 };
 
 /// Handle Tab key toggling focus between recipe grid and player inventory.
 pub fn handle_anvil_modal_tab(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
-    mut modal_state: Option<ResMut<AnvilModalState>>,
-    mut recipe_grids: Query<&mut ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
-    mut player_grids: Query<&mut ItemGrid, (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>)>,
+    focus_state: Option<ResMut<FocusState>>,
 ) {
     if active_modal.modal != Some(ModalType::AnvilModal) {
         return;
     }
 
-    let Some(ref mut modal_state) = modal_state else {
-        return;
-    };
+    let Some(mut focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            // Toggle focus
-            modal_state.recipes_focused = !modal_state.recipes_focused;
-
-            // Update ItemGrid focus states
-            if let Ok(mut grid) = recipe_grids.get_single_mut() {
-                grid.is_focused = !modal_state.recipes_focused;
-            }
-            if let Ok(mut grid) = player_grids.get_single_mut() {
-                grid.is_focused = modal_state.recipes_focused;
+            // Toggle between recipe grid and inventory
+            if focus_state.is_focused(FocusPanel::RecipeGrid) {
+                focus_state.set_focus(FocusPanel::AnvilInventory);
+            } else {
+                focus_state.set_focus(FocusPanel::RecipeGrid);
             }
         }
     }
@@ -50,7 +43,7 @@ pub fn handle_anvil_modal_tab(
 pub fn handle_anvil_modal_navigation(
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
-    modal_state: Option<Res<AnvilModalState>>,
+    focus_state: Option<Res<FocusState>>,
     mut recipe_grids: Query<&mut ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
     mut player_grids: Query<&mut ItemGrid, (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>)>,
 ) {
@@ -58,18 +51,16 @@ pub fn handle_anvil_modal_navigation(
         return;
     }
 
-    let Some(modal_state) = modal_state else {
-        return;
-    };
+    let Some(focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
-            if !modal_state.recipes_focused {
+            if focus_state.is_focused(FocusPanel::RecipeGrid) {
                 // Navigate recipe grid
                 if let Ok(mut grid) = recipe_grids.get_single_mut() {
                     grid.navigate(*direction);
                 }
-            } else {
+            } else if focus_state.is_focused(FocusPanel::AnvilInventory) {
                 // Navigate player inventory
                 if let Ok(mut grid) = player_grids.get_single_mut() {
                     grid.navigate(*direction);
@@ -84,7 +75,7 @@ pub fn handle_anvil_modal_select(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     active_modal: Res<ActiveModal>,
-    modal_state: Option<Res<AnvilModalState>>,
+    focus_state: Option<Res<FocusState>>,
     active_anvil: Option<Res<ActiveAnvilEntity>>,
     mut inventory: ResMut<Inventory>,
     mut anvil_state_query: Query<&mut AnvilCraftingState>,
@@ -95,9 +86,7 @@ pub fn handle_anvil_modal_select(
         return;
     }
 
-    let Some(modal_state) = modal_state else {
-        return;
-    };
+    let Some(focus_state) = focus_state else { return };
 
     let Some(active_anvil) = active_anvil else {
         return;
@@ -113,7 +102,7 @@ pub fn handle_anvil_modal_select(
         }
 
         // Only handle crafting when recipe grid is focused
-        if modal_state.recipes_focused {
+        if !focus_state.is_focused(FocusPanel::RecipeGrid) {
             continue;
         }
 

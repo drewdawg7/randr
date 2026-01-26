@@ -4,12 +4,13 @@ use crate::assets::GameFonts;
 use crate::economy::WorthGold;
 use crate::inventory::{Inventory, InventoryItem, ManagesEquipment, ManagesItems};
 use crate::stats::StatType;
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemStatsDisplay, OutlinedText};
+use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
 
 use super::state::{
-    MerchantDetailRefresh, MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid,
+    MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid,
 };
 
 /// Convert merchant stock to grid entries for display.
@@ -81,6 +82,11 @@ pub fn spawn_merchant_modal(
     commands.remove_resource::<super::state::SpawnMerchantModal>();
     active_modal.modal = Some(ModalType::MerchantModal);
 
+    // Initialize focus on merchant stock grid
+    commands.insert_resource(FocusState {
+        focused: Some(FocusPanel::MerchantStock),
+    });
+
     let stock_entries = get_merchant_stock_entries(&stock);
     let player_entries = get_player_inventory_entries(&inventory);
 
@@ -100,10 +106,10 @@ pub fn spawn_merchant_modal(
                     // Merchant stock grid (5x5) - focused by default
                     row.spawn((
                         MerchantStockGrid,
+                        ItemGridFocusPanel(FocusPanel::MerchantStock),
                         ItemGrid {
                             items: stock_entries,
                             selected_index: 0,
-                            is_focused: true,
                             grid_size: 5,
                         },
                     ));
@@ -111,10 +117,10 @@ pub fn spawn_merchant_modal(
                     // Player inventory grid (5x5)
                     row.spawn((
                         MerchantPlayerGrid,
+                        ItemGridFocusPanel(FocusPanel::PlayerInventory),
                         ItemGrid {
                             items: player_entries,
                             selected_index: 0,
-                            is_focused: false,
                             grid_size: 5,
                         },
                     ));
@@ -133,7 +139,7 @@ pub fn populate_merchant_detail_pane(
     game_fonts: Res<GameFonts>,
     stock: Option<Res<MerchantStock>>,
     inventory: Res<Inventory>,
-    refresh_trigger: Option<Res<MerchantDetailRefresh>>,
+    focus_state: Option<Res<FocusState>>,
     stock_grids: Query<&ItemGrid, With<MerchantStockGrid>>,
     player_grids: Query<&ItemGrid, With<MerchantPlayerGrid>>,
     mut panes: Query<&mut ItemDetailPane>,
@@ -143,23 +149,22 @@ pub fn populate_merchant_detail_pane(
         return;
     };
 
-    // Consume the refresh trigger if present
-    let force_refresh = refresh_trigger.is_some();
-    if force_refresh {
-        commands.remove_resource::<MerchantDetailRefresh>();
-    }
+    let Some(focus_state) = focus_state else {
+        return;
+    };
+
+    // Force refresh when FocusState changes
+    let focus_changed = focus_state.is_changed();
 
     // Determine which grid is focused and build the appropriate source
-    let source = if let Ok(grid) = stock_grids.get_single() {
-        if grid.is_focused {
+    let source = if focus_state.is_focused(FocusPanel::MerchantStock) {
+        if let Ok(grid) = stock_grids.get_single() {
             InfoPanelSource::Store { selected_index: grid.selected_index }
-        } else if let Ok(player_grid) = player_grids.get_single() {
-            InfoPanelSource::Inventory { selected_index: player_grid.selected_index }
         } else {
             return;
         }
-    } else if let Ok(grid) = player_grids.get_single() {
-        if grid.is_focused {
+    } else if focus_state.is_focused(FocusPanel::PlayerInventory) {
+        if let Ok(grid) = player_grids.get_single() {
             InfoPanelSource::Inventory { selected_index: grid.selected_index }
         } else {
             return;
@@ -176,9 +181,9 @@ pub fn populate_merchant_detail_pane(
         return;
     };
 
-    // Check if we need to update
+    // Check if we need to update (update on source change, first render, or focus change)
     let needs_initial = children.is_none();
-    if pane.source == source && !needs_initial && !force_refresh {
+    if pane.source == source && !needs_initial && !focus_changed {
         return;
     }
 

@@ -7,6 +7,57 @@ use bevy::prelude::*;
 
 use crate::ui::MenuIndex;
 
+// ============================================================================
+// FocusState - Centralized focus management for modals with multiple panels
+// ============================================================================
+
+/// Identifies which panel is focused in a multi-panel modal.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+pub enum FocusPanel {
+    // Inventory modal
+    EquipmentGrid,
+    BackpackGrid,
+    // Merchant modal
+    MerchantStock,
+    PlayerInventory,
+    // Forge modal
+    ForgeCraftingSlots,
+    ForgeInventory,
+    // Anvil modal
+    RecipeGrid,
+    AnvilInventory,
+}
+
+/// Resource tracking which panel is currently focused.
+///
+/// Use this instead of per-component/per-state focus fields for consistent
+/// focus management across all modals.
+#[derive(Resource, Default)]
+pub struct FocusState {
+    pub focused: Option<FocusPanel>,
+}
+
+impl FocusState {
+    /// Set focus to a specific panel.
+    pub fn set_focus(&mut self, panel: FocusPanel) {
+        self.focused = Some(panel);
+    }
+
+    /// Clear focus (no panel focused).
+    pub fn clear(&mut self) {
+        self.focused = None;
+    }
+
+    /// Check if a specific panel is focused.
+    pub fn is_focused(&self, panel: FocusPanel) -> bool {
+        self.focused == Some(panel)
+    }
+}
+
+// ============================================================================
+// SelectionState - Trait for resources managing list/menu selection
+// ============================================================================
+
 /// Trait for resources that manage selection state.
 ///
 /// Implement this trait for any resource that tracks a selected index

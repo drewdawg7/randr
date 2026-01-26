@@ -95,7 +95,6 @@ fn handle_anvil_close_with_crafting(
         active_modal.modal = None;
 
         // Clean up resources
-        commands.remove_resource::<super::state::AnvilModalState>();
         commands.remove_resource::<ActiveAnvilEntity>();
     }
 }

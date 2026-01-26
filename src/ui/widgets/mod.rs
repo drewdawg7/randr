@@ -21,7 +21,7 @@ pub use stack::{Stack, StackPlugin};
 pub use three_slice::spawn_three_slice_banner;
 pub use gold_display::{GoldDisplay, GoldDisplayPlugin};
 pub use icon_value_row::{IconSource, IconValueRow, IconValueRowPlugin};
-pub use item_grid::{ItemGrid, ItemGridEntry, ItemGridPlugin};
+pub use item_grid::{ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemGridPlugin};
 pub use item_stats_display::{ItemStatsDisplay, ItemStatsDisplayPlugin, StatsDisplayMode};
 pub use list_item::{
     AlchemistMarker, AlchemistRecipeItem, BlacksmithListItem, BlacksmithMarker,

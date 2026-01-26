@@ -21,12 +21,7 @@ pub struct AnvilPlayerGrid;
 #[derive(Resource)]
 pub struct ActiveAnvilEntity(pub Entity);
 
-/// Modal state resource tracking focus and selection.
-#[derive(Resource, Default)]
-pub struct AnvilModalState {
-    /// True = recipe grid focused, False = inventory focused
-    pub recipes_focused: bool,
-}
+// AnvilModalState removed - focus is now tracked via FocusState resource
 
 /// Trigger resource to spawn the anvil modal.
 #[derive(Resource)]
@@ -48,12 +43,10 @@ impl RegisteredModal for AnvilModal {
     const MODAL_TYPE: ModalType = ModalType::AnvilModal;
 
     fn spawn(world: &mut World) {
-        world.insert_resource(AnvilModalState::default());
         world.insert_resource(SpawnAnvilModal);
     }
 
     fn cleanup(world: &mut World) {
-        world.remove_resource::<AnvilModalState>();
         world.remove_resource::<ActiveAnvilEntity>();
         world.remove_resource::<AnvilRecipeRefresh>();
     }
