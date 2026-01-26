@@ -27,6 +27,8 @@ pub use list_item::{
     AlchemistMarker, AlchemistRecipeItem, BlacksmithListItem, BlacksmithMarker,
     SelectableListItem, StoreListItem, StoreMarker,
 };
-pub use outlined_text::{OutlinedText, OutlinedTextPlugin};
+pub use outlined_text::{
+    spawn_outlined_quantity_text, OutlinedQuantityConfig, OutlinedText, OutlinedTextPlugin,
+};
 pub use player_stats::{PlayerStats, PlayerStatsPlugin};
 pub use stat_row::{StatRow, StatRowPlugin};

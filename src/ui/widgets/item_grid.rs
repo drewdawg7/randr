@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use super::nine_slice::spawn_nine_slice_panel;
+use super::outlined_text::{spawn_outlined_quantity_text, OutlinedQuantityConfig};
 use crate::assets::{GameFonts, GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
 use crate::input::NavigationDirection;
 use crate::inventory::{Inventory, InventoryItem, ManagesItems};
@@ -256,6 +257,8 @@ fn on_add_item_grid(
                                             cell_content,
                                             &game_fonts,
                                             entry.quantity,
+                                            OutlinedQuantityConfig::default(),
+                                            GridItemQuantityText,
                                         );
                                     }
                                 });
@@ -274,62 +277,6 @@ struct GridItemSprite;
 /// Marker for quantity text inside grid cells.
 #[derive(Component)]
 struct GridItemQuantityText;
-
-/// Spawn quantity text with a black outline effect.
-/// Creates shadow text entities at 8 offsets around the main white text.
-fn spawn_outlined_quantity_text(
-    parent: &mut ChildBuilder,
-    game_fonts: &GameFonts,
-    quantity: u32,
-) {
-    let text = quantity.to_string();
-    let font_size = 14.0;
-
-    // Container for the outlined text
-    parent
-        .spawn((
-            GridItemQuantityText,
-            Node {
-                position_type: PositionType::Absolute,
-                right: Val::Px(2.0),
-                bottom: Val::Px(0.0),
-                ..default()
-            },
-        ))
-        .with_children(|text_container| {
-            // Shadow layers (black outline) - 8 directions
-            let offsets = [
-                (-1.0, -1.0),
-                (0.0, -1.0),
-                (1.0, -1.0),
-                (-1.0, 0.0),
-                (1.0, 0.0),
-                (-1.0, 1.0),
-                (0.0, 1.0),
-                (1.0, 1.0),
-            ];
-            for (x, y) in offsets {
-                text_container.spawn((
-                    Text::new(&text),
-                    game_fonts.pixel_font(font_size),
-                    TextColor(Color::BLACK),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::Px(x),
-                        top: Val::Px(y),
-                        ..default()
-                    },
-                ));
-            }
-
-            // Main white text on top
-            text_container.spawn((
-                Text::new(&text),
-                game_fonts.pixel_font(font_size),
-                TextColor(Color::WHITE),
-            ));
-        });
-}
 
 /// Update the item sprites in grid cells when the items list changes.
 fn update_grid_items(
@@ -390,6 +337,8 @@ fn update_grid_items(
                                 cell_content,
                                 &game_fonts,
                                 entry.quantity,
+                                OutlinedQuantityConfig::default(),
+                                GridItemQuantityText,
                             );
                         }
                     });

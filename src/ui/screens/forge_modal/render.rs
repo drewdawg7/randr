@@ -7,7 +7,10 @@ use crate::item::ItemId;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
+use crate::ui::widgets::{
+    spawn_outlined_quantity_text, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
+    ItemGridFocusPanel, ItemStatsDisplay, OutlinedQuantityConfig, OutlinedText,
+};
 
 use super::state::{
     ActiveForgeEntity, ForgeModalRoot, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex,
@@ -260,7 +263,13 @@ fn spawn_slot_item(
 
         // Quantity text if > 1
         if quantity > 1 {
-            spawn_slot_quantity_text(cell, game_fonts, quantity);
+            spawn_outlined_quantity_text(
+                cell,
+                game_fonts,
+                quantity,
+                OutlinedQuantityConfig::default(),
+                ForgeSlotQuantityText,
+            );
         }
     }
 }
@@ -289,56 +298,6 @@ fn spawn_slot_selector(cell: &mut ChildBuilder, game_sprites: &GameSprites) {
             ));
         }
     }
-}
-
-/// Spawn quantity text with outline for slot items.
-fn spawn_slot_quantity_text(parent: &mut ChildBuilder, game_fonts: &GameFonts, quantity: u32) {
-    let text = quantity.to_string();
-    let font_size = 14.0;
-
-    parent
-        .spawn((
-            ForgeSlotQuantityText,
-            Node {
-                position_type: PositionType::Absolute,
-                right: Val::Px(2.0),
-                bottom: Val::Px(0.0),
-                ..default()
-            },
-        ))
-        .with_children(|text_container| {
-            // Shadow layers (black outline)
-            let offsets = [
-                (-1.0, -1.0),
-                (0.0, -1.0),
-                (1.0, -1.0),
-                (-1.0, 0.0),
-                (1.0, 0.0),
-                (-1.0, 1.0),
-                (0.0, 1.0),
-                (1.0, 1.0),
-            ];
-            for (x, y) in offsets {
-                text_container.spawn((
-                    Text::new(&text),
-                    game_fonts.pixel_font(font_size),
-                    TextColor(Color::BLACK),
-                    Node {
-                        position_type: PositionType::Absolute,
-                        left: Val::Px(x),
-                        top: Val::Px(y),
-                        ..default()
-                    },
-                ));
-            }
-
-            // Main white text on top
-            text_container.spawn((
-                Text::new(&text),
-                game_fonts.pixel_font(font_size),
-                TextColor(Color::WHITE),
-            ));
-        });
 }
 
 /// Animate the forge slot selector.
