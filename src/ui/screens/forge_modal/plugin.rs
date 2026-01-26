@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::ui::modal_registry::modal_close_system;
+use crate::ui::screens::modal::in_forge_modal;
 
 use super::input::{handle_forge_modal_navigation, handle_forge_modal_select, handle_forge_modal_tab};
 use super::render::{
@@ -18,17 +19,21 @@ impl Plugin for ForgeModalPlugin {
             (
                 handle_forge_close_with_crafting,
                 modal_close_system::<ForgeModal>,
-                handle_forge_modal_tab,
-                handle_forge_modal_navigation,
-                handle_forge_modal_select,
+                (
+                    handle_forge_modal_tab,
+                    handle_forge_modal_navigation,
+                    handle_forge_modal_select,
+                    refresh_forge_slots.run_if(resource_exists::<ForgeSlotRefresh>),
+                    populate_forge_item_detail_pane,
+                ).run_if(in_forge_modal),
                 spawn_forge_modal.run_if(resource_exists::<SpawnForgeModal>),
-                refresh_forge_slots.run_if(resource_exists::<ForgeSlotRefresh>),
-                populate_forge_item_detail_pane,
             ),
         )
         .add_systems(
             PostUpdate,
-            (update_forge_slot_selector, animate_forge_slot_selector).chain(),
+            (update_forge_slot_selector, animate_forge_slot_selector)
+                .chain()
+                .run_if(in_forge_modal),
         );
     }
 }

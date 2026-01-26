@@ -7,7 +7,6 @@ use crate::input::GameAction;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::ItemGrid;
 
 use super::render::{get_player_inventory_entries, get_recipe_entries};
@@ -16,41 +15,28 @@ use super::state::{
 };
 
 /// Handle Tab key toggling focus between recipe grid and player inventory.
+/// Only runs when anvil modal is active (via run_if condition).
 pub fn handle_anvil_modal_tab(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<ResMut<FocusState>>,
 ) {
-    if active_modal.modal != Some(ModalType::AnvilModal) {
-        return;
-    }
-
     let Some(mut focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            // Toggle between recipe grid and inventory
-            if focus_state.is_focused(FocusPanel::RecipeGrid) {
-                focus_state.set_focus(FocusPanel::AnvilInventory);
-            } else {
-                focus_state.set_focus(FocusPanel::RecipeGrid);
-            }
+            focus_state.toggle_between(FocusPanel::RecipeGrid, FocusPanel::AnvilInventory);
         }
     }
 }
 
 /// Handle arrow key navigation within the anvil modal.
+/// Only runs when anvil modal is active (via run_if condition).
 pub fn handle_anvil_modal_navigation(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     mut recipe_grids: Query<&mut ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
     mut player_grids: Query<&mut ItemGrid, (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>)>,
 ) {
-    if active_modal.modal != Some(ModalType::AnvilModal) {
-        return;
-    }
-
     let Some(focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
@@ -71,10 +57,10 @@ pub fn handle_anvil_modal_navigation(
 }
 
 /// Handle Enter key for crafting selected recipe.
+/// Only runs when anvil modal is active (via run_if condition).
 pub fn handle_anvil_modal_select(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     active_anvil: Option<Res<ActiveAnvilEntity>>,
     mut inventory: ResMut<Inventory>,
@@ -82,10 +68,6 @@ pub fn handle_anvil_modal_select(
     recipe_grids: Query<&ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
     mut player_grids: Query<&mut ItemGrid, (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>)>,
 ) {
-    if active_modal.modal != Some(ModalType::AnvilModal) {
-        return;
-    }
-
     let Some(focus_state) = focus_state else { return };
 
     let Some(active_anvil) = active_anvil else {

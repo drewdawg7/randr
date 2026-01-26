@@ -52,6 +52,18 @@ impl FocusState {
     pub fn is_focused(&self, panel: FocusPanel) -> bool {
         self.focused == Some(panel)
     }
+
+    /// Toggle focus between two panels.
+    ///
+    /// If `first` is currently focused, switches to `second`.
+    /// Otherwise (including if no panel is focused), switches to `first`.
+    pub fn toggle_between(&mut self, first: FocusPanel, second: FocusPanel) {
+        if self.is_focused(first) {
+            self.set_focus(second);
+        } else {
+            self.set_focus(first);
+        }
+    }
 }
 
 // ============================================================================

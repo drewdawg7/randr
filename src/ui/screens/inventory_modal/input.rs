@@ -3,48 +3,34 @@ use bevy::prelude::*;
 use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, Inventory, ManagesEquipment};
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::{ItemGrid, ItemGridEntry};
 
 use super::render::{get_backpack_items, get_equipment_items};
 use super::state::{BackpackGrid, EquipmentGrid};
 
 /// System to handle Tab key toggling focus between equipment and backpack grids.
+/// Only runs when inventory modal is active (via run_if condition).
 pub fn handle_inventory_modal_tab(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<ResMut<FocusState>>,
 ) {
-    if active_modal.modal != Some(ModalType::Inventory) {
-        return;
-    }
-
     let Some(mut focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            // Toggle between equipment and backpack grids
-            if focus_state.is_focused(FocusPanel::EquipmentGrid) {
-                focus_state.set_focus(FocusPanel::BackpackGrid);
-            } else {
-                focus_state.set_focus(FocusPanel::EquipmentGrid);
-            }
+            focus_state.toggle_between(FocusPanel::EquipmentGrid, FocusPanel::BackpackGrid);
         }
     }
 }
 
 /// System to handle arrow key navigation within the focused inventory grid.
+/// Only runs when inventory modal is active (via run_if condition).
 pub fn handle_inventory_modal_navigation(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
     mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ) {
-    if active_modal.modal != Some(ModalType::Inventory) {
-        return;
-    }
-
     let Some(focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
@@ -63,18 +49,14 @@ pub fn handle_inventory_modal_navigation(
 }
 
 /// System to handle Enter key equipping/unequipping items in the inventory modal.
+/// Only runs when inventory modal is active (via run_if condition).
 pub fn handle_inventory_modal_select(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     mut inventory: ResMut<Inventory>,
     mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
     mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ) {
-    if active_modal.modal != Some(ModalType::Inventory) {
-        return;
-    }
-
     let Some(focus_state) = focus_state else { return };
 
     for action in action_reader.read() {

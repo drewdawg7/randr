@@ -116,18 +116,17 @@ The input.rs file only needs to handle:
 Close handling is automatic via `modal_close_system::<MyModal>` registered in the plugin.
 See [modal-registry.md](modal-registry.md) for details.
 
-```rust
-use crate::ui::screens::modal::{ActiveModal, ModalType};
+**Run Conditions (Bevy Idiomatic):** Modal input systems use `run_if()` with modal-specific conditions
+instead of checking modal state inside each handler. This is more efficient (systems don't run at all
+when the wrong modal is active) and follows Bevy idioms.
 
-/// Handle internal modal navigation
+```rust
+// input.rs - no ActiveModal check needed; plugin uses run_if(in_my_modal)
 pub fn handle_navigation(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
-    mut selection: ResMut<MyModalSelection>,
+    focus_state: Option<ResMut<FocusState>>,
 ) {
-    if active_modal.modal != Some(ModalType::MyModal) {
-        return;
-    }
+    let Some(mut focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         match action {
@@ -163,6 +162,7 @@ Plugin struct (note: no toggle handler, handled by NavigationPlugin):
 
 ```rust
 use crate::ui::modal_registry::modal_close_system;
+use crate::ui::screens::modal::in_my_modal;
 
 pub struct MyModalPlugin;
 
@@ -171,8 +171,13 @@ impl Plugin for MyModalPlugin {
         app.init_resource::<MyModalSelection>()
             .add_systems(Update, (
                 modal_close_system::<MyModal>,
-                handle_navigation,
-                update_display,
+                // Input systems use run_if - they only run when this modal is active
+                (
+                    handle_tab,
+                    handle_navigation,
+                    handle_select,
+                    update_display,
+                ).run_if(in_my_modal),
                 trigger_spawn_modal.run_if(resource_exists::<SpawnMyModal>),
             ));
     }
@@ -186,6 +191,22 @@ fn trigger_spawn_modal(
     spawn_modal(&mut commands, /* ... */);
 }
 ```
+
+### Run Condition Functions
+
+Define run conditions in `src/ui/screens/modal.rs`:
+
+```rust
+pub fn in_my_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::MyModal)
+}
+```
+
+Existing run conditions:
+- `in_inventory_modal` - Inventory modal
+- `in_merchant_modal` - Merchant modal
+- `in_forge_modal` - Forge modal
+- `in_anvil_modal` - Anvil modal
 
 ## Examples
 

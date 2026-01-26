@@ -173,3 +173,39 @@ pub fn close_modal<T: Component>(
     }
     false
 }
+
+// ============================================================================
+// Modal Run Conditions
+// ============================================================================
+//
+// Use these functions with `.run_if()` to conditionally run modal input systems.
+// This is more efficient than checking modal state inside each handler.
+//
+// Example:
+// ```
+// app.add_systems(Update, (
+//     handle_inventory_modal_tab,
+//     handle_inventory_modal_navigation,
+//     handle_inventory_modal_select,
+// ).run_if(in_inventory_modal));
+// ```
+
+/// Run condition: returns true when the inventory modal is active.
+pub fn in_inventory_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::Inventory)
+}
+
+/// Run condition: returns true when the merchant modal is active.
+pub fn in_merchant_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::MerchantModal)
+}
+
+/// Run condition: returns true when the forge modal is active.
+pub fn in_forge_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::ForgeModal)
+}
+
+/// Run condition: returns true when the anvil modal is active.
+pub fn in_anvil_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::AnvilModal)
+}

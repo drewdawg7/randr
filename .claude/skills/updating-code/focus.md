@@ -46,6 +46,24 @@ impl FocusState {
     pub fn set_focus(&mut self, panel: FocusPanel);
     pub fn clear(&mut self);
     pub fn is_focused(&self, panel: FocusPanel) -> bool;
+    pub fn toggle_between(&mut self, first: FocusPanel, second: FocusPanel);
+}
+```
+
+The `toggle_between` method is useful for Tab key handlers to cycle between two panels:
+
+```rust
+pub fn handle_modal_tab(
+    mut action_reader: EventReader<GameAction>,
+    focus_state: Option<ResMut<FocusState>>,
+) {
+    let Some(mut focus_state) = focus_state else { return };
+
+    for action in action_reader.read() {
+        if *action == GameAction::NextTab {
+            focus_state.toggle_between(FocusPanel::PanelA, FocusPanel::PanelB);
+        }
+    }
 }
 ```
 
@@ -53,25 +71,20 @@ impl FocusState {
 
 **Important:** Use `Option<Res<FocusState>>` or `Option<ResMut<FocusState>>` since the resource only exists when a modal is open.
 
+**Run Conditions:** Modal input systems use `run_if(in_*_modal)` conditions in the plugin,
+so individual handlers don't need to check `ActiveModal`. See [modals.md](modals.md) for details.
+
 ```rust
+// input.rs - no ActiveModal check needed; plugin uses run_if(in_my_modal)
 pub fn handle_modal_tab(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<ResMut<FocusState>>,
 ) {
-    if active_modal.modal != Some(ModalType::MyModal) {
-        return;
-    }
-
     let Some(mut focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            if focus_state.is_focused(FocusPanel::PanelA) {
-                focus_state.set_focus(FocusPanel::PanelB);
-            } else {
-                focus_state.set_focus(FocusPanel::PanelA);
-            }
+            focus_state.toggle_between(FocusPanel::PanelA, FocusPanel::PanelB);
         }
     }
 }
@@ -320,6 +333,21 @@ These only run when the state resource changes (`is_changed()`).
 | `src/ui/screens/anvil_modal/state.rs` | Removed `AnvilModalState` |
 | `src/ui/screens/anvil_modal/plugin.rs` | Removed AnvilModalState cleanup |
 | `src/ui/screens/dungeon/plugin.rs` | Removed AnvilModalState usage |
+
+## Files Changed in Issue #374 (Modal Run Conditions)
+
+| File | Change |
+|------|--------|
+| `src/ui/screens/modal.rs` | Added `in_inventory_modal`, `in_merchant_modal`, `in_forge_modal`, `in_anvil_modal` run conditions |
+| `src/ui/focus.rs` | Added `toggle_between` method to `FocusState` |
+| `src/ui/screens/inventory_modal/plugin.rs` | Added `.run_if(in_inventory_modal)` to input systems |
+| `src/ui/screens/inventory_modal/input.rs` | Removed `ActiveModal` checks, simplified tab handler |
+| `src/ui/screens/merchant_modal/plugin.rs` | Added `.run_if(in_merchant_modal)` to input systems |
+| `src/ui/screens/merchant_modal/input.rs` | Removed `ActiveModal` checks, simplified tab handler |
+| `src/ui/screens/forge_modal/plugin.rs` | Added `.run_if(in_forge_modal)` to input systems |
+| `src/ui/screens/forge_modal/input.rs` | Removed `ActiveModal` checks, simplified tab handler |
+| `src/ui/screens/anvil_modal/plugin.rs` | Added `.run_if(in_anvil_modal)` to input systems |
+| `src/ui/screens/anvil_modal/input.rs` | Removed `ActiveModal` checks, simplified tab handler |
 
 ## Related Documentation
 

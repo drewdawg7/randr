@@ -5,7 +5,6 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::ItemGrid;
 
 use super::render::get_player_inventory_entries;
@@ -14,41 +13,28 @@ use super::state::{
 };
 
 /// Handle Tab key toggling focus between crafting slots and player inventory.
+/// Only runs when forge modal is active (via run_if condition).
 pub fn handle_forge_modal_tab(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<ResMut<FocusState>>,
 ) {
-    if active_modal.modal != Some(ModalType::ForgeModal) {
-        return;
-    }
-
     let Some(mut focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            // Toggle between crafting slots and inventory
-            if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
-                focus_state.set_focus(FocusPanel::ForgeInventory);
-            } else {
-                focus_state.set_focus(FocusPanel::ForgeCraftingSlots);
-            }
+            focus_state.toggle_between(FocusPanel::ForgeCraftingSlots, FocusPanel::ForgeInventory);
         }
     }
 }
 
 /// Handle arrow key navigation within the forge modal.
+/// Only runs when forge modal is active (via run_if condition).
 pub fn handle_forge_modal_navigation(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     mut modal_state: Option<ResMut<ForgeModalState>>,
     mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
 ) {
-    if active_modal.modal != Some(ModalType::ForgeModal) {
-        return;
-    }
-
     let Some(focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
@@ -77,10 +63,10 @@ pub fn handle_forge_modal_navigation(
 }
 
 /// Handle Enter key for moving items between inventory and forge slots.
+/// Only runs when forge modal is active (via run_if condition).
 pub fn handle_forge_modal_select(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
     active_forge: Option<Res<ActiveForgeEntity>>,
@@ -88,10 +74,6 @@ pub fn handle_forge_modal_select(
     mut forge_state_query: Query<&mut ForgeCraftingState>,
     mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
 ) {
-    if active_modal.modal != Some(ModalType::ForgeModal) {
-        return;
-    }
-
     let Some(focus_state) = focus_state else { return };
 
     let Some(modal_state) = modal_state else {

@@ -7,7 +7,7 @@ use crate::crafting_station::AnvilCraftingState;
 use crate::ui::animation::{AnimationConfig, SpriteAnimation};
 use crate::ui::modal_registry::modal_close_system;
 use crate::ui::screens::dungeon::plugin::AnvilActiveTimer;
-use crate::ui::screens::modal::{ActiveModal, ModalType};
+use crate::ui::screens::modal::{in_anvil_modal, ActiveModal, ModalType};
 
 use super::input::{
     handle_anvil_modal_navigation, handle_anvil_modal_select, handle_anvil_modal_tab,
@@ -28,12 +28,14 @@ impl Plugin for AnvilModalPlugin {
             (
                 handle_anvil_close_with_crafting,
                 modal_close_system::<AnvilModal>,
-                handle_anvil_modal_tab,
-                handle_anvil_modal_navigation,
-                handle_anvil_modal_select,
+                (
+                    handle_anvil_modal_tab,
+                    handle_anvil_modal_navigation,
+                    handle_anvil_modal_select,
+                    refresh_anvil_recipes.run_if(resource_exists::<AnvilRecipeRefresh>),
+                    populate_anvil_detail_pane,
+                ).run_if(in_anvil_modal),
                 spawn_anvil_modal.run_if(resource_exists::<SpawnAnvilModal>),
-                refresh_anvil_recipes.run_if(resource_exists::<AnvilRecipeRefresh>),
-                populate_anvil_detail_pane,
             ),
         );
     }

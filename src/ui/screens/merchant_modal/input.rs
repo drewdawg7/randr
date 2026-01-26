@@ -5,50 +5,36 @@ use crate::input::GameAction;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::player::PlayerGold;
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::ItemGrid;
 
 use super::render::{get_merchant_stock_entries, get_player_inventory_entries};
 use super::state::{MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
 
 /// System to handle Tab key toggling focus between merchant stock and player inventory grids.
+/// Only runs when merchant modal is active (via run_if condition).
 pub fn handle_merchant_modal_tab(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     mut focus_state: Option<ResMut<FocusState>>,
 ) {
-    if active_modal.modal != Some(ModalType::MerchantModal) {
-        return;
-    }
-
     let Some(ref mut focus_state) = focus_state else {
         return;
     };
 
     for action in action_reader.read() {
         if *action == GameAction::NextTab {
-            // Toggle between merchant stock and player inventory
-            if focus_state.is_focused(FocusPanel::MerchantStock) {
-                focus_state.set_focus(FocusPanel::PlayerInventory);
-            } else {
-                focus_state.set_focus(FocusPanel::MerchantStock);
-            }
+            focus_state.toggle_between(FocusPanel::MerchantStock, FocusPanel::PlayerInventory);
         }
     }
 }
 
 /// System to handle arrow key navigation within the focused merchant modal grid.
+/// Only runs when merchant modal is active (via run_if condition).
 pub fn handle_merchant_modal_navigation(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
     mut player_grids: Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
 ) {
-    if active_modal.modal != Some(ModalType::MerchantModal) {
-        return;
-    }
-
     let Some(focus_state) = focus_state else {
         return;
     };
@@ -69,9 +55,9 @@ pub fn handle_merchant_modal_navigation(
 }
 
 /// System to handle Enter key for buying/selling items.
+/// Only runs when merchant modal is active (via run_if condition).
 pub fn handle_merchant_modal_select(
     mut action_reader: EventReader<GameAction>,
-    active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     mut player_gold: ResMut<PlayerGold>,
     mut inventory: ResMut<Inventory>,
@@ -79,10 +65,6 @@ pub fn handle_merchant_modal_select(
     mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
     mut player_grids: Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
 ) {
-    if active_modal.modal != Some(ModalType::MerchantModal) {
-        return;
-    }
-
     let Some(focus_state) = focus_state else {
         return;
     };
