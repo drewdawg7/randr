@@ -9,6 +9,7 @@ use super::layout::DungeonLayout;
 use super::room_patterns::{Rect, RoomPattern, RoomPatternKind};
 use super::spawn::SpawnTable;
 use super::tile::{Tile, TileType};
+use super::variant_strategy::{default_strategy, VariantStrategy, VariantStrategyKind};
 
 pub struct LayoutBuilder {
     width: usize,
@@ -19,6 +20,7 @@ pub struct LayoutBuilder {
     spawn_table: Option<SpawnTable>,
     torch_count: Option<RangeInclusive<u8>>,
     patterns: Vec<(Rect, RoomPatternKind)>,
+    variant_strategy: VariantStrategyKind,
 }
 
 impl LayoutBuilder {
@@ -32,6 +34,7 @@ impl LayoutBuilder {
             spawn_table: None,
             torch_count: None,
             patterns: Vec::new(),
+            variant_strategy: default_strategy(),
         }
     }
 
@@ -75,6 +78,12 @@ impl LayoutBuilder {
         self.pattern_at(bounds, pattern)
     }
 
+    /// Set the variant strategy for tile generation.
+    pub fn variant_strategy(mut self, strategy: VariantStrategyKind) -> Self {
+        self.variant_strategy = strategy;
+        self
+    }
+
     pub fn build(self) -> DungeonLayout {
         let entrance = self
             .entrance
@@ -95,11 +104,7 @@ impl LayoutBuilder {
                     TileType::Floor
                 };
 
-                let variant = if tile_type == TileType::Floor {
-                    if rng.gen_range(0u8..4) < 3 { 0 } else { rng.gen_range(1u8..5) }
-                } else {
-                    0
-                };
+                let variant = self.variant_strategy.choose_variant(x, y, tile_type, &mut rng);
 
                 layout.set_tile(x, y, Tile::new(tile_type).with_variant(variant));
             }
@@ -112,7 +117,7 @@ impl LayoutBuilder {
 
         // Set entrance (PlayerSpawn)
         let (ex, ey) = entrance;
-        let spawn_variant = if rng.gen_range(0u8..4) < 3 { 0 } else { rng.gen_range(1u8..5) };
+        let spawn_variant = self.variant_strategy.choose_variant(ex, ey, TileType::PlayerSpawn, &mut rng);
         layout.set_tile(ex, ey, Tile::new(TileType::PlayerSpawn).with_variant(spawn_variant));
         layout.entrance = entrance;
 

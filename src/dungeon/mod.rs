@@ -13,6 +13,7 @@ pub mod spawn;
 pub mod spawn_rules;
 pub mod state;
 pub mod tile;
+pub mod variant_strategy;
 
 pub use commands::DungeonCommands;
 pub use entity::{DungeonEntity, EntityRenderData};
@@ -33,3 +34,7 @@ pub use spawn_rules::{
 pub use room_patterns::{ComposedPattern, Rect, RoomPattern, RoomPatternKind};
 pub use state::DungeonState;
 pub use tile::{Tile, TileType};
+pub use variant_strategy::{
+    CheckerboardVariant, ClusteredVariant, PatternVariant, PercentageVariant, TileTypeVariant,
+    UniformVariant, VariantStrategy, VariantStrategyKind,
+};

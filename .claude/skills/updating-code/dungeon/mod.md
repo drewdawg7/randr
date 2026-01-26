@@ -287,12 +287,13 @@ let layout = LayoutBuilder::new(40, 21)
 - `door(x, y)` - Sets decorative door on back wall (y=0, impassable `TileType::Door`)
 - `torches(range)` - Sets torch count range (e.g., `2..=4`), placed randomly on back wall
 - `spawn(SpawnTable)` - Sets entity spawn rules (applied during build)
+- `variant_strategy(VariantStrategyKind)` - Sets tile variant selection strategy (see [variant-strategy.md](variant-strategy.md))
 - `build()` - Produces `DungeonLayout`, panics if entrance not set
 
 **Automatic features:**
 - 1-tile Wall border around edges
 - Interior filled with Floor tiles
-- Floor variants randomized: 75% `Slice_73`, 25% split among `FloorTile2/3/4` and `Slice_83`
+- Floor variants selected using `VariantStrategy` (default: 75% variant 0, 25% split among 1-4)
 - Torches placed randomly on back wall (y=0) if set, avoiding corners, exit, and door
 - Spawn table applied automatically if set
 

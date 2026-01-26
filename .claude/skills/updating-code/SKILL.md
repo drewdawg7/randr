@@ -42,6 +42,9 @@ Read the relevant doc BEFORE making changes.
 | ChestSpawner, WeightedMobSpawner, custom spawners | [dungeon/spawn-rules.md](dungeon/spawn-rules.md) |
 | RoomPattern trait, Rect, ComposedPattern | [dungeon/room-patterns.md](dungeon/room-patterns.md) |
 | LayoutBuilder pattern_at, custom tile patterns | [dungeon/room-patterns.md](dungeon/room-patterns.md) |
+| VariantStrategy trait, tile visual variety | [dungeon/variant-strategy.md](dungeon/variant-strategy.md) |
+| PercentageVariant, ClusteredVariant, UniformVariant | [dungeon/variant-strategy.md](dungeon/variant-strategy.md) |
+| LayoutBuilder variant_strategy, floor variants | [dungeon/variant-strategy.md](dungeon/variant-strategy.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Dungeon movement, SmoothPosition, interpolation | [dungeon/ui.md](dungeon/ui.md) |
 | EntityLayer, entity absolute positioning | [dungeon/ui.md](dungeon/ui.md) |

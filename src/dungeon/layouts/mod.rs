@@ -1,3 +1,4 @@
+mod clustered_floor;
 mod layout_id;
 mod starting_room;
 
