@@ -334,17 +334,26 @@ let treasure = SpawnTable::new().chest(5..=8);
 - `chest(range)` - Sets chest count range (e.g., `1..=2`), always 1x1
 - `stairs(range)` - Sets stairs count range (e.g., `1..=1`), always 1x1
 - `rock(range)` - Sets rock count range (e.g., `2..=4`), always 1x1, random RockType
+- `forge(range)` - Sets forge count range (e.g., `0..=1`)
+- `anvil(range)` - Sets anvil count range (e.g., `0..=1`)
+- `forge_chance(probability)` - Spawn 1 forge with probability (0.0-1.0)
+- `anvil_chance(probability)` - Spawn 1 anvil with probability (0.0-1.0)
+- `npc(MobId, range)` - Add NPC spawn with count range
+- `npc_chance(MobId, probability)` - Spawn 1 NPC with probability (0.0-1.0)
 - `apply(&mut layout, &mut rng)` - Applies spawns to layout
 
 **Algorithm (via SpawnRule implementations):**
 1. Chests - `ChestSpawner` with random variants 0-3
 2. Stairs - `StairsSpawner`
 3. Rocks - `RockSpawner` with random RockType
-4. Forges - `CraftingStationSpawner(Forge)`
-5. Anvils - `CraftingStationSpawner(Anvil)`
-6. NPCs - `NpcSpawner`
-7. Guaranteed mobs - `GuaranteedMobSpawner`
-8. Weighted mobs - `WeightedMobSpawner`
+4. Forges (count) - `CraftingStationSpawner(Forge)`
+5. Forges (probability) - `ProbabilityCraftingStationSpawner(Forge)`
+6. Anvils (count) - `CraftingStationSpawner(Anvil)`
+7. Anvils (probability) - `ProbabilityCraftingStationSpawner(Anvil)`
+8. NPCs (count) - `NpcSpawner`
+9. NPCs (probability) - `ProbabilityNpcSpawner`
+10. Guaranteed mobs - `GuaranteedMobSpawner`
+11. Weighted mobs - `WeightedMobSpawner`
 
 Each spawner uses `layout.spawn_areas(size)` to find valid positions. Entities never overlap.
 

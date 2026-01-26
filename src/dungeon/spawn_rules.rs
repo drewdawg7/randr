@@ -32,7 +32,9 @@ pub enum SpawnRuleKind {
     Stairs(StairsSpawner),
     Rock(RockSpawner),
     CraftingStation(CraftingStationSpawner),
+    ProbabilityCraftingStation(ProbabilityCraftingStationSpawner),
     Npc(NpcSpawner),
+    ProbabilityNpc(ProbabilityNpcSpawner),
     GuaranteedMob(GuaranteedMobSpawner),
     WeightedMob(WeightedMobSpawner),
     FixedPosition(FixedPositionSpawner),
@@ -45,7 +47,9 @@ impl SpawnRule for SpawnRuleKind {
             Self::Stairs(s) => s.apply(layout, rng),
             Self::Rock(s) => s.apply(layout, rng),
             Self::CraftingStation(s) => s.apply(layout, rng),
+            Self::ProbabilityCraftingStation(s) => s.apply(layout, rng),
             Self::Npc(s) => s.apply(layout, rng),
+            Self::ProbabilityNpc(s) => s.apply(layout, rng),
             Self::GuaranteedMob(s) => s.apply(layout, rng),
             Self::WeightedMob(s) => s.apply(layout, rng),
             Self::FixedPosition(s) => s.apply(layout, rng),
@@ -374,6 +378,73 @@ impl SpawnRule for WeightedMobSpawner {
         }
 
         spawned
+    }
+}
+
+/// Spawns a crafting station with a given probability (0.0 to 1.0).
+#[derive(Clone)]
+pub struct ProbabilityCraftingStationSpawner {
+    station_type: CraftingStationType,
+    probability: f64,
+}
+
+impl ProbabilityCraftingStationSpawner {
+    pub fn new(station_type: CraftingStationType, probability: f64) -> Self {
+        Self {
+            station_type,
+            probability,
+        }
+    }
+}
+
+impl SpawnRule for ProbabilityCraftingStationSpawner {
+    fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
+        if rng.gen_bool(self.probability) {
+            let areas = layout.spawn_areas(GridSize::single());
+            if let Some(&pos) = areas.choose(rng) {
+                layout.add_entity(
+                    pos,
+                    DungeonEntity::CraftingStation {
+                        station_type: self.station_type,
+                        size: GridSize::single(),
+                    },
+                );
+                return 1;
+            }
+        }
+        0
+    }
+}
+
+/// Spawns an NPC with a given probability (0.0 to 1.0).
+#[derive(Clone)]
+pub struct ProbabilityNpcSpawner {
+    mob_id: MobId,
+    probability: f64,
+}
+
+impl ProbabilityNpcSpawner {
+    pub fn new(mob_id: MobId, probability: f64) -> Self {
+        Self { mob_id, probability }
+    }
+}
+
+impl SpawnRule for ProbabilityNpcSpawner {
+    fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
+        if rng.gen_bool(self.probability) {
+            let areas = layout.spawn_areas(GridSize::single());
+            if let Some(&pos) = areas.choose(rng) {
+                layout.add_entity(
+                    pos,
+                    DungeonEntity::Npc {
+                        mob_id: self.mob_id,
+                        size: GridSize::single(),
+                    },
+                );
+                return 1;
+            }
+        }
+        0
     }
 }
 

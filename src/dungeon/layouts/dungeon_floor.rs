@@ -19,7 +19,11 @@ pub fn create_with_stairs() -> DungeonLayout {
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
                 .mob_count(3..=4)
-                .stairs(1..=1),
+                .stairs(1..=1)
+                .rock(0..=4)
+                .forge_chance(0.33)
+                .anvil_chance(0.33)
+                .npc_chance(MobId::Merchant, 0.33),
         )
         .build()
 }
@@ -39,7 +43,11 @@ pub fn create_final() -> DungeonLayout {
             SpawnTable::new()
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
-                .mob_count(3..=4),
+                .mob_count(3..=4)
+                .rock(0..=4)
+                .forge_chance(0.33)
+                .anvil_chance(0.33)
+                .npc_chance(MobId::Merchant, 0.33),
         )
         .build()
 }

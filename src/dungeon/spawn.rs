@@ -6,7 +6,8 @@ use super::grid::GridSize;
 use super::layout::DungeonLayout;
 use super::spawn_rules::{
     ChestSpawner, ComposedSpawnRules, CraftingStationSpawner, GuaranteedMobSpawner, NpcSpawner,
-    RockSpawner, SpawnRule, SpawnRuleKind, StairsSpawner, WeightedMobSpawner,
+    ProbabilityCraftingStationSpawner, ProbabilityNpcSpawner, RockSpawner, SpawnRule,
+    SpawnRuleKind, StairsSpawner, WeightedMobSpawner,
 };
 use crate::crafting_station::CraftingStationType;
 use crate::mob::MobId;
@@ -34,8 +35,11 @@ pub struct SpawnTable {
     rock_count: RangeInclusive<u32>,
     forge_count: RangeInclusive<u32>,
     anvil_count: RangeInclusive<u32>,
+    forge_chance: Option<f64>,
+    anvil_chance: Option<f64>,
     guaranteed_mobs: Vec<(MobId, u32)>,
     npc_spawns: Vec<(MobId, RangeInclusive<u32>)>,
+    npc_chances: Vec<(MobId, f64)>,
 }
 
 impl Default for SpawnTable {
@@ -54,8 +58,11 @@ impl SpawnTable {
             rock_count: 0..=0,
             forge_count: 0..=0,
             anvil_count: 0..=0,
+            forge_chance: None,
+            anvil_chance: None,
             guaranteed_mobs: Vec::new(),
             npc_spawns: Vec::new(),
+            npc_chances: Vec::new(),
         }
     }
 
@@ -109,6 +116,18 @@ impl SpawnTable {
         self
     }
 
+    /// Spawn 1 forge with given probability (0.0 to 1.0).
+    pub fn forge_chance(mut self, probability: f64) -> Self {
+        self.forge_chance = Some(probability);
+        self
+    }
+
+    /// Spawn 1 anvil with given probability (0.0 to 1.0).
+    pub fn anvil_chance(mut self, probability: f64) -> Self {
+        self.anvil_chance = Some(probability);
+        self
+    }
+
     /// Guarantee exactly `count` of this mob spawn on the floor (before weighted selection).
     pub fn guaranteed_mob(mut self, mob_id: MobId, count: u32) -> Self {
         self.guaranteed_mobs.push((mob_id, count));
@@ -118,6 +137,12 @@ impl SpawnTable {
     /// Add NPC spawns (blocks movement, no combat).
     pub fn npc(mut self, mob_id: MobId, count: RangeInclusive<u32>) -> Self {
         self.npc_spawns.push((mob_id, count));
+        self
+    }
+
+    /// Spawn 1 NPC with given probability (0.0 to 1.0).
+    pub fn npc_chance(mut self, mob_id: MobId, probability: f64) -> Self {
+        self.npc_chances.push((mob_id, probability));
         self
     }
 
@@ -140,7 +165,7 @@ impl SpawnTable {
             rules.push(SpawnRuleKind::Rock(RockSpawner::new(self.rock_count.clone())));
         }
 
-        // 4. Forges
+        // 4. Forges (count range)
         if *self.forge_count.end() > 0 {
             rules.push(SpawnRuleKind::CraftingStation(CraftingStationSpawner::new(
                 CraftingStationType::Forge,
@@ -148,7 +173,14 @@ impl SpawnTable {
             )));
         }
 
-        // 5. Anvils
+        // 5. Forges (probability)
+        if let Some(probability) = self.forge_chance {
+            rules.push(SpawnRuleKind::ProbabilityCraftingStation(
+                ProbabilityCraftingStationSpawner::new(CraftingStationType::Forge, probability),
+            ));
+        }
+
+        // 6. Anvils (count range)
         if *self.anvil_count.end() > 0 {
             rules.push(SpawnRuleKind::CraftingStation(CraftingStationSpawner::new(
                 CraftingStationType::Anvil,
@@ -156,17 +188,31 @@ impl SpawnTable {
             )));
         }
 
-        // 6. NPCs
+        // 7. Anvils (probability)
+        if let Some(probability) = self.anvil_chance {
+            rules.push(SpawnRuleKind::ProbabilityCraftingStation(
+                ProbabilityCraftingStationSpawner::new(CraftingStationType::Anvil, probability),
+            ));
+        }
+
+        // 8. NPCs (count range)
         for (mob_id, count_range) in &self.npc_spawns {
             rules.push(SpawnRuleKind::Npc(NpcSpawner::new(*mob_id, count_range.clone())));
         }
 
-        // 7. Guaranteed mobs
+        // 9. NPCs (probability)
+        for (mob_id, probability) in &self.npc_chances {
+            rules.push(SpawnRuleKind::ProbabilityNpc(ProbabilityNpcSpawner::new(
+                *mob_id, *probability,
+            )));
+        }
+
+        // 10. Guaranteed mobs
         for (mob_id, count) in &self.guaranteed_mobs {
             rules.push(SpawnRuleKind::GuaranteedMob(GuaranteedMobSpawner::new(*mob_id, *count)));
         }
 
-        // 8. Weighted mobs
+        // 11. Weighted mobs
         if !self.entries.is_empty() && *self.mob_count.end() > 0 {
             let mut weighted = WeightedMobSpawner::new().count(self.mob_count.clone());
             for entry in &self.entries {
