@@ -142,6 +142,10 @@ pub struct ForgeSlotQuantityText;
 pub struct ForgeSlotSelector { pub timer, pub frame, pub frame_indices }
 ```
 
+### Quantity Text
+
+Quantity text uses the shared `spawn_outlined_quantity_text` function from `src/ui/widgets/outlined_text.rs`. The `ForgeSlotQuantityText` marker component is passed to identify these text entities for updates.
+
 ## Opening the Modal
 
 From dungeon interaction (`handle_mine_interaction`):

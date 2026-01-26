@@ -21,9 +21,33 @@ pub struct ItemGrid {
 ```rust
 #[derive(Clone)]
 pub struct ItemGridEntry {
-    pub sprite_name: String,  // Slice name in icon_items sprite sheet
-    pub quantity: u32,        // Quantity to display (only shown if > 1)
+    pub sprite_sheet_key: SpriteSheetKey,  // Sprite sheet containing the icon
+    pub sprite_name: String,               // Slice name in sprite sheet
+    pub quantity: u32,                     // Quantity to display (only shown if > 1)
 }
+
+impl ItemGridEntry {
+    /// Create a grid entry from an inventory item.
+    pub fn from_inventory_item(inv_item: &InventoryItem) -> Self;
+
+    /// Create grid entries from all items in an inventory.
+    pub fn from_inventory(inventory: &Inventory) -> Vec<Self>;
+}
+```
+
+### Creating Entries from Inventory
+
+Use the helper methods to avoid duplicating conversion code:
+
+```rust
+// Convert all inventory items to grid entries
+let entries = ItemGridEntry::from_inventory(&inventory);
+
+// Convert equipped items to grid entries
+let entries: Vec<ItemGridEntry> = get_equipment_items(&inventory)
+    .iter()
+    .map(|inv_item| ItemGridEntry::from_inventory_item(inv_item))
+    .collect();
 ```
 
 ## Usage
@@ -57,7 +81,9 @@ parent.spawn(ItemGrid {
 ## Quantity Display
 
 - Quantities > 1 displayed as white text (14px) with black outline in bottom-right corner
-- Uses `spawn_outlined_quantity_text()` helper which creates 8 shadow layers for outline effect
+- Uses shared `spawn_outlined_quantity_text` function from `src/ui/widgets/outlined_text.rs`
+- Creates 8 shadow layers for the outline effect
+- Uses `GridItemQuantityText` as the marker component for reactive updates
 - Positioned at `right: 2px, bottom: 0px`
 
 ## Size Calculation
