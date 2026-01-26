@@ -124,6 +124,7 @@ fn refresh_grids(
         eq_grid.items = get_equipment_items(inventory)
             .iter()
             .map(|inv_item| ItemGridEntry {
+                sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
                 sprite_name: inv_item.item.item_id.sprite_name().to_string(),
                 quantity: inv_item.quantity,
             })
@@ -139,6 +140,7 @@ fn refresh_grids(
         bp_grid.items = get_backpack_items(inventory)
             .iter()
             .map(|inv_item| ItemGridEntry {
+                sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
                 sprite_name: inv_item.item.item_id.sprite_name().to_string(),
                 quantity: inv_item.quantity,
             })

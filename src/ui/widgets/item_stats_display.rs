@@ -31,6 +31,8 @@ pub enum StatsDisplayMode {
 pub struct ItemStatsDisplay {
     /// Stats to display as (StatType, value) pairs.
     pub stats: Vec<(StatType, i32)>,
+    /// Comparison stats from equipped item (for showing deltas).
+    pub comparison: Option<Vec<(StatType, i32)>>,
     /// Font size for stat text.
     pub font_size: f32,
     /// Text color for stat values.
@@ -49,10 +51,17 @@ impl ItemStatsDisplay {
     {
         Self {
             stats: iter.into_iter().filter(|(_, v)| *v > 0).collect(),
+            comparison: None,
             font_size: 18.0,
             text_color: Color::srgb(0.4, 0.25, 0.15),
             mode: StatsDisplayMode::default(),
         }
+    }
+
+    /// Set comparison stats from equipped item for showing deltas.
+    pub fn with_comparison(mut self, comparison: Vec<(StatType, i32)>) -> Self {
+        self.comparison = Some(comparison);
+        self
     }
 
     pub fn with_font_size(mut self, size: f32) -> Self {

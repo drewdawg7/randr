@@ -71,7 +71,7 @@ fn handle_forge_close_with_crafting(
             forge_state.is_crafting = true;
 
             // Start forge animation
-            if let Some(sheet) = game_sprites.get(SpriteSheetKey::Forge) {
+            if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
                 if let (Some(first), Some(last)) =
                     (sheet.get("forge_1_active1"), sheet.get("forge_1_active3"))
                 {

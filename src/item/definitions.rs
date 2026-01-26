@@ -555,6 +555,11 @@ impl ItemId {
         }
     }
 
+    /// Get the sprite sheet key for this item's icon.
+    pub fn sprite_sheet_key(&self) -> crate::assets::SpriteSheetKey {
+        crate::assets::SpriteSheetKey::IconItems
+    }
+
     /// Get the sprite slice name for this item in the IconItems sprite sheet.
     pub fn sprite_name(&self) -> &'static str {
         match self {

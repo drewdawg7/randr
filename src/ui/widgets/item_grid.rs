@@ -22,7 +22,9 @@ impl Plugin for ItemGridPlugin {
 /// An item to display in the grid.
 #[derive(Clone)]
 pub struct ItemGridEntry {
-    /// Slice name in icon_items sprite sheet (e.g., "Slice_337")
+    /// Sprite sheet containing the item icon
+    pub sprite_sheet_key: SpriteSheetKey,
+    /// Slice name in the sprite sheet (e.g., "Slice_337")
     pub sprite_name: String,
     /// Quantity to display (only shown if > 1)
     pub quantity: u32,
