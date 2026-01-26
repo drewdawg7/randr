@@ -13,6 +13,48 @@ use super::state::{
     MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid,
 };
 
+/// Sync system that reactively updates grids when inventory or stock changes.
+/// Uses Bevy's native change detection via `is_changed()`.
+pub fn sync_merchant_grids(
+    inventory: Res<Inventory>,
+    stock: Option<Res<MerchantStock>>,
+    mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
+    mut player_grids: Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
+) {
+    let Some(stock) = stock else {
+        return;
+    };
+
+    // Only run if inventory or stock has changed
+    if !inventory.is_changed() && !stock.is_changed() {
+        return;
+    }
+
+    // Update stock grid if stock changed
+    if stock.is_changed() {
+        if let Ok(mut grid) = stock_grids.get_single_mut() {
+            grid.items = get_merchant_stock_entries(&stock);
+            if !grid.items.is_empty() {
+                grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
+            } else {
+                grid.selected_index = 0;
+            }
+        }
+    }
+
+    // Update player grid if inventory changed
+    if inventory.is_changed() {
+        if let Ok(mut grid) = player_grids.get_single_mut() {
+            grid.items = get_player_inventory_entries(&inventory);
+            if !grid.items.is_empty() {
+                grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
+            } else {
+                grid.selected_index = 0;
+            }
+        }
+    }
+}
+
 /// Convert merchant stock to grid entries for display.
 pub fn get_merchant_stock_entries(stock: &MerchantStock) -> Vec<ItemGridEntry> {
     stock
@@ -153,8 +195,8 @@ pub fn populate_merchant_detail_pane(
         return;
     };
 
-    // Force refresh when FocusState changes
-    let focus_changed = focus_state.is_changed();
+    // Check for data changes that require refresh
+    let data_changed = stock.is_changed() || inventory.is_changed();
 
     // Determine which grid is focused and build the appropriate source
     let source = if focus_state.is_focused(FocusPanel::MerchantStock) {
@@ -181,9 +223,12 @@ pub fn populate_merchant_detail_pane(
         return;
     };
 
-    // Check if we need to update (update on source change, first render, or focus change)
+    // Check if we need to update:
+    // - First render (no children yet)
+    // - Source changed (different selection or focus)
+    // - Data changed (stock or inventory was modified)
     let needs_initial = children.is_none();
-    if pane.source == source && !needs_initial && !focus_changed {
+    if pane.source == source && !needs_initial && !data_changed {
         return;
     }
 

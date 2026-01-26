@@ -6,9 +6,56 @@ use crate::stats::StatType;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
+use crate::ui::widgets::{
+    ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel,
+    ItemStatsDisplay, OutlinedText,
+};
 
 use super::state::{BackpackGrid, EquipmentGrid, InventoryModalRoot};
+
+/// Sync system that reactively updates grids when inventory changes.
+/// Uses Bevy's native change detection via `is_changed()`.
+pub fn sync_inventory_to_grids(
+    inventory: Res<Inventory>,
+    mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
+    mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
+) {
+    if !inventory.is_changed() {
+        return;
+    }
+
+    if let Ok(mut eq_grid) = equipment_grids.get_single_mut() {
+        eq_grid.items = get_equipment_items(&inventory)
+            .iter()
+            .map(|inv_item| ItemGridEntry {
+                sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
+                sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+                quantity: inv_item.quantity,
+            })
+            .collect();
+        if !eq_grid.items.is_empty() {
+            eq_grid.selected_index = eq_grid.selected_index.min(eq_grid.items.len() - 1);
+        } else {
+            eq_grid.selected_index = 0;
+        }
+    }
+
+    if let Ok(mut bp_grid) = backpack_grids.get_single_mut() {
+        bp_grid.items = get_backpack_items(&inventory)
+            .iter()
+            .map(|inv_item| ItemGridEntry {
+                sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
+                sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+                quantity: inv_item.quantity,
+            })
+            .collect();
+        if !bp_grid.items.is_empty() {
+            bp_grid.selected_index = bp_grid.selected_index.min(bp_grid.items.len() - 1);
+        } else {
+            bp_grid.selected_index = 0;
+        }
+    }
+}
 
 /// Returns equipment items in slot order. Each entry corresponds to an EquipmentSlot.
 /// Only populated slots produce entries.
@@ -156,9 +203,13 @@ pub fn populate_item_detail_pane(
         return;
     };
 
-    // Check if we need to update
+    // Check if we need to update:
+    // - First render (no children yet)
+    // - Source changed (different selection or focus)
+    // - Inventory changed (item at same index may be different)
     let needs_initial = children.is_none();
-    if pane.source == source && !needs_initial {
+    let inventory_changed = inventory.is_changed();
+    if pane.source == source && !needs_initial && !inventory_changed {
         return;
     }
 

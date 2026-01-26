@@ -7,7 +7,6 @@ use crate::player::PlayerGold;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::ItemGrid;
 
-use super::render::{get_merchant_stock_entries, get_player_inventory_entries};
 use super::state::{MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
 
 /// System to handle Tab key toggling focus between merchant stock and player inventory grids.
@@ -62,8 +61,8 @@ pub fn handle_merchant_modal_select(
     mut player_gold: ResMut<PlayerGold>,
     mut inventory: ResMut<Inventory>,
     mut stock: Option<ResMut<MerchantStock>>,
-    mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
-    mut player_grids: Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
+    stock_grids: Query<&ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
+    player_grids: Query<&ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
 ) {
     let Some(focus_state) = focus_state else {
         return;
@@ -127,36 +126,9 @@ pub fn handle_merchant_modal_select(
             }
         }
 
-        // Only refresh grids when a transaction actually occurred
-        // The detail pane will refresh automatically via FocusState change detection
-        if transaction_occurred {
-            refresh_grids(stock, &inventory, &mut stock_grids, &mut player_grids);
-        }
-    }
-}
-
-fn refresh_grids(
-    stock: &MerchantStock,
-    inventory: &Inventory,
-    stock_grids: &mut Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
-    player_grids: &mut Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
-) {
-    if let Ok(mut grid) = stock_grids.get_single_mut() {
-        grid.items = get_merchant_stock_entries(stock);
-        if !grid.items.is_empty() {
-            grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
-        } else {
-            grid.selected_index = 0;
-        }
-    }
-
-    if let Ok(mut grid) = player_grids.get_single_mut() {
-        grid.items = get_player_inventory_entries(inventory);
-        if !grid.items.is_empty() {
-            grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
-        } else {
-            grid.selected_index = 0;
-        }
+        // Grids will be refreshed reactively by sync_merchant_grids when
+        // inventory or stock changes are detected
+        let _ = transaction_occurred;
     }
 }
 

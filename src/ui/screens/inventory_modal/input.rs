@@ -3,9 +3,9 @@ use bevy::prelude::*;
 use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, Inventory, ManagesEquipment};
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::widgets::{ItemGrid, ItemGridEntry};
+use crate::ui::widgets::ItemGrid;
 
-use super::render::{get_backpack_items, get_equipment_items};
+use super::render::get_backpack_items;
 use super::state::{BackpackGrid, EquipmentGrid};
 
 /// System to handle Tab key toggling focus between equipment and backpack grids.
@@ -54,8 +54,8 @@ pub fn handle_inventory_modal_select(
     mut action_reader: EventReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut inventory: ResMut<Inventory>,
-    mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
-    mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
+    equipment_grids: Query<&ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
+    backpack_grids: Query<&ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ) {
     let Some(focus_state) = focus_state else { return };
 
@@ -91,45 +91,6 @@ pub fn handle_inventory_modal_select(
             }
         }
 
-        // Refresh both grids with updated inventory data
-        refresh_grids(&inventory, &mut equipment_grids, &mut backpack_grids);
-    }
-}
-
-fn refresh_grids(
-    inventory: &Inventory,
-    equipment_grids: &mut Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
-    backpack_grids: &mut Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
-) {
-    if let Ok(mut eq_grid) = equipment_grids.get_single_mut() {
-        eq_grid.items = get_equipment_items(inventory)
-            .iter()
-            .map(|inv_item| ItemGridEntry {
-                sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
-                sprite_name: inv_item.item.item_id.sprite_name().to_string(),
-                quantity: inv_item.quantity,
-            })
-            .collect();
-        if !eq_grid.items.is_empty() {
-            eq_grid.selected_index = eq_grid.selected_index.min(eq_grid.items.len() - 1);
-        } else {
-            eq_grid.selected_index = 0;
-        }
-    }
-
-    if let Ok(mut bp_grid) = backpack_grids.get_single_mut() {
-        bp_grid.items = get_backpack_items(inventory)
-            .iter()
-            .map(|inv_item| ItemGridEntry {
-                sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
-                sprite_name: inv_item.item.item_id.sprite_name().to_string(),
-                quantity: inv_item.quantity,
-            })
-            .collect();
-        if !bp_grid.items.is_empty() {
-            bp_grid.selected_index = bp_grid.selected_index.min(bp_grid.items.len() - 1);
-        } else {
-            bp_grid.selected_index = 0;
-        }
+        // Grids will be refreshed reactively by sync_inventory_to_grids
     }
 }
