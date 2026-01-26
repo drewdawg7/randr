@@ -7,10 +7,10 @@ Modal displaying the player's equipment and backpack items as two `ItemGrid` wid
 ```
 src/ui/screens/inventory_modal/
 ├── mod.rs      # Module declarations, re-exports InventoryModalPlugin + InventoryModal
-├── plugin.rs   # InventoryModalPlugin: close, tab, navigation, populate, and spawn trigger
+├── plugin.rs   # InventoryModalPlugin: close, tab, navigation, sync, populate, and spawn trigger
 ├── state.rs    # InventoryModalRoot, EquipmentGrid, BackpackGrid, SpawnInventoryModal, InventoryModal
-├── input.rs    # handle_inventory_modal_close, handle_inventory_modal_tab, handle_inventory_modal_navigation
-└── render.rs   # spawn_inventory_modal, populate_item_detail_pane, get_equipment_items, get_backpack_items
+├── input.rs    # handle_inventory_modal_tab, handle_inventory_modal_navigation, handle_inventory_modal_select
+└── render.rs   # spawn_inventory_modal, sync_inventory_to_grids, populate_item_detail_pane, get_equipment_items, get_backpack_items
 ```
 
 ## Behavior
@@ -91,7 +91,7 @@ fn navigate_grid(grid: &mut ItemGrid, direction: NavigationDirection) {
   - Calls `inventory.equip_from_inventory(uuid, slot)` — automatically swaps if slot is occupied
   - Non-equipment items (materials, consumables) are ignored
 
-After any change, `refresh_grids()` rebuilds both grids' `items` vectors and clamps `selected_index`. The `ItemGridPlugin`'s `update_grid_items` system then reactively updates the cell sprites.
+Grids update automatically via `sync_inventory_to_grids` which uses Bevy's change detection (`inventory.is_changed()`).
 
 ### Slot Mapping for Equipment Grid
 
@@ -118,6 +118,25 @@ pub fn get_equipment_items(inventory: &Inventory) -> Vec<&InventoryItem>
 pub fn get_backpack_items(inventory: &Inventory) -> Vec<&InventoryItem>
 ```
 
+## Reactive Grid Sync
+
+The `sync_inventory_to_grids` system uses Bevy's native change detection to automatically update grids when inventory changes:
+
+```rust
+pub fn sync_inventory_to_grids(
+    inventory: Res<Inventory>,
+    mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
+    mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
+) {
+    if !inventory.is_changed() {
+        return;
+    }
+    // Rebuild grid items and clamp selected_index...
+}
+```
+
+This replaces manual `refresh_grids()` calls after equip/unequip operations.
+
 ## Detail Pane Population
 
 The `populate_item_detail_pane` system runs every frame and checks if the pane needs updating:
@@ -125,7 +144,7 @@ The `populate_item_detail_pane` system runs every frame and checks if the pane n
 1. Queries both grids, finds the one with `is_focused == true`
 2. Builds an `InfoPanelSource` (`Equipment` or `Inventory`) with the focused grid's `selected_index`
 3. Compares against current `pane.source` (uses `PartialEq`)
-4. On mismatch (or first frame with no children), updates content:
+4. On mismatch, first render, **or inventory change** (`inventory.is_changed()`), updates content:
    - Despawns existing `ItemDetailPaneContent` children
    - Looks up item via `get_equipment_items` or `get_backpack_items` at `selected_index`
    - Spawns: item name, item type, quality label, quantity (if > 1), and `ItemStatsDisplay`
@@ -163,9 +182,10 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
 
 | System | Schedule | Run Condition |
 |--------|----------|---------------|
-| `handle_inventory_modal_close` | Update | Always (guards on ActiveModal) |
-| `handle_inventory_modal_tab` | Update | Always (guards on ActiveModal) |
-| `handle_inventory_modal_navigation` | Update | Always (guards on ActiveModal) |
-| `handle_inventory_modal_select` | Update | Always (guards on ActiveModal) |
-| `populate_item_detail_pane` | Update | Always (guards internally on query results) |
+| `modal_close_system::<InventoryModal>` | Update | Always |
+| `handle_inventory_modal_tab` | Update | `in_inventory_modal` |
+| `handle_inventory_modal_navigation` | Update | `in_inventory_modal` |
+| `handle_inventory_modal_select` | Update | `in_inventory_modal` |
+| `sync_inventory_to_grids` | Update | `in_inventory_modal` |
+| `populate_item_detail_pane` | Update | `in_inventory_modal` |
 | `trigger_spawn_inventory_modal` | Update | `resource_exists::<SpawnInventoryModal>` |

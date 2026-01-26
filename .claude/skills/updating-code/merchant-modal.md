@@ -8,7 +8,7 @@ Modal that opens when pressing Space next to a Merchant NPC in the dungeon.
 src/ui/screens/merchant_modal/
   mod.rs         - Module exports
   state.rs       - Components, resources, RegisteredModal impl
-  render.rs      - UI spawning, detail pane population
+  render.rs      - UI spawning, sync_merchant_grids, detail pane population
   input.rs       - Tab, navigation, buy/sell handlers
   plugin.rs      - Plugin registration
 ```
@@ -73,23 +73,37 @@ Uses `spawn_modal_overlay` directly (no Modal builder):
 - Add gold via `PlayerGold::add()`
 - Decrease quantity by 1 via `inventory.decrease_item_quantity()` (removes item when quantity reaches 0)
 
+Grids update automatically via `sync_merchant_grids` which uses Bevy's change detection.
+
+## Reactive Grid Sync
+
+The `sync_merchant_grids` system uses Bevy's native change detection to automatically update grids:
+
+```rust
+pub fn sync_merchant_grids(
+    inventory: Res<Inventory>,
+    stock: Option<Res<MerchantStock>>,
+    mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
+    mut player_grids: Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
+) {
+    if !inventory.is_changed() && !stock.is_changed() {
+        return;
+    }
+    // Update stock grid if stock changed, player grid if inventory changed...
+}
+```
+
+This replaces manual `refresh_grids()` calls after buy/sell transactions.
+
 ## Detail Pane Population
 
 `populate_merchant_detail_pane` system:
 - Checks which grid is focused
 - Updates `ItemDetailPane.source` accordingly
+- Detects data changes via `stock.is_changed() || inventory.is_changed()`
 - Populates `ItemDetailPaneContent` with item name, type, quality, quantity, price, stats
 
-### Forcing Detail Pane Refresh
-
-After buy/sell transactions, the detail pane needs to refresh even when the selected index hasn't changed (the item at that slot may have changed). Use `MerchantDetailRefresh` resource:
-
-```rust
-// In handle_merchant_modal_select after a successful transaction:
-commands.insert_resource(MerchantDetailRefresh);
-```
-
-The `populate_merchant_detail_pane` system checks for this resource and forces an update when present, then removes it.
+The system automatically refreshes when stock or inventory changes (using Bevy's change detection), so no manual refresh trigger is needed after transactions.
 
 ## Stock Generation
 
