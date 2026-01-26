@@ -102,6 +102,7 @@ fn on_add_item_stats_display(
 
     // Capture values before removing component
     let stats = display.stats.clone();
+    let comparison = display.comparison.clone();
     let font_size = display.font_size;
     let text_color = display.text_color;
     let mode = display.mode;
@@ -115,14 +116,46 @@ fn on_add_item_stats_display(
         })
         .with_children(|parent| {
             for (stat_type, value) in stats {
+                // Calculate delta if comparison exists
+                let delta = comparison.as_ref().map(|comp_stats| {
+                    let equipped_value = comp_stats
+                        .iter()
+                        .find(|(t, _)| *t == stat_type)
+                        .map(|(_, v)| *v)
+                        .unwrap_or(0);
+                    value - equipped_value
+                });
+
                 match mode {
                     StatsDisplayMode::TextOnly => {
                         // Text-only format: "HP: +5"
-                        parent.spawn((
-                            Text::new(format!("{}: +{}", stat_type.display_name(), value)),
-                            game_fonts.pixel_font(font_size),
-                            TextColor(text_color),
-                        ));
+                        parent
+                            .spawn(Node {
+                                flex_direction: FlexDirection::Row,
+                                column_gap: Val::Px(4.0),
+                                ..default()
+                            })
+                            .with_children(|row| {
+                                row.spawn((
+                                    Text::new(format!("{}: +{}", stat_type.display_name(), value)),
+                                    game_fonts.pixel_font(font_size),
+                                    TextColor(text_color),
+                                ));
+                                if let Some(d) = delta {
+                                    if d != 0 {
+                                        let (delta_text, delta_color) = if d > 0 {
+                                            (format!("(+{})", d), Color::srgb(0.3, 0.8, 0.3))
+                                        } else {
+                                            (format!("({})", d), Color::srgb(0.8, 0.3, 0.3))
+                                        };
+                                        row.spawn((
+                                            Text::new(delta_text),
+                                            game_fonts.pixel_font(font_size),
+                                            TextColor(delta_color),
+                                        ));
+                                    }
+                                }
+                            });
                     }
                     StatsDisplayMode::IconValue => {
                         // Icon + value format
@@ -147,6 +180,20 @@ fn on_add_item_stats_display(
                                     game_fonts.pixel_font(font_size),
                                     TextColor(text_color),
                                 ));
+                                if let Some(d) = delta {
+                                    if d != 0 {
+                                        let (delta_text, delta_color) = if d > 0 {
+                                            (format!("(+{})", d), Color::srgb(0.3, 0.8, 0.3))
+                                        } else {
+                                            (format!("({})", d), Color::srgb(0.8, 0.3, 0.3))
+                                        };
+                                        row.spawn((
+                                            Text::new(delta_text),
+                                            game_fonts.pixel_font(font_size),
+                                            TextColor(delta_color),
+                                        ));
+                                    }
+                                }
                             });
                     }
                 }
