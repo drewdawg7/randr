@@ -4,7 +4,10 @@ use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_inventory_modal;
 
 use super::input::{handle_inventory_modal_navigation, handle_inventory_modal_select, handle_inventory_modal_tab};
-use super::render::{populate_item_detail_pane, sync_inventory_to_grids};
+use super::render::{
+    populate_inventory_detail_pane_content, sync_inventory_to_grids,
+    update_inventory_detail_pane_source,
+};
 use super::state::InventoryModal;
 
 /// Plugin that manages the inventory modal system.
@@ -22,8 +25,10 @@ impl Plugin for InventoryModalPlugin {
                         handle_inventory_modal_navigation,
                         handle_inventory_modal_select,
                         sync_inventory_to_grids,
-                        populate_item_detail_pane,
-                    ).run_if(in_inventory_modal),
+                        update_inventory_detail_pane_source,
+                        populate_inventory_detail_pane_content,
+                    )
+                        .run_if(in_inventory_modal),
                 ),
             );
     }

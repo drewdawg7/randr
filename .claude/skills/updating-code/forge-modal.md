@@ -108,7 +108,17 @@ Handles Enter key:
 ### `refresh_forge_slots`
 Updates slot visuals when `ForgeSlotRefresh` resource exists.
 
-### `populate_forge_item_detail_pane`
+### `update_forge_detail_pane_source`
+Updates `pane.source` based on focus, modal state, and grid selection. Only runs when:
+- `FocusState` changes (tab between crafting slots and inventory)
+- `ForgeModalState` changes (slot selection)
+- `ItemGrid.selected_index` changes (navigation in inventory)
+
+### `populate_forge_detail_pane_content`
+Renders content when source or data changes. Only runs when:
+- `pane.source` changed (via source update system)
+- `inventory.is_changed()` or `ForgeCraftingState.is_changed()` (data changed)
+
 Shows item details for selected inventory item or forge slot contents.
 
 ### `handle_forge_close_with_crafting`

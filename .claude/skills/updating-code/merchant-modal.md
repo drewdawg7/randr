@@ -95,15 +95,30 @@ pub fn sync_merchant_grids(
 
 This replaces manual `refresh_grids()` calls after buy/sell transactions.
 
-## Detail Pane Population
+## Detail Pane Systems
 
-`populate_merchant_detail_pane` system:
-- Checks which grid is focused
-- Updates `ItemDetailPane.source` accordingly
-- Detects data changes via `stock.is_changed() || inventory.is_changed()`
-- Populates `ItemDetailPaneContent` with item name, type, quality, quantity, price, stats
+Detail pane logic is split into two systems for efficient change detection:
 
-The system automatically refreshes when stock or inventory changes (using Bevy's change detection), so no manual refresh trigger is needed after transactions.
+### `update_merchant_detail_pane_source`
+Updates `pane.source` based on focus and grid selection. Only runs when:
+- `FocusState` changes (tab between grids)
+- `ItemGrid.selected_index` changes (navigation)
+
+Uses `Ref<ItemGrid>` to check `is_changed()` on each grid.
+
+### `populate_merchant_detail_pane_content`
+Renders content when source or data changes. Only runs when:
+- `pane.source` changed (via source update system)
+- `stock.is_changed() || inventory.is_changed()` (data changed after buy/sell)
+
+Uses `Ref<ItemDetailPane>` to check `is_changed()` for pane updates.
+
+**Content rendered:**
+- Item name (quality-colored with black outline)
+- Item type, quality label
+- Quantity (if > 1)
+- Price label: "Price: Xg" for store items, "Sell: Xg" for player items
+- `ItemStatsDisplay` with stat comparison for equipment
 
 ## Stock Generation
 

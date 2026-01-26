@@ -172,163 +172,187 @@ pub fn spawn_merchant_modal_impl(
         });
 }
 
-/// Populates the item detail pane with the currently selected item's information.
-pub fn populate_merchant_detail_pane(
+/// Updates the detail pane source based on which grid is focused and selected.
+/// Only runs when focus or grid selection changes.
+pub fn update_merchant_detail_pane_source(
+    focus_state: Option<Res<FocusState>>,
+    stock_grids: Query<Ref<ItemGrid>, With<MerchantStockGrid>>,
+    player_grids: Query<Ref<ItemGrid>, With<MerchantPlayerGrid>>,
+    mut panes: Query<&mut ItemDetailPane>,
+) {
+    let Some(focus_state) = focus_state else {
+        return;
+    };
+
+    // Check if focus or any grid changed
+    let focus_changed = focus_state.is_changed();
+    let stock_grid_changed = stock_grids
+        .get_single()
+        .map(|g| g.is_changed())
+        .unwrap_or(false);
+    let player_grid_changed = player_grids
+        .get_single()
+        .map(|g| g.is_changed())
+        .unwrap_or(false);
+
+    if !focus_changed && !stock_grid_changed && !player_grid_changed {
+        return;
+    }
+
+    // Determine source from focused grid
+    let source = if focus_state.is_focused(FocusPanel::MerchantStock) {
+        stock_grids
+            .get_single()
+            .ok()
+            .map(|g| InfoPanelSource::Store {
+                selected_index: g.selected_index,
+            })
+    } else if focus_state.is_focused(FocusPanel::PlayerInventory) {
+        player_grids
+            .get_single()
+            .ok()
+            .map(|g| InfoPanelSource::Inventory {
+                selected_index: g.selected_index,
+            })
+    } else {
+        None
+    };
+
+    let Some(source) = source else {
+        return;
+    };
+
+    // Update pane source (only if different to avoid unnecessary Changed trigger)
+    for mut pane in &mut panes {
+        if pane.source != source {
+            pane.source = source;
+        }
+    }
+}
+
+/// Populates the detail pane content when the source, stock, or inventory changes.
+/// Uses Ref<ItemDetailPane> for change detection.
+pub fn populate_merchant_detail_pane_content(
     mut commands: Commands,
     game_fonts: Res<GameFonts>,
     stock: Option<Res<MerchantStock>>,
     inventory: Res<Inventory>,
-    focus_state: Option<Res<FocusState>>,
-    stock_grids: Query<&ItemGrid, With<MerchantStockGrid>>,
-    player_grids: Query<&ItemGrid, With<MerchantPlayerGrid>>,
-    mut panes: Query<&mut ItemDetailPane>,
+    panes: Query<Ref<ItemDetailPane>>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
     let Some(stock) = stock else {
         return;
     };
 
-    let Some(focus_state) = focus_state else {
-        return;
-    };
-
     // Check for data changes that require refresh
     let data_changed = stock.is_changed() || inventory.is_changed();
 
-    // Determine which grid is focused and build the appropriate source
-    let source = if focus_state.is_focused(FocusPanel::MerchantStock) {
-        if let Ok(grid) = stock_grids.get_single() {
-            InfoPanelSource::Store { selected_index: grid.selected_index }
-        } else {
-            return;
+    for pane in &panes {
+        // Check if we need to update: pane.source changed OR data changed
+        if !pane.is_changed() && !data_changed {
+            continue;
         }
-    } else if focus_state.is_focused(FocusPanel::PlayerInventory) {
-        if let Ok(grid) = player_grids.get_single() {
-            InfoPanelSource::Inventory { selected_index: grid.selected_index }
-        } else {
-            return;
+
+        let Ok((content_entity, children)) = content_query.get_single() else {
+            continue;
+        };
+
+        // Despawn existing content children
+        if let Some(children) = children {
+            for &child in children.iter() {
+                commands.entity(child).despawn_recursive();
+            }
         }
-    } else {
-        return;
-    };
 
-    let Ok(mut pane) = panes.get_single_mut() else {
-        return;
-    };
-
-    let Ok((content_entity, children)) = content_query.get_single() else {
-        return;
-    };
-
-    // Check if we need to update:
-    // - First render (no children yet)
-    // - Source changed (different selection or focus)
-    // - Data changed (stock or inventory was modified)
-    let needs_initial = children.is_none();
-    if pane.source == source && !needs_initial && !data_changed {
-        return;
-    }
-
-    // Update pane source
-    pane.source = source;
-
-    // Despawn existing content children
-    if let Some(children) = children {
-        for &child in children.iter() {
-            commands.entity(child).despawn_recursive();
-        }
-    }
-
-    // Look up the selected item based on which grid is focused
-    let item_info: Option<(&crate::item::Item, u32, Option<i32>)> = match source {
-        InfoPanelSource::Store { selected_index } => {
-            stock.items.get(selected_index).and_then(|store_item| {
-                store_item.display_item().map(|item| {
-                    let qty = store_item.quantity() as u32;
-                    let price = item.purchase_price();
-                    (item, qty, Some(price))
+        // Look up the selected item based on source
+        let item_info: Option<(&crate::item::Item, u32, Option<i32>)> = match pane.source {
+            InfoPanelSource::Store { selected_index } => {
+                stock.items.get(selected_index).and_then(|store_item| {
+                    store_item.display_item().map(|item| {
+                        let qty = store_item.quantity() as u32;
+                        let price = item.purchase_price();
+                        (item, qty, Some(price))
+                    })
                 })
-            })
-        }
-        InfoPanelSource::Inventory { selected_index } => {
-            get_player_inventory_items(&inventory)
+            }
+            InfoPanelSource::Inventory { selected_index } => get_player_inventory_items(&inventory)
                 .get(selected_index)
                 .map(|inv_item| {
                     let price = inv_item.item.sell_price();
                     (&inv_item.item, inv_item.quantity, Some(price))
-                })
-        }
-        _ => None,
-    };
+                }),
+            _ => None,
+        };
 
-    let Some((item, quantity, price)) = item_info else {
-        return;
-    };
+        let Some((item, quantity, price)) = item_info else {
+            continue;
+        };
 
-    // Spawn item details
-    commands.entity(content_entity).with_children(|parent| {
-        // Item name (quality-colored with black outline)
-        parent.spawn(
-            OutlinedText::new(&item.name)
-                .with_font_size(16.0)
-                .with_color(item.quality.color()),
-        );
+        // Spawn item details
+        commands.entity(content_entity).with_children(|parent| {
+            // Item name (quality-colored with black outline)
+            parent.spawn(
+                OutlinedText::new(&item.name)
+                    .with_font_size(16.0)
+                    .with_color(item.quality.color()),
+            );
 
-        // Item type
-        parent.spawn((
-            Text::new(format!("{}", item.item_type)),
-            game_fonts.pixel_font(14.0),
-            TextColor(Color::srgb(0.7, 0.7, 0.7)),
-        ));
-
-        // Quality label
-        parent.spawn((
-            Text::new(item.quality.display_name()),
-            game_fonts.pixel_font(14.0),
-            TextColor(item.quality.color()),
-        ));
-
-        // Quantity
-        if quantity > 1 {
+            // Item type
             parent.spawn((
-                Text::new(format!("Qty: {}", quantity)),
+                Text::new(format!("{}", item.item_type)),
                 game_fonts.pixel_font(14.0),
-                TextColor(Color::srgb(0.3, 0.8, 0.3)),
+                TextColor(Color::srgb(0.7, 0.7, 0.7)),
             ));
-        }
 
-        // Price (with label based on context)
-        if let Some(price) = price {
-            let price_label = match source {
-                InfoPanelSource::Store { .. } => format!("Price: {}g", price),
-                InfoPanelSource::Inventory { .. } => format!("Sell: {}g", price),
-                _ => format!("{}g", price),
-            };
+            // Quality label
             parent.spawn((
-                Text::new(price_label),
+                Text::new(item.quality.display_name()),
                 game_fonts.pixel_font(14.0),
-                TextColor(Color::srgb(0.9, 0.8, 0.2)),
+                TextColor(item.quality.color()),
             ));
-        }
 
-        // Stats display with comparison for equipment items
-        let stats: Vec<_> = item
-            .stats
-            .stats()
-            .iter()
-            .map(|(t, si)| (*t, si.current_value))
-            .collect();
-        if !stats.is_empty() {
-            let mut display = ItemStatsDisplay::from_stats_iter(stats)
-                .with_font_size(14.0)
-                .with_color(Color::srgb(0.85, 0.85, 0.85));
-
-            // Add comparison for equipment items (both store and player inventory)
-            if let Some(comparison) = get_comparison_stats(item, &inventory) {
-                display = display.with_comparison(comparison);
+            // Quantity
+            if quantity > 1 {
+                parent.spawn((
+                    Text::new(format!("Qty: {}", quantity)),
+                    game_fonts.pixel_font(14.0),
+                    TextColor(Color::srgb(0.3, 0.8, 0.3)),
+                ));
             }
 
-            parent.spawn(display);
-        }
-    });
+            // Price (with label based on context)
+            if let Some(price) = price {
+                let price_label = match pane.source {
+                    InfoPanelSource::Store { .. } => format!("Price: {}g", price),
+                    InfoPanelSource::Inventory { .. } => format!("Sell: {}g", price),
+                    _ => format!("{}g", price),
+                };
+                parent.spawn((
+                    Text::new(price_label),
+                    game_fonts.pixel_font(14.0),
+                    TextColor(Color::srgb(0.9, 0.8, 0.2)),
+                ));
+            }
+
+            // Stats display with comparison for equipment items
+            let stats: Vec<_> = item
+                .stats
+                .stats()
+                .iter()
+                .map(|(t, si)| (*t, si.current_value))
+                .collect();
+            if !stats.is_empty() {
+                let mut display = ItemStatsDisplay::from_stats_iter(stats)
+                    .with_font_size(14.0)
+                    .with_color(Color::srgb(0.85, 0.85, 0.85));
+
+                // Add comparison for equipment items (both store and player inventory)
+                if let Some(comparison) = get_comparison_stats(item, &inventory) {
+                    display = display.with_comparison(comparison);
+                }
+
+                parent.spawn(display);
+            }
+        });
+    }
 }

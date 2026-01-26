@@ -137,18 +137,32 @@ pub fn sync_inventory_to_grids(
 
 This replaces manual `refresh_grids()` calls after equip/unequip operations.
 
-## Detail Pane Population
+## Detail Pane Systems
 
-The `populate_item_detail_pane` system runs every frame and checks if the pane needs updating:
+Detail pane logic is split into two systems for efficient change detection:
 
-1. Queries both grids, finds the one with `is_focused == true`
-2. Builds an `InfoPanelSource` (`Equipment` or `Inventory`) with the focused grid's `selected_index`
-3. Compares against current `pane.source` (uses `PartialEq`)
-4. On mismatch, first render, **or inventory change** (`inventory.is_changed()`), updates content:
-   - Despawns existing `ItemDetailPaneContent` children
-   - Looks up item via `get_equipment_items` or `get_backpack_items` at `selected_index`
-   - Spawns: item name, item type, quality label, quantity (if > 1), and `ItemStatsDisplay`
-5. Guards: if `selected_index >= items.len()`, clears content (no crash on empty cells)
+### `update_inventory_detail_pane_source`
+Updates `pane.source` based on focus and grid selection. Only runs when:
+- `FocusState` changes (tab between grids)
+- `ItemGrid.selected_index` changes (navigation)
+
+Uses `Ref<ItemGrid>` to check `is_changed()` on each grid without query filters.
+
+### `populate_inventory_detail_pane_content`
+Renders content when source or inventory changes. Only runs when:
+- `pane.source` changed (via source update system)
+- `inventory.is_changed()` (item at index may have changed after equip/unequip)
+
+Uses `Ref<ItemDetailPane>` to check `is_changed()` for pane updates.
+
+**Content rendered:**
+- Item name (quality-colored with black outline)
+- Item type (gray)
+- Quality label (quality-colored)
+- Quantity "Qty: X" (green, only if qty > 1)
+- `ItemStatsDisplay` with stat comparison for backpack items
+
+**Guards:** if `selected_index >= items.len()`, content is cleared (no crash on empty cells)
 
 ## Key Types
 
@@ -187,5 +201,6 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
 | `handle_inventory_modal_navigation` | Update | `in_inventory_modal` |
 | `handle_inventory_modal_select` | Update | `in_inventory_modal` |
 | `sync_inventory_to_grids` | Update | `in_inventory_modal` |
-| `populate_item_detail_pane` | Update | `in_inventory_modal` |
+| `update_inventory_detail_pane_source` | Update | `in_inventory_modal` |
+| `populate_inventory_detail_pane_content` | Update | `in_inventory_modal` |
 | `trigger_spawn_inventory_modal` | Update | `resource_exists::<SpawnInventoryModal>` |

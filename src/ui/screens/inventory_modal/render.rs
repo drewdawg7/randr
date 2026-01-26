@@ -162,136 +162,162 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
         });
 }
 
-/// Populates the item detail pane with the currently selected item's information.
-/// Runs when ItemGrid selection changes or when the content container is first created.
-pub fn populate_item_detail_pane(
-    mut commands: Commands,
-    game_fonts: Res<GameFonts>,
-    inventory: Res<Inventory>,
+/// Updates the detail pane source based on which grid is focused and selected.
+/// Only runs when focus or grid selection changes.
+pub fn update_inventory_detail_pane_source(
     focus_state: Option<Res<FocusState>>,
-    equipment_grids: Query<&ItemGrid, With<EquipmentGrid>>,
-    backpack_grids: Query<&ItemGrid, With<BackpackGrid>>,
+    equipment_grids: Query<Ref<ItemGrid>, With<EquipmentGrid>>,
+    backpack_grids: Query<Ref<ItemGrid>, With<BackpackGrid>>,
     mut panes: Query<&mut ItemDetailPane>,
-    content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
     let Some(focus_state) = focus_state else {
         return;
     };
 
-    // Determine which grid is focused and build the appropriate source
+    // Check if focus or any grid changed
+    let focus_changed = focus_state.is_changed();
+    let eq_changed = equipment_grids
+        .get_single()
+        .map(|g| g.is_changed())
+        .unwrap_or(false);
+    let bp_changed = backpack_grids
+        .get_single()
+        .map(|g| g.is_changed())
+        .unwrap_or(false);
+
+    if !focus_changed && !eq_changed && !bp_changed {
+        return;
+    }
+
+    // Determine source from focused grid
     let source = if focus_state.is_focused(FocusPanel::EquipmentGrid) {
-        if let Ok(grid) = equipment_grids.get_single() {
-            InfoPanelSource::Equipment { selected_index: grid.selected_index }
-        } else {
-            return;
-        }
+        equipment_grids
+            .get_single()
+            .ok()
+            .map(|g| InfoPanelSource::Equipment {
+                selected_index: g.selected_index,
+            })
     } else if focus_state.is_focused(FocusPanel::BackpackGrid) {
-        if let Ok(grid) = backpack_grids.get_single() {
-            InfoPanelSource::Inventory { selected_index: grid.selected_index }
-        } else {
-            return;
-        }
+        backpack_grids
+            .get_single()
+            .ok()
+            .map(|g| InfoPanelSource::Inventory {
+                selected_index: g.selected_index,
+            })
     } else {
+        None
+    };
+
+    let Some(source) = source else {
         return;
     };
 
-    let Ok(mut pane) = panes.get_single_mut() else {
-        return;
-    };
+    // Update pane source (only if different to avoid unnecessary Changed trigger)
+    for mut pane in &mut panes {
+        if pane.source != source {
+            pane.source = source;
+        }
+    }
+}
 
-    let Ok((content_entity, children)) = content_query.get_single() else {
-        return;
-    };
-
-    // Check if we need to update:
-    // - First render (no children yet)
-    // - Source changed (different selection or focus)
-    // - Inventory changed (item at same index may be different)
-    let needs_initial = children.is_none();
+/// Populates the detail pane content when the source or inventory changes.
+/// Uses Ref<ItemDetailPane> for change detection.
+pub fn populate_inventory_detail_pane_content(
+    mut commands: Commands,
+    game_fonts: Res<GameFonts>,
+    inventory: Res<Inventory>,
+    panes: Query<Ref<ItemDetailPane>>,
+    content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
+) {
     let inventory_changed = inventory.is_changed();
-    if pane.source == source && !needs_initial && !inventory_changed {
-        return;
-    }
 
-    // Update pane source
-    pane.source = source;
-
-    // Despawn existing content children
-    if let Some(children) = children {
-        for &child in children.iter() {
-            commands.entity(child).despawn_recursive();
+    for pane in &panes {
+        // Check if we need to update: pane.source changed OR inventory changed
+        if !pane.is_changed() && !inventory_changed {
+            continue;
         }
-    }
 
-    // Look up the selected item based on which grid is focused
-    let inv_item = match source {
-        InfoPanelSource::Equipment { selected_index } => {
-            get_equipment_items(&inventory).into_iter().nth(selected_index)
+        let Ok((content_entity, children)) = content_query.get_single() else {
+            continue;
+        };
+
+        // Despawn existing content children
+        if let Some(children) = children {
+            for &child in children.iter() {
+                commands.entity(child).despawn_recursive();
+            }
         }
-        InfoPanelSource::Inventory { selected_index } => {
-            get_backpack_items(&inventory).into_iter().nth(selected_index)
-        }
-        _ => None,
-    };
 
-    let Some(inv_item) = inv_item else {
-        return;
-    };
+        // Look up the selected item based on source
+        let inv_item = match pane.source {
+            InfoPanelSource::Equipment { selected_index } => {
+                get_equipment_items(&inventory).into_iter().nth(selected_index)
+            }
+            InfoPanelSource::Inventory { selected_index } => {
+                get_backpack_items(&inventory).into_iter().nth(selected_index)
+            }
+            _ => None,
+        };
 
-    let item = &inv_item.item;
+        let Some(inv_item) = inv_item else {
+            continue;
+        };
 
-    // Spawn item details
-    commands.entity(content_entity).with_children(|parent| {
-        // Item name (quality-colored with black outline)
-        parent.spawn(
-            OutlinedText::new(&item.name)
-                .with_font_size(16.0)
-                .with_color(item.quality.color()),
-        );
+        let item = &inv_item.item;
 
-        // Item type
-        parent.spawn((
-            Text::new(format!("{}", item.item_type)),
-            game_fonts.pixel_font(14.0),
-            TextColor(Color::srgb(0.7, 0.7, 0.7)),
-        ));
+        // Spawn item details
+        commands.entity(content_entity).with_children(|parent| {
+            // Item name (quality-colored with black outline)
+            parent.spawn(
+                OutlinedText::new(&item.name)
+                    .with_font_size(16.0)
+                    .with_color(item.quality.color()),
+            );
 
-        // Quality label
-        parent.spawn((
-            Text::new(item.quality.display_name()),
-            game_fonts.pixel_font(14.0),
-            TextColor(item.quality.color()),
-        ));
-
-        // Quantity
-        if inv_item.quantity > 1 {
+            // Item type
             parent.spawn((
-                Text::new(format!("Qty: {}", inv_item.quantity)),
+                Text::new(format!("{}", item.item_type)),
                 game_fonts.pixel_font(14.0),
-                TextColor(Color::srgb(0.3, 0.8, 0.3)),
+                TextColor(Color::srgb(0.7, 0.7, 0.7)),
             ));
-        }
 
-        // Stats display with comparison for backpack items
-        let stats: Vec<_> = item
-            .stats
-            .stats()
-            .iter()
-            .map(|(t, si)| (*t, si.current_value))
-            .collect();
-        if !stats.is_empty() {
-            let mut display = ItemStatsDisplay::from_stats_iter(stats)
-                .with_font_size(14.0)
-                .with_color(Color::srgb(0.85, 0.85, 0.85));
+            // Quality label
+            parent.spawn((
+                Text::new(item.quality.display_name()),
+                game_fonts.pixel_font(14.0),
+                TextColor(item.quality.color()),
+            ));
 
-            // Add comparison for backpack items (not for already-equipped items)
-            if matches!(source, InfoPanelSource::Inventory { .. }) {
-                if let Some(comparison) = get_comparison_stats(item, &inventory) {
-                    display = display.with_comparison(comparison);
-                }
+            // Quantity
+            if inv_item.quantity > 1 {
+                parent.spawn((
+                    Text::new(format!("Qty: {}", inv_item.quantity)),
+                    game_fonts.pixel_font(14.0),
+                    TextColor(Color::srgb(0.3, 0.8, 0.3)),
+                ));
             }
 
-            parent.spawn(display);
-        }
-    });
+            // Stats display with comparison for backpack items
+            let stats: Vec<_> = item
+                .stats
+                .stats()
+                .iter()
+                .map(|(t, si)| (*t, si.current_value))
+                .collect();
+            if !stats.is_empty() {
+                let mut display = ItemStatsDisplay::from_stats_iter(stats)
+                    .with_font_size(14.0)
+                    .with_color(Color::srgb(0.85, 0.85, 0.85));
+
+                // Add comparison for backpack items (not for already-equipped items)
+                if matches!(pane.source, InfoPanelSource::Inventory { .. }) {
+                    if let Some(comparison) = get_comparison_stats(item, &inventory) {
+                        display = display.with_comparison(comparison);
+                    }
+                }
+
+                parent.spawn(display);
+            }
+        });
+    }
 }

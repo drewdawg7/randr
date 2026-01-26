@@ -5,8 +5,8 @@ use crate::ui::screens::modal::in_forge_modal;
 
 use super::input::{handle_forge_modal_navigation, handle_forge_modal_select, handle_forge_modal_tab};
 use super::render::{
-    animate_forge_slot_selector, populate_forge_item_detail_pane, refresh_forge_slots,
-    update_forge_slot_selector,
+    animate_forge_slot_selector, populate_forge_detail_pane_content, refresh_forge_slots,
+    update_forge_detail_pane_source, update_forge_slot_selector,
 };
 use super::state::ForgeModal;
 
@@ -25,8 +25,10 @@ impl Plugin for ForgeModalPlugin {
                         handle_forge_modal_navigation,
                         handle_forge_modal_select,
                         refresh_forge_slots,
-                        populate_forge_item_detail_pane,
-                    ).run_if(in_forge_modal),
+                        update_forge_detail_pane_source,
+                        populate_forge_detail_pane_content,
+                    )
+                        .run_if(in_forge_modal),
                 ),
             )
             .add_systems(

@@ -123,22 +123,71 @@ commands.remove_resource::<FocusState>();
 
 ### Change Detection for Detail Panes
 
-Use `is_changed()` to refresh detail panes when focus changes:
+Detail pane systems are split into two responsibilities using Bevy's change detection:
 
+**1. Source Update System** - Determines which item to show:
 ```rust
-pub fn update_detail_pane(
+pub fn update_modal_detail_pane_source(
     focus_state: Option<Res<FocusState>>,
-    // ...
+    grid_a: Query<Ref<ItemGrid>, With<GridAMarker>>,
+    grid_b: Query<Ref<ItemGrid>, With<GridBMarker>>,
+    mut panes: Query<&mut ItemDetailPane>,
 ) {
     let Some(focus_state) = focus_state else { return };
 
-    if !focus_state.is_changed() {
+    // Only run when focus or grid selection changed
+    let focus_changed = focus_state.is_changed();
+    let grid_a_changed = grid_a.get_single().map(|g| g.is_changed()).unwrap_or(false);
+    let grid_b_changed = grid_b.get_single().map(|g| g.is_changed()).unwrap_or(false);
+
+    if !focus_changed && !grid_a_changed && !grid_b_changed {
         return;
     }
 
-    // Refresh detail pane based on which panel is focused
+    // Determine source from focused grid
+    let source = if focus_state.is_focused(FocusPanel::GridA) {
+        grid_a.get_single().ok().map(|g| InfoPanelSource::Equipment { selected_index: g.selected_index })
+    } else {
+        grid_b.get_single().ok().map(|g| InfoPanelSource::Inventory { selected_index: g.selected_index })
+    };
+
+    // Update pane source (only if different to avoid unnecessary Changed trigger)
+    for mut pane in &mut panes {
+        if let Some(source) = source {
+            if pane.source != source {
+                pane.source = source;
+            }
+        }
+    }
 }
 ```
+
+**2. Content Population System** - Renders content when source or data changes:
+```rust
+pub fn populate_modal_detail_pane_content(
+    mut commands: Commands,
+    inventory: Res<Inventory>,
+    panes: Query<Ref<ItemDetailPane>>,  // Use Ref<T> for change detection
+    content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
+) {
+    let inventory_changed = inventory.is_changed();
+
+    for pane in &panes {
+        // Check if we need to update: pane.source changed OR data changed
+        if !pane.is_changed() && !inventory_changed {
+            continue;
+        }
+
+        // Despawn existing content and spawn new based on pane.source
+    }
+}
+```
+
+**Key Benefits:**
+- Systems only run when relevant state changes
+- Uses `Ref<T>` for manual change detection without query filters
+- Separates source selection from content rendering
+- Handles both source changes and underlying data changes
 
 ### Modals Using FocusState
 

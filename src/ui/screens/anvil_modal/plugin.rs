@@ -13,7 +13,7 @@ use super::input::{
     handle_anvil_modal_navigation, handle_anvil_modal_select, handle_anvil_modal_tab,
     refresh_anvil_recipes,
 };
-use super::render::populate_anvil_detail_pane;
+use super::render::{populate_anvil_detail_pane_content, update_anvil_detail_pane_source};
 use super::state::{ActiveAnvilEntity, AnvilModal, AnvilModalRoot, CloseAnvilForCrafting};
 
 pub struct AnvilModalPlugin;
@@ -31,8 +31,10 @@ impl Plugin for AnvilModalPlugin {
                         handle_anvil_modal_navigation,
                         handle_anvil_modal_select,
                         refresh_anvil_recipes,
-                        populate_anvil_detail_pane,
-                    ).run_if(in_anvil_modal),
+                        update_anvil_detail_pane_source,
+                        populate_anvil_detail_pane_content,
+                    )
+                        .run_if(in_anvil_modal),
                 ),
             );
     }

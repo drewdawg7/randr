@@ -103,10 +103,19 @@ Handles Enter key when recipe focused:
 ### `refresh_anvil_recipes`
 Updates recipe grid entries when `AnvilRecipeRefresh` resource exists.
 
-### `populate_anvil_detail_pane`
+### `update_anvil_detail_pane_source`
+Updates `pane.source` based on focus and grid selection. Only runs when:
+- `FocusState` changes (tab between recipe grid and inventory)
+- `ItemGrid.selected_index` changes (navigation)
+
+### `populate_anvil_detail_pane_content`
+Renders content when source or inventory changes. Only runs when:
+- `pane.source` changed (via source update system)
+- `inventory.is_changed()` (ingredient counts may have changed)
+
 Shows:
-- When recipe focused: recipe name, required ingredients, output stats
-- When inventory focused: selected item info
+- When recipe focused: recipe name, required ingredients (with have/need counts), output stats
+- When inventory focused: selected item info (name, type, quality, quantity, stats)
 
 ### `handle_anvil_close_with_crafting`
 When `CloseAnvilForCrafting` resource exists:

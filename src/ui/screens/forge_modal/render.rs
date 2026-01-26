@@ -466,19 +466,13 @@ pub fn update_forge_slot_selector(
     }
 }
 
-/// Populates the item detail pane with the currently selected item.
-/// Shows inventory item when inventory is focused, or forge slot item when crafting is focused.
-pub fn populate_forge_item_detail_pane(
-    mut commands: Commands,
-    game_fonts: Res<GameFonts>,
-    inventory: Res<Inventory>,
+/// Updates the detail pane source based on which panel is focused and selected.
+/// Only runs when focus, grid selection, or modal state changes.
+pub fn update_forge_detail_pane_source(
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
-    active_forge: Option<Res<ActiveForgeEntity>>,
-    forge_state_query: Query<&ForgeCraftingState>,
-    player_grids: Query<&ItemGrid, With<ForgePlayerGrid>>,
+    player_grids: Query<Ref<ItemGrid>, With<ForgePlayerGrid>>,
     mut panes: Query<&mut ItemDetailPane>,
-    content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
     let Some(focus_state) = focus_state else {
         return;
@@ -488,116 +482,151 @@ pub fn populate_forge_item_detail_pane(
         return;
     };
 
-    let Ok(mut pane) = panes.get_single_mut() else {
-        return;
-    };
-
-    let Ok((content_entity, children)) = content_query.get_single() else {
-        return;
-    };
-
-    // Force refresh when FocusState changes
+    // Check if focus, modal state, or grid changed
     let focus_changed = focus_state.is_changed();
+    let modal_state_changed = modal_state.is_changed();
+    let grid_changed = player_grids
+        .get_single()
+        .map(|g| g.is_changed())
+        .unwrap_or(false);
 
-    // Determine source and get item info based on focus
-    let (source, item_info): (InfoPanelSource, Option<(ItemId, u32)>) = if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
-        // Get item from forge slot - use new InfoPanelSource::ForgeSlot
-        let source = InfoPanelSource::ForgeSlot { slot: modal_state.selected_slot };
+    if !focus_changed && !modal_state_changed && !grid_changed {
+        return;
+    }
 
-        let item_info = active_forge
-            .as_ref()
-            .and_then(|af| forge_state_query.get(af.0).ok())
-            .and_then(|state| match modal_state.selected_slot {
-                ForgeSlotIndex::Coal => state.coal_slot,
-                ForgeSlotIndex::Ore => state.ore_slot,
-                ForgeSlotIndex::Product => state.product_slot,
-            });
-
-        (source, item_info)
+    // Determine source from focused panel
+    let source = if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
+        Some(InfoPanelSource::ForgeSlot {
+            slot: modal_state.selected_slot,
+        })
     } else if focus_state.is_focused(FocusPanel::ForgeInventory) {
-        // Get item from inventory
-        let grid = player_grids.get_single().ok();
-        let selected_index = grid.map(|g| g.selected_index).unwrap_or(0);
-        let source = InfoPanelSource::Inventory { selected_index };
-
-        let item_info = inventory
-            .get_inventory_items()
-            .get(selected_index)
-            .map(|inv_item| (inv_item.item.item_id, inv_item.quantity));
-
-        (source, item_info)
+        player_grids
+            .get_single()
+            .ok()
+            .map(|g| InfoPanelSource::Inventory {
+                selected_index: g.selected_index,
+            })
     } else {
+        None
+    };
+
+    let Some(source) = source else {
         return;
     };
 
-    // Check if we need to update (update on source change, first render, or focus change)
-    let needs_initial = children.is_none();
-    if pane.source == source && !needs_initial && !focus_changed {
-        return;
-    }
-
-    // Update pane source
-    pane.source = source;
-
-    // Despawn existing content children
-    if let Some(children) = children {
-        for &child in children.iter() {
-            commands.entity(child).despawn_recursive();
+    // Update pane source (only if different to avoid unnecessary Changed trigger)
+    for mut pane in &mut panes {
+        if pane.source != source {
+            pane.source = source;
         }
     }
+}
 
-    // Get item details from ItemId
-    let Some((item_id, quantity)) = item_info else {
-        return;
-    };
+/// Populates the detail pane content when the source, inventory, or forge state changes.
+/// Uses Ref<ItemDetailPane> for change detection.
+pub fn populate_forge_detail_pane_content(
+    mut commands: Commands,
+    game_fonts: Res<GameFonts>,
+    inventory: Res<Inventory>,
+    active_forge: Option<Res<ActiveForgeEntity>>,
+    forge_state_query: Query<Ref<ForgeCraftingState>>,
+    panes: Query<Ref<ItemDetailPane>>,
+    content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
+) {
+    // Check for data changes that require refresh
+    let inventory_changed = inventory.is_changed();
+    let forge_state_changed = active_forge
+        .as_ref()
+        .and_then(|af| forge_state_query.get(af.0).ok())
+        .map(|s| s.is_changed())
+        .unwrap_or(false);
 
-    let item = item_id.spawn();
+    for pane in &panes {
+        // Check if we need to update: pane.source changed OR data changed
+        if !pane.is_changed() && !inventory_changed && !forge_state_changed {
+            continue;
+        }
 
-    // Spawn item details
-    commands.entity(content_entity).with_children(|parent| {
-        // Item name (quality-colored with black outline)
-        parent.spawn(
-            OutlinedText::new(&item.name)
-                .with_font_size(16.0)
-                .with_color(item.quality.color()),
-        );
+        let Ok((content_entity, children)) = content_query.get_single() else {
+            continue;
+        };
 
-        // Item type
-        parent.spawn((
-            Text::new(format!("{}", item.item_type)),
-            game_fonts.pixel_font(14.0),
-            TextColor(Color::srgb(0.7, 0.7, 0.7)),
-        ));
+        // Despawn existing content children
+        if let Some(children) = children {
+            for &child in children.iter() {
+                commands.entity(child).despawn_recursive();
+            }
+        }
 
-        // Quality label
-        parent.spawn((
-            Text::new(item.quality.display_name()),
-            game_fonts.pixel_font(14.0),
-            TextColor(item.quality.color()),
-        ));
+        // Get item info based on source
+        let item_info: Option<(ItemId, u32)> = match pane.source {
+            InfoPanelSource::ForgeSlot { slot } => active_forge
+                .as_ref()
+                .and_then(|af| forge_state_query.get(af.0).ok())
+                .and_then(|state| match slot {
+                    ForgeSlotIndex::Coal => state.coal_slot,
+                    ForgeSlotIndex::Ore => state.ore_slot,
+                    ForgeSlotIndex::Product => state.product_slot,
+                }),
+            InfoPanelSource::Inventory { selected_index } => inventory
+                .get_inventory_items()
+                .get(selected_index)
+                .map(|inv_item| (inv_item.item.item_id, inv_item.quantity)),
+            _ => None,
+        };
 
-        // Quantity
-        if quantity > 1 {
+        let Some((item_id, quantity)) = item_info else {
+            continue;
+        };
+
+        let item = item_id.spawn();
+
+        // Spawn item details
+        commands.entity(content_entity).with_children(|parent| {
+            // Item name (quality-colored with black outline)
+            parent.spawn(
+                OutlinedText::new(&item.name)
+                    .with_font_size(16.0)
+                    .with_color(item.quality.color()),
+            );
+
+            // Item type
             parent.spawn((
-                Text::new(format!("Qty: {}", quantity)),
+                Text::new(format!("{}", item.item_type)),
                 game_fonts.pixel_font(14.0),
-                TextColor(Color::srgb(0.3, 0.8, 0.3)),
+                TextColor(Color::srgb(0.7, 0.7, 0.7)),
             ));
-        }
 
-        // Stats display
-        let stats: Vec<_> = item
-            .stats
-            .stats()
-            .iter()
-            .map(|(t, si)| (*t, si.current_value))
-            .collect();
-        if !stats.is_empty() {
-            let display = ItemStatsDisplay::from_stats_iter(stats)
-                .with_font_size(14.0)
-                .with_color(Color::srgb(0.85, 0.85, 0.85));
+            // Quality label
+            parent.spawn((
+                Text::new(item.quality.display_name()),
+                game_fonts.pixel_font(14.0),
+                TextColor(item.quality.color()),
+            ));
 
-            parent.spawn(display);
-        }
-    });
+            // Quantity
+            if quantity > 1 {
+                parent.spawn((
+                    Text::new(format!("Qty: {}", quantity)),
+                    game_fonts.pixel_font(14.0),
+                    TextColor(Color::srgb(0.3, 0.8, 0.3)),
+                ));
+            }
+
+            // Stats display
+            let stats: Vec<_> = item
+                .stats
+                .stats()
+                .iter()
+                .map(|(t, si)| (*t, si.current_value))
+                .collect();
+            if !stats.is_empty() {
+                let display = ItemStatsDisplay::from_stats_iter(stats)
+                    .with_font_size(14.0)
+                    .with_color(Color::srgb(0.85, 0.85, 0.85));
+
+                parent.spawn(display);
+            }
+        });
+    }
 }
