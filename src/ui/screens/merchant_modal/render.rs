@@ -5,7 +5,7 @@ use crate::economy::WorthGold;
 use crate::inventory::{Inventory, InventoryItem, ManagesEquipment, ManagesItems};
 use crate::stats::StatType;
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
+use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
 
@@ -115,22 +115,19 @@ fn get_comparison_stats(
 }
 
 /// Spawn the merchant modal UI with stock grid, player inventory grid, and detail pane.
-pub fn spawn_merchant_modal(
+/// Called from RegisteredModal::spawn via run_system_cached.
+pub fn spawn_merchant_modal_impl(
     mut commands: Commands,
-    stock: Res<MerchantStock>,
-    inventory: Res<Inventory>,
-    mut active_modal: ResMut<ActiveModal>,
+    stock: &MerchantStock,
+    inventory: &Inventory,
 ) {
-    commands.remove_resource::<super::state::SpawnMerchantModal>();
-    active_modal.modal = Some(ModalType::MerchantModal);
-
     // Initialize focus on merchant stock grid
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::MerchantStock),
     });
 
-    let stock_entries = get_merchant_stock_entries(&stock);
-    let player_entries = get_player_inventory_entries(&inventory);
+    let stock_entries = get_merchant_stock_entries(stock);
+    let player_entries = get_player_inventory_entries(inventory);
 
     let overlay = spawn_modal_overlay(&mut commands);
     commands

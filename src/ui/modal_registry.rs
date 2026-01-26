@@ -9,7 +9,11 @@
 //!
 //! // In a system:
 //! commands.toggle_modal::<InventoryModal>();
-//! commands.close_modal::<ProfileModal>();
+//! commands.close_modal::<InventoryModal>();
+//!
+//! // Or via events:
+//! commands.trigger(OpenModal(ModalType::Inventory));
+//! commands.trigger(CloseModal(ModalType::Inventory));
 //! ```
 
 use std::marker::PhantomData;
@@ -18,7 +22,7 @@ use bevy::ecs::world::Command;
 use bevy::prelude::*;
 
 use crate::input::GameAction;
-use crate::ui::screens::modal::{ActiveModal, ModalType};
+use crate::ui::screens::modal::{ActiveModal, CloseModal, ModalType, OpenModal};
 
 /// Trait for modal types that can be toggled via commands.
 ///
@@ -32,7 +36,7 @@ pub trait RegisteredModal: 'static + Send + Sync {
 
     /// Spawn the modal UI.
     ///
-    /// Called when toggle opens the modal (no other modal was active).
+    /// Called when the modal should be opened (triggered via OpenModal event).
     /// Has mutable World access for reading resources and spawning entities.
     fn spawn(world: &mut World);
 
@@ -77,18 +81,15 @@ impl<M: RegisteredModal> Command for ToggleModalCommand<M> {
         let mut query = world.query_filtered::<Entity, With<M::Root>>();
         let modal_entity = query.iter(world).next();
 
-        if let Some(entity) = modal_entity {
-            // Modal is open - close it
-            world.entity_mut(entity).despawn_recursive();
-            world.resource_mut::<ActiveModal>().modal = None;
-            M::cleanup(world);
+        if modal_entity.is_some() {
+            // Modal is open - trigger close event
+            world.trigger(CloseModal(M::MODAL_TYPE));
         } else {
             // Check if any modal is open
             let active_modal = world.resource::<ActiveModal>();
             if active_modal.modal.is_none() {
-                // No modal open - spawn this one
-                world.resource_mut::<ActiveModal>().modal = Some(M::MODAL_TYPE);
-                M::spawn(world);
+                // No modal open - trigger open event
+                world.trigger(OpenModal(M::MODAL_TYPE));
             }
         }
     }
@@ -126,6 +127,58 @@ impl<M: RegisteredModal> Command for CloseModalCommand<M> {
             return;
         }
 
+        // Trigger close event
+        world.trigger(CloseModal(M::MODAL_TYPE));
+    }
+}
+
+// ============================================================================
+// Modal Lifecycle Observers
+// ============================================================================
+
+/// Observer that handles OpenModal events.
+///
+/// Register per-modal observers via `register_modal_observer::<M>`.
+pub fn on_open_modal<M: RegisteredModal>(
+    trigger: Trigger<OpenModal>,
+    mut commands: Commands,
+) {
+    if trigger.0 != M::MODAL_TYPE {
+        return;
+    }
+    commands.queue(SpawnModalCommand::<M>(PhantomData));
+}
+
+/// Observer that handles CloseModal events.
+///
+/// Register per-modal observers via `register_modal_observer::<M>`.
+pub fn on_close_modal<M: RegisteredModal>(
+    trigger: Trigger<CloseModal>,
+    mut commands: Commands,
+) {
+    if trigger.0 != M::MODAL_TYPE {
+        return;
+    }
+    commands.queue(DespawnModalCommand::<M>(PhantomData));
+}
+
+/// Command that spawns a modal.
+struct SpawnModalCommand<M: RegisteredModal>(PhantomData<M>);
+
+impl<M: RegisteredModal> Command for SpawnModalCommand<M> {
+    fn apply(self, world: &mut World) {
+        // Set active modal first
+        world.resource_mut::<ActiveModal>().modal = Some(M::MODAL_TYPE);
+        // Then spawn
+        M::spawn(world);
+    }
+}
+
+/// Command that despawns a modal and runs cleanup.
+struct DespawnModalCommand<M: RegisteredModal>(PhantomData<M>);
+
+impl<M: RegisteredModal> Command for DespawnModalCommand<M> {
+    fn apply(self, world: &mut World) {
         // Find and despawn the modal entity
         let mut query = world.query_filtered::<Entity, With<M::Root>>();
         if let Some(entity) = query.iter(world).next() {
@@ -133,5 +186,20 @@ impl<M: RegisteredModal> Command for CloseModalCommand<M> {
             world.resource_mut::<ActiveModal>().modal = None;
             M::cleanup(world);
         }
+    }
+}
+
+/// Extension trait for App to register modal observers.
+pub trait RegisterModalExt {
+    /// Register observers for a modal type.
+    ///
+    /// This sets up the OpenModal and CloseModal event handlers for the modal.
+    fn register_modal<M: RegisteredModal>(&mut self) -> &mut Self;
+}
+
+impl RegisterModalExt for App {
+    fn register_modal<M: RegisteredModal>(&mut self) -> &mut Self {
+        self.add_observer(on_open_modal::<M>)
+            .add_observer(on_close_modal::<M>)
     }
 }

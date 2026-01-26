@@ -18,10 +18,10 @@ use crate::states::AppState;
 use crate::stats::{StatSheet, StatType};
 use crate::mob::MobId;
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
-use crate::ui::screens::anvil_modal::{ActiveAnvilEntity, SpawnAnvilModal};
-use crate::ui::screens::forge_modal::{ActiveForgeEntity, ForgeModalState, SpawnForgeModal};
-use crate::ui::screens::merchant_modal::{MerchantStock, SpawnMerchantModal};
-use crate::ui::screens::modal::ActiveModal;
+use crate::ui::screens::anvil_modal::ActiveAnvilEntity;
+use crate::ui::screens::forge_modal::ActiveForgeEntity;
+use crate::ui::screens::merchant_modal::MerchantStock;
+use crate::ui::screens::modal::{ActiveModal, ModalType, OpenModal};
 use crate::ui::screens::results_modal::{ResultsModalData, SpawnResultsModal};
 use crate::ui::widgets::PlayerStats;
 use crate::ui::{DungeonMobSprite, DungeonPlayerSprite, MobSpriteSheets};
@@ -662,7 +662,7 @@ fn handle_mine_interaction(
             match mob_id {
                 MobId::Merchant => {
                     commands.insert_resource(MerchantStock::generate());
-                    commands.insert_resource(SpawnMerchantModal);
+                    commands.trigger(OpenModal(ModalType::MerchantModal));
                 }
                 _ => {
                     // Other NPCs - could add dialogue system later
@@ -681,15 +681,14 @@ fn handle_mine_interaction(
                         // Only open modal if forge is not already crafting
                         if forge_query.get(entity_id).is_err() {
                             commands.insert_resource(ActiveForgeEntity(entity_id));
-                            commands.insert_resource(ForgeModalState::default());
-                            commands.insert_resource(SpawnForgeModal);
+                            commands.trigger(OpenModal(ModalType::ForgeModal));
                         }
                     }
                     CraftingStationType::Anvil => {
                         // Only open modal if anvil is not already crafting
                         if anvil_query.get(entity_id).is_err() {
                             commands.insert_resource(ActiveAnvilEntity(entity_id));
-                            commands.insert_resource(SpawnAnvilModal);
+                            commands.trigger(OpenModal(ModalType::AnvilModal));
                         }
                     }
                 }

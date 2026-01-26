@@ -4,4 +4,4 @@ mod render;
 mod state;
 
 pub use plugin::MerchantModalPlugin;
-pub use state::{MerchantModal, MerchantStock, SpawnMerchantModal};
+pub use state::{MerchantModal, MerchantStock};

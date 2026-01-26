@@ -99,10 +99,6 @@ impl MerchantStock {
     }
 }
 
-/// Marker resource to trigger spawning the merchant modal.
-#[derive(Resource)]
-pub struct SpawnMerchantModal;
-
 /// Type-safe handle for the merchant modal.
 ///
 /// Used with `ModalCommands`:
@@ -117,10 +113,19 @@ impl RegisteredModal for MerchantModal {
     const MODAL_TYPE: ModalType = ModalType::MerchantModal;
 
     fn spawn(world: &mut World) {
-        world.insert_resource(SpawnMerchantModal);
+        world.run_system_cached(do_spawn_merchant_modal).ok();
     }
 
     fn cleanup(world: &mut World) {
         world.remove_resource::<MerchantStock>();
     }
+}
+
+/// System that spawns the merchant modal UI.
+fn do_spawn_merchant_modal(
+    commands: Commands,
+    stock: Res<MerchantStock>,
+    inventory: Res<crate::inventory::Inventory>,
+) {
+    super::render::spawn_merchant_modal_impl(commands, &stock, &inventory);
 }

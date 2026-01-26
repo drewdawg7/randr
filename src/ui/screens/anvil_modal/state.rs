@@ -23,14 +23,6 @@ pub struct ActiveAnvilEntity(pub Entity);
 
 // AnvilModalState removed - focus is now tracked via FocusState resource
 
-/// Trigger resource to spawn the anvil modal.
-#[derive(Resource)]
-pub struct SpawnAnvilModal;
-
-/// Trigger resource to refresh the recipe grid display.
-#[derive(Resource)]
-pub struct AnvilRecipeRefresh;
-
 /// Trigger resource to close modal and start crafting.
 #[derive(Resource)]
 pub struct CloseAnvilForCrafting;
@@ -43,11 +35,25 @@ impl RegisteredModal for AnvilModal {
     const MODAL_TYPE: ModalType = ModalType::AnvilModal;
 
     fn spawn(world: &mut World) {
-        world.insert_resource(SpawnAnvilModal);
+        world.run_system_cached(do_spawn_anvil_modal).ok();
     }
 
     fn cleanup(world: &mut World) {
         world.remove_resource::<ActiveAnvilEntity>();
-        world.remove_resource::<AnvilRecipeRefresh>();
     }
+}
+
+/// System that spawns the anvil modal UI.
+fn do_spawn_anvil_modal(
+    commands: Commands,
+    game_sprites: Res<crate::assets::GameSprites>,
+    game_fonts: Res<crate::assets::GameFonts>,
+    inventory: Res<crate::inventory::Inventory>,
+) {
+    super::render::spawn_anvil_modal_impl(
+        commands,
+        &game_sprites,
+        &game_fonts,
+        &inventory,
+    );
 }

@@ -1,40 +1,40 @@
 use bevy::prelude::*;
 
-use crate::ui::modal_registry::modal_close_system;
+use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_forge_modal;
 
 use super::input::{handle_forge_modal_navigation, handle_forge_modal_select, handle_forge_modal_tab};
 use super::render::{
     animate_forge_slot_selector, populate_forge_item_detail_pane, refresh_forge_slots,
-    spawn_forge_modal, update_forge_slot_selector,
+    update_forge_slot_selector,
 };
-use super::state::{ForgeModal, ForgeSlotRefresh, SpawnForgeModal};
+use super::state::ForgeModal;
 
 pub struct ForgeModalPlugin;
 
 impl Plugin for ForgeModalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                handle_forge_close_with_crafting,
-                modal_close_system::<ForgeModal>,
+        app.register_modal::<ForgeModal>()
+            .add_systems(
+                Update,
                 (
-                    handle_forge_modal_tab,
-                    handle_forge_modal_navigation,
-                    handle_forge_modal_select,
-                    refresh_forge_slots.run_if(resource_exists::<ForgeSlotRefresh>),
-                    populate_forge_item_detail_pane,
-                ).run_if(in_forge_modal),
-                spawn_forge_modal.run_if(resource_exists::<SpawnForgeModal>),
-            ),
-        )
-        .add_systems(
-            PostUpdate,
-            (update_forge_slot_selector, animate_forge_slot_selector)
-                .chain()
-                .run_if(in_forge_modal),
-        );
+                    handle_forge_close_with_crafting,
+                    modal_close_system::<ForgeModal>,
+                    (
+                        handle_forge_modal_tab,
+                        handle_forge_modal_navigation,
+                        handle_forge_modal_select,
+                        refresh_forge_slots,
+                        populate_forge_item_detail_pane,
+                    ).run_if(in_forge_modal),
+                ),
+            )
+            .add_systems(
+                PostUpdate,
+                (update_forge_slot_selector, animate_forge_slot_selector)
+                    .chain()
+                    .run_if(in_forge_modal),
+            );
     }
 }
 

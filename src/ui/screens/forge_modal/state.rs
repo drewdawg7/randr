@@ -67,14 +67,6 @@ pub struct ForgeModalState {
 #[derive(Resource)]
 pub struct ActiveForgeEntity(pub Entity);
 
-/// Marker resource to trigger spawning the forge modal.
-#[derive(Resource)]
-pub struct SpawnForgeModal;
-
-/// Marker resource to force slot display refresh after transfers.
-#[derive(Resource)]
-pub struct ForgeSlotRefresh;
-
 /// Type-safe handle for the forge modal.
 pub struct ForgeModal;
 
@@ -84,12 +76,32 @@ impl RegisteredModal for ForgeModal {
 
     fn spawn(world: &mut World) {
         world.insert_resource(ForgeModalState::default());
-        world.insert_resource(SpawnForgeModal);
+        world.run_system_cached(do_spawn_forge_modal).ok();
     }
 
     fn cleanup(world: &mut World) {
         world.remove_resource::<ForgeModalState>();
         world.remove_resource::<ActiveForgeEntity>();
-        world.remove_resource::<ForgeSlotRefresh>();
     }
+}
+
+/// System that spawns the forge modal UI.
+fn do_spawn_forge_modal(
+    commands: Commands,
+    game_sprites: Res<crate::assets::GameSprites>,
+    game_fonts: Res<crate::assets::GameFonts>,
+    inventory: Res<crate::inventory::Inventory>,
+    forge_state_query: Query<&crate::crafting_station::ForgeCraftingState>,
+    active_forge: Res<ActiveForgeEntity>,
+    modal_state: Res<ForgeModalState>,
+) {
+    super::render::spawn_forge_modal_impl(
+        commands,
+        &game_sprites,
+        &game_fonts,
+        &inventory,
+        &forge_state_query,
+        &active_forge,
+        &modal_state,
+    );
 }

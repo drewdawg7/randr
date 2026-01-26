@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::crafting_station::AnvilCraftingState;
 use crate::ui::animation::{AnimationConfig, SpriteAnimation};
-use crate::ui::modal_registry::modal_close_system;
+use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::dungeon::plugin::AnvilActiveTimer;
 use crate::ui::screens::modal::{in_anvil_modal, ActiveModal, ModalType};
 
@@ -13,31 +13,28 @@ use super::input::{
     handle_anvil_modal_navigation, handle_anvil_modal_select, handle_anvil_modal_tab,
     refresh_anvil_recipes,
 };
-use super::render::{populate_anvil_detail_pane, spawn_anvil_modal};
-use super::state::{
-    ActiveAnvilEntity, AnvilModal, AnvilModalRoot, AnvilRecipeRefresh, CloseAnvilForCrafting,
-    SpawnAnvilModal,
-};
+use super::render::populate_anvil_detail_pane;
+use super::state::{ActiveAnvilEntity, AnvilModal, AnvilModalRoot, CloseAnvilForCrafting};
 
 pub struct AnvilModalPlugin;
 
 impl Plugin for AnvilModalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                handle_anvil_close_with_crafting,
-                modal_close_system::<AnvilModal>,
+        app.register_modal::<AnvilModal>()
+            .add_systems(
+                Update,
                 (
-                    handle_anvil_modal_tab,
-                    handle_anvil_modal_navigation,
-                    handle_anvil_modal_select,
-                    refresh_anvil_recipes.run_if(resource_exists::<AnvilRecipeRefresh>),
-                    populate_anvil_detail_pane,
-                ).run_if(in_anvil_modal),
-                spawn_anvil_modal.run_if(resource_exists::<SpawnAnvilModal>),
-            ),
-        );
+                    handle_anvil_close_with_crafting,
+                    modal_close_system::<AnvilModal>,
+                    (
+                        handle_anvil_modal_tab,
+                        handle_anvil_modal_navigation,
+                        handle_anvil_modal_select,
+                        refresh_anvil_recipes,
+                        populate_anvil_detail_pane,
+                    ).run_if(in_anvil_modal),
+                ),
+            );
     }
 }
 

@@ -32,7 +32,7 @@ pub use keybinds::KeybindsPlugin;
 pub use main_menu::MainMenuPlugin;
 pub use merchant_modal::MerchantModalPlugin;
 pub use mine::MinePlugin;
-pub use modal::{ActiveModal, ModalPlugin, ModalType};
+pub use modal::{ActiveModal, CloseModal, ModalPlugin, ModalType, OpenModal};
 pub use profile::ProfilePlugin;
 pub use profile_modal::ProfileModalPlugin;
 pub use town::{InfoPanelSource, TownPlugin};

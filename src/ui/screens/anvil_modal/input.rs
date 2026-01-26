@@ -10,9 +10,7 @@ use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::ItemGrid;
 
 use super::render::{get_player_inventory_entries, get_recipe_entries};
-use super::state::{
-    ActiveAnvilEntity, AnvilPlayerGrid, AnvilRecipeGrid, AnvilRecipeRefresh,
-};
+use super::state::{ActiveAnvilEntity, AnvilPlayerGrid, AnvilRecipeGrid};
 
 /// Handle Tab key toggling focus between recipe grid and player inventory.
 /// Only runs when anvil modal is active (via run_if condition).
@@ -119,6 +117,7 @@ pub fn handle_anvil_modal_select(
         anvil_state.is_crafting = true;
 
         // Refresh inventory grid
+        // Recipe grid refresh is handled reactively via Changed<Inventory>
         if let Ok(mut grid) = player_grids.get_single_mut() {
             grid.items = get_player_inventory_entries(&inventory);
             if !grid.items.is_empty() {
@@ -128,26 +127,20 @@ pub fn handle_anvil_modal_select(
             }
         }
 
-        // Trigger recipe refresh
-        commands.insert_resource(AnvilRecipeRefresh);
-
         // Close modal to start crafting animation
         commands.insert_resource(crate::ui::screens::anvil_modal::state::CloseAnvilForCrafting);
     }
 }
 
 /// Refresh the recipe grid when inventory changes.
+/// Uses Bevy's native change detection via `is_changed()`.
 pub fn refresh_anvil_recipes(
-    mut commands: Commands,
-    refresh_trigger: Option<Res<AnvilRecipeRefresh>>,
     inventory: Res<Inventory>,
     mut recipe_grids: Query<&mut ItemGrid, With<AnvilRecipeGrid>>,
 ) {
-    if refresh_trigger.is_none() {
+    if !inventory.is_changed() {
         return;
     }
-
-    commands.remove_resource::<AnvilRecipeRefresh>();
 
     if let Ok(mut grid) = recipe_grids.get_single_mut() {
         grid.items = get_recipe_entries(&inventory);

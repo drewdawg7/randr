@@ -6,4 +6,4 @@ mod render;
 mod state;
 
 pub use plugin::AnvilModalPlugin;
-pub use state::{ActiveAnvilEntity, AnvilModal, SpawnAnvilModal};
+pub use state::{ActiveAnvilEntity, AnvilModal};

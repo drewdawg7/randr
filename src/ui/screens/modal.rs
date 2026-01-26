@@ -6,6 +6,24 @@ pub struct ActiveModal {
     pub modal: Option<ModalType>,
 }
 
+// ============================================================================
+// Modal Lifecycle Events
+// ============================================================================
+
+/// Event to request opening a modal.
+///
+/// Use `commands.trigger(OpenModal(ModalType::Inventory))` to trigger.
+/// The modal registry observers will handle the actual spawning.
+#[derive(Event, Debug, Clone, Copy)]
+pub struct OpenModal(pub ModalType);
+
+/// Event to request closing a modal.
+///
+/// Use `commands.trigger(CloseModal(ModalType::Inventory))` to trigger.
+/// The modal registry observers will handle the actual closing and cleanup.
+#[derive(Event, Debug, Clone, Copy)]
+pub struct CloseModal(pub ModalType);
+
 /// Types of modals available in the game.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ModalType {
@@ -33,7 +51,9 @@ pub struct ModalPlugin;
 
 impl Plugin for ModalPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<ActiveModal>();
+        app.init_resource::<ActiveModal>()
+            .add_event::<OpenModal>()
+            .add_event::<CloseModal>();
     }
 }
 

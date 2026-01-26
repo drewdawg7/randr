@@ -6,13 +6,11 @@ use crate::assets::{GameFonts, GameSprites};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
+use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{ItemDetailPane, ItemGrid, ItemGridEntry, ItemGridFocusPanel, OutlinedText};
 
-use super::state::{
-    AnvilModalRoot, AnvilPlayerGrid, AnvilRecipeGrid, SpawnAnvilModal,
-};
+use super::state::{AnvilModalRoot, AnvilPlayerGrid, AnvilRecipeGrid};
 
 /// Convert forging recipes to grid entries for display.
 pub fn get_recipe_entries(inventory: &Inventory) -> Vec<ItemGridEntry> {
@@ -48,23 +46,20 @@ pub fn get_player_inventory_entries(inventory: &Inventory) -> Vec<ItemGridEntry>
 }
 
 /// Spawn the anvil modal UI with recipe grid, player inventory, and detail pane.
-pub fn spawn_anvil_modal(
+/// Called from RegisteredModal::spawn via run_system_cached.
+pub fn spawn_anvil_modal_impl(
     mut commands: Commands,
-    _game_sprites: Res<GameSprites>,
-    _game_fonts: Res<GameFonts>,
-    inventory: Res<Inventory>,
-    mut active_modal: ResMut<ActiveModal>,
+    _game_sprites: &GameSprites,
+    _game_fonts: &GameFonts,
+    inventory: &Inventory,
 ) {
-    commands.remove_resource::<SpawnAnvilModal>();
-    active_modal.modal = Some(ModalType::AnvilModal);
-
     // Initialize focus on recipe grid (default)
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::RecipeGrid),
     });
 
-    let recipe_entries = get_recipe_entries(&inventory);
-    let player_entries = get_player_inventory_entries(&inventory);
+    let recipe_entries = get_recipe_entries(inventory);
+    let player_entries = get_player_inventory_entries(inventory);
 
     let overlay = spawn_modal_overlay(&mut commands);
     commands

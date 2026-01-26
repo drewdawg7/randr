@@ -8,9 +8,7 @@ use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::ItemGrid;
 
 use super::render::get_player_inventory_entries;
-use super::state::{
-    ActiveForgeEntity, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex, ForgeSlotRefresh,
-};
+use super::state::{ActiveForgeEntity, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex};
 
 /// Handle Tab key toggling focus between crafting slots and player inventory.
 /// Only runs when forge modal is active (via run_if condition).
@@ -64,8 +62,8 @@ pub fn handle_forge_modal_navigation(
 
 /// Handle Enter key for moving items between inventory and forge slots.
 /// Only runs when forge modal is active (via run_if condition).
+/// Note: Forge slot display refresh is now handled reactively via `Changed<ForgeCraftingState>`.
 pub fn handle_forge_modal_select(
-    mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
@@ -164,8 +162,9 @@ pub fn handle_forge_modal_select(
             }
         }
 
+        // Refresh inventory grid when transfer occurred
+        // Forge slot display is handled reactively via Changed<ForgeCraftingState>
         if transfer_occurred {
-            // Refresh inventory grid
             if let Ok(mut grid) = player_grids.get_single_mut() {
                 grid.items = get_player_inventory_entries(&inventory);
                 if !grid.items.is_empty() {
@@ -174,9 +173,6 @@ pub fn handle_forge_modal_select(
                     grid.selected_index = 0;
                 }
             }
-
-            // Trigger slot refresh
-            commands.insert_resource(ForgeSlotRefresh);
         }
     }
 }

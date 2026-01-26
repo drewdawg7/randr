@@ -5,13 +5,13 @@ use crate::crafting_station::ForgeCraftingState;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::screens::modal::{spawn_modal_overlay, ActiveModal, ModalType};
+use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
 
 use super::state::{
     ActiveForgeEntity, ForgeModalRoot, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex,
-    ForgeSlotRefresh, ForgeSlotsGrid, SpawnForgeModal,
+    ForgeSlotsGrid,
 };
 
 const SLOT_SIZE: f32 = 48.0;
@@ -54,25 +54,22 @@ pub fn get_player_inventory_entries(inventory: &Inventory) -> Vec<ItemGridEntry>
 }
 
 /// Spawn the forge modal UI with crafting slots, player inventory grid, and detail pane.
-pub fn spawn_forge_modal(
+/// Called from RegisteredModal::spawn via run_system_cached.
+pub fn spawn_forge_modal_impl(
     mut commands: Commands,
-    game_sprites: Res<GameSprites>,
-    game_fonts: Res<GameFonts>,
-    inventory: Res<Inventory>,
-    forge_state_query: Query<&ForgeCraftingState>,
-    active_forge: Res<ActiveForgeEntity>,
-    modal_state: Res<ForgeModalState>,
-    mut active_modal: ResMut<ActiveModal>,
+    game_sprites: &GameSprites,
+    game_fonts: &GameFonts,
+    inventory: &Inventory,
+    forge_state_query: &Query<&ForgeCraftingState>,
+    active_forge: &ActiveForgeEntity,
+    modal_state: &ForgeModalState,
 ) {
-    commands.remove_resource::<SpawnForgeModal>();
-    active_modal.modal = Some(ModalType::ForgeModal);
-
     // Initialize focus on player inventory (default)
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::ForgeInventory),
     });
 
-    let player_entries = get_player_inventory_entries(&inventory);
+    let player_entries = get_player_inventory_entries(inventory);
 
     // Get forge crafting state
     let forge_state = forge_state_query.get(active_forge.0).ok();
@@ -93,10 +90,10 @@ pub fn spawn_forge_modal(
                     // Crafting slots container (left side)
                     spawn_crafting_slots(
                         row,
-                        &game_sprites,
-                        &game_fonts,
+                        game_sprites,
+                        game_fonts,
                         forge_state,
-                        &modal_state,
+                        modal_state,
                     );
 
                     // Player inventory grid (5x5) - focused by default
@@ -372,29 +369,23 @@ pub fn animate_forge_slot_selector(
     }
 }
 
-/// Refresh the forge slots display when state changes.
+/// Refresh the forge slots display when ForgeCraftingState changes.
+/// Uses Bevy's native change detection via `Changed<ForgeCraftingState>`.
 pub fn refresh_forge_slots(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     game_fonts: Res<GameFonts>,
-    refresh_trigger: Option<Res<ForgeSlotRefresh>>,
     active_forge: Option<Res<ActiveForgeEntity>>,
-    forge_state_query: Query<&ForgeCraftingState>,
+    forge_state_query: Query<&ForgeCraftingState, Changed<ForgeCraftingState>>,
     slot_cells: Query<(Entity, &ForgeSlotCell, Option<&Children>)>,
     item_sprites: Query<Entity, With<ForgeSlotItemSprite>>,
     quantity_texts: Query<Entity, With<ForgeSlotQuantityText>>,
 ) {
-    // Only refresh if trigger is present
-    if refresh_trigger.is_none() {
-        return;
-    }
-
-    commands.remove_resource::<ForgeSlotRefresh>();
-
     let Some(active_forge) = active_forge else {
         return;
     };
 
+    // Only refresh if forge state has changed (Changed filter)
     let Ok(forge_state) = forge_state_query.get(active_forge.0) else {
         return;
     };

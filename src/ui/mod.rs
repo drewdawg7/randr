@@ -19,7 +19,7 @@ pub use hints::*;
 pub use menu::*;
 pub use mob_animation::*;
 pub use modal_builder::{Modal, ModalBackground, SpawnModalExt};
-pub use modal_registry::{ModalCommands, RegisteredModal};
+pub use modal_registry::{ModalCommands, RegisteredModal, RegisterModalExt};
 pub use nodes::*;
 pub use player_sprite::*;
 pub use screens::*;
