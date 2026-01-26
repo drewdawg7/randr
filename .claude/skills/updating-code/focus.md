@@ -148,6 +148,7 @@ pub fn update_detail_pane(
 | Merchant | MerchantStock, PlayerInventory | MerchantStock |
 | Forge | ForgeCraftingSlots, ForgeInventory | ForgeCraftingSlots |
 | Anvil | RecipeGrid, AnvilInventory | RecipeGrid |
+| Monster Compendium | CompendiumMonsterList, CompendiumDropsList | CompendiumMonsterList |
 
 ---
 
@@ -184,7 +185,8 @@ pub trait SelectionState {
 
 | Resource | File | Navigation | Notes |
 |----------|------|------------|-------|
-| `CompendiumListState` | `monster_compendium/state.rs` | Clamped | Added `count` field |
+| `CompendiumListState` | `monster_compendium/state.rs` | Clamped | Monster list selection |
+| `DropsListState` | `monster_compendium/state.rs` | Clamped | Drops list selection |
 | `ListState` | `town/shared/list_widget.rs` | Wrapping | Overrides `up()`/`down()` with wrapping + scroll |
 | `FightScreenState` | `fight/state.rs` | Clamped | Uses wrapper types (see below) |
 
