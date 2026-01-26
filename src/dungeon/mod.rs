@@ -1,4 +1,5 @@
 pub mod commands;
+pub mod config;
 pub mod entity;
 pub mod floor;
 pub mod generator;
@@ -16,8 +17,9 @@ pub mod tile;
 pub mod variant_strategy;
 
 pub use commands::DungeonCommands;
+pub use config::DungeonConfig;
 pub use entity::{DungeonEntity, EntityRenderData};
-pub use floor::{FloorId, FloorSpec};
+pub use floor::{FloorId, FloorInstance, FloorSpec, FloorType, GeneratedFloor, WeightedFloorPool};
 pub use generator::LayoutGenerator;
 pub use grid::{GridOccupancy, GridPosition, GridSize};
 pub use layout::DungeonLayout;

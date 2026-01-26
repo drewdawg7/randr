@@ -1048,7 +1048,7 @@ fn cleanup_dungeon(
     for entity in &query {
         commands.entity(entity).despawn_recursive();
     }
-    // Exit dungeon (clears runtime state but preserves cleared_floors)
+    // Exit dungeon (clears runtime state but preserves floor_sequence)
     state.exit_dungeon();
     commands.remove_resource::<UiScale>();
     commands.remove_resource::<GridOccupancy>();

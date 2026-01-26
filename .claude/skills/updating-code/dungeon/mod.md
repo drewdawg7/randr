@@ -6,12 +6,14 @@ Data-driven dungeon system at `src/dungeon/`.
 
 ```
 Dungeon Location (e.g., "Goblin Cave")
-  └── Floor (e.g., "Floor 1", "Boss Floor")
+  └── Floor (Fixed FloorId OR Generated from FloorType)
        └── Layout (the tile grid + entities)
 ```
 
 - **Location**: A dungeon destination (registered in `DungeonPlugin`)
-- **Floor**: One level within a dungeon, with its own layout and spawns (defined by `FloorSpec`/`FloorId`)
+- **Floor**: One level within a dungeon. Can be:
+  - **Fixed**: Predefined `FloorId` with static spawn table (e.g., HomeFloor, GoblinCave1)
+  - **Generated**: Runtime-created from a `FloorType` template via weighted pool
 - **Layout**: The actual tile grid and entity placement (defined by `LayoutId`)
 
 ## File Structure
@@ -19,6 +21,7 @@ Dungeon Location (e.g., "Goblin Cave")
 src/dungeon/
     mod.rs              # Re-exports
     commands.rs         # DungeonCommands extension trait (despawn entities)
+    config.rs           # DungeonConfig (Fixed vs Generated)
     plugin.rs           # DungeonPlugin, DungeonBuilder, DungeonRegistry
     state.rs            # DungeonState (runtime state + progression)
     tile.rs             # TileType, Tile
@@ -30,8 +33,11 @@ src/dungeon/
     generator.rs        # LayoutGenerator trait
     rendering.rs        # TileRenderer (logical -> visual)
     floor/
-        mod.rs          # Re-exports FloorSpec, FloorId
-        definitions.rs  # define_data! macro invocation
+        mod.rs          # Re-exports FloorSpec, FloorId, FloorType, etc.
+        definitions.rs  # define_data! macro invocation for FloorId
+        floor_type.rs   # FloorType enum (reusable templates)
+        weighted_pool.rs # WeightedFloorPool for random selection
+        generated.rs    # FloorInstance, GeneratedFloor
     layouts/
         mod.rs          # LayoutId enum
         starting_room.rs
@@ -41,59 +47,57 @@ src/dungeon/
 
 ### DungeonPlugin (`plugin.rs`)
 
-Plugin for registering dungeon locations and their floor sequences. Uses a fluent builder API similar to `NavigationPlugin`.
+Plugin for registering dungeon locations and their floor sequences. Uses a fluent builder API.
 
 ```rust
-use crate::dungeon::{DungeonPlugin, FloorId};
+use crate::dungeon::{DungeonPlugin, FloorId, FloorType, WeightedFloorPool};
 use crate::location::LocationId;
 
 // In game.rs plugin registration:
 app.add_plugins(
     DungeonPlugin::new()
+        // Fixed floors (predefined sequence)
+        .location(LocationId::Home)
+            .floor(FloorId::HomeFloor)
+        // Generated floors (random from weighted pool)
+        .location(LocationId::MainDungeon)
+            .generated_floors(3, WeightedFloorPool::new()
+                .add(FloorType::BasicDungeonFloor, 100))
+        // Fixed floors for specific content
         .location(LocationId::GoblinCave)
             .floor(FloorId::GoblinCave1)
-            .floor(FloorId::GoblinCave2)
-        .location(LocationId::CrystalMine)
-            .floor(FloorId::CrystalMine1)
         .build()
 );
 ```
 
 **Builder methods:**
 - `DungeonPlugin::new()` - Returns a `DungeonBuilder`
-- `.location(LocationId)` - Sets context for subsequent `.floor()` calls
-- `.floor(FloorId)` - Adds floor to current location (first added = first floor)
-- `.build()` - Returns final `DungeonPlugin` (panics if no locations registered)
+- `.location(LocationId)` - Sets context for subsequent floor calls
+- `.floor(FloorId)` - Adds fixed floor to current location
+- `.generated_floors(count, pool)` - Uses weighted pool to generate `count` floors
+- `.build()` - Returns final `DungeonPlugin`
 
 ### DungeonRegistry (Resource)
 
-Inserted by `DungeonPlugin`, provides runtime floor queries:
+Inserted by `DungeonPlugin`, provides runtime config queries:
 
 ```rust
 fn my_system(registry: Res<DungeonRegistry>) {
-    // Get all floors for a location
+    // Get config for a location
+    let config: Option<&DungeonConfig> = registry.config(LocationId::MainDungeon);
+
+    // For Fixed dungeons only: get floor list
     let floors: &[FloorId] = registry.floors(LocationId::GoblinCave);
-
-    // Get next floor (for progression)
-    if let Some(next) = registry.next_floor(LocationId::GoblinCave, FloorId::GoblinCave1) {
-        // next == FloorId::GoblinCave2
-    }
-
-    // Check if floor is the final one
-    let is_boss = registry.is_final_floor(LocationId::GoblinCave, FloorId::GoblinCave2);
 }
 ```
 
 **Methods:**
-- `floors(location) -> &[FloorId]` - All floors for a location in order
-- `next_floor(location, current) -> Option<FloorId>` - Next floor after current
-- `is_final_floor(location, floor) -> bool` - Check if this is the last floor
+- `config(location) -> Option<&DungeonConfig>` - Get dungeon configuration
+- `floors(location) -> &[FloorId]` - Fixed floors only (empty for Generated)
 
 ### DungeonState (Resource, `state.rs`)
 
-Tracks runtime dungeon state and player progression. Combines:
-- **Progression tracking**: Which dungeon/floor the player is on, which floors have been cleared
-- **Runtime state**: Current layout and player position
+Tracks runtime dungeon state and player progression.
 
 ```rust
 use crate::dungeon::{DungeonState, DungeonRegistry};
@@ -103,47 +107,99 @@ fn my_system(
     mut state: ResMut<DungeonState>,
     registry: Res<DungeonRegistry>,
 ) {
-    // Enter a dungeon (sets current_location, current_floor, floor_index)
-    state.enter_dungeon(LocationId::GoblinCave, &registry);
+    // Enter a dungeon (generates floor sequence if needed)
+    state.enter_dungeon(LocationId::MainDungeon, &registry);
 
-    // Load the layout for the current floor (sets layout, player_pos, player_size)
+    // Load the layout for the current floor
     state.load_floor_layout();
+
+    // Get current floor info
+    if let Some(floor) = state.current_floor() {
+        println!("On: {}", floor.name()); // "Floor 1" for generated, "Home" for fixed
+    }
 
     // Check if on final floor
     if state.is_current_floor_final(&registry) {
         // Boss floor!
     }
 
-    // Advance to next floor after clearing (marks current as cleared)
-    if let Some(next_floor) = state.advance_floor(&registry) {
+    // Advance to next floor
+    if state.advance_floor(&registry).is_some() {
         state.load_floor_layout();
     } else {
         // Dungeon complete!
         state.exit_dungeon();
     }
-
-    // Check if a floor has been cleared
-    let cleared = state.is_floor_cleared(FloorId::GoblinCave1);
 }
 ```
 
 **Fields:**
-- `current_location: Option<LocationId>` - Active dungeon (None if not in dungeon)
-- `current_floor: Option<FloorId>` - Active floor (None if not in dungeon)
-- `floor_index: usize` - 0-indexed position in location's floor sequence
-- `cleared_floors: HashSet<FloorId>` - Set of floors player has cleared
-- `layout: Option<DungeonLayout>` - Current floor layout (None until loaded)
+- `current_location: Option<LocationId>` - Active dungeon
+- `floor_index: usize` - 0-indexed position in floor sequence
+- `floor_sequence: Vec<FloorInstance>` - Generated on dungeon entry
+- `dungeon_cleared: bool` - True after completing final floor
+- `layout: Option<DungeonLayout>` - Current floor layout
 - `player_pos: GridPosition` - Player's grid position
-- `player_size: GridSize` - Player's grid size (default 1x1)
+- `player_size: GridSize` - Player's grid size
 
 **Methods:**
-- `enter_dungeon(location, registry)` - Begin dungeon run at first floor
+- `enter_dungeon(location, registry)` - Begin dungeon, generate floors if needed
+- `current_floor() -> Option<&FloorInstance>` - Get current floor instance
 - `load_floor_layout() -> Option<&DungeonLayout>` - Load layout for current floor
-- `advance_floor(registry) -> Option<FloorId>` - Move to next floor, mark current as cleared
+- `advance_floor(registry) -> Option<&FloorInstance>` - Move to next floor
 - `is_current_floor_final(registry) -> bool` - Check if on last floor
-- `exit_dungeon()` - Leave dungeon (clears runtime state, preserves cleared_floors)
-- `is_floor_cleared(floor) -> bool` - Check if specific floor has been cleared
+- `exit_dungeon()` - Leave dungeon (preserves floor_sequence for re-entry)
+- `reset_dungeon()` - Clear sequence so next entry regenerates
 - `is_in_dungeon() -> bool` - Check if currently in a dungeon
+
+**Floor Sequence Behavior:**
+- Generated on first entry or after `dungeon_cleared` becomes true
+- Persists across exit/re-entry (same floors until cleared)
+- Each location has its own sequence (entering different dungeon regenerates)
+
+### Floor Type System (`floor/`)
+
+**FloorType** (`floor_type.rs`) - Reusable floor templates:
+```rust
+pub enum FloorType {
+    BasicDungeonFloor,  // Goblins, slimes, rocks, crafting stations
+}
+
+impl FloorType {
+    fn spawn_table(&self, is_final: bool) -> SpawnTable;  // Stairs only if !is_final
+    fn layout_id(&self, is_final: bool) -> LayoutId;      // DungeonFloorFinal if is_final
+}
+```
+
+**WeightedFloorPool** (`weighted_pool.rs`) - Random floor selection:
+```rust
+let pool = WeightedFloorPool::new()
+    .add(FloorType::BasicDungeonFloor, 80)
+    .add(FloorType::TreasureRoom, 20);
+let floor_type = pool.select(&mut rng);
+```
+
+**FloorInstance** (`generated.rs`) - Runtime floor representation:
+```rust
+pub enum FloorInstance {
+    Fixed(FloorId),           // Predefined floor
+    Generated(GeneratedFloor), // Runtime-created
+}
+
+impl FloorInstance {
+    fn layout_id(&self) -> LayoutId;
+    fn spawn_table(&self) -> SpawnTable;
+    fn name(&self) -> String;  // "Floor 1" for generated, spec.name for fixed
+}
+```
+
+**DungeonConfig** (`config.rs`) - Dungeon composition:
+```rust
+pub enum DungeonConfig {
+    Fixed(Vec<FloorId>),
+    Generated { floor_count: usize, floor_pool: WeightedFloorPool },
+}
+```
 
 ### TileType (`tile.rs`)
 Logical tile types for gameplay:

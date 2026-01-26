@@ -39,20 +39,5 @@ entity_macros::define_data! {
             layout_id: LayoutId::HomeLayout,
             spawn_table: SpawnTable::empty(),
         }
-        MainDungeon1 {
-            name: "Main Dungeon - Floor 1",
-            layout_id: LayoutId::DungeonFloorWithStairs,
-            spawn_table: SpawnTable::empty(),
-        }
-        MainDungeon2 {
-            name: "Main Dungeon - Floor 2",
-            layout_id: LayoutId::DungeonFloorWithStairs,
-            spawn_table: SpawnTable::empty(),
-        }
-        MainDungeon3 {
-            name: "Main Dungeon - Floor 3",
-            layout_id: LayoutId::DungeonFloorFinal,
-            spawn_table: SpawnTable::empty(),
-        }
     }
 }

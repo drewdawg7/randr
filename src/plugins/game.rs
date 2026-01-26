@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::assets::AssetPlugin as GameAssetPlugin;
-use crate::dungeon::{DungeonPlugin, FloorId};
+use crate::dungeon::{DungeonPlugin, FloorId, FloorType, WeightedFloorPool};
 use crate::game::{BlacksmithPlugin, CombatPlugin, CraftingPlugin, ItemPlugin, PlayerPlugin, StoragePlugin, StorageTransactionsPlugin, ToastPlugin};
 use crate::input::{GameAction, InputPlugin};
 use crate::location::{LocationId, StorePlugin};
@@ -45,9 +45,8 @@ impl Plugin for GamePlugin {
                 .location(LocationId::Home)
                     .floor(FloorId::HomeFloor)
                 .location(LocationId::MainDungeon)
-                    .floor(FloorId::MainDungeon1)
-                    .floor(FloorId::MainDungeon2)
-                    .floor(FloorId::MainDungeon3)
+                    .generated_floors(3, WeightedFloorPool::new()
+                        .add(FloorType::BasicDungeonFloor, 100))
                 .location(LocationId::GoblinCave)
                     .floor(FloorId::GoblinCave1)
                 .build(),
