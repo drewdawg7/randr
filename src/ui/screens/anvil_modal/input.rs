@@ -9,7 +9,9 @@ use crate::item::recipe::RecipeId;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::ItemGrid;
 
-use super::render::{get_player_inventory_entries, get_recipe_entries};
+use crate::ui::widgets::ItemGridEntry;
+
+use super::render::get_recipe_entries;
 use super::state::{ActiveAnvilEntity, AnvilPlayerGrid, AnvilRecipeGrid};
 
 /// Handle Tab key toggling focus between recipe grid and player inventory.
@@ -119,7 +121,7 @@ pub fn handle_anvil_modal_select(
         // Refresh inventory grid
         // Recipe grid refresh is handled reactively via Changed<Inventory>
         if let Ok(mut grid) = player_grids.get_single_mut() {
-            grid.items = get_player_inventory_entries(&inventory);
+            grid.items = ItemGridEntry::from_inventory(&inventory);
             if !grid.items.is_empty() {
                 grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
             } else {

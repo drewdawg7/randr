@@ -40,18 +40,6 @@ pub struct ForgeSlotSelector {
     pub frame_indices: [usize; 2],
 }
 
-/// Convert player inventory items to grid entries for display.
-pub fn get_player_inventory_entries(inventory: &Inventory) -> Vec<ItemGridEntry> {
-    inventory
-        .get_inventory_items()
-        .iter()
-        .map(|inv_item| ItemGridEntry {
-            sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
-            sprite_name: inv_item.item.item_id.sprite_name().to_string(),
-            quantity: inv_item.quantity,
-        })
-        .collect()
-}
 
 /// Spawn the forge modal UI with crafting slots, player inventory grid, and detail pane.
 /// Called from RegisteredModal::spawn via run_system_cached.
@@ -69,7 +57,7 @@ pub fn spawn_forge_modal_impl(
         focused: Some(FocusPanel::ForgeInventory),
     });
 
-    let player_entries = get_player_inventory_entries(inventory);
+    let player_entries = ItemGridEntry::from_inventory(inventory);
 
     // Get forge crafting state
     let forge_state = forge_state_query.get(active_forge.0).ok();

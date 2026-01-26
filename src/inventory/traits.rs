@@ -1,6 +1,7 @@
 use uuid::Uuid;
 
 use crate::item::{Item, ItemId};
+use crate::stats::StatType;
 
 use super::{AddItemResult, EquipmentSlot, Inventory, InventoryError, InventoryItem};
 
@@ -153,6 +154,27 @@ pub trait ManagesEquipment: HasInventory + ManagesItems {
             let _ = self.unequip_item(slot);
             self.inventory_mut().equipment_mut().insert(slot, inv_item);
         }
+    }
+
+    /// Get comparison stats from the equipped item in the same slot as the given item.
+    /// Returns None if the item is not equipment, or Some(empty vec) if slot is empty.
+    fn get_comparison_stats(&self, item: &crate::item::Item) -> Option<Vec<(StatType, i32)>> {
+        let slot = item.item_type.equipment_slot()?;
+
+        let comparison: Vec<_> = self
+            .get_equipped_item(slot)
+            .map(|equipped| {
+                equipped
+                    .item
+                    .stats
+                    .stats()
+                    .iter()
+                    .map(|(t, si)| (*t, si.current_value))
+                    .collect()
+            })
+            .unwrap_or_default();
+
+        Some(comparison)
     }
 }
 

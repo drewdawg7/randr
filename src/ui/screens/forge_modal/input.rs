@@ -7,7 +7,7 @@ use crate::item::ItemId;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::ItemGrid;
 
-use super::render::get_player_inventory_entries;
+use crate::ui::widgets::ItemGridEntry;
 use super::state::{ActiveForgeEntity, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex};
 
 /// Handle Tab key toggling focus between crafting slots and player inventory.
@@ -166,7 +166,7 @@ pub fn handle_forge_modal_select(
         // Forge slot display is handled reactively via Changed<ForgeCraftingState>
         if transfer_occurred {
             if let Ok(mut grid) = player_grids.get_single_mut() {
-                grid.items = get_player_inventory_entries(&inventory);
+                grid.items = ItemGridEntry::from_inventory(&inventory);
                 if !grid.items.is_empty() {
                     grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
                 } else {

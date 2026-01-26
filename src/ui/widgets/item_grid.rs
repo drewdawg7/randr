@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use super::nine_slice::spawn_nine_slice_panel;
 use crate::assets::{GameFonts, GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
 use crate::input::NavigationDirection;
+use crate::inventory::{Inventory, InventoryItem, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
 
 const CELL_SIZE: f32 = 48.0;
@@ -29,6 +30,26 @@ pub struct ItemGridEntry {
     pub sprite_name: String,
     /// Quantity to display (only shown if > 1)
     pub quantity: u32,
+}
+
+impl ItemGridEntry {
+    /// Create a grid entry from an inventory item.
+    pub fn from_inventory_item(inv_item: &InventoryItem) -> Self {
+        Self {
+            sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
+            sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+            quantity: inv_item.quantity,
+        }
+    }
+
+    /// Create grid entries from all items in an inventory.
+    pub fn from_inventory(inventory: &Inventory) -> Vec<Self> {
+        inventory
+            .get_inventory_items()
+            .iter()
+            .map(Self::from_inventory_item)
+            .collect()
+    }
 }
 
 /// Item grid widget with optional items to display.

@@ -2,8 +2,7 @@ use bevy::prelude::*;
 
 use crate::assets::GameFonts;
 use crate::economy::WorthGold;
-use crate::inventory::{Inventory, InventoryItem, ManagesEquipment, ManagesItems};
-use crate::stats::StatType;
+use crate::inventory::{Inventory, ManagesEquipment, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
@@ -45,7 +44,7 @@ pub fn sync_merchant_grids(
     // Update player grid if inventory changed
     if inventory.is_changed() {
         if let Ok(mut grid) = player_grids.get_single_mut() {
-            grid.items = get_player_inventory_entries(&inventory);
+            grid.items = ItemGridEntry::from_inventory(&inventory);
             if !grid.items.is_empty() {
                 grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
             } else {
@@ -70,49 +69,6 @@ pub fn get_merchant_stock_entries(stock: &MerchantStock) -> Vec<ItemGridEntry> {
         .collect()
 }
 
-/// Convert player inventory items to grid entries for display.
-pub fn get_player_inventory_entries(inventory: &Inventory) -> Vec<ItemGridEntry> {
-    inventory
-        .get_inventory_items()
-        .iter()
-        .map(|inv_item| ItemGridEntry {
-            sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
-            sprite_name: inv_item.item.item_id.sprite_name().to_string(),
-            quantity: inv_item.quantity,
-        })
-        .collect()
-}
-
-/// Get player inventory items as a vector.
-pub fn get_player_inventory_items(inventory: &Inventory) -> Vec<&InventoryItem> {
-    inventory.get_inventory_items().iter().collect()
-}
-
-/// Gets comparison stats from the equipped item in the same slot as the given item.
-/// Returns None if the item is not equipment, or Some(empty vec) if slot is empty.
-fn get_comparison_stats(
-    item: &crate::item::Item,
-    inventory: &Inventory,
-) -> Option<Vec<(StatType, i32)>> {
-    // Only compare equipment items
-    let slot = item.item_type.equipment_slot()?;
-
-    // Get equipped item stats (empty vec if slot is empty)
-    let comparison: Vec<_> = inventory
-        .get_equipped_item(slot)
-        .map(|equipped| {
-            equipped
-                .item
-                .stats
-                .stats()
-                .iter()
-                .map(|(t, si)| (*t, si.current_value))
-                .collect()
-        })
-        .unwrap_or_default();
-
-    Some(comparison)
-}
 
 /// Spawn the merchant modal UI with stock grid, player inventory grid, and detail pane.
 /// Called from RegisteredModal::spawn via run_system_cached.
@@ -127,7 +83,7 @@ pub fn spawn_merchant_modal_impl(
     });
 
     let stock_entries = get_merchant_stock_entries(stock);
-    let player_entries = get_player_inventory_entries(inventory);
+    let player_entries = ItemGridEntry::from_inventory(inventory);
 
     let overlay = spawn_modal_overlay(&mut commands);
     commands
@@ -275,7 +231,8 @@ pub fn populate_merchant_detail_pane_content(
                     })
                 })
             }
-            InfoPanelSource::Inventory { selected_index } => get_player_inventory_items(&inventory)
+            InfoPanelSource::Inventory { selected_index } => inventory
+                .get_inventory_items()
                 .get(selected_index)
                 .map(|inv_item| {
                     let price = inv_item.item.sell_price();
@@ -347,7 +304,7 @@ pub fn populate_merchant_detail_pane_content(
                     .with_color(Color::srgb(0.85, 0.85, 0.85));
 
                 // Add comparison for equipment items (both store and player inventory)
-                if let Some(comparison) = get_comparison_stats(item, &inventory) {
+                if let Some(comparison) = inventory.get_comparison_stats(item) {
                     display = display.with_comparison(comparison);
                 }
 
