@@ -40,6 +40,8 @@ Read the relevant doc BEFORE making changes.
 | DungeonCommands, entity despawning, occupancy vacate | [dungeon/entities.md](dungeon/entities.md) |
 | SpawnRule trait, SpawnRuleKind, ComposedSpawnRules | [dungeon/spawn-rules.md](dungeon/spawn-rules.md) |
 | ChestSpawner, WeightedMobSpawner, custom spawners | [dungeon/spawn-rules.md](dungeon/spawn-rules.md) |
+| RoomPattern trait, Rect, ComposedPattern | [dungeon/room-patterns.md](dungeon/room-patterns.md) |
+| LayoutBuilder pattern_at, custom tile patterns | [dungeon/room-patterns.md](dungeon/room-patterns.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Dungeon movement, SmoothPosition, interpolation | [dungeon/ui.md](dungeon/ui.md) |
 | EntityLayer, entity absolute positioning | [dungeon/ui.md](dungeon/ui.md) |

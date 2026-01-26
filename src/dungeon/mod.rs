@@ -8,6 +8,7 @@ pub mod layout_builder;
 pub mod layouts;
 pub mod plugin;
 pub mod rendering;
+pub mod room_patterns;
 pub mod spawn;
 pub mod spawn_rules;
 pub mod state;
@@ -29,5 +30,6 @@ pub use spawn_rules::{
     GuaranteedMobSpawner, NpcSpawner, RockSpawner, SpawnRule, SpawnRuleKind, StairsSpawner,
     WeightedMobEntry, WeightedMobSpawner,
 };
+pub use room_patterns::{ComposedPattern, Rect, RoomPattern, RoomPatternKind};
 pub use state::DungeonState;
 pub use tile::{Tile, TileType};
