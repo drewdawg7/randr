@@ -273,6 +273,8 @@ fn has_progression_gain_xp_no_level_up_no_callback() {
 #[test]
 fn progression_gameplay_scenario() {
     // Simulate a typical gameplay session
+    // XP curve: 10% increase per level (50 base)
+    // Level 1->2: 50, Level 2->3: 55, Level 3->4: 61, Level 4->5: 67
     let mut mock = MockProgressor::new();
 
     // Kill a few weak mobs (10 XP each)
@@ -282,20 +284,20 @@ fn progression_gameplay_scenario() {
     assert_eq!(mock.level(), 1);
     assert_eq!(mock.level_up_count, 0);
 
-    // Kill stronger mob, level up
+    // Kill stronger mob, level up (30 + 20 = 50, exactly enough)
     mock.gain_xp(20);
     assert_eq!(mock.level(), 2);
     assert_eq!(mock.level_up_count, 1);
 
-    // Continue grinding
-    mock.gain_xp(50);
-    mock.gain_xp(50);
+    // Continue grinding - need 55 for next level
+    mock.gain_xp(30);
+    mock.gain_xp(25);
     assert_eq!(mock.level(), 3);
     assert_eq!(mock.level_up_count, 2);
 
     // Boss kill with big XP reward causes multiple level ups
-    // Level 3->4: 150, Level 4->5: 200 = 350 total needed for 2 levels
-    let levels_gained = mock.gain_xp(350);
+    // Level 3->4: 61, Level 4->5: 67 = 128 total needed for 2 levels
+    let levels_gained = mock.gain_xp(128);
     assert_eq!(levels_gained, 2);
     assert_eq!(mock.level(), 5);
     assert_eq!(mock.level_up_count, 4); // Total level ups in session

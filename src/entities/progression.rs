@@ -14,7 +14,7 @@ impl Progression {
     }
 
     pub fn xp_to_next_level(level: i32) -> i32 {
-        50 * level
+        (50.0 * 1.1_f64.powi(level - 1)).round() as i32
     }
 
     pub fn add_xp(&mut self, xp: i32) -> i32 {
