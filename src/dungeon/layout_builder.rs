@@ -15,6 +15,7 @@ pub struct LayoutBuilder {
     width: usize,
     height: usize,
     entrance: Option<(usize, usize)>,
+    spawn_point: Option<(usize, usize)>,
     exit: Option<(usize, usize)>,
     door: Option<(usize, usize)>,
     spawn_table: Option<SpawnTable>,
@@ -29,6 +30,7 @@ impl LayoutBuilder {
             width,
             height,
             entrance: None,
+            spawn_point: None,
             exit: None,
             door: None,
             spawn_table: None,
@@ -38,9 +40,17 @@ impl LayoutBuilder {
         }
     }
 
+    /// Set entrance with GateFloor tile (TileType::PlayerSpawn). Use for locations like Home.
     pub fn entrance(mut self, x: usize, y: usize) -> Self {
         self.validate_interior_position(x, y, "entrance");
         self.entrance = Some((x, y));
+        self
+    }
+
+    /// Set spawn point as normal floor tile (TileType::SpawnPoint). Use for dungeon floors.
+    pub fn spawn_point(mut self, x: usize, y: usize) -> Self {
+        self.validate_interior_position(x, y, "spawn_point");
+        self.spawn_point = Some((x, y));
         self
     }
 
@@ -85,9 +95,11 @@ impl LayoutBuilder {
     }
 
     pub fn build(self) -> DungeonLayout {
-        let entrance = self
+        // Require either entrance or spawn_point
+        let player_spawn = self
             .entrance
-            .expect("LayoutBuilder: entrance must be set before calling build()");
+            .or(self.spawn_point)
+            .expect("LayoutBuilder: entrance or spawn_point must be set before calling build()");
 
         let mut layout = DungeonLayout::new(self.width, self.height);
         let mut rng = rand::thread_rng();
@@ -115,11 +127,18 @@ impl LayoutBuilder {
             pattern.apply(&mut layout, *bounds, &mut rng);
         }
 
-        // Set entrance (PlayerSpawn)
-        let (ex, ey) = entrance;
-        let spawn_variant = self.variant_strategy.choose_variant(ex, ey, TileType::PlayerSpawn, &mut rng);
-        layout.set_tile(ex, ey, Tile::new(TileType::PlayerSpawn).with_variant(spawn_variant));
-        layout.entrance = entrance;
+        // Set player spawn tile
+        let (px, py) = player_spawn;
+        if self.entrance.is_some() {
+            // Entrance: GateFloor sprite (PlayerSpawn tile)
+            let spawn_variant = self.variant_strategy.choose_variant(px, py, TileType::PlayerSpawn, &mut rng);
+            layout.set_tile(px, py, Tile::new(TileType::PlayerSpawn).with_variant(spawn_variant));
+        } else {
+            // Spawn point: normal floor tile marked for player spawn
+            let spawn_variant = self.variant_strategy.choose_variant(px, py, TileType::SpawnPoint, &mut rng);
+            layout.set_tile(px, py, Tile::new(TileType::SpawnPoint).with_variant(spawn_variant));
+        }
+        layout.entrance = player_spawn;
 
         // Set exit if provided
         if let Some((x, y)) = self.exit {

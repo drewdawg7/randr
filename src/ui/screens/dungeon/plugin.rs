@@ -17,6 +17,7 @@ use crate::loot::{collect_loot_drops, HasLoot};
 use crate::states::AppState;
 use crate::stats::{StatSheet, StatType};
 use crate::mob::MobId;
+use crate::plugins::MobDefeated;
 use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
 use crate::ui::screens::anvil_modal::ActiveAnvilEntity;
 use crate::ui::screens::forge_modal::ActiveForgeEntity;
@@ -139,6 +140,9 @@ impl Plugin for DungeonScreenPlugin {
                     handle_back_action,
                     handle_window_resize,
                     advance_floor_system.run_if(resource_exists::<AdvanceFloor>),
+                    enter_door_system.run_if(resource_exists::<EnterDoor>),
+                    return_to_home_system.run_if(resource_exists::<ReturnToHome>),
+                    handle_mob_defeated.run_if(on_event::<MobDefeated>),
                     revert_forge_idle,
                     revert_anvil_idle,
                 )
@@ -418,6 +422,14 @@ fn on_add_dungeon_floor(
         });
 
     commands.insert_resource(occupancy);
+
+    // Initialize monster count for this floor
+    let mob_count = layout
+        .entities()
+        .iter()
+        .filter(|(_, e)| matches!(e, DungeonEntity::Mob { .. }))
+        .count();
+    commands.insert_resource(FloorMonsterCount(mob_count));
 }
 
 fn spawn_dungeon_screen(
@@ -426,7 +438,7 @@ fn spawn_dungeon_screen(
     mut state: ResMut<DungeonState>,
 ) {
     if !state.is_in_dungeon() {
-        state.enter_dungeon(LocationId::GoblinCave, &registry);
+        state.enter_dungeon(LocationId::Home, &registry);
     }
 
     state.load_floor_layout();
@@ -520,6 +532,16 @@ fn handle_dungeon_movement(
         (state.player_pos.y as i32 + dy).max(0) as usize,
     );
 
+    // Check if trying to walk into a door tile (transition to another location)
+    if let Some(layout) = state.layout.as_ref() {
+        if let Some(tile) = layout.tile_at(new_pos.x, new_pos.y) {
+            if tile.tile_type == TileType::Door {
+                commands.insert_resource(EnterDoor);
+                return;
+            }
+        }
+    }
+
     // Check if all destination cells are walkable
     if !all_cells_walkable(state.layout.as_ref(), new_pos, state.player_size) {
         return;
@@ -546,6 +568,9 @@ fn handle_dungeon_movement(
             | DungeonEntity::Rock { .. }
             | DungeonEntity::Npc { .. }
             | DungeonEntity::CraftingStation { .. } => {}
+            DungeonEntity::Door { .. } => {
+                commands.insert_resource(EnterDoor);
+            }
             DungeonEntity::Stairs { .. } => {
                 commands.insert_resource(AdvanceFloor);
             }
@@ -1033,9 +1058,22 @@ fn cleanup_dungeon(
 #[derive(Resource)]
 struct AdvanceFloor;
 
+/// Resource that triggers entering a door (transition from Home to MainDungeon).
+#[derive(Resource)]
+pub struct EnterDoor;
+
+/// Resource that triggers returning to home after dungeon completion.
+#[derive(Resource)]
+pub struct ReturnToHome;
+
+/// Resource tracking remaining monsters on the current floor.
+#[derive(Resource, Default)]
+pub struct FloorMonsterCount(pub usize);
+
 fn advance_floor_system(
     mut commands: Commands,
     mut state: ResMut<DungeonState>,
+    registry: Res<DungeonRegistry>,
     root_query: Query<Entity, With<DungeonRoot>>,
 ) {
     commands.remove_resource::<AdvanceFloor>();
@@ -1045,8 +1083,9 @@ fn advance_floor_system(
     }
     commands.remove_resource::<UiScale>();
     commands.remove_resource::<GridOccupancy>();
+    commands.remove_resource::<FloorMonsterCount>();
 
-    state.floor_index += 1;
+    state.advance_floor(&registry);
     state.load_floor_layout();
 
     let Some(layout) = state.layout.clone() else {
@@ -1058,4 +1097,93 @@ fn advance_floor_system(
         player_pos: state.player_pos,
         player_size: state.player_size,
     });
+}
+
+/// System that handles entering a door (transition from Home to MainDungeon).
+fn enter_door_system(
+    mut commands: Commands,
+    mut state: ResMut<DungeonState>,
+    registry: Res<DungeonRegistry>,
+    root_query: Query<Entity, With<DungeonRoot>>,
+) {
+    commands.remove_resource::<EnterDoor>();
+
+    // Cleanup current floor
+    for entity in &root_query {
+        commands.entity(entity).despawn_recursive();
+    }
+    commands.remove_resource::<UiScale>();
+    commands.remove_resource::<GridOccupancy>();
+    commands.remove_resource::<FloorMonsterCount>();
+
+    // Transition from Home to MainDungeon
+    state.exit_dungeon();
+    state.enter_dungeon(LocationId::MainDungeon, &registry);
+    state.load_floor_layout();
+
+    let Some(layout) = state.layout.clone() else {
+        return;
+    };
+
+    commands.spawn(DungeonFloor {
+        layout,
+        player_pos: state.player_pos,
+        player_size: state.player_size,
+    });
+}
+
+/// System that handles returning to home after dungeon completion.
+fn return_to_home_system(
+    mut commands: Commands,
+    mut state: ResMut<DungeonState>,
+    registry: Res<DungeonRegistry>,
+    root_query: Query<Entity, With<DungeonRoot>>,
+) {
+    commands.remove_resource::<ReturnToHome>();
+
+    // Cleanup current floor
+    for entity in &root_query {
+        commands.entity(entity).despawn_recursive();
+    }
+    commands.remove_resource::<UiScale>();
+    commands.remove_resource::<GridOccupancy>();
+    commands.remove_resource::<FloorMonsterCount>();
+
+    // Reset MainDungeon for next run
+    state.reset_dungeon();
+
+    // Transition to Home
+    state.exit_dungeon();
+    state.enter_dungeon(LocationId::Home, &registry);
+    state.load_floor_layout();
+
+    let Some(layout) = state.layout.clone() else {
+        return;
+    };
+
+    commands.spawn(DungeonFloor {
+        layout,
+        player_pos: state.player_pos,
+        player_size: state.player_size,
+    });
+}
+
+/// System that tracks mob defeats and triggers return to home on dungeon completion.
+fn handle_mob_defeated(
+    mut commands: Commands,
+    mut events: EventReader<MobDefeated>,
+    mut count: ResMut<FloorMonsterCount>,
+    state: Res<DungeonState>,
+    registry: Res<DungeonRegistry>,
+) {
+    for _ in events.read() {
+        if count.0 > 0 {
+            count.0 -= 1;
+        }
+
+        // Check win condition: final floor and all monsters dead
+        if count.0 == 0 && state.is_current_floor_final(&registry) {
+            commands.insert_resource(ReturnToHome);
+        }
+    }
 }

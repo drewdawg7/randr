@@ -1,6 +1,6 @@
 use super::entity::DungeonEntity;
 use super::grid::{GridPosition, GridSize};
-use super::tile::{Tile, TileType};
+use super::tile::Tile;
 
 #[derive(Debug, Clone)]
 pub struct DungeonLayout {
@@ -55,16 +55,7 @@ impl DungeonLayout {
 
     pub fn is_floor(&self, x: usize, y: usize) -> bool {
         self.tile_at(x, y)
-            .map(|t| {
-                matches!(
-                    t.tile_type,
-                    TileType::Floor
-                        | TileType::Entrance
-                        | TileType::Exit
-                        | TileType::DoorOpen
-                        | TileType::PlayerSpawn
-                )
-            })
+            .map(|t| t.tile_type.is_floor())
             .unwrap_or(false)
     }
 

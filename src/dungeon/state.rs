@@ -105,10 +105,15 @@ impl DungeonState {
         let spec = floor.spec();
         let layout = spec.layout_id.layout();
 
-        // Find player spawn position
+        // Find player spawn position from PlayerSpawn or SpawnPoint tile
         self.player_pos = layout
             .iter()
-            .find(|(_, _, tile)| tile.tile_type == crate::dungeon::TileType::PlayerSpawn)
+            .find(|(_, _, tile)| {
+                matches!(
+                    tile.tile_type,
+                    crate::dungeon::TileType::PlayerSpawn | crate::dungeon::TileType::SpawnPoint
+                )
+            })
             .map_or(GridPosition::default(), |(x, y, _)| GridPosition::new(x, y));
 
         self.player_size = GridSize::single();
@@ -120,5 +125,12 @@ impl DungeonState {
     /// Check if currently in a dungeon.
     pub fn is_in_dungeon(&self) -> bool {
         self.current_location.is_some()
+    }
+
+    /// Reset a dungeon's progress for regeneration on next entry.
+    ///
+    /// Clears all cleared_floors so the dungeon regenerates fresh.
+    pub fn reset_dungeon(&mut self) {
+        self.cleared_floors.clear();
     }
 }

@@ -7,15 +7,27 @@ pub enum TileType {
     Door,
     DoorOpen,
     PlayerSpawn,
+    /// Player spawn point that renders as normal floor (no GateFloor sprite).
+    SpawnPoint,
     TorchWall,
 }
 
 impl TileType {
-    pub const fn is_walkable(&self) -> bool {
+    /// Whether this tile renders as floor (for edge detection).
+    pub const fn is_floor(&self) -> bool {
         matches!(
             self,
-            Self::Floor | Self::Entrance | Self::Exit | Self::DoorOpen | Self::PlayerSpawn
+            Self::Floor
+                | Self::Entrance
+                | Self::Exit
+                | Self::DoorOpen
+                | Self::PlayerSpawn
+                | Self::SpawnPoint
         )
+    }
+
+    pub const fn is_walkable(&self) -> bool {
+        self.is_floor()
     }
 
     pub const fn is_solid(&self) -> bool {
@@ -23,7 +35,7 @@ impl TileType {
     }
 
     pub const fn can_spawn_entity(&self) -> bool {
-        matches!(self, Self::Floor | Self::DoorOpen)
+        matches!(self, Self::Floor | Self::DoorOpen | Self::SpawnPoint)
     }
 }
 

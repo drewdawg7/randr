@@ -42,6 +42,12 @@ impl Plugin for GamePlugin {
                     .on(GameAction::OpenKeybinds, AppState::Keybinds)
                 .build(),
             DungeonPlugin::new()
+                .location(LocationId::Home)
+                    .floor(FloorId::HomeFloor)
+                .location(LocationId::MainDungeon)
+                    .floor(FloorId::MainDungeon1)
+                    .floor(FloorId::MainDungeon2)
+                    .floor(FloorId::MainDungeon3)
                 .location(LocationId::GoblinCave)
                     .floor(FloorId::GoblinCave1)
                 .build(),

@@ -13,6 +13,7 @@ pub enum DungeonEntity {
     Stairs { size: GridSize },
     Rock { rock_type: RockType, size: GridSize },
     CraftingStation { station_type: CraftingStationType, size: GridSize },
+    Door { size: GridSize },
 }
 
 /// Describes how a DungeonEntity should be rendered in the grid.
@@ -36,6 +37,7 @@ impl DungeonEntity {
             Self::Stairs { size } => *size,
             Self::Rock { size, .. } => *size,
             Self::CraftingStation { size, .. } => *size,
+            Self::Door { size } => *size,
         }
     }
 
@@ -57,6 +59,10 @@ impl DungeonEntity {
             Self::CraftingStation { station_type, .. } => EntityRenderData::SpriteSheet {
                 sheet_key: SpriteSheetKey::CraftingStations,
                 sprite_name: station_type.sprite_name(),
+            },
+            Self::Door { .. } => EntityRenderData::SpriteSheet {
+                sheet_key: SpriteSheetKey::DungeonTileset,
+                sprite_name: "gate",
             },
             Self::Mob { mob_id, .. } => EntityRenderData::AnimatedMob { mob_id: *mob_id },
             Self::Npc { mob_id, .. } => EntityRenderData::AnimatedMob { mob_id: *mob_id },

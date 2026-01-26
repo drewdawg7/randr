@@ -10,7 +10,7 @@ impl TileRenderer {
 
         match tile.tile_type {
             TileType::PlayerSpawn => Some((DungeonTileSlice::GateFloor, false)),
-            TileType::Floor | TileType::Entrance => {
+            TileType::Floor | TileType::Entrance | TileType::SpawnPoint => {
                 if let Some(edge) = Self::resolve_floor_edge(layout, x, y) {
                     Some(edge)
                 } else {

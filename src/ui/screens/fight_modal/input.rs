@@ -12,6 +12,8 @@ use crate::player::{PlayerGold, PlayerGuard, PlayerName};
 use crate::stats::StatSheet;
 use crate::ui::{PlayerAttackTimer, PlayerSpriteSheet, SelectionState, SpriteAnimation};
 
+use crate::plugins::MobDefeated;
+
 use super::super::modal::{close_modal, ActiveModal, ModalType};
 use super::super::results_modal::{ResultsModalData, ResultsSprite, SpawnResultsModal};
 use super::state::{FightModalButton, FightModalButtonSelection, FightModalMob, FightModalRoot};
@@ -57,6 +59,7 @@ pub fn handle_fight_modal_navigation(
 pub fn handle_fight_modal_select(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
+    mut mob_defeated_events: EventWriter<MobDefeated>,
     selection: Res<FightModalButtonSelection>,
     mut fight_mob: ResMut<FightModalMob>,
     mut occupancy: ResMut<GridOccupancy>,
@@ -112,6 +115,11 @@ pub fn handle_fight_modal_select(
 
                     // Collect loot into inventory
                     collect_loot_drops(&mut *player, &death_result.loot_drops);
+
+                    // Send MobDefeated event for monster tracking
+                    mob_defeated_events.send(MobDefeated {
+                        mob: fight_mob.mob.clone(),
+                    });
 
                     // Despawn mob from dungeon and clear occupancy
                     occupancy.vacate(fight_mob.pos, GridSize::single());
