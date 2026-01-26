@@ -242,7 +242,6 @@ pub fn update_drops_display(
     drops_state.count = entry.drops.len();
     drops_state.reset();
 
-    let icon_sheet = game_sprites.get(SpriteSheetKey::IconItems);
     let drops_focused = focus_state
         .as_ref()
         .map_or(false, |f| f.is_focused(FocusPanel::CompendiumDropsList));
@@ -265,7 +264,7 @@ pub fn update_drops_display(
             for (idx, drop) in entry.drops.iter().enumerate() {
                 let is_selected = drops_focused && idx == drops_state.selected;
                 let text_color = if is_selected { SELECTED_COLOR } else { NORMAL_COLOR };
-                spawn_drop_row(parent, idx, drop, icon_sheet, text_color);
+                spawn_drop_row(parent, idx, drop, &*game_sprites, text_color);
             }
         }
     });
@@ -275,7 +274,7 @@ fn spawn_drop_row(
     parent: &mut ChildBuilder,
     idx: usize,
     drop: &DropEntry,
-    icon_sheet: Option<&crate::assets::SpriteSheet>,
+    game_sprites: &GameSprites,
     text_color: Color,
 ) {
     let quantity_str = if drop.quantity_min == drop.quantity_max {
@@ -301,7 +300,7 @@ fn spawn_drop_row(
             },
         ))
         .with_children(|row| {
-            if let Some(sheet) = icon_sheet {
+            if let Some(sheet) = game_sprites.get(drop.item_id.sprite_sheet_key()) {
                 let sprite_name = drop.item_id.sprite_name();
                 if let Some(bundle) = sheet.image_bundle(sprite_name, DROP_ICON_SIZE, DROP_ICON_SIZE)
                 {

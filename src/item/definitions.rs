@@ -557,7 +557,13 @@ impl ItemId {
 
     /// Get the sprite sheet key for this item's icon.
     pub fn sprite_sheet_key(&self) -> crate::assets::SpriteSheetKey {
-        crate::assets::SpriteSheetKey::IconItems
+        use crate::assets::SpriteSheetKey;
+        match self {
+            ItemId::TinSword => SpriteSheetKey::TinSword,
+            ItemId::CopperSword => SpriteSheetKey::CopperSword,
+            ItemId::BronzeSword => SpriteSheetKey::BronzeSword,
+            _ => SpriteSheetKey::IconItems,
+        }
     }
 
     /// Get the sprite slice name for this item in the IconItems sprite sheet.
@@ -568,9 +574,9 @@ impl ItemId {
             // Weapons
             ItemId::Sword => "Slice_155",
             ItemId::Dagger => "Slice_156",
-            ItemId::TinSword => "Slice_989",
-            ItemId::CopperSword => "Slice_989",
-            ItemId::BronzeSword => "Slice_989",
+            ItemId::TinSword => "tin_sword",
+            ItemId::CopperSword => "copper_sword",
+            ItemId::BronzeSword => "bronze_sword",
             ItemId::BonkStick => "Slice_607",
             // Shields
             ItemId::BasicShield => "Slice_100",

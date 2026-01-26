@@ -237,7 +237,7 @@ fn on_add_item_grid(
                     if let Some(item_grid) = item_grid {
                         if let Some(entry) = item_grid.items.get(i) {
                             if let Some(icon_img) = game_sprites
-                                .get(SpriteSheetKey::IconItems)
+                                .get(entry.sprite_sheet_key)
                                 .and_then(|s| s.image_node(&entry.sprite_name))
                             {
                                 cell.with_children(|cell_content| {
@@ -317,7 +317,7 @@ fn update_grid_items(
             // Add item sprite if there's an item at this cell index
             if let Some(entry) = item_grid.items.get(grid_cell.index) {
                 if let Some(icon_img) = game_sprites
-                    .get(SpriteSheetKey::IconItems)
+                    .get(entry.sprite_sheet_key)
                     .and_then(|s| s.image_node(&entry.sprite_name))
                 {
                     commands.entity(cell_entity).with_children(|cell_content| {
