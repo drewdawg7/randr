@@ -80,6 +80,7 @@ Read the relevant doc BEFORE making changes.
 | Inventory modal, ItemGrid display, inventory UI | [inventory-modal.md](inventory-modal.md) |
 | Merchant modal, NPC shop, buy/sell items | [merchant-modal.md](merchant-modal.md) |
 | Player stats banner, HP/XP/Gold HUD, reactive text | [player-stats.md](player-stats.md) |
+| Leveling, XP curve, Progression resource, HasProgression | [progression.md](progression.md) |
 
 
 ## Documentation
