@@ -1,13 +1,14 @@
 use bevy::prelude::*;
 
 use crate::assets::{BookSlotSlice, GameSprites, SpriteSheetKey, UiAllSlice};
-use super::super::modal::spawn_modal_overlay;
-use crate::ui::{MobSpriteSheets, SpriteAnimation};
+use crate::ui::screens::modal::spawn_modal_overlay;
+use crate::ui::{FocusPanel, FocusState, MobSpriteSheets, SelectionState, SpriteAnimation};
 
 use super::constants::*;
 use super::state::{
-    CompendiumListState, CompendiumMobSprite, CompendiumMonsters, MonsterCompendiumRoot,
-    MonsterListItem, SpawnMonsterCompendium,
+    CompendiumDropsSection, CompendiumListState, CompendiumMobSprite, CompendiumMonsters,
+    DropEntry, DropListItem, DropsListState, MonsterCompendiumRoot, MonsterListItem,
+    SpawnMonsterCompendium,
 };
 
 /// System to spawn the monster compendium UI.
@@ -94,7 +95,6 @@ fn spawn_left_page(book: &mut ChildBuilder, monsters: &CompendiumMonsters) {
     });
 }
 
-/// Spawn the right page with the slot and mob sprite.
 fn spawn_right_page(
     book: &mut ChildBuilder,
     slot_sprite: Option<(Handle<Image>, Handle<TextureAtlasLayout>, usize)>,
@@ -109,11 +109,12 @@ fn spawn_right_page(
         top: Val::Px(RIGHT_PAGE_TOP),
         width: Val::Px(RIGHT_PAGE_WIDTH),
         height: Val::Px(RIGHT_PAGE_HEIGHT),
-        justify_content: JustifyContent::Center,
+        flex_direction: FlexDirection::Column,
         align_items: AlignItems::Center,
         ..default()
     })
     .with_children(|right_page| {
+        // Slot with mob sprite at top
         right_page
             .spawn((
                 ImageNode::from_atlas_image(
@@ -141,20 +142,37 @@ fn spawn_right_page(
                     },
                 ));
             });
+
+        // Drops section below slot
+        right_page.spawn((
+            CompendiumDropsSection,
+            Node {
+                width: Val::Px(RIGHT_PAGE_WIDTH),
+                height: Val::Px(DROPS_SECTION_HEIGHT),
+                flex_direction: FlexDirection::Column,
+                overflow: Overflow::clip(),
+                margin: UiRect::top(Val::Px(8.0)),
+                padding: UiRect::horizontal(Val::Px(10.0)),
+                ..default()
+            },
+        ));
     });
 }
 
-/// System to update monster list item colors based on selection.
 pub fn update_monster_list_display(
     list_state: Res<CompendiumListState>,
+    focus_state: Option<Res<FocusState>>,
     mut items: Query<(&MonsterListItem, &mut TextColor)>,
 ) {
-    if !list_state.is_changed() {
+    let Some(focus_state) = focus_state else { return };
+    if !list_state.is_changed() && !focus_state.is_changed() {
         return;
     }
 
+    let monsters_focused = focus_state.is_focused(FocusPanel::CompendiumMonsterList);
+
     for (item, mut color) in items.iter_mut() {
-        if item.0 == list_state.selected {
+        if item.0 == list_state.selected && monsters_focused {
             *color = TextColor(SELECTED_COLOR);
         } else {
             *color = TextColor(NORMAL_COLOR);
@@ -198,6 +216,130 @@ pub fn update_compendium_mob_sprite(
                 .entity(entity)
                 .remove::<ImageNode>()
                 .remove::<SpriteAnimation>();
+        }
+    }
+}
+
+pub fn update_drops_display(
+    mut commands: Commands,
+    list_state: Res<CompendiumListState>,
+    mut drops_state: ResMut<DropsListState>,
+    monsters: Option<Res<CompendiumMonsters>>,
+    focus_state: Option<Res<FocusState>>,
+    game_sprites: Res<GameSprites>,
+    drops_section: Query<Entity, With<CompendiumDropsSection>>,
+    added: Query<Entity, Added<CompendiumDropsSection>>,
+) {
+    let needs_update = list_state.is_changed() || !added.is_empty();
+    if !needs_update {
+        return;
+    }
+
+    let Some(monsters) = monsters else { return };
+    let Some(entry) = monsters.get(list_state.selected) else { return };
+    let Ok(section_entity) = drops_section.get_single() else { return };
+
+    drops_state.count = entry.drops.len();
+    drops_state.reset();
+
+    let icon_sheet = game_sprites.get(SpriteSheetKey::IconItems);
+    let drops_focused = focus_state
+        .as_ref()
+        .map_or(false, |f| f.is_focused(FocusPanel::CompendiumDropsList));
+
+    commands.entity(section_entity).despawn_descendants();
+    commands.entity(section_entity).with_children(|parent| {
+        parent.spawn((
+            Text::new("Drops:"),
+            TextFont { font_size: DROP_FONT_SIZE, ..default() },
+            TextColor(NORMAL_COLOR),
+        ));
+
+        if entry.drops.is_empty() {
+            parent.spawn((
+                Text::new("No item drops"),
+                TextFont { font_size: DROP_FONT_SIZE, ..default() },
+                TextColor(NORMAL_COLOR),
+            ));
+        } else {
+            for (idx, drop) in entry.drops.iter().enumerate() {
+                let is_selected = drops_focused && idx == drops_state.selected;
+                let text_color = if is_selected { SELECTED_COLOR } else { NORMAL_COLOR };
+                spawn_drop_row(parent, idx, drop, icon_sheet, text_color);
+            }
+        }
+    });
+}
+
+fn spawn_drop_row(
+    parent: &mut ChildBuilder,
+    idx: usize,
+    drop: &DropEntry,
+    icon_sheet: Option<&crate::assets::SpriteSheet>,
+    text_color: Color,
+) {
+    let quantity_str = if drop.quantity_min == drop.quantity_max {
+        format!("({})", drop.quantity_min)
+    } else {
+        format!("({}-{})", drop.quantity_min, drop.quantity_max)
+    };
+
+    let display_text = format!(
+        "{} - {:.0}% {}",
+        drop.item_name, drop.drop_percent, quantity_str
+    );
+
+    parent
+        .spawn((
+            DropListItem(idx),
+            Node {
+                flex_direction: FlexDirection::Row,
+                align_items: AlignItems::Center,
+                column_gap: Val::Px(4.0),
+                height: Val::Px(DROP_ROW_HEIGHT),
+                ..default()
+            },
+        ))
+        .with_children(|row| {
+            if let Some(sheet) = icon_sheet {
+                let sprite_name = drop.item_id.sprite_name();
+                if let Some(bundle) = sheet.image_bundle(sprite_name, DROP_ICON_SIZE, DROP_ICON_SIZE)
+                {
+                    row.spawn(bundle);
+                }
+            }
+
+            row.spawn((
+                Text::new(display_text),
+                TextFont { font_size: DROP_FONT_SIZE, ..default() },
+                TextColor(text_color),
+            ));
+        });
+}
+
+pub fn update_drops_list_colors(
+    drops_state: Option<Res<DropsListState>>,
+    focus_state: Option<Res<FocusState>>,
+    items: Query<(&DropListItem, &Children)>,
+    mut texts: Query<&mut TextColor>,
+) {
+    let Some(drops_state) = drops_state else { return };
+    let Some(focus_state) = focus_state else { return };
+
+    if !drops_state.is_changed() && !focus_state.is_changed() {
+        return;
+    }
+
+    let drops_focused = focus_state.is_focused(FocusPanel::CompendiumDropsList);
+
+    for (item, children) in items.iter() {
+        let is_selected = drops_focused && item.0 == drops_state.selected;
+        let color = if is_selected { SELECTED_COLOR } else { NORMAL_COLOR };
+
+        for &child in children.iter() {
+            if let Ok(mut text_color) = texts.get_mut(child) {
+                *text_color = TextColor(color);
+            }
         }
     }
 }

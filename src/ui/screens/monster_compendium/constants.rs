@@ -27,3 +27,9 @@ pub const MONSTER_NAME_FONT_SIZE: f32 = 14.0;
 // Colors
 pub const SELECTED_COLOR: Color = Color::srgb(0.5, 0.3, 0.1);
 pub const NORMAL_COLOR: Color = Color::srgb(0.2, 0.15, 0.1);
+
+// Drops section layout
+pub const DROPS_SECTION_HEIGHT: f32 = 180.0;
+pub const DROP_ROW_HEIGHT: f32 = 18.0;
+pub const DROP_ICON_SIZE: f32 = 16.0;
+pub const DROP_FONT_SIZE: f32 = 12.0;

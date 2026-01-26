@@ -26,6 +26,9 @@ pub enum FocusPanel {
     // Anvil modal
     RecipeGrid,
     AnvilInventory,
+    // Monster compendium
+    CompendiumMonsterList,
+    CompendiumDropsList,
 }
 
 /// Resource tracking which panel is currently focused.

@@ -53,6 +53,14 @@ impl LootTable {
         self.get_loot_item_from_kind(kind).is_some()
     }
 
+    pub fn iter(&self) -> impl Iterator<Item = &LootItem> {
+        self.loot.iter()
+    }
+
+    pub fn is_empty(&self) -> bool {
+        self.loot.is_empty()
+    }
+
     /// Returns iterator over (ItemId, drop_chance as f32 0.0-1.0)
     pub fn ore_proportions(&self) -> impl Iterator<Item = (ItemId, f32)> + '_ {
         self.loot.iter().map(|item| {
@@ -171,6 +179,18 @@ impl LootItem {
             numerator,
             denominator,
         })
+    }
+
+    pub fn item_id(&self) -> ItemId {
+        self.item_kind
+    }
+
+    pub fn drop_chance_percent(&self) -> f32 {
+        (self.numerator as f32 / self.denominator as f32) * 100.0
+    }
+
+    pub fn quantity_range(&self) -> RangeInclusive<i32> {
+        self.quantity.clone()
     }
 }
 
