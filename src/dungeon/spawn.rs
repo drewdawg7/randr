@@ -1,14 +1,15 @@
 use std::ops::RangeInclusive;
 
-use rand::seq::SliceRandom;
 use rand::Rng;
 
-use super::entity::DungeonEntity;
 use super::grid::GridSize;
 use super::layout::DungeonLayout;
+use super::spawn_rules::{
+    ChestSpawner, ComposedSpawnRules, CraftingStationSpawner, GuaranteedMobSpawner, NpcSpawner,
+    RockSpawner, SpawnRule, SpawnRuleKind, StairsSpawner, WeightedMobSpawner,
+};
 use crate::crafting_station::CraftingStationType;
 use crate::mob::MobId;
-use crate::rock::RockType;
 
 /// Type of entity that can be spawned.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -120,151 +121,73 @@ impl SpawnTable {
         self
     }
 
-    pub fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) {
-        // 1. Spawn chests first (1x1, prioritize)
-        let chest_count = rng.gen_range(self.chest_count.clone());
-        for _ in 0..chest_count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                let variant = rng.gen_range(0..4);
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::Chest {
-                        variant,
-                        size: GridSize::single(),
-                    },
-                );
-            }
+    /// Build a ComposedSpawnRules from this table's configuration.
+    fn build_rules(&self) -> ComposedSpawnRules {
+        let mut rules = ComposedSpawnRules::new();
+
+        // 1. Chests
+        if *self.chest_count.end() > 0 {
+            rules.push(SpawnRuleKind::Chest(ChestSpawner::new(self.chest_count.clone())));
         }
 
-        // 2. Spawn stairs (1x1)
-        let stairs_count = rng.gen_range(self.stairs_count.clone());
-        for _ in 0..stairs_count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::Stairs {
-                        size: GridSize::single(),
-                    },
-                );
-            }
+        // 2. Stairs
+        if *self.stairs_count.end() > 0 {
+            rules.push(SpawnRuleKind::Stairs(StairsSpawner::new(self.stairs_count.clone())));
         }
 
-        // 3. Spawn rocks (1x1)
-        let rock_count = rng.gen_range(self.rock_count.clone());
-        for _ in 0..rock_count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                let rock_type = match rng.gen_range(0..3u8) {
-                    0 => RockType::Copper,
-                    1 => RockType::Coal,
-                    _ => RockType::Tin,
-                };
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::Rock {
-                        rock_type,
-                        size: GridSize::single(),
-                    },
-                );
-            }
+        // 3. Rocks
+        if *self.rock_count.end() > 0 {
+            rules.push(SpawnRuleKind::Rock(RockSpawner::new(self.rock_count.clone())));
         }
 
-        // 4. Spawn forges (1x1)
-        let forge_count = rng.gen_range(self.forge_count.clone());
-        for _ in 0..forge_count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::CraftingStation {
-                        station_type: CraftingStationType::Forge,
-                        size: GridSize::single(),
-                    },
-                );
-            }
+        // 4. Forges
+        if *self.forge_count.end() > 0 {
+            rules.push(SpawnRuleKind::CraftingStation(CraftingStationSpawner::new(
+                CraftingStationType::Forge,
+                self.forge_count.clone(),
+            )));
         }
 
-        // 4b. Spawn anvils (1x1)
-        let anvil_count = rng.gen_range(self.anvil_count.clone());
-        for _ in 0..anvil_count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::CraftingStation {
-                        station_type: CraftingStationType::Anvil,
-                        size: GridSize::single(),
-                    },
-                );
-            }
+        // 5. Anvils
+        if *self.anvil_count.end() > 0 {
+            rules.push(SpawnRuleKind::CraftingStation(CraftingStationSpawner::new(
+                CraftingStationType::Anvil,
+                self.anvil_count.clone(),
+            )));
         }
 
-        // 5. Spawn NPCs (before guaranteed mobs)
+        // 6. NPCs
         for (mob_id, count_range) in &self.npc_spawns {
-            let count = rng.gen_range(count_range.clone());
-            for _ in 0..count {
-                let areas = layout.spawn_areas(GridSize::single());
-                if let Some(&pos) = areas.choose(rng) {
-                    layout.add_entity(
-                        pos,
-                        DungeonEntity::Npc {
-                            mob_id: *mob_id,
-                            size: GridSize::single(),
-                        },
-                    );
-                }
-            }
+            rules.push(SpawnRuleKind::Npc(NpcSpawner::new(*mob_id, count_range.clone())));
         }
 
-        // 6. Spawn guaranteed mobs
+        // 7. Guaranteed mobs
         for (mob_id, count) in &self.guaranteed_mobs {
-            let size = mob_id.spec().grid_size;
-            for _ in 0..*count {
-                let areas = layout.spawn_areas(size);
-                if let Some(&pos) = areas.choose(rng) {
-                    layout.add_entity(pos, DungeonEntity::Mob { mob_id: *mob_id, size });
-                }
-            }
+            rules.push(SpawnRuleKind::GuaranteedMob(GuaranteedMobSpawner::new(*mob_id, *count)));
         }
 
-        // 7. Spawn mobs by weighted selection
-        let total_weight: u32 = self.entries.iter().map(|e| e.weight).sum();
-        if total_weight == 0 {
-            return;
-        }
-
-        let mob_count = rng.gen_range(self.mob_count.clone());
-        for _ in 0..mob_count {
-            let entry = self.weighted_entry_select(rng, total_weight);
-            let areas = layout.spawn_areas(entry.size);
-            if let Some(&pos) = areas.choose(rng) {
+        // 8. Weighted mobs
+        if !self.entries.is_empty() && *self.mob_count.end() > 0 {
+            let mut weighted = WeightedMobSpawner::new().count(self.mob_count.clone());
+            for entry in &self.entries {
                 let SpawnEntityType::Mob(mob_id) = entry.entity_type;
-                layout.add_entity(pos, DungeonEntity::Mob { mob_id, size: entry.size });
+                weighted = weighted.mob(mob_id, entry.weight);
             }
+            rules.push(SpawnRuleKind::WeightedMob(weighted));
         }
+
+        rules
     }
 
-    fn weighted_entry_select(&self, rng: &mut impl Rng, total_weight: u32) -> &SpawnEntry {
-        let roll = rng.gen_range(0..total_weight);
-        let mut cumulative = 0;
-
-        for entry in &self.entries {
-            cumulative += entry.weight;
-            if roll < cumulative {
-                return entry;
-            }
-        }
-
-        &self.entries[0]
+    pub fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) {
+        self.build_rules().apply(layout, rng);
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dungeon::LayoutBuilder;
+    use crate::dungeon::{DungeonEntity, LayoutBuilder};
 
     #[test]
     fn mob_entry_stores_size_from_spec() {

@@ -297,7 +297,9 @@ let layout = LayoutBuilder::new(40, 21)
 - Spawn table applied automatically if set
 
 ### SpawnTable (`spawn.rs`)
-Declarative entity spawning with weighted mob selection and multi-cell entity support:
+Declarative entity spawning with weighted mob selection and multi-cell entity support.
+
+`SpawnTable` is the high-level API that internally uses `ComposedSpawnRules` and individual spawner types. For custom spawner implementations, see [spawn-rules.md](spawn-rules.md).
 ```rust
 use crate::dungeon::SpawnTable;
 use crate::mob::MobId;
@@ -333,16 +335,17 @@ let treasure = SpawnTable::new().chest(5..=8);
 - `rock(range)` - Sets rock count range (e.g., `2..=4`), always 1x1, random RockType
 - `apply(&mut layout, &mut rng)` - Applies spawns to layout
 
-**Algorithm:**
-1. Spawns random chest count (range) first, each with variant 0-3
-   - Uses `layout.spawn_areas(GridSize::single())` to find valid 1x1 positions
-2. Spawns random stairs count (range), always 1x1
-   - Uses `layout.spawn_areas(GridSize::single())` to find valid positions
-3. Spawns random rock count (range), random RockType (equal weight Copper/Coal/Tin)
-   - Uses `layout.spawn_areas(GridSize::single())` to find valid positions
-4. Spawns random mob count using weighted selection from entries
-   - Uses `layout.spawn_areas(entry.size)` to find valid positions for each mob's size
-   - Entities never overlap due to `spawn_areas()` checking existing entities
+**Algorithm (via SpawnRule implementations):**
+1. Chests - `ChestSpawner` with random variants 0-3
+2. Stairs - `StairsSpawner`
+3. Rocks - `RockSpawner` with random RockType
+4. Forges - `CraftingStationSpawner(Forge)`
+5. Anvils - `CraftingStationSpawner(Anvil)`
+6. NPCs - `NpcSpawner`
+7. Guaranteed mobs - `GuaranteedMobSpawner`
+8. Weighted mobs - `WeightedMobSpawner`
+
+Each spawner uses `layout.spawn_areas(size)` to find valid positions. Entities never overlap.
 
 ### LayoutId (`layouts/mod.rs`)
 Registry of predefined layouts:

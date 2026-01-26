@@ -38,6 +38,8 @@ Read the relevant doc BEFORE making changes.
 | FloorSpec, FloorId, floor definitions | [dungeon/mod.md](dungeon/mod.md) |
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
 | DungeonCommands, entity despawning, occupancy vacate | [dungeon/entities.md](dungeon/entities.md) |
+| SpawnRule trait, SpawnRuleKind, ComposedSpawnRules | [dungeon/spawn-rules.md](dungeon/spawn-rules.md) |
+| ChestSpawner, WeightedMobSpawner, custom spawners | [dungeon/spawn-rules.md](dungeon/spawn-rules.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Dungeon movement, SmoothPosition, interpolation | [dungeon/ui.md](dungeon/ui.md) |
 | EntityLayer, entity absolute positioning | [dungeon/ui.md](dungeon/ui.md) |

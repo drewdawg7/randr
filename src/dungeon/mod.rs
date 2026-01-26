@@ -9,6 +9,7 @@ pub mod layouts;
 pub mod plugin;
 pub mod rendering;
 pub mod spawn;
+pub mod spawn_rules;
 pub mod state;
 pub mod tile;
 
@@ -23,5 +24,10 @@ pub use layouts::LayoutId;
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry};
 pub use rendering::TileRenderer;
 pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
+pub use spawn_rules::{
+    ChestSpawner, ComposedSpawnRules, CraftingStationSpawner, FixedPositionSpawner,
+    GuaranteedMobSpawner, NpcSpawner, RockSpawner, SpawnRule, SpawnRuleKind, StairsSpawner,
+    WeightedMobEntry, WeightedMobSpawner,
+};
 pub use state::DungeonState;
 pub use tile::{Tile, TileType};
