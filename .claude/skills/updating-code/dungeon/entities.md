@@ -12,12 +12,13 @@ Entities that can be spawned on dungeon tiles.
 ### DungeonEntity Enum (`src/dungeon/entity.rs`)
 ```rust
 pub enum DungeonEntity {
-    Chest { variant: u8, size: GridSize },        // Uses chests sprite sheet (Slice_1)
-    Mob { mob_id: MobId, size: GridSize },        // Any mob type (Goblin, Slime, etc.)
-    Npc { mob_id: MobId, size: GridSize },        // Non-combat entities (blocks movement)
-    Stairs { size: GridSize },                    // Advances player to next floor
-    Rock { rock_type: RockType, size: GridSize }, // Minable rocks (copper, coal, tin)
-    Door { size: GridSize },                      // Transitions to another dungeon location
+    Chest { variant: u8, size: GridSize },                         // Uses chests sprite sheet (Slice_1)
+    Mob { mob_id: MobId, size: GridSize },                         // Any mob type (Goblin, Slime, etc.)
+    Npc { mob_id: MobId, size: GridSize },                         // Non-combat entities (blocks movement)
+    Stairs { size: GridSize },                                     // Advances player to next floor
+    Rock { rock_type: RockType, sprite_variant: u8, size: GridSize }, // Minable rocks (coal, copper, iron, gold)
+    CraftingStation { station_type: CraftingStationType, size: GridSize }, // Forge, Anvil
+    Door { size: GridSize },                                       // Transitions to another dungeon location
 }
 ```
 
@@ -64,9 +65,14 @@ Adding a new entity type only requires:
 - Reuses `MobSpriteSheets` and `MobAnimation` from mob compendium
 
 ### Rock Entity
-- `render_data()` returns `SpriteSheet { Rocks, rock_type.sprite_name() }`
-- Three types: `RockType::Copper` ("copper_rock"), `RockType::Coal` ("coal_tin_rock"), `RockType::Tin` ("coal_tin_rock")
-- Coal and Tin share the same sprite (icon 859), Copper uses a different one (icon 858)
+- `render_data()` returns `SpriteSheet { CaveTileset, rock_type.sprite_data(sprite_variant) }`
+- Four types: `RockType::Coal`, `RockType::Copper`, `RockType::Iron`, `RockType::Gold`
+- Sprites from cave tileset with random variants:
+  - Coal: `rock_1` or `rock_2`
+  - Copper: `copper_rock_1` or `copper_rock_2`
+  - Iron: `iron_rock_1` or `iron_rock_2`
+  - Gold: `gold_rock_1` or `gold_rock_2`
+- `DungeonEntity::Rock { rock_type, sprite_variant, size }` - variant is 0 or 1, randomly selected at spawn
 - Always 1x1 (`GridSize::single()`)
 - Blocks movement (obstacles, like chests)
 - Mined via Space key when adjacent → shows results modal with ore drops
@@ -74,7 +80,7 @@ Adding a new entity type only requires:
 - `Rock::new(rock_type)` creates a rock with appropriate loot table
 - Implements `HasLoot` trait for `roll_drops(magic_find)`
 - Spawned via `SpawnTable::rock(count_range)` (e.g., `.rock(2..=4)`)
-- Loot: Copper → CopperOre (1-3), Coal → Coal (1-2), Tin → TinOre (1-3)
+- Loot: Coal → Coal (1-2), Copper → CopperOre (1-3), Iron → IronOre (1-3), Gold → GoldOre (1-3)
 
 ### Stairs Entity
 - `render_data()` returns `SpriteSheet { DungeonTileset, "stairs" }`
@@ -327,12 +333,14 @@ Located in `assets/sprites/dungeon_entities/`:
 - `chests.png` / `chests.json` - Full chests sprite sheet (128x96, 43 slices)
   - Currently uses `Slice_1` (16x14 brown chest at x:32, y:1)
   - Other slices available for future chest variants
-- `rocks.png` / `rocks.json` - Rock sprite sheet (64x32, 2 slices)
-  - `copper_rock` - Copper rock icon (icon858.png, x:0, y:0, 32x32)
-  - `coal_tin_rock` - Coal/tin rock icon (icon859.png, x:32, y:0, 32x32)
+
+Rock sprites from `assets/sprites/cave_tileset.png` (32x32 each):
+- `rock_1`, `rock_2` - Plain rocks (for Coal)
+- `copper_rock_1`, `copper_rock_2` - Copper rocks
+- `iron_rock_1`, `iron_rock_2` - Iron rocks
+- `gold_rock_1`, `gold_rock_2` - Gold rocks
 
 Source (chests): `16x16 Assorted RPG Icons/chests.{png,json}`
-Source (rocks): `icons_8.13.20/fullcolor/individual_32x32/icon858.png`, `icon859.png`
 
 ### Animated Mob Sprites
 Located in `assets/sprites/mobs/` (shared with combat/compendium):
