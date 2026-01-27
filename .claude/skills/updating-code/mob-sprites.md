@@ -184,6 +184,9 @@ pub struct SpriteAnimation {
 | `BlackDragon` | `black_dragon.png` | 64x32 | 16x7 | 2-5 | 98-103 | 0.35s |
 | `Merchant` | `merchant.png` | 32x32 | 23x1 | 0-3 | None | 0.15s |
 | `DwarfDefender` | `dwarf_defender.png` | 32x32 | 6x7 | 0-3 | 36-41 | 0.2s |
+| `DwarfWarrior` | `dwarf_warrior.png` | 32x32 | 6x6 | 0-3 | 30-33 | 0.2s |
+| `DwarfMiner` | `dwarf_miner.png` | 32x32 | 6x6 | 0-3 | 30-33 | 0.2s |
+| `DwarfKing` | `dwarf_king.png` | 32x32 | 7x7 | 0-3 | 42-48 | 0.25s |
 
 ### Non-Square Sprites
 

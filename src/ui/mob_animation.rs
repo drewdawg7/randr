@@ -227,5 +227,87 @@ fn load_mob_sprite_sheets(
         },
     );
 
-    info!("Loaded mob sprite sheets for Goblin, Slime, Dragon, Black Dragon, Merchant, and Dwarf Defender");
+    // Dwarf Warrior: 6x6 grid of 32x32, idle is frames 0-3, death is frames 30-33
+    let dwarf_warrior_texture: Handle<Image> =
+        asset_server.load("sprites/mobs/dwarf_warrior.png");
+    let dwarf_warrior_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 6, None, None);
+    let dwarf_warrior_layout_handle = layouts.add(dwarf_warrior_layout);
+    mob_sheets.insert(
+        MobId::DwarfWarrior,
+        MobSpriteSheet {
+            texture: dwarf_warrior_texture,
+            layout: dwarf_warrior_layout_handle,
+            animation: AnimationConfig {
+                first_frame: 0,
+                last_frame: 3,
+                frame_duration: 0.2,
+                looping: true,
+                synchronized: true,
+            },
+            death_animation: Some(AnimationConfig {
+                first_frame: 30,
+                last_frame: 33,
+                frame_duration: 0.15,
+                looping: false,
+                synchronized: false,
+            }),
+            frame_size: UVec2::splat(32),
+        },
+    );
+
+    // Dwarf Miner: 6x6 grid of 32x32, idle is frames 0-3, death is frames 30-33
+    let dwarf_miner_texture: Handle<Image> = asset_server.load("sprites/mobs/dwarf_miner.png");
+    let dwarf_miner_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 6, None, None);
+    let dwarf_miner_layout_handle = layouts.add(dwarf_miner_layout);
+    mob_sheets.insert(
+        MobId::DwarfMiner,
+        MobSpriteSheet {
+            texture: dwarf_miner_texture,
+            layout: dwarf_miner_layout_handle,
+            animation: AnimationConfig {
+                first_frame: 0,
+                last_frame: 3,
+                frame_duration: 0.2,
+                looping: true,
+                synchronized: true,
+            },
+            death_animation: Some(AnimationConfig {
+                first_frame: 30,
+                last_frame: 33,
+                frame_duration: 0.15,
+                looping: false,
+                synchronized: false,
+            }),
+            frame_size: UVec2::splat(32),
+        },
+    );
+
+    // Dwarf King: 7x7 grid of 32x32, idle is frames 0-3, death is frames 42-48
+    let dwarf_king_texture: Handle<Image> = asset_server.load("sprites/mobs/dwarf_king.png");
+    let dwarf_king_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 7, 7, None, None);
+    let dwarf_king_layout_handle = layouts.add(dwarf_king_layout);
+    mob_sheets.insert(
+        MobId::DwarfKing,
+        MobSpriteSheet {
+            texture: dwarf_king_texture,
+            layout: dwarf_king_layout_handle,
+            animation: AnimationConfig {
+                first_frame: 0,
+                last_frame: 3,
+                frame_duration: 0.25,
+                looping: true,
+                synchronized: true,
+            },
+            death_animation: Some(AnimationConfig {
+                first_frame: 42,
+                last_frame: 48,
+                frame_duration: 0.15,
+                looping: false,
+                synchronized: false,
+            }),
+            frame_size: UVec2::splat(32),
+        },
+    );
+
+    info!("Loaded mob sprite sheets for all mobs");
 }
