@@ -17,6 +17,7 @@ pub enum DungeonEntity {
     Npc { mob_id: MobId, size: GridSize },        // Non-combat entities (blocks movement)
     Stairs { size: GridSize },                    // Advances player to next floor
     Rock { rock_type: RockType, size: GridSize }, // Minable rocks (copper, coal, tin)
+    Door { size: GridSize },                      // Transitions to another dungeon location
 }
 ```
 

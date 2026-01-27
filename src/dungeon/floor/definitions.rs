@@ -37,7 +37,7 @@ entity_macros::define_data! {
         HomeFloor {
             name: "Home",
             layout_id: LayoutId::HomeLayout,
-            spawn_table: SpawnTable::empty(),
+            spawn_table: SpawnTable::new().npc(MobId::Merchant, 1..=1),
         }
     }
 }

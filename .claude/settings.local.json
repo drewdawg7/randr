@@ -202,7 +202,20 @@
       "Bash(git cat-file:*)",
       "Bash(1)",
       "Bash(gh pr create --title \"feat: use run_if conditions for modal input systems\" --body \"$\\(cat <<''EOF''\n## Summary\n- Add `in_*_modal\\(\\)` run condition functions to `modal.rs` for each modal type\n- Update all modal plugins to use `.run_if\\(\\)` on input systems instead of internal checks\n- Remove `ActiveModal` early-return boilerplate from all input handlers \\(~100 lines\\)\n- Add `FocusState.active\\(\\)` helper for run conditions\n\n## Test plan\n- [x] All modals open/close correctly\n- [x] Tab cycling works in multi-panel modals\n- [x] Grid navigation works in all modals\n- [x] Selection/actions work in each modal\n\nCloses #374\n\n🤖 Generated with [Claude Code]\\(https://claude.com/claude-code\\)\nEOF\n\\)\")",
-      "Bash(gh pr close:*)"
+      "Bash(gh pr close:*)",
+      "Skill(feature-planning)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Crafting_Items [16x16]/Crafting_Stroke [16x16]-export.aseprite\" --list-slices)",
+      "Bash(ASEPRITE=\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" \"$ASEPRITE\":*)",
+      "Bash(1 cat /tmp/crafting_slices.json)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/Crafting_Items [16x16]/Crafting_Stroke [16x16]-export.aseprite' --sheet /tmp/crafting.png --data /tmp/crafting.json --format json-hash)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/Crafting_Items [16x16]/Crafting_Stroke [16x16]-export.aseprite' --all-layers --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/Crafting_Items [16x16]/Crafting_Stroke [16x16]-export.aseprite' --sheet /tmp/crafting.png --data /tmp/crafting.json --format json-hash --list-slices --split-slices)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/headgear-export.aseprite' --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/headgear-export.aseprite' --sheet /tmp/headgear-export.png --data /tmp/headgear-export.json --format json-hash --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/breastplates-export.aseprite' --sheet /tmp/chestplates.png --data /tmp/chestplates.json --format json-hash)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/breastplates-export.aseprite' --sheet /tmp/chestplates.png --data /tmp/chestplates.json --format json-hash --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/trousers-export.aseprite' --sheet /tmp/leggings.png --data /tmp/leggings.json --format json-hash --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/boots-export.aseprite' --sheet /tmp/greaves.png --data /tmp/greaves.json --format json-hash --list-slices)"
     ]
   },
   "enabledMcpjsonServers": [

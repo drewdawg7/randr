@@ -1,9 +1,7 @@
-use crate::dungeon::{DungeonLayout, LayoutBuilder, SpawnTable};
-use crate::mob::MobId;
+use crate::dungeon::{DungeonLayout, LayoutBuilder};
 use crate::ui::DUNGEON_SCALE;
 
 pub fn create() -> DungeonLayout {
-    // Smaller room for home base
     const ORIGINAL_W: usize = 20;
     const ORIGINAL_H: usize = 15;
 
@@ -11,9 +9,8 @@ pub fn create() -> DungeonLayout {
     let h = (ORIGINAL_H as f32 / DUNGEON_SCALE) as usize;
 
     LayoutBuilder::new(w, h)
-        .entrance(w / 2, 1) // GateFloor in front of door, player spawns here
-        .door(w / 2, 0) // Door tile on back wall (collision handled in movement system)
+        .entrance(w / 2, 1)
+        .door(w / 2, 0)
         .torches(1..=2)
-        .spawn(SpawnTable::new().npc(MobId::Merchant, 1..=1))
         .build()
 }

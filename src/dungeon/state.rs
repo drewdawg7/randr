@@ -98,7 +98,11 @@ impl DungeonState {
 
     pub fn load_floor_layout(&mut self) -> Option<&DungeonLayout> {
         let floor = self.current_floor()?;
-        let layout = floor.layout_id().layout();
+        let mut layout = floor.layout_id().layout();
+
+        // Apply spawn table from floor (not from layout)
+        let spawn_table = floor.spawn_table();
+        spawn_table.apply(&mut layout, &mut thread_rng());
 
         self.player_pos = layout
             .iter()

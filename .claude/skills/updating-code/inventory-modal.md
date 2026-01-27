@@ -118,6 +118,20 @@ pub fn get_equipment_items(inventory: &Inventory) -> Vec<&InventoryItem>
 pub fn get_backpack_items(inventory: &Inventory) -> Vec<&InventoryItem>
 ```
 
+## Stat Comparison
+
+The `ManagesEquipment` trait provides a `get_comparison_stats` method for comparing an item's stats against the currently equipped item in the same slot:
+
+```rust
+// Returns None if item is not equipment, Some(empty vec) if slot is empty
+let comparison = inventory.get_comparison_stats(&item);
+if let Some(stats) = comparison {
+    display = display.with_comparison(stats);
+}
+```
+
+This method is defined in `src/inventory/traits.rs` and is used by inventory, merchant, and other modals to show stat differences when viewing items.
+
 ## Reactive Grid Sync
 
 The `sync_inventory_to_grids` system uses Bevy's native change detection to automatically update grids when inventory changes:

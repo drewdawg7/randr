@@ -1,9 +1,6 @@
-use crate::dungeon::{DungeonLayout, LayoutBuilder, SpawnTable};
-use crate::mob::MobId;
+use crate::dungeon::{DungeonLayout, LayoutBuilder};
 use crate::ui::DUNGEON_SCALE;
 
-/// Standard dungeon floor with configurable spawns.
-/// Used by MainDungeon floors where spawn tables are defined per-floor.
 pub fn create_with_stairs() -> DungeonLayout {
     const ORIGINAL_W: usize = 40;
     const ORIGINAL_H: usize = 21;
@@ -14,21 +11,9 @@ pub fn create_with_stairs() -> DungeonLayout {
     LayoutBuilder::new(w, h)
         .spawn_point(w / 2, h / 2)
         .torches(2..=4)
-        .spawn(
-            SpawnTable::new()
-                .mob(MobId::Goblin, 5)
-                .mob(MobId::Slime, 3)
-                .mob_count(3..=4)
-                .stairs(1..=1)
-                .rock(0..=4)
-                .forge_chance(0.33)
-                .anvil_chance(0.33)
-                .npc_chance(MobId::Merchant, 0.33),
-        )
         .build()
 }
 
-/// Final dungeon floor without stairs (boss floor).
 pub fn create_final() -> DungeonLayout {
     const ORIGINAL_W: usize = 40;
     const ORIGINAL_H: usize = 21;
@@ -39,15 +24,5 @@ pub fn create_final() -> DungeonLayout {
     LayoutBuilder::new(w, h)
         .spawn_point(w / 2, h / 2)
         .torches(2..=4)
-        .spawn(
-            SpawnTable::new()
-                .mob(MobId::Goblin, 5)
-                .mob(MobId::Slime, 3)
-                .mob_count(3..=4)
-                .rock(0..=4)
-                .forge_chance(0.33)
-                .anvil_chance(0.33)
-                .npc_chance(MobId::Merchant, 0.33),
-        )
         .build()
 }
