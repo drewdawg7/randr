@@ -562,6 +562,22 @@ impl ItemId {
             ItemId::GoldSword => SpriteSheetKey::GoldSword,
             ItemId::IronSword => SpriteSheetKey::IronSword,
             ItemId::CopperSword => SpriteSheetKey::CopperSword,
+            // Helmets
+            ItemId::CopperHelmet | ItemId::IronHelmet | ItemId::GoldHelmet => {
+                SpriteSheetKey::Headgear
+            }
+            // Chestplates
+            ItemId::CopperChestplate | ItemId::IronChestplate | ItemId::GoldChestplate => {
+                SpriteSheetKey::Chestplates
+            }
+            // Leggings
+            ItemId::CopperLeggings | ItemId::IronLeggings | ItemId::GoldLeggings => {
+                SpriteSheetKey::Leggings
+            }
+            // Greaves
+            ItemId::CopperGreaves | ItemId::IronGreaves | ItemId::GoldGreaves => {
+                SpriteSheetKey::Greaves
+            }
             // Ores, ingots, and materials from crafting sheet
             ItemId::IronOre
             | ItemId::GoldOre
@@ -588,25 +604,25 @@ impl ItemId {
             // Shields
             ItemId::BasicShield => "Slice_100",
             // Helmets
-            ItemId::IronHelmet => "Slice_101",
-            ItemId::GoldHelmet => "Slice_108",
-            ItemId::CopperHelmet => "Slice_108",
+            ItemId::IronHelmet => "iron_helmet",
+            ItemId::GoldHelmet => "gold_helmet",
+            ItemId::CopperHelmet => "copper_helmet",
             // Chestplates
-            ItemId::IronChestplate => "Slice_551",
-            ItemId::GoldChestplate => "Slice_551",
-            ItemId::CopperChestplate => "Slice_551",
+            ItemId::IronChestplate => "iron_chestplate",
+            ItemId::GoldChestplate => "gold_chestplate",
+            ItemId::CopperChestplate => "copper_chestplate",
             // Gauntlets
             ItemId::IronGauntlets => "Slice_558",
             ItemId::GoldGauntlets => "Slice_558",
             ItemId::CopperGauntlets => "Slice_558",
             // Greaves
-            ItemId::IronGreaves => "Slice_367",
-            ItemId::GoldGreaves => "Slice_367",
-            ItemId::CopperGreaves => "Slice_367",
+            ItemId::IronGreaves => "iron_greaves",
+            ItemId::GoldGreaves => "gold_greaves",
+            ItemId::CopperGreaves => "copper_greaves",
             // Leggings
-            ItemId::IronLeggings => "Slice_42",
-            ItemId::GoldLeggings => "Slice_42",
-            ItemId::CopperLeggings => "Slice_42",
+            ItemId::IronLeggings => "iron_leggings",
+            ItemId::GoldLeggings => "gold_leggings",
+            ItemId::CopperLeggings => "copper_leggings",
             // Tools
             ItemId::CopperPickaxe => "Slice_826",
             // Accessories

@@ -1,0 +1,11 @@
+{
+  "frames": {
+    "copper_greaves": { "frame": {"x": 48, "y": 0, "w": 16, "h": 16} },
+    "iron_greaves": { "frame": {"x": 48, "y": 32, "w": 16, "h": 16} },
+    "gold_greaves": { "frame": {"x": 48, "y": 96, "w": 16, "h": 16} }
+  },
+  "meta": {
+    "image": "sprites/greaves.png",
+    "size": {"w": 480, "h": 256}
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "frames": {
+    "copper_chestplate": { "frame": {"x": 48, "y": 16, "w": 16, "h": 16} },
+    "iron_chestplate": { "frame": {"x": 48, "y": 80, "w": 16, "h": 16} },
+    "gold_chestplate": { "frame": {"x": 48, "y": 240, "w": 16, "h": 16} }
+  },
+  "meta": {
+    "image": "sprites/chestplates.png",
+    "size": {"w": 480, "h": 608}
+  }
+}

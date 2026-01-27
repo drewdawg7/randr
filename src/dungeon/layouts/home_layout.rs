@@ -1,4 +1,5 @@
 use crate::dungeon::{DungeonLayout, LayoutBuilder, SpawnTable};
+use crate::mob::MobId;
 use crate::ui::DUNGEON_SCALE;
 
 pub fn create() -> DungeonLayout {
@@ -13,6 +14,6 @@ pub fn create() -> DungeonLayout {
         .entrance(w / 2, 1) // GateFloor in front of door, player spawns here
         .door(w / 2, 0) // Door tile on back wall (collision handled in movement system)
         .torches(1..=2)
-        .spawn(SpawnTable::empty())
+        .spawn(SpawnTable::new().npc(MobId::Merchant, 1..=1))
         .build()
 }

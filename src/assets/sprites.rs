@@ -44,6 +44,10 @@ pub enum SpriteSheetKey {
     CopperSword,
     CraftingStations,
     CraftingMaterials,
+    Headgear,
+    Chestplates,
+    Leggings,
+    Greaves,
 }
 
 impl SpriteSheetKey {
@@ -84,6 +88,10 @@ impl SpriteSheetKey {
             Self::CopperSword,
             Self::CraftingStations,
             Self::CraftingMaterials,
+            Self::Headgear,
+            Self::Chestplates,
+            Self::Leggings,
+            Self::Greaves,
         ]
     }
 
@@ -124,6 +132,10 @@ impl SpriteSheetKey {
             Self::CopperSword => "copper_sword",
             Self::CraftingStations => "dungeon_entities/crafting_stations",
             Self::CraftingMaterials => "crafting_materials",
+            Self::Headgear => "headgear",
+            Self::Chestplates => "chestplates",
+            Self::Leggings => "leggings",
+            Self::Greaves => "greaves",
         }
     }
 }

@@ -1,0 +1,11 @@
+{
+  "frames": {
+    "copper_helmet": { "frame": {"x": 48, "y": 0, "w": 16, "h": 16} },
+    "iron_helmet": { "frame": {"x": 48, "y": 480, "w": 16, "h": 16} },
+    "gold_helmet": { "frame": {"x": 48, "y": 384, "w": 16, "h": 16} }
+  },
+  "meta": {
+    "image": "sprites/headgear.png",
+    "size": {"w": 480, "h": 768}
+  }
+}
