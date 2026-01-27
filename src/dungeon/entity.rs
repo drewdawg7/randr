@@ -11,7 +11,7 @@ pub enum DungeonEntity {
     Mob { mob_id: MobId, size: GridSize },
     Npc { mob_id: MobId, size: GridSize },
     Stairs { size: GridSize },
-    Rock { rock_type: RockType, size: GridSize },
+    Rock { rock_type: RockType, sprite_variant: u8, size: GridSize },
     CraftingStation { station_type: CraftingStationType, size: GridSize },
     Door { size: GridSize },
 }
@@ -48,8 +48,8 @@ impl DungeonEntity {
                 sheet_key: SpriteSheetKey::Chests,
                 sprite_name: "Slice_1",
             },
-            Self::Rock { rock_type, .. } => {
-                let (sheet_key, sprite_name) = rock_type.sprite_data();
+            Self::Rock { rock_type, sprite_variant, .. } => {
+                let (sheet_key, sprite_name) = rock_type.sprite_data(*sprite_variant);
                 EntityRenderData::SpriteSheet { sheet_key, sprite_name }
             }
             Self::Stairs { .. } => EntityRenderData::SpriteSheet {

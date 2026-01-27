@@ -854,8 +854,9 @@ fn handle_mine_interaction(
                 let rock = Rock::new(rock_type);
                 let drops = rock.roll_drops(magic_find);
                 let rock_name = match rock_type {
-                    RockType::Iron => "Iron Rock",
                     RockType::Coal => "Coal Rock",
+                    RockType::Copper => "Copper Rock",
+                    RockType::Iron => "Iron Rock",
                     RockType::Gold => "Gold Rock",
                 };
                 (format!("{} Mined!", rock_name), drops)

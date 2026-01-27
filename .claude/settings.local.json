@@ -215,7 +215,20 @@
       "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/breastplates-export.aseprite' --sheet /tmp/chestplates.png --data /tmp/chestplates.json --format json-hash)",
       "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/breastplates-export.aseprite' --sheet /tmp/chestplates.png --data /tmp/chestplates.json --format json-hash --list-slices)",
       "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/trousers-export.aseprite' --sheet /tmp/leggings.png --data /tmp/leggings.json --format json-hash --list-slices)",
-      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/boots-export.aseprite' --sheet /tmp/greaves.png --data /tmp/greaves.json --format json-hash --list-slices)"
+      "Bash(\"$ASEPRITE\" --batch '/Users/drewstewart/Downloads/16x16 Armour RPG Icons/boots-export.aseprite' --sheet /tmp/greaves.png --data /tmp/greaves.json --format json-hash --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfShieldbreaker.aseprite\" --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfShieldbreaker.aseprite\" --data /tmp/dwarf_info.json --format json-array)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfShieldbreaker.aseprite\" --list-slices --data /tmp/dwarf_slices.json --format json-array)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfShieldbreaker.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_defender.png)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfWarrior.aseprite\" --list-slices --data /tmp/dwarf_warrior_slices.json --format json-array)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfWarrior.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_warrior.png)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfMiner.aseprite\" --list-slices --data /tmp/dwarf_miner_slices.json --format json-array)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfMiner.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_miner.png)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfKing.aseprite\" --list-slices --data /tmp/dwarf_king_slices.json --format json-array)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfKing.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_king.png)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Cave Tileset-export.aseprite\" --sheet /Users/drewstewart/code/game/assets/sprites/cave_tileset.png --data /Users/drewstewart/code/game/assets/sprites/cave_tileset.json --format json-hash --sheet-type packed)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Cave Tileset-export.aseprite\" --sheet /Users/drewstewart/code/game/assets/sprites/cave_tileset.png --data /Users/drewstewart/code/game/assets/sprites/cave_tileset.json --format json-hash --list-slices)",
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Cave Tileset-export.aseprite\" --scale 0.5 --sheet /Users/drewstewart/code/game/assets/sprites/cave_tileset.png --data /Users/drewstewart/code/game/assets/sprites/cave_tileset.json --format json-hash --list-slices)"
     ]
   },
   "enabledMcpjsonServers": [

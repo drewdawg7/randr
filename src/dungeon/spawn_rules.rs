@@ -172,15 +172,18 @@ impl SpawnRule for RockSpawner {
         for _ in 0..count {
             let areas = layout.spawn_areas(GridSize::single());
             if let Some(&pos) = areas.choose(rng) {
-                let rock_type = match rng.gen_range(0..3u8) {
-                    0 => RockType::Iron,
-                    1 => RockType::Coal,
+                let rock_type = match rng.gen_range(0..4u8) {
+                    0 => RockType::Coal,
+                    1 => RockType::Copper,
+                    2 => RockType::Iron,
                     _ => RockType::Gold,
                 };
+                let sprite_variant = rng.gen_range(0..2u8);
                 layout.add_entity(
                     pos,
                     DungeonEntity::Rock {
                         rock_type,
+                        sprite_variant,
                         size: GridSize::single(),
                     },
                 );

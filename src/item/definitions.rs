@@ -293,6 +293,15 @@ entity_macros::define_entity! {
             max_stack_quantity: 99,
             gold_value: 4,
         }
+        CopperOre {
+            name: String::from("Copper Ore"),
+            item_type: ItemType::Material(MaterialType::Ore),
+            quality: Some(ItemQuality::Normal),
+            stats: StatSheet::new(),
+            max_upgrades: 0,
+            max_stack_quantity: 99,
+            gold_value: 5,
+        }
         IronOre {
             name: String::from("Iron Ore"),
             item_type: ItemType::Material(MaterialType::Ore),
@@ -579,7 +588,8 @@ impl ItemId {
                 SpriteSheetKey::Greaves
             }
             // Ores, ingots, and materials from crafting sheet
-            ItemId::IronOre
+            ItemId::CopperOre
+            | ItemId::IronOre
             | ItemId::GoldOre
             | ItemId::IronIngot
             | ItemId::GoldIngot
@@ -630,6 +640,7 @@ impl ItemId {
             ItemId::ImbaRing => "Slice_1009",
             // Ores
             ItemId::Coal => "Slice_693",
+            ItemId::CopperOre => "copper_ore",
             ItemId::IronOre => "iron_ore",
             ItemId::GoldOre => "gold_ore",
             // Ingots
