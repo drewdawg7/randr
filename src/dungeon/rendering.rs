@@ -296,12 +296,8 @@ impl CaveTileRenderer {
             });
         }
 
-        // Everything else (top walls, interior) - render as floor
-        Some(CaveTileResult {
-            slice_name: CaveTileSlice::Floor1.as_str(),
-            flip_x: false,
-            uses_dungeon_tileset: false,
-        })
+        // No matching wall pattern - don't render
+        None
     }
 }
 
