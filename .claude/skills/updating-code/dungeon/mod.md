@@ -479,26 +479,29 @@ if let Some((slice, flip_x)) = TileRenderer::resolve(&layout, x, y) {
 
 ## Adding New Layouts
 
-**Preferred: Use LayoutBuilder with SpawnTable** for declarative layout creation:
+Layouts define **physical structure only** (walls, tiles, entrances, torches). Spawn tables are defined separately in `FloorType` or `FloorSpec`.
 
 1. Create `src/dungeon/layouts/my_layout.rs`:
 ```rust
-use crate::dungeon::{DungeonLayout, LayoutBuilder, SpawnTable};
-use crate::mob::MobId;
+use crate::dungeon::{DungeonLayout, LayoutBuilder};
+use crate::ui::DUNGEON_SCALE;
 
 pub fn create() -> DungeonLayout {
-    LayoutBuilder::new(30, 20)
-        .entrance(15, 18)  // Player spawn (interior)
-        .exit(15, 19)      // Exit at bottom wall
-        .spawn(SpawnTable::new()
-            .mob(MobId::Goblin, 3)
-            .mob(MobId::Slime, 2)
-            .chest(1..=2))
+    const ORIGINAL_W: usize = 30;
+    const ORIGINAL_H: usize = 20;
+
+    let w = (ORIGINAL_W as f32 / DUNGEON_SCALE) as usize;
+    let h = (ORIGINAL_H as f32 / DUNGEON_SCALE) as usize;
+
+    LayoutBuilder::new(w, h)
+        .entrance(w / 2, 1)
+        .door(w / 2, 0)
+        .torches(2..=4)
         .build()
 }
 ```
 
-2. Add variant to `LayoutId` in `layouts/mod.rs`:
+2. Add variant to `LayoutId` in `layouts/layout_id.rs`:
 ```rust
 pub enum LayoutId {
     StartingRoom,
@@ -515,22 +518,7 @@ impl LayoutId {
 }
 ```
 
-**Special layout patterns:**
-```rust
-// Boss room - no random spawns, handle specially
-LayoutBuilder::new(40, 30)
-    .entrance(20, 28)
-    .exit(20, 0)
-    .spawn(SpawnTable::empty())  // Explicit: no random spawns
-    .build()
-
-// Treasure room - only chests
-LayoutBuilder::new(20, 15)
-    .entrance(10, 13)
-    .exit(10, 14)
-    .spawn(SpawnTable::new().chest(5..=8))
-    .build()
-```
+3. Define spawn table in `FloorSpec` (see "Adding New Floors" below)
 
 ## Adding New Floors
 

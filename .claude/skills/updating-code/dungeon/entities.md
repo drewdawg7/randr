@@ -290,54 +290,35 @@ DungeonGrid (on_add_dungeon_floor)    Mob Animation (mob_animation.rs)
 - `DungeonMobSprite { mob_id: MobId }` - Marker component in `src/ui/mob_animation.rs`
 - `populate_sprite_markers()` - Generic system that detects `Added<DungeonMobSprite>` and inserts sprite
 
-## Spawning Entities in Layouts
+## Spawning Entities
 
-**Important:** Spawn tables are applied via `LayoutBuilder::spawn()` inside each layout's `create()` function (e.g., `src/dungeon/layouts/starting_room.rs`). The `FloorSpec.spawn_table` field in `src/dungeon/floor/definitions.rs` is currently **not applied at runtime** — only the spawn table passed to `LayoutBuilder` takes effect.
+Spawn tables are defined in `FloorSpec` (fixed floors) or `FloorType` (generated floors), not in layouts. `DungeonState::load_floor_layout()` applies the spawn table after loading the layout.
 
-**Preferred: Use SpawnTable** for declarative entity spawning:
+```
+Layout      = physical structure (walls, tiles, entrances, torches)
+SpawnTable  = what entities spawn (mobs, chests, NPCs, stairs)
+FloorType   = Layout + SpawnTable combined
+```
+
+### SpawnTable API
 ```rust
-use crate::dungeon::{LayoutBuilder, SpawnTable};
-use crate::mob::MobId;
-
-LayoutBuilder::new(40, 21)
-    .entrance(20, 19)
-    .exit(20, 20)
-    .spawn(SpawnTable::new()
-        .mob(MobId::Goblin, 3)        // Weight 3 (more common)
-        .mob(MobId::Slime, 2)         // Weight 2 (less common)
-        .mob_count(3..=5)             // 3-5 total weighted mobs
-        .guaranteed_mob(MobId::BlackDragon, 1)  // Exactly 1, always spawned
-        .npc(MobId::Merchant, 1..=1)  // 1 NPC (blocks movement, no combat)
-        .chest(1..=2)                 // 1-2 chests randomly
-        .rock(2..=4))                 // 2-4 rocks randomly (random type)
-    .build()
+SpawnTable::new()
+    .mob(MobId::Goblin, 3)
+    .mob(MobId::Slime, 2)
+    .mob_count(3..=5)
+    .guaranteed_mob(MobId::BlackDragon, 1)
+    .npc(MobId::Merchant, 1..=1)
+    .chest(1..=2)
+    .stairs(1..=1)
+    .rock(2..=4)
+    .forge_chance(0.33)
+    .anvil_chance(0.33)
 ```
 
 ### Guaranteed vs Weighted Mobs
 
 - `.mob(id, weight)` + `.mob_count(range)` — spawns N mobs chosen randomly by weight
-- `.guaranteed_mob(id, count)` — spawns exactly `count` of this mob (before weighted selection), guaranteed every time
-
-**Manual spawning** (for special cases):
-```rust
-use crate::dungeon::{DungeonEntity, GridSize};
-use crate::mob::MobId;
-
-// Specific positions (e.g., boss placement)
-let mob_id = MobId::Dragon;
-let size = mob_id.spec().grid_size;
-layout.add_entity(20, 10, DungeonEntity::Mob { mob_id, size });
-
-// Random positions with shuffle
-let mut spawn_points = layout.spawn_points();
-spawn_points.shuffle(&mut rng);
-for (x, y) in spawn_points.into_iter().take(3) {
-    layout.add_entity(x, y, DungeonEntity::Chest {
-        variant: rng.gen_range(0..4),
-        size: GridSize::single(),
-    });
-}
-```
+- `.guaranteed_mob(id, count)` — spawns exactly `count` of this mob, guaranteed every time
 
 ## Sprite Assets
 
