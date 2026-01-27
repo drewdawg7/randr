@@ -17,6 +17,13 @@ ASEPRITE="/Users/drewstewart/Library/Application Support/Steam/steamapps/common/
 "$ASEPRITE" --batch "input.aseprite" --save-as assets/sprites/mobs/<mob_name>.png
 ```
 
+**To analyze slice positions before exporting**, export slices to JSON:
+```bash
+"$ASEPRITE" --batch "input.aseprite" --list-slices --data /tmp/slices.json --format json-array
+cat /tmp/slices.json
+```
+This outputs slice names and bounds (x, y, w, h) to help determine animation frame indices.
+
 Slices are numbered left-to-right, top-to-bottom. Common row layout:
 | Row | Animation | Typical Slices (6-col) |
 |-----|-----------|----------------------|
@@ -176,6 +183,7 @@ pub struct SpriteAnimation {
 | `Dragon` | `dragon.png` | 64x32 | 66x1 | 0-3 | None | 0.35s |
 | `BlackDragon` | `black_dragon.png` | 64x32 | 16x7 | 2-5 | 98-103 | 0.35s |
 | `Merchant` | `merchant.png` | 32x32 | 23x1 | 0-3 | None | 0.15s |
+| `DwarfDefender` | `dwarf_defender.png` | 32x32 | 6x7 | 0-3 | 36-41 | 0.2s |
 
 ### Non-Square Sprites
 

@@ -15,6 +15,7 @@ impl FloorType {
                     .mob(MobId::Goblin, 5)
                     .mob(MobId::Slime, 3)
                     .mob_count(3..=4)
+                    .guaranteed_mob(MobId::DwarfDefender, 1)
                     .rock(0..=4)
                     .forge_chance(0.33)
                     .anvil_chance(0.33)

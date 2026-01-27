@@ -78,6 +78,32 @@ entity_macros::define_entity! {
                 .with(ItemId::GoldRing, 1, 100, 1..=1),
             grid_size: GridSize::single(),
         }
+        DwarfDefender {
+            name: String::from("Dwarf Defender"),
+            quality: MobQuality::Normal,
+            max_health: 50..=65,
+            attack: 12..=18,
+            defense: 12..=18,
+            dropped_gold: 15..=25,
+            dropped_xp: 20..=30,
+            loot: LootTable::new()
+                // Ores (common)
+                .with(ItemId::IronOre, 2, 4, 1..=2)
+                .with(ItemId::GoldOre, 1, 6, 1..=2)
+                .with(ItemId::Coal, 2, 4, 1..=3)
+                // Ingots (uncommon)
+                .with(ItemId::IronIngot, 1, 8, 1..=1)
+                .with(ItemId::GoldIngot, 1, 12, 1..=1)
+                .with(ItemId::CopperIngot, 1, 10, 1..=1)
+                // Armor pieces (rare)
+                .with(ItemId::IronHelmet, 1, 20, 1..=1)
+                .with(ItemId::IronChestplate, 1, 25, 1..=1)
+                .with(ItemId::IronGauntlets, 1, 18, 1..=1)
+                // Swords (rare)
+                .with(ItemId::IronSword, 1, 15, 1..=1)
+                .with(ItemId::CopperSword, 1, 20, 1..=1),
+            grid_size: GridSize::single(),
+        }
         Dragon {
             name: String::from("Dragon"),
             quality: MobQuality::Boss,

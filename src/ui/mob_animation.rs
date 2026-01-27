@@ -199,5 +199,33 @@ fn load_mob_sprite_sheets(
         },
     );
 
-    info!("Loaded mob sprite sheets for Goblin, Slime, Dragon, Black Dragon, and Merchant");
+    // Dwarf Defender: 6x7 grid of 32x32, idle is frames 0-3, death is frames 36-41
+    let dwarf_defender_texture: Handle<Image> =
+        asset_server.load("sprites/mobs/dwarf_defender.png");
+    let dwarf_defender_layout = TextureAtlasLayout::from_grid(UVec2::splat(32), 6, 7, None, None);
+    let dwarf_defender_layout_handle = layouts.add(dwarf_defender_layout);
+    mob_sheets.insert(
+        MobId::DwarfDefender,
+        MobSpriteSheet {
+            texture: dwarf_defender_texture,
+            layout: dwarf_defender_layout_handle,
+            animation: AnimationConfig {
+                first_frame: 0,
+                last_frame: 3,
+                frame_duration: 0.2,
+                looping: true,
+                synchronized: true,
+            },
+            death_animation: Some(AnimationConfig {
+                first_frame: 36,
+                last_frame: 41,
+                frame_duration: 0.15,
+                looping: false,
+                synchronized: false,
+            }),
+            frame_size: UVec2::splat(32),
+        },
+    );
+
+    info!("Loaded mob sprite sheets for Goblin, Slime, Dragon, Black Dragon, Merchant, and Dwarf Defender");
 }
