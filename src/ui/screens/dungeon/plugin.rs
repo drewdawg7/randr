@@ -6,8 +6,8 @@ use crate::chest::Chest;
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
 use crate::rock::{Rock, RockType};
 use crate::dungeon::{
-    DungeonCommands, DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState,
-    EntityRenderData, GridOccupancy, GridPosition, GridSize, TileRenderer, TileType,
+    resolve_tile, DungeonCommands, DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState,
+    EntityRenderData, FloorType, GridOccupancy, GridPosition, GridSize, TileType,
 };
 use crate::ui::{AnimationConfig, PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 use crate::inventory::{Inventory, ManagesItems};
@@ -58,6 +58,20 @@ impl UiScale {
             _ => 16,
         }
     }
+}
+
+/// Resource tracking whether current floor has a roof row (caves).
+/// When true, entity positions need to be offset by one tile.
+#[derive(Resource, Default)]
+pub struct HasRoofRow(pub bool);
+
+/// Resource tracking tile sizes for the current floor.
+/// - `tile_size`: Size for grid rendering (includes floor type scaling)
+/// - `base_tile_size`: Size for entity positioning (consistent across floor types)
+#[derive(Resource)]
+pub struct TileSizes {
+    pub tile_size: f32,
+    pub base_tile_size: f32,
 }
 
 
@@ -122,6 +136,7 @@ pub struct DungeonFloor {
     pub layout: DungeonLayout,
     pub player_pos: GridPosition,
     pub player_size: GridSize,
+    pub floor_type: FloorType,
 }
 
 pub struct DungeonScreenPlugin;
@@ -171,21 +186,26 @@ fn on_add_dungeon_floor(
     let layout = floor.layout.clone();
     let player_pos = floor.player_pos;
     let player_size = floor.player_size;
+    let floor_type = floor.floor_type;
 
     // Despawn the trigger entity (consumed)
     commands.entity(entity).despawn();
 
     // Calculate scale from window dimensions
     let scale = UiScale::calculate(window.height());
-    let tile_size = BASE_TILE * scale as f32;
+    // Base tile size for entity positioning (consistent across floor types)
+    let base_tile_size = BASE_TILE * scale as f32;
+    // Tile size for grid rendering (caves have 32x32 tiles vs dungeon's 16x16)
+    let tile_size = base_tile_size * floor_type.tile_scale();
     commands.insert_resource(UiScale(scale));
 
     // Build occupancy
     let mut occupancy = GridOccupancy::new(layout.width(), layout.height());
     let grid_width = tile_size * layout.width() as f32;
-    let grid_height = tile_size * layout.height() as f32;
-
-    let tile_sheet = game_sprites.get(SpriteSheetKey::DungeonTileset);
+    // Add extra rows for cave roof (backwall_roof + backwall)
+    let has_roof_row = floor_type == FloorType::CaveFloor;
+    let roof_rows = if has_roof_row { 2 } else { 0 };
+    let grid_height = tile_size * (layout.height() + roof_rows) as f32;
 
     commands
         .spawn((
@@ -211,6 +231,9 @@ fn on_add_dungeon_floor(
                     },
                 ))
                 .with_children(|container| {
+                    // Grid rows account for roof row in caves
+                    let grid_rows = layout.height() + roof_rows;
+
                     // Tile layer: CSS Grid for static tile backgrounds
                     container
                         .spawn((
@@ -218,18 +241,93 @@ fn on_add_dungeon_floor(
                             Node {
                                 display: Display::Grid,
                                 grid_template_columns: vec![GridTrack::px(tile_size); layout.width()],
-                                grid_template_rows: vec![GridTrack::px(tile_size); layout.height()],
+                                grid_template_rows: vec![GridTrack::px(tile_size); grid_rows],
                                 ..default()
                             },
                         ))
                         .with_children(|grid| {
+                            // Render cave roof rows (Row 1: backwall_roof, Row 2: backwall)
+                            if has_roof_row {
+                                if let Some(cave_sheet) = game_sprites.get(SpriteSheetKey::CaveTileset) {
+                                    // Row 1: backwall_roof
+                                    for x in 0..layout.width() {
+                                        let slice_name = if x == 0 {
+                                            "right_roof"
+                                        } else if x == layout.width() - 1 {
+                                            "left_roof"
+                                        } else {
+                                            "backwall_roof"
+                                        };
+                                        grid.spawn((
+                                            DungeonCell,
+                                            Node {
+                                                grid_column: GridPlacement::start(x as i16 + 1),
+                                                grid_row: GridPlacement::start(1),
+                                                ..default()
+                                            },
+                                        ))
+                                        .with_children(|cell| {
+                                            if let Some(img) = cave_sheet.image_node(slice_name) {
+                                                cell.spawn((
+                                                    img,
+                                                    Node {
+                                                        position_type: PositionType::Absolute,
+                                                        width: Val::Percent(100.0),
+                                                        height: Val::Percent(100.0),
+                                                        ..default()
+                                                    },
+                                                ));
+                                            }
+                                        });
+                                    }
+
+                                    // Row 2: backwall
+                                    for x in 0..layout.width() {
+                                        let slice_name = if x == 0 {
+                                            "right_roof"
+                                        } else if x == layout.width() - 1 {
+                                            "left_roof"
+                                        } else {
+                                            match x % 3 {
+                                                0 => "backwall_1",
+                                                1 => "backwall_2",
+                                                _ => "backwall_3",
+                                            }
+                                        };
+                                        grid.spawn((
+                                            DungeonCell,
+                                            Node {
+                                                grid_column: GridPlacement::start(x as i16 + 1),
+                                                grid_row: GridPlacement::start(2),
+                                                ..default()
+                                            },
+                                        ))
+                                        .with_children(|cell| {
+                                            if let Some(img) = cave_sheet.image_node(slice_name) {
+                                                cell.spawn((
+                                                    img,
+                                                    Node {
+                                                        position_type: PositionType::Absolute,
+                                                        width: Val::Percent(100.0),
+                                                        height: Val::Percent(100.0),
+                                                        ..default()
+                                                    },
+                                                ));
+                                            }
+                                        });
+                                    }
+                                }
+                            }
+
+                            // Render dungeon tiles (offset by 2 rows if roof exists)
+                            let row_offset = if has_roof_row { 2 } else { 0 };
                             for y in 0..layout.height() {
                                 for x in 0..layout.width() {
                                     grid.spawn((
                                         DungeonCell,
                                         Node {
                                             grid_column: GridPlacement::start(x as i16 + 1),
-                                            grid_row: GridPlacement::start(y as i16 + 1),
+                                            grid_row: GridPlacement::start((y + row_offset) as i16 + 1),
                                             ..default()
                                         },
                                     ))
@@ -239,7 +337,8 @@ fn on_add_dungeon_floor(
                                             .map(|t| t.tile_type);
 
                                         match tile_type {
-                                            Some(TileType::TorchWall) => {
+                                            // Torches only render for non-cave floors
+                                            Some(TileType::TorchWall) if floor_type != FloorType::CaveFloor => {
                                                 if let Some(torch_sheet) =
                                                     game_sprites.get(SpriteSheetKey::TorchWall)
                                                 {
@@ -263,14 +362,16 @@ fn on_add_dungeon_floor(
                                                 }
                                             }
                                             _ => {
-                                                if let Some(tile_sheet) = tile_sheet.as_ref() {
-                                                    if let Some((slice, flip_x)) =
-                                                        TileRenderer::resolve(&layout, x, y)
+                                                if let Some(resolved) =
+                                                    resolve_tile(floor_type, &layout, x, y)
+                                                {
+                                                    if let Some(sheet) =
+                                                        game_sprites.get(resolved.tileset_key)
                                                     {
                                                         if let Some(mut img) =
-                                                            tile_sheet.image_node(slice.as_str())
+                                                            sheet.image_node(resolved.slice_name)
                                                         {
-                                                            if flip_x {
+                                                            if resolved.flip_x {
                                                                 img.flip_x = true;
                                                             }
                                                             cell.spawn((
@@ -294,8 +395,11 @@ fn on_add_dungeon_floor(
                         });
 
                     // Entity layer: absolute-positioned overlay for entities + player
-                    let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_size;
+                    // Entity sizes use base_tile_size (consistent across floor types)
+                    let entity_sprite_size = ENTITY_VISUAL_SCALE * base_tile_size;
                     let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
+                    // Offset for roof rows (entities start after 2 roof rows in caves)
+                    let roof_y_offset = if has_roof_row { tile_size * 2.0 } else { 0.0 };
 
                     container
                         .spawn((
@@ -324,18 +428,18 @@ fn on_add_dungeon_floor(
                                         // Size based on actual sprite dimensions
                                         if sprite_name.starts_with("anvil") {
                                             // Anvil is 32x16 (2:1 aspect) - render at 2x tile width, 1x tile height
-                                            (entity_sprite_size, tile_size)
+                                            (entity_sprite_size, base_tile_size)
                                         } else {
                                             // Forge is 32x49 - render at 2x tile size
                                             (entity_sprite_size, entity_sprite_size)
                                         }
                                     }
-                                    _ => (tile_size, tile_size),
+                                    _ => (base_tile_size, base_tile_size),
                                 };
                                 let offset_x = -(visual_width - tile_size) / 2.0;
                                 let offset_y = -(visual_height - tile_size) / 2.0;
                                 let left = pos.x as f32 * tile_size + offset_x;
-                                let top = pos.y as f32 * tile_size + offset_y;
+                                let top = pos.y as f32 * tile_size + offset_y + roof_y_offset;
 
                                 let entity_node = Node {
                                     position_type: PositionType::Absolute,
@@ -393,7 +497,7 @@ fn on_add_dungeon_floor(
                             // Spawn player with absolute positioning + SmoothPosition
                             let player_px = Vec2::new(
                                 player_pos.x as f32 * tile_size + entity_offset,
-                                player_pos.y as f32 * tile_size + entity_offset,
+                                player_pos.y as f32 * tile_size + entity_offset + roof_y_offset,
                             );
 
                             let player_entity = layer.spawn((
@@ -422,6 +526,8 @@ fn on_add_dungeon_floor(
         });
 
     commands.insert_resource(occupancy);
+    commands.insert_resource(HasRoofRow(has_roof_row));
+    commands.insert_resource(TileSizes { tile_size, base_tile_size });
 
     // Initialize monster count for this floor
     let mob_count = layout
@@ -447,10 +553,16 @@ fn spawn_dungeon_screen(
         return;
     };
 
+    let floor_type = state
+        .current_floor()
+        .map(|f| f.floor_type())
+        .unwrap_or(FloorType::BasicDungeonFloor);
+
     commands.spawn(DungeonFloor {
         layout,
         player_pos: state.player_pos,
         player_size: state.player_size,
+        floor_type,
     });
 }
 
@@ -486,7 +598,8 @@ fn handle_dungeon_movement(
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<DungeonState>,
     mut occupancy: ResMut<GridOccupancy>,
-    scale: Res<UiScale>,
+    tile_sizes: Res<TileSizes>,
+    roof_row: Res<HasRoofRow>,
     keyboard: Res<ButtonInput<KeyCode>>,
     active_modal: Res<ActiveModal>,
     sheet: Res<PlayerSpriteSheet>,
@@ -584,12 +697,13 @@ fn handle_dungeon_movement(
     state.player_pos = new_pos;
 
     // Set interpolation target
-    let tile_size = BASE_TILE * scale.0 as f32;
-    let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_size;
+    let tile_size = tile_sizes.tile_size;
+    let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_sizes.base_tile_size;
     let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
+    let roof_y_offset = if roof_row.0 { tile_size * 2.0 } else { 0.0 };
     smooth_pos.target = Vec2::new(
         new_pos.x as f32 * tile_size + entity_offset,
-        new_pos.y as f32 * tile_size + entity_offset,
+        new_pos.y as f32 * tile_size + entity_offset + roof_y_offset,
     );
     smooth_pos.moving = true;
 
@@ -631,10 +745,10 @@ fn held_direction(keyboard: &ButtonInput<KeyCode>) -> Option<NavigationDirection
 /// Interpolates entity positions smoothly toward their targets each frame.
 fn interpolate_positions(
     time: Res<Time>,
-    scale: Res<UiScale>,
+    tile_sizes: Res<TileSizes>,
     mut query: Query<(&mut SmoothPosition, &mut Node)>,
 ) {
-    let tile_size = BASE_TILE * scale.0 as f32;
+    let tile_size = tile_sizes.tile_size;
     let speed = MOVE_SPEED * tile_size;
 
     for (mut pos, mut node) in &mut query {
@@ -1092,10 +1206,16 @@ fn advance_floor_system(
         return;
     };
 
+    let floor_type = state
+        .current_floor()
+        .map(|f| f.floor_type())
+        .unwrap_or(FloorType::BasicDungeonFloor);
+
     commands.spawn(DungeonFloor {
         layout,
         player_pos: state.player_pos,
         player_size: state.player_size,
+        floor_type,
     });
 }
 
@@ -1125,10 +1245,16 @@ fn enter_door_system(
         return;
     };
 
+    let floor_type = state
+        .current_floor()
+        .map(|f| f.floor_type())
+        .unwrap_or(FloorType::BasicDungeonFloor);
+
     commands.spawn(DungeonFloor {
         layout,
         player_pos: state.player_pos,
         player_size: state.player_size,
+        floor_type,
     });
 }
 
@@ -1161,10 +1287,16 @@ fn return_to_home_system(
         return;
     };
 
+    let floor_type = state
+        .current_floor()
+        .map(|f| f.floor_type())
+        .unwrap_or(FloorType::BasicDungeonFloor);
+
     commands.spawn(DungeonFloor {
         layout,
         player_pos: state.player_pos,
         player_size: state.player_size,
+        floor_type,
     });
 }
 

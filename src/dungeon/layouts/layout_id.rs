@@ -1,6 +1,6 @@
 use crate::dungeon::DungeonLayout;
 
-use super::{clustered_floor, dungeon_floor, home_layout, starting_room};
+use super::{cave_floor, clustered_floor, dungeon_floor, home_layout, starting_room};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LayoutId {
@@ -9,6 +9,8 @@ pub enum LayoutId {
     HomeLayout,
     DungeonFloorWithStairs,
     DungeonFloorFinal,
+    CaveFloorWithStairs,
+    CaveFloorFinal,
 }
 
 impl LayoutId {
@@ -19,6 +21,8 @@ impl LayoutId {
             LayoutId::HomeLayout => home_layout::create(),
             LayoutId::DungeonFloorWithStairs => dungeon_floor::create_with_stairs(),
             LayoutId::DungeonFloorFinal => dungeon_floor::create_final(),
+            LayoutId::CaveFloorWithStairs => cave_floor::create_with_stairs(),
+            LayoutId::CaveFloorFinal => cave_floor::create_final(),
         }
     }
 
@@ -28,5 +32,7 @@ impl LayoutId {
         LayoutId::HomeLayout,
         LayoutId::DungeonFloorWithStairs,
         LayoutId::DungeonFloorFinal,
+        LayoutId::CaveFloorWithStairs,
+        LayoutId::CaveFloorFinal,
     ];
 }

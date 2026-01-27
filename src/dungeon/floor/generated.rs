@@ -52,4 +52,13 @@ impl FloorInstance {
             FloorInstance::Generated(generated) => generated.name(),
         }
     }
+
+    /// Returns the floor type for tileset rendering.
+    /// Fixed floors use BasicDungeonFloor (standard dungeon tileset).
+    pub fn floor_type(&self) -> FloorType {
+        match self {
+            FloorInstance::Fixed(_) => FloorType::BasicDungeonFloor,
+            FloorInstance::Generated(generated) => generated.floor_type,
+        }
+    }
 }

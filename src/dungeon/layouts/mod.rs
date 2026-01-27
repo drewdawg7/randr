@@ -1,3 +1,4 @@
+mod cave_floor;
 mod clustered_floor;
 mod dungeon_floor;
 mod home_layout;

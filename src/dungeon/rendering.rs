@@ -1,6 +1,44 @@
-use crate::assets::DungeonTileSlice;
+use crate::assets::{CaveTileSlice, DungeonTileSlice, SpriteSheetKey};
 
-use super::{DungeonLayout, TileType};
+use super::{DungeonLayout, FloorType, TileType};
+
+/// Unified tile resolution result that works across different tilesets
+pub struct ResolvedTile {
+    pub slice_name: &'static str,
+    pub flip_x: bool,
+    pub tileset_key: SpriteSheetKey,
+}
+
+/// Resolves tiles based on floor type, dispatching to the appropriate renderer
+pub fn resolve_tile(
+    floor_type: FloorType,
+    layout: &DungeonLayout,
+    x: usize,
+    y: usize,
+) -> Option<ResolvedTile> {
+    match floor_type {
+        FloorType::BasicDungeonFloor => {
+            TileRenderer::resolve(layout, x, y).map(|(slice, flip_x)| ResolvedTile {
+                slice_name: slice.as_str(),
+                flip_x,
+                tileset_key: SpriteSheetKey::DungeonTileset,
+            })
+        }
+        FloorType::CaveFloor => CaveTileRenderer::resolve(layout, x, y).map(|result| {
+            // Gate/GateFloor/Stairs come from dungeon tileset
+            let tileset_key = if result.uses_dungeon_tileset {
+                SpriteSheetKey::DungeonTileset
+            } else {
+                SpriteSheetKey::CaveTileset
+            };
+            ResolvedTile {
+                slice_name: result.slice_name,
+                flip_x: result.flip_x,
+                tileset_key,
+            }
+        }),
+    }
+}
 
 pub struct TileRenderer;
 
@@ -167,6 +205,103 @@ impl TileRenderer {
         }
 
         (DungeonTileSlice::TopWall1, false)
+    }
+}
+
+/// Cave-specific tile renderer
+pub struct CaveTileRenderer;
+
+/// Result from cave tile resolution
+pub struct CaveTileResult {
+    pub slice_name: &'static str,
+    pub flip_x: bool,
+    pub uses_dungeon_tileset: bool,
+}
+
+impl CaveTileRenderer {
+    pub fn resolve(layout: &DungeonLayout, x: usize, y: usize) -> Option<CaveTileResult> {
+        let tile = layout.tile_at(x, y)?;
+
+        match tile.tile_type {
+            TileType::PlayerSpawn => Some(CaveTileResult {
+                slice_name: DungeonTileSlice::GateFloor.as_str(),
+                flip_x: false,
+                uses_dungeon_tileset: true,
+            }),
+            TileType::Floor | TileType::Entrance | TileType::SpawnPoint => {
+                Some(Self::resolve_floor(tile.variant))
+            }
+            TileType::Wall => Self::resolve_wall(layout, x, y),
+            TileType::Exit => Some(CaveTileResult {
+                slice_name: DungeonTileSlice::Gate.as_str(),
+                flip_x: false,
+                uses_dungeon_tileset: true,
+            }),
+            TileType::Door => Some(CaveTileResult {
+                slice_name: DungeonTileSlice::Gate.as_str(),
+                flip_x: false,
+                uses_dungeon_tileset: true,
+            }),
+            TileType::DoorOpen => Some(CaveTileResult {
+                slice_name: DungeonTileSlice::GateFloor.as_str(),
+                flip_x: false,
+                uses_dungeon_tileset: true,
+            }),
+            // TorchWall renders as wall in caves (no torches)
+            TileType::TorchWall => Self::resolve_wall(layout, x, y),
+        }
+    }
+
+    fn resolve_floor(variant: u8) -> CaveTileResult {
+        let slice = match variant % 6 {
+            0 => CaveTileSlice::Floor1,
+            1 => CaveTileSlice::Floor2,
+            2 => CaveTileSlice::Floor3,
+            3 => CaveTileSlice::Floor4,
+            4 => CaveTileSlice::Floor5,
+            _ => CaveTileSlice::Floor6,
+        };
+        CaveTileResult {
+            slice_name: slice.as_str(),
+            flip_x: false,
+            uses_dungeon_tileset: false,
+        }
+    }
+
+    fn resolve_wall(layout: &DungeonLayout, x: usize, y: usize) -> Option<CaveTileResult> {
+        // Edge walls: same tile all the way down each side (checked FIRST)
+        if x == 0 {
+            return Some(CaveTileResult {
+                slice_name: CaveTileSlice::RightRoof.as_str(),
+                flip_x: false,
+                uses_dungeon_tileset: false,
+            });
+        }
+        if x == layout.width() - 1 {
+            return Some(CaveTileResult {
+                slice_name: CaveTileSlice::LeftRoof.as_str(),
+                flip_x: false,
+                uses_dungeon_tileset: false,
+            });
+        }
+
+        let ctx = WallContext::analyze(layout, x, y);
+
+        // Bottom wall (floor above) - front_roof in cave
+        if ctx.floor_above && !ctx.floor_below {
+            return Some(CaveTileResult {
+                slice_name: CaveTileSlice::FrontRoof.as_str(),
+                flip_x: false,
+                uses_dungeon_tileset: false,
+            });
+        }
+
+        // Everything else (top walls, interior) - render as floor
+        Some(CaveTileResult {
+            slice_name: CaveTileSlice::Floor1.as_str(),
+            flip_x: false,
+            uses_dungeon_tileset: false,
+        })
     }
 }
 

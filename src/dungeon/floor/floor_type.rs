@@ -1,3 +1,4 @@
+use crate::assets::SpriteSheetKey;
 use crate::dungeon::layouts::LayoutId;
 use crate::dungeon::spawn::SpawnTable;
 use crate::mob::MobId;
@@ -5,12 +6,30 @@ use crate::mob::MobId;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FloorType {
     BasicDungeonFloor,
+    CaveFloor,
 }
 
 impl FloorType {
+    /// Returns the tileset key for rendering this floor type
+    pub fn tileset_key(&self) -> SpriteSheetKey {
+        match self {
+            FloorType::BasicDungeonFloor => SpriteSheetKey::DungeonTileset,
+            FloorType::CaveFloor => SpriteSheetKey::CaveTileset,
+        }
+    }
+
+    /// Returns the tile size multiplier for this floor type.
+    /// Cave tiles are 32x32 (2x dungeon's 16x16), so they need 2x scaling.
+    pub fn tile_scale(&self) -> f32 {
+        match self {
+            FloorType::BasicDungeonFloor => 1.0,
+            FloorType::CaveFloor => 2.0,
+        }
+    }
+
     pub fn spawn_table(&self, is_final: bool) -> SpawnTable {
         match self {
-            FloorType::BasicDungeonFloor => {
+            FloorType::BasicDungeonFloor | FloorType::CaveFloor => {
                 let base = SpawnTable::new()
                     .mob(MobId::Goblin, 5)
                     .mob(MobId::Slime, 3)
@@ -40,6 +59,13 @@ impl FloorType {
                     LayoutId::DungeonFloorFinal
                 } else {
                     LayoutId::DungeonFloorWithStairs
+                }
+            }
+            FloorType::CaveFloor => {
+                if is_final {
+                    LayoutId::CaveFloorFinal
+                } else {
+                    LayoutId::CaveFloorWithStairs
                 }
             }
         }

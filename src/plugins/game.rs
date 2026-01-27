@@ -46,7 +46,7 @@ impl Plugin for GamePlugin {
                     .floor(FloorId::HomeFloor)
                 .location(LocationId::MainDungeon)
                     .generated_floors(3, WeightedFloorPool::new()
-                        .add(FloorType::BasicDungeonFloor, 100))
+                        .add(FloorType::CaveFloor, 100))
                 .location(LocationId::GoblinCave)
                     .floor(FloorId::GoblinCave1)
                 .build(),

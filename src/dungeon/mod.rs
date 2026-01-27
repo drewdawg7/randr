@@ -26,7 +26,7 @@ pub use layout::DungeonLayout;
 pub use layout_builder::LayoutBuilder;
 pub use layouts::LayoutId;
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry};
-pub use rendering::TileRenderer;
+pub use rendering::{resolve_tile, ResolvedTile, TileRenderer};
 pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
 pub use spawn_rules::{
     ChestSpawner, ComposedSpawnRules, CraftingStationSpawner, FixedPositionSpawner,
