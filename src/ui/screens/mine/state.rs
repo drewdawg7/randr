@@ -16,8 +16,8 @@ impl OreType {
     /// Get the RockId associated with this ore type.
     pub fn rock_id(&self) -> RockId {
         match self {
-            OreType::Copper => RockId::Copper,
-            OreType::Tin => RockId::Tin,
+            OreType::Copper => RockId::Iron,
+            OreType::Tin => RockId::Gold,
             OreType::Coal => RockId::Coal,
             OreType::Mixed => RockId::Mixed,
         }

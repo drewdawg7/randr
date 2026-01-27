@@ -143,9 +143,9 @@ entity_macros::define_data! {
             min_level: None,
             data: LocationData::Mine(MineData {
                 rock_weights: HashMap::from([
-                    (RockId::Copper, 50),
+                    (RockId::Iron, 50),
                     (RockId::Coal, 30),
-                    (RockId::Tin, 20),
+                    (RockId::Gold, 20),
                 ]),
             }),
         }

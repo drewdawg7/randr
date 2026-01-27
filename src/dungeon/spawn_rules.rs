@@ -173,9 +173,9 @@ impl SpawnRule for RockSpawner {
             let areas = layout.spawn_areas(GridSize::single());
             if let Some(&pos) = areas.choose(rng) {
                 let rock_type = match rng.gen_range(0..3u8) {
-                    0 => RockType::Copper,
+                    0 => RockType::Iron,
                     1 => RockType::Coal,
-                    _ => RockType::Tin,
+                    _ => RockType::Gold,
                 };
                 layout.add_entity(
                     pos,

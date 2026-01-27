@@ -48,9 +48,9 @@ impl Mine {
 
     pub fn new(name: String) -> Self {
         let mut rock_weights = HashMap::new();
-        rock_weights.insert(RockId::Copper, 50);
+        rock_weights.insert(RockId::Iron, 50);
         rock_weights.insert(RockId::Coal, 30);
-        rock_weights.insert(RockId::Tin, 20);
+        rock_weights.insert(RockId::Gold, 20);
 
         Self {
             location_id: LocationId::VillageMine,

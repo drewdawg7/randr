@@ -36,41 +36,41 @@ impl MerchantStock {
             // Basic weapons
             (ItemId::Sword, 1),
             (ItemId::Dagger, 1),
-            (ItemId::TinSword, 1),
+            (ItemId::GoldSword, 1),
+            (ItemId::IronSword, 1),
             (ItemId::CopperSword, 1),
-            (ItemId::BronzeSword, 1),
             // Shields
             (ItemId::BasicShield, 1),
             // Copper armor
+            (ItemId::IronHelmet, 1),
+            (ItemId::IronChestplate, 1),
+            (ItemId::IronGauntlets, 1),
+            (ItemId::IronGreaves, 1),
+            (ItemId::IronLeggings, 1),
+            // Tin armor
+            (ItemId::GoldHelmet, 1),
+            (ItemId::GoldChestplate, 1),
+            (ItemId::GoldGauntlets, 1),
+            (ItemId::GoldGreaves, 1),
+            (ItemId::GoldLeggings, 1),
+            // Bronze armor
             (ItemId::CopperHelmet, 1),
             (ItemId::CopperChestplate, 1),
             (ItemId::CopperGauntlets, 1),
             (ItemId::CopperGreaves, 1),
             (ItemId::CopperLeggings, 1),
-            // Tin armor
-            (ItemId::TinHelmet, 1),
-            (ItemId::TinChestplate, 1),
-            (ItemId::TinGauntlets, 1),
-            (ItemId::TinGreaves, 1),
-            (ItemId::TinLeggings, 1),
-            // Bronze armor
-            (ItemId::BronzeHelmet, 1),
-            (ItemId::BronzeChestplate, 1),
-            (ItemId::BronzeGauntlets, 1),
-            (ItemId::BronzeGreaves, 1),
-            (ItemId::BronzeLeggings, 1),
             // Tools
-            (ItemId::BronzePickaxe, 1),
+            (ItemId::CopperPickaxe, 1),
             // Accessories
             (ItemId::GoldRing, 1),
             // Ores
-            (ItemId::CopperOre, rng.gen_range(5..=15)),
-            (ItemId::TinOre, rng.gen_range(5..=15)),
+            (ItemId::IronOre, rng.gen_range(5..=15)),
+            (ItemId::GoldOre, rng.gen_range(5..=15)),
             (ItemId::Coal, rng.gen_range(5..=15)),
             // Ingots
-            (ItemId::CopperIngot, rng.gen_range(2..=5)),
-            (ItemId::TinIngot, rng.gen_range(2..=5)),
-            (ItemId::BronzeIngot, rng.gen_range(1..=3)),
+            (ItemId::IronIngot, rng.gen_range(2..=5)),
+            (ItemId::GoldIngot, rng.gen_range(2..=5)),
+            (ItemId::CopperIngot, rng.gen_range(1..=3)),
             // Materials
             (ItemId::Cowhide, rng.gen_range(3..=8)),
             (ItemId::SlimeGel, rng.gen_range(3..=8)),

@@ -15,9 +15,9 @@ use super::rock::RockId;
 impl Default for Mine {
     fn default() -> Self {
         let mut rock_weights = HashMap::new();
-        rock_weights.insert(RockId::Tin, 2);
+        rock_weights.insert(RockId::Gold, 2);
         rock_weights.insert(RockId::Coal, 2);
-        rock_weights.insert(RockId::Copper, 2);
+        rock_weights.insert(RockId::Iron, 2);
         rock_weights.insert(RockId::Mixed, 1);
         Self {
             location_id: LocationId::VillageMine,

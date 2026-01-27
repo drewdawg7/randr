@@ -48,10 +48,10 @@ impl DungeonEntity {
                 sheet_key: SpriteSheetKey::Chests,
                 sprite_name: "Slice_1",
             },
-            Self::Rock { rock_type, .. } => EntityRenderData::SpriteSheet {
-                sheet_key: SpriteSheetKey::Rocks,
-                sprite_name: rock_type.sprite_name(),
-            },
+            Self::Rock { rock_type, .. } => {
+                let (sheet_key, sprite_name) = rock_type.sprite_data();
+                EntityRenderData::SpriteSheet { sheet_key, sprite_name }
+            }
             Self::Stairs { .. } => EntityRenderData::SpriteSheet {
                 sheet_key: SpriteSheetKey::DungeonTileset,
                 sprite_name: "stairs",

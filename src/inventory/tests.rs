@@ -131,7 +131,7 @@ fn inventory_item_uuid_returns_item_uuid() {
 
 #[test]
 fn inventory_item_decrease_quantity_decreases_correctly() {
-    let material = create_test_material(ItemId::CopperOre);
+    let material = create_test_material(ItemId::IronOre);
     let mut inv_item = InventoryItem::new(material);
     inv_item.quantity = 10;
 
@@ -141,7 +141,7 @@ fn inventory_item_decrease_quantity_decreases_correctly() {
 
 #[test]
 fn inventory_item_decrease_quantity_floors_at_zero() {
-    let material = create_test_material(ItemId::CopperOre);
+    let material = create_test_material(ItemId::IronOre);
     let mut inv_item = InventoryItem::new(material);
     inv_item.quantity = 5;
 
@@ -151,7 +151,7 @@ fn inventory_item_decrease_quantity_floors_at_zero() {
 
 #[test]
 fn inventory_item_decrease_quantity_to_exactly_zero() {
-    let material = create_test_material(ItemId::CopperOre);
+    let material = create_test_material(ItemId::IronOre);
     let mut inv_item = InventoryItem::new(material);
     inv_item.quantity = 5;
 
@@ -163,7 +163,7 @@ fn inventory_item_decrease_quantity_to_exactly_zero() {
 
 #[test]
 fn inventory_item_increase_quantity_increases_correctly() {
-    let material = create_test_material(ItemId::CopperOre);
+    let material = create_test_material(ItemId::IronOre);
     let mut inv_item = InventoryItem::new(material);
 
     inv_item.increase_quantity(5);
@@ -172,7 +172,7 @@ fn inventory_item_increase_quantity_increases_correctly() {
 
 #[test]
 fn inventory_item_increase_quantity_multiple_times() {
-    let material = create_test_material(ItemId::CopperOre);
+    let material = create_test_material(ItemId::IronOre);
     let mut inv_item = InventoryItem::new(material);
 
     inv_item.increase_quantity(3);
@@ -288,8 +288,8 @@ fn add_to_inv_adds_new_item() {
 fn add_to_inv_stacks_non_equipment_items() {
     let mut holder = MockInventoryHolder::new();
 
-    let material1 = create_test_material(ItemId::CopperOre);
-    let material2 = create_test_material(ItemId::CopperOre);
+    let material1 = create_test_material(ItemId::IronOre);
+    let material2 = create_test_material(ItemId::IronOre);
 
     holder.add_to_inv(material1).unwrap();
     holder.add_to_inv(material2).unwrap();
@@ -335,7 +335,7 @@ fn add_to_inv_stacks_up_to_max_stack_quantity() {
 
     // Add materials that stack up to 99
     for _ in 0..99 {
-        let material = create_test_material(ItemId::CopperOre);
+        let material = create_test_material(ItemId::IronOre);
         holder.add_to_inv(material).unwrap();
     }
 
@@ -344,7 +344,7 @@ fn add_to_inv_stacks_up_to_max_stack_quantity() {
     assert_eq!(holder.inventory().items[0].quantity, 99);
 
     // Adding one more should create a new stack
-    let material = create_test_material(ItemId::CopperOre);
+    let material = create_test_material(ItemId::IronOre);
     holder.add_to_inv(material).unwrap();
 
     assert_eq!(holder.inventory().items.len(), 2);
@@ -411,15 +411,15 @@ fn find_item_by_id_returns_none_when_not_found() {
 #[test]
 fn decrease_item_quantity_decreases_in_inventory() {
     let mut holder = MockInventoryHolder::new();
-    let material = create_test_material(ItemId::CopperOre);
+    let material = create_test_material(ItemId::IronOre);
     holder.add_to_inv(material.clone()).unwrap();
-    holder.add_to_inv(create_test_material(ItemId::CopperOre)).unwrap();
-    holder.add_to_inv(create_test_material(ItemId::CopperOre)).unwrap();
+    holder.add_to_inv(create_test_material(ItemId::IronOre)).unwrap();
+    holder.add_to_inv(create_test_material(ItemId::IronOre)).unwrap();
 
     // Should have 3 stacked
     assert_eq!(holder.inventory().items[0].quantity, 3);
 
-    holder.decrease_item_quantity(ItemId::CopperOre, 1);
+    holder.decrease_item_quantity(ItemId::IronOre, 1);
 
     assert_eq!(holder.inventory().items[0].quantity, 2);
 }
@@ -427,10 +427,10 @@ fn decrease_item_quantity_decreases_in_inventory() {
 #[test]
 fn decrease_item_quantity_removes_when_zero() {
     let mut holder = MockInventoryHolder::new();
-    let material = create_test_material(ItemId::CopperOre);
+    let material = create_test_material(ItemId::IronOre);
     holder.add_to_inv(material).unwrap();
 
-    holder.decrease_item_quantity(ItemId::CopperOre, 1);
+    holder.decrease_item_quantity(ItemId::IronOre, 1);
 
     // Item should be removed
     assert!(holder.inventory().items.is_empty());
@@ -773,7 +773,7 @@ fn user_flow_collect_materials_and_stack() {
 
     // Player mines some copper ore
     for _ in 0..5 {
-        let ore = create_test_material(ItemId::CopperOre);
+        let ore = create_test_material(ItemId::IronOre);
         holder.add_to_inv(ore).unwrap();
     }
 
@@ -782,12 +782,12 @@ fn user_flow_collect_materials_and_stack() {
     assert_eq!(holder.inventory().items[0].quantity, 5);
 
     // Player uses 3 ore for crafting
-    holder.decrease_item_quantity(ItemId::CopperOre, 3);
+    holder.decrease_item_quantity(ItemId::IronOre, 3);
 
     assert_eq!(holder.inventory().items[0].quantity, 2);
 
     // Player uses remaining ore
-    holder.decrease_item_quantity(ItemId::CopperOre, 2);
+    holder.decrease_item_quantity(ItemId::IronOre, 2);
 
     assert!(holder.inventory().items.is_empty());
 }

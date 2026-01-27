@@ -23,11 +23,11 @@ entity_macros::define_entity! {
     id RockId;
 
     variants {
-        Copper {
-            name: "Copper Rock",
+        Iron {
+            name: "Iron Rock",
             health: 50,
             loot: LootTable::new()
-                .with(ItemId::CopperOre, 1, 1, 1..=3)
+                .with(ItemId::IronOre, 1, 1, 1..=3)
                 .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
         }
         Coal {
@@ -37,19 +37,19 @@ entity_macros::define_entity! {
                 .with(ItemId::Coal, 1, 1, 1..=2)
                 .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
         }
-        Tin {
-            name: "Tin Rock",
+        Gold {
+            name: "Gold Rock",
             health: 50,
             loot: LootTable::new()
-                .with(ItemId::TinOre, 1, 1, 1..=3)
+                .with(ItemId::GoldOre, 1, 1, 1..=3)
                 .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
         }
         Mixed {
             name: "Mixed Rock",
             health: 100,
             loot: LootTable::new()
-                .with(ItemId::TinOre, 1, 2, 1..=4)
-                .with(ItemId::CopperOre, 1, 2, 1..=4)
+                .with(ItemId::GoldOre, 1, 2, 1..=4)
+                .with(ItemId::IronOre, 1, 2, 1..=4)
                 .with(ItemId::Coal, 1, 2, 1..=4)
                 .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
         }

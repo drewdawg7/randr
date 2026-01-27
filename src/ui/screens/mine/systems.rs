@@ -131,8 +131,8 @@ pub fn handle_mining_action(
                             let mut rng = rand::thread_rng();
                             let roll = rng.gen_range(0..3);
                             match roll {
-                                0 => RockId::Copper,
-                                1 => RockId::Tin,
+                                0 => RockId::Iron,
+                                1 => RockId::Gold,
                                 _ => RockId::Coal,
                             }
                         }

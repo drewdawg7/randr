@@ -8,21 +8,21 @@ pub const CAVE_WIDTH: usize = 60;
 pub const CAVE_HEIGHT: usize = 20;
 pub const MAX_ROCKS: usize = 8;
 
-/// Rock types with spawn weights (Copper: 50, Coal: 30, Tin: 20)
+/// Rock types with spawn weights (Iron: 50, Coal: 30, Gold: 20)
 #[derive(Clone, Copy, Debug)]
 pub enum RockType {
-    Copper,
+    Iron,
     Coal,
-    Tin,
+    Gold,
 }
 
 impl RockType {
     /// Get the loot table for this rock type
     pub fn loot_table(&self) -> LootTable {
         match self {
-            RockType::Copper => RockId::Copper.spec().loot.clone(),
+            RockType::Iron => RockId::Iron.spec().loot.clone(),
             RockType::Coal => RockId::Coal.spec().loot.clone(),
-            RockType::Tin => RockId::Tin.spec().loot.clone(),
+            RockType::Gold => RockId::Gold.spec().loot.clone(),
         }
     }
 
@@ -31,11 +31,11 @@ impl RockType {
         let mut rng = rand::thread_rng();
         let roll = rng.gen_range(0..100);
         if roll < 50 {
-            RockType::Copper
+            RockType::Iron
         } else if roll < 80 {
             RockType::Coal
         } else {
-            RockType::Tin
+            RockType::Gold
         }
     }
 }

@@ -49,8 +49,17 @@ entity_macros::define_entity! {
             max_stack_quantity: 1,
             gold_value: 10,
         }
-        TinSword {
-            name: String::from("Tin Sword"),
+        GoldSword {
+            name: String::from("Gold Sword"),
+            item_type: ItemType::Equipment(EquipmentType::Weapon),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Attack, 12),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 15,
+        }
+        IronSword {
+            name: String::from("Iron Sword"),
             item_type: ItemType::Equipment(EquipmentType::Weapon),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 12),
@@ -60,15 +69,6 @@ entity_macros::define_entity! {
         }
         CopperSword {
             name: String::from("Copper Sword"),
-            item_type: ItemType::Equipment(EquipmentType::Weapon),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Attack, 12),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 15,
-        }
-        BronzeSword {
-            name: String::from("Bronze Sword"),
             item_type: ItemType::Equipment(EquipmentType::Weapon),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 16),
@@ -100,108 +100,108 @@ entity_macros::define_entity! {
         }
 
         // ─────────────────────────────────────────────────────────────────────
+        // Iron Armor
+        // ─────────────────────────────────────────────────────────────────────
+        IronHelmet {
+            name: String::from("Iron Helmet"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 36),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 180,
+        }
+        IronChestplate {
+            name: String::from("Iron Chestplate"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 60),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 300,
+        }
+        IronGauntlets {
+            name: String::from("Iron Gauntlets"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 24),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 120,
+        }
+        IronGreaves {
+            name: String::from("Iron Greaves"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 30),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 150,
+        }
+        IronLeggings {
+            name: String::from("Iron Leggings"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 54),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 270,
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Gold Armor
+        // ─────────────────────────────────────────────────────────────────────
+        GoldHelmet {
+            name: String::from("Gold Helmet"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 36),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 180,
+        }
+        GoldChestplate {
+            name: String::from("Gold Chestplate"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 60),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 300,
+        }
+        GoldGauntlets {
+            name: String::from("Gold Gauntlets"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 24),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 120,
+        }
+        GoldGreaves {
+            name: String::from("Gold Greaves"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 30),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 150,
+        }
+        GoldLeggings {
+            name: String::from("Gold Leggings"),
+            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
+            quality: None,
+            stats: StatSheet::new().with(StatType::Defense, 54),
+            max_upgrades: 5,
+            max_stack_quantity: 1,
+            gold_value: 270,
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
         // Copper Armor
         // ─────────────────────────────────────────────────────────────────────
         CopperHelmet {
             name: String::from("Copper Helmet"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 36),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 180,
-        }
-        CopperChestplate {
-            name: String::from("Copper Chestplate"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 60),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 300,
-        }
-        CopperGauntlets {
-            name: String::from("Copper Gauntlets"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 24),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 120,
-        }
-        CopperGreaves {
-            name: String::from("Copper Greaves"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 30),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 150,
-        }
-        CopperLeggings {
-            name: String::from("Copper Leggings"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 54),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 270,
-        }
-
-        // ─────────────────────────────────────────────────────────────────────
-        // Tin Armor
-        // ─────────────────────────────────────────────────────────────────────
-        TinHelmet {
-            name: String::from("Tin Helmet"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 36),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 180,
-        }
-        TinChestplate {
-            name: String::from("Tin Chestplate"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 60),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 300,
-        }
-        TinGauntlets {
-            name: String::from("Tin Gauntlets"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 24),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 120,
-        }
-        TinGreaves {
-            name: String::from("Tin Greaves"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 30),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 150,
-        }
-        TinLeggings {
-            name: String::from("Tin Leggings"),
-            item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
-            quality: None,
-            stats: StatSheet::new().with(StatType::Defense, 54),
-            max_upgrades: 5,
-            max_stack_quantity: 1,
-            gold_value: 270,
-        }
-
-        // ─────────────────────────────────────────────────────────────────────
-        // Bronze Armor
-        // ─────────────────────────────────────────────────────────────────────
-        BronzeHelmet {
-            name: String::from("Bronze Helmet"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Head)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 48),
@@ -209,8 +209,8 @@ entity_macros::define_entity! {
             max_stack_quantity: 1,
             gold_value: 270,
         }
-        BronzeChestplate {
-            name: String::from("Bronze Chestplate"),
+        CopperChestplate {
+            name: String::from("Copper Chestplate"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Chest)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 80),
@@ -218,8 +218,8 @@ entity_macros::define_entity! {
             max_stack_quantity: 1,
             gold_value: 450,
         }
-        BronzeGauntlets {
-            name: String::from("Bronze Gauntlets"),
+        CopperGauntlets {
+            name: String::from("Copper Gauntlets"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Hands)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 32),
@@ -227,8 +227,8 @@ entity_macros::define_entity! {
             max_stack_quantity: 1,
             gold_value: 180,
         }
-        BronzeGreaves {
-            name: String::from("Bronze Greaves"),
+        CopperGreaves {
+            name: String::from("Copper Greaves"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Feet)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 40),
@@ -236,8 +236,8 @@ entity_macros::define_entity! {
             max_stack_quantity: 1,
             gold_value: 225,
         }
-        BronzeLeggings {
-            name: String::from("Bronze Leggings"),
+        CopperLeggings {
+            name: String::from("Copper Leggings"),
             item_type: ItemType::Equipment(EquipmentType::Armor(EquipmentSlot::Legs)),
             quality: None,
             stats: StatSheet::new().with(StatType::Defense, 72),
@@ -249,8 +249,8 @@ entity_macros::define_entity! {
         // ─────────────────────────────────────────────────────────────────────
         // Tools
         // ─────────────────────────────────────────────────────────────────────
-        BronzePickaxe {
-            name: String::from("Bronze Pickaxe"),
+        CopperPickaxe {
+            name: String::from("Copper Pickaxe"),
             item_type: ItemType::Equipment(EquipmentType::Tool(ToolKind::Pickaxe)),
             quality: None,
             stats: StatSheet::new().with(StatType::Attack, 10).with(StatType::Mining, 10),
@@ -293,8 +293,8 @@ entity_macros::define_entity! {
             max_stack_quantity: 99,
             gold_value: 4,
         }
-        CopperOre {
-            name: String::from("Copper Ore"),
+        IronOre {
+            name: String::from("Iron Ore"),
             item_type: ItemType::Material(MaterialType::Ore),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -302,8 +302,8 @@ entity_macros::define_entity! {
             max_stack_quantity: 99,
             gold_value: 5,
         }
-        TinOre {
-            name: String::from("Tin Ore"),
+        GoldOre {
+            name: String::from("Gold Ore"),
             item_type: ItemType::Material(MaterialType::Ore),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -315,8 +315,17 @@ entity_macros::define_entity! {
         // ─────────────────────────────────────────────────────────────────────
         // Ingots
         // ─────────────────────────────────────────────────────────────────────
-        TinIngot {
-            name: String::from("Tin Ingot"),
+        GoldIngot {
+            name: String::from("Gold Ingot"),
+            item_type: ItemType::Material(MaterialType::CraftingMaterial),
+            quality: Some(ItemQuality::Normal),
+            stats: StatSheet::new(),
+            max_upgrades: 0,
+            max_stack_quantity: 99,
+            gold_value: 10,
+        }
+        IronIngot {
+            name: String::from("Iron Ingot"),
             item_type: ItemType::Material(MaterialType::CraftingMaterial),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -326,15 +335,6 @@ entity_macros::define_entity! {
         }
         CopperIngot {
             name: String::from("Copper Ingot"),
-            item_type: ItemType::Material(MaterialType::CraftingMaterial),
-            quality: Some(ItemQuality::Normal),
-            stats: StatSheet::new(),
-            max_upgrades: 0,
-            max_stack_quantity: 99,
-            gold_value: 10,
-        }
-        BronzeIngot {
-            name: String::from("Bronze Ingot"),
             item_type: ItemType::Material(MaterialType::CraftingMaterial),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
@@ -559,9 +559,16 @@ impl ItemId {
     pub fn sprite_sheet_key(&self) -> crate::assets::SpriteSheetKey {
         use crate::assets::SpriteSheetKey;
         match self {
-            ItemId::TinSword => SpriteSheetKey::TinSword,
+            ItemId::GoldSword => SpriteSheetKey::GoldSword,
+            ItemId::IronSword => SpriteSheetKey::IronSword,
             ItemId::CopperSword => SpriteSheetKey::CopperSword,
-            ItemId::BronzeSword => SpriteSheetKey::BronzeSword,
+            // Ores, ingots, and materials from crafting sheet
+            ItemId::IronOre
+            | ItemId::GoldOre
+            | ItemId::IronIngot
+            | ItemId::GoldIngot
+            | ItemId::CopperIngot
+            | ItemId::Cowhide => SpriteSheetKey::CraftingMaterials,
             _ => SpriteSheetKey::IconItems,
         }
     }
@@ -574,47 +581,47 @@ impl ItemId {
             // Weapons
             ItemId::Sword => "Slice_155",
             ItemId::Dagger => "Slice_156",
-            ItemId::TinSword => "tin_sword",
+            ItemId::GoldSword => "gold_sword",
+            ItemId::IronSword => "iron_sword",
             ItemId::CopperSword => "copper_sword",
-            ItemId::BronzeSword => "bronze_sword",
             ItemId::BonkStick => "Slice_607",
             // Shields
             ItemId::BasicShield => "Slice_100",
             // Helmets
-            ItemId::CopperHelmet => "Slice_101",
-            ItemId::TinHelmet => "Slice_108",
-            ItemId::BronzeHelmet => "Slice_108",
+            ItemId::IronHelmet => "Slice_101",
+            ItemId::GoldHelmet => "Slice_108",
+            ItemId::CopperHelmet => "Slice_108",
             // Chestplates
+            ItemId::IronChestplate => "Slice_551",
+            ItemId::GoldChestplate => "Slice_551",
             ItemId::CopperChestplate => "Slice_551",
-            ItemId::TinChestplate => "Slice_551",
-            ItemId::BronzeChestplate => "Slice_551",
             // Gauntlets
+            ItemId::IronGauntlets => "Slice_558",
+            ItemId::GoldGauntlets => "Slice_558",
             ItemId::CopperGauntlets => "Slice_558",
-            ItemId::TinGauntlets => "Slice_558",
-            ItemId::BronzeGauntlets => "Slice_558",
             // Greaves
+            ItemId::IronGreaves => "Slice_367",
+            ItemId::GoldGreaves => "Slice_367",
             ItemId::CopperGreaves => "Slice_367",
-            ItemId::TinGreaves => "Slice_367",
-            ItemId::BronzeGreaves => "Slice_367",
             // Leggings
+            ItemId::IronLeggings => "Slice_42",
+            ItemId::GoldLeggings => "Slice_42",
             ItemId::CopperLeggings => "Slice_42",
-            ItemId::TinLeggings => "Slice_42",
-            ItemId::BronzeLeggings => "Slice_42",
             // Tools
-            ItemId::BronzePickaxe => "Slice_826",
+            ItemId::CopperPickaxe => "Slice_826",
             // Accessories
             ItemId::GoldRing => "Slice_50",
             ItemId::ImbaRing => "Slice_1009",
             // Ores
             ItemId::Coal => "Slice_693",
-            ItemId::CopperOre => "Slice_565",
-            ItemId::TinOre => "Slice_565",
+            ItemId::IronOre => "iron_ore",
+            ItemId::GoldOre => "gold_ore",
             // Ingots
-            ItemId::CopperIngot => "Slice_501",
-            ItemId::BronzeIngot => "Slice_501",
-            ItemId::TinIngot => "Slice_565",
+            ItemId::IronIngot => "iron_ingot",
+            ItemId::CopperIngot => "copper_ingot",
+            ItemId::GoldIngot => "gold_ingot",
             // Materials
-            ItemId::Cowhide => "Slice_183",
+            ItemId::Cowhide => "leather",
             ItemId::SlimeGel => "Slice_952",
             // Upgrade Materials
             ItemId::QualityUpgradeStone => "Slice_57",

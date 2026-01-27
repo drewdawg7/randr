@@ -14,7 +14,7 @@ impl Plugin for StorePlugin {
             (ItemId::BasicHPPotion, 5),
             (ItemId::Sword, 3),
             (ItemId::BasicShield, 3),
-            (ItemId::CopperHelmet, 2),
+            (ItemId::IronHelmet, 2),
         ]);
 
         app.insert_resource(store)

@@ -184,7 +184,7 @@ fn is_coal(item_id: ItemId) -> bool {
 
 /// Check if an item is an ore (copper or tin).
 fn is_ore(item_id: ItemId) -> bool {
-    matches!(item_id, ItemId::CopperOre | ItemId::TinOre)
+    matches!(item_id, ItemId::IronOre | ItemId::GoldOre)
 }
 
 /// Add items to inventory (handles stacking).

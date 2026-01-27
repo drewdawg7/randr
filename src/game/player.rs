@@ -49,7 +49,7 @@ impl Plugin for PlayerPlugin {
         let mut inventory = Inventory::new();
         let _ = inventory.add_to_inv(ItemId::BasicHPPotion.spawn());
         let _ = inventory.add_to_inv(ItemId::Coal.spawn());
-        let _ = inventory.add_to_inv(ItemId::CopperOre.spawn());
+        let _ = inventory.add_to_inv(ItemId::IronOre.spawn());
 
         app.init_resource::<PlayerName>()
             .insert_resource(PlayerGold(100))

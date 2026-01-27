@@ -13,7 +13,7 @@ impl Default for Store {
         Store::new("The Shop", vec![
             (ItemId::Sword, 1),
             (ItemId::Dagger, 1),
-            (ItemId::BronzePickaxe, 1),
+            (ItemId::CopperPickaxe, 1),
             (ItemId::BasicHPPotion, 7),
         ])
     }

@@ -50,13 +50,13 @@ fn recipe_new_creates_from_valid_id() {
 
 #[test]
 fn recipe_new_creates_for_smelting_recipe() {
-    let recipe = Recipe::new(RecipeId::CopperIngot);
+    let recipe = Recipe::new(RecipeId::IronIngot);
     assert!(recipe.is_ok());
 }
 
 #[test]
 fn recipe_new_creates_for_forging_recipe() {
-    let recipe = Recipe::new(RecipeId::BronzeSword);
+    let recipe = Recipe::new(RecipeId::CopperSword);
     assert!(recipe.is_ok());
 }
 
@@ -70,8 +70,8 @@ fn recipe_name_returns_recipe_name() {
 
 #[test]
 fn recipe_name_returns_correct_name_for_smelting() {
-    let recipe = Recipe::new(RecipeId::BronzeIngot).unwrap();
-    assert_eq!(recipe.name(), "Bronze Ingot");
+    let recipe = Recipe::new(RecipeId::CopperIngot).unwrap();
+    assert_eq!(recipe.name(), "Copper Ingot");
 }
 
 // ==================== Recipe::ingredients() tests ====================
@@ -87,12 +87,12 @@ fn recipe_ingredients_returns_ingredient_map() {
 
 #[test]
 fn recipe_ingredients_returns_multiple_ingredients() {
-    let recipe = Recipe::new(RecipeId::BronzeIngot).unwrap();
+    let recipe = Recipe::new(RecipeId::CopperIngot).unwrap();
     let ingredients = recipe.ingredients();
 
     // Bronze requires copper ore and tin ore
-    assert!(ingredients.contains_key(&ItemId::CopperOre));
-    assert!(ingredients.contains_key(&ItemId::TinOre));
+    assert!(ingredients.contains_key(&ItemId::IronOre));
+    assert!(ingredients.contains_key(&ItemId::GoldOre));
     assert_eq!(ingredients.len(), 2);
 }
 
@@ -106,8 +106,8 @@ fn recipe_output_item_id_returns_output() {
 
 #[test]
 fn recipe_output_item_id_returns_correct_output_for_forging() {
-    let recipe = Recipe::new(RecipeId::CopperSword).unwrap();
-    assert_eq!(recipe.output_item_id(), ItemId::CopperSword);
+    let recipe = Recipe::new(RecipeId::IronSword).unwrap();
+    assert_eq!(recipe.output_item_id(), ItemId::IronSword);
 }
 
 // ==================== Recipe::can_craft() tests ====================
@@ -150,20 +150,20 @@ fn recipe_can_craft_returns_false_with_insufficient_quantity() {
 #[test]
 fn recipe_can_craft_returns_false_when_missing_one_of_multiple_ingredients() {
     let mut player = Player::default();
-    add_materials_to_player(&mut player, ItemId::CopperOre, 1);
-    // Missing TinOre for bronze ingot
+    add_materials_to_player(&mut player, ItemId::IronOre, 1);
+    // Missing GoldOre for bronze ingot
 
-    let recipe = Recipe::new(RecipeId::BronzeIngot).unwrap();
+    let recipe = Recipe::new(RecipeId::CopperIngot).unwrap();
     assert!(!recipe.can_craft(&player));
 }
 
 #[test]
 fn recipe_can_craft_returns_true_with_multiple_ingredients() {
     let mut player = Player::default();
-    add_materials_to_player(&mut player, ItemId::CopperOre, 1);
-    add_materials_to_player(&mut player, ItemId::TinOre, 1);
+    add_materials_to_player(&mut player, ItemId::IronOre, 1);
+    add_materials_to_player(&mut player, ItemId::GoldOre, 1);
 
-    let recipe = Recipe::new(RecipeId::BronzeIngot).unwrap();
+    let recipe = Recipe::new(RecipeId::CopperIngot).unwrap();
     assert!(recipe.can_craft(&player));
 }
 
@@ -232,17 +232,17 @@ fn recipe_craft_returns_output_item_id() {
 #[test]
 fn recipe_craft_consumes_multiple_ingredients() {
     let mut player = Player::default();
-    add_materials_to_player(&mut player, ItemId::CopperOre, 2);
-    add_materials_to_player(&mut player, ItemId::TinOre, 2);
+    add_materials_to_player(&mut player, ItemId::IronOre, 2);
+    add_materials_to_player(&mut player, ItemId::GoldOre, 2);
 
-    let recipe = Recipe::new(RecipeId::BronzeIngot).unwrap();
+    let recipe = Recipe::new(RecipeId::CopperIngot).unwrap();
     let result = recipe.craft(&mut player);
 
     assert!(result.is_ok());
 
     // Should have 1 of each remaining
-    let copper = player.find_item_by_id(ItemId::CopperOre);
-    let tin = player.find_item_by_id(ItemId::TinOre);
+    let copper = player.find_item_by_id(ItemId::IronOre);
+    let tin = player.find_item_by_id(ItemId::GoldOre);
     assert!(copper.is_some());
     assert!(tin.is_some());
     assert_eq!(copper.unwrap().quantity, 1);
@@ -264,15 +264,15 @@ fn recipe_id_all_forging_recipes_returns_forging_recipes() {
     let forging_recipes = RecipeId::all_forging_recipes();
 
     assert!(!forging_recipes.is_empty());
-    assert!(forging_recipes.contains(&RecipeId::BronzeSword));
     assert!(forging_recipes.contains(&RecipeId::CopperSword));
+    assert!(forging_recipes.contains(&RecipeId::IronSword));
 }
 
 #[test]
 fn recipe_id_material_returns_correct_material() {
-    assert_eq!(RecipeId::CopperSword.material(), crate::item::recipe::ForgeMaterial::Copper);
-    assert_eq!(RecipeId::TinSword.material(), crate::item::recipe::ForgeMaterial::Tin);
-    assert_eq!(RecipeId::BronzeSword.material(), crate::item::recipe::ForgeMaterial::Bronze);
+    assert_eq!(RecipeId::IronSword.material(), crate::item::recipe::ForgeMaterial::Iron);
+    assert_eq!(RecipeId::GoldSword.material(), crate::item::recipe::ForgeMaterial::Gold);
+    assert_eq!(RecipeId::CopperSword.material(), crate::item::recipe::ForgeMaterial::Bronze);
 }
 
 // ==================== RecipeSpec tests ====================

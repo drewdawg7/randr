@@ -59,9 +59,9 @@ impl ForgeCraftingState {
     /// Determine the output ingot based on the ore type.
     pub fn get_output_item(&self) -> Option<ItemId> {
         self.ore_slot.as_ref().map(|(ore_id, _)| match ore_id {
-            ItemId::CopperOre => ItemId::CopperIngot,
-            ItemId::TinOre => ItemId::TinIngot,
-            _ => ItemId::CopperIngot, // Fallback
+            ItemId::IronOre => ItemId::IronIngot,
+            ItemId::GoldOre => ItemId::GoldIngot,
+            _ => ItemId::IronIngot, // Fallback
         })
     }
 

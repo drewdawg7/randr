@@ -102,9 +102,9 @@ fn create_test_shield(defense: i32, num_upgrades: i32, max_upgrades: i32) -> Ite
 fn create_material_item() -> Item {
     Item {
         item_uuid: Uuid::new_v4(),
-        item_id: ItemId::CopperOre,
+        item_id: ItemId::IronOre,
         item_type: ItemType::Material(MaterialType::Ore),
-        name: "Copper Ore".to_string(),
+        name: "Iron Ore".to_string(),
         is_equipped: false,
         is_locked: false,
         num_upgrades: 0,

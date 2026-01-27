@@ -7,8 +7,8 @@ pub enum RecipeError {
 /// Material type for forge filtering
 #[derive(Clone, Copy, PartialEq, Eq, Default, Debug)]
 pub enum ForgeMaterial {
-    Copper,
-    Tin,
+    Iron,
+    Gold,
     Bronze,
     #[default]
     Other,

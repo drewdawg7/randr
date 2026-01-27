@@ -30,24 +30,24 @@ entity_macros::define_data! {
         // ─────────────────────────────────────────────────────────────────────
         // Smelting Recipes
         // ─────────────────────────────────────────────────────────────────────
-        TinIngot {
-            name: "Tin Ingot",
-            ingredients: HashMap::from([(ItemId::TinOre, 1)]),
-            output: ItemId::TinIngot,
+        GoldIngot {
+            name: "Gold Ingot",
+            ingredients: HashMap::from([(ItemId::GoldOre, 1)]),
+            output: ItemId::GoldIngot,
+            output_quantity: 1,
+            recipe_type: RecipeType::Smelting,
+        }
+        IronIngot {
+            name: "Iron Ingot",
+            ingredients: HashMap::from([(ItemId::IronOre, 1)]),
+            output: ItemId::IronIngot,
             output_quantity: 1,
             recipe_type: RecipeType::Smelting,
         }
         CopperIngot {
             name: "Copper Ingot",
-            ingredients: HashMap::from([(ItemId::CopperOre, 1)]),
+            ingredients: HashMap::from([(ItemId::IronOre, 1), (ItemId::GoldOre, 1)]),
             output: ItemId::CopperIngot,
-            output_quantity: 1,
-            recipe_type: RecipeType::Smelting,
-        }
-        BronzeIngot {
-            name: "Bronze Ingot",
-            ingredients: HashMap::from([(ItemId::CopperOre, 1), (ItemId::TinOre, 1)]),
-            output: ItemId::BronzeIngot,
             output_quantity: 1,
             recipe_type: RecipeType::Smelting,
         }
@@ -55,13 +55,6 @@ entity_macros::define_data! {
         // ─────────────────────────────────────────────────────────────────────
         // Forging Recipes - Swords
         // ─────────────────────────────────────────────────────────────────────
-        BronzeSword {
-            name: "Bronze Sword",
-            ingredients: HashMap::from([(ItemId::BronzeIngot, 4)]),
-            output: ItemId::BronzeSword,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
         CopperSword {
             name: "Copper Sword",
             ingredients: HashMap::from([(ItemId::CopperIngot, 4)]),
@@ -69,10 +62,17 @@ entity_macros::define_data! {
             output_quantity: 1,
             recipe_type: RecipeType::Forging,
         }
-        TinSword {
-            name: "Tin Sword",
-            ingredients: HashMap::from([(ItemId::TinIngot, 4)]),
-            output: ItemId::TinSword,
+        IronSword {
+            name: "Iron Sword",
+            ingredients: HashMap::from([(ItemId::IronIngot, 4)]),
+            output: ItemId::IronSword,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        GoldSword {
+            name: "Gold Sword",
+            ingredients: HashMap::from([(ItemId::GoldIngot, 4)]),
+            output: ItemId::GoldSword,
             output_quantity: 1,
             recipe_type: RecipeType::Forging,
         }
@@ -86,6 +86,84 @@ entity_macros::define_data! {
             output: ItemId::BasicHPPotion,
             output_quantity: 1,
             recipe_type: RecipeType::Alchemy,
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Iron Armor Recipes
+        // ─────────────────────────────────────────────────────────────────────
+        IronHelmet {
+            name: "Iron Helmet",
+            ingredients: HashMap::from([(ItemId::IronIngot, 12)]),
+            output: ItemId::IronHelmet,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        IronChestplate {
+            name: "Iron Chestplate",
+            ingredients: HashMap::from([(ItemId::IronIngot, 20)]),
+            output: ItemId::IronChestplate,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        IronGauntlets {
+            name: "Iron Gauntlets",
+            ingredients: HashMap::from([(ItemId::IronIngot, 8)]),
+            output: ItemId::IronGauntlets,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        IronGreaves {
+            name: "Iron Greaves",
+            ingredients: HashMap::from([(ItemId::IronIngot, 10)]),
+            output: ItemId::IronGreaves,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        IronLeggings {
+            name: "Iron Leggings",
+            ingredients: HashMap::from([(ItemId::IronIngot, 18)]),
+            output: ItemId::IronLeggings,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+
+        // ─────────────────────────────────────────────────────────────────────
+        // Gold Armor Recipes
+        // ─────────────────────────────────────────────────────────────────────
+        GoldHelmet {
+            name: "Gold Helmet",
+            ingredients: HashMap::from([(ItemId::GoldIngot, 12)]),
+            output: ItemId::GoldHelmet,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        GoldChestplate {
+            name: "Gold Chestplate",
+            ingredients: HashMap::from([(ItemId::GoldIngot, 20)]),
+            output: ItemId::GoldChestplate,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        GoldGauntlets {
+            name: "Gold Gauntlets",
+            ingredients: HashMap::from([(ItemId::GoldIngot, 8)]),
+            output: ItemId::GoldGauntlets,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        GoldGreaves {
+            name: "Gold Greaves",
+            ingredients: HashMap::from([(ItemId::GoldIngot, 10)]),
+            output: ItemId::GoldGreaves,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
+        }
+        GoldLeggings {
+            name: "Gold Leggings",
+            ingredients: HashMap::from([(ItemId::GoldIngot, 18)]),
+            output: ItemId::GoldLeggings,
+            output_quantity: 1,
+            recipe_type: RecipeType::Forging,
         }
 
         // ─────────────────────────────────────────────────────────────────────
@@ -123,84 +201,6 @@ entity_macros::define_data! {
             name: "Copper Leggings",
             ingredients: HashMap::from([(ItemId::CopperIngot, 18)]),
             output: ItemId::CopperLeggings,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-
-        // ─────────────────────────────────────────────────────────────────────
-        // Tin Armor Recipes
-        // ─────────────────────────────────────────────────────────────────────
-        TinHelmet {
-            name: "Tin Helmet",
-            ingredients: HashMap::from([(ItemId::TinIngot, 12)]),
-            output: ItemId::TinHelmet,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-        TinChestplate {
-            name: "Tin Chestplate",
-            ingredients: HashMap::from([(ItemId::TinIngot, 20)]),
-            output: ItemId::TinChestplate,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-        TinGauntlets {
-            name: "Tin Gauntlets",
-            ingredients: HashMap::from([(ItemId::TinIngot, 8)]),
-            output: ItemId::TinGauntlets,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-        TinGreaves {
-            name: "Tin Greaves",
-            ingredients: HashMap::from([(ItemId::TinIngot, 10)]),
-            output: ItemId::TinGreaves,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-        TinLeggings {
-            name: "Tin Leggings",
-            ingredients: HashMap::from([(ItemId::TinIngot, 18)]),
-            output: ItemId::TinLeggings,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-
-        // ─────────────────────────────────────────────────────────────────────
-        // Bronze Armor Recipes
-        // ─────────────────────────────────────────────────────────────────────
-        BronzeHelmet {
-            name: "Bronze Helmet",
-            ingredients: HashMap::from([(ItemId::BronzeIngot, 12)]),
-            output: ItemId::BronzeHelmet,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-        BronzeChestplate {
-            name: "Bronze Chestplate",
-            ingredients: HashMap::from([(ItemId::BronzeIngot, 20)]),
-            output: ItemId::BronzeChestplate,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-        BronzeGauntlets {
-            name: "Bronze Gauntlets",
-            ingredients: HashMap::from([(ItemId::BronzeIngot, 8)]),
-            output: ItemId::BronzeGauntlets,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-        BronzeGreaves {
-            name: "Bronze Greaves",
-            ingredients: HashMap::from([(ItemId::BronzeIngot, 10)]),
-            output: ItemId::BronzeGreaves,
-            output_quantity: 1,
-            recipe_type: RecipeType::Forging,
-        }
-        BronzeLeggings {
-            name: "Bronze Leggings",
-            ingredients: HashMap::from([(ItemId::BronzeIngot, 18)]),
-            output: ItemId::BronzeLeggings,
             output_quantity: 1,
             recipe_type: RecipeType::Forging,
         }
@@ -265,29 +265,29 @@ impl RecipeId {
     /// Get the material type for this recipe (for forge filtering)
     pub fn material(&self) -> ForgeMaterial {
         match self {
+            RecipeId::IronIngot
+            | RecipeId::IronSword
+            | RecipeId::IronHelmet
+            | RecipeId::IronChestplate
+            | RecipeId::IronGauntlets
+            | RecipeId::IronGreaves
+            | RecipeId::IronLeggings => ForgeMaterial::Iron,
+
+            RecipeId::GoldIngot
+            | RecipeId::GoldSword
+            | RecipeId::GoldHelmet
+            | RecipeId::GoldChestplate
+            | RecipeId::GoldGauntlets
+            | RecipeId::GoldGreaves
+            | RecipeId::GoldLeggings => ForgeMaterial::Gold,
+
             RecipeId::CopperIngot
             | RecipeId::CopperSword
             | RecipeId::CopperHelmet
             | RecipeId::CopperChestplate
             | RecipeId::CopperGauntlets
             | RecipeId::CopperGreaves
-            | RecipeId::CopperLeggings => ForgeMaterial::Copper,
-
-            RecipeId::TinIngot
-            | RecipeId::TinSword
-            | RecipeId::TinHelmet
-            | RecipeId::TinChestplate
-            | RecipeId::TinGauntlets
-            | RecipeId::TinGreaves
-            | RecipeId::TinLeggings => ForgeMaterial::Tin,
-
-            RecipeId::BronzeIngot
-            | RecipeId::BronzeSword
-            | RecipeId::BronzeHelmet
-            | RecipeId::BronzeChestplate
-            | RecipeId::BronzeGauntlets
-            | RecipeId::BronzeGreaves
-            | RecipeId::BronzeLeggings => ForgeMaterial::Bronze,
+            | RecipeId::CopperLeggings => ForgeMaterial::Bronze,
 
             RecipeId::BasicHPPotion => ForgeMaterial::Other,
         }
