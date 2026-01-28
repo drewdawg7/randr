@@ -33,9 +33,12 @@ Read the relevant doc BEFORE making changes.
 | Crafting recipes, upgrades, blacksmith | [blacksmith.md](blacksmith.md) |
 | Store buy/sell, Store resource, StoreItem | [store.md](store.md) |
 | Store screen UI, item grids, detail panels | [store-ui.md](store-ui.md) |
-| Dungeon layouts, TileType, DungeonLayout | [dungeon/mod.md](dungeon/mod.md) |
-| DungeonPlugin, DungeonRegistry, location floors | [dungeon/mod.md](dungeon/mod.md) |
-| FloorSpec, FloorId, floor definitions | [dungeon/mod.md](dungeon/mod.md) |
+| Dungeon overview, TileType, DungeonPlugin | [dungeon/mod.md](dungeon/mod.md) |
+| FloorType, FloorId, FloorSpec, WeightedFloorPool | [dungeon/floors.md](dungeon/floors.md) |
+| DungeonLayout, LayoutBuilder, LayoutId | [dungeon/layouts.md](dungeon/layouts.md) |
+| SpawnTable, entity spawning | [dungeon/spawning.md](dungeon/spawning.md) |
+| TMX/Tiled maps, TmxMap, TmxTilesetGrid | [dungeon/tmx.md](dungeon/tmx.md) |
+| Player movement, GridOccupancy, collisions | [dungeon/movement.md](dungeon/movement.md) |
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
 | DungeonCommands, entity despawning, occupancy vacate | [dungeon/entities.md](dungeon/entities.md) |
 | SpawnRule trait, SpawnRuleKind, ComposedSpawnRules | [dungeon/spawn-rules.md](dungeon/spawn-rules.md) |
