@@ -29,6 +29,7 @@ pub enum EquipmentType {
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
 pub enum MaterialType {
     Ore,
+    Fuel,
     Gem,
     CraftingMaterial,
     UpgradeStone,
@@ -123,6 +124,7 @@ impl std::fmt::Display for MaterialType {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             MaterialType::Ore => write!(f, "Ore"),
+            MaterialType::Fuel => write!(f, "Fuel"),
             MaterialType::Gem => write!(f, "Gem"),
             MaterialType::CraftingMaterial => write!(f, "Crafting Material"),
             MaterialType::UpgradeStone => write!(f, "Upgrade Stone"),

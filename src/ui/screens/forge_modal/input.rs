@@ -3,7 +3,8 @@ use bevy::prelude::*;
 use crate::crafting_station::ForgeCraftingState;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
-use crate::item::ItemId;
+use crate::item::{ItemId, ItemType};
+use crate::item::enums::MaterialType;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::ItemGrid;
 
@@ -182,9 +183,12 @@ fn is_coal(item_id: ItemId) -> bool {
     matches!(item_id, ItemId::Coal)
 }
 
-/// Check if an item is an ore (copper or tin).
+/// Check if an item is a smeltable ore.
 fn is_ore(item_id: ItemId) -> bool {
-    matches!(item_id, ItemId::IronOre | ItemId::GoldOre)
+    matches!(
+        item_id.spec().item_type,
+        ItemType::Material(MaterialType::Ore)
+    )
 }
 
 /// Add items to inventory (handles stacking).

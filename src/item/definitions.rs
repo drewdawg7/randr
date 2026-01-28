@@ -286,7 +286,7 @@ entity_macros::define_entity! {
         // ─────────────────────────────────────────────────────────────────────
         Coal {
             name: String::from("Coal"),
-            item_type: ItemType::Material(MaterialType::Ore),
+            item_type: ItemType::Material(MaterialType::Fuel),
             quality: Some(ItemQuality::Normal),
             stats: StatSheet::new(),
             max_upgrades: 0,

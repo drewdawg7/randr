@@ -59,6 +59,7 @@ impl ForgeCraftingState {
     /// Determine the output ingot based on the ore type.
     pub fn get_output_item(&self) -> Option<ItemId> {
         self.ore_slot.as_ref().map(|(ore_id, _)| match ore_id {
+            ItemId::CopperOre => ItemId::CopperIngot,
             ItemId::IronOre => ItemId::IronIngot,
             ItemId::GoldOre => ItemId::GoldIngot,
             _ => ItemId::IronIngot, // Fallback
@@ -66,7 +67,7 @@ impl ForgeCraftingState {
     }
 
     /// Complete crafting: consume inputs, produce output.
-    /// Crafts min(coal_qty, ore_qty) ingots.
+    /// Crafts min(coal_qty, ore_qty) ingots, preserving any leftover resources.
     pub fn complete_crafting(&mut self) {
         let Some(output_id) = self.get_output_item() else {
             return;
@@ -77,8 +78,19 @@ impl ForgeCraftingState {
         let output_qty = coal_qty.min(ore_qty);
 
         if output_qty > 0 {
-            self.coal_slot = None;
-            self.ore_slot = None;
+            // Consume only what was used, keep leftovers
+            if let Some((_, qty)) = self.coal_slot.as_mut() {
+                *qty -= output_qty;
+                if *qty == 0 {
+                    self.coal_slot = None;
+                }
+            }
+            if let Some((_, qty)) = self.ore_slot.as_mut() {
+                *qty -= output_qty;
+                if *qty == 0 {
+                    self.ore_slot = None;
+                }
+            }
             self.product_slot = Some((output_id, output_qty));
         }
         self.is_crafting = false;

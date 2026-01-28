@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
+use crate::ui::modal_registry::RegisterModalExt;
 use crate::ui::screens::modal::in_forge_modal;
 
 use super::input::{handle_forge_modal_navigation, handle_forge_modal_select, handle_forge_modal_tab};
@@ -18,8 +18,8 @@ impl Plugin for ForgeModalPlugin {
             .add_systems(
                 Update,
                 (
-                    handle_forge_close_with_crafting,
-                    modal_close_system::<ForgeModal>,
+                    // Custom close handler replaces modal_close_system - handles both crafting and normal close
+                    handle_forge_close,
                     (
                         handle_forge_modal_tab,
                         handle_forge_modal_navigation,
@@ -40,14 +40,16 @@ impl Plugin for ForgeModalPlugin {
     }
 }
 
-/// Custom close handler that starts crafting when closing the modal with ingredients.
-fn handle_forge_close_with_crafting(
+/// Unified close handler for forge modal.
+/// Handles CloseModal action: starts crafting if ready, then closes the modal.
+fn handle_forge_close(
     mut commands: Commands,
     mut action_reader: EventReader<crate::input::GameAction>,
-    active_modal: Res<crate::ui::screens::modal::ActiveModal>,
+    mut active_modal: ResMut<crate::ui::screens::modal::ActiveModal>,
     active_forge: Option<Res<super::state::ActiveForgeEntity>>,
     game_sprites: Res<crate::assets::GameSprites>,
     mut forge_state_query: Query<(Entity, &mut crate::crafting_station::ForgeCraftingState)>,
+    modal_query: Query<Entity, With<super::state::ForgeModalRoot>>,
 ) {
     use crate::assets::SpriteSheetKey;
     use crate::input::GameAction;
@@ -59,42 +61,48 @@ fn handle_forge_close_with_crafting(
         return;
     }
 
-    let Some(active_forge) = active_forge else {
-        return;
-    };
-
     for action in action_reader.read() {
         if *action != GameAction::CloseModal {
             continue;
         }
 
-        // Check if we should start crafting
-        let Ok((entity, mut forge_state)) = forge_state_query.get_mut(active_forge.0) else {
-            continue;
-        };
+        // Try to start crafting if we have a forge and it's ready
+        if let Some(ref active_forge) = active_forge {
+            if let Ok((entity, mut forge_state)) = forge_state_query.get_mut(active_forge.0) {
+                if forge_state.can_start_crafting() {
+                    // Start crafting
+                    forge_state.is_crafting = true;
 
-        if forge_state.can_start_crafting() {
-            // Start crafting
-            forge_state.is_crafting = true;
-
-            // Start forge animation
-            if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
-                if let (Some(first), Some(last)) =
-                    (sheet.get("forge_1_active1"), sheet.get("forge_1_active3"))
-                {
-                    let config = AnimationConfig {
-                        first_frame: first,
-                        last_frame: last,
-                        frame_duration: 0.1,
-                        looping: true,
-                        synchronized: false,
-                    };
-                    commands.entity(entity).insert((
-                        SpriteAnimation::new(&config),
-                        DungeonForgeActiveTimer(Timer::from_seconds(5.0, TimerMode::Once)),
-                    ));
+                    // Start forge animation
+                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
+                        if let (Some(first), Some(last)) =
+                            (sheet.get("forge_1_active1"), sheet.get("forge_1_active3"))
+                        {
+                            let config = AnimationConfig {
+                                first_frame: first,
+                                last_frame: last,
+                                frame_duration: 0.1,
+                                looping: true,
+                                synchronized: false,
+                            };
+                            commands.entity(entity).insert((
+                                SpriteAnimation::new(&config),
+                                DungeonForgeActiveTimer(Timer::from_seconds(5.0, TimerMode::Once)),
+                            ));
+                        }
+                    }
                 }
             }
         }
+
+        // Always close the modal
+        if let Ok(modal_entity) = modal_query.get_single() {
+            commands.entity(modal_entity).despawn_recursive();
+        }
+        active_modal.modal = None;
+
+        // Clean up resources
+        commands.remove_resource::<super::state::ForgeModalState>();
+        commands.remove_resource::<super::state::ActiveForgeEntity>();
     }
 }
