@@ -83,8 +83,8 @@ impl ForgeCraftingState {
 
 | Slot | Valid Items |
 |------|-------------|
-| Coal | `ItemId::Coal` only |
-| Ore | `ItemId::CopperOre`, `ItemId::TinOre` |
+| Coal | `ItemId::Coal` only (has `MaterialType::Fuel`) |
+| Ore | Any item with `MaterialType::Ore` (CopperOre, IronOre, GoldOre) |
 | Product | Output only (crafted ingots) |
 
 ## Key Systems
@@ -121,11 +121,10 @@ Renders content when source or data changes. Only runs when:
 
 Shows item details for selected inventory item or forge slot contents.
 
-### `handle_forge_close_with_crafting`
-When modal closes with both slots filled:
-- Sets `is_crafting = true`
-- Starts forge animation
-- Adds `ForgeActiveTimer(5 seconds)`
+### `handle_forge_close`
+Unified close handler (replaces `modal_close_system` for forge). On CloseModal action:
+- If `can_start_crafting()`: sets `is_crafting = true`, starts forge animation, adds `ForgeActiveTimer(5 seconds)`
+- Always: despawns modal, clears `ActiveModal`, removes resources
 
 ### `revert_forge_idle` (in dungeon plugin)
 When timer expires:
@@ -164,6 +163,7 @@ commands.insert_resource(SpawnForgeModal);
 ## Crafting Recipe
 
 - 1 Coal + 1 CopperOre = 1 CopperIngot
-- 1 Coal + 1 TinOre = 1 TinIngot
+- 1 Coal + 1 IronOre = 1 IronIngot
+- 1 Coal + 1 GoldOre = 1 GoldIngot
 - Crafts `min(coal_qty, ore_qty)` ingots
-- All coal and ore consumed when crafting starts
+- Consumes only what's needed; leftover resources remain in the forge
