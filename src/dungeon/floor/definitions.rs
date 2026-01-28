@@ -15,12 +15,12 @@ entity_macros::define_data! {
     variants {
         HomeFloor {
             name: "Home",
-            layout_id: LayoutId::TmxHomeFloor,
+            layout_id: LayoutId::HomeFloor,
             spawn_table: SpawnTable::new().npc(MobId::Merchant, 1..=1),
         }
         MainDungeon1 {
             name: "Dungeon - Floor 1",
-            layout_id: LayoutId::TmxCaveFloor,
+            layout_id: LayoutId::CaveFloor,
             spawn_table: SpawnTable::new()
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
@@ -37,7 +37,7 @@ entity_macros::define_data! {
         }
         MainDungeon2 {
             name: "Dungeon - Floor 2",
-            layout_id: LayoutId::TmxCaveFloor,
+            layout_id: LayoutId::CaveFloor,
             spawn_table: SpawnTable::new()
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
@@ -54,7 +54,7 @@ entity_macros::define_data! {
         }
         MainDungeon3 {
             name: "Dungeon - Floor 3",
-            layout_id: LayoutId::TmxCaveFloor,
+            layout_id: LayoutId::CaveFloor,
             spawn_table: SpawnTable::new()
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
@@ -73,6 +73,6 @@ entity_macros::define_data! {
 
 impl FloorId {
     pub fn floor_type(&self) -> FloorType {
-        FloorType::TmxCaveFloor
+        FloorType::CaveFloor
     }
 }

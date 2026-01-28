@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::dungeon::config::DungeonConfig;
 use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::DungeonState;
-use crate::dungeon::tmx_tileset::{init_tmx_tileset_grid, TmxTilesetGrid};
+use crate::dungeon::tileset::{init_tileset_grid, TilesetGrid};
 use crate::location::LocationId;
 
 #[derive(Resource, Clone, Debug)]
@@ -48,17 +48,17 @@ impl Plugin for DungeonPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(self.registry.clone())
             .init_resource::<DungeonState>()
-            .init_resource::<TmxTilesetGrid>()
-            .add_systems(Startup, init_tmx_tileset);
+            .init_resource::<TilesetGrid>()
+            .add_systems(Startup, init_tileset);
     }
 }
 
-fn init_tmx_tileset(
+fn init_tileset(
     asset_server: Res<AssetServer>,
     mut layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut tmx_tileset: ResMut<TmxTilesetGrid>,
+    mut tileset: ResMut<TilesetGrid>,
 ) {
-    *tmx_tileset = init_tmx_tileset_grid(&asset_server, &mut layouts);
+    *tileset = init_tileset_grid(&asset_server, &mut layouts);
 }
 
 impl DungeonPlugin {

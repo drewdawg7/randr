@@ -1,16 +1,16 @@
-//! Grid-based tileset for direct TMX tile ID rendering.
+//! Grid-based tileset for direct tile ID rendering.
 //!
-//! This module provides a way to render tiles directly by their TMX tile ID,
+//! This module provides a way to render tiles directly by their tile ID,
 //! bypassing the named-slice system used for procedural dungeon generation.
 
 use bevy::prelude::*;
 
-/// Grid-based tileset for TMX direct tile rendering.
+/// Grid-based tileset for direct tile rendering.
 ///
 /// Stores a texture and grid layout where tile IDs map directly to indices.
 /// Tile ID 0 = empty (not rendered), tile ID 1+ = grid index (id - firstgid).
 #[derive(Resource, Default)]
-pub struct TmxTilesetGrid {
+pub struct TilesetGrid {
     pub texture: Option<Handle<Image>>,
     pub layout: Option<Handle<TextureAtlasLayout>>,
     /// Number of columns in the tileset grid.
@@ -22,7 +22,7 @@ pub struct TmxTilesetGrid {
     pub tile_height: u32,
 }
 
-impl TmxTilesetGrid {
+impl TilesetGrid {
     /// Create an ImageNode for a specific tile ID.
     ///
     /// Returns None for tile ID 0 (empty) or if tileset not initialized.
@@ -52,13 +52,13 @@ impl TmxTilesetGrid {
     }
 }
 
-/// Initialize the TMX tileset grid for cave tiles.
+/// Initialize the tileset grid for cave tiles.
 ///
 /// Creates a grid-based TextureAtlasLayout covering all tiles in the tileset.
-pub fn init_tmx_tileset_grid(
+pub fn init_tileset_grid(
     asset_server: &AssetServer,
     layouts: &mut Assets<TextureAtlasLayout>,
-) -> TmxTilesetGrid {
+) -> TilesetGrid {
     // Cave tileset parameters (from cave.tsx)
     const COLUMNS: u32 = 14;
     const TILE_WIDTH: u32 = 32;
@@ -85,7 +85,7 @@ pub fn init_tmx_tileset_grid(
 
     let layout_handle = layouts.add(layout);
 
-    TmxTilesetGrid {
+    TilesetGrid {
         texture: Some(texture),
         layout: Some(layout_handle),
         columns: COLUMNS,

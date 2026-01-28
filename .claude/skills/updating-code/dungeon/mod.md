@@ -9,7 +9,7 @@ Data-driven dungeon system at `src/dungeon/`.
 | Floors, FloorType, FloorId | [floors.md](floors.md) |
 | Layouts, DungeonLayout, LayoutId | [layouts.md](layouts.md) |
 | Entity spawning, SpawnTable | [spawning.md](spawning.md) |
-| TMX/Tiled map support | [tmx.md](tmx.md) |
+| TMX/Tiled map support | [map.md](map.md) |
 | Player movement | [movement.md](movement.md) |
 | Dungeon entities | [entities.md](entities.md) |
 
@@ -78,5 +78,5 @@ src/dungeon/
         definitions.rs, floor_type.rs
     layouts/
         mod.rs, layout_id.rs
-        tmx_cave_floor.rs, tmx_home_floor.rs
+        cave_floor.rs, home_floor.rs
 ```

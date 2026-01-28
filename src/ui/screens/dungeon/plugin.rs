@@ -7,7 +7,7 @@ use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraf
 use crate::rock::{Rock, RockType};
 use crate::dungeon::{
     resolve_tile, DungeonCommands, DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState,
-    EntityRenderData, FloorType, GridOccupancy, GridPosition, GridSize, TmxTilesetGrid,
+    EntityRenderData, FloorType, GridOccupancy, GridPosition, GridSize, TilesetGrid,
 };
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 use crate::inventory::{Inventory, ManagesItems};
@@ -136,7 +136,7 @@ fn on_add_dungeon_floor(
     query: Query<&DungeonFloor>,
     game_sprites: Res<GameSprites>,
     mob_sheets: Res<MobSpriteSheets>,
-    tmx_tileset: Res<TmxTilesetGrid>,
+    tileset: Res<TilesetGrid>,
     window: Single<&Window>,
 ) {
     let entity = trigger.entity();
@@ -216,7 +216,7 @@ fn on_add_dungeon_floor(
                                     .with_children(|cell| {
                                         if let Some(tile) = layout.tile_at(x, y) {
                                             if let Some(tileset_id) = tile.tileset_id {
-                                                if let Some(img) = tmx_tileset.image_node_for_tile(tileset_id) {
+                                                if let Some(img) = tileset.image_node_for_tile(tileset_id) {
                                                     cell.spawn((
                                                         img,
                                                         Node {
@@ -407,7 +407,7 @@ fn spawn_dungeon_screen(
     let floor_type = state
         .current_floor()
         .map(|f| f.floor_type())
-        .unwrap_or(FloorType::TmxCaveFloor);
+        .unwrap_or(FloorType::CaveFloor);
 
     commands.spawn(DungeonFloor {
         layout,
@@ -1004,7 +1004,7 @@ fn advance_floor_system(
     let floor_type = state
         .current_floor()
         .map(|f| f.floor_type())
-        .unwrap_or(FloorType::TmxCaveFloor);
+        .unwrap_or(FloorType::CaveFloor);
 
     commands.spawn(DungeonFloor {
         layout,
@@ -1040,7 +1040,7 @@ fn enter_door_system(
     let floor_type = state
         .current_floor()
         .map(|f| f.floor_type())
-        .unwrap_or(FloorType::TmxCaveFloor);
+        .unwrap_or(FloorType::CaveFloor);
 
     commands.spawn(DungeonFloor {
         layout,
@@ -1078,7 +1078,7 @@ fn return_to_home_system(
     let floor_type = state
         .current_floor()
         .map(|f| f.floor_type())
-        .unwrap_or(FloorType::TmxCaveFloor);
+        .unwrap_or(FloorType::CaveFloor);
 
     commands.spawn(DungeonFloor {
         layout,

@@ -1,4 +1,4 @@
-//! TMX/TSX map parser for loading Tiled maps into DungeonLayout.
+//! Map parser for loading Tiled maps into DungeonLayout.
 //!
 //! Parses Tiled Map Editor files (.tmx) and tilesets (.tsx) to create
 //! dungeon layouts with tile properties determining walkability and spawn rules.
@@ -48,7 +48,7 @@ pub struct Tileset {
 
 /// Parsed map data from a TMX file.
 #[derive(Debug)]
-pub struct TmxMap {
+pub struct Map {
     pub width: u32,
     pub height: u32,
     pub tile_width: u32,
@@ -59,58 +59,58 @@ pub struct TmxMap {
     pub tile_data: Vec<u32>,
 }
 
-/// Errors that can occur during TMX/TSX parsing.
+/// Errors that can occur during map/tileset parsing.
 #[derive(Debug)]
-pub enum TmxError {
+pub enum MapError {
     IoError(std::io::Error),
     ParseError(String),
     MissingAttribute(String),
     MissingElement(String),
 }
 
-impl From<std::io::Error> for TmxError {
+impl From<std::io::Error> for MapError {
     fn from(e: std::io::Error) -> Self {
-        TmxError::IoError(e)
+        MapError::IoError(e)
     }
 }
 
-impl std::fmt::Display for TmxError {
+impl std::fmt::Display for MapError {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
-            TmxError::IoError(e) => write!(f, "IO error: {}", e),
-            TmxError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            TmxError::MissingAttribute(attr) => write!(f, "Missing attribute: {}", attr),
-            TmxError::MissingElement(elem) => write!(f, "Missing element: {}", elem),
+            MapError::IoError(e) => write!(f, "IO error: {}", e),
+            MapError::ParseError(msg) => write!(f, "Parse error: {}", msg),
+            MapError::MissingAttribute(attr) => write!(f, "Missing attribute: {}", attr),
+            MapError::MissingElement(elem) => write!(f, "Missing element: {}", elem),
         }
     }
 }
 
-impl std::error::Error for TmxError {}
+impl std::error::Error for MapError {}
 
 /// Parse a TSX tileset file.
-pub fn parse_tsx(path: &Path) -> Result<Tileset, TmxError> {
+pub fn parse_tileset(path: &Path) -> Result<Tileset, MapError> {
     let content = fs::read_to_string(path)?;
-    parse_tsx_content(&content)
+    parse_tileset_content(&content)
 }
 
 /// Parse TSX content from a string.
-fn parse_tsx_content(content: &str) -> Result<Tileset, TmxError> {
+fn parse_tileset_content(content: &str) -> Result<Tileset, MapError> {
     // Find tileset element
     let tileset_start = content
         .find("<tileset")
-        .ok_or_else(|| TmxError::MissingElement("tileset".to_string()))?;
+        .ok_or_else(|| MapError::MissingElement("tileset".to_string()))?;
     let tileset_end = content[tileset_start..]
         .find('>')
-        .ok_or_else(|| TmxError::ParseError("Unclosed tileset tag".to_string()))?;
+        .ok_or_else(|| MapError::ParseError("Unclosed tileset tag".to_string()))?;
     let tileset_tag = &content[tileset_start..tileset_start + tileset_end + 1];
 
     let name = extract_attr(tileset_tag, "name").unwrap_or_default();
     let tile_width = extract_attr(tileset_tag, "tilewidth")
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| TmxError::MissingAttribute("tilewidth".to_string()))?;
+        .ok_or_else(|| MapError::MissingAttribute("tilewidth".to_string()))?;
     let tile_height = extract_attr(tileset_tag, "tileheight")
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| TmxError::MissingAttribute("tileheight".to_string()))?;
+        .ok_or_else(|| MapError::MissingAttribute("tileheight".to_string()))?;
     let tile_count = extract_attr(tileset_tag, "tilecount")
         .and_then(|s| s.parse().ok())
         .unwrap_or(0);
@@ -187,48 +187,48 @@ fn parse_tsx_content(content: &str) -> Result<Tileset, TmxError> {
 }
 
 /// Parse a TMX map file, loading its referenced tileset.
-pub fn parse_tmx(path: &Path) -> Result<TmxMap, TmxError> {
+pub fn parse_map(path: &Path) -> Result<Map, MapError> {
     let content = fs::read_to_string(path)?;
-    parse_tmx_content(&content, path.parent())
+    parse_map_content(&content, path.parent())
 }
 
 /// Parse TMX content from a string.
-fn parse_tmx_content(content: &str, base_path: Option<&Path>) -> Result<TmxMap, TmxError> {
+fn parse_map_content(content: &str, base_path: Option<&Path>) -> Result<Map, MapError> {
     // Find map element
     let map_start = content
         .find("<map")
-        .ok_or_else(|| TmxError::MissingElement("map".to_string()))?;
+        .ok_or_else(|| MapError::MissingElement("map".to_string()))?;
     let map_end = content[map_start..]
         .find('>')
-        .ok_or_else(|| TmxError::ParseError("Unclosed map tag".to_string()))?;
+        .ok_or_else(|| MapError::ParseError("Unclosed map tag".to_string()))?;
     let map_tag = &content[map_start..map_start + map_end + 1];
 
     let width = extract_attr(map_tag, "width")
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| TmxError::MissingAttribute("width".to_string()))?;
+        .ok_or_else(|| MapError::MissingAttribute("width".to_string()))?;
     let height = extract_attr(map_tag, "height")
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| TmxError::MissingAttribute("height".to_string()))?;
+        .ok_or_else(|| MapError::MissingAttribute("height".to_string()))?;
     let tile_width = extract_attr(map_tag, "tilewidth")
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| TmxError::MissingAttribute("tilewidth".to_string()))?;
+        .ok_or_else(|| MapError::MissingAttribute("tilewidth".to_string()))?;
     let tile_height = extract_attr(map_tag, "tileheight")
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| TmxError::MissingAttribute("tileheight".to_string()))?;
+        .ok_or_else(|| MapError::MissingAttribute("tileheight".to_string()))?;
 
     // Find tileset reference
     let tileset_start = content
         .find("<tileset")
-        .ok_or_else(|| TmxError::MissingElement("tileset".to_string()))?;
+        .ok_or_else(|| MapError::MissingElement("tileset".to_string()))?;
     let tileset_end = content[tileset_start..]
         .find("/>")
         .or_else(|| content[tileset_start..].find('>'))
-        .ok_or_else(|| TmxError::ParseError("Unclosed tileset tag".to_string()))?;
+        .ok_or_else(|| MapError::ParseError("Unclosed tileset tag".to_string()))?;
     let tileset_tag = &content[tileset_start..tileset_start + tileset_end + 2];
 
     let first_gid = extract_attr(tileset_tag, "firstgid")
         .and_then(|s| s.parse().ok())
-        .ok_or_else(|| TmxError::MissingAttribute("firstgid".to_string()))?;
+        .ok_or_else(|| MapError::MissingAttribute("firstgid".to_string()))?;
 
     // Load external tileset
     let tileset = if let Some(tsx_source) = extract_attr(tileset_tag, "source") {
@@ -237,22 +237,22 @@ fn parse_tmx_content(content: &str, base_path: Option<&Path>) -> Result<TmxMap, 
         } else {
             Path::new(&tsx_source).to_path_buf()
         };
-        parse_tsx(&tsx_path)?
+        parse_tileset(&tsx_path)?
     } else {
         // Embedded tileset (parse from same content)
-        parse_tsx_content(content)?
+        parse_tileset_content(content)?
     };
 
     // Parse tile layer data
     let data_start = content
         .find("<data")
-        .ok_or_else(|| TmxError::MissingElement("data".to_string()))?;
+        .ok_or_else(|| MapError::MissingElement("data".to_string()))?;
     let data_content_start = content[data_start..]
         .find('>')
-        .ok_or_else(|| TmxError::ParseError("Unclosed data tag".to_string()))?;
+        .ok_or_else(|| MapError::ParseError("Unclosed data tag".to_string()))?;
     let data_content_end = content[data_start..]
         .find("</data>")
-        .ok_or_else(|| TmxError::MissingElement("</data>".to_string()))?;
+        .ok_or_else(|| MapError::MissingElement("</data>".to_string()))?;
 
     let csv_data = &content[data_start + data_content_start + 1..data_start + data_content_end];
     let tile_data: Vec<u32> = csv_data
@@ -260,7 +260,7 @@ fn parse_tmx_content(content: &str, base_path: Option<&Path>) -> Result<TmxMap, 
         .filter_map(|s| s.trim().parse().ok())
         .collect();
 
-    Ok(TmxMap {
+    Ok(Map {
         width,
         height,
         tile_width,
@@ -293,7 +293,7 @@ pub struct TilesetRenderInfo {
     pub image_path: String,
 }
 
-impl TmxMap {
+impl Map {
     /// Get tileset rendering info for direct sprite lookup.
     pub fn tileset_render_info(&self) -> TilesetRenderInfo {
         TilesetRenderInfo {
@@ -450,7 +450,7 @@ mod tests {
  </tile>
 </tileset>"#;
 
-        let tileset = parse_tsx_content(tsx).unwrap();
+        let tileset = parse_tileset_content(tsx).unwrap();
         assert_eq!(tileset.name, "cave");
         assert_eq!(tileset.tile_width, 32);
         assert_eq!(tileset.tile_height, 32);
@@ -489,10 +489,10 @@ mod tests {
 </map>"#;
 
         // Parse tileset directly for this test
-        let tileset = parse_tsx_content(tsx).unwrap();
+        let tileset = parse_tileset_content(tsx).unwrap();
 
         // Create map with embedded tileset for test
-        let map = TmxMap {
+        let map = Map {
             width: 3,
             height: 3,
             tile_width: 32,

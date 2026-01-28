@@ -7,7 +7,7 @@ Layout system in `src/dungeon/layout.rs` and `layouts/`.
 2D tile grid with entities:
 
 ```rust
-let layout = LayoutId::TmxCaveFloor.layout();
+let layout = LayoutId::CaveFloor.layout();
 
 layout.width();
 layout.height();
@@ -28,11 +28,11 @@ Registry of TMX-based layouts:
 
 ```rust
 pub enum LayoutId {
-    TmxCaveFloor,
-    TmxHomeFloor,
+    CaveFloor,
+    HomeFloor,
 }
 
-let layout = LayoutId::TmxCaveFloor.layout();
+let layout = LayoutId::CaveFloor.layout();
 ```
 
 ## Tile Struct
@@ -52,14 +52,14 @@ pub struct Tile {
 
 2. Create `src/dungeon/layouts/my_layout.rs`:
 ```rust
-use crate::dungeon::tmx::parse_tmx;
+use crate::dungeon::tmx::parse_map;
 use crate::dungeon::DungeonLayout;
 use std::path::Path;
 
 const MY_LAYOUT_TMX: &str = "assets/maps/my_layout.tmx";
 
 pub fn create() -> DungeonLayout {
-    match parse_tmx(Path::new(MY_LAYOUT_TMX)) {
+    match parse_map(Path::new(MY_LAYOUT_TMX)) {
         Ok(tmx_map) => tmx_map.to_layout(),
         Err(e) => {
             eprintln!("Failed to load TMX map: {}", e);
@@ -73,4 +73,4 @@ pub fn create() -> DungeonLayout {
 
 4. Reference from `FloorSpec` in `definitions.rs`
 
-For TMX details, see [tmx.md](tmx.md).
+For TMX details, see [map.md](map.md).

@@ -21,9 +21,9 @@ assets/maps/
 ## Usage
 
 ```rust
-use crate::dungeon::{parse_tmx, TmxMap};
+use crate::dungeon::{parse_map, Map};
 
-let tmx = parse_tmx(Path::new("assets/maps/cave_floor.tmx"))?;
+let tmx = parse_map(Path::new("assets/maps/cave_floor.tmx"))?;
 let layout = tmx.to_layout();
 ```
 
@@ -53,11 +53,11 @@ let layout = tmx.to_layout();
 
 2. **Add loader** `src/dungeon/layouts/my_floor.rs`:
 ```rust
-use crate::dungeon::tmx::parse_tmx;
+use crate::dungeon::tmx::parse_map;
 use crate::dungeon::DungeonLayout;
 
 pub fn create() -> DungeonLayout {
-    parse_tmx(Path::new("assets/maps/my_floor.tmx"))
+    parse_map(Path::new("assets/maps/my_floor.tmx"))
         .map(|tmx| tmx.to_layout())
         .unwrap_or_else(|_| DungeonLayout::new(10, 10))
 }
@@ -71,14 +71,14 @@ pub fn create() -> DungeonLayout {
 
 | Type | Purpose |
 |------|---------|
-| `TmxMap` | Parsed map with tiles and tileset |
+| `Map` | Parsed map with tiles and tileset |
 | `Tileset` | Parsed TSX with tile properties |
 | `TileProperties` | Per-tile walkability/spawning |
-| `TmxTilesetGrid` | Resource for direct tile rendering |
+| `TilesetGrid` | Resource for direct tile rendering |
 
 ## Rendering
 
-`FloorType::TmxCaveFloor` uses `TmxTilesetGrid` resource:
+`FloorType::CaveFloor` uses `TilesetGrid` resource:
 - Tiles render by exact tile ID
 - No roof rows added (TMX defines complete layout)
 - Entity spawning uses standard SpawnTable
@@ -87,7 +87,7 @@ pub fn create() -> DungeonLayout {
 
 | Layout | File | Description |
 |--------|------|-------------|
-| `TmxCaveFloor` | `cave_floor.tmx` | Dungeon cave floor |
-| `TmxHomeFloor` | `home_floor.tmx` | Home with door to dungeon |
+| `CaveFloor` | `cave_floor.tmx` | Dungeon cave floor |
+| `HomeFloor` | `home_floor.tmx` | Home with door to dungeon |
 
-**Home Floor:** Uses `FloorType::TmxCaveFloor` for rendering. The `FloorId::floor_type()` method returns the appropriate floor type for Fixed floors (see `definitions.rs`).
+**Home Floor:** Uses `FloorType::CaveFloor` for rendering. The `FloorId::floor_type()` method returns the appropriate floor type for Fixed floors (see `definitions.rs`).

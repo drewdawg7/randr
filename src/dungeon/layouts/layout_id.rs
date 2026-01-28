@@ -1,23 +1,23 @@
 use crate::dungeon::DungeonLayout;
 
-use super::{tmx_cave_floor, tmx_home_floor};
+use super::{cave_floor, home_floor};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LayoutId {
-    TmxCaveFloor,
-    TmxHomeFloor,
+    CaveFloor,
+    HomeFloor,
 }
 
 impl LayoutId {
     pub fn layout(&self) -> DungeonLayout {
         match self {
-            LayoutId::TmxCaveFloor => tmx_cave_floor::create(),
-            LayoutId::TmxHomeFloor => tmx_home_floor::create(),
+            LayoutId::CaveFloor => cave_floor::create(),
+            LayoutId::HomeFloor => home_floor::create(),
         }
     }
 
     pub const ALL: &'static [LayoutId] = &[
-        LayoutId::TmxCaveFloor,
-        LayoutId::TmxHomeFloor,
+        LayoutId::CaveFloor,
+        LayoutId::HomeFloor,
     ];
 }

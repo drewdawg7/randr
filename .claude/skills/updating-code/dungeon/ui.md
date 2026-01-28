@@ -24,7 +24,7 @@ commands.spawn(DungeonFloor {
     layout: layout.clone(),
     player_pos: state.player_pos,
     player_size: state.player_size,
-    floor_type: FloorType::TmxCaveFloor,
+    floor_type: FloorType::CaveFloor,
 });
 ```
 
@@ -37,7 +37,7 @@ fn spawn_dungeon_screen(mut commands: Commands, registry: Res<DungeonRegistry>, 
     if !state.is_in_dungeon() { state.enter_dungeon(LocationId::Home, &registry); }
     state.load_floor_layout();
     let Some(layout) = state.layout.clone() else { return; };
-    let floor_type = state.current_floor().map(|f| f.floor_type()).unwrap_or(FloorType::TmxCaveFloor);
+    let floor_type = state.current_floor().map(|f| f.floor_type()).unwrap_or(FloorType::CaveFloor);
     commands.spawn(DungeonFloor { layout, player_pos: state.player_pos, player_size: state.player_size, floor_type });
 }
 ```

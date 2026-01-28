@@ -37,7 +37,7 @@ Read the relevant doc BEFORE making changes.
 | FloorType, FloorId, FloorSpec | [dungeon/floors.md](dungeon/floors.md) |
 | DungeonLayout, LayoutId | [dungeon/layouts.md](dungeon/layouts.md) |
 | SpawnTable, entity spawning | [dungeon/spawning.md](dungeon/spawning.md) |
-| TMX/Tiled maps, TmxMap, TmxTilesetGrid | [dungeon/tmx.md](dungeon/tmx.md) |
+| TMX/Tiled maps, Map, TilesetGrid | [dungeon/map.md](dungeon/map.md) |
 | Player movement, GridOccupancy, collisions | [dungeon/movement.md](dungeon/movement.md) |
 | DungeonEntity enum, entity spawning | [dungeon/entities.md](dungeon/entities.md) |
 | DungeonCommands, entity despawning, occupancy vacate | [dungeon/entities.md](dungeon/entities.md) |

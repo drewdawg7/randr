@@ -8,7 +8,7 @@ Floor rendering configuration:
 
 ```rust
 pub enum FloorType {
-    TmxCaveFloor,
+    CaveFloor,
 }
 
 impl FloorType {
@@ -42,7 +42,7 @@ Current floor variants:
 ```rust
 MyFloor {
     name: "My Floor",
-    layout_id: LayoutId::TmxCaveFloor,
+    layout_id: LayoutId::CaveFloor,
     spawn_table: SpawnTable::new()
         .mob(MobId::Goblin, 5)
         .chest(1..=2),
