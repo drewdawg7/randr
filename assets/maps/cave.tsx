@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <tileset version="1.10" tiledversion="1.11.2" name="cave" tilewidth="32" tileheight="32" tilecount="280" columns="14">
- <image source="Cave Tileset.png" width="448" height="640"/>
+ <image source="Downloads/Cave Tileset.png" width="448" height="640"/>
  <tile id="0">
   <properties>
    <property name="is_solid" type="bool" value="true"/>
@@ -59,6 +59,18 @@
  <tile id="44">
   <properties>
    <property name="is_solid" type="bool" value="true"/>
+  </properties>
+ </tile>
+ <tile id="56">
+  <properties>
+   <property name="is_door" type="bool" value="true"/>
+   <property name="is_solid" type="bool" value="false"/>
+  </properties>
+ </tile>
+ <tile id="57">
+  <properties>
+   <property name="is_door" type="bool" value="true"/>
+   <property name="is_solid" type="bool" value="false"/>
   </properties>
  </tile>
  <tile id="70">

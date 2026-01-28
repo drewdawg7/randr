@@ -19,6 +19,7 @@ pub struct TileProperties {
     pub is_solid: bool,
     pub can_have_entity: bool,
     pub can_spawn_player: bool,
+    pub is_door: bool,
 }
 
 impl Default for TileProperties {
@@ -27,6 +28,7 @@ impl Default for TileProperties {
             is_solid: true, // Tiles without properties are walls by default
             can_have_entity: false,
             can_spawn_player: false,
+            is_door: false,
         }
     }
 }
@@ -160,6 +162,7 @@ fn parse_tsx_content(content: &str) -> Result<Tileset, TmxError> {
                         "is_solid" => props.is_solid = value == "true",
                         "can_have_entity" => props.can_have_entity = value == "true",
                         "can_spawn_player" => props.can_spawn_player = value == "true",
+                        "is_door" => props.is_door = value == "true",
                         _ => {}
                     }
                 }
@@ -339,7 +342,9 @@ impl TmxMap {
                         spawn_candidates.push((x, y));
                     }
 
-                    if props.is_solid {
+                    if props.is_door {
+                        TileType::Door
+                    } else if props.is_solid {
                         TileType::Wall
                     } else {
                         TileType::Floor

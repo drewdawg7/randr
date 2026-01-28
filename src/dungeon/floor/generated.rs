@@ -54,10 +54,9 @@ impl FloorInstance {
     }
 
     /// Returns the floor type for tileset rendering.
-    /// Fixed floors use BasicDungeonFloor (standard dungeon tileset).
     pub fn floor_type(&self) -> FloorType {
         match self {
-            FloorInstance::Fixed(_) => FloorType::BasicDungeonFloor,
+            FloorInstance::Fixed(floor_id) => floor_id.floor_type(),
             FloorInstance::Generated(generated) => generated.floor_type,
         }
     }

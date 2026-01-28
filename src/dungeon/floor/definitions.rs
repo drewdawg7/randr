@@ -6,6 +6,7 @@
 //! - All floor spec constants
 //! - The spec() method on FloorId
 
+use super::floor_type::FloorType;
 use crate::dungeon::layouts::LayoutId;
 use crate::dungeon::spawn::SpawnTable;
 use crate::mob::MobId;
@@ -36,8 +37,18 @@ entity_macros::define_data! {
         }
         HomeFloor {
             name: "Home",
-            layout_id: LayoutId::HomeLayout,
+            layout_id: LayoutId::TmxHomeFloor,
             spawn_table: SpawnTable::new().npc(MobId::Merchant, 1..=1),
+        }
+    }
+}
+
+impl FloorId {
+    /// Returns the floor type for tileset rendering.
+    pub fn floor_type(&self) -> FloorType {
+        match self {
+            FloorId::HomeFloor => FloorType::TmxCaveFloor,
+            _ => FloorType::BasicDungeonFloor,
         }
     }
 }

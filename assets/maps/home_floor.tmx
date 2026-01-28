@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<map version="1.10" tiledversion="1.11.2" orientation="orthogonal" renderorder="right-down" width="10" height="10" tilewidth="32" tileheight="32" infinite="0" nextlayerid="2" nextobjectid="1">
+ <tileset firstgid="1" source="cave.tsx"/>
+ <layer id="1" name="Tile Layer 1" width="10" height="10">
+  <data encoding="csv">
+16,30,30,30,30,30,30,30,30,16,
+17,43,44,44,57,58,44,44,45,15,
+17,71,71,71,71,71,71,71,71,15,
+17,71,71,72,71,71,71,71,71,15,
+17,71,71,71,72,71,72,72,71,15,
+17,71,87,71,71,71,71,71,71,15,
+17,71,87,87,71,71,71,71,87,15,
+17,71,71,71,87,87,71,71,71,15,
+17,71,71,71,71,71,71,71,71,15,
+16,2,2,2,2,2,2,2,2,16
+</data>
+ </layer>
+</map>
