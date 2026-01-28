@@ -595,6 +595,8 @@ impl ItemId {
             | ItemId::GoldIngot
             | ItemId::CopperIngot
             | ItemId::Cowhide => SpriteSheetKey::CraftingMaterials,
+            // Accessories
+            ItemId::GoldRing => SpriteSheetKey::GoldRing,
             _ => SpriteSheetKey::IconItems,
         }
     }
@@ -636,7 +638,7 @@ impl ItemId {
             // Tools
             ItemId::CopperPickaxe => "Slice_826",
             // Accessories
-            ItemId::GoldRing => "Slice_50",
+            ItemId::GoldRing => "gold_ring",
             ItemId::ImbaRing => "Slice_1009",
             // Ores
             ItemId::Coal => "Slice_693",

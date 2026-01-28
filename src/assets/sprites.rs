@@ -49,6 +49,7 @@ pub enum SpriteSheetKey {
     Chestplates,
     Leggings,
     Greaves,
+    GoldRing,
 }
 
 impl SpriteSheetKey {
@@ -94,6 +95,7 @@ impl SpriteSheetKey {
             Self::Chestplates,
             Self::Leggings,
             Self::Greaves,
+            Self::GoldRing,
         ]
     }
 
@@ -139,6 +141,7 @@ impl SpriteSheetKey {
             Self::Chestplates => "chestplates",
             Self::Leggings => "leggings",
             Self::Greaves => "greaves",
+            Self::GoldRing => "gold_ring",
         }
     }
 }
