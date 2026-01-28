@@ -29,6 +29,10 @@ let spec = FloorId::GoblinCave1.spec();
 spec.name;        // "Goblin Cave - Floor 1"
 spec.layout_id;   // LayoutId for tile grid
 spec.spawn_table; // Entity spawns
+
+// FloorId also has floor_type() for rendering
+FloorId::HomeFloor.floor_type(); // FloorType::TmxCaveFloor
+FloorId::GoblinCave1.floor_type(); // FloorType::BasicDungeonFloor
 ```
 
 ## FloorInstance (`generated.rs`)

@@ -6,8 +6,9 @@ Load Tiled Map Editor (.tmx) files directly as dungeon layouts. TMX maps render 
 
 ```
 assets/maps/
-    cave_floor.tmx       # TMX map file
-    cave.tsx             # Tileset definition
+    cave_floor.tmx       # TMX cave dungeon floor
+    home_floor.tmx       # TMX home floor with door tiles
+    cave.tsx             # Tileset definition (shared)
     Cave Tileset.png     # Tileset sprite sheet
 ```
 
@@ -33,8 +34,11 @@ let layout = tmx.to_layout();
 | `is_solid` | bool | `true` | Wall if true, Floor if false |
 | `can_have_entity` | bool | `false` | Allows entity spawning |
 | `can_spawn_player` | bool | `false` | Valid player spawn |
+| `is_door` | bool | `false` | Door tile (triggers location transition) |
 
 **Important:** Tiles without properties default to **solid walls**.
+
+**Door tiles:** When `is_door=true`, the tile maps to `TileType::Door`. Walking into a door tile triggers dungeon entry (see `plugin.rs:682`).
 
 ## Tile ID Mapping
 
@@ -78,3 +82,12 @@ pub fn create() -> DungeonLayout {
 - Tiles render by exact tile ID
 - No roof rows added (TMX defines complete layout)
 - Entity spawning uses standard SpawnTable
+
+## TMX Floors
+
+| Layout | File | Description |
+|--------|------|-------------|
+| `TmxCaveFloor` | `cave_floor.tmx` | Dungeon cave floor |
+| `TmxHomeFloor` | `home_floor.tmx` | Home with door to dungeon |
+
+**Home Floor:** Uses `FloorType::TmxCaveFloor` for rendering. The `FloorId::floor_type()` method returns the appropriate floor type for Fixed floors (see `definitions.rs`).

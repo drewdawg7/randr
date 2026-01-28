@@ -44,16 +44,20 @@ let layout = LayoutBuilder::new(40, 21)
 - Interior filled with Floor tiles
 - Floor variants via VariantStrategy
 
-## LayoutId (`layouts/mod.rs`)
+## LayoutId (`layouts/layout_id.rs`)
 
 Registry of predefined layouts:
 
 ```rust
 pub enum LayoutId {
     StartingRoom,
+    ClusteredFloor,
     DungeonFloorWithStairs,
+    DungeonFloorFinal,
+    CaveFloorWithStairs,
     CaveFloorFinal,
     TmxCaveFloor,
+    TmxHomeFloor,  // TMX-based home with door tiles
 }
 
 let layout = LayoutId::StartingRoom.layout();
