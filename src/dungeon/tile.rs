@@ -10,6 +10,8 @@ pub enum TileType {
     /// Player spawn point that renders as normal floor (no GateFloor sprite).
     SpawnPoint,
     TorchWall,
+    /// Empty tile - not rendered, not walkable. Used for TMX tile ID 0.
+    Empty,
 }
 
 impl TileType {
@@ -44,6 +46,9 @@ pub struct Tile {
     pub tile_type: TileType,
     pub variant: u8,
     pub flip_x: bool,
+    /// Original tileset ID from TMX (0 = empty, >0 = actual tile).
+    /// Used for direct sprite lookup in TMX rendering.
+    pub tileset_id: Option<u32>,
 }
 
 impl Tile {
@@ -52,6 +57,7 @@ impl Tile {
             tile_type,
             variant: 0,
             flip_x: false,
+            tileset_id: None,
         }
     }
 
@@ -62,6 +68,11 @@ impl Tile {
 
     pub const fn flipped(mut self) -> Self {
         self.flip_x = true;
+        self
+    }
+
+    pub const fn with_tileset_id(mut self, id: u32) -> Self {
+        self.tileset_id = Some(id);
         self
     }
 }

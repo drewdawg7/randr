@@ -14,6 +14,8 @@ pub mod spawn;
 pub mod spawn_rules;
 pub mod state;
 pub mod tile;
+pub mod tmx;
+pub mod tmx_tileset;
 pub mod variant_strategy;
 
 pub use commands::DungeonCommands;
@@ -40,3 +42,5 @@ pub use variant_strategy::{
     CheckerboardVariant, ClusteredVariant, PatternVariant, PercentageVariant, TileTypeVariant,
     UniformVariant, VariantStrategy, VariantStrategyKind,
 };
+pub use tmx::{parse_tmx, parse_tsx, TileProperties, Tileset, TmxError, TmxMap};
+pub use tmx_tileset::{init_tmx_tileset_grid, TmxTilesetGrid};

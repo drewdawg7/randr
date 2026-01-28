@@ -7,7 +7,7 @@ use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraf
 use crate::rock::{Rock, RockType};
 use crate::dungeon::{
     resolve_tile, DungeonCommands, DungeonEntity, DungeonLayout, DungeonRegistry, DungeonState,
-    EntityRenderData, FloorType, GridOccupancy, GridPosition, GridSize, TileType,
+    EntityRenderData, FloorType, GridOccupancy, GridPosition, GridSize, TileType, TmxTilesetGrid,
 };
 use crate::ui::{AnimationConfig, PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 use crate::inventory::{Inventory, ManagesItems};
@@ -176,6 +176,7 @@ fn on_add_dungeon_floor(
     query: Query<&DungeonFloor>,
     game_sprites: Res<GameSprites>,
     mob_sheets: Res<MobSpriteSheets>,
+    tmx_tileset: Res<TmxTilesetGrid>,
     window: Single<&Window>,
 ) {
     let entity = trigger.entity();
@@ -191,20 +192,33 @@ fn on_add_dungeon_floor(
     // Despawn the trigger entity (consumed)
     commands.entity(entity).despawn();
 
-    // Calculate scale from window dimensions
-    let scale = UiScale::calculate(window.height());
-    // Base tile size for entity positioning (consistent across floor types)
-    let base_tile_size = BASE_TILE * scale as f32;
-    // Tile size for grid rendering (caves have 32x32 tiles vs dungeon's 16x16)
-    let tile_size = base_tile_size * floor_type.tile_scale();
+    // Add extra rows for cave roof (backwall_roof + backwall)
+    // TmxCaveFloor excluded - TMX defines its own complete layout
+    let has_roof_row = matches!(floor_type, FloorType::CaveFloor);
+    let roof_rows = if has_roof_row { 2 } else { 0 };
+
+    // Calculate tile size to fit the map in the window
+    // Reserve space for player stats bar (~30px) and some padding
+    let available_width = window.width() - 20.0;
+    let available_height = window.height() - 50.0;
+
+    // Calculate tile size based on what fits
+    let tile_scale = floor_type.tile_scale();
+    let max_tile_from_width = available_width / (layout.width() as f32 * tile_scale);
+    let max_tile_from_height = available_height / ((layout.height() + roof_rows) as f32 * tile_scale);
+
+    // Use the smaller of the two to ensure it fits both dimensions
+    // Round down to nearest multiple of BASE_TILE for clean scaling
+    let base_tile_size = max_tile_from_width.min(max_tile_from_height).max(BASE_TILE);
+    let tile_size = base_tile_size * tile_scale;
+
+    // Calculate effective scale for UiScale resource (find closest power of 2)
+    let scale = (base_tile_size / BASE_TILE).round().max(1.0) as u32;
     commands.insert_resource(UiScale(scale));
 
     // Build occupancy
     let mut occupancy = GridOccupancy::new(layout.width(), layout.height());
     let grid_width = tile_size * layout.width() as f32;
-    // Add extra rows for cave roof (backwall_roof + backwall)
-    let has_roof_row = floor_type == FloorType::CaveFloor;
-    let roof_rows = if has_roof_row { 2 } else { 0 };
     let grid_height = tile_size * (layout.height() + roof_rows) as f32;
 
     commands
@@ -338,7 +352,7 @@ fn on_add_dungeon_floor(
 
                                         match tile_type {
                                             // Torches only render for non-cave floors
-                                            Some(TileType::TorchWall) if floor_type != FloorType::CaveFloor => {
+                                            Some(TileType::TorchWall) if !matches!(floor_type, FloorType::CaveFloor | FloorType::TmxCaveFloor) => {
                                                 if let Some(torch_sheet) =
                                                     game_sprites.get(SpriteSheetKey::TorchWall)
                                                 {
@@ -362,7 +376,24 @@ fn on_add_dungeon_floor(
                                                 }
                                             }
                                             _ => {
-                                                if let Some(resolved) =
+                                                // TMX floors: render directly by tile ID (exact 1:1 mapping)
+                                                if matches!(floor_type, FloorType::TmxCaveFloor) {
+                                                    if let Some(tile) = layout.tile_at(x, y) {
+                                                        if let Some(tileset_id) = tile.tileset_id {
+                                                            if let Some(img) = tmx_tileset.image_node_for_tile(tileset_id) {
+                                                                cell.spawn((
+                                                                    img,
+                                                                    Node {
+                                                                        position_type: PositionType::Absolute,
+                                                                        width: Val::Percent(100.0),
+                                                                        height: Val::Percent(100.0),
+                                                                        ..default()
+                                                                    },
+                                                                ));
+                                                            }
+                                                        }
+                                                    }
+                                                } else if let Some(resolved) =
                                                     resolve_tile(floor_type, &layout, x, y)
                                                 {
                                                     if let Some(sheet) =

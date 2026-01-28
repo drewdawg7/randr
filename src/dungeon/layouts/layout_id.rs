@@ -1,6 +1,6 @@
 use crate::dungeon::DungeonLayout;
 
-use super::{cave_floor, clustered_floor, dungeon_floor, home_layout, starting_room};
+use super::{cave_floor, clustered_floor, dungeon_floor, home_layout, starting_room, tmx_cave_floor};
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LayoutId {
@@ -11,6 +11,8 @@ pub enum LayoutId {
     DungeonFloorFinal,
     CaveFloorWithStairs,
     CaveFloorFinal,
+    /// TMX-based cave floor loaded from Tiled map file.
+    TmxCaveFloor,
 }
 
 impl LayoutId {
@@ -23,6 +25,7 @@ impl LayoutId {
             LayoutId::DungeonFloorFinal => dungeon_floor::create_final(),
             LayoutId::CaveFloorWithStairs => cave_floor::create_with_stairs(),
             LayoutId::CaveFloorFinal => cave_floor::create_final(),
+            LayoutId::TmxCaveFloor => tmx_cave_floor::create(),
         }
     }
 
@@ -34,5 +37,6 @@ impl LayoutId {
         LayoutId::DungeonFloorFinal,
         LayoutId::CaveFloorWithStairs,
         LayoutId::CaveFloorFinal,
+        LayoutId::TmxCaveFloor,
     ];
 }

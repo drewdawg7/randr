@@ -24,19 +24,21 @@ pub fn resolve_tile(
                 tileset_key: SpriteSheetKey::DungeonTileset,
             })
         }
-        FloorType::CaveFloor => CaveTileRenderer::resolve(layout, x, y).map(|result| {
-            // Gate/GateFloor/Stairs come from dungeon tileset
-            let tileset_key = if result.uses_dungeon_tileset {
-                SpriteSheetKey::DungeonTileset
-            } else {
-                SpriteSheetKey::CaveTileset
-            };
-            ResolvedTile {
-                slice_name: result.slice_name,
-                flip_x: result.flip_x,
-                tileset_key,
-            }
-        }),
+        FloorType::CaveFloor | FloorType::TmxCaveFloor => {
+            CaveTileRenderer::resolve(layout, x, y).map(|result| {
+                // Gate/GateFloor/Stairs come from dungeon tileset
+                let tileset_key = if result.uses_dungeon_tileset {
+                    SpriteSheetKey::DungeonTileset
+                } else {
+                    SpriteSheetKey::CaveTileset
+                };
+                ResolvedTile {
+                    slice_name: result.slice_name,
+                    flip_x: result.flip_x,
+                    tileset_key,
+                }
+            })
+        }
     }
 }
 
@@ -59,7 +61,7 @@ impl TileRenderer {
             TileType::Exit => Some((DungeonTileSlice::Gate, false)),
             TileType::Door => Some((DungeonTileSlice::Gate, false)),
             TileType::DoorOpen => Some((DungeonTileSlice::GateFloor, false)),
-            TileType::TorchWall => None,
+            TileType::TorchWall | TileType::Empty => None,
         }
     }
 
@@ -249,6 +251,8 @@ impl CaveTileRenderer {
             }),
             // TorchWall renders as wall in caves (no torches)
             TileType::TorchWall => Self::resolve_wall(layout, x, y),
+            // Empty tiles are not rendered
+            TileType::Empty => None,
         }
     }
 

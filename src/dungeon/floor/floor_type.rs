@@ -7,6 +7,8 @@ use crate::mob::MobId;
 pub enum FloorType {
     BasicDungeonFloor,
     CaveFloor,
+    /// TMX-based cave floor loaded from Tiled map file.
+    TmxCaveFloor,
 }
 
 impl FloorType {
@@ -14,7 +16,7 @@ impl FloorType {
     pub fn tileset_key(&self) -> SpriteSheetKey {
         match self {
             FloorType::BasicDungeonFloor => SpriteSheetKey::DungeonTileset,
-            FloorType::CaveFloor => SpriteSheetKey::CaveTileset,
+            FloorType::CaveFloor | FloorType::TmxCaveFloor => SpriteSheetKey::CaveTileset,
         }
     }
 
@@ -23,13 +25,13 @@ impl FloorType {
     pub fn tile_scale(&self) -> f32 {
         match self {
             FloorType::BasicDungeonFloor => 1.0,
-            FloorType::CaveFloor => 2.0,
+            FloorType::CaveFloor | FloorType::TmxCaveFloor => 2.0,
         }
     }
 
     pub fn spawn_table(&self, is_final: bool) -> SpawnTable {
         match self {
-            FloorType::BasicDungeonFloor | FloorType::CaveFloor => {
+            FloorType::BasicDungeonFloor | FloorType::CaveFloor | FloorType::TmxCaveFloor => {
                 let base = SpawnTable::new()
                     .mob(MobId::Goblin, 5)
                     .mob(MobId::Slime, 3)
@@ -68,6 +70,9 @@ impl FloorType {
                     LayoutId::CaveFloorWithStairs
                 }
             }
+            // TMX floors use the same layout regardless of final status
+            // (the TMX file itself determines the layout)
+            FloorType::TmxCaveFloor => LayoutId::TmxCaveFloor,
         }
     }
 }
