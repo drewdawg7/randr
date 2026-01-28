@@ -34,8 +34,8 @@ Read the relevant doc BEFORE making changes.
 | Store buy/sell, Store resource, StoreItem | [store.md](store.md) |
 | Store screen UI, item grids, detail panels | [store-ui.md](store-ui.md) |
 | Dungeon overview, TileType, DungeonPlugin | [dungeon/mod.md](dungeon/mod.md) |
-| FloorType, FloorId, FloorSpec, WeightedFloorPool | [dungeon/floors.md](dungeon/floors.md) |
-| DungeonLayout, LayoutBuilder, LayoutId | [dungeon/layouts.md](dungeon/layouts.md) |
+| FloorType, FloorId, FloorSpec | [dungeon/floors.md](dungeon/floors.md) |
+| DungeonLayout, LayoutId | [dungeon/layouts.md](dungeon/layouts.md) |
 | SpawnTable, entity spawning | [dungeon/spawning.md](dungeon/spawning.md) |
 | TMX/Tiled maps, TmxMap, TmxTilesetGrid | [dungeon/tmx.md](dungeon/tmx.md) |
 | Player movement, GridOccupancy, collisions | [dungeon/movement.md](dungeon/movement.md) |
@@ -43,11 +43,6 @@ Read the relevant doc BEFORE making changes.
 | DungeonCommands, entity despawning, occupancy vacate | [dungeon/entities.md](dungeon/entities.md) |
 | SpawnRule trait, SpawnRuleKind, ComposedSpawnRules | [dungeon/spawn-rules.md](dungeon/spawn-rules.md) |
 | ChestSpawner, WeightedMobSpawner, custom spawners | [dungeon/spawn-rules.md](dungeon/spawn-rules.md) |
-| RoomPattern trait, Rect, ComposedPattern | [dungeon/room-patterns.md](dungeon/room-patterns.md) |
-| LayoutBuilder pattern_at, custom tile patterns | [dungeon/room-patterns.md](dungeon/room-patterns.md) |
-| VariantStrategy trait, tile visual variety | [dungeon/variant-strategy.md](dungeon/variant-strategy.md) |
-| PercentageVariant, ClusteredVariant, UniformVariant | [dungeon/variant-strategy.md](dungeon/variant-strategy.md) |
-| LayoutBuilder variant_strategy, floor variants | [dungeon/variant-strategy.md](dungeon/variant-strategy.md) |
 | Dungeon tab rendering, tile slices | [dungeon/ui.md](dungeon/ui.md) |
 | Dungeon movement, SmoothPosition, interpolation | [dungeon/ui.md](dungeon/ui.md) |
 | EntityLayer, entity absolute positioning | [dungeon/ui.md](dungeon/ui.md) |

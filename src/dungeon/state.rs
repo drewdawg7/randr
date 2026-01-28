@@ -1,16 +1,15 @@
 use bevy::prelude::*;
 use rand::thread_rng;
 
-use crate::dungeon::config::DungeonConfig;
-use crate::dungeon::floor::{FloorInstance, GeneratedFloor};
 use crate::dungeon::{DungeonLayout, DungeonRegistry, GridPosition, GridSize};
+use crate::dungeon::floor::FloorId;
 use crate::location::LocationId;
 
 #[derive(Resource, Default)]
 pub struct DungeonState {
     pub current_location: Option<LocationId>,
     pub floor_index: usize,
-    pub floor_sequence: Vec<FloorInstance>,
+    pub floor_sequence: Vec<FloorId>,
     sequence_location: Option<LocationId>,
     pub dungeon_cleared: bool,
     pub layout: Option<DungeonLayout>,
@@ -33,36 +32,15 @@ impl DungeonState {
         if should_generate {
             self.dungeon_cleared = false;
             self.sequence_location = Some(location);
-            self.floor_sequence = self.generate_sequence(config);
+            self.floor_sequence = config.floors().to_vec();
         }
     }
 
-    fn generate_sequence(&self, config: &DungeonConfig) -> Vec<FloorInstance> {
-        match config {
-            DungeonConfig::Fixed(floors) => {
-                floors.iter().map(|&f| FloorInstance::Fixed(f)).collect()
-            }
-            DungeonConfig::Generated { floor_count, floor_pool } => {
-                let mut rng = thread_rng();
-                (1..=*floor_count)
-                    .map(|n| {
-                        let floor_type = floor_pool.select(&mut rng);
-                        FloorInstance::Generated(GeneratedFloor {
-                            floor_type,
-                            floor_number: n,
-                            is_final: n == *floor_count,
-                        })
-                    })
-                    .collect()
-            }
-        }
+    pub fn current_floor(&self) -> Option<FloorId> {
+        self.floor_sequence.get(self.floor_index).copied()
     }
 
-    pub fn current_floor(&self) -> Option<&FloorInstance> {
-        self.floor_sequence.get(self.floor_index)
-    }
-
-    pub fn advance_floor(&mut self, registry: &DungeonRegistry) -> Option<&FloorInstance> {
+    pub fn advance_floor(&mut self, registry: &DungeonRegistry) -> Option<FloorId> {
         let location = self.current_location?;
         let config = registry.config(location)?;
         let floor_count = config.floor_count();
@@ -74,7 +52,7 @@ impl DungeonState {
             self.dungeon_cleared = true;
             None
         } else {
-            self.floor_sequence.get(self.floor_index)
+            self.floor_sequence.get(self.floor_index).copied()
         }
     }
 
@@ -97,11 +75,11 @@ impl DungeonState {
     }
 
     pub fn load_floor_layout(&mut self) -> Option<&DungeonLayout> {
-        let floor = self.current_floor()?;
-        let mut layout = floor.layout_id().layout();
+        let floor_id = self.current_floor()?;
+        let spec = floor_id.spec();
+        let mut layout = spec.layout_id.layout();
 
-        // Apply spawn table from floor (not from layout)
-        let spawn_table = floor.spawn_table();
+        let spawn_table = &spec.spawn_table;
         spawn_table.apply(&mut layout, &mut thread_rng());
 
         self.player_pos = layout

@@ -34,7 +34,6 @@ FloorId::HomeFloor.floor_type();
 
 Current floor variants:
 - `HomeFloor` - Player home with merchant NPC
-- `GoblinCave1` - Legacy goblin cave floor
 - `MainDungeon1`, `MainDungeon2`, `MainDungeon3` - Main dungeon floors
 
 ## Adding a New Floor

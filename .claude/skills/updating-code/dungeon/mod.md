@@ -7,7 +7,7 @@ Data-driven dungeon system at `src/dungeon/`.
 | Topic | File |
 |-------|------|
 | Floors, FloorType, FloorId | [floors.md](floors.md) |
-| Layouts, LayoutBuilder | [layouts.md](layouts.md) |
+| Layouts, DungeonLayout, LayoutId | [layouts.md](layouts.md) |
 | Entity spawning, SpawnTable | [spawning.md](spawning.md) |
 | TMX/Tiled map support | [tmx.md](tmx.md) |
 | Player movement | [movement.md](movement.md) |
@@ -16,8 +16,8 @@ Data-driven dungeon system at `src/dungeon/`.
 ## Conceptual Hierarchy
 
 ```
-Location (e.g., "Goblin Cave")
-  └── Floor (Fixed FloorId OR Generated from FloorType)
+Location (e.g., "MainDungeon")
+  └── Floor (FloorId)
        └── Layout (tile grid + entities)
 ```
 
@@ -37,30 +37,30 @@ Location (e.g., "Goblin Cave")
 
 ```rust
 pub enum TileType {
-    Wall,        // Impassable
-    Floor,       // Walkable
-    Entrance,    // Player spawn
-    Exit,        // Stairs/door
-    Door,        // Decorative (impassable)
-    DoorOpen,    // Open door
-    PlayerSpawn, // Renders as GateFloor
-    SpawnPoint,  // Renders as normal floor
-    TorchWall,   // Animated torch
-    Empty,       // TMX tile ID 0
+    Wall,
+    Floor,
+    Entrance,
+    Exit,
+    Door,
+    DoorOpen,
+    PlayerSpawn,
+    SpawnPoint,
+    TorchWall,
+    Empty,
 }
 ```
 
 ## DungeonPlugin Registration
 
 ```rust
-// In game.rs
 app.add_plugins(
     DungeonPlugin::new()
         .location(LocationId::Home)
             .floor(FloorId::HomeFloor)
         .location(LocationId::MainDungeon)
-            .generated_floors(3, WeightedFloorPool::new()
-                .add(FloorType::BasicDungeonFloor, 100))
+            .floor(FloorId::MainDungeon1)
+            .floor(FloorId::MainDungeon2)
+            .floor(FloorId::MainDungeon3)
         .build()
 );
 ```
@@ -71,13 +71,12 @@ app.add_plugins(
 src/dungeon/
     mod.rs, plugin.rs, state.rs
     tile.rs, entity.rs, grid.rs
-    layout.rs, layout_builder.rs
-    spawn.rs, generator.rs, rendering.rs
-    tmx.rs, tmx_tileset.rs          # TMX support
+    layout.rs, spawn.rs, rendering.rs
+    tmx.rs, tmx_tileset.rs
+    config.rs
     floor/
         definitions.rs, floor_type.rs
-        weighted_pool.rs, generated.rs
     layouts/
-        mod.rs, starting_room.rs
-        tmx_cave_floor.rs           # TMX loader
+        mod.rs, layout_id.rs
+        tmx_cave_floor.rs, tmx_home_floor.rs
 ```

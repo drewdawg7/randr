@@ -233,7 +233,21 @@ impl SpawnTable {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dungeon::{DungeonEntity, LayoutBuilder};
+    use crate::dungeon::{DungeonEntity, DungeonLayout, Tile, TileType};
+
+    fn create_test_layout(width: usize, height: usize) -> DungeonLayout {
+        let mut layout = DungeonLayout::new(width, height);
+        for y in 0..height {
+            for x in 0..width {
+                if x == 0 || x == width - 1 || y == 0 || y == height - 1 {
+                    layout.set_tile(x, y, Tile::new(TileType::Wall));
+                } else {
+                    layout.set_tile(x, y, Tile::new(TileType::Floor));
+                }
+            }
+        }
+        layout
+    }
 
     #[test]
     fn mob_entry_stores_size_from_spec() {
@@ -243,14 +257,13 @@ mod tests {
         let entry = &table.entries[0];
         assert_eq!(entry.entity_type, SpawnEntityType::Mob(MobId::Goblin));
         assert_eq!(entry.weight, 1);
-        // Size should match MobSpec
         assert_eq!(entry.size, MobId::Goblin.spec().grid_size);
     }
 
     #[test]
     fn spawn_table_applies_chests() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         SpawnTable::new().chest(2..=2).apply(&mut layout, &mut rng);
 
@@ -265,7 +278,7 @@ mod tests {
     #[test]
     fn spawn_table_applies_mobs_with_size() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(20, 20).entrance(10, 18).build();
+        let mut layout = create_test_layout(20, 20);
 
         SpawnTable::new()
             .mob(MobId::Goblin, 1)
@@ -279,7 +292,6 @@ mod tests {
             .collect();
         assert_eq!(mobs.len(), 1);
 
-        // Verify the mob has the correct size from MobSpec
         if let (_, DungeonEntity::Mob { size, .. }) = mobs[0] {
             assert_eq!(*size, MobId::Goblin.spec().grid_size);
         } else {
@@ -290,9 +302,8 @@ mod tests {
     #[test]
     fn entities_do_not_overlap() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(30, 30).entrance(15, 28).build();
+        let mut layout = create_test_layout(30, 30);
 
-        // Spawn multiple entities
         SpawnTable::new()
             .mob(MobId::Goblin, 1)
             .mob(MobId::Slime, 1)
@@ -302,7 +313,6 @@ mod tests {
 
         let entities = layout.entities();
 
-        // Check no two entities occupy the same cells
         for (i, (pos1, entity1)) in entities.iter().enumerate() {
             for (pos2, entity2) in entities.iter().skip(i + 1) {
                 let overlaps = pos1
@@ -316,7 +326,7 @@ mod tests {
     #[test]
     fn empty_spawn_table_adds_nothing() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         SpawnTable::empty().apply(&mut layout, &mut rng);
 
@@ -326,7 +336,7 @@ mod tests {
     #[test]
     fn spawn_table_applies_rocks() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         SpawnTable::new().rock(2..=2).apply(&mut layout, &mut rng);
 
@@ -341,7 +351,7 @@ mod tests {
     #[test]
     fn rocks_are_1x1_size() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         SpawnTable::new().rock(3..=3).apply(&mut layout, &mut rng);
 
@@ -352,3 +362,4 @@ mod tests {
         }
     }
 }
+

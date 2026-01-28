@@ -1,30 +1,20 @@
-use super::floor::{FloorId, WeightedFloorPool};
+use super::floor::FloorId;
 
 #[derive(Debug, Clone)]
-pub enum DungeonConfig {
-    Fixed(Vec<FloorId>),
-    Generated {
-        floor_count: usize,
-        floor_pool: WeightedFloorPool,
-    },
+pub struct DungeonConfig {
+    floors: Vec<FloorId>,
 }
 
 impl DungeonConfig {
-    pub fn fixed(floors: Vec<FloorId>) -> Self {
-        DungeonConfig::Fixed(floors)
+    pub fn new(floors: Vec<FloorId>) -> Self {
+        Self { floors }
     }
 
-    pub fn generated(floor_count: usize, floor_pool: WeightedFloorPool) -> Self {
-        DungeonConfig::Generated {
-            floor_count,
-            floor_pool,
-        }
+    pub fn floors(&self) -> &[FloorId] {
+        &self.floors
     }
 
     pub fn floor_count(&self) -> usize {
-        match self {
-            DungeonConfig::Fixed(floors) => floors.len(),
-            DungeonConfig::Generated { floor_count, .. } => *floor_count,
-        }
+        self.floors.len()
     }
 }

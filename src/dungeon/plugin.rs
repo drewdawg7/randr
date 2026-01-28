@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 use crate::dungeon::config::DungeonConfig;
-use crate::dungeon::floor::{FloorId, WeightedFloorPool};
+use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::DungeonState;
 use crate::dungeon::tmx_tileset::{init_tmx_tileset_grid, TmxTilesetGrid};
 use crate::location::LocationId;
@@ -19,10 +19,10 @@ impl DungeonRegistry {
     }
 
     pub fn floors(&self, location: LocationId) -> &[FloorId] {
-        match self.configs.get(&location) {
-            Some(DungeonConfig::Fixed(floors)) => floors.as_slice(),
-            _ => &[],
-        }
+        self.configs
+            .get(&location)
+            .map(|c| c.floors())
+            .unwrap_or(&[])
     }
 
     pub fn next_floor(&self, location: LocationId, current: FloorId) -> Option<FloorId> {
@@ -88,7 +88,9 @@ pub struct DungeonBuilder {
 impl DungeonBuilder {
     pub fn location(mut self, id: LocationId) -> Self {
         self.current_location = Some(id);
-        self.configs.entry(id).or_insert(DungeonConfig::Fixed(Vec::new()));
+        self.configs
+            .entry(id)
+            .or_insert(DungeonConfig::new(Vec::new()));
         self
     }
 
@@ -96,17 +98,11 @@ impl DungeonBuilder {
         let location = self
             .current_location
             .expect("floor() called before location()");
-        if let Some(DungeonConfig::Fixed(floors)) = self.configs.get_mut(&location) {
+        if let Some(config) = self.configs.get_mut(&location) {
+            let mut floors = config.floors().to_vec();
             floors.push(floor);
+            *config = DungeonConfig::new(floors);
         }
-        self
-    }
-
-    pub fn generated_floors(mut self, floor_count: usize, floor_pool: WeightedFloorPool) -> Self {
-        let location = self
-            .current_location
-            .expect("generated_floors() called before location()");
-        self.configs.insert(location, DungeonConfig::Generated { floor_count, floor_pool });
         self
     }
 

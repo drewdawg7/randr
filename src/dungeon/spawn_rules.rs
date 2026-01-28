@@ -474,12 +474,26 @@ impl SpawnRule for FixedPositionSpawner {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dungeon::LayoutBuilder;
+    use crate::dungeon::{DungeonLayout, Tile, TileType};
+
+    fn create_test_layout(width: usize, height: usize) -> DungeonLayout {
+        let mut layout = DungeonLayout::new(width, height);
+        for y in 0..height {
+            for x in 0..width {
+                if x == 0 || x == width - 1 || y == 0 || y == height - 1 {
+                    layout.set_tile(x, y, Tile::new(TileType::Wall));
+                } else {
+                    layout.set_tile(x, y, Tile::new(TileType::Floor));
+                }
+            }
+        }
+        layout
+    }
 
     #[test]
     fn chest_spawner_places_chests() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         let spawned = ChestSpawner::new(2..=2).apply(&mut layout, &mut rng);
 
@@ -495,7 +509,7 @@ mod tests {
     #[test]
     fn stairs_spawner_places_stairs() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         let spawned = StairsSpawner::new(1..=1).apply(&mut layout, &mut rng);
 
@@ -511,7 +525,7 @@ mod tests {
     #[test]
     fn rock_spawner_places_rocks() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         let spawned = RockSpawner::new(3..=3).apply(&mut layout, &mut rng);
 
@@ -527,7 +541,7 @@ mod tests {
     #[test]
     fn crafting_station_spawner_places_forges() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         let spawned =
             CraftingStationSpawner::new(CraftingStationType::Forge, 2..=2).apply(&mut layout, &mut rng);
@@ -552,7 +566,7 @@ mod tests {
     #[test]
     fn guaranteed_mob_spawner_places_mobs() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(20, 20).entrance(10, 18).build();
+        let mut layout = create_test_layout(20, 20);
 
         let spawned = GuaranteedMobSpawner::new(MobId::Goblin, 2).apply(&mut layout, &mut rng);
 
@@ -568,7 +582,7 @@ mod tests {
     #[test]
     fn weighted_mob_spawner_places_mobs() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(20, 20).entrance(10, 18).build();
+        let mut layout = create_test_layout(20, 20);
 
         let spawned = WeightedMobSpawner::new()
             .mob(MobId::Goblin, 1)
@@ -588,7 +602,7 @@ mod tests {
     #[test]
     fn composed_rules_applies_all_rules() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(20, 20).entrance(10, 18).build();
+        let mut layout = create_test_layout(20, 20);
 
         let rules = ComposedSpawnRules::new()
             .add(SpawnRuleKind::Chest(ChestSpawner::new(1..=1)))
@@ -604,7 +618,7 @@ mod tests {
     #[test]
     fn empty_composed_rules_spawns_nothing() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
 
         let rules = ComposedSpawnRules::new();
         let total = rules.apply(&mut layout, &mut rng);
@@ -616,7 +630,7 @@ mod tests {
     #[test]
     fn fixed_position_spawner_places_at_position() {
         let mut rng = rand::thread_rng();
-        let mut layout = LayoutBuilder::new(10, 10).entrance(5, 8).build();
+        let mut layout = create_test_layout(10, 10);
         let pos = GridPosition::new(3, 3);
 
         let spawned = FixedPositionSpawner::new(
@@ -634,3 +648,4 @@ mod tests {
         assert_eq!(entities[0].0, pos);
     }
 }
+

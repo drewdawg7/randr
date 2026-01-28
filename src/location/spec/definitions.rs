@@ -150,16 +150,6 @@ entity_macros::define_data! {
             }),
         }
 
-        // ─────────────────────────────────────────────────────────────────────
-        // Dungeon Locations
-        // ─────────────────────────────────────────────────────────────────────
-        GoblinCave {
-            name: "Goblin Cave",
-            description: "A dark cave infested with goblins",
-            refresh_interval: None,
-            min_level: None,
-            data: LocationData::Dungeon(DungeonData {}),
-        }
         Home {
             name: "Home",
             description: "Your starting home with a door to the dungeon",
@@ -232,7 +222,7 @@ impl LocationId {
             LocationId::VillageAlchemist => LocationType::Crafting(CraftingSubtype::Alchemist),
             LocationId::VillageField => LocationType::Combat(CombatSubtype::Field),
             LocationId::VillageMine => LocationType::Resource(ResourceSubtype::Mine),
-            LocationId::GoblinCave | LocationId::Home | LocationId::MainDungeon => {
+            LocationId::Home | LocationId::MainDungeon => {
                 LocationType::Combat(CombatSubtype::Dungeon)
             }
         }
