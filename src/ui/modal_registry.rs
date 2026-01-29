@@ -179,13 +179,15 @@ struct DespawnModalCommand<M: RegisteredModal>(PhantomData<M>);
 
 impl<M: RegisteredModal> Command for DespawnModalCommand<M> {
     fn apply(self, world: &mut World) {
-        // Find and despawn the modal entity
+        // Find and despawn the modal entity if it exists
         let mut query = world.query_filtered::<Entity, With<M::Root>>();
         if let Some(entity) = query.iter(world).next() {
             world.entity_mut(entity).despawn_recursive();
-            world.resource_mut::<ActiveModal>().modal = None;
-            M::cleanup(world);
         }
+        // Always clear ActiveModal and run cleanup, even if entity wasn't found.
+        // This prevents ActiveModal from getting stuck if spawn failed or entity was already despawned.
+        world.resource_mut::<ActiveModal>().modal = None;
+        M::cleanup(world);
     }
 }
 
