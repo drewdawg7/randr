@@ -228,7 +228,10 @@
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/sprites_aseprite/MiniDwarfKing.aseprite\" --save-as /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_king.png)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Cave Tileset-export.aseprite\" --sheet /Users/drewstewart/code/game/assets/sprites/cave_tileset.png --data /Users/drewstewart/code/game/assets/sprites/cave_tileset.json --format json-hash --sheet-type packed)",
       "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Cave Tileset-export.aseprite\" --sheet /Users/drewstewart/code/game/assets/sprites/cave_tileset.png --data /Users/drewstewart/code/game/assets/sprites/cave_tileset.json --format json-hash --list-slices)",
-      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Cave Tileset-export.aseprite\" --scale 0.5 --sheet /Users/drewstewart/code/game/assets/sprites/cave_tileset.png --data /Users/drewstewart/code/game/assets/sprites/cave_tileset.json --format json-hash --list-slices)"
+      "Bash(\"$ASEPRITE\" --batch \"/Users/drewstewart/Downloads/Cave Tileset-export.aseprite\" --scale 0.5 --sheet /Users/drewstewart/code/game/assets/sprites/cave_tileset.png --data /Users/drewstewart/code/game/assets/sprites/cave_tileset.json --format json-hash --list-slices)",
+      "Bash(for f in /Users/drewstewart/code/game/src/combat/tests.rs /Users/drewstewart/code/game/src/inventory/tests.rs /Users/drewstewart/code/game/src/stats/tests.rs /Users/drewstewart/code/game/src/entities/tests.rs /Users/drewstewart/code/game/src/loot/tests.rs /Users/drewstewart/code/game/src/location/blacksmith/tests.rs /Users/drewstewart/code/game/src/item/recipe/tests.rs)",
+      "Bash(gh issue reopen:*)",
+      "Bash(gh pr view:*)"
     ]
   },
   "enabledMcpjsonServers": [

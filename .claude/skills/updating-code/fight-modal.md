@@ -16,92 +16,54 @@ Modal overlay for dungeon combat encounters. Appears when player collides with a
 
 ## Key Resources
 
-### FightModalMob
-
-Stores the mob being fought along with data for despawning after defeat:
-
-```rust
-#[derive(Resource)]
-pub struct FightModalMob {
-    pub mob_id: MobId,       // For sprite lookup
-    pub mob: Mob,            // Live mob instance for combat
-    pub pos: GridPosition,   // For clearing occupancy
-    pub entity: Entity,      // For despawning from dungeon
-}
-```
-
-### FightModalButtonSelection
-
-Tracks OK/Cancel button selection:
-
-```rust
-#[derive(Resource, Default)]
-pub struct FightModalButtonSelection {
-    pub selected: FightModalButton,  // Ok or Cancel
-}
-```
-
-Implements `SelectionState` trait for left/right navigation.
+- **FightModalMob** (`state.rs`): Stores `mob_id`, `pos`, and `entity` for the mob being fought
+- **FightModalButtonSelection** (`state.rs`): OK/Cancel selection, implements `SelectionState`
 
 ## Combat Flow
 
-1. **Collision Detection** (`dungeon/plugin.rs:check_entity_collision`)
-   - Returns `(DungeonEntity, Entity, GridPosition)` tuple
-   - Mob collision triggers `FightModalMob` and `SpawnFightModal` resources
+1. **Collision Detection** (`dungeon/plugin.rs:handle_move_result`)
+   - `MoveResult::TriggeredCombat` contains `(mob_id, entity, pos)`
+   - Guards against duplicate triggers if `FightModalMob` resource exists
+   - Inserts `FightModalMob` resource and triggers `OpenModal(ModalType::FightModal)`
 
-2. **Modal Spawn** (`render.rs:spawn_fight_modal`)
+2. **Modal Spawn** (`render.rs:do_spawn_fight_modal`)
    - Spawns player and mob sprites with health bars
    - OK/Cancel buttons below player sprite
 
 3. **Attack Handling** (`input.rs:handle_fight_modal_select`)
-   - Enter with OK: Player attacks mob using `combat::attack()`
-   - Triggers attack animation (frames 39-47) on player sprite via `PlayerAttackTimer`
+   - Enter with OK: Player attacks mob via `player_attacks_entity()`
+   - Triggers attack animation via `PlayerAttackTimer`
    - If mob dies: Apply rewards, collect loot, despawn mob, close modal, spawn results modal
    - If mob survives: Mob counter-attacks player
    - If player dies: Process defeat, close modal
    - Enter with Cancel: Close modal, no combat
 
-4. **Health Bar Updates** (data → visuals separation)
-   - `update_mob_health_bar` (`render.rs`): Writes mob HP from `FightModalMob` into `HealthBarValues`
-   - `update_player_health_bar` (`render.rs`): Writes player HP from `StatSheet` into `HealthBarValues`
-   - `update_sprite_health_bar_visuals` (`health_bar.rs`): Generic system that reads `HealthBarValues` and updates both the sprite atlas index and the HP text overlay
-   - Health bars are spawned with initial `HealthBarValues` so they display correctly from the first frame
-   - See [health-bar.md](health-bar.md) for the generic health bar system
+4. **Health Bar Updates** - See [health-bar.md](health-bar.md)
 
 ## Combat Integration
 
 Uses functions from `crate::combat`:
-- `attack(&attacker, &mut defender)` - Execute single attack
-- `apply_victory_rewards(&mut player, gold, xp)` - Grant rewards (returns `VictoryRewards`)
-- `process_defeat(&mut player)` - Handle player death
-- `IsKillable::on_death(magic_find)` - Get mob death rewards
+- `player_attacks_entity()` / `entity_attacks_player()` - ECS-based combat
+- `apply_victory_rewards_direct()` - Grant rewards
+- `process_player_defeat()` - Handle player death
 
-Uses `collect_loot_drops(&mut player, &loot_drops)` from `crate::loot` to add dropped items to inventory.
-
-Uses `PlayerGuard` pattern for auto-writeback of player resources.
+Uses `collect_loot_drops()` from `crate::loot` to add dropped items to inventory.
 
 ## Victory Transition
 
-When mob dies, the fight modal:
-1. Calls `on_death()` → `MobDeathResult { gold_dropped, xp_dropped, loot_drops }`
-2. Calls `apply_victory_rewards()` → `VictoryRewards { gold_gained, xp_gained }`
-3. Calls `collect_loot_drops()` to add loot to inventory
-4. Despawns mob entity and clears occupancy
-5. Closes fight modal
-6. Inserts `ResultsModalData` and `SpawnResultsModal` resources
-7. Results modal spawns next frame showing "Victory!" with gold, XP, and loot
+When mob dies:
+1. Roll loot via `loot_table.0.roll_drops(magic_find)`
+2. Apply rewards via `apply_victory_rewards_direct()`
+3. Collect loot into inventory
+4. Send `MobDefeated` event
+5. Despawn mob entity and clear occupancy
+6. Close fight modal
+7. Insert `ResultsModalData` and trigger `OpenModal(ModalType::ResultsModal)`
 
-See [results-modal.md](results-modal.md) for the results modal implementation.
+## Error Handling
 
-## Despawning Mobs
-
-When mob is defeated:
-```rust
-// Clear from dungeon occupancy
-occupancy.vacate(fight_mob.pos, GridSize::single());
-// Remove entity from ECS
-commands.entity(fight_mob.entity).despawn_recursive();
-```
+- **Invalid entity**: If mob entity query fails in `handle_fight_modal_select` (e.g., despawned during floor transition), modal closes gracefully
+- **Duplicate triggers**: `handle_move_result` skips combat if `FightModalMob` resource exists, preventing race conditions during floor transitions
 
 ## UI Components
 
@@ -109,7 +71,7 @@ commands.entity(fight_mob.entity).despawn_recursive();
 |-----------|---------|
 | `FightModalRoot` | Modal overlay root entity |
 | `FightModalPlayerSprite` | Player sprite marker |
-| `FightModalMobSprite { mob_id }` | Mob sprite marker |
+| `FightModalMobSprite` | Mob sprite marker (contains `mob_id`) |
 | `FightModalPlayerHealthBar` | Player health bar marker |
 | `FightModalMobHealthBar` | Mob health bar marker |
 | `FightModalOkButton` | OK button marker |

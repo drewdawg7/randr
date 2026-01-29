@@ -1,5 +1,9 @@
 # Project Guidelines
 
+## Important Reminders (MANDATORY)
+1. Do not add comments to code unless there is a really good reason too. Clean up exisitng comments you come across.
+2. Do not use unwrap in non-test code.
+
 ## Code Change Workflow
 **Use the `updating-code` skill for ALL code changes.** It contains the full workflow.
 

@@ -17,11 +17,11 @@ Follow this workflow for ALL code changes:
 5. **Make Changes**: Execute your plan
 6. **Test**: Run tests for changed modules only.
 7. **Clean-Up**: Fix any compiler warnings related to your changes
-8. **Verify**: Ask user to verify changes
-9. **Merge**: Commit, merge, and push. No PR necessary.
-10. **Close**: If working on a GitHub issue, close it
-11. **Document**: Update documentation based on the documentation section below.
+8. **Verify**: Ask user to verify changes. You must not start updating docs or merging / pushing until the user verifies the changes.
+9. **Document**: Update documentation based on the documentation section below.
     1. Documentation is NOT a choice. You should always add additional documentation. 
+10. **Merge**: Commit, merge, and push. No PR necessary.
+11. **Close**: If working on a GitHub issue, close it
 
 
 ## Documentation Index
@@ -49,6 +49,8 @@ Read the relevant doc BEFORE making changes.
 | Animated tiles, torch walls, TorchWall | [dungeon/ui.md](dungeon/ui.md) |
 | Fight screen UI, action menu, post-combat overlay | [fight-screen.md](fight-screen.md) |
 | Fight modal, dungeon combat, mob encounters | [fight-modal.md](fight-modal.md) |
+| Combat system, MobCombatBundle, player_attacks_entity | [combat-ecs.md](combat-ecs.md) |
+| Mob ECS components, Health, CombatStats, GoldReward | [combat-ecs.md](combat-ecs.md) |
 | Results modal, post-fight/chest rewards, loot display | [results-modal.md](results-modal.md) |
 | Chest interaction, adjacency detection, chest loot | [dungeon/entities.md](dungeon/entities.md) |
 | Rock mining, RockType, rock loot, mine interaction | [dungeon/entities.md](dungeon/entities.md) |
@@ -82,6 +84,7 @@ Read the relevant doc BEFORE making changes.
 
 
 ## Documentation
+- DOCUMENTATION SHOULD BE KEPT BRIEF. DO NOT PASTE CODE SNIPPETS UNLESS IT IS A NON-OBVIOUS EXAMPLE
 - Upon completion of a code change, documentation must be added to the updating-code skill.
 - Each module should get its own file in .claude/skills/updating-code. If a file starts to get close to 500 lines, create a subdirectory, break out the file, and place them all the subdirectory.
 - If any new files are created, update the documentation index above. The goal of the documentation index is to make it easy to find relevant code or guidance in the future.
