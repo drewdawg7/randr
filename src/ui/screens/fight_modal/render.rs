@@ -3,6 +3,7 @@
 use bevy::prelude::*;
 
 use crate::assets::{FightBannerSlice, GameSprites, SpriteSheetKey};
+use crate::mob::Health;
 use crate::player::PlayerName;
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBar};
@@ -32,7 +33,14 @@ pub fn spawn_fight_modal(
     stats: Res<StatSheet>,
     mut active_modal: ResMut<ActiveModal>,
     game_sprites: Res<GameSprites>,
+    mob_query: Query<&Health>,
 ) {
+    // Get mob health from entity component
+    let mob_health = mob_query.get(mob_res.entity).ok();
+    let (mob_current_hp, mob_max_hp) = mob_health
+        .map(|h| (h.current, h.max))
+        .unwrap_or((0, 1)); // Fallback if entity not found
+
     commands.remove_resource::<SpawnFightModal>();
     commands.init_resource::<FightModalButtonSelection>();
     active_modal.modal = Some(ModalType::FightModal);
@@ -145,13 +153,13 @@ pub fn spawn_fight_modal(
                                 Some(&mob_res.mob_id.spec().name),
                             );
 
-                            // Health bar
+                            // Health bar (from entity component)
                             column.spawn((
                                 FightModalMobHealthBar,
                                 SpriteHealthBar,
                                 HealthBarValues {
-                                    current: mob_res.mob.hp(),
-                                    max: mob_res.mob.max_hp(),
+                                    current: mob_current_hp,
+                                    max: mob_max_hp,
                                 },
                                 Node {
                                     width: Val::Px(HEALTH_BAR_SIZE.0),
@@ -220,16 +228,20 @@ pub fn update_button_sprites(
     }
 }
 
-/// System to update mob health bar values from FightModalMob state.
+/// System to update mob health bar values from mob entity's Health component.
 pub fn update_mob_health_bar(
     fight_mob: Res<FightModalMob>,
     mut bar_query: Query<&mut HealthBarValues, With<FightModalMobHealthBar>>,
+    mob_query: Query<&Health>,
 ) {
     let Ok(mut values) = bar_query.get_single_mut() else {
         return;
     };
-    values.current = fight_mob.mob.hp();
-    values.max = fight_mob.mob.max_hp();
+    let Ok(health) = mob_query.get(fight_mob.entity) else {
+        return;
+    };
+    values.current = health.current;
+    values.max = health.max;
 }
 
 /// System to update player health bar values from StatSheet.

@@ -6,6 +6,7 @@ use crate::dungeon::{
     resolve_tile, DungeonEntity, DungeonEntityMarker, DungeonLayout, EntityRenderData, FloorType,
     GridPosition, TilesetGrid,
 };
+use crate::mob::MobCombatBundle;
 use crate::ui::{DungeonMobSprite, DungeonPlayerSprite, MobSpriteSheets, PlayerWalkTimer};
 
 use super::components::{
@@ -244,6 +245,7 @@ fn spawn_entities(
                 layer.spawn((
                     marker,
                     DungeonMobSprite { mob_id },
+                    MobCombatBundle::from_mob_id(mob_id),
                     ZIndex(pos.y as i32),
                     entity_node,
                 ));

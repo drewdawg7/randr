@@ -67,12 +67,19 @@ pub fn effective_goldfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
 }
 
 // =============================================================================
-// Player struct (for trait-based combat compatibility)
+// Player struct (DEPRECATED - for trait-based combat compatibility)
 // =============================================================================
 
 /// Combined player data for trait-based operations (e.g., combat).
 /// This is NOT a Resource - use the individual resources above for Bevy systems.
 /// Construct this temporarily when you need trait-based polymorphism.
+///
+/// DEPRECATED: Use direct resource access with combat helper functions instead.
+/// See `combat::player_attacks_entity` and `combat::entity_attacks_player`.
+#[deprecated(
+    since = "0.2.0",
+    note = "Use direct resource access with combat helper functions instead"
+)]
 #[derive(Debug, Clone)]
 pub struct Player {
     pub name: &'static str,
@@ -148,12 +155,18 @@ impl Player {
 }
 
 // =============================================================================
-// PlayerGuard (RAII pattern for automatic write-back)
+// PlayerGuard (DEPRECATED - RAII pattern for automatic write-back)
 // =============================================================================
 
 /// RAII guard that holds a `Player` and automatically writes changes back
 /// to the underlying resources when dropped. Use this in combat and other
 /// contexts where you always need to persist changes regardless of exit path.
+///
+/// DEPRECATED: Use direct resource mutation instead. This defeats Bevy's change detection.
+#[deprecated(
+    since = "0.2.0",
+    note = "Use direct resource mutation instead - this defeats Bevy's change detection"
+)]
 pub struct PlayerGuard<'a> {
     player: Player,
     gold: &'a mut PlayerGold,

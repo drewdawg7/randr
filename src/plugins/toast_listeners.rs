@@ -160,7 +160,7 @@ fn listen_combat_events(
     for event in mob_defeated_events.read() {
         toast_writer.send(ShowToast::success(format!(
             "Defeated {}!",
-            event.mob.name
+            event.mob_id.spec().name
         )));
     }
 

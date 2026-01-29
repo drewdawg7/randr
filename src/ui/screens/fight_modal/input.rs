@@ -2,13 +2,17 @@
 
 use bevy::prelude::*;
 
-use crate::combat::{apply_victory_rewards, attack, process_defeat, IsKillable};
+use crate::combat::{
+    apply_victory_rewards_direct, entity_attacks_player, player_attacks_entity,
+    player_effective_magicfind, process_player_defeat,
+};
 use crate::dungeon::{GridOccupancy, GridSize};
 use crate::entities::Progression;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::Inventory;
 use crate::loot::collect_loot_drops;
-use crate::player::{PlayerGold, PlayerGuard, PlayerName};
+use crate::mob::{CombatStats, DeathProcessed, GoldReward, Health, MobLootTable, MobMarker, XpReward};
+use crate::player::{PlayerGold, PlayerName};
 use crate::stats::StatSheet;
 use crate::ui::{PlayerAttackTimer, PlayerSpriteSheet, SelectionState, SpriteAnimation};
 
@@ -55,13 +59,13 @@ pub fn handle_fight_modal_navigation(
 }
 
 /// System to handle OK/Cancel button activation with Enter.
-#[allow(clippy::too_many_arguments)]
+#[allow(clippy::too_many_arguments, clippy::type_complexity)]
 pub fn handle_fight_modal_select(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut mob_defeated_events: EventWriter<MobDefeated>,
     selection: Res<FightModalButtonSelection>,
-    mut fight_mob: ResMut<FightModalMob>,
+    fight_mob: Res<FightModalMob>,
     mut occupancy: ResMut<GridOccupancy>,
     player_name: Res<PlayerName>,
     mut player_gold: ResMut<PlayerGold>,
@@ -72,6 +76,15 @@ pub fn handle_fight_modal_select(
     sheet: Res<PlayerSpriteSheet>,
     mut sprite_query: Query<(&mut SpriteAnimation, &mut PlayerAttackTimer)>,
     modal_query: Query<Entity, With<FightModalRoot>>,
+    mut mob_query: Query<(
+        &MobMarker,
+        &mut Health,
+        &CombatStats,
+        &GoldReward,
+        &XpReward,
+        &MobLootTable,
+        &mut DeathProcessed,
+    )>,
 ) {
     for action in action_reader.read() {
         if *action != GameAction::Select {
@@ -80,17 +93,31 @@ pub fn handle_fight_modal_select(
 
         match selection.selected {
             FightModalButton::Ok => {
-                // Build player guard for combat (auto-writes changes on drop)
-                let mut player = PlayerGuard::from_resources(
-                    &player_name,
-                    &mut player_gold,
-                    &mut progression,
-                    &mut inventory,
-                    &mut stats,
-                );
+                // Query mob entity's combat components
+                let Ok((
+                    mob_marker,
+                    mut health,
+                    combat_stats,
+                    gold_reward,
+                    xp_reward,
+                    loot_table,
+                    mut death_processed,
+                )) = mob_query.get_mut(fight_mob.entity)
+                else {
+                    continue;
+                };
 
-                // Player attacks mob
-                let result = attack(&*player, &mut fight_mob.mob);
+                let mob_name = fight_mob.mob_id.spec().name.clone();
+
+                // Player attacks mob using ECS components
+                let result = player_attacks_entity(
+                    player_name.0,
+                    &stats,
+                    &inventory,
+                    &mob_name,
+                    &mut health,
+                    combat_stats,
+                );
 
                 // Switch to attack animation
                 if let Ok((mut anim, mut attack_timer)) = sprite_query.get_single_mut() {
@@ -105,20 +132,32 @@ pub fn handle_fight_modal_select(
                 }
 
                 if result.target_died {
-                    // Apply victory rewards
-                    let death_result = fight_mob.mob.on_death(player.effective_magicfind());
-                    let rewards = apply_victory_rewards(
-                        &mut player,
-                        death_result.gold_dropped,
-                        death_result.xp_dropped,
+                    // Guard against double death processing
+                    if death_processed.0 {
+                        continue;
+                    }
+                    death_processed.0 = true;
+
+                    // Roll loot drops
+                    let magic_find = player_effective_magicfind(&stats, &inventory);
+                    let loot_drops = loot_table.0.roll_drops(magic_find);
+
+                    // Apply victory rewards using direct resources
+                    let rewards = apply_victory_rewards_direct(
+                        &stats,
+                        &inventory,
+                        &mut player_gold,
+                        &mut progression,
+                        gold_reward.0,
+                        xp_reward.0,
                     );
 
                     // Collect loot into inventory
-                    collect_loot_drops(&mut *player, &death_result.loot_drops);
+                    collect_loot_drops(&mut *inventory, &loot_drops);
 
                     // Send MobDefeated event for monster tracking
                     mob_defeated_events.send(MobDefeated {
-                        mob: fight_mob.mob.clone(),
+                        mob_id: mob_marker.0,
                     });
 
                     // Despawn mob from dungeon and clear occupancy
@@ -136,23 +175,29 @@ pub fn handle_fight_modal_select(
                     // Spawn results modal with victory data
                     commands.insert_resource(ResultsModalData {
                         title: "Victory!".to_string(),
-                        subtitle: Some(fight_mob.mob.name.clone()),
+                        subtitle: Some(mob_name),
                         sprite: Some(ResultsSprite::Mob(fight_mob.mob_id)),
                         gold_gained: Some(rewards.gold_gained),
                         xp_gained: Some(rewards.xp_gained),
-                        loot_drops: death_result.loot_drops,
+                        loot_drops,
                     });
                     commands.insert_resource(SpawnResultsModal);
 
                     commands.remove_resource::<FightModalMob>();
                     commands.remove_resource::<FightModalButtonSelection>();
                 } else {
-                    // Enemy counter-attack
-                    let enemy_result = attack(&fight_mob.mob, &mut *player);
+                    // Enemy counter-attack using ECS components
+                    let enemy_result = entity_attacks_player(
+                        &mob_name,
+                        combat_stats,
+                        player_name.0,
+                        &mut stats,
+                        &inventory,
+                    );
 
                     if enemy_result.target_died {
                         // Handle player defeat
-                        process_defeat(&mut player);
+                        process_player_defeat(&mut stats, &mut player_gold);
 
                         // Close modal
                         close_modal(

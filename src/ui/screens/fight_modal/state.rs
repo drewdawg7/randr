@@ -3,7 +3,7 @@
 use bevy::prelude::*;
 
 use crate::dungeon::GridPosition;
-use crate::mob::{Mob, MobId};
+use crate::mob::MobId;
 use crate::ui::focus::SelectionState;
 use crate::ui::sprite_marker::{SpriteData, SpriteMarker};
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet};
@@ -53,11 +53,14 @@ impl SpriteMarker for FightModalMobSprite {
 }
 
 /// Resource storing the mob encountered for the fight modal.
+/// Combat data is queried from the entity's components (Health, CombatStats, etc.)
 #[derive(Resource)]
 pub struct FightModalMob {
+    /// Mob type for sprite lookup and name display
     pub mob_id: MobId,
-    pub mob: Mob,
+    /// Grid position for clearing occupancy after defeat
     pub pos: GridPosition,
+    /// Entity reference for despawning and querying combat components
     pub entity: Entity,
 }
 

@@ -203,9 +203,9 @@ fn handle_move_result(
                 walk_timer.0.reset();
             }
             MoveResult::TriggeredCombat { mob_id, entity, pos } => {
+                // Combat data is now stored on the entity's components (MobCombatBundle)
                 commands.insert_resource(FightModalMob {
                     mob_id: *mob_id,
-                    mob: mob_id.spawn(),
                     pos: *pos,
                     entity: *entity,
                 });

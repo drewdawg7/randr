@@ -3,13 +3,14 @@ use bevy::prelude::*;
 use crate::entities::Progression;
 use crate::inventory::Inventory;
 use crate::mob::{Mob, MobId};
-use crate::player::{PlayerGold, PlayerGuard, PlayerName};
+use crate::player::{PlayerGold, PlayerName};
 use super::log::CombatLogEntry;
 use crate::stats::StatSheet;
 
 use super::{
-    enemy_attack_step, player_attack_step, process_defeat, process_victory, ActiveCombat,
-    ActiveCombatResource, CombatPhaseState, CombatSourceResource, Named,
+    apply_victory_rewards_direct, mob_attacks_player, player_attacks_mob,
+    player_effective_magicfind, process_player_defeat, ActiveCombat, ActiveCombatResource,
+    CombatPhaseState, CombatSourceResource, IsKillable, Named,
 };
 
 #[derive(Resource, Default)]
@@ -73,7 +74,7 @@ pub fn execute_player_attack(
     name: Res<PlayerName>,
     mut gold: ResMut<PlayerGold>,
     mut progression: ResMut<Progression>,
-    mut inventory: ResMut<Inventory>,
+    inventory: Res<Inventory>,
     mut stats: ResMut<StatSheet>,
     mut log_state: ResMut<CombatLogState>,
     mut next_phase: ResMut<NextState<CombatPhaseState>>,
@@ -87,11 +88,8 @@ pub fn execute_player_attack(
             continue;
         };
 
-        // Build Player guard - auto-writes changes on drop
-        let mut player =
-            PlayerGuard::from_resources(&name, &mut gold, &mut progression, &mut inventory, &mut stats);
-
-        let player_result = player_attack_step(&player, combat);
+        // Player attacks mob using direct resource access
+        let player_result = player_attacks_mob(name.0, &stats, &inventory, &mut combat.mob);
         log_state.entries.push(CombatLogEntry::player_attack(
             player_result.damage_to_target,
             &player_result.defender,
@@ -101,10 +99,25 @@ pub fn execute_player_attack(
             log_state
                 .entries
                 .push(CombatLogEntry::enemy_defeated(&player_result.defender));
-            process_victory(&mut player, combat);
+
+            // Process victory rewards using direct resources
+            let death_result = combat.mob.on_death(player_effective_magicfind(&stats, &inventory));
+            let rewards = apply_victory_rewards_direct(
+                &stats,
+                &inventory,
+                &mut gold,
+                &mut progression,
+                death_result.gold_dropped,
+                death_result.xp_dropped,
+            );
+            combat.gold_gained = rewards.gold_gained;
+            combat.xp_gained = rewards.xp_gained;
+            combat.loot_drops = death_result.loot_drops;
+
             next_phase.set(CombatPhaseState::Victory);
         } else {
-            let enemy_result = enemy_attack_step(combat, &mut player);
+            // Mob counter-attacks player using direct resources
+            let enemy_result = mob_attacks_player(&combat.mob, name.0, &mut stats, &inventory);
             log_state.entries.push(CombatLogEntry::enemy_attack(
                 enemy_result.damage_to_target,
                 &enemy_result.attacker,
@@ -112,11 +125,10 @@ pub fn execute_player_attack(
 
             if enemy_result.target_died {
                 log_state.entries.push(CombatLogEntry::player_defeated());
-                process_defeat(&mut player);
+                process_player_defeat(&mut stats, &mut gold);
                 next_phase.set(CombatPhaseState::Defeat);
             }
         }
-        // PlayerGuard automatically writes back on drop
     }
 }
 

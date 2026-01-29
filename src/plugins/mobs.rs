@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::mob::Mob;
+use crate::mob::{Mob, MobId};
 
 /// Resource that holds the mob currently in active combat
 #[derive(Resource)]
@@ -21,10 +21,10 @@ pub struct MobDamaged {
     pub remaining_health: i32,
 }
 
-/// Event fired when a mob is defeated
+/// Event fired when a mob is defeated (ECS-based combat)
 #[derive(Event)]
 pub struct MobDefeated {
-    pub mob: Mob,
+    pub mob_id: MobId,
 }
 
 /// Plugin that registers mob-related events and resources
