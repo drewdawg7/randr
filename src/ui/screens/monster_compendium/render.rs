@@ -1,8 +1,7 @@
 use bevy::prelude::*;
 
 use crate::assets::{BookSlotSlice, GameSprites, SpriteSheetKey, UiAllSlice};
-use crate::ui::screens::modal::spawn_modal_overlay;
-use crate::ui::{FocusPanel, FocusState, MobSpriteSheets, SelectionState, SpriteAnimation};
+use crate::ui::{FocusPanel, FocusState, Modal, ModalBackground, MobSpriteSheets, SelectionState, SpawnModalExt, SpriteAnimation};
 
 use super::constants::*;
 use super::state::{
@@ -28,34 +27,24 @@ pub fn do_spawn_monster_compendium(
             .map(|idx| (s.texture.clone(), s.layout.clone(), idx))
     });
 
-    let overlay = spawn_modal_overlay(&mut commands);
+    let monsters = monsters.clone();
 
-    commands
-        .entity(overlay)
-        .insert(MonsterCompendiumRoot)
-        .with_children(|parent| {
-            // Book container (relative positioning for children)
-            parent
-                .spawn((
-                    ImageNode::from_atlas_image(
-                        ui_all.texture.clone(),
-                        TextureAtlas {
-                            layout: ui_all.layout.clone(),
-                            index: book_idx,
-                        },
-                    ),
-                    Node {
-                        width: Val::Px(BOOK_WIDTH),
-                        height: Val::Px(BOOK_HEIGHT),
-                        position_type: PositionType::Relative,
-                        ..default()
-                    },
-                ))
-                .with_children(|book| {
-                    spawn_left_page(book, &monsters);
-                    spawn_right_page(book, slot_sprite);
-                });
-        });
+    commands.spawn_modal(
+        Modal::new()
+            .background(ModalBackground::Atlas {
+                texture: ui_all.texture.clone(),
+                layout: ui_all.layout.clone(),
+                index: book_idx,
+            })
+            .size(BOOK_WIDTH, BOOK_HEIGHT)
+            .with_root_marker(|e| {
+                e.insert(MonsterCompendiumRoot);
+            })
+            .content(move |book| {
+                spawn_left_page(book, &monsters);
+                spawn_right_page(book, slot_sprite);
+            }),
+    );
 }
 
 /// Spawn the left page with the monster list.

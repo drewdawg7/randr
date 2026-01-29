@@ -60,6 +60,9 @@ pub enum ModalBackground {
         layout: Handle<TextureAtlasLayout>,
         index: usize,
     },
+    /// No container - content is added directly to the overlay.
+    /// Use for modals where child widgets provide their own backgrounds (e.g., grid-based modals).
+    None,
 }
 
 impl Default for ModalBackground {
@@ -70,6 +73,7 @@ impl Default for ModalBackground {
         }
     }
 }
+
 
 // ============================================================================
 // Modal Builder
@@ -279,6 +283,13 @@ impl SpawnModalExt for Commands<'_, '_> {
                 self.entity(overlay).with_children(|parent| {
                     spawn_atlas_modal(parent, size, texture, layout, index, content);
                 });
+            }
+            ModalBackground::None => {
+                if let Some(content_fn) = content {
+                    self.entity(overlay).with_children(|parent| {
+                        content_fn(parent);
+                    });
+                }
             }
         }
 

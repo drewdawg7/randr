@@ -7,9 +7,9 @@ use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
-use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{ItemDetailPane, ItemGrid, ItemGridEntry, ItemGridFocusPanel, OutlinedText};
+use crate::ui::{Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{AnvilModalRoot, AnvilPlayerGrid, AnvilRecipeGrid};
 
@@ -42,7 +42,6 @@ pub fn spawn_anvil_modal_impl(
     _game_fonts: &GameFonts,
     inventory: &Inventory,
 ) {
-    // Initialize focus on recipe grid (default)
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::RecipeGrid),
     });
@@ -50,15 +49,14 @@ pub fn spawn_anvil_modal_impl(
     let recipe_entries = get_recipe_entries(inventory);
     let player_entries = ItemGridEntry::from_inventory(inventory);
 
-    let overlay = spawn_modal_overlay(&mut commands);
-    commands
-        .entity(overlay)
-        .insert(AnvilModalRoot)
-        .with_children(|parent| {
-            parent
-                .spawn(modal_content_row())
-                .with_children(|row| {
-                    // Recipe grid (left side) - focused by default
+    commands.spawn_modal(
+        Modal::new()
+            .background(ModalBackground::None)
+            .with_root_marker(|e| {
+                e.insert(AnvilModalRoot);
+            })
+            .content(move |c| {
+                c.spawn(modal_content_row()).with_children(|row| {
                     row.spawn((
                         AnvilRecipeGrid,
                         ItemGridFocusPanel(FocusPanel::RecipeGrid),
@@ -68,8 +66,6 @@ pub fn spawn_anvil_modal_impl(
                             grid_size: 5,
                         },
                     ));
-
-                    // Player inventory grid (5x5)
                     row.spawn((
                         AnvilPlayerGrid,
                         ItemGridFocusPanel(FocusPanel::AnvilInventory),
@@ -79,13 +75,12 @@ pub fn spawn_anvil_modal_impl(
                             grid_size: 5,
                         },
                     ));
-
-                    // Item detail pane (right side) - use Recipe source for initial
                     row.spawn(ItemDetailPane {
                         source: InfoPanelSource::Recipe { selected_index: 0 },
                     });
                 });
-        });
+            }),
+    );
 }
 
 /// Updates the detail pane source based on which panel is focused and selected.

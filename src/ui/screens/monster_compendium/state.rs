@@ -99,7 +99,7 @@ pub struct MonsterEntry {
 }
 
 /// Pre-computed list of monsters for the compendium display.
-#[derive(Resource)]
+#[derive(Resource, Clone)]
 pub struct CompendiumMonsters(pub Vec<MonsterEntry>);
 
 impl CompendiumMonsters {

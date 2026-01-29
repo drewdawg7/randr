@@ -8,8 +8,7 @@ use crate::player::PlayerName;
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBar};
 use crate::ui::widgets::spawn_three_slice_banner;
-
-use super::super::modal::spawn_modal_overlay;
+use crate::ui::{Modal, SpawnModalExt};
 use crate::ui::PlayerAttackTimer;
 
 use super::state::{
@@ -34,148 +33,174 @@ pub fn do_spawn_fight_modal(
     game_sprites: Res<GameSprites>,
     mob_query: Query<&Health>,
 ) {
-    // Get mob health from entity component
     let mob_health = mob_query.get(mob_res.entity).ok();
     let (mob_current_hp, mob_max_hp) = mob_health
         .map(|h| (h.current, h.max))
-        .unwrap_or((0, 1)); // Fallback if entity not found
+        .unwrap_or((0, 1));
 
-    let overlay = spawn_modal_overlay(&mut commands);
+    let player_name_str = player_name.0.to_string();
+    let player_hp = stats.hp();
+    let player_max_hp = stats.max_hp();
+    let mob_id = mob_res.mob_id;
+    let mob_name = mob_res.mob_id.spec().name.clone();
+    let game_sprites = (*game_sprites).clone();
 
-    commands
-        .entity(overlay)
-        .insert(FightModalRoot)
-        .with_children(|parent| {
-            // Modal container
-            parent
-                .spawn((
-                    Node {
-                        width: Val::Px(CONTAINER_WIDTH),
-                        height: Val::Px(CONTAINER_HEIGHT),
-                        flex_direction: FlexDirection::Row,
-                        justify_content: JustifyContent::SpaceBetween,
-                        align_items: AlignItems::FlexStart,
-                        padding: UiRect::axes(Val::Px(10.0), Val::Px(15.0)),
-                        border: UiRect::all(Val::Px(3.0)),
-                        ..default()
-                    },
-                    BackgroundColor(Color::srgb(0.15, 0.12, 0.1)),
-                    BorderColor(Color::srgb(0.6, 0.5, 0.3)),
-                ))
+    commands.spawn_modal(
+        Modal::new()
+            .size(CONTAINER_WIDTH, CONTAINER_HEIGHT)
+            .padding(0.0)
+            .with_root_marker(|e| {
+                e.insert(FightModalRoot);
+            })
+            .content(move |c| {
+                c.spawn(Node {
+                    width: Val::Percent(100.0),
+                    height: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Row,
+                    justify_content: JustifyContent::SpaceBetween,
+                    align_items: AlignItems::FlexStart,
+                    padding: UiRect::axes(Val::Px(10.0), Val::Px(15.0)),
+                    ..default()
+                })
                 .with_children(|container| {
-                    // Player column (banner + sprite)
-                    container
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            justify_content: JustifyContent::FlexStart,
-                            row_gap: Val::Px(4.0),
-                            ..default()
-                        })
-                        .with_children(|column| {
-                            // Banner above player
-                            spawn_three_slice_banner::<FightBannerSlice>(
-                                column,
-                                &game_sprites,
-                                BANNER_WIDTH,
-                                Some(player_name.0),
-                            );
-
-                            // Health bar
-                            column.spawn((
-                                FightModalPlayerHealthBar,
-                                SpriteHealthBar,
-                                HealthBarValues {
-                                    current: stats.hp(),
-                                    max: stats.max_hp(),
-                                },
-                                Node {
-                                    width: Val::Px(HEALTH_BAR_SIZE.0),
-                                    height: Val::Px(HEALTH_BAR_SIZE.1),
-                                    ..default()
-                                },
-                            ));
-
-                            // Player sprite (facing right - default orientation)
-                            column.spawn((
-                                FightModalPlayerSprite,
-                                PlayerAttackTimer(Timer::from_seconds(0.54, TimerMode::Once)),
-                                Node {
-                                    width: Val::Px(SPRITE_SIZE),
-                                    height: Val::Px(SPRITE_SIZE),
-                                    ..default()
-                                },
-                            ));
-
-                            // Button row below player sprite
-                            column
-                                .spawn(Node {
-                                    flex_direction: FlexDirection::Row,
-                                    column_gap: Val::Px(2.0),
-                                    ..default()
-                                })
-                                .with_children(|row| {
-                                    // OK button (left) - starts selected
-                                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::OkButtonSelected) {
-                                        if let Some(bundle) = sheet.image_bundle("ok_button_selected", BUTTON_SIZE.0, BUTTON_SIZE.1) {
-                                            row.spawn((FightModalOkButton, bundle));
-                                        }
-                                    }
-                                    // Cancel button (right) - starts unselected
-                                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::CancelButton) {
-                                        if let Some(bundle) = sheet.image_bundle("cancel_button", BUTTON_SIZE.0, BUTTON_SIZE.1) {
-                                            row.spawn((FightModalCancelButton, bundle));
-                                        }
-                                    }
-                                });
-                        });
-
-                    // Mob column (banner + sprite)
-                    container
-                        .spawn(Node {
-                            flex_direction: FlexDirection::Column,
-                            align_items: AlignItems::Center,
-                            justify_content: JustifyContent::FlexStart,
-                            row_gap: Val::Px(4.0),
-                            ..default()
-                        })
-                        .with_children(|column| {
-                            // Banner above mob
-                            spawn_three_slice_banner::<FightBannerSlice>(
-                                column,
-                                &game_sprites,
-                                BANNER_WIDTH,
-                                Some(&mob_res.mob_id.spec().name),
-                            );
-
-                            // Health bar (from entity component)
-                            column.spawn((
-                                FightModalMobHealthBar,
-                                SpriteHealthBar,
-                                HealthBarValues {
-                                    current: mob_current_hp,
-                                    max: mob_max_hp,
-                                },
-                                Node {
-                                    width: Val::Px(HEALTH_BAR_SIZE.0),
-                                    height: Val::Px(HEALTH_BAR_SIZE.1),
-                                    ..default()
-                                },
-                            ));
-
-                            // Mob sprite (flipped to face left)
-                            column.spawn((
-                                FightModalMobSprite {
-                                    mob_id: mob_res.mob_id,
-                                },
-                                Node {
-                                    width: Val::Px(SPRITE_SIZE),
-                                    height: Val::Px(SPRITE_SIZE),
-                                    ..default()
-                                },
-                            ));
-                        });
+                    spawn_player_column(
+                        container,
+                        &game_sprites,
+                        &player_name_str,
+                        player_hp,
+                        player_max_hp,
+                    );
+                    spawn_mob_column(
+                        container,
+                        &game_sprites,
+                        &mob_name,
+                        mob_id,
+                        mob_current_hp,
+                        mob_max_hp,
+                    );
                 });
+            }),
+    );
+}
+
+fn spawn_player_column(
+    parent: &mut ChildBuilder,
+    game_sprites: &GameSprites,
+    player_name: &str,
+    hp: i32,
+    max_hp: i32,
+) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::FlexStart,
+            row_gap: Val::Px(4.0),
+            ..default()
+        })
+        .with_children(|column| {
+            spawn_three_slice_banner::<FightBannerSlice>(
+                column,
+                game_sprites,
+                BANNER_WIDTH,
+                Some(player_name),
+            );
+
+            column.spawn((
+                FightModalPlayerHealthBar,
+                SpriteHealthBar,
+                HealthBarValues {
+                    current: hp,
+                    max: max_hp,
+                },
+                Node {
+                    width: Val::Px(HEALTH_BAR_SIZE.0),
+                    height: Val::Px(HEALTH_BAR_SIZE.1),
+                    ..default()
+                },
+            ));
+
+            column.spawn((
+                FightModalPlayerSprite,
+                PlayerAttackTimer(Timer::from_seconds(0.54, TimerMode::Once)),
+                Node {
+                    width: Val::Px(SPRITE_SIZE),
+                    height: Val::Px(SPRITE_SIZE),
+                    ..default()
+                },
+            ));
+
+            column
+                .spawn(Node {
+                    flex_direction: FlexDirection::Row,
+                    column_gap: Val::Px(2.0),
+                    ..default()
+                })
+                .with_children(|row| {
+                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::OkButtonSelected) {
+                        if let Some(bundle) =
+                            sheet.image_bundle("ok_button_selected", BUTTON_SIZE.0, BUTTON_SIZE.1)
+                        {
+                            row.spawn((FightModalOkButton, bundle));
+                        }
+                    }
+                    if let Some(sheet) = game_sprites.get(SpriteSheetKey::CancelButton) {
+                        if let Some(bundle) =
+                            sheet.image_bundle("cancel_button", BUTTON_SIZE.0, BUTTON_SIZE.1)
+                        {
+                            row.spawn((FightModalCancelButton, bundle));
+                        }
+                    }
+                });
+        });
+}
+
+fn spawn_mob_column(
+    parent: &mut ChildBuilder,
+    game_sprites: &GameSprites,
+    mob_name: &str,
+    mob_id: crate::mob::MobId,
+    current_hp: i32,
+    max_hp: i32,
+) {
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Column,
+            align_items: AlignItems::Center,
+            justify_content: JustifyContent::FlexStart,
+            row_gap: Val::Px(4.0),
+            ..default()
+        })
+        .with_children(|column| {
+            spawn_three_slice_banner::<FightBannerSlice>(
+                column,
+                game_sprites,
+                BANNER_WIDTH,
+                Some(mob_name),
+            );
+
+            column.spawn((
+                FightModalMobHealthBar,
+                SpriteHealthBar,
+                HealthBarValues {
+                    current: current_hp,
+                    max: max_hp,
+                },
+                Node {
+                    width: Val::Px(HEALTH_BAR_SIZE.0),
+                    height: Val::Px(HEALTH_BAR_SIZE.1),
+                    ..default()
+                },
+            ));
+
+            column.spawn((
+                FightModalMobSprite { mob_id },
+                Node {
+                    width: Val::Px(SPRITE_SIZE),
+                    height: Val::Px(SPRITE_SIZE),
+                    ..default()
+                },
+            ));
         });
 }
 

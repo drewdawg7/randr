@@ -287,7 +287,7 @@ impl Plugin for AssetPlugin {
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct SpriteSheet {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,
@@ -396,7 +396,7 @@ impl SpriteSheet {
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Clone)]
 pub struct GameFonts {
     pub pixel: Handle<Font>,
 }
@@ -412,7 +412,7 @@ impl GameFonts {
     }
 }
 
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Clone)]
 pub struct GameSprites {
     sheets: HashMap<SpriteSheetKey, SpriteSheet>,
 }

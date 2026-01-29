@@ -57,7 +57,7 @@ impl ForgeSlotIndex {
 }
 
 /// Tracks forge slot selection state.
-#[derive(Resource, Default)]
+#[derive(Resource, Default, Clone)]
 pub struct ForgeModalState {
     /// Currently selected forge slot (when FocusPanel::ForgeCraftingSlots is focused)
     pub selected_slot: ForgeSlotIndex,

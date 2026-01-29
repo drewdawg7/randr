@@ -6,12 +6,12 @@ use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
-use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{
     spawn_outlined_quantity_text, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
     ItemGridFocusPanel, ItemStatsDisplay, OutlinedQuantityConfig, OutlinedText,
 };
+use crate::ui::{Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{
     ActiveForgeEntity, ForgeModalRoot, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex,
@@ -56,34 +56,31 @@ pub fn spawn_forge_modal_impl(
     active_forge: &ActiveForgeEntity,
     modal_state: &ForgeModalState,
 ) {
-    // Initialize focus on player inventory (default)
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::ForgeInventory),
     });
 
     let player_entries = ItemGridEntry::from_inventory(inventory);
+    let forge_state = forge_state_query.get(active_forge.0).ok().cloned();
+    let game_sprites = game_sprites.clone();
+    let game_fonts = game_fonts.clone();
+    let modal_state = modal_state.clone();
 
-    // Get forge crafting state
-    let forge_state = forge_state_query.get(active_forge.0).ok();
-
-    let overlay = spawn_modal_overlay(&mut commands);
-    commands
-        .entity(overlay)
-        .insert(ForgeModalRoot)
-        .with_children(|parent| {
-            parent
-                .spawn(modal_content_row())
-                .with_children(|row| {
-                    // Crafting slots container (left side)
+    commands.spawn_modal(
+        Modal::new()
+            .background(ModalBackground::None)
+            .with_root_marker(|e| {
+                e.insert(ForgeModalRoot);
+            })
+            .content(move |c| {
+                c.spawn(modal_content_row()).with_children(|row| {
                     spawn_crafting_slots(
                         row,
-                        game_sprites,
-                        game_fonts,
-                        forge_state,
-                        modal_state,
+                        &game_sprites,
+                        &game_fonts,
+                        forge_state.as_ref(),
+                        &modal_state,
                     );
-
-                    // Player inventory grid (5x5) - focused by default
                     row.spawn((
                         ForgePlayerGrid,
                         ItemGridFocusPanel(FocusPanel::ForgeInventory),
@@ -93,13 +90,12 @@ pub fn spawn_forge_modal_impl(
                             grid_size: 5,
                         },
                     ));
-
-                    // Item detail pane (right side)
                     row.spawn(ItemDetailPane {
                         source: InfoPanelSource::Inventory { selected_index: 0 },
                     });
                 });
-        });
+            }),
+    );
 }
 
 /// Spawn the 3-slot horizontal crafting area.

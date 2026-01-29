@@ -4,12 +4,12 @@ use crate::assets::GameFonts;
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem, ManagesEquipment, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
-use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel,
     ItemStatsDisplay, OutlinedText,
 };
+use crate::ui::{Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{BackpackGrid, EquipmentGrid, InventoryModalRoot};
 
@@ -62,7 +62,6 @@ pub fn get_backpack_items(inventory: &Inventory) -> Vec<&InventoryItem> {
 
 /// Spawn the inventory modal UI with an equipment grid, backpack grid, and detail pane.
 pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
-    // Initialize focus on equipment grid
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::EquipmentGrid),
     });
@@ -74,15 +73,14 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
 
     let backpack_entries: Vec<ItemGridEntry> = ItemGridEntry::from_inventory(inventory);
 
-    let overlay = spawn_modal_overlay(commands);
-    commands
-        .entity(overlay)
-        .insert(InventoryModalRoot)
-        .with_children(|parent| {
-            parent
-                .spawn(modal_content_row())
-                .with_children(|row| {
-                    // Equipment grid (3x3) - focused by default
+    commands.spawn_modal(
+        Modal::new()
+            .background(ModalBackground::None)
+            .with_root_marker(|e| {
+                e.insert(InventoryModalRoot);
+            })
+            .content(move |c| {
+                c.spawn(modal_content_row()).with_children(|row| {
                     row.spawn((
                         EquipmentGrid,
                         ItemGridFocusPanel(FocusPanel::EquipmentGrid),
@@ -92,7 +90,6 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
                             grid_size: 3,
                         },
                     ));
-                    // Backpack grid (4x4)
                     row.spawn((
                         BackpackGrid,
                         ItemGridFocusPanel(FocusPanel::BackpackGrid),
@@ -106,7 +103,8 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
                         source: InfoPanelSource::Equipment { selected_index: 0 },
                     });
                 });
-        });
+            }),
+    );
 }
 
 /// Updates the detail pane source based on which grid is focused and selected.

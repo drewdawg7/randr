@@ -5,9 +5,9 @@ use crate::economy::WorthGold;
 use crate::inventory::{Inventory, ManagesEquipment, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
-use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
+use crate::ui::{Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{
     MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid,
@@ -78,7 +78,6 @@ pub fn spawn_merchant_modal_impl(
     stock: &MerchantStock,
     inventory: &Inventory,
 ) {
-    // Initialize focus on merchant stock grid
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::MerchantStock),
     });
@@ -86,15 +85,14 @@ pub fn spawn_merchant_modal_impl(
     let stock_entries = get_merchant_stock_entries(stock);
     let player_entries = ItemGridEntry::from_inventory(inventory);
 
-    let overlay = spawn_modal_overlay(&mut commands);
-    commands
-        .entity(overlay)
-        .insert(MerchantModalRoot)
-        .with_children(|parent| {
-            parent
-                .spawn(modal_content_row())
-                .with_children(|row| {
-                    // Merchant stock grid (5x5) - focused by default
+    commands.spawn_modal(
+        Modal::new()
+            .background(ModalBackground::None)
+            .with_root_marker(|e| {
+                e.insert(MerchantModalRoot);
+            })
+            .content(move |c| {
+                c.spawn(modal_content_row()).with_children(|row| {
                     row.spawn((
                         MerchantStockGrid,
                         ItemGridFocusPanel(FocusPanel::MerchantStock),
@@ -104,8 +102,6 @@ pub fn spawn_merchant_modal_impl(
                             grid_size: 5,
                         },
                     ));
-
-                    // Player inventory grid (5x5)
                     row.spawn((
                         MerchantPlayerGrid,
                         ItemGridFocusPanel(FocusPanel::PlayerInventory),
@@ -115,13 +111,12 @@ pub fn spawn_merchant_modal_impl(
                             grid_size: 5,
                         },
                     ));
-
-                    // Item detail pane
                     row.spawn(ItemDetailPane {
                         source: InfoPanelSource::Store { selected_index: 0 },
                     });
                 });
-        });
+            }),
+    );
 }
 
 /// Updates the detail pane source based on which grid is focused and selected.

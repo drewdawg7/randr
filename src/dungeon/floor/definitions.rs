@@ -16,7 +16,10 @@ entity_macros::define_data! {
         HomeFloor {
             name: "Home",
             layout_id: LayoutId::HomeFloor,
-            spawn_table: SpawnTable::new().npc(MobId::Merchant, 1..=1),
+            spawn_table: SpawnTable::new()
+                .npc(MobId::Merchant, 1..=1)
+                .forge(1..=1)
+                .anvil(1..=1),
         }
         MainDungeon1 {
             name: "Dungeon - Floor 1",

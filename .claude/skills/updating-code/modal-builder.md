@@ -29,6 +29,14 @@ commands.spawn_modal(
         .with_root_marker(|e| { e.insert(MonsterCompendiumRoot); })
         .content(|c| { /* children use absolute positioning */ })
 );
+
+// No-background modal (grid-based modals where widgets have their own backgrounds)
+commands.spawn_modal(
+    Modal::new()
+        .background(ModalBackground::None)
+        .with_root_marker(|e| { e.insert(InventoryModalRoot); })
+        .content(|c| { /* widgets provide their own backgrounds */ })
+);
 ```
 
 ## API Reference
@@ -46,15 +54,15 @@ Creates a new modal builder with default settings:
 |--------|-------------|------------|
 | `.title(impl Into<String>)` | Title at top (48px cream) | Solid only |
 | `.hint(impl Into<String>)` | Hint at bottom (16px gray), can call multiple times | Solid only |
-| `.size(f32, f32)` | Width and height in pixels | Both |
-| `.max_width_percent(f32)` | Max width constraint (default 90%) | Both |
-| `.max_height_percent(f32)` | Max height constraint (default 80%) | Both |
+| `.size(f32, f32)` | Width and height in pixels | Solid, Atlas |
+| `.max_width_percent(f32)` | Max width constraint (default 90%) | Solid, Atlas |
+| `.max_height_percent(f32)` | Max height constraint (default 80%) | Solid, Atlas |
 | `.padding(f32)` | Container padding (default 30px) | Solid only |
 | `.border(f32)` | Border width (default 3px) | Solid only |
-| `.background(ModalBackground)` | Set background type | Both |
-| `.modal_type(ModalType)` | For ActiveModal tracking | Both |
-| `.with_root_marker(FnOnce)` | Add marker component to overlay | Both |
-| `.content(FnOnce)` | Spawn child content | Both |
+| `.background(ModalBackground)` | Set background type | All |
+| `.modal_type(ModalType)` | For ActiveModal tracking | All |
+| `.with_root_marker(FnOnce)` | Add marker component to overlay | All |
+| `.content(FnOnce)` | Spawn child content | All |
 
 ### ModalBackground Enum
 
@@ -70,19 +78,28 @@ pub enum ModalBackground {
         layout: Handle<TextureAtlasLayout>,
         index: usize,
     },
+
+    /// No container - content is added directly to the overlay.
+    /// Use for grid-based modals where child widgets provide their own backgrounds.
+    None,
 }
 ```
 
 ## Behavioral Differences by Background
 
-| Behavior | Solid | Atlas |
-|----------|-------|-------|
-| Container | `BackgroundColor` + `BorderColor` | `ImageNode::from_atlas_image()` |
-| Positioning | Default flex | `PositionType::Relative` |
-| Padding | Applied (default 30px) | Ignored |
-| Border | Applied (3px) | None |
-| Title | Spawned if set | Skipped |
-| Hints | Spawned if set | Skipped |
+| Behavior | Solid | Atlas | None |
+|----------|-------|-------|------|
+| Container | `BackgroundColor` + `BorderColor` | `ImageNode::from_atlas_image()` | No container |
+| Positioning | Default flex | `PositionType::Relative` | Content on overlay |
+| Padding | Applied (default 30px) | Ignored | N/A |
+| Border | Applied (3px) | None | N/A |
+| Title | Spawned if set | Skipped | Skipped |
+| Hints | Spawned if set | Skipped | Skipped |
+
+**When to use each:**
+- `Solid` - Standard modals with title, hints, and solid background (ProfileModal, FightModal)
+- `Atlas` - Sprite-based modals using an image as background (MonsterCompendium book)
+- `None` - Grid-based modals where widgets provide their own backgrounds (InventoryModal, MerchantModal, AnvilModal, ForgeModal)
 
 ## Styling Constants
 
@@ -136,22 +153,24 @@ fn spawn_profile_modal(commands: &mut Commands, player: &Player) {
 }
 ```
 
-### Custom Size and Multiple Hints
+### Grid-Based Modal (No Container)
 
 ```rust
-commands.spawn_modal(
-    Modal::new()
-        .title("Inventory")
-        .size(1000.0, 700.0)
-        .max_height_percent(90.0)
-        .with_root_marker(|e| { e.insert(InventoryModalRoot); })
-        .hint("[↑↓] Navigate")
-        .hint("[Enter] Equip/Unequip")
-        .hint("[I/Esc] Close")
-        .content(|modal| {
-            spawn_item_list(modal, &items, selected_index);
-        })
-);
+fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
+    let items = inventory.items.clone();
+
+    commands.spawn_modal(
+        Modal::new()
+            .background(ModalBackground::None)
+            .with_root_marker(|e| { e.insert(InventoryModalRoot); })
+            .content(move |c| {
+                c.spawn(modal_content_row()).with_children(|row| {
+                    spawn_equipment_grid(row, &items);
+                    spawn_backpack_grid(row, &items);
+                });
+            })
+    );
+}
 ```
 
 ### Atlas Background (Monster Compendium Book)
@@ -188,19 +207,6 @@ fn spawn_monster_compendium(
 }
 ```
 
-### Minimal Modal (No Title/Hints)
-
-```rust
-commands.spawn_modal(
-    Modal::new()
-        .size(400.0, 200.0)
-        .with_root_marker(|e| { e.insert(ConfirmDialogRoot); })
-        .content(|modal| {
-            modal.spawn(Text::new("Are you sure?"));
-        })
-);
-```
-
 ## Content Closure Pattern
 
 The content closure is `FnOnce(&mut ChildBuilder) + Send + Sync + 'static`. When capturing data:
@@ -231,5 +237,5 @@ pub use modal_builder::{Modal, ModalBackground, SpawnModalExt};
 
 ## Related Files
 
-- `src/ui/screens/modal.rs` - `ModalOverlayBundle`, `spawn_modal_overlay()`, `ModalOverlay`, `ModalContent`, `ActiveModal`
+- `src/ui/screens/modal.rs` - `ModalOverlayBundle`, `ModalOverlay`, `ModalContent`, `ActiveModal`, `ModalType`
 - `src/ui/hints.rs` - `spawn_modal_hint()` used for hint rendering

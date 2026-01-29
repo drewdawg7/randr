@@ -9,11 +9,9 @@ use crate::stats::{HasStats, StatSheet, StatType};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt, RegisteredModal};
 use crate::ui::separator_node;
 use crate::ui::widgets::StatRow;
+use crate::ui::{Modal, SpawnModalExt};
 
-use super::modal::{
-    create_modal_container, create_modal_instruction, create_modal_title, spawn_modal_overlay,
-    ModalType,
-};
+use super::modal::ModalType;
 
 /// Plugin that manages the profile modal system.
 pub struct ProfileModalPlugin;
@@ -62,45 +60,28 @@ impl RegisteredModal for ProfileModal {
 
 /// Spawn the profile modal UI showing player stats and equipped items.
 pub fn spawn_profile_modal(commands: &mut Commands, player: &Player) {
-    let overlay = spawn_modal_overlay(commands);
+    let player = player.clone();
 
-    commands
-        .entity(overlay)
-        .insert(ProfileModalRoot)
-        .with_children(|parent| {
-            // Modal content container
-            parent
-                .spawn((
-                    create_modal_container(),
-                    BackgroundColor(Color::srgb(0.15, 0.12, 0.1)),
-                    BorderColor(Color::srgb(0.6, 0.5, 0.3)),
-                ))
-                .with_children(|modal| {
-                    // Title
-                    modal.spawn(create_modal_title("Character Profile"));
-
-                    // Two-column layout
-                    modal
-                        .spawn(Node {
-                            width: Val::Percent(100.0),
-                            flex_direction: FlexDirection::Row,
-                            column_gap: Val::Px(40.0),
-                            ..default()
-                        })
-                        .with_children(|columns| {
-                            // Left column: Stats
-                            spawn_stats_column(columns, player);
-
-                            // Right column: Equipment
-                            spawn_equipment_column(columns, player);
-                        });
-
-                    // Instructions at bottom
-                    modal.spawn(create_modal_instruction(
-                        "Press [P] or [Esc] to close",
-                    ));
+    commands.spawn_modal(
+        Modal::new()
+            .title("Character Profile")
+            .hint("[P] or [Esc] to close")
+            .with_root_marker(|e| {
+                e.insert(ProfileModalRoot);
+            })
+            .content(move |c| {
+                c.spawn(Node {
+                    width: Val::Percent(100.0),
+                    flex_direction: FlexDirection::Row,
+                    column_gap: Val::Px(40.0),
+                    ..default()
+                })
+                .with_children(|columns| {
+                    spawn_stats_column(columns, &player);
+                    spawn_equipment_column(columns, &player);
                 });
-        });
+            }),
+    );
 }
 
 /// Spawn the left column showing player stats.
