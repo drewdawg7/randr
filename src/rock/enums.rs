@@ -17,6 +17,15 @@ impl RockType {
         RockType::Gold,
     ];
 
+    pub fn display_name(&self) -> &'static str {
+        match self {
+            Self::Coal => "Coal Rock",
+            Self::Copper => "Copper Rock",
+            Self::Iron => "Iron Rock",
+            Self::Gold => "Gold Rock",
+        }
+    }
+
     /// Returns the sprite sheet key and slice name for this rock type.
     /// The `variant` parameter (0 or 1) selects between the two sprite variants.
     pub fn sprite_data(&self, variant: u8) -> (SpriteSheetKey, &'static str) {

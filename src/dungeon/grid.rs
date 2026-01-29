@@ -57,20 +57,22 @@ impl GridPosition {
     }
 }
 
-/// Resource tracking which cells are occupied.
 #[derive(Resource)]
 pub struct GridOccupancy {
     width: usize,
     height: usize,
     cells: Vec<Option<Entity>>,
+    blocked: Vec<bool>,
 }
 
 impl GridOccupancy {
     pub fn new(width: usize, height: usize) -> Self {
+        let size = width * height;
         Self {
             width,
             height,
-            cells: vec![None; width * height],
+            cells: vec![None; size],
+            blocked: vec![false; size],
         }
     }
 
@@ -82,11 +84,9 @@ impl GridOccupancy {
         }
     }
 
-    /// Check if a cell is occupied.
     pub fn is_occupied(&self, x: usize, y: usize) -> bool {
         self.index(x, y)
-            .and_then(|i| self.cells.get(i))
-            .map(|cell| cell.is_some())
+            .map(|i| self.cells[i].is_some() || self.blocked[i])
             .unwrap_or(false)
     }
 
@@ -97,7 +97,6 @@ impl GridOccupancy {
         })
     }
 
-    /// Mark cells as occupied by entity.
     pub fn occupy(&mut self, pos: GridPosition, size: GridSize, entity: Entity) {
         for (x, y) in pos.occupied_cells(size) {
             if let Some(i) = self.index(x, y) {
@@ -106,7 +105,22 @@ impl GridOccupancy {
         }
     }
 
-    /// Clear cells previously occupied by entity at position.
+    pub fn mark_blocked(&mut self, pos: GridPosition, size: GridSize) {
+        for (x, y) in pos.occupied_cells(size) {
+            if let Some(i) = self.index(x, y) {
+                self.blocked[i] = true;
+            }
+        }
+    }
+
+    pub fn unmark_blocked(&mut self, pos: GridPosition, size: GridSize) {
+        for (x, y) in pos.occupied_cells(size) {
+            if let Some(i) = self.index(x, y) {
+                self.blocked[i] = false;
+            }
+        }
+    }
+
     pub fn vacate(&mut self, pos: GridPosition, size: GridSize) {
         for (x, y) in pos.occupied_cells(size) {
             if let Some(i) = self.index(x, y) {

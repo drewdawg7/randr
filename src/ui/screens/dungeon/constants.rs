@@ -1,0 +1,5 @@
+pub const DUNGEON_SCALE: f32 = 1.5;
+pub const BASE_TILE_UNSCALED: f32 = 8.0;
+pub const BASE_TILE: f32 = BASE_TILE_UNSCALED * DUNGEON_SCALE;
+pub const MOVE_SPEED: f32 = 6.0;
+pub const ENTITY_VISUAL_SCALE: f32 = 2.0;

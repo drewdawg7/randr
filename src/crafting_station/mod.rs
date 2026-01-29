@@ -11,6 +11,12 @@ pub enum CraftingStationType {
     Anvil,
 }
 
+#[derive(Component)]
+pub struct ForgeActiveTimer(pub Timer);
+
+#[derive(Component)]
+pub struct AnvilActiveTimer(pub Timer);
+
 /// Crafting state attached to forge entities.
 /// Tracks items in each slot and whether crafting is in progress.
 #[derive(Component, Default, Clone)]

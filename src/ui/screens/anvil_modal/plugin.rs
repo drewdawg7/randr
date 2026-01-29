@@ -6,7 +6,7 @@ use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::crafting_station::AnvilCraftingState;
 use crate::ui::animation::{AnimationConfig, SpriteAnimation};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
-use crate::ui::screens::dungeon::plugin::AnvilActiveTimer;
+use crate::crafting_station::AnvilActiveTimer;
 use crate::ui::screens::modal::{in_anvil_modal, ActiveModal, ModalType};
 
 use super::input::{

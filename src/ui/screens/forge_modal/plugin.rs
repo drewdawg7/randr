@@ -54,7 +54,7 @@ fn handle_forge_close(
     use crate::assets::SpriteSheetKey;
     use crate::input::GameAction;
     use crate::ui::animation::{AnimationConfig, SpriteAnimation};
-    use crate::ui::screens::dungeon::plugin::ForgeActiveTimer as DungeonForgeActiveTimer;
+    use crate::crafting_station::ForgeActiveTimer;
     use crate::ui::screens::modal::ModalType;
 
     if active_modal.modal != Some(ModalType::ForgeModal) {
@@ -87,7 +87,7 @@ fn handle_forge_close(
                             };
                             commands.entity(entity).insert((
                                 SpriteAnimation::new(&config),
-                                DungeonForgeActiveTimer(Timer::from_seconds(5.0, TimerMode::Once)),
+                                ForgeActiveTimer(Timer::from_seconds(5.0, TimerMode::Once)),
                             ));
                         }
                     }

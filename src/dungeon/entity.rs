@@ -1,9 +1,17 @@
+use bevy::prelude::*;
+
 use crate::assets::SpriteSheetKey;
 use crate::crafting_station::CraftingStationType;
 use crate::mob::MobId;
 use crate::rock::RockType;
 
-use super::grid::GridSize;
+use super::grid::{GridPosition, GridSize};
+
+#[derive(Component)]
+pub struct DungeonEntityMarker {
+    pub pos: GridPosition,
+    pub entity_type: DungeonEntity,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DungeonEntity {
