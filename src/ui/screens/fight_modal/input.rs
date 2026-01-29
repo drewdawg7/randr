@@ -44,8 +44,9 @@ pub fn handle_fight_modal_close(
 /// System to handle left/right button navigation.
 pub fn handle_fight_modal_navigation(
     mut action_reader: EventReader<GameAction>,
-    mut selection: ResMut<FightModalButtonSelection>,
+    selection: Option<ResMut<FightModalButtonSelection>>,
 ) {
+    let Some(mut selection) = selection else { return };
     for action in action_reader.read() {
         match action {
             GameAction::Navigate(NavigationDirection::Left) => selection.up(),
