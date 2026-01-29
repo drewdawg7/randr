@@ -6,7 +6,7 @@ use crate::entities::Progression;
 use crate::inventory::{EquipmentSlot, HasInventory, Inventory};
 use crate::player::{Player, PlayerGold, PlayerName};
 use crate::stats::{HasStats, StatSheet, StatType};
-use crate::ui::modal_registry::{modal_close_system, RegisteredModal};
+use crate::ui::modal_registry::{modal_close_system, RegisterModalExt, RegisteredModal};
 use crate::ui::widgets::StatRow;
 
 use super::modal::{
@@ -19,18 +19,13 @@ pub struct ProfileModalPlugin;
 
 impl Plugin for ProfileModalPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
-            Update,
-            (
-                modal_close_system::<ProfileModal>,
-                trigger_spawn_profile_modal.run_if(resource_exists::<SpawnProfileModal>),
-            ),
-        );
+        app.register_modal::<ProfileModal>()
+            .add_systems(Update, modal_close_system::<ProfileModal>);
     }
 }
 
-/// System triggered by `SpawnProfileModal` resource.
-fn trigger_spawn_profile_modal(
+/// System that spawns the profile modal UI.
+fn do_spawn_profile_modal(
     mut commands: Commands,
     player_name: Res<PlayerName>,
     player_gold: Res<PlayerGold>,
@@ -38,7 +33,6 @@ fn trigger_spawn_profile_modal(
     inventory: Res<Inventory>,
     stats: Res<StatSheet>,
 ) {
-    commands.remove_resource::<SpawnProfileModal>();
     let player = Player::from_resources(&player_name, &player_gold, &progression, &inventory, &stats);
     spawn_profile_modal(&mut commands, &player);
 }
@@ -46,10 +40,6 @@ fn trigger_spawn_profile_modal(
 /// Component marker for the profile modal UI.
 #[derive(Component)]
 pub struct ProfileModalRoot;
-
-/// Marker resource to trigger spawning the profile modal.
-#[derive(Resource)]
-pub struct SpawnProfileModal;
 
 /// Type-safe handle for the profile modal.
 ///
@@ -65,7 +55,7 @@ impl RegisteredModal for ProfileModal {
     const MODAL_TYPE: ModalType = ModalType::Profile;
 
     fn spawn(world: &mut World) {
-        world.insert_resource(SpawnProfileModal);
+        world.run_system_cached(do_spawn_profile_modal).ok();
     }
 }
 

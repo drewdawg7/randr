@@ -138,62 +138,6 @@ pub fn create_modal_instruction(text: &str) -> impl Bundle {
     )
 }
 
-/// Result of a modal toggle operation.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ModalAction {
-    /// Modal was closed (was previously open).
-    Closed,
-    /// Modal should be opened (no other modal was active).
-    Open,
-}
-
-/// Toggle a modal open/closed.
-///
-/// Returns `Some(ModalAction::Closed)` if the modal was despawned,
-/// `Some(ModalAction::Open)` if no modal is active and this one should open,
-/// or `None` if another modal is already open.
-///
-/// The caller is responsible for:
-/// - Spawning the modal UI when `ModalAction::Open` is returned
-/// - Any custom cleanup (removing resources) when `ModalAction::Closed` is returned
-pub fn toggle_modal<T: Component>(
-    commands: &mut Commands,
-    active_modal: &mut ActiveModal,
-    modal_query: &Query<Entity, With<T>>,
-    modal_type: ModalType,
-) -> Option<ModalAction> {
-    if let Ok(entity) = modal_query.get_single() {
-        commands.entity(entity).despawn_recursive();
-        active_modal.modal = None;
-        Some(ModalAction::Closed)
-    } else if active_modal.modal.is_none() {
-        active_modal.modal = Some(modal_type);
-        Some(ModalAction::Open)
-    } else {
-        None
-    }
-}
-
-/// Close a modal if it's currently active.
-///
-/// Returns `true` if the modal was closed, `false` if it wasn't active.
-/// The caller is responsible for any custom cleanup (removing resources).
-pub fn close_modal<T: Component>(
-    commands: &mut Commands,
-    active_modal: &mut ActiveModal,
-    modal_query: &Query<Entity, With<T>>,
-    modal_type: ModalType,
-) -> bool {
-    if active_modal.modal == Some(modal_type) {
-        if let Ok(entity) = modal_query.get_single() {
-            commands.entity(entity).despawn_recursive();
-            active_modal.modal = None;
-            return true;
-        }
-    }
-    false
-}
-
 // ============================================================================
 // Modal Run Conditions
 // ============================================================================
@@ -228,4 +172,14 @@ pub fn in_forge_modal(active_modal: Res<ActiveModal>) -> bool {
 /// Run condition: returns true when the anvil modal is active.
 pub fn in_anvil_modal(active_modal: Res<ActiveModal>) -> bool {
     active_modal.modal == Some(ModalType::AnvilModal)
+}
+
+/// Run condition: returns true when the fight modal is active.
+pub fn in_fight_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::FightModal)
+}
+
+/// Run condition: returns true when the results modal is active.
+pub fn in_results_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::ResultsModal)
 }

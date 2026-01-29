@@ -4,4 +4,4 @@ mod render;
 mod state;
 
 pub use plugin::ResultsModalPlugin;
-pub use state::{ResultsModalData, ResultsSprite, SpawnResultsModal};
+pub use state::{ResultsModal, ResultsModalData, ResultsSprite};

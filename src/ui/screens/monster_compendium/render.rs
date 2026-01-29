@@ -8,18 +8,14 @@ use super::constants::*;
 use super::state::{
     CompendiumDropsSection, CompendiumListState, CompendiumMobSprite, CompendiumMonsters,
     DropEntry, DropListItem, DropsListState, MonsterCompendiumRoot, MonsterListItem,
-    SpawnMonsterCompendium,
 };
 
 /// System to spawn the monster compendium UI.
-pub fn spawn_monster_compendium(
+pub fn do_spawn_monster_compendium(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     monsters: Res<CompendiumMonsters>,
 ) {
-    // Remove trigger resource
-    commands.remove_resource::<SpawnMonsterCompendium>();
-
     let Some(ui_all) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
     };

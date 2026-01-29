@@ -5,8 +5,12 @@ use bevy::prelude::*;
 use crate::dungeon::GridPosition;
 use crate::mob::MobId;
 use crate::ui::focus::SelectionState;
+use crate::ui::modal_registry::RegisteredModal;
+use crate::ui::screens::modal::ModalType;
 use crate::ui::sprite_marker::{SpriteData, SpriteMarker};
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet};
+
+use super::render::do_spawn_fight_modal;
 
 /// Marker component for the fight modal root entity.
 #[derive(Component)]
@@ -64,9 +68,23 @@ pub struct FightModalMob {
     pub entity: Entity,
 }
 
-/// Marker resource to trigger spawning the fight modal.
-#[derive(Resource)]
-pub struct SpawnFightModal;
+/// Type-safe handle for the fight modal.
+pub struct FightModal;
+
+impl RegisteredModal for FightModal {
+    type Root = FightModalRoot;
+    const MODAL_TYPE: ModalType = ModalType::FightModal;
+
+    fn spawn(world: &mut World) {
+        world.init_resource::<FightModalButtonSelection>();
+        world.run_system_cached(do_spawn_fight_modal).ok();
+    }
+
+    fn cleanup(world: &mut World) {
+        world.remove_resource::<FightModalMob>();
+        world.remove_resource::<FightModalButtonSelection>();
+    }
+}
 
 /// Button selection options in the fight modal.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]

@@ -2,13 +2,10 @@
 
 use bevy::prelude::*;
 
-use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::widgets::Column;
 use crate::ui::{Modal, SpawnModalExt};
 
-use super::state::{
-    ResultsModalData, ResultsModalMobSprite, ResultsModalRoot, ResultsSprite, SpawnResultsModal,
-};
+use super::state::{ResultsModalData, ResultsModalMobSprite, ResultsModalRoot, ResultsSprite};
 
 const SPRITE_SIZE: f32 = 128.0;
 const MODAL_WIDTH: f32 = 300.0;
@@ -20,14 +17,7 @@ const GOLD_COLOR: Color = Color::srgb(1.0, 0.84, 0.0);
 const XP_COLOR: Color = Color::srgb(0.6, 0.8, 1.0);
 
 /// System to spawn the results modal UI.
-pub fn spawn_results_modal(
-    mut commands: Commands,
-    data: Res<ResultsModalData>,
-    mut active_modal: ResMut<ActiveModal>,
-) {
-    commands.remove_resource::<SpawnResultsModal>();
-    active_modal.modal = Some(ModalType::ResultsModal);
-
+pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData>) {
     let title = data.title.clone();
     let subtitle = data.subtitle.clone();
     let sprite = data.sprite.clone();

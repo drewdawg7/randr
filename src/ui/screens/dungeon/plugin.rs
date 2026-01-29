@@ -16,11 +16,11 @@ use crate::location::LocationId;
 use crate::mob::MobId;
 use crate::states::AppState;
 use crate::ui::screens::anvil_modal::ActiveAnvilEntity;
-use crate::ui::screens::fight_modal::state::{FightModalMob, SpawnFightModal};
+use crate::ui::screens::fight_modal::state::FightModalMob;
 use crate::ui::screens::forge_modal::ActiveForgeEntity;
 use crate::ui::screens::merchant_modal::MerchantStock;
 use crate::ui::screens::modal::{ActiveModal, ModalType, OpenModal};
-use crate::ui::screens::results_modal::{ResultsModalData, SpawnResultsModal};
+use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::MobSpriteSheets;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
@@ -233,7 +233,7 @@ fn handle_move_result(
                     pos: *pos,
                     entity: *entity,
                 });
-                commands.insert_resource(SpawnFightModal);
+                commands.trigger(OpenModal(ModalType::FightModal));
             }
             MoveResult::Blocked | MoveResult::TriggeredStairs | MoveResult::TriggeredDoor => {}
         }
@@ -357,7 +357,7 @@ fn handle_mining_result(mut commands: Commands, mut events: EventReader<MiningRe
             xp_gained: None,
             loot_drops: event.loot_drops.clone(),
         });
-        commands.insert_resource(SpawnResultsModal);
+        commands.trigger(OpenModal(ModalType::ResultsModal));
     }
 }
 

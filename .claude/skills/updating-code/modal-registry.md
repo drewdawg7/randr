@@ -167,6 +167,8 @@ pub fn spawn_my_modal_impl(
 | Merchant | `MerchantModal` | `MerchantModalRoot` | `merchant_modal/state.rs` |
 | Forge | `ForgeModal` | `ForgeModalRoot` | `forge_modal/state.rs` |
 | Anvil | `AnvilModal` | `AnvilModalRoot` | `anvil_modal/state.rs` |
+| Fight | `FightModal` | `FightModalRoot` | `fight_modal/state.rs` |
+| Results | `ResultsModal` | `ResultsModalRoot` | `results_modal/state.rs` |
 
 ## Close Handlers
 
@@ -185,8 +187,9 @@ app.add_systems(Update, (
 The generic system (defined in `src/ui/modal_registry.rs`) listens for `GameAction::CloseModal`
 and calls `commands.close_modal::<M>()` when the modal is active.
 
-**Note:** Modals with custom close logic (e.g., fight modal which removes extra resources,
-results modal which closes on both Select and CloseModal) should still use custom handlers.
+**Note:** Modals with custom close logic should still use custom handlers:
+- **FightModal**: Uses custom close handler (closes on Escape, but combat flow stays open during exchanges)
+- **ResultsModal**: Uses custom close handler (closes on both Select AND CloseModal actions)
 
 ## Opening Modals from Other Systems
 
@@ -257,8 +260,30 @@ From `src/ui/screens/mod.rs`:
 pub use modal::{ActiveModal, CloseModal, ModalPlugin, ModalType, OpenModal};
 ```
 
+## Run Conditions
+
+Modal-specific run conditions in `src/ui/screens/modal.rs`:
+
+```rust
+pub fn in_inventory_modal(active_modal: Res<ActiveModal>) -> bool
+pub fn in_merchant_modal(active_modal: Res<ActiveModal>) -> bool
+pub fn in_forge_modal(active_modal: Res<ActiveModal>) -> bool
+pub fn in_anvil_modal(active_modal: Res<ActiveModal>) -> bool
+pub fn in_fight_modal(active_modal: Res<ActiveModal>) -> bool
+pub fn in_results_modal(active_modal: Res<ActiveModal>) -> bool
+```
+
+Use with `.run_if()` to conditionally run modal systems:
+
+```rust
+app.add_systems(Update, (
+    handle_navigation,
+    handle_select,
+).run_if(in_fight_modal));
+```
+
 ## Related Files
 
-- `src/ui/screens/modal.rs` - `ActiveModal`, `ModalType`, `OpenModal`, `CloseModal`, base modal helpers
+- `src/ui/screens/modal.rs` - `ActiveModal`, `ModalType`, `OpenModal`, `CloseModal`, run conditions
 - `src/ui/modal_builder.rs` - `Modal` builder for UI
 - `src/navigation/systems.rs` - Central navigation system using `ModalCommands`

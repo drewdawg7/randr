@@ -18,28 +18,25 @@ use crate::ui::{PlayerAttackTimer, PlayerSpriteSheet, SelectionState, SpriteAnim
 
 use crate::plugins::MobDefeated;
 
-use super::super::modal::{close_modal, ActiveModal, ModalType};
-use super::super::results_modal::{ResultsModalData, ResultsSprite, SpawnResultsModal};
-use super::state::{FightModalButton, FightModalButtonSelection, FightModalMob, FightModalRoot};
+use crate::ui::modal_registry::ModalCommands;
+
+use super::super::modal::{ActiveModal, ModalType, OpenModal};
+use super::super::results_modal::{ResultsModalData, ResultsSprite};
+use super::state::{FightModal, FightModalButton, FightModalButtonSelection, FightModalMob};
 
 /// System to handle closing the fight modal.
 pub fn handle_fight_modal_close(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
-    mut active_modal: ResMut<ActiveModal>,
-    modal_query: Query<Entity, With<FightModalRoot>>,
+    active_modal: Res<ActiveModal>,
 ) {
+    if active_modal.modal != Some(ModalType::FightModal) {
+        return;
+    }
+
     for action in action_reader.read() {
-        if *action == GameAction::CloseModal
-            && close_modal(
-                &mut commands,
-                &mut active_modal,
-                &modal_query,
-                ModalType::FightModal,
-            )
-        {
-            commands.remove_resource::<FightModalMob>();
-            commands.remove_resource::<FightModalButtonSelection>();
+        if *action == GameAction::CloseModal {
+            commands.close_modal::<FightModal>();
         }
     }
 }
@@ -72,10 +69,8 @@ pub fn handle_fight_modal_select(
     mut progression: ResMut<Progression>,
     mut inventory: ResMut<Inventory>,
     mut stats: ResMut<StatSheet>,
-    mut active_modal: ResMut<ActiveModal>,
     sheet: Res<PlayerSpriteSheet>,
     mut sprite_query: Query<(&mut SpriteAnimation, &mut PlayerAttackTimer)>,
-    modal_query: Query<Entity, With<FightModalRoot>>,
     mut mob_query: Query<(
         &MobMarker,
         &mut Health,
@@ -164,13 +159,8 @@ pub fn handle_fight_modal_select(
                     occupancy.vacate(fight_mob.pos, GridSize::single());
                     commands.entity(fight_mob.entity).despawn_recursive();
 
-                    // Close fight modal
-                    close_modal(
-                        &mut commands,
-                        &mut active_modal,
-                        &modal_query,
-                        ModalType::FightModal,
-                    );
+                    // Close fight modal (cleanup removes FightModalMob and FightModalButtonSelection)
+                    commands.close_modal::<FightModal>();
 
                     // Spawn results modal with victory data
                     commands.insert_resource(ResultsModalData {
@@ -181,10 +171,7 @@ pub fn handle_fight_modal_select(
                         xp_gained: Some(rewards.xp_gained),
                         loot_drops,
                     });
-                    commands.insert_resource(SpawnResultsModal);
-
-                    commands.remove_resource::<FightModalMob>();
-                    commands.remove_resource::<FightModalButtonSelection>();
+                    commands.trigger(OpenModal(ModalType::ResultsModal));
                 } else {
                     // Enemy counter-attack using ECS components
                     let enemy_result = entity_attacks_player(
@@ -199,29 +186,15 @@ pub fn handle_fight_modal_select(
                         // Handle player defeat
                         process_player_defeat(&mut stats, &mut player_gold);
 
-                        // Close modal
-                        close_modal(
-                            &mut commands,
-                            &mut active_modal,
-                            &modal_query,
-                            ModalType::FightModal,
-                        );
-                        commands.remove_resource::<FightModalMob>();
-                        commands.remove_resource::<FightModalButtonSelection>();
+                        // Close modal (cleanup removes FightModalMob and FightModalButtonSelection)
+                        commands.close_modal::<FightModal>();
                     }
                     // Otherwise combat continues - modal stays open for next attack
                 }
             }
             FightModalButton::Cancel => {
-                // Just close the modal, no combat
-                close_modal(
-                    &mut commands,
-                    &mut active_modal,
-                    &modal_query,
-                    ModalType::FightModal,
-                );
-                commands.remove_resource::<FightModalMob>();
-                commands.remove_resource::<FightModalButtonSelection>();
+                // Just close the modal, no combat (cleanup removes resources)
+                commands.close_modal::<FightModal>();
             }
         }
     }

@@ -9,13 +9,13 @@ use crate::stats::{HasStats, StatSheet};
 use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBar};
 use crate::ui::widgets::spawn_three_slice_banner;
 
-use super::super::modal::{spawn_modal_overlay, ActiveModal, ModalType};
+use super::super::modal::spawn_modal_overlay;
 use crate::ui::PlayerAttackTimer;
 
 use super::state::{
     FightModalButton, FightModalButtonSelection, FightModalCancelButton, FightModalMob,
     FightModalMobHealthBar, FightModalMobSprite, FightModalOkButton, FightModalPlayerHealthBar,
-    FightModalPlayerSprite, FightModalRoot, SpawnFightModal,
+    FightModalPlayerSprite, FightModalRoot,
 };
 
 const SPRITE_SIZE: f32 = 128.0;
@@ -26,12 +26,11 @@ const BUTTON_SIZE: (f32, f32) = (27.0, 19.5);
 const HEALTH_BAR_SIZE: (f32, f32) = (120.0, 16.0);
 
 /// System to spawn the fight modal UI.
-pub fn spawn_fight_modal(
+pub fn do_spawn_fight_modal(
     mut commands: Commands,
     mob_res: Res<FightModalMob>,
     player_name: Res<PlayerName>,
     stats: Res<StatSheet>,
-    mut active_modal: ResMut<ActiveModal>,
     game_sprites: Res<GameSprites>,
     mob_query: Query<&Health>,
 ) {
@@ -40,10 +39,6 @@ pub fn spawn_fight_modal(
     let (mob_current_hp, mob_max_hp) = mob_health
         .map(|h| (h.current, h.max))
         .unwrap_or((0, 1)); // Fallback if entity not found
-
-    commands.remove_resource::<SpawnFightModal>();
-    commands.init_resource::<FightModalButtonSelection>();
-    active_modal.modal = Some(ModalType::FightModal);
 
     let overlay = spawn_modal_overlay(&mut commands);
 

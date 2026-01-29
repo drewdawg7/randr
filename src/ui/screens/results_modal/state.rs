@@ -4,8 +4,12 @@ use bevy::prelude::*;
 
 use crate::loot::LootDrop;
 use crate::mob::MobId;
+use crate::ui::modal_registry::RegisteredModal;
+use crate::ui::screens::modal::ModalType;
 use crate::ui::sprite_marker::{SpriteData, SpriteMarker};
 use crate::ui::MobSpriteSheets;
+
+use super::render::do_spawn_results_modal;
 
 /// Marker component for the results modal root entity.
 #[derive(Component)]
@@ -52,6 +56,18 @@ pub struct ResultsModalData {
     pub loot_drops: Vec<LootDrop>,
 }
 
-/// Marker resource to trigger spawning the results modal.
-#[derive(Resource)]
-pub struct SpawnResultsModal;
+/// Type-safe handle for the results modal.
+pub struct ResultsModal;
+
+impl RegisteredModal for ResultsModal {
+    type Root = ResultsModalRoot;
+    const MODAL_TYPE: ModalType = ModalType::ResultsModal;
+
+    fn spawn(world: &mut World) {
+        world.run_system_cached(do_spawn_results_modal).ok();
+    }
+
+    fn cleanup(world: &mut World) {
+        world.remove_resource::<ResultsModalData>();
+    }
+}

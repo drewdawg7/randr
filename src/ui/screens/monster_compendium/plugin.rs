@@ -4,12 +4,10 @@ use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 
 use super::input::{handle_compendium_navigation, handle_compendium_tab};
 use super::render::{
-    spawn_monster_compendium, update_compendium_mob_sprite, update_drops_display,
-    update_drops_list_colors, update_monster_list_display,
+    update_compendium_mob_sprite, update_drops_display, update_drops_list_colors,
+    update_monster_list_display,
 };
-use super::state::{
-    CompendiumListState, DropsListState, MonsterCompendiumModal, SpawnMonsterCompendium,
-};
+use super::state::{CompendiumListState, DropsListState, MonsterCompendiumModal};
 
 pub struct MonsterCompendiumPlugin;
 
@@ -28,7 +26,6 @@ impl Plugin for MonsterCompendiumPlugin {
                     update_compendium_mob_sprite,
                     update_drops_display,
                     update_drops_list_colors,
-                    spawn_monster_compendium.run_if(resource_exists::<SpawnMonsterCompendium>),
                 ),
             );
     }

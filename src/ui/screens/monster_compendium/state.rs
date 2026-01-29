@@ -7,6 +7,8 @@ use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
 use crate::ui::{FocusPanel, FocusState, SelectionState};
 
+use super::render::do_spawn_monster_compendium;
+
 /// Component marker for the monster compendium UI.
 #[derive(Component)]
 pub struct MonsterCompendiumRoot;
@@ -89,10 +91,6 @@ impl DropEntry {
     }
 }
 
-/// Marker resource to trigger spawning the monster compendium.
-#[derive(Resource)]
-pub struct SpawnMonsterCompendium;
-
 #[derive(Clone)]
 pub struct MonsterEntry {
     pub name: String,
@@ -167,12 +165,13 @@ impl RegisteredModal for MonsterCompendiumModal {
         world.resource_mut::<CompendiumListState>().reset();
         world.resource_mut::<DropsListState>().reset();
         world.insert_resource(monsters);
-        world.insert_resource(SpawnMonsterCompendium);
 
         world.insert_resource(FocusState::default());
         world
             .resource_mut::<FocusState>()
             .set_focus(FocusPanel::CompendiumMonsterList);
+
+        world.run_system_cached(do_spawn_monster_compendium).ok();
     }
 
     fn cleanup(world: &mut World) {
