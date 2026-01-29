@@ -91,8 +91,6 @@ pub fn animate_sprites(
     mut query: Query<(&mut SpriteAnimation, &mut ImageNode)>,
 ) {
     for (mut animation, mut image) in &mut query {
-        let prev_frame = animation.current_frame;
-
         if animation.synchronized && animation.looping {
             // Derive frame from global clock so all same-config animations stay in phase
             let frame_count = animation.last_frame - animation.first_frame + 1;
@@ -103,11 +101,7 @@ pub fn animate_sprites(
         } else {
             // Per-entity timer for non-synchronized or non-looping animations
             animation.timer.tick(time.delta());
-            let times_finished = animation.timer.times_finished_this_tick();
-            if times_finished == 0 {
-                continue;
-            }
-            for _ in 0..times_finished {
+            for _ in 0..animation.timer.times_finished_this_tick() {
                 if animation.current_frame >= animation.last_frame {
                     if animation.looping {
                         animation.current_frame = animation.first_frame;
@@ -120,8 +114,9 @@ pub fn animate_sprites(
             }
         }
 
-        if animation.current_frame != prev_frame {
-            if let Some(ref mut atlas) = image.texture_atlas {
+        // Always sync image to current_frame (handles external changes like animation switches)
+        if let Some(ref mut atlas) = image.texture_atlas {
+            if atlas.index != animation.current_frame {
                 atlas.index = animation.current_frame;
             }
         }

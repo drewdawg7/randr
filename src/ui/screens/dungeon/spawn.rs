@@ -123,13 +123,15 @@ fn spawn_grid_tiles(
     tileset: &TilesetGrid,
     game_sprites: &GameSprites,
 ) {
-    for y in 0..layout.height() {
-        for x in 0..layout.width() {
+    // Layout is at 2x resolution, so visual tiles are at every other position.
+    // Each visual tile spans 2x2 grid cells.
+    for y in (0..layout.height()).step_by(2) {
+        for x in (0..layout.width()).step_by(2) {
             grid.spawn((
                 DungeonCell,
                 Node {
-                    grid_column: GridPlacement::start(x as i16 + 1),
-                    grid_row: GridPlacement::start(y as i16 + 1),
+                    grid_column: GridPlacement::start(x as i16 + 1).set_span(2),
+                    grid_row: GridPlacement::start(y as i16 + 1).set_span(2),
                     ..default()
                 },
             ))

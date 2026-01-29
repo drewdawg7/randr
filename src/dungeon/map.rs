@@ -314,20 +314,24 @@ impl Map {
     /// - `is_solid=true` → TileType::Wall
     /// - `is_solid=false` → TileType::Floor
     /// - `can_spawn_player=true` → candidate for player spawn
+    ///
+    /// The layout is created at 2x TMX resolution for finer collision.
+    /// Each TMX tile maps to a 2x2 block of cells in the layout.
     pub fn to_layout(&self) -> DungeonLayout {
-        let width = self.width as usize;
-        let height = self.height as usize;
+        let tmx_width = self.width as usize;
+        let tmx_height = self.height as usize;
+        let width = tmx_width * 2;
+        let height = tmx_height * 2;
 
         let mut layout = DungeonLayout::new(width, height);
         let mut spawn_candidates: Vec<(usize, usize)> = Vec::new();
 
-        for y in 0..height {
-            for x in 0..width {
-                let idx = y * width + x;
+        for tmx_y in 0..tmx_height {
+            for tmx_x in 0..tmx_width {
+                let idx = tmx_y * tmx_width + tmx_x;
                 let gid = self.tile_data.get(idx).copied().unwrap_or(0);
 
                 let tile_type = if gid == 0 {
-                    // Tile ID 0 = empty, not rendered
                     TileType::Empty
                 } else {
                     let local_id = gid - self.tileset_first_gid;
@@ -339,7 +343,7 @@ impl Map {
                         .unwrap_or_default();
 
                     if props.can_spawn_player {
-                        spawn_candidates.push((x, y));
+                        spawn_candidates.push((tmx_x * 2, tmx_y * 2));
                     }
 
                     if props.is_door {
@@ -351,16 +355,26 @@ impl Map {
                     }
                 };
 
-                // Store the exact tileset ID for direct rendering
-                let tile = Tile::new(tile_type).with_tileset_id(gid);
-                layout.set_tile(x, y, tile);
+                // Fill 2x2 block of cells for this TMX tile
+                // Only top-left cell stores the tileset_id for rendering
+                for dy in 0..2 {
+                    for dx in 0..2 {
+                        let x = tmx_x * 2 + dx;
+                        let y = tmx_y * 2 + dy;
+                        let tile = if dx == 0 && dy == 0 {
+                            Tile::new(tile_type).with_tileset_id(gid)
+                        } else {
+                            Tile::new(tile_type)
+                        };
+                        layout.set_tile(x, y, tile);
+                    }
+                }
             }
         }
 
         // Set entrance to first spawn candidate or center
         if let Some(&(x, y)) = spawn_candidates.first() {
             layout.entrance = (x, y);
-            // Keep the tileset_id when setting spawn point
             if let Some(existing) = layout.tile_at(x, y) {
                 let tileset_id = existing.tileset_id;
                 let mut tile = Tile::new(TileType::SpawnPoint);
@@ -377,6 +391,7 @@ impl Map {
     }
 
     /// Get all tiles marked as valid for entity spawning.
+    /// Returns positions at 2x resolution to match layout coordinates.
     pub fn entity_spawn_positions(&self) -> Vec<GridPosition> {
         let width = self.width as usize;
         let height = self.height as usize;
@@ -391,7 +406,7 @@ impl Map {
                     let local_id = gid - self.tileset_first_gid;
                     if let Some(props) = self.tileset.tile_properties.get(&local_id) {
                         if props.can_have_entity && !props.is_solid {
-                            positions.push(GridPosition::new(x, y));
+                            positions.push(GridPosition::new(x * 2, y * 2));
                         }
                     }
                 }
@@ -402,6 +417,7 @@ impl Map {
     }
 
     /// Get all tiles marked as valid for player spawning.
+    /// Returns positions at 2x resolution to match layout coordinates.
     pub fn player_spawn_positions(&self) -> Vec<GridPosition> {
         let width = self.width as usize;
         let height = self.height as usize;
@@ -416,7 +432,7 @@ impl Map {
                     let local_id = gid - self.tileset_first_gid;
                     if let Some(props) = self.tileset.tile_properties.get(&local_id) {
                         if props.can_spawn_player && !props.is_solid {
-                            positions.push(GridPosition::new(x, y));
+                            positions.push(GridPosition::new(x * 2, y * 2));
                         }
                     }
                 }

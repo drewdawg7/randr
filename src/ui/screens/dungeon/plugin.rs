@@ -124,6 +124,7 @@ fn handle_dungeon_movement(
     keyboard: Res<ButtonInput<KeyCode>>,
     active_modal: Res<ActiveModal>,
     player_query: Query<&SmoothPosition, With<DungeonPlayer>>,
+    mut was_moving: Local<bool>,
 ) {
     if active_modal.modal.is_some() {
         return;
@@ -133,24 +134,47 @@ fn handle_dungeon_movement(
         return;
     };
 
+    let fresh_direction = action_reader.read().find_map(|a| match a {
+        GameAction::Navigate(dir) => Some(*dir),
+        _ => None,
+    });
+
     if smooth_pos.moving {
+        *was_moving = true;
         return;
     }
 
-    let direction = action_reader
-        .read()
-        .find_map(|a| match a {
-            GameAction::Navigate(dir) => Some(*dir),
-            _ => None,
-        })
-        .or_else(|| held_direction(&keyboard));
+    // Determine direction: fresh press takes priority, then held key (only after a move completed)
+    let direction = fresh_direction.or_else(|| {
+        if *was_moving {
+            held_direction(&keyboard)
+        } else {
+            None
+        }
+    });
 
     let Some(direction) = direction else {
+        *was_moving = false;
         return;
     };
 
+    *was_moving = false;
     commands.insert_resource(LastMoveDirection(direction));
     move_events.send(PlayerMoveIntent { direction });
+}
+
+fn held_direction(keyboard: &ButtonInput<KeyCode>) -> Option<NavigationDirection> {
+    if keyboard.pressed(KeyCode::ArrowLeft) {
+        Some(NavigationDirection::Left)
+    } else if keyboard.pressed(KeyCode::ArrowRight) {
+        Some(NavigationDirection::Right)
+    } else if keyboard.pressed(KeyCode::ArrowUp) {
+        Some(NavigationDirection::Up)
+    } else if keyboard.pressed(KeyCode::ArrowDown) {
+        Some(NavigationDirection::Down)
+    } else {
+        None
+    }
 }
 
 fn handle_move_result(
@@ -213,20 +237,6 @@ fn handle_move_result(
             }
             MoveResult::Blocked | MoveResult::TriggeredStairs | MoveResult::TriggeredDoor => {}
         }
-    }
-}
-
-fn held_direction(keyboard: &ButtonInput<KeyCode>) -> Option<NavigationDirection> {
-    if keyboard.pressed(KeyCode::ArrowLeft) {
-        Some(NavigationDirection::Left)
-    } else if keyboard.pressed(KeyCode::ArrowRight) {
-        Some(NavigationDirection::Right)
-    } else if keyboard.pressed(KeyCode::ArrowUp) {
-        Some(NavigationDirection::Up)
-    } else if keyboard.pressed(KeyCode::ArrowDown) {
-        Some(NavigationDirection::Down)
-    } else {
-        None
     }
 }
 

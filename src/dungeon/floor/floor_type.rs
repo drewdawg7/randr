@@ -14,7 +14,7 @@ impl FloorType {
     }
 
     pub fn tile_scale(&self) -> f32 {
-        2.0
+        1.0
     }
 
     pub fn spawn_table(&self, is_final: bool) -> SpawnTable {
