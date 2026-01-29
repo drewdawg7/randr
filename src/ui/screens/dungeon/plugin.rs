@@ -10,7 +10,7 @@ use crate::dungeon::{
     FloorReady, GridOccupancy, MineEntity, MiningResult, MoveResult, NpcInteraction,
     PlayerMoveIntent, SpawnFloor, TilesetGrid,
 };
-use crate::input::{GameAction, NavigationDirection};
+use crate::input::{GameAction, HeldDirection, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::location::LocationId;
 use crate::mob::MobId;
@@ -121,7 +121,7 @@ fn handle_dungeon_movement(
     mut commands: Commands,
     mut action_reader: EventReader<GameAction>,
     mut move_events: EventWriter<PlayerMoveIntent>,
-    keyboard: Res<ButtonInput<KeyCode>>,
+    held_direction: Res<HeldDirection>,
     active_modal: Res<ActiveModal>,
     player_query: Query<&SmoothPosition, With<DungeonPlayer>>,
     mut was_moving: Local<bool>,
@@ -147,7 +147,7 @@ fn handle_dungeon_movement(
     // Determine direction: fresh press takes priority, then held key (only after a move completed)
     let direction = fresh_direction.or_else(|| {
         if *was_moving {
-            held_direction(&keyboard)
+            held_direction.0
         } else {
             None
         }
@@ -161,20 +161,6 @@ fn handle_dungeon_movement(
     *was_moving = false;
     commands.insert_resource(LastMoveDirection(direction));
     move_events.send(PlayerMoveIntent { direction });
-}
-
-fn held_direction(keyboard: &ButtonInput<KeyCode>) -> Option<NavigationDirection> {
-    if keyboard.pressed(KeyCode::ArrowLeft) {
-        Some(NavigationDirection::Left)
-    } else if keyboard.pressed(KeyCode::ArrowRight) {
-        Some(NavigationDirection::Right)
-    } else if keyboard.pressed(KeyCode::ArrowUp) {
-        Some(NavigationDirection::Up)
-    } else if keyboard.pressed(KeyCode::ArrowDown) {
-        Some(NavigationDirection::Down)
-    } else {
-        None
-    }
 }
 
 fn handle_move_result(

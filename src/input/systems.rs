@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::actions::{GameAction, NavigationDirection};
+use super::actions::{GameAction, HeldDirection, NavigationDirection};
 
 /// Initial delay before key repeat starts (seconds).
 const REPEAT_INITIAL_DELAY: f32 = 0.3;
@@ -33,6 +33,7 @@ impl Plugin for InputPlugin {
         app.add_event::<GameAction>()
             .add_event::<NavigationDirection>()
             .init_resource::<NavigationRepeatState>()
+            .init_resource::<HeldDirection>()
             .add_systems(PreUpdate, handle_keyboard_input);
     }
 }
@@ -64,6 +65,7 @@ fn handle_keyboard_input(
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut repeat: ResMut<NavigationRepeatState>,
+    mut held: ResMut<HeldDirection>,
     mut action_writer: EventWriter<GameAction>,
 ) {
     // Navigation - Arrow keys with key repeat
@@ -149,6 +151,9 @@ fn handle_keyboard_input(
     if keyboard.just_pressed(KeyCode::KeyB) {
         action_writer.send(GameAction::OpenCompendium);
     }
+
+    // Sync HeldDirection with repeat state
+    held.0 = repeat.direction;
 }
 
 /// Clear all pending GameAction events. Use in OnExit to prevent event bleed.

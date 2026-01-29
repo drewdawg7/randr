@@ -46,3 +46,8 @@ pub enum GameAction {
     /// Open monster compendium (b)
     OpenCompendium,
 }
+
+/// Tracks the currently-held navigation direction (if any).
+/// Updated by InputPlugin each frame based on NavigationRepeatState.
+#[derive(Resource, Default, Debug, Clone, PartialEq, Eq)]
+pub struct HeldDirection(pub Option<NavigationDirection>);
