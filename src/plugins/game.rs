@@ -11,7 +11,7 @@ use crate::save_load::SaveLoadPlugin;
 use crate::states::{AppState, StateTransitionPlugin};
 use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
-    AnvilModalPlugin, DungeonScreenPlugin, FightModalPlugin, FightPlugin, ForgeModalPlugin,
+    AnvilModalPlugin, DungeonScreenPlugin, FightModalPlugin, ForgeModalPlugin,
     InventoryModalPlugin, KeybindsPlugin, MainMenuPlugin, MerchantModalPlugin, MinePlugin,
     ModalPlugin, MonsterCompendiumPlugin, ProfileModalPlugin, ProfilePlugin, ResultsModalPlugin,
     TownPlugin,
@@ -79,7 +79,6 @@ impl Plugin for GamePlugin {
             TownPlugin,
             DungeonScreenPlugin,
             MinePlugin,
-            FightPlugin,
             FightModalPlugin,
             ResultsModalPlugin,
         ));

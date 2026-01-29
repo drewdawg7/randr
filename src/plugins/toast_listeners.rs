@@ -2,8 +2,8 @@ use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::game::{
     BrewingResult, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped,
-    ItemPickedUp, ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerDefeat, PlayerHealed,
-    PlayerLeveledUp, PlayerVictory, ShowToast,
+    ItemPickedUp, ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerHealed,
+    PlayerLeveledUp, ShowToast,
 };
 use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, MobSpawned, TransactionCompleted};
 
@@ -136,26 +136,10 @@ fn listen_item_events(mut events: ItemEventReaders, mut toast_writer: EventWrite
 
 /// Listen to combat-related events
 fn listen_combat_events(
-    mut victory_events: EventReader<PlayerVictory>,
-    mut defeat_events: EventReader<PlayerDefeat>,
     mut mob_defeated_events: EventReader<MobDefeated>,
     mut mob_spawned_events: EventReader<MobSpawned>,
     mut toast_writer: EventWriter<ShowToast>,
 ) {
-
-    // Victory notifications
-    for event in victory_events.read() {
-        toast_writer.send(ShowToast::success(format!(
-            "Victory! Gained {} XP",
-            event.xp_gained
-        )));
-    }
-
-    // Defeat notifications
-    for _event in defeat_events.read() {
-        toast_writer.send(ShowToast::error("Defeated! You have been sent back to town"));
-    }
-
     // Mob defeated
     for event in mob_defeated_events.read() {
         toast_writer.send(ShowToast::success(format!(

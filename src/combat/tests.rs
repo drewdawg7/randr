@@ -312,19 +312,6 @@ fn player_on_death_restores_health() {
     assert_eq!(player.hp(), player.max_hp());
 }
 
-// ==================== CombatRounds tests ====================
-
-#[test]
-fn combat_rounds_new_is_empty() {
-    use crate::combat::CombatRounds;
-    let rounds = CombatRounds::new();
-
-    assert!(rounds.loot_drops.is_empty());
-    assert_eq!(rounds.gold_gained, 0);
-    assert_eq!(rounds.xp_gained, 0);
-    assert!(!rounds.player_won);
-}
-
 // ==================== MobQuality tests ====================
 
 #[test]
@@ -354,32 +341,3 @@ fn mob_gives_xp_returns_xp_value() {
     assert_eq!(mob.give_xp(), 15);
 }
 
-// ==================== CombatEntity trait tests ====================
-
-#[test]
-fn get_combat_entity_info_returns_all_stats() {
-    use crate::combat::get_combat_entity_info;
-    let mob = create_test_mob("Info Mob", 100, 20, 8);
-
-    let info = get_combat_entity_info(&mob);
-
-    assert_eq!(info.name, "Info Mob");
-    assert_eq!(info.health, 100);
-    assert_eq!(info.attack, 20); // Average attack with variance
-    assert_eq!(info.defense, 8);
-    assert_eq!(info.gold_reward, 5);
-    assert_eq!(info.xp_reward, 15);
-}
-
-#[test]
-fn combat_entity_trait_works_with_mob() {
-    use crate::combat::CombatEntity;
-
-    // Verify Mob implements CombatEntity via blanket impl
-    fn accepts_combat_entity<E: CombatEntity>(entity: &E) -> String {
-        entity.name().to_string()
-    }
-
-    let mob = create_test_mob("Generic Enemy", 50, 10, 5);
-    assert_eq!(accepts_combat_entity(&mob), "Generic Enemy");
-}

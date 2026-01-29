@@ -7,10 +7,7 @@ pub mod store_transactions;
 pub mod toast;
 
 // Re-export combat types from the combat module
-pub use crate::combat::{
-    ActiveCombatResource, AttackPerformed, CombatEnded, CombatPhaseState, CombatPlugin,
-    CombatSourceResource, CombatStarted, PlayerDefeat, PlayerVictory,
-};
+pub use crate::combat::CombatPlugin;
 pub use items::{ItemDropped, ItemEquipped, ItemPickedUp, ItemPlugin, ItemUnequipped, ItemUsed};
 pub use crate::player::{Player, PlayerGold, PlayerName};
 pub use crate::storage::Storage;

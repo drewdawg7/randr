@@ -5,9 +5,12 @@ use super::super::constants::MOVE_SPEED;
 
 pub fn interpolate_positions(
     time: Res<Time>,
-    tile_sizes: Res<TileSizes>,
+    tile_sizes: Option<Res<TileSizes>>,
     mut query: Query<(&mut SmoothPosition, &mut Node)>,
 ) {
+    let Some(tile_sizes) = tile_sizes else {
+        return;
+    };
     let tile_size = tile_sizes.tile_size;
     let speed = MOVE_SPEED * tile_size;
 

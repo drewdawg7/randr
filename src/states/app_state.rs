@@ -4,10 +4,6 @@ use bevy::prelude::*;
 // State Transition Events
 // ============================================================================
 
-/// Event requesting transition to Fight state.
-#[derive(Event, Debug, Clone)]
-pub struct RequestFightEvent;
-
 /// Event requesting transition to Mine state.
 #[derive(Event, Debug, Clone)]
 pub struct RequestMineEvent;
@@ -24,7 +20,6 @@ pub enum AppState {
     Menu,
     Town,
     Dungeon,
-    Fight,
     Profile,
     Mine,
     Keybinds,
@@ -59,7 +54,6 @@ impl Plugin for StateTransitionPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<AppState>()
             .init_resource::<PreviousState>()
-            .add_event::<RequestFightEvent>()
             .add_event::<RequestMineEvent>()
             .add_systems(
                 StateTransition,
@@ -71,15 +65,9 @@ impl Plugin for StateTransitionPlugin {
 
 /// System that handles state transition request events.
 fn handle_state_transition_requests(
-    mut fight_events: EventReader<RequestFightEvent>,
     mut mine_events: EventReader<RequestMineEvent>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
-    // Process fight requests
-    if fight_events.read().next().is_some() {
-        next_state.set(AppState::Fight);
-    }
-
     // Process mine requests
     if mine_events.read().next().is_some() {
         next_state.set(AppState::Mine);

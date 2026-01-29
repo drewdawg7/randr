@@ -1,9 +1,6 @@
 use crate::{
-    combat::{ActiveCombat, Attack, AttackResult, CombatEntity, Combatant, DealsDamage, HasGold, IsKillable, Named},
-    entities::progression::HasProgression,
+    combat::{Attack, AttackResult, Combatant},
     inventory::Inventory,
-    loot::LootDrop,
-    player::Player,
     stats::{HasStats, StatSheet, StatType},
 };
 
@@ -43,21 +40,8 @@ pub struct VictoryRewards {
     pub xp_gained: i32,
 }
 
-/// Apply victory rewards to player: gold (with goldfind) and XP.
-/// Returns the calculated gold and XP for display purposes.
-pub fn apply_victory_rewards(player: &mut Player, base_gold: i32, base_xp: i32) -> VictoryRewards {
-    // Apply gold with goldfind bonus
-    let gold_gained = apply_goldfind(base_gold, player.effective_goldfind());
-    player.add_gold(gold_gained);
-
-    // Apply XP directly
-    player.gain_xp(base_xp);
-
-    VictoryRewards { gold_gained, xp_gained: base_xp }
-}
-
-pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
--> AttackResult {
+/// Generic attack function for trait-based combat (used in tests).
+pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D) -> AttackResult {
     let target_health_before = defender.effective_health();
     let target_defense = defender.effective_defense();
 
@@ -75,88 +59,7 @@ pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D)
         damage_to_target,
         target_health_before,
         target_health_after,
-        target_died
-    }
-}
-#[derive(Debug, Default, Clone)]
-pub struct CombatRounds {
-    /// Spawned loot drops from the loot table, includes item instances and quantities
-    pub loot_drops: Vec<LootDrop>,
-    pub gold_gained: i32,
-    pub xp_gained: i32,
-    pub player_won: bool,
-}
-
-impl CombatRounds {
-    pub fn new() -> Self {
-        Self {
-            loot_drops: Vec::new(),
-            gold_gained: 0,
-            xp_gained: 0,
-            player_won: false,
-        }
-    }
-
-    pub fn loot_drops(&self) -> &[LootDrop] {
-        &self.loot_drops
-    }
-}
-
-/// Execute a single player attack step. Returns the AttackResult.
-pub fn player_attack_step(player: &Player, combat: &mut ActiveCombat) -> AttackResult {
-    attack(player, &mut combat.mob)
-}
-
-/// Execute a single enemy attack step. Returns the AttackResult.
-pub fn enemy_attack_step(combat: &mut ActiveCombat, player: &mut Player) -> AttackResult {
-    attack(&combat.mob, player)
-}
-
-/// Process victory rewards: gold (with goldfind), XP, and loot drops.
-/// Call this when in `CombatPhaseState::Victory`.
-pub fn process_victory(player: &mut Player, combat: &mut ActiveCombat) {
-    let death_result = combat.mob.on_death(player.effective_magicfind());
-
-    // Apply gold and XP rewards using shared helper
-    let rewards = apply_victory_rewards(player, death_result.gold_dropped, death_result.xp_dropped);
-    combat.gold_gained = rewards.gold_gained;
-    combat.xp_gained = rewards.xp_gained;
-
-    // Store loot drops for spawning
-    combat.loot_drops = death_result.loot_drops;
-}
-
-/// Process player defeat: gold penalty and health restore.
-/// Call this when in `CombatPhaseState::Defeat`.
-pub fn process_defeat(player: &mut Player) {
-    let _death_result = player.on_death(0);
-}
-
-/// Summary of a combat entity's stats and potential rewards.
-#[derive(Debug, Clone)]
-pub struct CombatEntityInfo {
-    pub name: String,
-    pub health: i32,
-    pub max_health: i32,
-    pub attack: i32,
-    pub defense: i32,
-    pub gold_reward: i32,
-    pub xp_reward: i32,
-}
-
-/// Extract combat info from any entity implementing CombatEntity.
-///
-/// Uses the composite CombatEntity trait to access all relevant data
-/// with a single trait bound instead of `Combatant + DropsGold + GivesXP + HasLoot`.
-pub fn get_combat_entity_info<E: CombatEntity>(entity: &E) -> CombatEntityInfo {
-    CombatEntityInfo {
-        name: entity.name().to_string(),
-        health: entity.effective_health(),
-        max_health: entity.max_hp(),
-        attack: entity.effective_attack(),
-        defense: entity.effective_defense(),
-        gold_reward: entity.drop_gold(),
-        xp_reward: entity.give_xp(),
+        target_died,
     }
 }
 
@@ -204,67 +107,6 @@ pub fn player_effective_goldfind(stats: &StatSheet, inventory: &Inventory) -> i3
     let base = stats.value(StatType::GoldFind);
     let equipment_bonus = inventory.sum_equipment_stats(StatType::GoldFind);
     base + equipment_bonus
-}
-
-/// Execute a player attack against a mob using direct resources.
-/// Returns the AttackResult with damage dealt.
-pub fn player_attacks_mob(
-    player_name: &str,
-    player_stats: &StatSheet,
-    player_inventory: &Inventory,
-    mob: &mut crate::mob::Mob,
-) -> AttackResult {
-    let target_health_before = mob.effective_health();
-    let target_defense = mob.effective_defense();
-
-    // Roll damage from player's attack range
-    let player_attack = player_attack_value(player_stats, player_inventory);
-    let raw_damage = player_attack.roll_damage();
-    // Apply percentage-based defense with diminishing returns
-    let damage_to_target = apply_defense(raw_damage, target_defense);
-
-    mob.take_damage(damage_to_target);
-    let target_health_after = mob.effective_health();
-    let target_died = !mob.is_alive();
-
-    AttackResult {
-        attacker: player_name.to_string(),
-        defender: mob.name().to_string(),
-        damage_to_target,
-        target_health_before,
-        target_health_after,
-        target_died,
-    }
-}
-
-/// Execute a mob attack against the player using direct resources.
-/// Returns the AttackResult with damage dealt.
-pub fn mob_attacks_player(
-    mob: &crate::mob::Mob,
-    player_name: &str,
-    player_stats: &mut StatSheet,
-    player_inventory: &Inventory,
-) -> AttackResult {
-    let target_health_before = player_stats.hp();
-    let target_defense = player_effective_defense(player_stats, player_inventory);
-
-    // Roll damage from mob's attack range
-    let raw_damage = mob.get_attack().roll_damage();
-    // Apply percentage-based defense with diminishing returns
-    let damage_to_target = apply_defense(raw_damage, target_defense);
-
-    player_take_damage(player_stats, damage_to_target);
-    let target_health_after = player_stats.hp();
-    let target_died = target_health_after <= 0;
-
-    AttackResult {
-        attacker: mob.name().to_string(),
-        defender: player_name.to_string(),
-        damage_to_target,
-        target_health_before,
-        target_health_after,
-        target_died,
-    }
 }
 
 /// Process player defeat using direct resources.

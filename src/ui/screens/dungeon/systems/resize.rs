@@ -13,7 +13,7 @@ pub fn handle_window_resize(
     windows: Query<&Window>,
     state: Res<DungeonState>,
     mob_sheets: Res<MobSpriteSheets>,
-    mut scale: ResMut<UiScale>,
+    scale: Option<ResMut<UiScale>>,
     mut grid_query: Query<&mut Node, With<DungeonGrid>>,
     mut container_query: Query<
         &mut Node,
@@ -53,6 +53,10 @@ pub fn handle_window_resize(
     >,
 ) {
     let Some(layout) = state.layout.as_ref() else {
+        return;
+    };
+
+    let Some(mut scale) = scale else {
         return;
     };
 
