@@ -99,6 +99,12 @@ pub fn handle_fight_modal_select(
                     mut death_processed,
                 )) = mob_query.get_mut(fight_mob.entity)
                 else {
+                    // Entity is invalid (despawned during floor transition) - close modal gracefully
+                    warn!(
+                        "Fight modal entity {:?} is invalid, closing modal",
+                        fight_mob.entity
+                    );
+                    commands.close_modal::<FightModal>();
                     continue;
                 };
 

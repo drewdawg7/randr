@@ -183,6 +183,7 @@ fn handle_move_result(
     last_direction: Option<Res<LastMoveDirection>>,
     tile_sizes: Res<TileSizes>,
     sheet: Res<PlayerSpriteSheet>,
+    fight_mob: Option<Res<FightModalMob>>,
     mut player_query: Query<
         (&mut SmoothPosition, &mut ImageNode, &mut SpriteAnimation, &mut PlayerWalkTimer),
         With<DungeonPlayer>,
@@ -227,6 +228,10 @@ fn handle_move_result(
                 walk_timer.0.reset();
             }
             MoveResult::TriggeredCombat { mob_id, entity, pos } => {
+                // Guard against triggering combat when a fight modal is already open
+                if fight_mob.is_some() {
+                    continue;
+                }
                 // Combat data is now stored on the entity's components (MobCombatBundle)
                 commands.insert_resource(FightModalMob {
                     mob_id: *mob_id,
