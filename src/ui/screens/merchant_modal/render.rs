@@ -4,6 +4,7 @@ use crate::assets::GameFonts;
 use crate::economy::WorthGold;
 use crate::inventory::{Inventory, ManagesEquipment, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::modal_content_row;
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
@@ -91,12 +92,7 @@ pub fn spawn_merchant_modal_impl(
         .insert(MerchantModalRoot)
         .with_children(|parent| {
             parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(16.0),
-                    align_items: AlignItems::FlexStart,
-                    ..default()
-                })
+                .spawn(modal_content_row())
                 .with_children(|row| {
                     // Merchant stock grid (5x5) - focused by default
                     row.spawn((

@@ -231,5 +231,5 @@ pub use modal_builder::{Modal, ModalBackground, SpawnModalExt};
 
 ## Related Files
 
-- `src/ui/screens/modal.rs` - `spawn_modal_overlay()`, `ModalOverlay`, `ModalContent`, `ActiveModal`
+- `src/ui/screens/modal.rs` - `ModalOverlayBundle`, `spawn_modal_overlay()`, `ModalOverlay`, `ModalContent`, `ActiveModal`
 - `src/ui/hints.rs` - `spawn_modal_hint()` used for hint rendering

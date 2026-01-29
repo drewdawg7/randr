@@ -5,6 +5,7 @@ use crate::crafting_station::ForgeCraftingState;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::modal_content_row;
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{
@@ -71,12 +72,7 @@ pub fn spawn_forge_modal_impl(
         .insert(ForgeModalRoot)
         .with_children(|parent| {
             parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(16.0),
-                    align_items: AlignItems::FlexStart,
-                    ..default()
-                })
+                .spawn(modal_content_row())
                 .with_children(|row| {
                     // Crafting slots container (left side)
                     spawn_crafting_slots(

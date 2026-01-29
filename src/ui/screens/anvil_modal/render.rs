@@ -6,6 +6,7 @@ use crate::assets::{GameFonts, GameSprites};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
 use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::modal_content_row;
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{ItemDetailPane, ItemGrid, ItemGridEntry, ItemGridFocusPanel, OutlinedText};
@@ -55,12 +56,7 @@ pub fn spawn_anvil_modal_impl(
         .insert(AnvilModalRoot)
         .with_children(|parent| {
             parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(16.0),
-                    align_items: AlignItems::FlexStart,
-                    ..default()
-                })
+                .spawn(modal_content_row())
                 .with_children(|row| {
                     // Recipe grid (left side) - focused by default
                     row.spawn((

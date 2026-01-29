@@ -2,22 +2,14 @@ use bevy::prelude::*;
 
 use crate::input::GameAction;
 use crate::states::AppState;
+use crate::ui::screen_root_bundle;
 use crate::ui::widgets::PlayerStats;
 
 use super::components::{ContentArea, TownUiRoot};
 
 pub fn setup_town_ui(mut commands: Commands) {
     commands
-        .spawn((
-            TownUiRoot,
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                ..default()
-            },
-            BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
-        ))
+        .spawn((TownUiRoot, screen_root_bundle()))
         .with_children(|parent| {
             // Player stats banner at top
             parent.spawn(PlayerStats);

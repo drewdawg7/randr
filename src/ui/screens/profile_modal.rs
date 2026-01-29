@@ -7,6 +7,7 @@ use crate::inventory::{EquipmentSlot, HasInventory, Inventory};
 use crate::player::{Player, PlayerGold, PlayerName};
 use crate::stats::{HasStats, StatSheet, StatType};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt, RegisteredModal};
+use crate::ui::separator_node;
 use crate::ui::widgets::StatRow;
 
 use super::modal::{
@@ -160,13 +161,7 @@ fn spawn_stats_column(parent: &mut ChildBuilder, player: &Player) {
                     .value_color(Color::srgb(1.0, 0.84, 0.0)),
             );
 
-            // Separator
-            stats.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Px(2.0),
-                margin: UiRect::vertical(Val::Px(10.0)),
-                ..default()
-            });
+            stats.spawn(separator_node());
 
             // Combat stats
             let attack = player.attack();
@@ -200,13 +195,7 @@ fn spawn_stats_column(parent: &mut ChildBuilder, player: &Player) {
                 stats.spawn(defense_row);
             }
 
-            // Separator
-            stats.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Px(2.0),
-                margin: UiRect::vertical(Val::Px(10.0)),
-                ..default()
-            });
+            stats.spawn(separator_node());
 
             // Additional stats
             stats.spawn(
@@ -231,13 +220,7 @@ fn spawn_stats_column(parent: &mut ChildBuilder, player: &Player) {
                     .value_color(Color::srgb(0.7, 0.7, 0.7)),
             );
 
-            // Separator
-            stats.spawn(Node {
-                width: Val::Percent(100.0),
-                height: Val::Px(2.0),
-                margin: UiRect::vertical(Val::Px(10.0)),
-                ..default()
-            });
+            stats.spawn(separator_node());
 
             // XP Progress
             let xp = player.prog.xp;

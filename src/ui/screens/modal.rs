@@ -38,9 +38,37 @@ pub enum ModalType {
     AnvilModal,
 }
 
-/// Component marker for modal overlay background.
-#[derive(Component)]
+#[derive(Component, Default)]
 pub struct ModalOverlay;
+
+pub const MODAL_OVERLAY_COLOR: Color = Color::srgba(0.0, 0.0, 0.0, 0.7);
+pub const MODAL_OVERLAY_Z_INDEX: i32 = 100;
+
+#[derive(Bundle, Default)]
+pub struct ModalOverlayBundle {
+    pub marker: ModalOverlay,
+    pub node: Node,
+    pub background: BackgroundColor,
+    pub z_index: ZIndex,
+}
+
+impl ModalOverlayBundle {
+    pub fn new() -> Self {
+        Self {
+            marker: ModalOverlay,
+            node: Node {
+                position_type: PositionType::Absolute,
+                width: Val::Percent(100.0),
+                height: Val::Percent(100.0),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+            background: BackgroundColor(MODAL_OVERLAY_COLOR),
+            z_index: ZIndex(MODAL_OVERLAY_Z_INDEX),
+        }
+    }
+}
 
 /// Component marker for modal content container.
 #[derive(Component)]
@@ -57,23 +85,8 @@ impl Plugin for ModalPlugin {
     }
 }
 
-/// Helper to spawn a modal overlay with semi-transparent background.
 pub fn spawn_modal_overlay(commands: &mut Commands) -> Entity {
-    commands
-        .spawn((
-            ModalOverlay,
-            Node {
-                position_type: PositionType::Absolute,
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.7)),
-            ZIndex(100),
-        ))
-        .id()
+    commands.spawn(ModalOverlayBundle::new()).id()
 }
 
 /// Helper to create a modal container node.

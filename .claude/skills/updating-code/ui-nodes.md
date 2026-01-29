@@ -7,44 +7,18 @@ The `src/ui/nodes.rs` module provides helper functions for creating common Bevy 
 
 ## Functions
 
-### `row_node(gap: f32) -> Node`
-Creates a horizontal row node with centered items.
-
-```rust
-use crate::ui::row_node;
-
-// Instead of:
-parent.spawn(Node {
-    flex_direction: FlexDirection::Row,
-    align_items: AlignItems::Center,
-    column_gap: Val::Px(4.0),
-    ..default()
-});
-
-// Use:
-parent.spawn(row_node(4.0));
-```
-
-### `column_node(gap: f32) -> Node`
-Creates a vertical column node.
-
-```rust
-use crate::ui::column_node;
-
-// Instead of:
-parent.spawn(Node {
-    flex_direction: FlexDirection::Column,
-    row_gap: Val::Px(15.0),
-    ..default()
-});
-
-// Use:
-parent.spawn(column_node(15.0));
-```
+| Function | Purpose |
+|----------|---------|
+| `row_node(gap)` | Horizontal row with centered items |
+| `column_node(gap)` | Vertical column |
+| `modal_content_row()` | Row for modal content (16px gap, FlexStart) |
+| `separator_node()` | Horizontal separator (2px, full width) |
+| `screen_root_bundle()` | Full-screen root (Node + BackgroundColor) |
+| `screen_root_node()` | Just the node for custom backgrounds |
 
 ## When to Use
 
-Use these helpers when you need a simple row or column container with only a gap setting. If you need additional properties like `padding`, `margin`, `width`, etc., use the full `Node` struct instead.
+Use for simple containers. Use full `Node` struct if you need additional properties.
 
 ## Overflow Clipping
 

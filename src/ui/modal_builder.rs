@@ -28,46 +28,17 @@
 use bevy::prelude::*;
 
 use crate::ui::hints::spawn_modal_hint;
-use crate::ui::screens::modal::{ModalContent, ModalOverlay, ModalType};
+use crate::ui::screens::modal::{ModalContent, ModalOverlayBundle, ModalType};
 
-// ============================================================================
-// Constants
-// ============================================================================
-
-/// Modal overlay background color (semi-transparent black).
-pub const MODAL_OVERLAY_COLOR: Color = Color::srgba(0.0, 0.0, 0.0, 0.7);
-
-/// Modal overlay z-index.
-pub const MODAL_OVERLAY_Z_INDEX: i32 = 100;
-
-/// Modal container background color (dark brown).
 pub const MODAL_BG_COLOR: Color = Color::srgb(0.15, 0.12, 0.1);
-
-/// Modal container border color (tan).
 pub const MODAL_BORDER_COLOR: Color = Color::srgb(0.6, 0.5, 0.3);
-
-/// Modal title text color (cream).
 pub const MODAL_TITLE_COLOR: Color = Color::srgb(0.95, 0.9, 0.7);
-
-/// Default modal width in pixels.
 pub const MODAL_DEFAULT_WIDTH: f32 = 800.0;
-
-/// Default modal maximum width percentage.
 pub const MODAL_DEFAULT_MAX_WIDTH_PERCENT: f32 = 90.0;
-
-/// Default modal maximum height percentage.
 pub const MODAL_DEFAULT_MAX_HEIGHT_PERCENT: f32 = 80.0;
-
-/// Default modal padding in pixels.
 pub const MODAL_DEFAULT_PADDING: f32 = 30.0;
-
-/// Default modal border width in pixels.
 pub const MODAL_DEFAULT_BORDER_WIDTH: f32 = 3.0;
-
-/// Modal title font size.
 pub const MODAL_TITLE_FONT_SIZE: f32 = 48.0;
-
-/// Modal title bottom margin.
 pub const MODAL_TITLE_MARGIN_BOTTOM: f32 = 20.0;
 
 // ============================================================================
@@ -271,22 +242,7 @@ impl SpawnModalExt for Commands<'_, '_> {
             root_marker,
         } = modal;
 
-        // 1. Spawn the overlay (full-screen semi-transparent background)
-        let overlay = self
-            .spawn((
-                ModalOverlay,
-                Node {
-                    position_type: PositionType::Absolute,
-                    width: Val::Percent(100.0),
-                    height: Val::Percent(100.0),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-                BackgroundColor(MODAL_OVERLAY_COLOR),
-                ZIndex(MODAL_OVERLAY_Z_INDEX),
-            ))
-            .id();
+        let overlay = self.spawn(ModalOverlayBundle::new()).id();
 
         // 2. Apply custom root marker if provided
         if let Some(marker_fn) = root_marker {

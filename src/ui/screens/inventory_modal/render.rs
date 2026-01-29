@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::assets::GameFonts;
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem, ManagesEquipment, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::modal_content_row;
 use crate::ui::screens::modal::spawn_modal_overlay;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{
@@ -79,12 +80,7 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
         .insert(InventoryModalRoot)
         .with_children(|parent| {
             parent
-                .spawn(Node {
-                    flex_direction: FlexDirection::Row,
-                    column_gap: Val::Px(16.0),
-                    align_items: AlignItems::FlexStart,
-                    ..default()
-                })
+                .spawn(modal_content_row())
                 .with_children(|row| {
                     // Equipment grid (3x3) - focused by default
                     row.spawn((
