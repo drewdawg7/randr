@@ -1,5 +1,6 @@
 use std::ops::RangeInclusive;
 
+use bon::Builder;
 use rand::Rng;
 
 use crate::{item::{Item, ItemId}, loot::enums::LootError};
@@ -19,22 +20,29 @@ pub struct LootItem {
     quantity: RangeInclusive<i32>,
 }
 
-#[derive(Default, Debug, Clone)]
+#[derive(Default, Debug, Clone, Builder)]
 pub struct LootTable {
+    #[builder(field)]
     loot: Vec<LootItem>,
 }
 
-impl LootTable {
-    pub fn new() -> Self {
-        Self::default()
-    }
+use loot_table_builder::State;
 
-    /// Builder method to add a loot item. Silently ignores invalid items.
+impl<S: State> LootTableBuilder<S> {
     pub fn with(mut self, item: ItemId, numerator: i32, denominator: i32, quantity: RangeInclusive<i32>) -> Self {
         if let Ok(loot_item) = LootItem::new(item, numerator, denominator, quantity) {
-            let _ = self.add_loot_item(loot_item);
+            let already_exists = self.loot.iter().any(|i| i.item_kind == item);
+            if !already_exists {
+                self.loot.push(loot_item);
+            }
         }
         self
+    }
+}
+
+impl LootTable {
+    pub fn new() -> LootTableBuilder {
+        Self::builder()
     }
 
     pub fn add_loot_item(&mut self, item: LootItem) -> Result<usize, LootError> {

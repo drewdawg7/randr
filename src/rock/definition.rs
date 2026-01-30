@@ -11,10 +11,10 @@ pub struct Rock {
 impl Rock {
     pub fn new(rock_type: RockType) -> Self {
         let loot = match rock_type {
-            RockType::Coal => LootTable::new().with(ItemId::Coal, 1, 1, 1..=2),
-            RockType::Copper => LootTable::new().with(ItemId::CopperOre, 1, 1, 1..=3),
-            RockType::Iron => LootTable::new().with(ItemId::IronOre, 1, 1, 1..=3),
-            RockType::Gold => LootTable::new().with(ItemId::GoldOre, 1, 1, 1..=3),
+            RockType::Coal => LootTable::new().with(ItemId::Coal, 1, 1, 1..=2).build(),
+            RockType::Copper => LootTable::new().with(ItemId::CopperOre, 1, 1, 1..=3).build(),
+            RockType::Iron => LootTable::new().with(ItemId::IronOre, 1, 1, 1..=3).build(),
+            RockType::Gold => LootTable::new().with(ItemId::GoldOre, 1, 1, 1..=3).build(),
         };
 
         Self { rock_type, loot }

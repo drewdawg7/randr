@@ -28,21 +28,24 @@ entity_macros::define_entity! {
             health: 50,
             loot: LootTable::new()
                 .with(ItemId::IronOre, 1, 1, 1..=3)
-                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
+                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1)
+                .build(),
         }
         Coal {
             name: "Coal Rock",
             health: 50,
             loot: LootTable::new()
                 .with(ItemId::Coal, 1, 1, 1..=2)
-                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
+                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1)
+                .build(),
         }
         Gold {
             name: "Gold Rock",
             health: 50,
             loot: LootTable::new()
                 .with(ItemId::GoldOre, 1, 1, 1..=3)
-                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
+                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1)
+                .build(),
         }
         Mixed {
             name: "Mixed Rock",
@@ -51,7 +54,8 @@ entity_macros::define_entity! {
                 .with(ItemId::GoldOre, 1, 2, 1..=4)
                 .with(ItemId::IronOre, 1, 2, 1..=4)
                 .with(ItemId::Coal, 1, 2, 1..=4)
-                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1),
+                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1)
+                .build(),
         }
     }
 }
