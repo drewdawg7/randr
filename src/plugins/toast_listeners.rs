@@ -5,6 +5,7 @@ use crate::game::{
     ItemPickedUp, ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerHealed,
     PlayerLeveledUp, ShowToast,
 };
+use crate::skills::SkillLeveledUp;
 use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, TransactionCompleted};
 
 /// SystemParam grouping all item-related event readers to reduce parameter count.
@@ -32,6 +33,7 @@ impl Plugin for ToastListenersPlugin {
                 listen_combat_events,
                 listen_economy_events,
                 listen_brewing_events,
+                listen_skill_events,
             ),
         );
     }
@@ -220,5 +222,18 @@ fn listen_brewing_events(
                 )));
             }
         }
+    }
+}
+
+fn listen_skill_events(
+    mut skill_events: EventReader<SkillLeveledUp>,
+    mut toast_writer: EventWriter<ShowToast>,
+) {
+    for event in skill_events.read() {
+        toast_writer.send(ShowToast::success(format!(
+            "{} Level Up! Now level {}",
+            event.skill.display_name(),
+            event.new_level
+        )));
     }
 }

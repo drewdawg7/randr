@@ -36,6 +36,7 @@ pub enum ModalType {
     MerchantModal,
     ForgeModal,
     AnvilModal,
+    SkillsModal,
 }
 
 #[derive(Component, Default)]
@@ -129,4 +130,9 @@ pub fn in_fight_modal(active_modal: Res<ActiveModal>) -> bool {
 /// Run condition: returns true when the results modal is active.
 pub fn in_results_modal(active_modal: Res<ActiveModal>) -> bool {
     active_modal.modal == Some(ModalType::ResultsModal)
+}
+
+/// Run condition: returns true when the skills modal is active.
+pub fn in_skills_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::SkillsModal)
 }

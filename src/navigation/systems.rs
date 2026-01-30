@@ -11,6 +11,7 @@ use crate::ui::screens::forge_modal::ForgeModal;
 use crate::ui::screens::inventory_modal::InventoryModal;
 use crate::ui::screens::merchant_modal::MerchantModal;
 use crate::ui::screens::monster_compendium::MonsterCompendiumModal;
+use crate::ui::screens::skills_modal::SkillsModal;
 
 /// Central system that handles all navigation actions.
 pub fn handle_navigation(
@@ -48,6 +49,7 @@ fn handle_modal_toggle(commands: &mut Commands, modal_type: ModalType) {
         ModalType::MonsterCompendium => commands.toggle_modal::<MonsterCompendiumModal>(),
         ModalType::MerchantModal => commands.toggle_modal::<MerchantModal>(),
         ModalType::ForgeModal => commands.toggle_modal::<ForgeModal>(),
+        ModalType::SkillsModal => commands.toggle_modal::<SkillsModal>(),
         ModalType::Profile
         | ModalType::Keybinds
         | ModalType::FightModal

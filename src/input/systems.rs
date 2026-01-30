@@ -130,6 +130,10 @@ fn handle_keyboard_input(
         action_writer.send(GameAction::OpenCompendium);
     }
 
+    if keyboard.just_pressed(KeyCode::KeyK) {
+        action_writer.send(GameAction::OpenSkills);
+    }
+
     held.0 = repeat.direction;
 }
 

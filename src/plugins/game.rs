@@ -13,7 +13,7 @@ use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
     AnvilModalPlugin, DungeonScreenPlugin, FightModalPlugin, ForgeModalPlugin,
     InventoryModalPlugin, KeybindsPlugin, MainMenuPlugin, MerchantModalPlugin, MinePlugin,
-    ModalPlugin, MonsterCompendiumPlugin, ProfilePlugin, ResultsModalPlugin,
+    ModalPlugin, MonsterCompendiumPlugin, ProfilePlugin, ResultsModalPlugin, SkillsModalPlugin,
     TownPlugin,
 };
 use crate::ui::widgets::{ItemDetailPanePlugin, ItemDetailDisplayPlugin, ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, OutlinedTextPlugin, PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin};
@@ -32,10 +32,12 @@ impl Plugin for GamePlugin {
                     .on(GameAction::OpenInventory, ModalType::Inventory)
                     .on(GameAction::OpenProfile, ModalType::Profile)
                     .on(GameAction::OpenCompendium, ModalType::MonsterCompendium)
+                    .on(GameAction::OpenSkills, ModalType::SkillsModal)
                 .state(AppState::Dungeon)
                     .on(GameAction::OpenInventory, ModalType::Inventory)
                     .on(GameAction::OpenProfile, ModalType::Profile)
                     .on(GameAction::OpenCompendium, ModalType::MonsterCompendium)
+                    .on(GameAction::OpenSkills, ModalType::SkillsModal)
                 .global()
                     .on(GameAction::OpenKeybinds, AppState::Keybinds)
                 .build(),
@@ -80,6 +82,7 @@ impl Plugin for GamePlugin {
             MinePlugin,
             FightModalPlugin,
             ResultsModalPlugin,
+            SkillsModalPlugin,
         ));
 
         app.add_systems(Startup, setup);

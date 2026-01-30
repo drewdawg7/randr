@@ -45,6 +45,9 @@ pub enum GameAction {
 
     /// Open monster compendium (b)
     OpenCompendium,
+
+    /// Open skills modal (k)
+    OpenSkills,
 }
 
 /// Tracks the currently-held navigation direction (if any).

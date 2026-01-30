@@ -13,6 +13,7 @@ pub mod monster_compendium;
 mod profile;
 pub mod town;
 pub mod results_modal;
+pub mod skills_modal;
 
 pub use anvil_modal::AnvilModalPlugin;
 pub use dungeon::{DungeonScreenPlugin, DUNGEON_SCALE};
@@ -37,3 +38,4 @@ pub use modal::{
 pub use profile::ProfilePlugin;
 pub use town::{InfoPanelSource, TownPlugin};
 pub use results_modal::ResultsModalPlugin;
+pub use skills_modal::SkillsModalPlugin;
