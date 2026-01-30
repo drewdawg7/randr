@@ -30,16 +30,15 @@ pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData
         .collect();
 
     commands.spawn_modal(
-        Modal::new()
+        Modal::builder()
             .title(&title)
-            .size(MODAL_WIDTH, 0.0)
-            .with_root_marker(|e| {
+            .size((MODAL_WIDTH, 0.0))
+            .root_marker(Box::new(|e| {
                 e.insert(ResultsModalRoot);
-            })
-            .content(move |c| {
+            }))
+            .content(Box::new(move |c| {
                 c.spawn(Column::new().gap(8.0).align_center())
                     .with_children(|col| {
-                        // Sprite (if any)
                         if let Some(sprite) = &sprite {
                             match sprite {
                                 ResultsSprite::Mob(mob_id) => {
@@ -55,7 +54,6 @@ pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData
                             }
                         }
 
-                        // Subtitle (e.g., mob name)
                         if let Some(subtitle) = &subtitle {
                             col.spawn((
                                 Text::new(subtitle),
@@ -67,7 +65,6 @@ pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData
                             ));
                         }
 
-                        // Gold gained
                         if let Some(gold) = gold_gained {
                             col.spawn((
                                 Text::new(format!("+{gold} Gold")),
@@ -79,7 +76,6 @@ pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData
                             ));
                         }
 
-                        // XP gained
                         if let Some(xp) = xp_gained {
                             col.spawn((
                                 Text::new(format!("+{xp} XP")),
@@ -91,7 +87,6 @@ pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData
                             ));
                         }
 
-                        // Loot drops (if any)
                         for (item_name, quantity) in &loot_drops {
                             let text = if *quantity > 1 {
                                 format!("{item_name} x{quantity}")
@@ -108,6 +103,7 @@ pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData
                             ));
                         }
                     });
-            }),
+            }))
+            .build(),
     );
 }

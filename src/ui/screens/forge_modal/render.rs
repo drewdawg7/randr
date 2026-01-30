@@ -67,12 +67,12 @@ pub fn spawn_forge_modal_impl(
     let modal_state = modal_state.clone();
 
     commands.spawn_modal(
-        Modal::new()
+        Modal::builder()
             .background(ModalBackground::None)
-            .with_root_marker(|e| {
+            .root_marker(Box::new(|e| {
                 e.insert(ForgeModalRoot);
-            })
-            .content(move |c| {
+            }))
+            .content(Box::new(move |c| {
                 c.spawn(modal_content_row()).with_children(|row| {
                     spawn_crafting_slots(
                         row,
@@ -94,7 +94,8 @@ pub fn spawn_forge_modal_impl(
                         source: InfoPanelSource::Inventory { selected_index: 0 },
                     });
                 });
-            }),
+            }))
+            .build(),
     );
 }
 

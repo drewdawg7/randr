@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bon::Builder;
 
 use crate::ui::hints::spawn_modal_hint;
 use crate::ui::screens::modal::{ModalContent, ModalOverlayBundle, ModalType};
@@ -40,102 +41,38 @@ impl Default for ModalBackground {
 type ContentFn = Box<dyn FnOnce(&mut ChildBuilder) + Send + Sync>;
 type RootMarkerFn = Box<dyn FnOnce(&mut EntityCommands) + Send + Sync>;
 
+#[derive(Builder)]
+#[builder(state_mod(vis = "pub"))]
 pub struct Modal {
-    title: Option<String>,
+    #[builder(field)]
     hints: Vec<String>,
+
+    #[builder(into)]
+    title: Option<String>,
+
     size: Option<(f32, f32)>,
+
     max_width_percent: Option<f32>,
+
     max_height_percent: Option<f32>,
+
+    #[builder(default)]
     background: ModalBackground,
+
     padding: Option<f32>,
+
     border_width: Option<f32>,
+
     modal_type: Option<ModalType>,
+
     content: Option<ContentFn>,
+
     root_marker: Option<RootMarkerFn>,
 }
 
-impl Default for Modal {
-    fn default() -> Self {
-        Self {
-            title: None,
-            hints: Vec::new(),
-            size: None,
-            max_width_percent: None,
-            max_height_percent: None,
-            background: ModalBackground::default(),
-            padding: None,
-            border_width: None,
-            modal_type: None,
-            content: None,
-            root_marker: None,
-        }
-    }
-}
-
-impl Modal {
-    pub fn new() -> Self {
-        Self::default()
-    }
-
-    pub fn title(mut self, title: impl Into<String>) -> Self {
-        self.title = Some(title.into());
-        self
-    }
-
+impl<S: modal_builder::State> ModalBuilder<S> {
     pub fn hint(mut self, hint: impl Into<String>) -> Self {
         self.hints.push(hint.into());
-        self
-    }
-
-    pub fn content<F>(mut self, f: F) -> Self
-    where
-        F: FnOnce(&mut ChildBuilder) + Send + Sync + 'static,
-    {
-        self.content = Some(Box::new(f));
-        self
-    }
-
-    pub fn size(mut self, width: f32, height: f32) -> Self {
-        self.size = Some((width, height));
-        self
-    }
-
-    pub fn max_width_percent(mut self, percent: f32) -> Self {
-        self.max_width_percent = Some(percent);
-        self
-    }
-
-    pub fn max_height_percent(mut self, percent: f32) -> Self {
-        self.max_height_percent = Some(percent);
-        self
-    }
-
-    pub fn background(mut self, bg: ModalBackground) -> Self {
-        self.background = bg;
-        self
-    }
-
-    pub fn padding(mut self, padding: f32) -> Self {
-        self.padding = Some(padding);
-        self
-    }
-
-    pub fn border(mut self, width: f32) -> Self {
-        self.border_width = Some(width);
-        self
-    }
-
-    #[allow(dead_code)]
-    pub fn modal_type(mut self, modal_type: ModalType) -> Self {
-        self.modal_type = Some(modal_type);
-        self
-    }
-
-    pub fn with_root_marker<F>(mut self, f: F) -> Self
-    where
-        F: FnOnce(&mut EntityCommands) + Send + Sync + 'static,
-    {
-        self.root_marker = Some(Box::new(f));
         self
     }
 }

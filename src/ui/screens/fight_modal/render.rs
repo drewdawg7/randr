@@ -41,13 +41,13 @@ pub fn do_spawn_fight_modal(
     let game_sprites = (*game_sprites).clone();
 
     commands.spawn_modal(
-        Modal::new()
-            .size(CONTAINER_WIDTH, CONTAINER_HEIGHT)
+        Modal::builder()
+            .size((CONTAINER_WIDTH, CONTAINER_HEIGHT))
             .padding(0.0)
-            .with_root_marker(|e| {
+            .root_marker(Box::new(|e| {
                 e.insert(FightModalRoot);
-            })
-            .content(move |c| {
+            }))
+            .content(Box::new(move |c| {
                 c.spawn(Node {
                     width: Val::Percent(100.0),
                     height: Val::Percent(100.0),
@@ -74,7 +74,8 @@ pub fn do_spawn_fight_modal(
                         mob_max_hp,
                     );
                 });
-            }),
+            }))
+            .build(),
     );
 }
 

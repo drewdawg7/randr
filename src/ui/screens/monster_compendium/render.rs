@@ -30,20 +30,21 @@ pub fn do_spawn_monster_compendium(
     let monsters = monsters.clone();
 
     commands.spawn_modal(
-        Modal::new()
+        Modal::builder()
             .background(ModalBackground::Atlas {
                 texture: ui_all.texture.clone(),
                 layout: ui_all.layout.clone(),
                 index: book_idx,
             })
-            .size(BOOK_WIDTH, BOOK_HEIGHT)
-            .with_root_marker(|e| {
+            .size((BOOK_WIDTH, BOOK_HEIGHT))
+            .root_marker(Box::new(|e| {
                 e.insert(MonsterCompendiumRoot);
-            })
-            .content(move |book| {
+            }))
+            .content(Box::new(move |book| {
                 spawn_left_page(book, &monsters);
                 spawn_right_page(book, slot_sprite);
-            }),
+            }))
+            .build(),
     );
 }
 

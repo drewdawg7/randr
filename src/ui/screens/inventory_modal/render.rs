@@ -73,12 +73,12 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
     let backpack_entries: Vec<ItemGridEntry> = ItemGridEntry::from_inventory(inventory);
 
     commands.spawn_modal(
-        Modal::new()
+        Modal::builder()
             .background(ModalBackground::None)
-            .with_root_marker(|e| {
+            .root_marker(Box::new(|e| {
                 e.insert(InventoryModalRoot);
-            })
-            .content(move |c| {
+            }))
+            .content(Box::new(move |c| {
                 c.spawn(modal_content_row()).with_children(|row| {
                     row.spawn((
                         EquipmentGrid,
@@ -102,7 +102,8 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
                         source: InfoPanelSource::Equipment { selected_index: 0 },
                     });
                 });
-            }),
+            }))
+            .build(),
     );
 }
 

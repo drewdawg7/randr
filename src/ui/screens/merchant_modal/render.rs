@@ -88,12 +88,12 @@ pub fn spawn_merchant_modal_impl(
     let player_entries = ItemGridEntry::from_inventory(inventory);
 
     commands.spawn_modal(
-        Modal::new()
+        Modal::builder()
             .background(ModalBackground::None)
-            .with_root_marker(|e| {
+            .root_marker(Box::new(|e| {
                 e.insert(MerchantModalRoot);
-            })
-            .content(move |c| {
+            }))
+            .content(Box::new(move |c| {
                 c.spawn(modal_content_row()).with_children(|row| {
                     row.spawn((
                         MerchantStockGrid,
@@ -117,7 +117,8 @@ pub fn spawn_merchant_modal_impl(
                         source: InfoPanelSource::Store { selected_index: 0 },
                     });
                 });
-            }),
+            }))
+            .build(),
     );
 }
 
