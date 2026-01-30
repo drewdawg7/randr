@@ -24,11 +24,6 @@ impl Attack {
         let mut rng = rand::thread_rng();
         rng.gen_range(self.min_damage..=self.max_damage)
     }
-
-    /// Get the average damage (useful for UI display)
-    pub fn average(&self) -> i32 {
-        (self.min_damage + self.max_damage) / 2
-    }
 }
 
 impl Default for Attack {

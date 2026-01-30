@@ -12,7 +12,7 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::Inventory;
 use crate::loot::collect_loot_drops;
 use crate::mob::{CombatStats, DeathProcessed, GoldReward, Health, MobLootTable, MobMarker, XpReward};
-use crate::player::{PlayerGold, PlayerName};
+use crate::player::PlayerGold;
 use crate::stats::StatSheet;
 use crate::ui::{PlayerAttackTimer, PlayerSpriteSheet, SelectionState, SpriteAnimation};
 
@@ -65,7 +65,6 @@ pub fn handle_fight_modal_select(
     selection: Res<FightModalButtonSelection>,
     fight_mob: Res<FightModalMob>,
     mut occupancy: ResMut<GridOccupancy>,
-    player_name: Res<PlayerName>,
     mut player_gold: ResMut<PlayerGold>,
     mut progression: ResMut<Progression>,
     mut inventory: ResMut<Inventory>,
@@ -113,10 +112,8 @@ pub fn handle_fight_modal_select(
 
                 // Player attacks mob using ECS components
                 let result = player_attacks_entity(
-                    player_name.0,
                     &stats,
                     &inventory,
-                    &mob_name,
                     &mut health,
                     combat_stats,
                 );
@@ -182,9 +179,7 @@ pub fn handle_fight_modal_select(
                 } else {
                     // Enemy counter-attack using ECS components
                     let enemy_result = entity_attacks_player(
-                        &mob_name,
                         combat_stats,
-                        player_name.0,
                         &mut stats,
                         &inventory,
                     );

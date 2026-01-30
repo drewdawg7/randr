@@ -1,5 +1,5 @@
 use crate::{
-    combat::{Attack, AttackResult, Combatant},
+    combat::{Attack, AttackResult},
     inventory::Inventory,
     stats::{HasStats, StatSheet, StatType},
 };
@@ -26,26 +26,6 @@ pub fn apply_goldfind(base_gold: i32, goldfind: i32) -> i32 {
 pub struct VictoryRewards {
     pub gold_gained: i32,
     pub xp_gained: i32,
-}
-
-pub fn attack<A: Combatant, D: Combatant>(attacker: &A, defender: &mut D) -> AttackResult {
-    let target_health_before = defender.effective_health();
-    let target_defense = defender.effective_defense();
-
-    let raw_damage = attacker.get_attack().roll_damage();
-    let damage_to_target = apply_defense(raw_damage, target_defense);
-
-    defender.take_damage(damage_to_target);
-    let target_health_after = defender.effective_health();
-    let target_died = !defender.is_alive();
-    AttackResult {
-        attacker: attacker.name().to_string(),
-        defender: defender.name().to_string(),
-        damage_to_target,
-        target_health_before,
-        target_health_after,
-        target_died,
-    }
 }
 
 const ATTACK_VARIANCE: f64 = 0.25;
@@ -111,60 +91,38 @@ pub fn apply_victory_rewards_direct(
 use crate::mob::{CombatStats, Health};
 
 pub fn player_attacks_entity(
-    player_name: &str,
     player_stats: &StatSheet,
     player_inventory: &Inventory,
-    mob_name: &str,
     mob_health: &mut Health,
     mob_combat_stats: &CombatStats,
 ) -> AttackResult {
-    let target_health_before = mob_health.current;
-    let target_defense = mob_combat_stats.defense;
-
     let player_attack = player_attack_value(player_stats, player_inventory);
     let raw_damage = player_attack.roll_damage();
-    let damage_to_target = apply_defense(raw_damage, target_defense);
+    let damage = apply_defense(raw_damage, mob_combat_stats.defense);
 
-    mob_health.take_damage(damage_to_target);
-    let target_health_after = mob_health.current;
-    let target_died = !mob_health.is_alive();
+    mob_health.take_damage(damage);
 
     AttackResult {
-        attacker: player_name.to_string(),
-        defender: mob_name.to_string(),
-        damage_to_target,
-        target_health_before,
-        target_health_after,
-        target_died,
+        target_died: !mob_health.is_alive(),
     }
 }
 
 pub fn entity_attacks_player(
-    mob_name: &str,
     mob_combat_stats: &CombatStats,
-    player_name: &str,
     player_stats: &mut StatSheet,
     player_inventory: &Inventory,
 ) -> AttackResult {
-    let target_health_before = player_stats.hp();
-    let target_defense = player_effective_defense(player_stats, player_inventory);
+    let defense = player_effective_defense(player_stats, player_inventory);
 
     let base_attack = mob_combat_stats.attack;
     let variance = (base_attack as f64 * ATTACK_VARIANCE).round() as i32;
     let mob_attack = Attack::new((base_attack - variance).max(1), base_attack + variance);
     let raw_damage = mob_attack.roll_damage();
-    let damage_to_target = apply_defense(raw_damage, target_defense);
+    let damage = apply_defense(raw_damage, defense);
 
-    player_take_damage(player_stats, damage_to_target);
-    let target_health_after = player_stats.hp();
-    let target_died = target_health_after <= 0;
+    player_take_damage(player_stats, damage);
 
     AttackResult {
-        attacker: mob_name.to_string(),
-        defender: player_name.to_string(),
-        damage_to_target,
-        target_health_before,
-        target_health_after,
-        target_died,
+        target_died: player_stats.hp() <= 0,
     }
 }

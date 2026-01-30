@@ -1,10 +1,8 @@
 use crate::{
-    combat::IsKillable,
-    loot::{LootDrop, LootTable},
-    stats::StatSheet,
+    loot::LootTable,
+    stats::{HasStats, StatSheet},
 };
 
-// RockId now comes from definitions (macro-generated)
 use super::definitions::RockId;
 
 #[derive(Clone)]
@@ -14,14 +12,12 @@ pub struct Rock {
     pub loot: LootTable,
 }
 
-impl Rock {
-    /// Mine this rock. Returns drops if rock was destroyed, None otherwise.
-    pub fn mine(&mut self, damage: i32, magic_find: i32) -> Option<Vec<LootDrop>> {
-        self.take_damage(damage);
-        if !self.is_alive() {
-            Some(self.on_death(magic_find).drops)
-        } else {
-            None
-        }
+impl HasStats for Rock {
+    fn stats(&self) -> &StatSheet {
+        &self.stats
+    }
+
+    fn stats_mut(&mut self) -> &mut StatSheet {
+        &mut self.stats
     }
 }

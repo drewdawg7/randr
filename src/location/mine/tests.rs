@@ -5,8 +5,7 @@ use crate::{
         rock::{Rock, RockId},
     },
     loot::LootTable,
-    stats::{StatSheet, StatType, HasStats},
-    combat::IsKillable,
+    stats::{HasStats, StatSheet, StatType},
 };
 
 // ==================== Helper functions ====================
@@ -114,60 +113,6 @@ fn rock_has_correct_health() {
     let rock = create_test_rock(RockId::Iron, 100);
 
     assert_eq!(rock.hp(), 100);
-}
-
-// ==================== Rock IsKillable trait tests ====================
-
-#[test]
-fn rock_take_damage_reduces_health() {
-    let mut rock = create_test_rock(RockId::Iron, 50);
-
-    rock.take_damage(10);
-
-    assert_eq!(rock.hp(), 40);
-}
-
-#[test]
-fn rock_take_damage_multiple_times() {
-    let mut rock = create_test_rock(RockId::Iron, 50);
-
-    rock.take_damage(10);
-    rock.take_damage(15);
-    rock.take_damage(5);
-
-    assert_eq!(rock.hp(), 20);
-}
-
-#[test]
-fn rock_take_damage_does_not_go_negative() {
-    let mut rock = create_test_rock(RockId::Iron, 50);
-
-    rock.take_damage(100);
-
-    assert_eq!(rock.hp(), 0);
-}
-
-#[test]
-fn rock_is_alive_when_health_positive() {
-    let rock = create_test_rock(RockId::Iron, 50);
-
-    assert!(rock.is_alive());
-}
-
-#[test]
-fn rock_is_not_alive_when_health_zero() {
-    let mut rock = create_test_rock(RockId::Iron, 50);
-
-    rock.take_damage(50);
-
-    assert!(!rock.is_alive());
-}
-
-#[test]
-fn rock_health_returns_current_hp() {
-    let rock = create_test_rock(RockId::Gold, 75);
-
-    assert_eq!(rock.health(), 75);
 }
 
 // ==================== Rock HasStats trait tests ====================
