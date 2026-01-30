@@ -175,7 +175,7 @@ pub fn define_entity(input: TokenStream) -> TokenStream {
             quote! { #name: #value }
         });
         quote! {
-            static #static_name: once_cell::sync::Lazy<#spec_name> = once_cell::sync::Lazy::new(|| #spec_name {
+            static #static_name: std::sync::LazyLock<#spec_name> = std::sync::LazyLock::new(|| #spec_name {
                 #(#field_inits),*
             });
         }
