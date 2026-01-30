@@ -113,14 +113,6 @@ pub struct SpriteSheetMeta {
 #[derive(Debug, Deserialize)]
 pub struct SpriteFrameMeta {
     pub frame: SpriteRect,
-    #[serde(default)]
-    pub rotated: bool,
-    #[serde(default)]
-    pub trimmed: bool,
-    #[serde(rename = "sourceSize")]
-    pub source_size: Option<SpriteSize>,
-    #[serde(rename = "spriteSourceSize")]
-    pub sprite_source_size: Option<SpriteRect>,
 }
 
 #[derive(Debug, Deserialize, Clone, Copy)]
@@ -136,10 +128,6 @@ pub struct SpriteSheetInfo {
     pub size: SpriteSize,
     #[serde(default)]
     pub image: String,
-    #[serde(default)]
-    pub app: String,
-    #[serde(default)]
-    pub scale: String,
     #[serde(default)]
     pub slices: Vec<SpriteSlice>,
 }
