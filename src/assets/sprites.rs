@@ -7,7 +7,7 @@ use std::collections::HashMap;
 
 use crate::ui::{AnimationConfig, SpriteAnimation};
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, strum::EnumIter)]
 pub enum SpriteSheetKey {
     UiIcons,
     UiButtons,
@@ -53,50 +53,8 @@ pub enum SpriteSheetKey {
 }
 
 impl SpriteSheetKey {
-    pub const fn all() -> &'static [Self] {
-        &[
-            Self::UiIcons,
-            Self::UiButtons,
-            Self::BookUi,
-            Self::UiFrames,
-            Self::UiBars,
-            Self::UiAll,
-            Self::IconItems,
-            Self::UiSelectors,
-            Self::TravelBook,
-            Self::BookSlot,
-            Self::GridSlot,
-            Self::MenuBackground,
-            Self::FightPopup,
-            Self::FightBackgrounds,
-            Self::ShopBgSlices,
-            Self::DetailPanelBg,
-            Self::ItemDetailIcons,
-            Self::HealthIcon,
-            Self::DefenseIcon,
-            Self::GoldIcon,
-            Self::DefaultStatIcon,
-            Self::DungeonTileset,
-            Self::CaveTileset,
-            Self::Chests,
-            Self::Rocks,
-            Self::FightBannerSlices,
-            Self::OkButton,
-            Self::OkButtonSelected,
-            Self::CancelButton,
-            Self::CancelButtonSelected,
-            Self::TorchWall,
-            Self::GoldSword,
-            Self::IronSword,
-            Self::CopperSword,
-            Self::CraftingStations,
-            Self::CraftingMaterials,
-            Self::Headgear,
-            Self::Chestplates,
-            Self::Leggings,
-            Self::Greaves,
-            Self::GoldRing,
-        ]
+    pub fn all() -> impl Iterator<Item = Self> {
+        <Self as strum::IntoEnumIterator>::iter()
     }
 
     pub const fn asset_name(&self) -> &'static str {
@@ -502,7 +460,7 @@ fn load_assets(
 
     for key in SpriteSheetKey::all() {
         let path = format!("sprites/{}.json", key.asset_name());
-        pending.handles.insert(*key, asset_server.load(&path));
+        pending.handles.insert(key, asset_server.load(&path));
     }
 
     info!("Asset loading initiated");
