@@ -1,25 +1,22 @@
 # Combat ECS System
 
-This document describes the ECS-based combat system.
-
 ## Overview
 
-Combat operates on Bevy ECS components and direct resource access:
-- Mobs are Entities with combat components (Health, CombatStats, etc.)
-- Player stats accessed via direct resource queries (StatSheet, Inventory, etc.)
-- Combat functions operate on component references, not owned structs
+Combat is event-driven. The fight modal sends events, combat systems process them:
+- `PlayerAttackMob` - sent when player attacks
+- `EntityDied` - sent when mob or player dies
+- `DealDamage` - sent for observation (damage numbers, combat log)
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/combat/system.rs` | Combat helper functions for direct resource access |
-| `src/combat/events.rs` | Combat events (DealDamage, EntityDied) |
-| `src/combat/plugin.rs` | CombatPlugin registers events |
+| `src/combat/plugin.rs` | Combat systems: `process_player_attack`, `handle_mob_death`, `handle_player_death` |
+| `src/combat/events.rs` | Combat events (PlayerAttackMob, DealDamage, EntityDied) |
+| `src/combat/system.rs` | Combat helper functions |
 | `src/mob/components.rs` | ECS components for mob combat data |
 | `src/mob/bundle.rs` | MobCombatBundle for spawning mobs |
-| `src/ui/screens/fight_modal/input.rs` | Combat input handling with entity queries |
-| `src/ui/screens/fight_modal/render.rs` | Health bar updates from entity components |
+| `src/ui/screens/fight_modal/input.rs` | Sends PlayerAttackMob, handles EntityDied for modal transitions |
 
 ## Mob ECS Components
 
@@ -104,25 +101,22 @@ entity_attacks_player(
 ) -> AttackResult
 ```
 
-## Combat Flow (Fight Modal)
+## Combat Flow (Event-Driven)
 
-1. Player walks into mob, triggering `FightModalMob` resource insertion
-2. `FightModalMob` stores `mob_id`, `entity`, `pos` (no owned Mob struct)
-3. Fight modal input system queries mob entity's components:
-   ```rust
-   mob_query: Query<(
-       &MobMarker,
-       &mut Health,
-       &CombatStats,
-       &GoldReward,
-       &XpReward,
-       &MobLootTable,
-       &mut DeathProcessed,
-   )>
-   ```
-4. Combat uses `player_attacks_entity` / `entity_attacks_player`
-5. On victory, rewards applied with `apply_victory_rewards_direct`
-6. On defeat, gold penalty with `process_player_defeat`
+1. Player walks into mob → `FightModalMob` resource inserted
+2. Player presses OK → `handle_fight_modal_select` sends `PlayerAttackMob` event
+3. `process_player_attack` system:
+   - Applies damage to mob
+   - If mob dies → sends `EntityDied { is_player: false }`
+   - If mob survives → counter-attacks player, may send `EntityDied { is_player: true }`
+4. `handle_mob_death` system (on EntityDied):
+   - Applies rewards, collects loot
+   - Despawns mob, clears occupancy
+   - Inserts `PendingVictory` resource
+5. `handle_combat_outcome` (in fight modal):
+   - Reads `EntityDied` events
+   - If mob died → closes modal, opens results modal with `PendingVictory` data
+   - If player died → closes modal
 
 ## FightModalMob Resource
 
@@ -142,7 +136,11 @@ pub struct FightModalMob {
 Located in `src/combat/events.rs`, registered by `CombatPlugin`:
 
 ```rust
-// Event fired when damage should be dealt to an entity
+#[derive(Event)]
+pub struct PlayerAttackMob {
+    pub target: Entity,
+}
+
 #[derive(Event)]
 pub struct DealDamage {
     pub target: Entity,
@@ -150,7 +148,6 @@ pub struct DealDamage {
     pub source_name: String,
 }
 
-// Event fired when an entity dies
 #[derive(Event)]
 pub struct EntityDied {
     pub entity: Entity,
@@ -158,7 +155,9 @@ pub struct EntityDied {
 }
 ```
 
-These events can be used for observability and extension (combat logging, sound effects, etc.).
+- `PlayerAttackMob` - triggers combat processing
+- `DealDamage` - observation event for damage numbers, combat log
+- `EntityDied` - triggers death handling and UI transitions
 
 ## Defense Formula
 

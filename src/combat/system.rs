@@ -1,5 +1,6 @@
+use super::attack::Attack;
+use super::result::AttackResult;
 use crate::{
-    combat::{Attack, AttackResult},
     inventory::Inventory,
     stats::{HasStats, StatSheet, StatType},
 };

@@ -1,5 +1,3 @@
-//! Fight modal plugin.
-
 use bevy::prelude::*;
 
 use crate::ui::modal_registry::RegisterModalExt;
@@ -7,13 +5,17 @@ use crate::ui::screens::health_bar::{init_sprite_health_bars, update_sprite_heal
 use crate::ui::screens::modal::in_fight_modal;
 use crate::ui::SpriteMarkerAppExt;
 
+use crate::combat::EntityDied;
+
+use crate::combat::PlayerAttackMob;
+
 use super::input::{
-    handle_fight_modal_close, handle_fight_modal_navigation, handle_fight_modal_select,
+    handle_combat_outcome, handle_fight_modal_close, handle_fight_modal_navigation,
+    handle_fight_modal_select, trigger_attack_animation,
 };
 use super::render::{update_button_sprites, update_mob_health_bar, update_player_health_bar};
 use super::state::{FightModal, FightModalMobSprite, FightModalPlayerSprite};
 
-/// Plugin for the fight modal that appears when colliding with mobs.
 pub struct FightModalPlugin;
 
 impl Plugin for FightModalPlugin {
@@ -33,6 +35,8 @@ impl Plugin for FightModalPlugin {
                         update_sprite_health_bar_visuals,
                     )
                         .run_if(in_fight_modal),
+                    handle_combat_outcome.run_if(on_event::<EntityDied>),
+                    trigger_attack_animation.run_if(on_event::<PlayerAttackMob>),
                 ),
             )
             .register_sprite_marker::<FightModalPlayerSprite>()

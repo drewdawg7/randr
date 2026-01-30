@@ -5,8 +5,8 @@ mod result;
 mod system;
 mod tests;
 
-pub(crate) use attack::*;
-pub use events::{DealDamage, EntityDied};
-pub use plugin::CombatPlugin;
-pub(crate) use result::*;
-pub(crate) use system::*;
+pub use events::{DealDamage, EntityDied, PlayerAttackMob};
+pub use plugin::{CombatPlugin, PendingVictory};
+
+#[cfg(test)]
+pub(crate) use system::{apply_defense, calculate_damage_reduction};

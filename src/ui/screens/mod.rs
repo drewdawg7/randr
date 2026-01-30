@@ -16,6 +16,7 @@ pub mod results_modal;
 
 pub use anvil_modal::AnvilModalPlugin;
 pub use dungeon::{DungeonScreenPlugin, DUNGEON_SCALE};
+pub use fight_modal::state::FightModalMob;
 pub use fight_modal::FightModalPlugin;
 pub use forge_modal::ForgeModalPlugin;
 pub use monster_compendium::MonsterCompendiumPlugin;
