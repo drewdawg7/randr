@@ -1,12 +1,15 @@
+use std::ops::RangeInclusive;
+
 use bevy::prelude::*;
 
-use crate::assets::{BookSlotSlice, GameSprites, SpriteSheetKey, UiAllSlice};
+use crate::assets::{GameSprites, ItemDetailIconsSlice, SpriteSheetKey, UiAllSlice};
 use crate::ui::{FocusPanel, FocusState, Modal, ModalBackground, MobSpriteSheets, SelectionState, SpawnModalExt, SpriteAnimation};
 
 use super::constants::*;
 use super::state::{
-    CompendiumDropsSection, CompendiumListState, CompendiumMobSprite, CompendiumMonsters,
-    DropEntry, DropListItem, DropsListState, MonsterCompendiumRoot, MonsterListItem,
+    CompendiumDetailView, CompendiumDropsSection, CompendiumListState, CompendiumMobSprite,
+    CompendiumMonsters, CompendiumStatsSection, CompendiumViewState, DropEntry, DropListItem,
+    DropsListState, MonsterCompendiumRoot, MonsterListItem,
 };
 
 /// System to spawn the monster compendium UI.
@@ -21,11 +24,6 @@ pub fn do_spawn_monster_compendium(
     let Some(book_idx) = ui_all.get(UiAllSlice::Book.as_str()) else {
         return;
     };
-
-    let slot_sprite = game_sprites.get(SpriteSheetKey::BookSlot).and_then(|s| {
-        s.get(BookSlotSlice::Slot.as_str())
-            .map(|idx| (s.texture.clone(), s.layout.clone(), idx))
-    });
 
     let monsters = monsters.clone();
 
@@ -42,7 +40,7 @@ pub fn do_spawn_monster_compendium(
             }))
             .content(Box::new(move |book| {
                 spawn_left_page(book, &monsters);
-                spawn_right_page(book, slot_sprite);
+                spawn_right_page(book);
             }))
             .build(),
     );
@@ -81,14 +79,7 @@ fn spawn_left_page(book: &mut ChildBuilder, monsters: &CompendiumMonsters) {
     });
 }
 
-fn spawn_right_page(
-    book: &mut ChildBuilder,
-    slot_sprite: Option<(Handle<Image>, Handle<TextureAtlasLayout>, usize)>,
-) {
-    let Some((texture, layout, slot_idx)) = slot_sprite else {
-        return;
-    };
-
+fn spawn_right_page(book: &mut ChildBuilder) {
     book.spawn(Node {
         position_type: PositionType::Absolute,
         left: Val::Px(RIGHT_PAGE_LEFT),
@@ -97,51 +88,50 @@ fn spawn_right_page(
         height: Val::Px(RIGHT_PAGE_HEIGHT),
         flex_direction: FlexDirection::Column,
         align_items: AlignItems::Center,
+        overflow: Overflow::clip(),
         ..default()
     })
     .with_children(|right_page| {
-        // Slot with mob sprite at top
+        right_page.spawn((
+            CompendiumMobSprite,
+            Node {
+                width: Val::Px(MOB_SPRITE_SIZE),
+                height: Val::Px(MOB_SPRITE_SIZE),
+                ..default()
+            },
+        ));
+
         right_page
-            .spawn((
-                ImageNode::from_atlas_image(
-                    texture,
-                    TextureAtlas {
-                        layout,
-                        index: slot_idx,
-                    },
-                ),
-                Node {
-                    width: Val::Px(SLOT_SIZE),
-                    height: Val::Px(SLOT_SIZE),
-                    justify_content: JustifyContent::Center,
-                    align_items: AlignItems::Center,
-                    ..default()
-                },
-            ))
-            .with_children(|slot| {
-                slot.spawn((
-                    CompendiumMobSprite,
+            .spawn(Node {
+                width: Val::Px(RIGHT_PAGE_WIDTH),
+                flex_grow: 1.0,
+                flex_direction: FlexDirection::Column,
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            })
+            .with_children(|content_area| {
+                content_area.spawn((
+                    CompendiumStatsSection,
                     Node {
-                        width: Val::Px(MOB_SPRITE_SIZE),
-                        height: Val::Px(MOB_SPRITE_SIZE),
+                        width: Val::Px(RIGHT_PAGE_WIDTH),
+                        flex_direction: FlexDirection::Column,
+                        padding: UiRect::horizontal(Val::Px(10.0)),
+                        ..default()
+                    },
+                ));
+
+                content_area.spawn((
+                    CompendiumDropsSection,
+                    Node {
+                        width: Val::Px(RIGHT_PAGE_WIDTH),
+                        flex_direction: FlexDirection::Column,
+                        overflow: Overflow::clip(),
+                        padding: UiRect::horizontal(Val::Px(10.0)),
                         ..default()
                     },
                 ));
             });
-
-        // Drops section below slot
-        right_page.spawn((
-            CompendiumDropsSection,
-            Node {
-                width: Val::Px(RIGHT_PAGE_WIDTH),
-                height: Val::Px(DROPS_SECTION_HEIGHT),
-                flex_direction: FlexDirection::Column,
-                overflow: Overflow::clip(),
-                margin: UiRect::top(Val::Px(8.0)),
-                padding: UiRect::horizontal(Val::Px(10.0)),
-                ..default()
-            },
-        ));
     });
 }
 
@@ -206,24 +196,164 @@ pub fn update_compendium_mob_sprite(
     }
 }
 
-pub fn update_drops_display(
+pub fn update_stats_display(
     mut commands: Commands,
     list_state: Res<CompendiumListState>,
-    mut drops_state: ResMut<DropsListState>,
+    view_state: Res<CompendiumViewState>,
     monsters: Option<Res<CompendiumMonsters>>,
-    focus_state: Option<Res<FocusState>>,
     game_sprites: Res<GameSprites>,
-    drops_section: Query<Entity, With<CompendiumDropsSection>>,
-    added: Query<Entity, Added<CompendiumDropsSection>>,
+    mut stats_section: Query<(Entity, &mut Node), With<CompendiumStatsSection>>,
+    added: Query<Entity, Added<CompendiumStatsSection>>,
 ) {
-    let needs_update = list_state.is_changed() || !added.is_empty();
+    let needs_update = list_state.is_changed() || view_state.is_changed() || !added.is_empty();
     if !needs_update {
         return;
     }
 
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else { return };
-    let Ok(section_entity) = drops_section.get_single() else { return };
+    let Ok((section_entity, mut node)) = stats_section.get_single_mut() else { return };
+
+    let is_visible = view_state.view == CompendiumDetailView::Stats;
+    node.display = if is_visible {
+        Display::Flex
+    } else {
+        Display::None
+    };
+
+    if !is_visible {
+        return;
+    }
+
+    commands.entity(section_entity).despawn_descendants();
+    commands.entity(section_entity).with_children(|parent| {
+        spawn_stat_item(
+            parent,
+            ItemDetailIconsSlice::HealthIcon,
+            "HP",
+            &entry.max_health,
+            &game_sprites,
+        );
+
+        parent
+            .spawn(Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: Val::Px(16.0),
+                ..default()
+            })
+            .with_children(|row| {
+                spawn_stat_item(
+                    row,
+                    ItemDetailIconsSlice::AttackIcon,
+                    "ATK",
+                    &entry.attack,
+                    &game_sprites,
+                );
+                spawn_stat_item(
+                    row,
+                    ItemDetailIconsSlice::DefenseIcon,
+                    "DEF",
+                    &entry.defense,
+                    &game_sprites,
+                );
+            });
+
+        parent
+            .spawn(Node {
+                flex_direction: FlexDirection::Row,
+                column_gap: Val::Px(16.0),
+                ..default()
+            })
+            .with_children(|row| {
+                spawn_stat_item(
+                    row,
+                    ItemDetailIconsSlice::GoldIcon,
+                    "Gold",
+                    &entry.dropped_gold,
+                    &game_sprites,
+                );
+                spawn_stat_item(
+                    row,
+                    ItemDetailIconsSlice::DefaultStatIcon,
+                    "XP",
+                    &entry.dropped_xp,
+                    &game_sprites,
+                );
+            });
+    });
+}
+
+fn spawn_stat_item(
+    parent: &mut ChildBuilder,
+    icon_slice: ItemDetailIconsSlice,
+    label: &str,
+    range: &RangeInclusive<i32>,
+    game_sprites: &GameSprites,
+) {
+    let value_str = if range.start() == range.end() {
+        format!("{}: {}", label, range.start())
+    } else {
+        format!("{}: {}-{}", label, range.start(), range.end())
+    };
+
+    parent
+        .spawn(Node {
+            flex_direction: FlexDirection::Row,
+            align_items: AlignItems::Center,
+            column_gap: Val::Px(4.0),
+            height: Val::Px(STAT_ROW_HEIGHT),
+            ..default()
+        })
+        .with_children(|row| {
+            if let Some(sheet) = game_sprites.get(icon_slice.sprite_sheet_key()) {
+                if let Some(bundle) =
+                    sheet.image_bundle(icon_slice.as_str(), STAT_ICON_SIZE, STAT_ICON_SIZE)
+                {
+                    row.spawn(bundle);
+                }
+            }
+
+            row.spawn((
+                Text::new(value_str),
+                TextFont {
+                    font_size: STAT_FONT_SIZE,
+                    ..default()
+                },
+                TextColor(NORMAL_COLOR),
+            ));
+        });
+}
+
+pub fn update_drops_display(
+    mut commands: Commands,
+    list_state: Res<CompendiumListState>,
+    view_state: Res<CompendiumViewState>,
+    mut drops_state: ResMut<DropsListState>,
+    monsters: Option<Res<CompendiumMonsters>>,
+    focus_state: Option<Res<FocusState>>,
+    game_sprites: Res<GameSprites>,
+    mut drops_section: Query<(Entity, &mut Node), With<CompendiumDropsSection>>,
+    added: Query<Entity, Added<CompendiumDropsSection>>,
+) {
+    let needs_update = list_state.is_changed() || view_state.is_changed() || !added.is_empty();
+    if !needs_update {
+        return;
+    }
+
+    let Some(monsters) = monsters else { return };
+    let Some(entry) = monsters.get(list_state.selected) else { return };
+    let Ok((section_entity, mut node)) = drops_section.get_single_mut() else { return };
+
+    let is_visible = view_state.view == CompendiumDetailView::Drops;
+    node.display = if is_visible {
+        Display::Flex
+    } else {
+        Display::None
+    };
+
+    if !is_visible {
+        return;
+    }
 
     drops_state.count = entry.drops.len();
     drops_state.reset();

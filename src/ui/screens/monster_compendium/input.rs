@@ -4,7 +4,10 @@ use crate::input::{GameAction, NavigationDirection};
 use crate::ui::screens::modal::{ActiveModal, ModalType};
 use crate::ui::{FocusPanel, FocusState, SelectionState};
 
-use super::state::{CompendiumListState, CompendiumMonsters, DropsListState};
+use super::state::{
+    CompendiumDetailView, CompendiumListState, CompendiumMonsters, CompendiumViewState,
+    DropsListState,
+};
 
 pub fn handle_compendium_tab(
     mut action_reader: EventReader<GameAction>,
@@ -33,6 +36,7 @@ pub fn handle_compendium_navigation(
     focus_state: Option<Res<FocusState>>,
     mut list_state: ResMut<CompendiumListState>,
     mut drops_state: Option<ResMut<DropsListState>>,
+    mut view_state: ResMut<CompendiumViewState>,
     monsters: Option<Res<CompendiumMonsters>>,
 ) {
     if active_modal.modal != Some(ModalType::MonsterCompendium) {
@@ -66,7 +70,12 @@ pub fn handle_compendium_navigation(
                         }
                     }
                 }
-                _ => {}
+                NavigationDirection::Left | NavigationDirection::Right => {
+                    view_state.view = match view_state.view {
+                        CompendiumDetailView::Stats => CompendiumDetailView::Drops,
+                        CompendiumDetailView::Drops => CompendiumDetailView::Stats,
+                    };
+                }
             }
         }
     }

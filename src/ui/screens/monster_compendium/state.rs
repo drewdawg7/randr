@@ -1,3 +1,5 @@
+use std::ops::RangeInclusive;
+
 use bevy::prelude::*;
 
 use crate::item::ItemId;
@@ -22,10 +24,25 @@ pub struct MonsterListItem(pub usize);
 pub struct CompendiumMobSprite;
 
 #[derive(Component)]
+pub struct CompendiumStatsSection;
+
+#[derive(Component)]
 pub struct CompendiumDropsSection;
 
 #[derive(Component)]
 pub struct DropListItem(pub usize);
+
+#[derive(Default, Clone, Copy, PartialEq, Eq)]
+pub enum CompendiumDetailView {
+    #[default]
+    Stats,
+    Drops,
+}
+
+#[derive(Resource, Default)]
+pub struct CompendiumViewState {
+    pub view: CompendiumDetailView,
+}
 
 /// Resource tracking the selected monster in the compendium.
 #[derive(Resource, Default)]
@@ -96,6 +113,11 @@ pub struct MonsterEntry {
     pub name: String,
     pub mob_id: MobId,
     pub drops: Vec<DropEntry>,
+    pub max_health: RangeInclusive<i32>,
+    pub attack: RangeInclusive<i32>,
+    pub defense: RangeInclusive<i32>,
+    pub dropped_gold: RangeInclusive<i32>,
+    pub dropped_xp: RangeInclusive<i32>,
 }
 
 /// Pre-computed list of monsters for the compendium display.
@@ -125,6 +147,11 @@ impl CompendiumMonsters {
                         name: spec.name.clone(),
                         mob_id: *mob_id,
                         drops,
+                        max_health: spec.max_health.clone(),
+                        attack: spec.attack.clone(),
+                        defense: spec.defense.clone(),
+                        dropped_gold: spec.dropped_gold.clone(),
+                        dropped_xp: spec.dropped_xp.clone(),
                     }
                 })
                 .collect(),
@@ -164,6 +191,7 @@ impl RegisteredModal for MonsterCompendiumModal {
         world.resource_mut::<CompendiumListState>().count = count;
         world.resource_mut::<CompendiumListState>().reset();
         world.resource_mut::<DropsListState>().reset();
+        world.resource_mut::<CompendiumViewState>().view = CompendiumDetailView::Stats;
         world.insert_resource(monsters);
 
         world.insert_resource(FocusState::default());
