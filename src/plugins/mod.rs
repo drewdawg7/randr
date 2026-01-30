@@ -7,5 +7,5 @@ pub use economy::{
     TransactionCompleted,
 };
 pub use game::GamePlugin;
-pub use mobs::{CurrentMob, MobDamaged, MobDefeated, MobPlugin, MobSpawned};
+pub use mobs::{MobDefeated, MobPlugin};
 pub use toast_listeners::ToastListenersPlugin;

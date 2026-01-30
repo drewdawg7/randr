@@ -2,7 +2,7 @@ use std::collections::HashMap;
 
 use crate::{
     location::{FieldData, LocationId, LocationSpec},
-    mob::{Mob, MobId},
+    mob::MobId,
     utils::weighted_select,
 };
 
@@ -16,7 +16,6 @@ pub struct Field {
 }
 
 impl Field {
-    /// Create a Field from a LocationSpec
     pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &FieldData) -> Self {
         Field {
             location_id,
@@ -35,13 +34,10 @@ impl Field {
         }
     }
 
-    pub fn spawn_mob(&self) -> Result<Mob, FieldError> {
-        weighted_select(&self.mob_weights)
-            .map(|mob_id| mob_id.spawn())
-            .ok_or(FieldError::MobSpawnError)
+    pub fn spawn_mob(&self) -> Result<MobId, FieldError> {
+        weighted_select(&self.mob_weights).ok_or(FieldError::MobSpawnError)
     }
 
-    // Location trait accessors
     pub fn location_id(&self) -> LocationId {
         self.location_id
     }

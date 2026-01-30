@@ -5,7 +5,7 @@ use crate::game::{
     ItemPickedUp, ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerHealed,
     PlayerLeveledUp, ShowToast,
 };
-use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, MobSpawned, TransactionCompleted};
+use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, TransactionCompleted};
 
 /// SystemParam grouping all item-related event readers to reduce parameter count.
 #[derive(SystemParam)]
@@ -137,23 +137,12 @@ fn listen_item_events(mut events: ItemEventReaders, mut toast_writer: EventWrite
 /// Listen to combat-related events
 fn listen_combat_events(
     mut mob_defeated_events: EventReader<MobDefeated>,
-    mut mob_spawned_events: EventReader<MobSpawned>,
     mut toast_writer: EventWriter<ShowToast>,
 ) {
-    // Mob defeated
     for event in mob_defeated_events.read() {
         toast_writer.send(ShowToast::success(format!(
             "Defeated {}!",
             event.mob_id.spec().name
-        )));
-    }
-
-    // Mob spawned (only show for bosses or special enemies)
-    for event in mob_spawned_events.read() {
-        // Show toast for all mob spawns
-        toast_writer.send(ShowToast::info(format!(
-            "{} appeared!",
-            event.mob.name
         )));
     }
 }
