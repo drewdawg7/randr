@@ -48,7 +48,8 @@ entity_macros::define_entity! {
             dropped_xp: 5..=9,
             loot: LootTable::new()
                 .with(ItemId::SlimeGel, 3, 4, 1..=4)
-                .with(ItemId::GoldRing, 1, 100, 1..=1),
+                .with(ItemId::GoldRing, 1, 100, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         Cow {
@@ -61,7 +62,8 @@ entity_macros::define_entity! {
             dropped_xp: 5..=9,
             loot: LootTable::new()
                 .with(ItemId::Cowhide, 3, 4, 1..=3)
-                .with(ItemId::GoldRing, 1, 1000, 1..=1),
+                .with(ItemId::GoldRing, 1, 1000, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         Goblin {
@@ -75,7 +77,8 @@ entity_macros::define_entity! {
             loot: LootTable::new()
                 .with(ItemId::Sword, 1, 15, 1..=1)
                 .with(ItemId::BasicShield, 1, 15, 1..=1)
-                .with(ItemId::GoldRing, 1, 100, 1..=1),
+                .with(ItemId::GoldRing, 1, 100, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         DwarfDefender {
@@ -87,21 +90,18 @@ entity_macros::define_entity! {
             dropped_gold: 15..=25,
             dropped_xp: 20..=30,
             loot: LootTable::new()
-                // Ores (common)
                 .with(ItemId::IronOre, 2, 4, 1..=2)
                 .with(ItemId::GoldOre, 1, 6, 1..=2)
                 .with(ItemId::Coal, 2, 4, 1..=3)
-                // Ingots (uncommon)
                 .with(ItemId::IronIngot, 1, 8, 1..=1)
                 .with(ItemId::GoldIngot, 1, 12, 1..=1)
                 .with(ItemId::CopperIngot, 1, 10, 1..=1)
-                // Armor pieces (rare)
                 .with(ItemId::IronHelmet, 1, 20, 1..=1)
                 .with(ItemId::IronChestplate, 1, 25, 1..=1)
                 .with(ItemId::IronGauntlets, 1, 18, 1..=1)
-                // Swords (rare)
                 .with(ItemId::IronSword, 1, 15, 1..=1)
-                .with(ItemId::CopperSword, 1, 20, 1..=1),
+                .with(ItemId::CopperSword, 1, 20, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         DwarfWarrior {
@@ -113,19 +113,16 @@ entity_macros::define_entity! {
             dropped_gold: 18..=30,
             dropped_xp: 22..=32,
             loot: LootTable::new()
-                // Ores (common)
                 .with(ItemId::IronOre, 2, 4, 1..=3)
                 .with(ItemId::Coal, 2, 4, 1..=2)
-                // Ingots (uncommon)
                 .with(ItemId::IronIngot, 1, 6, 1..=2)
                 .with(ItemId::CopperIngot, 1, 8, 1..=1)
-                // Weapons (more common than Defender)
                 .with(ItemId::IronSword, 1, 10, 1..=1)
                 .with(ItemId::CopperSword, 1, 12, 1..=1)
                 .with(ItemId::GoldSword, 1, 15, 1..=1)
-                // Armor pieces (rare)
                 .with(ItemId::IronGreaves, 1, 20, 1..=1)
-                .with(ItemId::IronLeggings, 1, 22, 1..=1),
+                .with(ItemId::IronLeggings, 1, 22, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         DwarfMiner {
@@ -137,16 +134,14 @@ entity_macros::define_entity! {
             dropped_gold: 8..=16,
             dropped_xp: 12..=18,
             loot: LootTable::new()
-                // Ores (very common)
                 .with(ItemId::IronOre, 3, 3, 1..=3)
                 .with(ItemId::GoldOre, 2, 4, 1..=2)
                 .with(ItemId::Coal, 3, 3, 1..=4)
-                // Ingots (uncommon)
                 .with(ItemId::IronIngot, 1, 10, 1..=1)
                 .with(ItemId::GoldIngot, 1, 15, 1..=1)
                 .with(ItemId::CopperIngot, 1, 12, 1..=1)
-                // Tools (rare)
-                .with(ItemId::CopperPickaxe, 1, 20, 1..=1),
+                .with(ItemId::CopperPickaxe, 1, 20, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         DwarfKing {
@@ -158,7 +153,6 @@ entity_macros::define_entity! {
             dropped_gold: 40..=60,
             dropped_xp: 50..=70,
             loot: LootTable::new()
-                // Armor (common)
                 .with(ItemId::IronHelmet, 1, 6, 1..=1)
                 .with(ItemId::IronChestplate, 1, 6, 1..=1)
                 .with(ItemId::IronGauntlets, 1, 5, 1..=1)
@@ -166,19 +160,16 @@ entity_macros::define_entity! {
                 .with(ItemId::IronLeggings, 1, 6, 1..=1)
                 .with(ItemId::GoldHelmet, 1, 10, 1..=1)
                 .with(ItemId::GoldChestplate, 1, 10, 1..=1)
-                // Swords (common)
                 .with(ItemId::IronSword, 1, 5, 1..=1)
                 .with(ItemId::CopperSword, 1, 6, 1..=1)
                 .with(ItemId::GoldSword, 1, 8, 1..=1)
-                // Ingots (uncommon)
                 .with(ItemId::IronIngot, 1, 4, 1..=2)
                 .with(ItemId::GoldIngot, 1, 5, 1..=2)
                 .with(ItemId::CopperIngot, 1, 4, 1..=2)
-                // Ores (less common)
                 .with(ItemId::IronOre, 1, 6, 1..=3)
                 .with(ItemId::GoldOre, 1, 8, 1..=2)
-                // Rare accessory
-                .with(ItemId::GoldRing, 1, 10, 1..=1),
+                .with(ItemId::GoldRing, 1, 10, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         Dragon {
@@ -191,7 +182,8 @@ entity_macros::define_entity! {
             dropped_xp: 500..=750,
             loot: LootTable::new()
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
-                .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
+                .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         BlackDragon {
@@ -204,7 +196,8 @@ entity_macros::define_entity! {
             dropped_xp: 550..=800,
             loot: LootTable::new()
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
-                .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1),
+                .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1)
+                .build(),
             grid_size: GridSize::single(),
         }
         Merchant {
@@ -215,7 +208,7 @@ entity_macros::define_entity! {
             defense: 0..=0,
             dropped_gold: 0..=0,
             dropped_xp: 0..=0,
-            loot: LootTable::new(),
+            loot: LootTable::new().build(),
             grid_size: GridSize::single(),
         }
     }

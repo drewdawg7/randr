@@ -15,7 +15,8 @@ impl Default for Chest {
             .with(ItemId::CopperChestplate, 1, 4, 1..=1)
             .with(ItemId::CopperIngot, 1, 2, 4..=8)
             .with(ItemId::QualityUpgradeStone, 1, 3, 1..=2)
-            .with(ItemId::BasicHPPotion, 1, 1, 3..=6);
+            .with(ItemId::BasicHPPotion, 1, 1, 3..=6)
+            .build();
         Self {
             loot,
             is_locked: false

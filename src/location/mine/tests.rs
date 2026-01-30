@@ -16,7 +16,7 @@ fn create_test_rock(rock_id: RockId, health: i32) -> Rock {
     Rock {
         rock_id,
         stats: StatSheet::new().with(StatType::Health, health),
-        loot: LootTable::new(),
+        loot: LootTable::new().build(),
     }
 }
 

@@ -79,8 +79,7 @@ fn loot_item_new_accepts_zero_numerator() {
 
 #[test]
 fn loot_table_new_creates_empty_table() {
-    let table = LootTable::new();
-    // Check that it's empty by verifying ore_proportions returns no items
+    let table = LootTable::new().build();
     assert_eq!(table.ore_proportions().count(), 0);
 }
 
@@ -90,7 +89,8 @@ fn loot_table_new_creates_empty_table() {
 fn loot_table_with_chains_loot_item_additions() {
     let table = LootTable::new()
         .with(ItemId::IronOre, 1, 4, 1..=1)
-        .with(ItemId::GoldOre, 1, 8, 1..=2);
+        .with(ItemId::GoldOre, 1, 8, 1..=2)
+        .build();
 
     assert_eq!(table.ore_proportions().count(), 2);
 }
@@ -99,9 +99,9 @@ fn loot_table_with_chains_loot_item_additions() {
 fn loot_table_with_silently_ignores_invalid_items() {
     let table = LootTable::new()
         .with(ItemId::IronOre, 1, 4, 1..=1)
-        .with(ItemId::GoldOre, 5, 3, 1..=1); // Invalid: numerator > denominator
+        .with(ItemId::GoldOre, 5, 3, 1..=1)
+        .build();
 
-    // Only the valid item should be added
     assert_eq!(table.ore_proportions().count(), 1);
 }
 
@@ -109,9 +109,9 @@ fn loot_table_with_silently_ignores_invalid_items() {
 fn loot_table_with_ignores_duplicate_items() {
     let table = LootTable::new()
         .with(ItemId::IronOre, 1, 4, 1..=1)
-        .with(ItemId::IronOre, 1, 8, 1..=2); // Duplicate item
+        .with(ItemId::IronOre, 1, 8, 1..=2)
+        .build();
 
-    // Only one item should be added
     assert_eq!(table.ore_proportions().count(), 1);
 }
 
@@ -119,14 +119,13 @@ fn loot_table_with_ignores_duplicate_items() {
 
 #[test]
 fn loot_table_add_loot_item_adds_items_correctly() {
-    let mut table = LootTable::new();
+    let mut table = LootTable::new().build();
     let item = LootItem::new(ItemId::IronOre, 1, 4, 1..=1).unwrap();
 
     let result = table.add_loot_item(item);
     assert_eq!(result, Ok(0));
     assert_eq!(table.ore_proportions().count(), 1);
 
-    // Adding a second item returns the next index
     let item2 = LootItem::new(ItemId::GoldOre, 1, 4, 1..=1).unwrap();
     let result2 = table.add_loot_item(item2);
     assert_eq!(result2, Ok(1));
@@ -135,7 +134,7 @@ fn loot_table_add_loot_item_adds_items_correctly() {
 
 #[test]
 fn loot_table_add_loot_item_returns_item_already_in_table_for_duplicates() {
-    let mut table = LootTable::new();
+    let mut table = LootTable::new().build();
     let item1 = LootItem::new(ItemId::IronOre, 1, 4, 1..=1).unwrap();
     let item2 = LootItem::new(ItemId::IronOre, 1, 8, 1..=2).unwrap();
 
@@ -150,7 +149,8 @@ fn loot_table_add_loot_item_returns_item_already_in_table_for_duplicates() {
 #[test]
 fn loot_table_check_item_kind_returns_true_when_item_exists() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1);
+        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .build();
 
     assert!(table.check_item_kind(&ItemId::IronOre));
 }
@@ -158,14 +158,15 @@ fn loot_table_check_item_kind_returns_true_when_item_exists() {
 #[test]
 fn loot_table_check_item_kind_returns_false_when_item_missing() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1);
+        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .build();
 
     assert!(!table.check_item_kind(&ItemId::GoldOre));
 }
 
 #[test]
 fn loot_table_check_item_kind_returns_false_for_empty_table() {
-    let table = LootTable::new();
+    let table = LootTable::new().build();
     assert!(!table.check_item_kind(&ItemId::IronOre));
 }
 
@@ -174,7 +175,8 @@ fn loot_table_check_item_kind_returns_false_for_empty_table() {
 #[test]
 fn loot_table_get_loot_item_from_kind_finds_item() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1);
+        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .build();
 
     let result = table.get_loot_item_from_kind(&ItemId::IronOre);
     assert!(result.is_some());
@@ -183,7 +185,8 @@ fn loot_table_get_loot_item_from_kind_finds_item() {
 #[test]
 fn loot_table_get_loot_item_from_kind_returns_none_when_missing() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1);
+        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .build();
 
     let result = table.get_loot_item_from_kind(&ItemId::GoldOre);
     assert!(result.is_none());
@@ -194,8 +197,9 @@ fn loot_table_get_loot_item_from_kind_returns_none_when_missing() {
 #[test]
 fn loot_table_ore_proportions_returns_correct_drop_chances() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)   // 25% chance
-        .with(ItemId::GoldOre, 1, 2, 1..=1);    // 50% chance
+        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .with(ItemId::GoldOre, 1, 2, 1..=1)
+        .build();
 
     let proportions: Vec<(ItemId, f32)> = table.ore_proportions().collect();
 
@@ -214,7 +218,7 @@ fn loot_table_ore_proportions_returns_correct_drop_chances() {
 
 #[test]
 fn loot_table_ore_proportions_returns_empty_for_empty_table() {
-    let table = LootTable::new();
+    let table = LootTable::new().build();
     assert_eq!(table.ore_proportions().count(), 0);
 }
 
@@ -222,18 +226,17 @@ fn loot_table_ore_proportions_returns_empty_for_empty_table() {
 
 #[test]
 fn loot_table_roll_drops_empty_table_returns_no_drops() {
-    let table = LootTable::new();
+    let table = LootTable::new().build();
     let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
     assert!(drops.is_empty());
 }
 
 #[test]
 fn loot_table_roll_drops_100_percent_always_drops() {
-    // 100% drop chance (1/1) should always drop
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=1);
+        .with(ItemId::IronOre, 1, 1, 1..=1)
+        .build();
 
-    // Run 100 times to ensure it always drops
     for _ in 0..100 {
         let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
         assert_eq!(drops.len(), 1);
@@ -243,11 +246,10 @@ fn loot_table_roll_drops_100_percent_always_drops() {
 
 #[test]
 fn loot_table_roll_drops_0_percent_never_drops() {
-    // 0% drop chance (0/4) should never drop
     let table = LootTable::new()
-        .with(ItemId::IronOre, 0, 4, 1..=1);
+        .with(ItemId::IronOre, 0, 4, 1..=1)
+        .build();
 
-    // Run 100 times to ensure it never drops
     for _ in 0..100 {
         let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
         assert!(drops.is_empty());
@@ -256,9 +258,9 @@ fn loot_table_roll_drops_0_percent_never_drops() {
 
 #[test]
 fn loot_table_roll_drops_probability_statistical_test() {
-    // 50% drop chance (1/2)
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 2, 1..=1);
+        .with(ItemId::IronOre, 1, 2, 1..=1)
+        .build();
 
     let iterations = 1000;
     let mut drop_count = 0;
@@ -280,9 +282,9 @@ fn loot_table_roll_drops_probability_statistical_test() {
 
 #[test]
 fn loot_table_roll_drops_quantity_within_range() {
-    // 100% drop, quantity 1-5
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=5);
+        .with(ItemId::IronOre, 1, 1, 1..=5)
+        .build();
 
     for _ in 0..100 {
         let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
@@ -293,9 +295,9 @@ fn loot_table_roll_drops_quantity_within_range() {
 
 #[test]
 fn loot_table_roll_drops_single_quantity_always_returns_that_value() {
-    // 100% drop, quantity always 3
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 3..=3);
+        .with(ItemId::IronOre, 1, 1, 3..=3)
+        .build();
 
     for _ in 0..50 {
         let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
@@ -306,10 +308,10 @@ fn loot_table_roll_drops_single_quantity_always_returns_that_value() {
 
 #[test]
 fn loot_table_roll_drops_multiple_items_roll_independently() {
-    // Both items have 100% drop
     let table = LootTable::new()
         .with(ItemId::IronOre, 1, 1, 1..=1)
-        .with(ItemId::GoldOre, 1, 1, 1..=1);
+        .with(ItemId::GoldOre, 1, 1, 1..=1)
+        .build();
 
     let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
     assert_eq!(drops.len(), 2);
@@ -318,9 +320,9 @@ fn loot_table_roll_drops_multiple_items_roll_independently() {
 #[test]
 fn loot_table_roll_drops_handles_spawn_failure() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=1);
+        .with(ItemId::IronOre, 1, 1, 1..=1)
+        .build();
 
-    // Spawn function that returns None
     let drops = table.roll_drops_with_spawner(0, |_| None);
     assert!(drops.is_empty());
 }
@@ -330,7 +332,8 @@ fn loot_table_roll_drops_handles_spawn_failure() {
 #[test]
 fn loot_drop_contains_spawned_item_with_quantity() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 2..=2);
+        .with(ItemId::IronOre, 1, 1, 2..=2)
+        .build();
 
     let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
 
@@ -379,11 +382,10 @@ fn worth_gold_sell_price_rounds_down_for_odd_values() {
 
 #[test]
 fn loot_table_roll_drops_magic_find_zero_no_bonus() {
-    // 100% drop rate, we verify behavior is consistent
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=1);
+        .with(ItemId::IronOre, 1, 1, 1..=1)
+        .build();
 
-    // With 0 magic find, should still work normally
     for _ in 0..10 {
         let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
         assert_eq!(drops.len(), 1);
@@ -392,13 +394,12 @@ fn loot_table_roll_drops_magic_find_zero_no_bonus() {
 
 #[test]
 fn loot_table_roll_drops_magic_find_increases_chances() {
-    // Low drop rate (10% = 1/10) with high magic find
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 10, 1..=1);
+        .with(ItemId::IronOre, 1, 10, 1..=1)
+        .build();
 
     let iterations = 1000;
 
-    // Count drops with 0 magic find
     let mut drops_no_mf = 0;
     for _ in 0..iterations {
         let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
