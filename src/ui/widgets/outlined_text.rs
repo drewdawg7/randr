@@ -1,38 +1,28 @@
 use bevy::prelude::*;
+use bon::Builder;
 
 use crate::assets::GameFonts;
 
-/// Configuration for spawning outlined quantity text.
+#[derive(Builder)]
 pub struct OutlinedQuantityConfig {
-    /// Font size (default: 14.0)
+    #[builder(default = 14.0)]
     pub font_size: f32,
-    /// Main text color (default: WHITE)
+    #[builder(default = Color::WHITE)]
     pub text_color: Color,
-    /// Outline color (default: BLACK)
+    #[builder(default = Color::BLACK)]
     pub outline_color: Color,
-    /// Position from right edge (default: 2.0)
+    #[builder(default = 2.0)]
     pub right: f32,
-    /// Position from bottom edge (default: 0.0)
+    #[builder(default = 0.0)]
     pub bottom: f32,
 }
 
 impl Default for OutlinedQuantityConfig {
     fn default() -> Self {
-        Self {
-            font_size: 14.0,
-            text_color: Color::WHITE,
-            outline_color: Color::BLACK,
-            right: 2.0,
-            bottom: 0.0,
-        }
+        Self::builder().build()
     }
 }
 
-/// Spawn quantity text with a black outline effect at the bottom-right corner.
-/// Creates shadow text entities at 8 offsets around the main text for a thick outline.
-///
-/// The `marker` parameter allows callers to attach a marker component to the container
-/// entity for later querying (e.g., for despawning on refresh).
 pub fn spawn_outlined_quantity_text<M: Bundle>(
     parent: &mut ChildBuilder,
     game_fonts: &GameFonts,
@@ -43,7 +33,6 @@ pub fn spawn_outlined_quantity_text<M: Bundle>(
     let text = quantity.to_string();
     let font = game_fonts.pixel_font(config.font_size);
 
-    // Shadow offsets - 8 directions for thicker outline
     const OFFSETS: [(f32, f32); 8] = [
         (-1.0, -1.0),
         (0.0, -1.0),
@@ -66,7 +55,6 @@ pub fn spawn_outlined_quantity_text<M: Bundle>(
             },
         ))
         .with_children(|text_container| {
-            // Shadow layers (outline)
             for (x, y) in OFFSETS {
                 text_container.spawn((
                     Text::new(&text),
@@ -81,7 +69,6 @@ pub fn spawn_outlined_quantity_text<M: Bundle>(
                 ));
             }
 
-            // Main text on top
             text_container.spawn((
                 Text::new(&text),
                 font,
@@ -90,7 +77,6 @@ pub fn spawn_outlined_quantity_text<M: Bundle>(
         });
 }
 
-/// Plugin for outlined text widget.
 pub struct OutlinedTextPlugin;
 
 impl Plugin for OutlinedTextPlugin {
@@ -99,60 +85,19 @@ impl Plugin for OutlinedTextPlugin {
     }
 }
 
-/// Widget that displays text with an outline effect.
-///
-/// Uses layered shadow text nodes behind the main text to create an outline.
-/// Spawns a relative container with 4 shadow copies offset in cardinal directions,
-/// plus the main text on top.
-#[derive(Component)]
+#[derive(Component, Builder)]
+#[builder(on(String, into))]
 pub struct OutlinedText {
-    /// The text to display.
+    #[builder(start_fn)]
     pub text: String,
-    /// Font size.
+    #[builder(default = 16.0)]
     pub font_size: f32,
-    /// Main text color.
+    #[builder(default = Color::WHITE)]
     pub text_color: Color,
-    /// Outline/shadow color.
+    #[builder(default = Color::BLACK)]
     pub outline_color: Color,
-    /// Pixel offset for outline shadows.
+    #[builder(default = 1.0)]
     pub outline_offset: f32,
-}
-
-impl OutlinedText {
-    /// Create a new outlined text with the given content.
-    pub fn new(text: impl Into<String>) -> Self {
-        Self {
-            text: text.into(),
-            font_size: 16.0,
-            text_color: Color::WHITE,
-            outline_color: Color::BLACK,
-            outline_offset: 1.0,
-        }
-    }
-
-    /// Set the font size.
-    pub fn with_font_size(mut self, size: f32) -> Self {
-        self.font_size = size;
-        self
-    }
-
-    /// Set the main text color.
-    pub fn with_color(mut self, color: Color) -> Self {
-        self.text_color = color;
-        self
-    }
-
-    /// Set the outline color.
-    pub fn with_outline(mut self, color: Color) -> Self {
-        self.outline_color = color;
-        self
-    }
-
-    /// Set the outline offset in pixels.
-    pub fn with_outline_offset(mut self, offset: f32) -> Self {
-        self.outline_offset = offset;
-        self
-    }
 }
 
 fn on_add_outlined_text(
@@ -166,7 +111,6 @@ fn on_add_outlined_text(
         return;
     };
 
-    // Capture values before removing component
     let text = outlined.text.clone();
     let font_size = outlined.font_size;
     let text_color = outlined.text_color;
@@ -183,15 +127,13 @@ fn on_add_outlined_text(
             ..default()
         })
         .with_children(|parent| {
-            // Shadow offsets for 4 cardinal directions
             let offsets = [
-                (offset, 0.0),   // right
-                (-offset, 0.0),  // left
-                (0.0, offset),   // down
-                (0.0, -offset),  // up
+                (offset, 0.0),
+                (-offset, 0.0),
+                (0.0, offset),
+                (0.0, -offset),
             ];
 
-            // Spawn shadow text nodes
             for (x, y) in offsets {
                 parent.spawn((
                     Text::new(&text),
@@ -206,7 +148,6 @@ fn on_add_outlined_text(
                 ));
             }
 
-            // Spawn main text on top
             parent.spawn((
                 Text::new(&text),
                 font,

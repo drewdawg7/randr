@@ -231,16 +231,16 @@ pub fn populate_merchant_detail_pane_content(
             continue;
         };
 
-        let mut display = ItemDetailDisplay::new(item)
-            .with_quantity(quantity)
-            .with_price(price);
-
-        if let Some(comparison) = inventory.get_comparison_stats(item) {
-            display = display.with_comparison(comparison);
-        }
+        let comparison = inventory.get_comparison_stats(item);
 
         commands.entity(content_entity).with_children(|parent| {
-            parent.spawn(display);
+            parent.spawn(
+                ItemDetailDisplay::builder(item)
+                    .quantity(quantity)
+                    .price(price)
+                    .maybe_comparison(comparison)
+                    .build(),
+            );
         });
     }
 }

@@ -1,9 +1,9 @@
 use bevy::prelude::*;
+use bon::Builder;
 
 use crate::assets::{GameFonts, GameSprites, ItemDetailIconsSlice};
 use crate::stats::StatType;
 
-/// Plugin for item stats display widget.
 pub struct ItemStatsDisplayPlugin;
 
 impl Plugin for ItemStatsDisplayPlugin {
@@ -12,80 +12,24 @@ impl Plugin for ItemStatsDisplayPlugin {
     }
 }
 
-/// Display mode for item stats.
 #[derive(Clone, Copy, Default)]
 pub enum StatsDisplayMode {
-    /// Text-only format: "HP: +5"
     TextOnly,
-    /// Icon + value format: [icon] 5
     #[default]
     IconValue,
 }
 
-/// Widget that displays item stats.
-///
-/// Spawns a column with stat rows based on the display mode:
-/// - `TextOnly`: "HP: +5", "ATK: +3"
-/// - `IconValue`: [icon] 5, [icon] 3
-#[derive(Component)]
+#[derive(Component, Builder)]
 pub struct ItemStatsDisplay {
-    /// Stats to display as (StatType, value) pairs.
+    #[builder(start_fn)]
     pub stats: Vec<(StatType, i32)>,
-    /// Comparison stats from equipped item (for showing deltas).
     pub comparison: Option<Vec<(StatType, i32)>>,
-    /// Font size for stat text.
+    #[builder(default = 18.0)]
     pub font_size: f32,
-    /// Text color for stat values.
+    #[builder(default = Color::srgb(0.4, 0.25, 0.15))]
     pub text_color: Color,
-    /// Display mode (text-only or icon+value).
+    #[builder(default)]
     pub mode: StatsDisplayMode,
-}
-
-impl ItemStatsDisplay {
-    /// Creates a new ItemStatsDisplay with the given stats.
-    ///
-    /// Only includes stats with non-zero values.
-    pub fn from_stats_iter<I>(iter: I) -> Self
-    where
-        I: IntoIterator<Item = (StatType, i32)>,
-    {
-        Self {
-            stats: iter.into_iter().filter(|(_, v)| *v > 0).collect(),
-            comparison: None,
-            font_size: 18.0,
-            text_color: Color::srgb(0.4, 0.25, 0.15),
-            mode: StatsDisplayMode::default(),
-        }
-    }
-
-    /// Set comparison stats from equipped item for showing deltas.
-    pub fn with_comparison(mut self, comparison: Vec<(StatType, i32)>) -> Self {
-        self.comparison = Some(comparison);
-        self
-    }
-
-    pub fn with_font_size(mut self, size: f32) -> Self {
-        self.font_size = size;
-        self
-    }
-
-    pub fn with_color(mut self, color: Color) -> Self {
-        self.text_color = color;
-        self
-    }
-
-    pub fn with_mode(mut self, mode: StatsDisplayMode) -> Self {
-        self.mode = mode;
-        self
-    }
-
-    pub fn text_only(self) -> Self {
-        self.with_mode(StatsDisplayMode::TextOnly)
-    }
-
-    pub fn icon_value(self) -> Self {
-        self.with_mode(StatsDisplayMode::IconValue)
-    }
 }
 
 fn on_add_item_stats_display(
@@ -100,7 +44,6 @@ fn on_add_item_stats_display(
         return;
     };
 
-    // Capture values before removing component
     let stats = display.stats.clone();
     let comparison = display.comparison.clone();
     let font_size = display.font_size;
@@ -116,7 +59,6 @@ fn on_add_item_stats_display(
         })
         .with_children(|parent| {
             for (stat_type, value) in stats {
-                // Calculate delta if comparison exists
                 let delta = comparison.as_ref().map(|comp_stats| {
                     let equipped_value = comp_stats
                         .iter()
@@ -128,7 +70,6 @@ fn on_add_item_stats_display(
 
                 match mode {
                     StatsDisplayMode::TextOnly => {
-                        // Text-only format: "HP: +5"
                         parent
                             .spawn(Node {
                                 flex_direction: FlexDirection::Row,
@@ -158,7 +99,6 @@ fn on_add_item_stats_display(
                             });
                     }
                     StatsDisplayMode::IconValue => {
-                        // Icon + value format
                         let icon_slice = ItemDetailIconsSlice::for_stat(stat_type);
                         parent
                             .spawn(Node {

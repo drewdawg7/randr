@@ -512,7 +512,7 @@ pub fn populate_forge_detail_pane_content(
         };
 
         let item = item_id.spawn();
-        let display = ItemDetailDisplay::new(&item).with_quantity(quantity);
+        let display = ItemDetailDisplay::builder(&item).quantity(quantity).build();
 
         commands.entity(content_entity).with_children(|parent| {
             parent.spawn(display);

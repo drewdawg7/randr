@@ -212,9 +212,10 @@ pub fn populate_anvil_detail_pane_content(
                         Color::srgb(0.6, 0.6, 0.6)
                     };
                     parent.spawn(
-                        OutlinedText::new(spec.name)
-                            .with_font_size(16.0)
-                            .with_color(name_color),
+                        OutlinedText::builder(spec.name)
+                            .font_size(16.0)
+                            .text_color(name_color)
+                            .build(),
                     );
 
                     parent.spawn((
@@ -264,15 +265,16 @@ pub fn populate_anvil_detail_pane_content(
                                 ..default()
                             },
                         ));
-                        let display = ItemStatsDisplay::from_stats_iter(stats)
-                            .with_font_size(12.0)
-                            .with_color(Color::srgb(0.85, 0.85, 0.85));
+                        let display = ItemStatsDisplay::builder(stats)
+                            .font_size(12.0)
+                            .text_color(Color::srgb(0.85, 0.85, 0.85))
+                            .build();
                         parent.spawn(display);
                     }
                 }
                 RecipeOrItem::Item { item_id, quantity } => {
                     let item = item_id.spawn();
-                    let display = ItemDetailDisplay::new(&item).with_quantity(quantity);
+                    let display = ItemDetailDisplay::builder(&item).quantity(quantity).build();
                     parent.spawn(display);
                 }
             }

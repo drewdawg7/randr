@@ -202,16 +202,19 @@ pub fn populate_inventory_detail_pane_content(
         };
 
         let item = &inv_item.item;
-        let mut display = ItemDetailDisplay::new(item).with_quantity(inv_item.quantity);
-
-        if matches!(pane.source, InfoPanelSource::Inventory { .. }) {
-            if let Some(comparison) = inventory.get_comparison_stats(item) {
-                display = display.with_comparison(comparison);
-            }
-        }
+        let comparison = if matches!(pane.source, InfoPanelSource::Inventory { .. }) {
+            inventory.get_comparison_stats(item)
+        } else {
+            None
+        };
 
         commands.entity(content_entity).with_children(|parent| {
-            parent.spawn(display);
+            parent.spawn(
+                ItemDetailDisplay::builder(item)
+                    .quantity(inv_item.quantity)
+                    .maybe_comparison(comparison)
+                    .build(),
+            );
         });
     }
 }

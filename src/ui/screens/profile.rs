@@ -73,54 +73,54 @@ fn spawn_profile_screen(
                     ..default()
                 })
                 .with_children(|parent| {
-                    // HP
                     parent.spawn(
-                        StatRow::new("HP:", format!("{} / {}", stats.hp(), stats.max_hp()))
+                        StatRow::builder("HP:", format!("{} / {}", stats.hp(), stats.max_hp()))
                             .label_width(150.0)
                             .font_size(28.0)
                             .column_gap(15.0)
                             .label_color(Color::srgb(0.8, 0.8, 0.8))
-                            .value_color(Color::srgb(0.9, 0.2, 0.2)),
+                            .value_color(Color::srgb(0.9, 0.2, 0.2))
+                            .build(),
                     );
 
-                    // Gold
                     parent.spawn(
-                        StatRow::new("Gold:", format!("{}", gold.0))
+                        StatRow::builder("Gold:", format!("{}", gold.0))
                             .label_width(150.0)
                             .font_size(28.0)
                             .column_gap(15.0)
                             .label_color(Color::srgb(0.8, 0.8, 0.8))
-                            .value_color(Color::srgb(1.0, 0.84, 0.0)),
+                            .value_color(Color::srgb(1.0, 0.84, 0.0))
+                            .build(),
                     );
 
-                    // Attack
                     parent.spawn(
-                        StatRow::new("Attack:", format!("{}", stats.attack()))
+                        StatRow::builder("Attack:", format!("{}", stats.attack()))
                             .label_width(150.0)
                             .font_size(28.0)
                             .column_gap(15.0)
                             .label_color(Color::srgb(0.8, 0.8, 0.8))
-                            .value_color(Color::srgb(1.0, 0.4, 0.2)),
+                            .value_color(Color::srgb(1.0, 0.4, 0.2))
+                            .build(),
                     );
 
-                    // Defense
                     parent.spawn(
-                        StatRow::new("Defense:", format!("{}", stats.defense()))
+                        StatRow::builder("Defense:", format!("{}", stats.defense()))
                             .label_width(150.0)
                             .font_size(28.0)
                             .column_gap(15.0)
                             .label_color(Color::srgb(0.8, 0.8, 0.8))
-                            .value_color(Color::srgb(0.4, 0.6, 1.0)),
+                            .value_color(Color::srgb(0.4, 0.6, 1.0))
+                            .build(),
                     );
 
-                    // Level
                     parent.spawn(
-                        StatRow::new("Level:", format!("{}", prog.level))
+                        StatRow::builder("Level:", format!("{}", prog.level))
                             .label_width(150.0)
                             .font_size(28.0)
                             .column_gap(15.0)
                             .label_color(Color::srgb(0.8, 0.8, 0.8))
-                            .value_color(Color::srgb(0.6, 1.0, 0.6)),
+                            .value_color(Color::srgb(0.6, 1.0, 0.6))
+                            .build(),
                     );
 
                     // XP Bar

@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bon::Builder;
 
 use crate::assets::GameFonts;
 use crate::item::Item;
@@ -29,52 +30,39 @@ impl PriceDisplay {
     }
 }
 
-#[derive(Component)]
+#[derive(Component, Builder)]
+#[builder(on(String, into))]
 pub struct ItemDetailDisplay {
-    name: String,
-    item_type: String,
-    quality_name: String,
-    quality_color: Color,
+    #[builder(start_fn, into)]
+    item: ItemData,
+    #[builder(default = 1)]
     quantity: u32,
-    stats: Vec<(StatType, i32)>,
     comparison: Option<Vec<(StatType, i32)>>,
     price: Option<PriceDisplay>,
 }
 
-impl ItemDetailDisplay {
-    pub fn new(item: &Item) -> Self {
-        let stats = item
-            .stats
-            .stats()
-            .iter()
-            .map(|(t, si)| (*t, si.current_value))
-            .collect();
+struct ItemData {
+    name: String,
+    item_type: String,
+    quality_name: String,
+    quality_color: Color,
+    stats: Vec<(StatType, i32)>,
+}
 
+impl From<&Item> for ItemData {
+    fn from(item: &Item) -> Self {
         Self {
             name: item.name.clone(),
             item_type: format!("{}", item.item_type),
             quality_name: item.quality.display_name().to_string(),
             quality_color: item.quality.color(),
-            quantity: 1,
-            stats,
-            comparison: None,
-            price: None,
+            stats: item
+                .stats
+                .stats()
+                .iter()
+                .map(|(t, si)| (*t, si.current_value))
+                .collect(),
         }
-    }
-
-    pub fn with_quantity(mut self, quantity: u32) -> Self {
-        self.quantity = quantity;
-        self
-    }
-
-    pub fn with_price(mut self, price: PriceDisplay) -> Self {
-        self.price = Some(price);
-        self
-    }
-
-    pub fn with_comparison(mut self, comparison: Vec<(StatType, i32)>) -> Self {
-        self.comparison = Some(comparison);
-        self
     }
 }
 
@@ -89,12 +77,12 @@ fn on_add_item_detail_display(
         return;
     };
 
-    let name = display.name.clone();
-    let item_type = display.item_type.clone();
-    let quality_name = display.quality_name.clone();
-    let quality_color = display.quality_color;
+    let name = display.item.name.clone();
+    let item_type = display.item.item_type.clone();
+    let quality_name = display.item.quality_name.clone();
+    let quality_color = display.item.quality_color;
     let quantity = display.quantity;
-    let stats = display.stats.clone();
+    let stats = display.item.stats.clone();
     let comparison = display.comparison.clone();
     let price = display.price;
 
@@ -109,9 +97,10 @@ fn on_add_item_detail_display(
         })
         .with_children(|parent| {
             parent.spawn(
-                OutlinedText::new(&name)
-                    .with_font_size(16.0)
-                    .with_color(quality_color),
+                OutlinedText::builder(&name)
+                    .font_size(16.0)
+                    .text_color(quality_color)
+                    .build(),
             );
 
             parent.spawn((
@@ -143,15 +132,13 @@ fn on_add_item_detail_display(
             }
 
             if !stats.is_empty() {
-                let mut stats_display = ItemStatsDisplay::from_stats_iter(stats)
-                    .with_font_size(14.0)
-                    .with_color(Color::srgb(0.85, 0.85, 0.85));
-
-                if let Some(comp) = comparison {
-                    stats_display = stats_display.with_comparison(comp);
-                }
-
-                parent.spawn(stats_display);
+                parent.spawn(
+                    ItemStatsDisplay::builder(stats)
+                        .font_size(14.0)
+                        .text_color(Color::srgb(0.85, 0.85, 0.85))
+                        .maybe_comparison(comparison)
+                        .build(),
+                );
             }
         });
 }

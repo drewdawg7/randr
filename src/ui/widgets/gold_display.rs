@@ -1,9 +1,9 @@
 use bevy::prelude::*;
+use bon::Builder;
 
 use crate::assets::{GameSprites, SpriteSheetKey, UiAllSlice};
 use crate::ui::row_node;
 
-/// Plugin for gold display widget.
 pub struct GoldDisplayPlugin;
 
 impl Plugin for GoldDisplayPlugin {
@@ -12,33 +12,14 @@ impl Plugin for GoldDisplayPlugin {
     }
 }
 
-/// Widget that displays a gold amount with the coin icon.
-/// Spawns a row with: [coin icon] [amount]
-#[derive(Component)]
+#[derive(Component, Builder)]
 pub struct GoldDisplay {
+    #[builder(start_fn)]
     pub amount: i32,
+    #[builder(default = 16.0)]
     pub font_size: f32,
+    #[builder(default = Color::srgb(0.4, 0.25, 0.15))]
     pub text_color: Color,
-}
-
-impl GoldDisplay {
-    pub fn new(amount: i32) -> Self {
-        Self {
-            amount,
-            font_size: 16.0,
-            text_color: Color::srgb(0.4, 0.25, 0.15),
-        }
-    }
-
-    pub fn with_font_size(mut self, size: f32) -> Self {
-        self.font_size = size;
-        self
-    }
-
-    pub fn with_color(mut self, color: Color) -> Self {
-        self.text_color = color;
-        self
-    }
 }
 
 fn on_add_gold_display(
@@ -52,12 +33,10 @@ fn on_add_gold_display(
         return;
     };
 
-    // Get gold icon
     let gold_image = game_sprites
         .get(SpriteSheetKey::UiAll)
         .and_then(|s| s.image_node(UiAllSlice::GoldIcon.as_str()));
 
-    // Icon size scales with font size
     let icon_size = gold_display.font_size;
 
     commands
@@ -65,7 +44,6 @@ fn on_add_gold_display(
         .remove::<GoldDisplay>()
         .insert(row_node(4.0))
         .with_children(|row| {
-            // Gold icon
             let mut icon = row.spawn(Node {
                 width: Val::Px(icon_size),
                 height: Val::Px(icon_size),
@@ -75,7 +53,6 @@ fn on_add_gold_display(
                 icon.insert(img);
             }
 
-            // Amount text
             row.spawn((
                 Text::new(format!("{}", gold_display.amount)),
                 TextFont {
