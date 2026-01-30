@@ -12,6 +12,7 @@ use crate::dungeon::{
 };
 use crate::input::{GameAction, HeldDirection, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
+use crate::skills::{SkillType, SkillXpGained};
 use crate::location::LocationId;
 use crate::mob::MobId;
 use crate::states::AppState;
@@ -356,6 +357,7 @@ fn revert_forge_idle(
     mut commands: Commands,
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
+    mut xp_events: EventWriter<SkillXpGained>,
     mut query: Query<(
         Entity,
         &mut ForgeActiveTimer,
@@ -367,7 +369,18 @@ fn revert_forge_idle(
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
             if let Some(mut state) = forge_state {
+                let coal_qty = state.coal_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
+                let ore_qty = state.ore_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
+                let ingot_count = coal_qty.min(ore_qty);
+
                 state.complete_crafting();
+
+                if ingot_count > 0 {
+                    xp_events.send(SkillXpGained {
+                        skill: SkillType::Blacksmith,
+                        amount: ingot_count as u64 * 25,
+                    });
+                }
             }
 
             if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
@@ -388,6 +401,7 @@ fn revert_anvil_idle(
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
     mut inventory: ResMut<Inventory>,
+    mut xp_events: EventWriter<SkillXpGained>,
     mut query: Query<(
         Entity,
         &mut AnvilActiveTimer,
@@ -403,6 +417,13 @@ fn revert_anvil_idle(
                     let spec = recipe_id.spec();
                     let item = spec.output.spawn();
                     let _ = inventory.add_to_inv(item);
+
+                    let ingredient_count: u32 = spec.ingredients.values().sum();
+                    let xp_amount = 75 + (ingredient_count.saturating_sub(1) * 25);
+                    xp_events.send(SkillXpGained {
+                        skill: SkillType::Blacksmith,
+                        amount: xp_amount as u64,
+                    });
                 }
             }
 

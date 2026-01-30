@@ -14,6 +14,7 @@ use crate::mob::{
 };
 use crate::player::PlayerGold;
 use crate::plugins::MobDefeated;
+use crate::skills::{SkillType, SkillXpGained};
 use crate::stats::StatSheet;
 use crate::ui::screens::FightModalMob;
 
@@ -101,6 +102,7 @@ fn handle_mob_death(
     mut commands: Commands,
     mut events: EventReader<EntityDied>,
     mut mob_defeated_events: EventWriter<MobDefeated>,
+    mut skill_xp_events: EventWriter<SkillXpGained>,
     mut occupancy: ResMut<GridOccupancy>,
     mut player: PlayerResources,
     fight_mob: Option<Res<FightModalMob>>,
@@ -150,6 +152,11 @@ fn handle_mob_death(
         collect_loot_drops(&mut *player.inventory, &loot_drops);
 
         mob_defeated_events.send(MobDefeated { mob_id });
+
+        skill_xp_events.send(SkillXpGained {
+            skill: SkillType::Combat,
+            amount: xp_reward.0 as u64,
+        });
 
         occupancy.vacate(fight_mob.pos, GridSize::single());
         commands.entity(event.entity).despawn_recursive();

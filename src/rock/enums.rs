@@ -26,6 +26,15 @@ impl RockType {
         }
     }
 
+    pub fn mining_xp(&self) -> u64 {
+        match self {
+            Self::Coal => 15,
+            Self::Copper => 20,
+            Self::Iron => 30,
+            Self::Gold => 50,
+        }
+    }
+
     /// Returns the sprite sheet key and slice name for this rock type.
     /// The `variant` parameter (0 or 1) selects between the two sprite variants.
     pub fn sprite_data(&self, variant: u8) -> (SpriteSheetKey, &'static str) {
