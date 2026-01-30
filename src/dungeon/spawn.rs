@@ -1,5 +1,6 @@
 use std::ops::RangeInclusive;
 
+use bon::Builder;
 use rand::Rng;
 
 use super::grid::GridSize;
@@ -12,13 +13,11 @@ use super::spawn_rules::{
 use crate::crafting_station::CraftingStationType;
 use crate::mob::MobId;
 
-/// Type of entity that can be spawned.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpawnEntityType {
     Mob(MobId),
 }
 
-/// A spawn table entry with entity type, weight, and size.
 #[derive(Debug, Clone)]
 pub struct SpawnEntry {
     pub entity_type: SpawnEntityType,
@@ -26,51 +25,36 @@ pub struct SpawnEntry {
     pub size: GridSize,
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Builder)]
 pub struct SpawnTable {
+    #[builder(field)]
     entries: Vec<SpawnEntry>,
+    #[builder(field)]
+    guaranteed_mobs: Vec<(MobId, u32)>,
+    #[builder(field)]
+    npc_spawns: Vec<(MobId, RangeInclusive<u32>)>,
+    #[builder(field)]
+    npc_chances: Vec<(MobId, f64)>,
+
+    #[builder(default = 0..=0)]
     mob_count: RangeInclusive<u32>,
-    chest_count: RangeInclusive<u32>,
-    stairs_count: RangeInclusive<u32>,
-    rock_count: RangeInclusive<u32>,
-    forge_count: RangeInclusive<u32>,
-    anvil_count: RangeInclusive<u32>,
+    #[builder(default = 0..=0)]
+    chest: RangeInclusive<u32>,
+    #[builder(default = 0..=0)]
+    stairs: RangeInclusive<u32>,
+    #[builder(default = 0..=0)]
+    rock: RangeInclusive<u32>,
+    #[builder(default = 0..=0)]
+    forge: RangeInclusive<u32>,
+    #[builder(default = 0..=0)]
+    anvil: RangeInclusive<u32>,
     forge_chance: Option<f64>,
     anvil_chance: Option<f64>,
-    guaranteed_mobs: Vec<(MobId, u32)>,
-    npc_spawns: Vec<(MobId, RangeInclusive<u32>)>,
-    npc_chances: Vec<(MobId, f64)>,
 }
 
-impl Default for SpawnTable {
-    fn default() -> Self {
-        Self::new()
-    }
-}
+use spawn_table_builder::State;
 
-impl SpawnTable {
-    pub fn new() -> Self {
-        Self {
-            entries: Vec::new(),
-            mob_count: 0..=0,
-            chest_count: 0..=0,
-            stairs_count: 0..=0,
-            rock_count: 0..=0,
-            forge_count: 0..=0,
-            anvil_count: 0..=0,
-            forge_chance: None,
-            anvil_chance: None,
-            guaranteed_mobs: Vec::new(),
-            npc_spawns: Vec::new(),
-            npc_chances: Vec::new(),
-        }
-    }
-
-    pub fn empty() -> Self {
-        Self::new()
-    }
-
-    /// Add mob with its defined grid size from MobSpec.
+impl<S: State> SpawnTableBuilder<S> {
     pub fn mob(mut self, mob_id: MobId, weight: u32) -> Self {
         let size = mob_id.spec().grid_size;
         self.entries.push(SpawnEntry {
@@ -81,138 +65,86 @@ impl SpawnTable {
         self
     }
 
-    pub fn mob_count(mut self, count: RangeInclusive<u32>) -> Self {
-        self.mob_count = count;
-        self
-    }
-
-    /// Add chest count range (always 1x1).
-    pub fn chest(mut self, count: RangeInclusive<u32>) -> Self {
-        self.chest_count = count;
-        self
-    }
-
-    /// Add stairs count range (always 1x1).
-    pub fn stairs(mut self, count: RangeInclusive<u32>) -> Self {
-        self.stairs_count = count;
-        self
-    }
-
-    /// Add rock count range (always 1x1).
-    pub fn rock(mut self, count: RangeInclusive<u32>) -> Self {
-        self.rock_count = count;
-        self
-    }
-
-    /// Add forge count range (always 1x1).
-    pub fn forge(mut self, count: RangeInclusive<u32>) -> Self {
-        self.forge_count = count;
-        self
-    }
-
-    /// Add anvil count range (always 1x1).
-    pub fn anvil(mut self, count: RangeInclusive<u32>) -> Self {
-        self.anvil_count = count;
-        self
-    }
-
-    /// Spawn 1 forge with given probability (0.0 to 1.0).
-    pub fn forge_chance(mut self, probability: f64) -> Self {
-        self.forge_chance = Some(probability);
-        self
-    }
-
-    /// Spawn 1 anvil with given probability (0.0 to 1.0).
-    pub fn anvil_chance(mut self, probability: f64) -> Self {
-        self.anvil_chance = Some(probability);
-        self
-    }
-
-    /// Guarantee exactly `count` of this mob spawn on the floor (before weighted selection).
     pub fn guaranteed_mob(mut self, mob_id: MobId, count: u32) -> Self {
         self.guaranteed_mobs.push((mob_id, count));
         self
     }
 
-    /// Add NPC spawns (blocks movement, no combat).
     pub fn npc(mut self, mob_id: MobId, count: RangeInclusive<u32>) -> Self {
         self.npc_spawns.push((mob_id, count));
         self
     }
 
-    /// Spawn 1 NPC with given probability (0.0 to 1.0).
     pub fn npc_chance(mut self, mob_id: MobId, probability: f64) -> Self {
         self.npc_chances.push((mob_id, probability));
         self
     }
+}
 
-    /// Build a ComposedSpawnRules from this table's configuration.
+impl SpawnTable {
+    pub fn new() -> SpawnTableBuilder {
+        Self::builder()
+    }
+
+    pub fn empty() -> SpawnTableBuilder {
+        Self::builder()
+    }
+
     fn build_rules(&self) -> ComposedSpawnRules {
         let mut rules = ComposedSpawnRules::new();
 
-        // 1. Chests
-        if *self.chest_count.end() > 0 {
-            rules.push(SpawnRuleKind::Chest(ChestSpawner::new(self.chest_count.clone())));
+        if *self.chest.end() > 0 {
+            rules.push(SpawnRuleKind::Chest(ChestSpawner::new(self.chest.clone())));
         }
 
-        // 2. Stairs
-        if *self.stairs_count.end() > 0 {
-            rules.push(SpawnRuleKind::Stairs(StairsSpawner::new(self.stairs_count.clone())));
+        if *self.stairs.end() > 0 {
+            rules.push(SpawnRuleKind::Stairs(StairsSpawner::new(self.stairs.clone())));
         }
 
-        // 3. Rocks
-        if *self.rock_count.end() > 0 {
-            rules.push(SpawnRuleKind::Rock(RockSpawner::new(self.rock_count.clone())));
+        if *self.rock.end() > 0 {
+            rules.push(SpawnRuleKind::Rock(RockSpawner::new(self.rock.clone())));
         }
 
-        // 4. Forges (count range)
-        if *self.forge_count.end() > 0 {
+        if *self.forge.end() > 0 {
             rules.push(SpawnRuleKind::CraftingStation(CraftingStationSpawner::new(
                 CraftingStationType::Forge,
-                self.forge_count.clone(),
+                self.forge.clone(),
             )));
         }
 
-        // 5. Forges (probability)
         if let Some(probability) = self.forge_chance {
             rules.push(SpawnRuleKind::ProbabilityCraftingStation(
                 ProbabilityCraftingStationSpawner::new(CraftingStationType::Forge, probability),
             ));
         }
 
-        // 6. Anvils (count range)
-        if *self.anvil_count.end() > 0 {
+        if *self.anvil.end() > 0 {
             rules.push(SpawnRuleKind::CraftingStation(CraftingStationSpawner::new(
                 CraftingStationType::Anvil,
-                self.anvil_count.clone(),
+                self.anvil.clone(),
             )));
         }
 
-        // 7. Anvils (probability)
         if let Some(probability) = self.anvil_chance {
             rules.push(SpawnRuleKind::ProbabilityCraftingStation(
                 ProbabilityCraftingStationSpawner::new(CraftingStationType::Anvil, probability),
             ));
         }
 
-        // 8. NPCs (count range)
         for (mob_id, count_range) in &self.npc_spawns {
             rules.push(SpawnRuleKind::Npc(NpcSpawner::new(*mob_id, count_range.clone())));
         }
 
-        // 9. NPCs (probability)
         for (mob_id, probability) in &self.npc_chances {
             rules.push(SpawnRuleKind::ProbabilityNpc(ProbabilityNpcSpawner::new(
                 *mob_id, *probability,
             )));
         }
 
-        // 10. Guaranteed mobs
         for (mob_id, count) in &self.guaranteed_mobs {
             rules.push(SpawnRuleKind::GuaranteedMob(GuaranteedMobSpawner::new(*mob_id, *count)));
         }
 
-        // 11. Weighted mobs
         if !self.entries.is_empty() && *self.mob_count.end() > 0 {
             let mut weighted = WeightedMobSpawner::new().count(self.mob_count.clone());
             for entry in &self.entries {
@@ -251,7 +183,7 @@ mod tests {
 
     #[test]
     fn mob_entry_stores_size_from_spec() {
-        let table = SpawnTable::new().mob(MobId::Goblin, 1);
+        let table = SpawnTable::new().mob(MobId::Goblin, 1).build();
 
         assert_eq!(table.entries.len(), 1);
         let entry = &table.entries[0];
@@ -265,7 +197,10 @@ mod tests {
         let mut rng = rand::thread_rng();
         let mut layout = create_test_layout(10, 10);
 
-        SpawnTable::new().chest(2..=2).apply(&mut layout, &mut rng);
+        SpawnTable::new()
+            .chest(2..=2)
+            .build()
+            .apply(&mut layout, &mut rng);
 
         let chests: Vec<_> = layout
             .entities()
@@ -283,6 +218,7 @@ mod tests {
         SpawnTable::new()
             .mob(MobId::Goblin, 1)
             .mob_count(1..=1)
+            .build()
             .apply(&mut layout, &mut rng);
 
         let mobs: Vec<_> = layout
@@ -309,6 +245,7 @@ mod tests {
             .mob(MobId::Slime, 1)
             .mob_count(3..=3)
             .chest(2..=2)
+            .build()
             .apply(&mut layout, &mut rng);
 
         let entities = layout.entities();
@@ -328,7 +265,7 @@ mod tests {
         let mut rng = rand::thread_rng();
         let mut layout = create_test_layout(10, 10);
 
-        SpawnTable::empty().apply(&mut layout, &mut rng);
+        SpawnTable::empty().build().apply(&mut layout, &mut rng);
 
         assert!(layout.entities().is_empty());
     }
@@ -338,7 +275,10 @@ mod tests {
         let mut rng = rand::thread_rng();
         let mut layout = create_test_layout(10, 10);
 
-        SpawnTable::new().rock(2..=2).apply(&mut layout, &mut rng);
+        SpawnTable::new()
+            .rock(2..=2)
+            .build()
+            .apply(&mut layout, &mut rng);
 
         let rocks: Vec<_> = layout
             .entities()
@@ -353,7 +293,10 @@ mod tests {
         let mut rng = rand::thread_rng();
         let mut layout = create_test_layout(10, 10);
 
-        SpawnTable::new().rock(3..=3).apply(&mut layout, &mut rng);
+        SpawnTable::new()
+            .rock(3..=3)
+            .build()
+            .apply(&mut layout, &mut rng);
 
         for (_, entity) in layout.entities() {
             if matches!(entity, DungeonEntity::Rock { .. }) {

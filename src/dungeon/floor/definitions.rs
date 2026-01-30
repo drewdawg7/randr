@@ -19,7 +19,8 @@ entity_macros::define_data! {
             spawn_table: SpawnTable::new()
                 .npc(MobId::Merchant, 1..=1)
                 .forge(1..=1)
-                .anvil(1..=1),
+                .anvil(1..=1)
+                .build(),
         }
         MainDungeon1 {
             name: "Dungeon - Floor 1",
@@ -36,7 +37,8 @@ entity_macros::define_data! {
                 .forge_chance(0.33)
                 .anvil_chance(0.33)
                 .npc_chance(MobId::Merchant, 0.33)
-                .stairs(1..=1),
+                .stairs(1..=1)
+                .build(),
         }
         MainDungeon2 {
             name: "Dungeon - Floor 2",
@@ -53,7 +55,8 @@ entity_macros::define_data! {
                 .forge_chance(0.33)
                 .anvil_chance(0.33)
                 .npc_chance(MobId::Merchant, 0.33)
-                .stairs(1..=1),
+                .stairs(1..=1)
+                .build(),
         }
         MainDungeon3 {
             name: "Dungeon - Floor 3",
@@ -69,7 +72,8 @@ entity_macros::define_data! {
                 .rock(0..=4)
                 .forge_chance(0.33)
                 .anvil_chance(0.33)
-                .npc_chance(MobId::Merchant, 0.33),
+                .npc_chance(MobId::Merchant, 0.33)
+                .build(),
         }
     }
 }

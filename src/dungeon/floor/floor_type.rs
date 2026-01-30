@@ -32,9 +32,9 @@ impl FloorType {
             .npc_chance(MobId::Merchant, 0.33);
 
         if is_final {
-            base
+            base.build()
         } else {
-            base.stairs(1..=1)
+            base.stairs(1..=1).build()
         }
     }
 
