@@ -1,3 +1,4 @@
+use bevy::ecs::world::Command;
 use bevy::prelude::*;
 
 use crate::combat::{EntityDied, PendingVictory, PlayerAttackMob};
@@ -9,6 +10,15 @@ use crate::ui::{PlayerAttackTimer, PlayerSpriteSheet, SelectionState, SpriteAnim
 use super::super::modal::{ActiveModal, ModalType, OpenModal};
 use super::super::results_modal::{ResultsModalData, ResultsSprite};
 use super::state::{FightModal, FightModalButton, FightModalButtonSelection, FightModalMob};
+
+struct OpenResultsModalCommand(ResultsModalData);
+
+impl Command for OpenResultsModalCommand {
+    fn apply(self, world: &mut World) {
+        world.insert_resource(self.0);
+        world.trigger(OpenModal(ModalType::ResultsModal));
+    }
+}
 
 pub fn handle_fight_modal_close(
     mut commands: Commands,
@@ -116,15 +126,14 @@ pub fn handle_combat_outcome(
             let fight_mob = fight_mob.as_ref().expect("checked above");
             commands.close_modal::<FightModal>();
 
-            commands.insert_resource(ResultsModalData {
+            commands.queue(OpenResultsModalCommand(ResultsModalData {
                 title: "Victory!".to_string(),
                 subtitle: Some(victory.mob_name.clone()),
                 sprite: Some(ResultsSprite::Mob(fight_mob.mob_id)),
                 gold_gained: Some(victory.gold_gained),
                 xp_gained: Some(victory.xp_gained),
                 loot_drops: victory.loot_drops.clone(),
-            });
-            commands.trigger(OpenModal(ModalType::ResultsModal));
+            }));
             commands.remove_resource::<PendingVictory>();
         }
     }
