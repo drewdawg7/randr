@@ -66,6 +66,6 @@ Configured to run in order (Input → Ui) only when `AppState::Fight` is active.
 
 - [fight-modal.md](fight-modal.md) - The older fight modal (different module at `fight_modal/`)
 - [health-bar.md](health-bar.md) - Health bar system
-- [sprite-marker.md](sprite-marker.md) - SpriteMarker trait pattern
-- [mob-sprites.md](mob-sprites.md) - Mob sprite sheet loading
-- [focus.md](focus.md) - SelectionState trait used by ActionSelection/PostCombatSelection
+- [sprite-marker.md](../sprites/sprite-marker.md) - SpriteMarker trait pattern
+- [mob-sprites.md](../sprites/mob-sprites.md) - Mob sprite sheet loading
+- [focus.md](../ui/focus.md) - SelectionState trait used by ActionSelection/PostCombatSelection

@@ -132,7 +132,7 @@ NavigationPlugin::new()
 ### Modal Navigation
 
 1. Add the modal type to `ModalType` enum in `src/ui/screens/modal.rs`
-2. Implement `RegisteredModal` for the modal (see [modal-registry.md](modal-registry.md))
+2. Implement `RegisteredModal` for the modal (see [modal-registry.md](../modals/modal-registry.md))
 3. Add handling in `handle_modal_toggle` in `src/navigation/systems.rs`:
    ```rust
    ModalType::NewModal => commands.toggle_modal::<NewModal>(),
@@ -167,7 +167,7 @@ pub fn handle_modal_close(
 }
 ```
 
-See [modal-registry.md](modal-registry.md) for full `ModalCommands` documentation.
+See [modal-registry.md](../modals/modal-registry.md) for full `ModalCommands` documentation.
 
 ## Configuration Location
 

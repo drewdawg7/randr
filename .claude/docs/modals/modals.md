@@ -108,7 +108,7 @@ impl RegisteredModal for MyModal {
 
 ### input.rs
 
-**Modal opening is handled by the navigation system** (see [navigation.md](navigation.md)).
+**Modal opening is handled by the navigation system** (see [navigation.md](../ui/navigation.md)).
 
 The input.rs file only needs to handle:
 1. **Internal navigation** - Up/down, select actions within the modal
@@ -260,5 +260,5 @@ Files that implement this pattern:
 8. Register modal plugin in `src/plugins/game.rs`
 9. Export `MyModal` from `src/ui/screens/mod.rs`
 
-See [navigation.md](navigation.md) for full navigation system documentation.
+See [navigation.md](../ui/navigation.md) for full navigation system documentation.
 See [modal-registry.md](modal-registry.md) for full modal registry documentation.

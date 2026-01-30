@@ -71,7 +71,7 @@ use crate::ui::widgets::spawn_nine_slice_panel;
 spawn_nine_slice_panel::<ShopBgSlice>(parent, &game_sprites, width, height);
 ```
 
-See [widgets/nine_slice.md](widgets/nine_slice.md) for full documentation.
+See [nine_slice.md](../widgets/nine_slice.md) for full documentation.
 
 ## ThreeSlice Trait
 
@@ -85,7 +85,7 @@ use crate::ui::widgets::spawn_three_slice_banner;
 spawn_three_slice_banner::<FightBannerSlice>(parent, &game_sprites, width);
 ```
 
-See [widgets/three_slice.md](widgets/three_slice.md) for full documentation.
+See [three_slice.md](../widgets/three_slice.md) for full documentation.
 
 ## Adding New Slices
 

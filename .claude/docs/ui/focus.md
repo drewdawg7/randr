@@ -72,7 +72,7 @@ pub fn handle_modal_tab(
 **Important:** Use `Option<Res<FocusState>>` or `Option<ResMut<FocusState>>` since the resource only exists when a modal is open.
 
 **Run Conditions:** Modal input systems use `run_if(in_*_modal)` conditions in the plugin,
-so individual handlers don't need to check `ActiveModal`. See [modals.md](modals.md) for details.
+so individual handlers don't need to check `ActiveModal`. See [modals.md](../modals/modals.md) for details.
 
 ```rust
 // input.rs - no ActiveModal check needed; plugin uses run_if(in_my_modal)
@@ -239,7 +239,7 @@ pub trait SelectionState {
 | `ListState` | `town/shared/list_widget.rs` | Wrapping | Overrides `up()`/`down()` with wrapping + scroll |
 | `FightScreenState` | `fight/state.rs` | Clamped | Uses wrapper types (see below) |
 
-**Note:** The inventory modal uses 2D grid navigation directly on the `ItemGrid` component (not `SelectionState`). See [inventory-modal.md](inventory-modal.md).
+**Note:** The inventory modal uses 2D grid navigation directly on the `ItemGrid` component (not `SelectionState`). See [inventory-modal.md](../modals/inventory-modal.md).
 
 ### FightScreenState Wrappers
 
@@ -402,9 +402,9 @@ These only run when the state resource changes (`is_changed()`).
 
 ## Related Documentation
 
-- [modals.md](modals.md) - Modal screen patterns
+- [modals.md](../modals/modals.md) - Modal screen patterns
 - [navigation.md](navigation.md) - Navigation system
-- [inventory-modal.md](inventory-modal.md) - Inventory modal implementation
-- [merchant-modal.md](merchant-modal.md) - Merchant modal implementation
-- [forge-modal.md](forge-modal.md) - Forge modal implementation
-- [anvil-modal.md](anvil-modal.md) - Anvil modal implementation
+- [inventory-modal.md](../modals/inventory-modal.md) - Inventory modal implementation
+- [merchant-modal.md](../modals/merchant-modal.md) - Merchant modal implementation
+- [forge-modal.md](../modals/forge-modal.md) - Forge modal implementation
+- [anvil-modal.md](../modals/anvil-modal.md) - Anvil modal implementation

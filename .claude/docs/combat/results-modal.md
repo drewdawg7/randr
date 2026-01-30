@@ -106,7 +106,7 @@ Like the old VictoryModal and FightModal, the results modal is spawned programma
 ## Related Documentation
 
 - [fight-modal.md](fight-modal.md) - Fight modal (spawns results modal on mob death)
-- [dungeon/entities.md](dungeon/entities.md) - Chest interaction system
-- [modals.md](modals.md) - General modal patterns
-- [modal-builder.md](modal-builder.md) - Modal builder API
-- [sprite-marker.md](sprite-marker.md) - SpriteMarker trait
+- [entities.md](../dungeon/entities.md) - Chest interaction system
+- [modals.md](../modals/modals.md) - General modal patterns
+- [modal-builder.md](../modals/modal-builder.md) - Modal builder API
+- [sprite-marker.md](../sprites/sprite-marker.md) - SpriteMarker trait

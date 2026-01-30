@@ -31,3 +31,14 @@ For structural patterns across files, use `ast-grep --pattern 'PATTERN' --lang r
 ## Sprites
 Use the `sprites` skill when working with sprite sheets, Aseprite exports, or adding sprites to UI.
 
+## Project Documentation
+
+Reference docs in `.claude/docs/` organized by domain:
+- `dungeon/` - floors, layouts, movement, spawning, entities
+- `combat/` - ECS combat, fight modal, health bars
+- `modals/` - modal system, registry, individual modals
+- `widgets/` - reusable UI components
+- `ui/` - layout, navigation, display patterns
+- `sprites/` - sprite sheets, slices, animations
+
+Each domain has a README.md with its index.

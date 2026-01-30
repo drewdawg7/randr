@@ -81,6 +81,6 @@ When mob dies:
 
 - [results-modal.md](results-modal.md) - Results modal (spawned after mob death or chest opening)
 - [health-bar.md](health-bar.md) - HealthBarValues, SpriteHealthBar, HP text overlay
-- [modals.md](modals.md) - General modal patterns
-- [focus.md](focus.md) - SelectionState trait
-- [dungeon/mod.md](dungeon/mod.md) - Dungeon and grid systems
+- [modals.md](../modals/modals.md) - General modal patterns
+- [focus.md](../ui/focus.md) - SelectionState trait
+- [mod.md](../dungeon/mod.md) - Dungeon and grid systems
