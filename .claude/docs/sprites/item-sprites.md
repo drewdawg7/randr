@@ -2,9 +2,9 @@
 
 ## Overview
 
-Each `ItemId` has a `sprite_name()` method that returns the slice name for its icon in the `IconItems` sprite sheet (`assets/sprites/icon_items.json` + `icon_items.png`).
+Each `ItemId` has sprite metadata defined inline in the `define_entity!` macro using the `@sprite` annotation. The macro generates `sprite_name()` and `sprite_sheet_key()` methods.
 
-**File**: `src/item/definitions.rs` — the `sprite_name()` method on `ItemId`
+**File**: `src/item/definitions.rs`
 
 ## Sprite Sheet Layout
 
@@ -23,39 +23,37 @@ y = row * 32
 # Then look up (x, y) in the JSON slices to find the Slice_ name
 ```
 
-## Current Sprite Assignments
+## Sprite Annotation Syntax
 
-| Item | Slice | Icon Source |
-|------|-------|-------------|
-| BasicHPPotion | Slice_337 | — |
-| Sword | Slice_155 | — |
-| Dagger | Slice_156 | — |
-| BasicShield | Slice_100 | — |
-| CopperHelmet | Slice_101 | — |
-| TinSword, CopperSword, BronzeSword | Slice_989 | icon480.png |
-| BonkStick | Slice_607 | icon506.png |
-| TinHelmet, BronzeHelmet | Slice_108 | icon706.png |
-| CopperChestplate, TinChestplate, BronzeChestplate | Slice_551 | icon633.png |
-| CopperGauntlets, TinGauntlets, BronzeGauntlets | Slice_558 | icon745.png |
-| CopperGreaves, TinGreaves, BronzeGreaves | Slice_367 | icon758.png |
-| CopperLeggings, TinLeggings, BronzeLeggings | Slice_42 | icon673.png |
-| BronzePickaxe | Slice_826 | icon941.png |
-| GoldRing | Slice_50 | icon801.png |
-| ImbaRing | Slice_1009 | icon800.png |
-| Coal | Slice_693 | icon859.png |
-| CopperOre, TinOre | Slice_565 | icon857.png |
-| CopperIngot, BronzeIngot | Slice_501 | icon856.png |
-| TinIngot | Slice_565 | icon857.png |
-| Cowhide | Slice_183 | icon883.png |
-| SlimeGel | Slice_952 | icon911.png |
-| QualityUpgradeStone | Slice_57 | icon913.png |
+Items define their sprite inline with the `@sprite` annotation:
+
+```rust
+Sword {
+    name: String::from("Sword"),
+    item_type: ItemType::Equipment(EquipmentType::Weapon),
+    // ... other fields ...
+    @sprite: "Slice_155",  // Uses default sheet (IconItems)
+}
+
+GoldSword {
+    name: String::from("Gold Sword"),
+    // ...
+    @sprite: "gold_sword" in SpriteSheetKey::GoldSword,  // Custom sheet
+}
+```
+
+The default sprite sheet (`SpriteSheetKey::IconItems`) is set in the `sprites(...)` block:
+
+```rust
+sprites(default_sheet: SpriteSheetKey::IconItems);
+```
 
 ## Usage in UI
 
-Item sprites are displayed using the `IconItems` sprite sheet key:
+Item sprites are displayed using the generated methods:
 
 ```rust
-let sheet = game_sprites.get(SpriteSheetKey::IconItems)?;
+let sheet = game_sprites.get(item_id.sprite_sheet_key())?;
 let icon = sheet.image_bundle(item_id.sprite_name(), 32.0, 32.0)?;
 ```
 
@@ -63,5 +61,6 @@ let icon = sheet.image_bundle(item_id.sprite_name(), 32.0, 32.0)?;
 
 1. Identify the icon file number from the source assets
 2. Run the mapping formula above (or check the JSON) to find the `Slice_` name
-3. Add the mapping in `ItemId::sprite_name()` in `src/item/definitions.rs`
-4. Every `ItemId` variant must be explicitly matched (no wildcard fallback)
+3. Add the `@sprite` annotation to the item variant in `src/item/definitions.rs`
+   - Use `@sprite: "slice_name"` for items using the default `IconItems` sheet
+   - Use `@sprite: "slice_name" in SpriteSheetKey::SheetName` for custom sheets

@@ -2,12 +2,8 @@ use proc_macro::TokenStream;
 use quote::{quote, format_ident};
 use syn::{
     parse_macro_input, parse::{Parse, ParseStream},
-    Ident, Token, Expr, Type, Visibility, braced,
-    punctuated::Punctuated,
+    Ident, Token, Expr, Type, Visibility, braced, parenthesized,
 };
-
-// Note: This macro generates Lazy statics (not const) because StatSheet uses HashMap.
-// When StatSheet becomes const-friendly, we can switch to const statics.
 
 /// Parsed field definition: `pub name: Type`
 struct FieldDef {
@@ -26,13 +22,48 @@ impl Parse for FieldDef {
     }
 }
 
-/// Parsed variant definition: `VariantName { field: value, ... }`
-struct VariantDef {
-    name: Ident,
-    fields: Punctuated<FieldInit, Token![,]>,
+struct SpriteConfig {
+    default_sheet: Expr,
 }
 
-/// Field initialization: `field: value`
+impl Parse for SpriteConfig {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let content;
+        parenthesized!(content in input);
+        let key: Ident = content.parse()?;
+        if key != "default_sheet" {
+            return Err(syn::Error::new(key.span(), "expected `default_sheet`"));
+        }
+        content.parse::<Token![:]>()?;
+        let default_sheet: Expr = content.parse()?;
+        Ok(SpriteConfig { default_sheet })
+    }
+}
+
+struct VariantSprite {
+    name: Expr,
+    sheet: Option<Expr>,
+}
+
+impl Parse for VariantSprite {
+    fn parse(input: ParseStream) -> syn::Result<Self> {
+        let name: Expr = input.parse()?;
+        let sheet = if input.peek(Token![in]) {
+            input.parse::<Token![in]>()?;
+            Some(input.parse::<Expr>()?)
+        } else {
+            None
+        };
+        Ok(VariantSprite { name, sheet })
+    }
+}
+
+struct VariantDef {
+    name: Ident,
+    fields: Vec<FieldInit>,
+    sprite: Option<VariantSprite>,
+}
+
 struct FieldInit {
     name: Ident,
     value: Expr,
@@ -52,38 +83,44 @@ impl Parse for VariantDef {
         let name: Ident = input.parse()?;
         let content;
         braced!(content in input);
-        let fields = content.parse_terminated(FieldInit::parse, Token![,])?;
-        Ok(VariantDef { name, fields })
+
+        let mut fields = Vec::new();
+        let mut sprite = None;
+
+        while !content.is_empty() {
+            if content.peek(Token![@]) {
+                content.parse::<Token![@]>()?;
+                let attr_name: Ident = content.parse()?;
+                if attr_name != "sprite" {
+                    return Err(syn::Error::new(attr_name.span(), "expected `sprite`"));
+                }
+                content.parse::<Token![:]>()?;
+                sprite = Some(content.parse::<VariantSprite>()?);
+                if content.peek(Token![,]) {
+                    content.parse::<Token![,]>()?;
+                }
+            } else {
+                fields.push(content.parse::<FieldInit>()?);
+                if content.peek(Token![,]) {
+                    content.parse::<Token![,]>()?;
+                }
+            }
+        }
+
+        Ok(VariantDef { name, fields, sprite })
     }
 }
 
-/// Main input for define_entity! macro
-///
-/// ```ignore
-/// define_entity! {
-///     spec ItemSpec {
-///         pub name: &'static str,
-///         pub gold_value: i32,
-///     }
-///
-///     id ItemId;
-///
-///     variants {
-///         Sword { name: "Sword", gold_value: 15 }
-///         Dagger { name: "Dagger", gold_value: 10 }
-///     }
-/// }
-/// ```
 struct DefineEntityInput {
     spec_name: Ident,
     fields: Vec<FieldDef>,
     id_name: Ident,
+    sprite_config: Option<SpriteConfig>,
     variants: Vec<VariantDef>,
 }
 
 impl Parse for DefineEntityInput {
     fn parse(input: ParseStream) -> syn::Result<Self> {
-        // Parse: spec SpecName { fields... }
         input.parse::<Ident>()?; // "spec"
         let spec_name: Ident = input.parse()?;
 
@@ -97,12 +134,37 @@ impl Parse for DefineEntityInput {
             }
         }
 
-        // Parse: id IdName;
         input.parse::<Ident>()?; // "id"
         let id_name: Ident = input.parse()?;
         input.parse::<Token![;]>()?;
 
-        // Parse: variants { ... }
+        let sprite_config = if input.peek(Ident) {
+            let keyword: Ident = input.parse()?;
+            if keyword == "sprites" {
+                let config = input.parse::<SpriteConfig>()?;
+                input.parse::<Token![;]>()?;
+                Some(config)
+            } else if keyword == "variants" {
+                let variants_content;
+                braced!(variants_content in input);
+                let mut variants = Vec::new();
+                while !variants_content.is_empty() {
+                    variants.push(variants_content.parse::<VariantDef>()?);
+                }
+                return Ok(DefineEntityInput {
+                    spec_name,
+                    fields,
+                    id_name,
+                    sprite_config: None,
+                    variants,
+                });
+            } else {
+                return Err(syn::Error::new(keyword.span(), "expected `sprites` or `variants`"));
+            }
+        } else {
+            None
+        };
+
         input.parse::<Ident>()?; // "variants"
         let variants_content;
         braced!(variants_content in input);
@@ -115,47 +177,22 @@ impl Parse for DefineEntityInput {
             spec_name,
             fields,
             id_name,
+            sprite_config,
             variants,
         })
     }
 }
 
-/// Defines an entity with its spec struct and ID enum.
-///
-/// Generates:
-/// - The spec struct with all fields
-/// - The ID enum with all variants
-/// - `ID::spec(&self) -> &'static Spec` method
-/// - `ID::ALL` constant array of all variants
-/// - Static const specs for each variant
-///
-/// # Example
-///
-/// ```ignore
-/// define_entity! {
-///     spec ItemSpec {
-///         pub name: &'static str,
-///         pub gold_value: i32,
-///     }
-///
-///     id ItemId;
-///
-///     variants {
-///         Sword { name: "Sword", gold_value: 15 }
-///         Dagger { name: "Dagger", gold_value: 10 }
-///     }
-/// }
-/// ```
 #[proc_macro]
 pub fn define_entity(input: TokenStream) -> TokenStream {
     let DefineEntityInput {
         spec_name,
         fields,
         id_name,
+        sprite_config,
         variants,
     } = parse_macro_input!(input as DefineEntityInput);
 
-    // Generate field definitions for the spec struct
     let field_defs = fields.iter().map(|f| {
         let vis = &f.vis;
         let name = &f.name;
@@ -163,10 +200,8 @@ pub fn define_entity(input: TokenStream) -> TokenStream {
         quote! { #vis #name: #ty }
     });
 
-    // Generate variant names for the enum
     let variant_names: Vec<_> = variants.iter().map(|v| &v.name).collect();
 
-    // Generate static Lazy specs (not const, because StatSheet uses HashMap)
     let static_specs = variants.iter().map(|v| {
         let static_name = format_ident!("{}_SPEC", to_screaming_snake_case(&v.name.to_string()));
         let field_inits = v.fields.iter().map(|f| {
@@ -181,7 +216,6 @@ pub fn define_entity(input: TokenStream) -> TokenStream {
         }
     });
 
-    // Generate match arms for spec()
     let spec_arms = variants.iter().map(|v| {
         let variant = &v.name;
         let static_name = format_ident!("{}_SPEC", to_screaming_snake_case(&v.name.to_string()));
@@ -190,40 +224,80 @@ pub fn define_entity(input: TokenStream) -> TokenStream {
         }
     });
 
-    // Generate ALL slice
     let all_variants = variants.iter().map(|v| {
         let variant = &v.name;
         quote! { #id_name::#variant }
     });
 
+    let sprite_methods = if let Some(config) = &sprite_config {
+        let default_sheet = &config.default_sheet;
+
+        let sheet_arms = variants.iter().map(|v| {
+            let variant = &v.name;
+            if let Some(sprite) = &v.sprite {
+                if let Some(sheet) = &sprite.sheet {
+                    quote! { #id_name::#variant => #sheet }
+                } else {
+                    quote! { #id_name::#variant => #default_sheet }
+                }
+            } else {
+                quote! { #id_name::#variant => #default_sheet }
+            }
+        });
+
+        let name_arms = variants.iter().map(|v| {
+            let variant = &v.name;
+            if let Some(sprite) = &v.sprite {
+                let name = &sprite.name;
+                quote! { #id_name::#variant => #name }
+            } else {
+                let snake = to_snake_case(&v.name.to_string());
+                quote! { #id_name::#variant => #snake }
+            }
+        });
+
+        quote! {
+            pub fn sprite_sheet_key(&self) -> crate::assets::SpriteSheetKey {
+                match self {
+                    #(#sheet_arms),*
+                }
+            }
+
+            pub fn sprite_name(&self) -> &'static str {
+                match self {
+                    #(#name_arms),*
+                }
+            }
+        }
+    } else {
+        quote! {}
+    };
+
     let expanded = quote! {
-        /// Spec struct defining static entity properties
         #[derive(Debug, Clone)]
         pub struct #spec_name {
             #(#field_defs),*
         }
 
-        /// ID enum for this entity type
         #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
         pub enum #id_name {
             #(#variant_names),*
         }
 
-        // Static const specs
         #(#static_specs)*
 
         impl #id_name {
-            /// Get the static spec for this ID
             pub fn spec(&self) -> &'static #spec_name {
                 match self {
                     #(#spec_arms),*
                 }
             }
 
-            /// All variant IDs
             pub const ALL: &'static [#id_name] = &[
                 #(#all_variants),*
             ];
+
+            #sprite_methods
         }
     };
 
@@ -255,7 +329,6 @@ pub fn define_data(input: TokenStream) -> TokenStream {
     define_entity(input)
 }
 
-/// Convert PascalCase to SCREAMING_SNAKE_CASE
 fn to_screaming_snake_case(s: &str) -> String {
     let mut result = String::new();
     for (i, c) in s.chars().enumerate() {
@@ -263,6 +336,17 @@ fn to_screaming_snake_case(s: &str) -> String {
             result.push('_');
         }
         result.push(c.to_ascii_uppercase());
+    }
+    result
+}
+
+fn to_snake_case(s: &str) -> String {
+    let mut result = String::new();
+    for (i, c) in s.chars().enumerate() {
+        if c.is_uppercase() && i > 0 {
+            result.push('_');
+        }
+        result.push(c.to_ascii_lowercase());
     }
     result
 }
@@ -276,5 +360,12 @@ mod tests {
         assert_eq!(to_screaming_snake_case("Sword"), "SWORD");
         assert_eq!(to_screaming_snake_case("BronzeSword"), "BRONZE_SWORD");
         assert_eq!(to_screaming_snake_case("BasicHPPotion"), "BASIC_H_P_POTION");
+    }
+
+    #[test]
+    fn test_snake_case() {
+        assert_eq!(to_snake_case("Sword"), "sword");
+        assert_eq!(to_snake_case("BronzeSword"), "bronze_sword");
+        assert_eq!(to_snake_case("BasicHPPotion"), "basic_h_p_potion");
     }
 }
