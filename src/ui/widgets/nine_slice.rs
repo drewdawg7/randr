@@ -1,22 +1,7 @@
-//! Generic nine-slice panel spawning helper.
-
 use bevy::prelude::*;
 
 use crate::assets::{GameSprites, NineSlice};
 
-/// Spawns a nine-slice panel background using a 3x3 CSS grid.
-///
-/// The panel is positioned absolutely at (0, 0) within its parent.
-/// Corner slices remain fixed size while edge and center slices stretch.
-///
-/// # Type Parameters
-/// - `S`: A type implementing [`NineSlice`] that defines the slices, size, and sprite sheet.
-///
-/// # Arguments
-/// - `parent`: The parent entity's `ChildBuilder`
-/// - `game_sprites`: The game sprites resource for sprite lookups
-/// - `width`: Total width of the panel
-/// - `height`: Total height of the panel
 pub fn spawn_nine_slice_panel<S: NineSlice>(
     parent: &mut ChildBuilder,
     game_sprites: &GameSprites,

@@ -7,31 +7,26 @@ use crate::item::recipe::{Recipe, RecipeId};
 use crate::player::{Player, PlayerGold, PlayerName};
 use crate::stats::StatSheet;
 
-/// Event sent when player attempts to upgrade an item's stats.
 #[derive(Event, Debug, Clone)]
 pub struct UpgradeItemEvent {
     pub item_uuid: Uuid,
 }
 
-/// Event sent when player attempts to upgrade an item's quality.
 #[derive(Event, Debug, Clone)]
 pub struct UpgradeQualityEvent {
     pub item_uuid: Uuid,
 }
 
-/// Event sent when player attempts to smelt ore into bars.
 #[derive(Event, Debug, Clone)]
 pub struct SmeltRecipeEvent {
     pub recipe_id: RecipeId,
 }
 
-/// Event sent when player attempts to forge equipment.
 #[derive(Event, Debug, Clone)]
 pub struct ForgeRecipeEvent {
     pub recipe_id: RecipeId,
 }
 
-/// Result event for blacksmith operations.
 #[derive(Event, Debug, Clone)]
 pub enum BlacksmithResult {
     UpgradeSuccess {
@@ -74,7 +69,6 @@ pub enum BlacksmithResult {
     },
 }
 
-/// Plugin for blacksmith-related events and systems.
 pub struct BlacksmithPlugin;
 
 impl Plugin for BlacksmithPlugin {
@@ -96,7 +90,6 @@ impl Plugin for BlacksmithPlugin {
     }
 }
 
-/// The type of crafting operation (used by the helper to generate appropriate results).
 #[derive(Clone, Copy)]
 enum CraftingOperation {
     Smelt,
@@ -144,8 +137,6 @@ impl CraftingOperation {
     }
 }
 
-/// Process a crafting recipe (shared logic for smelt and forge operations).
-/// Returns true if crafting succeeded and changes should be written back.
 fn process_crafting_recipe(
     recipe_id: RecipeId,
     operation: CraftingOperation,
@@ -158,14 +149,12 @@ fn process_crafting_recipe(
 
     let recipe_name = recipe.name().to_string();
 
-    // Check ingredients
     if !recipe.can_craft(player) {
         result_events.send(operation.fail_ingredients_result(recipe_name));
         info!("Not enough ingredients to {}", operation.verb());
         return false;
     }
 
-    // Craft (consumes ingredients)
     match recipe.craft(player) {
         Ok(item_id) => {
             let item = item_id.spawn();
@@ -188,14 +177,12 @@ fn process_crafting_recipe(
     }
 }
 
-/// Calculate the upgrade cost for an item.
 pub fn calculate_upgrade_cost(item: &crate::item::Item) -> i32 {
     let base_cost = 100;
     let quality_multiplier = item.quality.upgrade_cost_multiplier();
     (base_cost as f64 * (item.num_upgrades + 1) as f64 * quality_multiplier) as i32
 }
 
-/// Handle upgrade item events by executing the upgrade logic.
 fn handle_upgrade_item(
     mut upgrade_events: EventReader<UpgradeItemEvent>,
     mut result_events: EventWriter<BlacksmithResult>,
@@ -203,7 +190,6 @@ fn handle_upgrade_item(
     mut inventory: ResMut<Inventory>,
 ) {
     for event in upgrade_events.read() {
-        // Get item info first (immutable borrow)
         let Some(inv_item) = inventory.find_item_by_uuid(event.item_uuid) else {
             continue;
         };
@@ -212,14 +198,12 @@ fn handle_upgrade_item(
         let upgrade_cost = calculate_upgrade_cost(&inv_item.item);
         let can_upgrade = inv_item.item.num_upgrades < inv_item.item.max_upgrades;
 
-        // Check if item can be upgraded
         if !can_upgrade {
             result_events.send(BlacksmithResult::UpgradeFailedMaxLevel { item_name });
             info!("Item is already at max upgrade level");
             continue;
         }
 
-        // Check if player has enough gold
         if gold.0 < upgrade_cost {
             result_events.send(BlacksmithResult::UpgradeFailedNotEnoughGold {
                 need: upgrade_cost,
@@ -229,10 +213,8 @@ fn handle_upgrade_item(
             continue;
         }
 
-        // Deduct gold
         gold.0 -= upgrade_cost;
 
-        // Perform upgrade (mutable borrow)
         if let Some(inv_item_mut) = inventory.find_item_by_uuid_mut(event.item_uuid) {
             if let Ok(result) = inv_item_mut.item.upgrade() {
                 result_events.send(BlacksmithResult::UpgradeSuccess {
@@ -249,20 +231,17 @@ fn handle_upgrade_item(
     }
 }
 
-/// Handle upgrade quality events by executing the quality upgrade logic.
 fn handle_upgrade_quality(
     mut quality_events: EventReader<UpgradeQualityEvent>,
     mut result_events: EventWriter<BlacksmithResult>,
     mut inventory: ResMut<Inventory>,
 ) {
     for event in quality_events.read() {
-        // Get item info first
         let Some(inv_item) = inventory.find_item_by_uuid(event.item_uuid) else {
             continue;
         };
         let item_name = inv_item.item.name.clone();
 
-        // Check if player has QualityUpgradeStone
         if inventory
             .find_item_by_id(crate::item::ItemId::QualityUpgradeStone)
             .is_none()
@@ -272,13 +251,11 @@ fn handle_upgrade_quality(
             continue;
         }
 
-        // Perform quality upgrade
         if let Some(inv_item_mut) = inventory.find_item_by_uuid_mut(event.item_uuid) {
             match inv_item_mut.item.upgrade_quality() {
                 Ok(new_quality) => {
                     let quality_name = format!("{:?}", new_quality);
 
-                    // Consume the stone
                     inventory.decrease_item_quantity(crate::item::ItemId::QualityUpgradeStone, 1);
 
                     result_events.send(BlacksmithResult::QualityUpgradeSuccess {
@@ -298,7 +275,6 @@ fn handle_upgrade_quality(
     }
 }
 
-/// Handle smelt recipe events by executing the smelting logic.
 fn handle_smelt_recipe(
     mut smelt_events: EventReader<SmeltRecipeEvent>,
     mut result_events: EventWriter<BlacksmithResult>,
@@ -321,7 +297,6 @@ fn handle_smelt_recipe(
     }
 }
 
-/// Handle forge recipe events by executing the forging logic.
 fn handle_forge_recipe(
     mut forge_events: EventReader<ForgeRecipeEvent>,
     mut result_events: EventWriter<BlacksmithResult>,

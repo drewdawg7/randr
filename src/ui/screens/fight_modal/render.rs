@@ -1,5 +1,3 @@
-//! Fight modal rendering.
-
 use bevy::prelude::*;
 
 use crate::assets::{FightBannerSlice, GameSprites, SpriteSheetKey};
@@ -8,8 +6,8 @@ use crate::player::PlayerName;
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBar};
 use crate::ui::widgets::spawn_three_slice_banner;
-use crate::ui::{Modal, SpawnModalExt};
 use crate::ui::PlayerAttackTimer;
+use crate::ui::{Modal, SpawnModalExt};
 
 use super::state::{
     FightModalButton, FightModalButtonSelection, FightModalCancelButton, FightModalMob,
@@ -20,11 +18,10 @@ use super::state::{
 const SPRITE_SIZE: f32 = 128.0;
 const BANNER_WIDTH: f32 = 160.0;
 const CONTAINER_WIDTH: f32 = 400.0;
-const CONTAINER_HEIGHT: f32 = 270.0; // Increased to accommodate health bars
+const CONTAINER_HEIGHT: f32 = 270.0;
 const BUTTON_SIZE: (f32, f32) = (27.0, 19.5);
 const HEALTH_BAR_SIZE: (f32, f32) = (120.0, 16.0);
 
-/// System to spawn the fight modal UI.
 pub fn do_spawn_fight_modal(
     mut commands: Commands,
     mob_res: Res<FightModalMob>,
@@ -34,9 +31,7 @@ pub fn do_spawn_fight_modal(
     mob_query: Query<&Health>,
 ) {
     let mob_health = mob_query.get(mob_res.entity).ok();
-    let (mob_current_hp, mob_max_hp) = mob_health
-        .map(|h| (h.current, h.max))
-        .unwrap_or((0, 1));
+    let (mob_current_hp, mob_max_hp) = mob_health.map(|h| (h.current, h.max)).unwrap_or((0, 1));
 
     let player_name_str = player_name.0.to_string();
     let player_hp = stats.hp();
@@ -204,12 +199,17 @@ fn spawn_mob_column(
         });
 }
 
-/// System to update button sprites based on selection state.
 pub fn update_button_sprites(
     selection: Res<FightModalButtonSelection>,
     game_sprites: Res<GameSprites>,
-    mut ok_query: Query<&mut ImageNode, (With<FightModalOkButton>, Without<FightModalCancelButton>)>,
-    mut cancel_query: Query<&mut ImageNode, (With<FightModalCancelButton>, Without<FightModalOkButton>)>,
+    mut ok_query: Query<
+        &mut ImageNode,
+        (With<FightModalOkButton>, Without<FightModalCancelButton>),
+    >,
+    mut cancel_query: Query<
+        &mut ImageNode,
+        (With<FightModalCancelButton>, Without<FightModalOkButton>),
+    >,
 ) {
     if !selection.is_changed() {
         return;
@@ -217,14 +217,17 @@ pub fn update_button_sprites(
 
     let ok_selected = selection.selected == FightModalButton::Ok;
 
-    // Update OK button
     if let Ok(mut image) = ok_query.get_single_mut() {
         let key = if ok_selected {
             SpriteSheetKey::OkButtonSelected
         } else {
             SpriteSheetKey::OkButton
         };
-        let sprite_name = if ok_selected { "ok_button_selected" } else { "ok_button" };
+        let sprite_name = if ok_selected {
+            "ok_button_selected"
+        } else {
+            "ok_button"
+        };
         if let Some(sheet) = game_sprites.get(key) {
             if let Some(node) = sheet.image_node(sprite_name) {
                 *image = node;
@@ -232,14 +235,17 @@ pub fn update_button_sprites(
         }
     }
 
-    // Update Cancel button
     if let Ok(mut image) = cancel_query.get_single_mut() {
         let key = if ok_selected {
             SpriteSheetKey::CancelButton
         } else {
             SpriteSheetKey::CancelButtonSelected
         };
-        let sprite_name = if ok_selected { "cancel_button" } else { "cancel_button_selected" };
+        let sprite_name = if ok_selected {
+            "cancel_button"
+        } else {
+            "cancel_button_selected"
+        };
         if let Some(sheet) = game_sprites.get(key) {
             if let Some(node) = sheet.image_node(sprite_name) {
                 *image = node;
@@ -248,7 +254,6 @@ pub fn update_button_sprites(
     }
 }
 
-/// System to update mob health bar values from mob entity's Health component.
 pub fn update_mob_health_bar(
     fight_mob: Res<FightModalMob>,
     mut bar_query: Query<&mut HealthBarValues, With<FightModalMobHealthBar>>,
@@ -264,7 +269,6 @@ pub fn update_mob_health_bar(
     values.max = health.max;
 }
 
-/// System to update player health bar values from StatSheet.
 pub fn update_player_health_bar(
     stats: Res<StatSheet>,
     mut bar_query: Query<&mut HealthBarValues, With<FightModalPlayerHealthBar>>,
