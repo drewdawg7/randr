@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
-use crate::location::mine::RockId;
+use crate::rock::RockId;
 use crate::stats::{StatSheet, StatType};
 use crate::states::AppState;
 use crate::ui::spawn_modal_hint;

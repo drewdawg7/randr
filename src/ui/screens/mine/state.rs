@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::location::mine::rock::RockId;
+use crate::rock::RockId;
 
 /// Different types of ore that can be mined.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
