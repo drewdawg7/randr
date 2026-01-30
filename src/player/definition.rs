@@ -56,24 +56,3 @@ pub fn effective_goldfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
     base + equipment
 }
 
-pub fn apply_level_up_bonuses(stats: &mut StatSheet, new_level: i32) {
-    if new_level % 10 == 0 {
-        stats.increase_stat(StatType::Defense, 1);
-    }
-    stats.increase_stat(StatType::Health, 5);
-    stats.increase_stat_max(StatType::Health, 5);
-    stats.increase_stat(StatType::Attack, 1);
-}
-
-pub fn add_xp_with_bonuses(
-    prog: &mut crate::entities::Progression,
-    stats: &mut StatSheet,
-    xp: i32,
-) -> i32 {
-    let old_level = prog.level;
-    let levels_gained = prog.add_xp(xp);
-    for level in (old_level + 1)..=(old_level + levels_gained) {
-        apply_level_up_bonuses(stats, level);
-    }
-    levels_gained
-}

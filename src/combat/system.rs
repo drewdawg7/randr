@@ -100,7 +100,7 @@ pub fn apply_victory_rewards_direct(
     let gold_gained = apply_goldfind(base_gold, goldfind);
     gold.add(gold_gained);
 
-    crate::player::add_xp_with_bonuses(progression, stats, base_xp);
+    progression.add_xp(base_xp);
 
     VictoryRewards {
         gold_gained,
