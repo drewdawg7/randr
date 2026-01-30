@@ -90,3 +90,68 @@ fn track_state_transitions(
     }
 }
 
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn previous_state_default() {
+        let prev = PreviousState::default();
+        assert!(prev.state.is_none());
+        assert!(!prev.just_entered);
+    }
+
+    #[test]
+    fn came_from_returns_true_when_just_entered_from_state() {
+        let prev = PreviousState {
+            state: Some(AppState::Town),
+            just_entered: true,
+        };
+        assert!(prev.came_from(AppState::Town));
+    }
+
+    #[test]
+    fn came_from_returns_false_when_not_just_entered() {
+        let prev = PreviousState {
+            state: Some(AppState::Town),
+            just_entered: false,
+        };
+        assert!(!prev.came_from(AppState::Town));
+    }
+
+    #[test]
+    fn came_from_returns_false_when_different_state() {
+        let prev = PreviousState {
+            state: Some(AppState::Town),
+            just_entered: true,
+        };
+        assert!(!prev.came_from(AppState::Dungeon));
+    }
+
+    #[test]
+    fn came_from_returns_false_when_no_previous_state() {
+        let prev = PreviousState {
+            state: None,
+            just_entered: true,
+        };
+        assert!(!prev.came_from(AppState::Town));
+    }
+
+    #[test]
+    fn acknowledge_entry_clears_just_entered() {
+        let mut prev = PreviousState {
+            state: Some(AppState::Town),
+            just_entered: true,
+        };
+        prev.acknowledge_entry();
+        assert!(!prev.just_entered);
+        assert_eq!(prev.state, Some(AppState::Town));
+    }
+
+    #[test]
+    fn app_state_default_is_menu() {
+        let state = AppState::default();
+        assert_eq!(state, AppState::Menu);
+    }
+}
+

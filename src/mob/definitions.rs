@@ -254,3 +254,117 @@ impl RegistryDefaults<MobId> for MobSpec {
         MobId::ALL.iter().map(|id| (*id, id.spec().clone()))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn mob_id_spec_returns_valid_spec() {
+        let spec = MobId::Goblin.spec();
+        assert_eq!(spec.name, "Goblin");
+    }
+
+    #[test]
+    fn mob_spec_with_multiplier_scales_stats() {
+        let base = MobId::Goblin.spec();
+        let scaled = base.with_multiplier(2.0);
+
+        assert_eq!(*scaled.max_health.start(), (*base.max_health.start() as f32 * 2.0).round() as i32);
+        assert_eq!(*scaled.max_health.end(), (*base.max_health.end() as f32 * 2.0).round() as i32);
+        assert_eq!(*scaled.attack.start(), (*base.attack.start() as f32 * 2.0).round() as i32);
+        assert_eq!(*scaled.attack.end(), (*base.attack.end() as f32 * 2.0).round() as i32);
+        assert_eq!(*scaled.defense.start(), (*base.defense.start() as f32 * 2.0).round() as i32);
+        assert_eq!(*scaled.defense.end(), (*base.defense.end() as f32 * 2.0).round() as i32);
+    }
+
+    #[test]
+    fn mob_spec_with_multiplier_preserves_name() {
+        let base = MobId::Goblin.spec();
+        let scaled = base.with_multiplier(1.5);
+        assert_eq!(scaled.name, "Goblin");
+    }
+
+    #[test]
+    fn mob_spec_with_multiplier_preserves_quality() {
+        let base = MobId::Dragon.spec();
+        let scaled = base.with_multiplier(1.5);
+        assert!(matches!(scaled.quality, MobQuality::Boss));
+    }
+
+    #[test]
+    fn mob_spec_with_name_changes_name() {
+        let base = MobId::Goblin.spec();
+        let renamed = base.with_name("Elite Goblin");
+        assert_eq!(renamed.name, "Elite Goblin");
+    }
+
+    #[test]
+    fn mob_spec_with_name_preserves_stats() {
+        let base = MobId::Goblin.spec();
+        let renamed = base.with_name("Elite Goblin");
+        assert_eq!(renamed.max_health, base.max_health);
+        assert_eq!(renamed.attack, base.attack);
+        assert_eq!(renamed.defense, base.defense);
+    }
+
+    #[test]
+    fn mob_spec_with_quality_changes_quality() {
+        let base = MobId::Goblin.spec();
+        let boss = base.with_quality(MobQuality::Boss);
+        assert!(matches!(boss.quality, MobQuality::Boss));
+    }
+
+    #[test]
+    fn mob_spec_with_quality_preserves_stats() {
+        let base = MobId::Goblin.spec();
+        let boss = base.with_quality(MobQuality::Boss);
+        assert_eq!(boss.max_health, base.max_health);
+        assert_eq!(boss.attack, base.attack);
+        assert_eq!(boss.name, base.name);
+    }
+
+    #[test]
+    fn mob_id_all_contains_expected_mobs() {
+        assert!(MobId::ALL.contains(&MobId::Goblin));
+        assert!(MobId::ALL.contains(&MobId::Slime));
+        assert!(MobId::ALL.contains(&MobId::Dragon));
+    }
+
+    #[test]
+    fn slime_is_normal_quality() {
+        let spec = MobId::Slime.spec();
+        assert!(matches!(spec.quality, MobQuality::Normal));
+    }
+
+    #[test]
+    fn dragon_is_boss_quality() {
+        let spec = MobId::Dragon.spec();
+        assert!(matches!(spec.quality, MobQuality::Boss));
+    }
+
+    #[test]
+    fn black_dragon_is_boss_quality() {
+        let spec = MobId::BlackDragon.spec();
+        assert!(matches!(spec.quality, MobQuality::Boss));
+    }
+
+    #[test]
+    fn merchant_has_zero_combat_stats() {
+        let spec = MobId::Merchant.spec();
+        assert_eq!(*spec.attack.start(), 0);
+        assert_eq!(*spec.attack.end(), 0);
+        assert_eq!(*spec.defense.start(), 0);
+        assert_eq!(*spec.defense.end(), 0);
+        assert_eq!(*spec.dropped_gold.start(), 0);
+        assert_eq!(*spec.dropped_xp.start(), 0);
+    }
+
+    #[test]
+    fn all_mobs_have_grid_size() {
+        for mob_id in MobId::ALL {
+            let spec = mob_id.spec();
+            assert!(spec.grid_size.cells() > 0);
+        }
+    }
+}
