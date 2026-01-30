@@ -1,10 +1,7 @@
 use std::collections::HashMap;
 
-use crate::{
-    mob::MobId,
-    location::{Location, LocationEntryError, LocationId},
-    player::Player,
-};
+use crate::location::{Location, LocationId};
+use crate::mob::MobId;
 
 use super::definition::Field;
 
@@ -34,17 +31,5 @@ impl Location for Field {
 
     fn description(&self) -> &str {
         Field::description(self)
-    }
-
-    fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
-        Ok(())
-    }
-
-    fn on_enter(&mut self, _player: &mut Player) {
-        // No special action on enter
-    }
-
-    fn on_exit(&mut self, _player: &mut Player) {
-        // No special action on exit
     }
 }

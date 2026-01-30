@@ -146,7 +146,7 @@ pub fn handle_fight_modal_select(
 
                     // Apply victory rewards using direct resources
                     let rewards = apply_victory_rewards_direct(
-                        &stats,
+                        &mut stats,
                         &inventory,
                         &mut player_gold,
                         &mut progression,

@@ -3,10 +3,7 @@ use std::time::Duration;
 
 use bevy::time::{Timer, TimerMode};
 
-use crate::{
-    player::Player,
-    location::{Location, LocationEntryError, LocationId, Refreshable},
-};
+use crate::location::{Location, LocationId, Refreshable};
 
 use super::cave::CaveLayout;
 use super::definition::{Mine, MINE_REGENERATION_INTERVAL, ROCK_RESPAWN_INTERVAL};
@@ -44,32 +41,16 @@ impl Location for Mine {
     fn description(&self) -> &str {
         Mine::description(self)
     }
-
-    fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
-        Ok(())
-    }
-
-    fn on_enter(&mut self, _player: &mut Player) {
-        self.ensure_rock_exists();
-    }
-
-    fn on_exit(&mut self, _player: &mut Player) {
-        // No special action on exit
-    }
 }
 
 impl Refreshable for Mine {
     fn tick(&mut self, elapsed: Duration) {
-        // Advance all timers
         self.tick_timers(elapsed);
-        // Check for mine regeneration (every 10 minutes)
         self.check_and_regenerate();
-        // Check for rock respawn (every 2 minutes)
         self.check_and_respawn_rock();
     }
 
     fn refresh(&mut self) {
-        // Force regenerate the mine
         self.cave = Some(CaveLayout::generate());
         self.regeneration_timer.reset();
         self.rock_respawn_timer.reset();

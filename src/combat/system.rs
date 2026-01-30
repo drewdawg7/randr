@@ -89,7 +89,7 @@ pub fn process_player_defeat(stats: &mut StatSheet, gold: &mut crate::player::Pl
 }
 
 pub fn apply_victory_rewards_direct(
-    stats: &StatSheet,
+    stats: &mut StatSheet,
     inventory: &Inventory,
     gold: &mut crate::player::PlayerGold,
     progression: &mut crate::entities::Progression,
@@ -100,7 +100,7 @@ pub fn apply_victory_rewards_direct(
     let gold_gained = apply_goldfind(base_gold, goldfind);
     gold.add(gold_gained);
 
-    progression.add_xp(base_xp);
+    crate::player::add_xp_with_bonuses(progression, stats, base_xp);
 
     VictoryRewards {
         gold_gained,

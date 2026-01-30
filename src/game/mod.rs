@@ -9,7 +9,7 @@ pub mod toast;
 // Re-export combat types from the combat module
 pub use crate::combat::CombatPlugin;
 pub use items::{ItemDropped, ItemEquipped, ItemPickedUp, ItemPlugin, ItemUnequipped, ItemUsed};
-pub use crate::player::{Player, PlayerGold, PlayerName};
+pub use crate::player::{PlayerGold, PlayerName};
 pub use crate::storage::Storage;
 pub use player::{GoldChanged, PlayerDamaged, PlayerHealed, PlayerLeveledUp, PlayerPlugin};
 pub use storage::{ItemDeposited, ItemWithdrawn, StoragePlugin};

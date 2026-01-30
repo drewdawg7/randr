@@ -5,12 +5,11 @@ use bevy::prelude::Resource;
 use bevy::time::{Timer, TimerMode};
 
 use crate::{
-    combat::HasGold,
     economy::WorthGold,
-    player::Player,
-    inventory::ManagesItems,
+    inventory::{Inventory, ManagesItems},
     item::{Item, ItemId},
     location::{LocationId, LocationSpec, StoreData},
+    player::PlayerGold,
 };
 
 use super::store_item::StoreItem;
@@ -123,33 +122,32 @@ impl Store {
 
     /// Attempt to purchase an item at the given index.
     /// Returns Ok(item) on success, Err on failure.
-    pub fn purchase_item(&mut self, player: &mut Player, index: usize) -> Result<Item, super::StoreError> {
+    pub fn purchase_item(
+        &mut self,
+        gold: &mut PlayerGold,
+        inventory: &mut Inventory,
+        index: usize,
+    ) -> Result<Item, super::StoreError> {
         use super::StoreError;
 
         if index >= self.inventory.len() {
             return Err(StoreError::InvalidIndex);
         }
 
-        // Take item from store
         let item = self.inventory[index].take_item().ok_or(StoreError::OutOfStock)?;
         let cost = item.purchase_price();
 
-        // Check gold
-        if player.gold() < cost {
-            // Not enough gold - put item back
+        if gold.0 < cost {
             self.inventory[index].items.push(item);
             return Err(StoreError::NotEnoughGold);
         }
 
-        // Try to add to inventory
-        if player.add_to_inv(item.clone()).is_err() {
-            // Inventory full - put item back
+        if inventory.add_to_inv(item.clone()).is_err() {
             self.inventory[index].items.push(item);
             return Err(StoreError::InventoryFull);
         }
 
-        // Deduct gold
-        player.dec_gold(cost);
+        gold.subtract(cost);
         Ok(item)
     }
 
@@ -175,12 +173,12 @@ impl Display for Store {
     }
 }
 
-pub fn sell_player_item(player: &mut Player, item: &Item) -> i32 {
+pub fn sell_player_item(gold: &mut PlayerGold, inventory: &mut Inventory, item: &Item) -> i32 {
     if item.is_locked {
-        return 0; // Cannot sell locked items
+        return 0;
     }
     let sell_price = item.sell_price();
-    player.add_gold(sell_price);
-    player.decrease_item_quantity(item.item_id, 1);
+    gold.add(sell_price);
+    inventory.decrease_item_quantity(item.item_id, 1);
     sell_price
 }

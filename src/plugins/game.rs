@@ -7,13 +7,12 @@ use crate::input::{GameAction, InputPlugin};
 use crate::location::{LocationId, StorePlugin};
 use crate::navigation::NavigationPlugin;
 use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
-use crate::save_load::SaveLoadPlugin;
 use crate::states::{AppState, StateTransitionPlugin};
 use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
     AnvilModalPlugin, DungeonScreenPlugin, FightModalPlugin, ForgeModalPlugin,
     InventoryModalPlugin, KeybindsPlugin, MainMenuPlugin, MerchantModalPlugin, MinePlugin,
-    ModalPlugin, MonsterCompendiumPlugin, ProfileModalPlugin, ProfilePlugin, ResultsModalPlugin,
+    ModalPlugin, MonsterCompendiumPlugin, ProfilePlugin, ResultsModalPlugin,
     TownPlugin,
 };
 use crate::ui::widgets::{ItemDetailPanePlugin, ItemDetailDisplayPlugin, ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, OutlinedTextPlugin, PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin};
@@ -60,7 +59,6 @@ impl Plugin for GamePlugin {
             StorageTransactionsPlugin,
             MobPlugin,
             EconomyPlugin,
-            SaveLoadPlugin,
         ));
 
         app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, ItemDetailPanePlugin, ItemDetailDisplayPlugin, ItemStatsDisplayPlugin));
@@ -69,7 +67,6 @@ impl Plugin for GamePlugin {
         app.add_plugins((
             MainMenuPlugin,
             ProfilePlugin,
-            ProfileModalPlugin,
             InventoryModalPlugin,
             MerchantModalPlugin,
             ForgeModalPlugin,

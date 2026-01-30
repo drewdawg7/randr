@@ -1,17 +1,10 @@
 use std::collections::HashMap;
-use std::fmt::Display;
 
 use bevy::prelude::*;
 
-use crate::entities::Progression;
 use crate::inventory::Inventory;
-use crate::stats::{HasStats, StatInstance, StatSheet, StatType};
+use crate::stats::{StatInstance, StatSheet, StatType};
 
-// =============================================================================
-// Individual Resources (new granular design)
-// =============================================================================
-
-/// Player's display name
 #[derive(Resource, Debug, Clone)]
 pub struct PlayerName(pub &'static str);
 
@@ -21,7 +14,6 @@ impl Default for PlayerName {
     }
 }
 
-/// Player's gold currency
 #[derive(Resource, Debug, Clone, Default)]
 pub struct PlayerGold(pub i32);
 
@@ -35,7 +27,6 @@ impl PlayerGold {
     }
 }
 
-/// Returns the default player stats
 pub fn default_player_stats() -> StatSheet {
     let stats: HashMap<StatType, StatInstance> = HashMap::new();
     let mut sheet = StatSheet { stats };
@@ -47,7 +38,6 @@ pub fn default_player_stats() -> StatSheet {
     sheet
 }
 
-/// Helper functions for calculating effective stats from inventory and base stats
 pub fn effective_magicfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
     let base = stats.value(StatType::MagicFind);
     let equipment = inventory.sum_equipment_stats(StatType::MagicFind);
@@ -66,152 +56,24 @@ pub fn effective_goldfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
     base + equipment
 }
 
-// =============================================================================
-// Player struct (DEPRECATED - for trait-based combat compatibility)
-// =============================================================================
-
-/// Combined player data for trait-based operations (e.g., combat).
-/// This is NOT a Resource - use the individual resources above for Bevy systems.
-/// Construct this temporarily when you need trait-based polymorphism.
-///
-/// DEPRECATED: Use direct resource access with combat helper functions instead.
-/// See `combat::player_attacks_entity` and `combat::entity_attacks_player`.
-#[deprecated(
-    since = "0.2.0",
-    note = "Use direct resource access with combat helper functions instead"
-)]
-#[derive(Debug, Clone)]
-pub struct Player {
-    pub name: &'static str,
-    pub gold: i32,
-    pub prog: Progression,
-    pub inventory: Inventory,
-    pub stats: StatSheet,
+pub fn apply_level_up_bonuses(stats: &mut StatSheet, new_level: i32) {
+    if new_level % 10 == 0 {
+        stats.increase_stat(StatType::Defense, 1);
+    }
+    stats.increase_stat(StatType::Health, 5);
+    stats.increase_stat_max(StatType::Health, 5);
+    stats.increase_stat(StatType::Attack, 1);
 }
 
-impl Default for Player {
-    fn default() -> Self {
-        Self {
-            gold: 0,
-            name: "Drew",
-            prog: Progression::new(),
-            inventory: Inventory::new(),
-            stats: default_player_stats(),
-        }
+pub fn add_xp_with_bonuses(
+    prog: &mut crate::entities::Progression,
+    stats: &mut StatSheet,
+    xp: i32,
+) -> i32 {
+    let old_level = prog.level;
+    let levels_gained = prog.add_xp(xp);
+    for level in (old_level + 1)..=(old_level + levels_gained) {
+        apply_level_up_bonuses(stats, level);
     }
-}
-
-impl Display for Player {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{} ({}/{})", self.name, self.hp(), self.max_hp())
-    }
-}
-
-impl Player {
-    /// Construct from individual resources (clones the data).
-    /// Use this when you need a Player for trait-based operations.
-    pub fn from_resources(
-        name: &PlayerName,
-        gold: &PlayerGold,
-        prog: &Progression,
-        inventory: &Inventory,
-        stats: &StatSheet,
-    ) -> Self {
-        Self {
-            name: name.0,
-            gold: gold.0,
-            prog: prog.clone(),
-            inventory: inventory.clone(),
-            stats: stats.clone(),
-        }
-    }
-
-    /// Write changes back to individual resources.
-    /// Call this after combat operations that modify the player.
-    pub fn write_back(
-        &self,
-        gold: &mut PlayerGold,
-        prog: &mut Progression,
-        inventory: &mut Inventory,
-        stats: &mut StatSheet,
-    ) {
-        gold.0 = self.gold;
-        *prog = self.prog.clone();
-        *inventory = self.inventory.clone();
-        *stats = self.stats.clone();
-    }
-
-    pub fn effective_magicfind(&self) -> i32 {
-        effective_magicfind(&self.stats, &self.inventory)
-    }
-
-    pub fn effective_mining(&self) -> i32 {
-        effective_mining(&self.stats, &self.inventory)
-    }
-
-    pub fn effective_goldfind(&self) -> i32 {
-        effective_goldfind(&self.stats, &self.inventory)
-    }
-}
-
-// =============================================================================
-// PlayerGuard (DEPRECATED - RAII pattern for automatic write-back)
-// =============================================================================
-
-/// RAII guard that holds a `Player` and automatically writes changes back
-/// to the underlying resources when dropped. Use this in combat and other
-/// contexts where you always need to persist changes regardless of exit path.
-///
-/// DEPRECATED: Use direct resource mutation instead. This defeats Bevy's change detection.
-#[deprecated(
-    since = "0.2.0",
-    note = "Use direct resource mutation instead - this defeats Bevy's change detection"
-)]
-pub struct PlayerGuard<'a> {
-    player: Player,
-    gold: &'a mut PlayerGold,
-    prog: &'a mut Progression,
-    inventory: &'a mut Inventory,
-    stats: &'a mut StatSheet,
-}
-
-impl<'a> PlayerGuard<'a> {
-    /// Create a guard that will auto-write changes on drop.
-    pub fn from_resources(
-        name: &PlayerName,
-        gold: &'a mut PlayerGold,
-        prog: &'a mut Progression,
-        inventory: &'a mut Inventory,
-        stats: &'a mut StatSheet,
-    ) -> Self {
-        let player = Player::from_resources(name, gold, prog, inventory, stats);
-        Self {
-            player,
-            gold,
-            prog,
-            inventory,
-            stats,
-        }
-    }
-}
-
-impl std::ops::Deref for PlayerGuard<'_> {
-    type Target = Player;
-
-    fn deref(&self) -> &Self::Target {
-        &self.player
-    }
-}
-
-impl std::ops::DerefMut for PlayerGuard<'_> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        &mut self.player
-    }
-}
-
-impl Drop for PlayerGuard<'_> {
-    fn drop(&mut self) {
-        self.player
-            .write_back(self.gold, self.prog, self.inventory, self.stats);
-    }
+    levels_gained
 }

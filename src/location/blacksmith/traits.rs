@@ -1,9 +1,6 @@
 use std::time::Duration;
 
-use crate::{
-    player::Player,
-    location::{Location, LocationEntryError, LocationId, Refreshable},
-};
+use crate::location::{Location, LocationId, Refreshable};
 
 use super::definition::Blacksmith;
 
@@ -31,18 +28,6 @@ impl Location for Blacksmith {
 
     fn description(&self) -> &str {
         Blacksmith::description(self)
-    }
-
-    fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
-        Ok(())
-    }
-
-    fn on_enter(&mut self, _player: &mut Player) {
-        // No special action on enter
-    }
-
-    fn on_exit(&mut self, _player: &mut Player) {
-        // No special action on exit
     }
 }
 

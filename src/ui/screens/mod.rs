@@ -11,7 +11,6 @@ mod mine;
 pub mod modal;
 pub mod monster_compendium;
 mod profile;
-pub mod profile_modal;
 pub mod town;
 pub mod results_modal;
 
@@ -35,6 +34,5 @@ pub use modal::{
     MODAL_OVERLAY_COLOR, MODAL_OVERLAY_Z_INDEX,
 };
 pub use profile::ProfilePlugin;
-pub use profile_modal::ProfileModalPlugin;
 pub use town::{InfoPanelSource, TownPlugin};
 pub use results_modal::ResultsModalPlugin;

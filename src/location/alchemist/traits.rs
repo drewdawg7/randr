@@ -1,7 +1,4 @@
-use crate::{
-    player::Player,
-    location::{Location, LocationEntryError, LocationId},
-};
+use crate::location::{Location, LocationId};
 
 use super::definition::Alchemist;
 
@@ -26,17 +23,5 @@ impl Location for Alchemist {
 
     fn description(&self) -> &str {
         Alchemist::description(self)
-    }
-
-    fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
-        Ok(())
-    }
-
-    fn on_enter(&mut self, _player: &mut Player) {
-        // No special action on enter
-    }
-
-    fn on_exit(&mut self, _player: &mut Player) {
-        // No special action on exit
     }
 }

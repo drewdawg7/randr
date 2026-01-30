@@ -2,12 +2,11 @@
 use std::time::Duration;
 #[cfg(test)]
 use crate::{
-    combat::HasGold,
-    player::Player,
-    inventory::{HasInventory, ManagesItems},
+    inventory::{Inventory, ManagesItems},
     item::{Item, ItemId, ItemType},
     item::enums::{EquipmentType, ItemQuality},
     location::store::{sell_player_item, Store, StoreError, StoreItem},
+    player::PlayerGold,
     stats::StatSheet,
 };
 #[cfg(test)]
@@ -133,30 +132,30 @@ fn add_item_creates_new_slot_if_not_exists() {
 #[test]
 fn purchase_item_success_full_flow() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(200);
+    let mut gold = PlayerGold(200);
+    let mut inventory = Inventory::new();
 
     let item = create_weapon(100);
     store.add_item(item);
 
-    let result = store.purchase_item(&mut player, 0);
+    let result = store.purchase_item(&mut gold, &mut inventory, 0);
 
     assert!(result.is_ok());
-    assert_eq!(player.gold(), 100); // 200 - 100
-    assert_eq!(player.inventory().items.len(), 1);
+    assert_eq!(gold.0, 100); // 200 - 100
+    assert_eq!(inventory.items.len(), 1);
     assert_eq!(store.inventory[0].quantity(), 0);
 }
 
 #[test]
 fn purchase_item_adds_correct_item_to_inventory() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(200);
+    let mut gold = PlayerGold(200);
+    let mut inventory = Inventory::new();
 
     let item = create_weapon(100);
     store.add_item(item);
 
-    let result = store.purchase_item(&mut player, 0);
+    let result = store.purchase_item(&mut gold, &mut inventory, 0);
 
     assert!(result.is_ok());
     let purchased = result.unwrap();
@@ -169,25 +168,25 @@ fn purchase_item_adds_correct_item_to_inventory() {
 #[test]
 fn purchase_item_returns_not_enough_gold() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(50);
+    let mut gold = PlayerGold(50);
+    let mut inventory = Inventory::new();
 
     let item = create_weapon(100);
     store.add_item(item);
 
-    let result = store.purchase_item(&mut player, 0);
+    let result = store.purchase_item(&mut gold, &mut inventory, 0);
 
     assert!(matches!(result, Err(StoreError::NotEnoughGold)));
-    assert_eq!(player.gold(), 50);
+    assert_eq!(gold.0, 50);
     assert_eq!(store.inventory[0].quantity(), 1);
-    assert_eq!(player.inventory().items.len(), 0);
+    assert_eq!(inventory.items.len(), 0);
 }
 
 #[test]
 fn purchase_item_returns_out_of_stock() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(200);
+    let mut gold = PlayerGold(200);
+    let mut inventory = Inventory::new();
 
     let store_item = StoreItem {
         item_id: ItemId::Sword,
@@ -196,41 +195,41 @@ fn purchase_item_returns_out_of_stock() {
     };
     store.inventory.push(store_item);
 
-    let result = store.purchase_item(&mut player, 0);
+    let result = store.purchase_item(&mut gold, &mut inventory, 0);
 
     assert!(matches!(result, Err(StoreError::OutOfStock)));
-    assert_eq!(player.gold(), 200);
-    assert_eq!(player.inventory().items.len(), 0);
+    assert_eq!(gold.0, 200);
+    assert_eq!(inventory.items.len(), 0);
 }
 
 #[test]
 fn purchase_item_returns_inventory_full() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(200);
+    let mut gold = PlayerGold(200);
+    let mut inventory = Inventory::new();
 
     for _ in 0..20 {
         let item = create_weapon(10);
-        let _ = player.add_to_inv(item);
+        let _ = inventory.add_to_inv(item);
     }
 
     let item = create_weapon(100);
     store.add_item(item);
 
-    let result = store.purchase_item(&mut player, 0);
+    let result = store.purchase_item(&mut gold, &mut inventory, 0);
 
     assert!(matches!(result, Err(StoreError::InventoryFull)));
-    assert_eq!(player.gold(), 200);
+    assert_eq!(gold.0, 200);
     assert_eq!(store.inventory[0].quantity(), 1);
 }
 
 #[test]
 fn purchase_item_returns_invalid_index() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(200);
+    let mut gold = PlayerGold(200);
+    let mut inventory = Inventory::new();
 
-    let result = store.purchase_item(&mut player, 0);
+    let result = store.purchase_item(&mut gold, &mut inventory, 0);
 
     assert!(matches!(result, Err(StoreError::InvalidIndex)));
 }
@@ -238,13 +237,13 @@ fn purchase_item_returns_invalid_index() {
 #[test]
 fn purchase_item_invalid_index_when_index_too_high() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(200);
+    let mut gold = PlayerGold(200);
+    let mut inventory = Inventory::new();
 
     let item = create_weapon(100);
     store.add_item(item);
 
-    let result = store.purchase_item(&mut player, 1);
+    let result = store.purchase_item(&mut gold, &mut inventory, 1);
 
     assert!(matches!(result, Err(StoreError::InvalidIndex)));
 }
@@ -422,41 +421,44 @@ fn store_item_restock_clears_old_items() {
 
 #[test]
 fn sell_player_item_adds_gold_and_decreases_quantity() {
-    let mut player = Player::default();
+    let mut gold = PlayerGold(0);
+    let mut inventory = Inventory::new();
     let item = create_weapon(100);
-    let _ = player.add_to_inv(item.clone());
+    let _ = inventory.add_to_inv(item.clone());
 
-    let initial_gold = player.gold();
-    let sell_price = sell_player_item(&mut player, &item);
+    let initial_gold = gold.0;
+    let sell_price = sell_player_item(&mut gold, &mut inventory, &item);
 
     assert_eq!(sell_price, 50);
-    assert_eq!(player.gold(), initial_gold + 50);
-    assert_eq!(player.inventory().items.len(), 0);
+    assert_eq!(gold.0, initial_gold + 50);
+    assert_eq!(inventory.items.len(), 0);
 }
 
 #[test]
 fn sell_player_item_returns_zero_for_locked_items() {
-    let mut player = Player::default();
+    let mut gold = PlayerGold(0);
+    let mut inventory = Inventory::new();
     let item = create_locked_item(100);
-    let _ = player.add_to_inv(item.clone());
+    let _ = inventory.add_to_inv(item.clone());
 
-    let initial_gold = player.gold();
-    let sell_price = sell_player_item(&mut player, &item);
+    let initial_gold = gold.0;
+    let sell_price = sell_player_item(&mut gold, &mut inventory, &item);
 
     assert_eq!(sell_price, 0);
-    assert_eq!(player.gold(), initial_gold);
-    assert_eq!(player.inventory().items.len(), 1);
+    assert_eq!(gold.0, initial_gold);
+    assert_eq!(inventory.items.len(), 1);
 }
 
 #[test]
 fn sell_player_item_correct_price_calculation() {
-    let mut player = Player::default();
+    let mut gold = PlayerGold(0);
+    let mut inventory = Inventory::new();
 
     for gold_value in [10, 50, 100, 200] {
         let item = create_weapon(gold_value);
-        let _ = player.add_to_inv(item.clone());
+        let _ = inventory.add_to_inv(item.clone());
 
-        let sell_price = sell_player_item(&mut player, &item);
+        let sell_price = sell_player_item(&mut gold, &mut inventory, &item);
 
         assert_eq!(sell_price, gold_value / 2);
     }
@@ -467,59 +469,59 @@ fn sell_player_item_correct_price_calculation() {
 #[test]
 fn store_full_purchase_and_sell_cycle() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(200);
+    let mut gold = PlayerGold(200);
+    let mut inventory = Inventory::new();
 
     let item = create_weapon(100);
     store.add_item(item);
 
-    let result = store.purchase_item(&mut player, 0);
+    let result = store.purchase_item(&mut gold, &mut inventory, 0);
     assert!(result.is_ok());
-    assert_eq!(player.gold(), 100);
-    assert_eq!(player.inventory().items.len(), 1);
+    assert_eq!(gold.0, 100);
+    assert_eq!(inventory.items.len(), 1);
 
     let purchased_item = result.unwrap();
-    let sell_price = sell_player_item(&mut player, &purchased_item);
+    let sell_price = sell_player_item(&mut gold, &mut inventory, &purchased_item);
     assert_eq!(sell_price, 50);
-    assert_eq!(player.gold(), 150);
+    assert_eq!(gold.0, 150);
 }
 
 #[test]
 fn store_multiple_purchases() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(1000);
+    let mut gold = PlayerGold(1000);
+    let mut inventory = Inventory::new();
 
     store.add_item(create_weapon(100));
     store.add_item(create_shield(50));
 
-    let result1 = store.purchase_item(&mut player, 0);
+    let result1 = store.purchase_item(&mut gold, &mut inventory, 0);
     assert!(result1.is_ok());
-    assert_eq!(player.gold(), 900);
+    assert_eq!(gold.0, 900);
 
-    let result2 = store.purchase_item(&mut player, 1);
+    let result2 = store.purchase_item(&mut gold, &mut inventory, 1);
     assert!(result2.is_ok());
-    assert_eq!(player.gold(), 850);
+    assert_eq!(gold.0, 850);
 
-    assert_eq!(player.inventory().items.len(), 2);
+    assert_eq!(inventory.items.len(), 2);
 }
 
 #[test]
 fn store_purchase_without_enough_gold_preserves_state() {
     let mut store = Store::new("Test Store", vec![]);
-    let mut player = Player::default();
-    player.add_gold(50);
+    let mut gold = PlayerGold(50);
+    let mut inventory = Inventory::new();
 
     let item = create_weapon(100);
     store.add_item(item);
 
-    let initial_gold = player.gold();
+    let initial_gold = gold.0;
     let initial_store_qty = store.inventory[0].quantity();
 
-    let result = store.purchase_item(&mut player, 0);
+    let result = store.purchase_item(&mut gold, &mut inventory, 0);
 
     assert!(matches!(result, Err(StoreError::NotEnoughGold)));
-    assert_eq!(player.gold(), initial_gold);
+    assert_eq!(gold.0, initial_gold);
     assert_eq!(store.inventory[0].quantity(), initial_store_qty);
-    assert_eq!(player.inventory().items.len(), 0);
+    assert_eq!(inventory.items.len(), 0);
 }

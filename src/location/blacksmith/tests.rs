@@ -1,11 +1,11 @@
 #[cfg(test)]
 use crate::{
+    inventory::Inventory,
     item::{Item, ItemId, ItemType},
     item::enums::{EquipmentType, ItemQuality, MaterialType},
     stats::{StatType, StatSheet, HasStats},
     location::blacksmith::{Blacksmith, BlacksmithError, UpgradeOperation, UpgradeOperationResult},
-    player::Player,
-    combat::HasGold,
+    player::PlayerGold,
 };
 #[cfg(test)]
 use uuid::Uuid;
@@ -14,14 +14,15 @@ use uuid::Uuid;
 #[cfg(test)]
 fn upgrade_item(
     blacksmith: &Blacksmith,
-    player: &mut Player,
+    gold: &mut PlayerGold,
+    inventory: &mut Inventory,
     item: &mut Item,
 ) -> Result<crate::location::blacksmith::enums::BlacksmithUpgradeResult, BlacksmithError> {
     let operation = UpgradeOperation::Stat {
         max_upgrades: blacksmith.max_upgrades,
         base_upgrade_cost: blacksmith.base_upgrade_cost,
     };
-    match operation.execute(player, item)? {
+    match operation.execute(gold, inventory, item)? {
         UpgradeOperationResult::StatUpgrade(result) => Ok(result),
         UpgradeOperationResult::QualityUpgrade(_) => unreachable!(),
     }
@@ -31,10 +32,11 @@ fn upgrade_item(
 #[cfg(test)]
 fn upgrade_item_quality(
     _blacksmith: &Blacksmith,
-    player: &mut Player,
+    gold: &mut PlayerGold,
+    inventory: &mut Inventory,
     item: &mut Item,
 ) -> Result<ItemQuality, BlacksmithError> {
-    match UpgradeOperation::Quality.execute(player, item)? {
+    match UpgradeOperation::Quality.execute(gold, inventory, item)? {
         UpgradeOperationResult::QualityUpgrade(quality) => Ok(quality),
         UpgradeOperationResult::StatUpgrade(_) => unreachable!(),
     }
@@ -199,27 +201,27 @@ fn calc_upgrade_cost_affected_by_quality() {
 #[test]
 fn upgrade_item_success_deducts_gold() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
-    player.add_gold(100);
+    let mut gold = PlayerGold(100);
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
-    let result = upgrade_item(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert!(result.is_ok());
     // First upgrade costs 10, so 100 - 10 = 90
-    assert_eq!(player.gold(), 90);
+    assert_eq!(gold.0, 90);
 }
 
 #[test]
 fn upgrade_item_success_increments_num_upgrades() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
-    player.add_gold(100);
+    let mut gold = PlayerGold(100);
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
     assert_eq!(item.num_upgrades, 0);
 
-    let _ = upgrade_item(&blacksmith,&mut player, &mut item);
+    let _ = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert_eq!(item.num_upgrades, 1);
 }
@@ -227,12 +229,12 @@ fn upgrade_item_success_increments_num_upgrades() {
 #[test]
 fn upgrade_item_weapon_increases_attack() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
-    player.add_gold(100);
+    let mut gold = PlayerGold(100);
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
     let initial_attack = item.attack();
-    let _ = upgrade_item(&blacksmith,&mut player, &mut item);
+    let _ = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     // Upgrade multiplies base stat by 1.1, so 10 * 0.1 = 1 increase (min 1)
     assert!(item.attack() > initial_attack);
@@ -241,12 +243,12 @@ fn upgrade_item_weapon_increases_attack() {
 #[test]
 fn upgrade_item_shield_increases_defense() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
-    player.add_gold(100);
+    let mut gold = PlayerGold(100);
+    let mut inventory = Inventory::new();
     let mut item = create_test_shield(10, 0, 5);
 
     let initial_defense = item.defense();
-    let _ = upgrade_item(&blacksmith,&mut player, &mut item);
+    let _ = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     // Upgrade increases defense
     assert!(item.defense() > initial_defense);
@@ -255,30 +257,30 @@ fn upgrade_item_shield_increases_defense() {
 #[test]
 fn upgrade_item_fails_when_max_upgrades_reached() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 3, 10);
-    let mut player = Player::default();
-    player.add_gold(100);
+    let mut gold = PlayerGold(100);
+    let mut inventory = Inventory::new();
     // Item already at max upgrades for this blacksmith
     let mut item = create_test_weapon(10, 3, 5);
 
-    let result = upgrade_item(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert!(matches!(result, Err(BlacksmithError::MaxUpgradesReached)));
     // Gold should not be deducted
-    assert_eq!(player.gold(), 100);
+    assert_eq!(gold.0, 100);
 }
 
 #[test]
 fn upgrade_item_fails_when_not_enough_gold() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
-    player.add_gold(5); // Only 5 gold, but first upgrade costs 10
+    let mut gold = PlayerGold(5); // Only 5 gold, but first upgrade costs 10
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
-    let result = upgrade_item(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert!(matches!(result, Err(BlacksmithError::NotEnoughGold)));
     // Gold should not be deducted
-    assert_eq!(player.gold(), 5);
+    assert_eq!(gold.0, 5);
     // Item should not be upgraded
     assert_eq!(item.num_upgrades, 0);
 }
@@ -286,10 +288,11 @@ fn upgrade_item_fails_when_not_enough_gold() {
 #[test]
 fn upgrade_item_fails_with_zero_gold() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
+    let mut gold = PlayerGold(0);
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
-    let result = upgrade_item(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert!(matches!(result, Err(BlacksmithError::NotEnoughGold)));
 }
@@ -297,49 +300,49 @@ fn upgrade_item_fails_with_zero_gold() {
 #[test]
 fn upgrade_item_succeeds_with_exact_gold() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
-    player.add_gold(10); // Exactly enough for first upgrade
+    let mut gold = PlayerGold(10); // Exactly enough for first upgrade
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
-    let result = upgrade_item(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert!(result.is_ok());
-    assert_eq!(player.gold(), 0);
+    assert_eq!(gold.0, 0);
     assert_eq!(item.num_upgrades, 1);
 }
 
 #[test]
 fn upgrade_item_multiple_times() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
-    player.add_gold(1000);
+    let mut gold = PlayerGold(1000);
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
     // Upgrade 3 times
     for i in 0..3 {
-        let result = upgrade_item(&blacksmith,&mut player, &mut item);
+        let result = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
         assert!(result.is_ok());
         assert_eq!(item.num_upgrades, i + 1);
     }
 
     // Total cost: 10 + 20 + 30 = 60
-    assert_eq!(player.gold(), 940);
+    assert_eq!(gold.0, 940);
 }
 
 #[test]
 fn upgrade_item_respects_blacksmith_max_not_item_max() {
     // Blacksmith allows only 2 upgrades, but item allows 5
     let blacksmith = Blacksmith::new("Smith".to_string(), 2, 10);
-    let mut player = Player::default();
-    player.add_gold(1000);
+    let mut gold = PlayerGold(1000);
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
     // First two upgrades should succeed
-    assert!(upgrade_item(&blacksmith,&mut player, &mut item).is_ok());
-    assert!(upgrade_item(&blacksmith,&mut player, &mut item).is_ok());
+    assert!(upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item).is_ok());
+    assert!(upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item).is_ok());
 
     // Third upgrade should fail due to blacksmith max
-    let result = upgrade_item(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
     assert!(matches!(result, Err(BlacksmithError::MaxUpgradesReached)));
     assert_eq!(item.num_upgrades, 2);
 }
@@ -347,14 +350,14 @@ fn upgrade_item_respects_blacksmith_max_not_item_max() {
 #[test]
 fn upgrade_item_fails_for_non_equipment() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
-    player.add_gold(100);
+    let mut gold = PlayerGold(100);
+    let mut inventory = Inventory::new();
     let mut item = create_material_item();
 
-    let result = upgrade_item(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert!(matches!(result, Err(BlacksmithError::NotEquipment)));
-    assert_eq!(player.gold(), 100);
+    assert_eq!(gold.0, 100);
 }
 
 // ==================== Item upgrade tests (direct) ====================
@@ -399,10 +402,11 @@ fn item_upgrade_shield_stats() {
 #[test]
 fn upgrade_quality_requires_upgrade_stone() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
+    let mut gold = PlayerGold(0);
+    let mut inventory = Inventory::new();
     let mut item = create_test_weapon(10, 0, 5);
 
-    let result = upgrade_item_quality(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item_quality(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert!(matches!(result, Err(BlacksmithError::NoUpgradeStones)));
 }
@@ -410,10 +414,11 @@ fn upgrade_quality_requires_upgrade_stone() {
 #[test]
 fn upgrade_quality_fails_for_non_equipment() {
     let blacksmith = Blacksmith::new("Smith".to_string(), 5, 10);
-    let mut player = Player::default();
+    let mut gold = PlayerGold(0);
+    let mut inventory = Inventory::new();
     let mut item = create_material_item();
 
-    let result = upgrade_item_quality(&blacksmith,&mut player, &mut item);
+    let result = upgrade_item_quality(&blacksmith, &mut gold, &mut inventory, &mut item);
 
     assert!(matches!(result, Err(BlacksmithError::NotEquipment)));
 }

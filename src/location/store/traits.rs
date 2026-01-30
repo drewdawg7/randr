@@ -1,10 +1,7 @@
 use std::time::Duration;
 
-use crate::{
-    player::Player,
-    item::ItemId,
-    location::{Location, LocationEntryError, LocationId, Refreshable},
-};
+use crate::item::ItemId;
+use crate::location::{Location, LocationId, Refreshable};
 
 use super::definition::Store;
 
@@ -30,18 +27,6 @@ impl Location for Store {
 
     fn description(&self) -> &str {
         Store::description(self)
-    }
-
-    fn can_enter(&self, _player: &Player) -> Result<(), LocationEntryError> {
-        Ok(())
-    }
-
-    fn on_enter(&mut self, _player: &mut Player) {
-        // No special action on enter
-    }
-
-    fn on_exit(&mut self, _player: &mut Player) {
-        // No special action on exit
     }
 }
 

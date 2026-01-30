@@ -1,14 +1,14 @@
 use uuid::Uuid;
 
 use crate::{
-    player::Player,
-    inventory::{EquipmentSlot, FindsItems, HasInventory, ManagesEquipment, ManagesItems},
+    inventory::{EquipmentSlot, FindsItems, Inventory, ManagesItems},
     item::{
         enums::ItemQuality,
         recipe::{Recipe, RecipeId},
         Item, ItemId,
     },
     location::{BlacksmithData, LocationId, LocationSpec},
+    player::PlayerGold,
 };
 
 use super::enums::{BlacksmithError, BlacksmithUpgradeResult, UpgradeOperation, UpgradeOperationResult};
@@ -62,7 +62,7 @@ impl Blacksmith {
 
     pub fn smelt_ore(
         &mut self,
-        player: &mut Player,
+        inventory: &mut Inventory,
         recipe_id: &RecipeId,
     ) -> Result<Item, BlacksmithError> {
         if self.fuel_amount <= 0 {
@@ -73,7 +73,7 @@ impl Blacksmith {
             Ok(recipe) => recipe,
             Err(e) => return Err(BlacksmithError::RecipeError(e)),
         };
-        let item_id = match recipe.craft(player) {
+        let item_id = match recipe.craft(inventory) {
             Ok(id) => id,
             Err(e) => return Err(BlacksmithError::RecipeError(e)),
         };
@@ -82,10 +82,8 @@ impl Blacksmith {
         Ok(item)
     }
 
-    /// Add fuel to the forge by consuming coal from player inventory.
-    /// Returns the new fuel amount on success.
-    pub fn add_fuel(&mut self, player: &mut Player) -> Result<i32, BlacksmithError> {
-        let coal = player
+    pub fn add_fuel(&mut self, inventory: &mut Inventory) -> Result<i32, BlacksmithError> {
+        let coal = inventory
             .find_item_by_id(ItemId::Coal)
             .ok_or(BlacksmithError::NoFuel)?;
 
@@ -93,86 +91,74 @@ impl Blacksmith {
             return Err(BlacksmithError::NoFuel);
         }
 
-        player.decrease_item_quantity(ItemId::Coal, 1);
+        inventory.decrease_item_quantity(ItemId::Coal, 1);
         self.inc_fuel(1);
         Ok(self.fuel_amount)
     }
 
-    /// Process an upgrade operation on a player's item by UUID.
-    /// Handles the find-remove-modify-reinsert pattern for both inventory and equipment.
     fn process_player_upgrade(
-        player: &mut Player,
+        gold: &mut PlayerGold,
+        inventory: &mut Inventory,
         item_uuid: Uuid,
         operation: UpgradeOperation,
     ) -> Result<UpgradeOperationResult, BlacksmithError> {
-        // Check equipped items first
         for slot in EquipmentSlot::all() {
-            if let Some(equipped) = player.get_equipped_item(*slot) {
+            if let Some(equipped) = inventory.equipment().get(slot) {
                 if equipped.item.item_uuid == item_uuid {
-                    if let Some(mut inv_item) =
-                        player.inventory_mut().equipment_mut().remove(slot)
-                    {
-                        let result = operation.execute(player, &mut inv_item.item);
-                        player
-                            .inventory_mut()
-                            .equipment_mut()
-                            .insert(*slot, inv_item);
+                    if let Some(mut inv_item) = inventory.equipment_mut().remove(slot) {
+                        let result = operation.execute(gold, inventory, &mut inv_item.item);
+                        inventory.equipment_mut().insert(*slot, inv_item);
                         return result;
                     }
                 }
             }
         }
 
-        // Check inventory items
-        if let Some(idx) = player.find_item_index_by_uuid(item_uuid) {
-            let mut inv_item = player.inventory_mut().items.remove(idx);
-            let result = operation.execute(player, &mut inv_item.item);
-            player.inventory_mut().items.insert(idx, inv_item);
+        if let Some(idx) = inventory.find_item_index_by_uuid(item_uuid) {
+            let mut inv_item = inventory.items.remove(idx);
+            let result = operation.execute(gold, inventory, &mut inv_item.item);
+            inventory.items.insert(idx, inv_item);
             return result;
         }
 
         Err(BlacksmithError::ItemNotFound)
     }
 
-    /// Upgrade an item in player's inventory or equipment by UUID.
-    /// Returns the upgrade result with stat increases and gold spent.
     pub fn upgrade_player_item(
         &self,
-        player: &mut Player,
+        gold: &mut PlayerGold,
+        inventory: &mut Inventory,
         item_uuid: Uuid,
     ) -> Result<BlacksmithUpgradeResult, BlacksmithError> {
         let operation = UpgradeOperation::Stat {
             max_upgrades: self.max_upgrades,
             base_upgrade_cost: self.base_upgrade_cost,
         };
-        match Self::process_player_upgrade(player, item_uuid, operation)? {
+        match Self::process_player_upgrade(gold, inventory, item_uuid, operation)? {
             UpgradeOperationResult::StatUpgrade(result) => Ok(result),
             UpgradeOperationResult::QualityUpgrade(_) => unreachable!(),
         }
     }
 
-    /// Upgrade item quality in player's inventory or equipment by UUID.
-    /// Returns the new quality level.
     pub fn upgrade_player_item_quality(
         &self,
-        player: &mut Player,
+        gold: &mut PlayerGold,
+        inventory: &mut Inventory,
         item_uuid: Uuid,
     ) -> Result<ItemQuality, BlacksmithError> {
-        match Self::process_player_upgrade(player, item_uuid, UpgradeOperation::Quality)? {
+        match Self::process_player_upgrade(gold, inventory, item_uuid, UpgradeOperation::Quality)? {
             UpgradeOperationResult::QualityUpgrade(quality) => Ok(quality),
             UpgradeOperationResult::StatUpgrade(_) => unreachable!(),
         }
     }
 
-    /// Smelt ore and add result to player inventory.
-    /// Returns the smelted item.
     pub fn smelt_and_give(
         &mut self,
-        player: &mut Player,
+        inventory: &mut Inventory,
         recipe_id: &RecipeId,
     ) -> Result<Item, BlacksmithError> {
-        let item = self.smelt_ore(player, recipe_id)?;
-        player
+        let item = self.smelt_ore(inventory, recipe_id)?;
+        inventory
             .add_to_inv(item.clone())
             .map_err(|_| BlacksmithError::InventoryFull)?;
         Ok(item)

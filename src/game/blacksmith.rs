@@ -1,11 +1,9 @@
 use bevy::prelude::*;
 use uuid::Uuid;
 
-use crate::entities::Progression;
 use crate::inventory::{FindsItems, Inventory, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
-use crate::player::{Player, PlayerGold, PlayerName};
-use crate::stats::StatSheet;
+use crate::player::PlayerGold;
 
 #[derive(Event, Debug, Clone)]
 pub struct UpgradeItemEvent {
@@ -141,7 +139,7 @@ fn process_crafting_recipe(
     recipe_id: RecipeId,
     operation: CraftingOperation,
     result_events: &mut EventWriter<BlacksmithResult>,
-    player: &mut Player,
+    inventory: &mut Inventory,
 ) -> bool {
     let Ok(recipe) = Recipe::new(recipe_id) else {
         return false;
@@ -149,18 +147,18 @@ fn process_crafting_recipe(
 
     let recipe_name = recipe.name().to_string();
 
-    if !recipe.can_craft(player) {
+    if !recipe.can_craft(inventory) {
         result_events.send(operation.fail_ingredients_result(recipe_name));
         info!("Not enough ingredients to {}", operation.verb());
         return false;
     }
 
-    match recipe.craft(player) {
+    match recipe.craft(inventory) {
         Ok(item_id) => {
             let item = item_id.spawn();
             let item_name = recipe.name().to_string();
 
-            match player.add_to_inv(item) {
+            match inventory.add_to_inv(item) {
                 Ok(_) => {
                     result_events.send(operation.success_result(item_name.clone()));
                     info!("{} {}", operation.past_verb(), item_name);
@@ -278,43 +276,29 @@ fn handle_upgrade_quality(
 fn handle_smelt_recipe(
     mut smelt_events: EventReader<SmeltRecipeEvent>,
     mut result_events: EventWriter<BlacksmithResult>,
-    name: Res<PlayerName>,
-    mut gold: ResMut<PlayerGold>,
-    mut progression: ResMut<Progression>,
     mut inventory: ResMut<Inventory>,
-    mut stats: ResMut<StatSheet>,
 ) {
     for event in smelt_events.read() {
-        let mut player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
-        if process_crafting_recipe(
+        process_crafting_recipe(
             event.recipe_id,
             CraftingOperation::Smelt,
             &mut result_events,
-            &mut player,
-        ) {
-            player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
-        }
+            &mut inventory,
+        );
     }
 }
 
 fn handle_forge_recipe(
     mut forge_events: EventReader<ForgeRecipeEvent>,
     mut result_events: EventWriter<BlacksmithResult>,
-    name: Res<PlayerName>,
-    mut gold: ResMut<PlayerGold>,
-    mut progression: ResMut<Progression>,
     mut inventory: ResMut<Inventory>,
-    mut stats: ResMut<StatSheet>,
 ) {
     for event in forge_events.read() {
-        let mut player = Player::from_resources(&name, &gold, &progression, &inventory, &stats);
-        if process_crafting_recipe(
+        process_crafting_recipe(
             event.recipe_id,
             CraftingOperation::Forge,
             &mut result_events,
-            &mut player,
-        ) {
-            player.write_back(&mut gold, &mut progression, &mut inventory, &mut stats);
-        }
+            &mut inventory,
+        );
     }
 }

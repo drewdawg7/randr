@@ -1,8 +1,7 @@
 use crate::{
-    player::Player,
-    item::{Item, recipe::{Recipe, RecipeId}},
+    inventory::{Inventory, ManagesItems},
+    item::{recipe::{Recipe, RecipeId}, Item},
     location::{AlchemistData, LocationId, LocationSpec},
-    inventory::ManagesItems,
 };
 
 use super::enums::AlchemistError;
@@ -32,13 +31,13 @@ impl Alchemist {
 
     pub fn brew_potion(
         &self,
-        player: &mut Player,
+        inventory: &mut Inventory,
         recipe_id: &RecipeId,
     ) -> Result<Item, AlchemistError> {
         let recipe = Recipe::new(*recipe_id).map_err(AlchemistError::RecipeError)?;
-        let item_id = recipe.craft(player).map_err(AlchemistError::RecipeError)?;
+        let item_id = recipe.craft(inventory).map_err(AlchemistError::RecipeError)?;
         let item = item_id.spawn();
-        player
+        inventory
             .add_to_inv(item.clone())
             .map_err(|_| AlchemistError::InventoryFull)?;
         Ok(item)
