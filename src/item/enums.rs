@@ -1,6 +1,7 @@
 use bevy::prelude::Color;
 use rand::Rng;
 
+use crate::skills::blacksmith_quality_bonus;
 use crate::stats::StatSheet;
 
 // ItemId is now defined in definitions.rs via macro
@@ -212,16 +213,21 @@ impl ItemQuality {
             }
     }
     pub fn roll() -> Self {
+        Self::roll_with_bonus(0)
+    }
+
+    pub fn roll_with_bonus(blacksmith_level: u32) -> Self {
         let mut rng = rand::thread_rng();
-        let roll = rng.gen_range(0..100);
+        let bonus = blacksmith_quality_bonus(blacksmith_level);
+        let roll = rng.gen_range(0..100) + bonus;
 
         match roll {
-            0..=9   => ItemQuality::Poor,         // 10%
-            10..=69 => ItemQuality::Normal,       // 60%
-            70..=84 => ItemQuality::Improved,     // 15%
-            85..=94 => ItemQuality::WellForged,   // 10%
-            95..=97 => ItemQuality::Masterworked, // 3%
-            _       => ItemQuality::Mythic,       // 2%
+            ..=9    => ItemQuality::Poor,
+            10..=69 => ItemQuality::Normal,
+            70..=84 => ItemQuality::Improved,
+            85..=94 => ItemQuality::WellForged,
+            95..=97 => ItemQuality::Masterworked,
+            _       => ItemQuality::Mythic,
         }
     }
 

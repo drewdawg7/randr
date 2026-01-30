@@ -12,7 +12,7 @@ use crate::dungeon::{
 };
 use crate::input::{GameAction, HeldDirection, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
-use crate::skills::{SkillType, SkillXpGained};
+use crate::skills::{SkillType, SkillXpGained, Skills};
 use crate::location::LocationId;
 use crate::mob::MobId;
 use crate::states::AppState;
@@ -357,6 +357,7 @@ fn revert_forge_idle(
     mut commands: Commands,
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
+    skills: Res<Skills>,
     mut xp_events: EventWriter<SkillXpGained>,
     mut query: Query<(
         Entity,
@@ -365,6 +366,14 @@ fn revert_forge_idle(
         Option<&mut ForgeCraftingState>,
     )>,
 ) {
+    use crate::skills::blacksmith_bonus_item_chance;
+
+    let blacksmith_level = skills
+        .skill(SkillType::Blacksmith)
+        .map(|s| s.level)
+        .unwrap_or(1);
+    let bonus_chance = blacksmith_bonus_item_chance(blacksmith_level);
+
     for (entity, mut timer, mut image, forge_state) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
@@ -373,7 +382,7 @@ fn revert_forge_idle(
                 let ore_qty = state.ore_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
                 let ingot_count = coal_qty.min(ore_qty);
 
-                state.complete_crafting();
+                state.complete_crafting_with_bonus(bonus_chance);
 
                 if ingot_count > 0 {
                     xp_events.send(SkillXpGained {
@@ -401,6 +410,7 @@ fn revert_anvil_idle(
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
     mut inventory: ResMut<Inventory>,
+    skills: Res<Skills>,
     mut xp_events: EventWriter<SkillXpGained>,
     mut query: Query<(
         Entity,
@@ -409,13 +419,18 @@ fn revert_anvil_idle(
         Option<&mut AnvilCraftingState>,
     )>,
 ) {
+    let blacksmith_level = skills
+        .skill(SkillType::Blacksmith)
+        .map(|s| s.level)
+        .unwrap_or(1);
+
     for (entity, mut timer, mut image, anvil_state) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
             if let Some(mut state) = anvil_state {
                 if let Some(recipe_id) = state.complete_crafting() {
                     let spec = recipe_id.spec();
-                    let item = spec.output.spawn();
+                    let item = spec.output.spawn_with_quality_bonus(blacksmith_level);
                     let _ = inventory.add_to_inv(item);
 
                     let ingredient_count: u32 = spec.ingredients.values().sum();

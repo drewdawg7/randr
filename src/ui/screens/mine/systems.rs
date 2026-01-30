@@ -1,8 +1,10 @@
 use bevy::prelude::*;
+use rand::Rng;
 
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::rock::RockId;
+use crate::skills::{mining_gem_chance, Skills, SkillType};
 use crate::stats::{StatSheet, StatType};
 use crate::states::AppState;
 use crate::ui::spawn_modal_hint;
@@ -104,11 +106,14 @@ pub fn handle_mining_action(
     mut action_reader: EventReader<GameAction>,
     mut state: ResMut<MineScreenState>,
     stats: Res<StatSheet>,
+    skills: Res<Skills>,
     mut inventory: ResMut<Inventory>,
 ) {
+    let mining_level = skills.skill(SkillType::Mining).map(|s| s.level).unwrap_or(1);
+    let gem_chance = mining_gem_chance(mining_level);
+
     for action in action_reader.read() {
         if *action == GameAction::Mine {
-            // Find adjacent mineable tiles
             let adjacent = state.get_adjacent_mineable();
 
             if adjacent.is_empty() {
@@ -116,18 +121,14 @@ pub fn handle_mining_action(
                 continue;
             }
 
-            // Mine the first adjacent rock (could be extended to choose direction)
             let (mx, my) = adjacent[0];
             let tile = state.grid.get(mx, my);
 
             if let Some(tile) = tile {
                 if tile.is_mineable() {
-                    // Determine which rock to mine
                     let rock_id = match tile {
                         MineTile::Ore(ore_type) => ore_type.rock_id(),
                         MineTile::Rock => {
-                            // Random rock type for generic rocks
-                            use rand::Rng;
                             let mut rng = rand::thread_rng();
                             let roll = rng.gen_range(0..3);
                             match roll {
@@ -139,36 +140,57 @@ pub fn handle_mining_action(
                         _ => continue,
                     };
 
-                    // Get the rock and roll for loot
                     let rock = rock_id.spawn();
                     let magic_find = stats.value(StatType::MagicFind);
                     let drops = rock.loot.roll_drops(magic_find);
 
-                    // Add items to player inventory
                     let mut message_parts = Vec::new();
                     for drop in drops {
                         let item_name = drop.item.name.clone();
                         let quantity = drop.quantity;
 
-                        // Add item to inventory (takes ownership, no clone needed)
                         if inventory.add_to_inv(drop.item).is_ok() {
                             message_parts.push(format!("{}x {}", quantity, item_name));
                         }
                     }
 
-                    // Set message
+                    let mut rng = rand::thread_rng();
+                    if rng.gen_range(0.0..1.0) < gem_chance {
+                        if let Some(crystal) = roll_crystal_drop() {
+                            let crystal_name = crystal.name.clone();
+                            if inventory.add_to_inv(crystal).is_ok() {
+                                message_parts.push(format!("1x {} (RARE!)", crystal_name));
+                            }
+                        }
+                    }
+
                     if message_parts.is_empty() {
                         state.set_message("Just rocks...".to_string());
                     } else {
                         state.set_message(format!("Found: {}", message_parts.join(", ")));
                     }
 
-                    // Replace mined tile with floor
                     state.grid.set(mx, my, MineTile::Floor);
                 }
             }
         }
     }
+}
+
+fn roll_crystal_drop() -> Option<crate::item::Item> {
+    use crate::item::ItemId;
+
+    let mut rng = rand::thread_rng();
+    let roll = rng.gen_range(0..6);
+    let crystal_id = match roll {
+        0 => ItemId::BlueCrystal,
+        1 => ItemId::RedCrystal,
+        2 => ItemId::GreenCrystal,
+        3 => ItemId::WhiteCrystal,
+        4 => ItemId::OrangeCrystal,
+        _ => ItemId::YellowCrystal,
+    };
+    Some(crystal_id.spawn())
 }
 
 /// System to handle exiting via ladder.

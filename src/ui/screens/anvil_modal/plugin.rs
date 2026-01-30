@@ -47,9 +47,12 @@ fn handle_anvil_close_with_crafting(
     mut active_modal: ResMut<ActiveModal>,
     active_anvil: Option<Res<ActiveAnvilEntity>>,
     game_sprites: Res<GameSprites>,
+    skills: Res<crate::skills::Skills>,
     anvil_state_query: Query<(Entity, &AnvilCraftingState)>,
     modal_query: Query<Entity, With<AnvilModalRoot>>,
 ) {
+    use crate::skills::{blacksmith_speed_multiplier, SkillType};
+
     // Check if we should close for crafting
     if close_trigger.is_none() {
         return;
@@ -69,6 +72,12 @@ fn handle_anvil_close_with_crafting(
         return;
     };
 
+    let blacksmith_level = skills
+        .skill(SkillType::Blacksmith)
+        .map(|s| s.level)
+        .unwrap_or(1);
+    let speed_mult = blacksmith_speed_multiplier(blacksmith_level);
+
     if anvil_state.is_crafting && anvil_state.selected_recipe.is_some() {
         // Start anvil animation
         if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
@@ -82,9 +91,10 @@ fn handle_anvil_close_with_crafting(
                     looping: true,
                     synchronized: false,
                 };
+                let duration = 3.0 * speed_mult;
                 commands.entity(entity).insert((
                     SpriteAnimation::new(&config),
-                    AnvilActiveTimer(Timer::from_seconds(3.0, TimerMode::Once)),
+                    AnvilActiveTimer(Timer::from_seconds(duration, TimerMode::Once)),
                 ));
             }
         }

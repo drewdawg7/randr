@@ -14,7 +14,7 @@ use crate::mob::{
 };
 use crate::player::PlayerGold;
 use crate::plugins::MobDefeated;
-use crate::skills::{SkillType, SkillXpGained};
+use crate::skills::{SkillType, SkillXpGained, Skills};
 use crate::stats::StatSheet;
 use crate::ui::screens::FightModalMob;
 
@@ -59,14 +59,26 @@ fn process_player_attack(
     mut entity_died_events: EventWriter<EntityDied>,
     mut stats: ResMut<StatSheet>,
     inventory: Res<Inventory>,
+    skills: Res<Skills>,
     mut mob_query: Query<(&mut Health, &CombatStats)>,
 ) {
+    let combat_level = skills
+        .skill(SkillType::Combat)
+        .map(|s| s.level)
+        .unwrap_or(1);
+
     for event in events.read() {
         let Ok((mut mob_health, mob_combat_stats)) = mob_query.get_mut(event.target) else {
             continue;
         };
 
-        let result = player_attacks_entity(&stats, &inventory, &mut mob_health, mob_combat_stats);
+        let result = player_attacks_entity(
+            &stats,
+            &inventory,
+            &mut mob_health,
+            mob_combat_stats,
+            combat_level,
+        );
 
         deal_damage_events.send(DealDamage {
             target: event.target,
@@ -80,7 +92,8 @@ fn process_player_attack(
                 is_player: false,
             });
         } else {
-            let counter_result = entity_attacks_player(mob_combat_stats, &mut stats, &inventory);
+            let counter_result =
+                entity_attacks_player(mob_combat_stats, &mut stats, &inventory, combat_level);
 
             deal_damage_events.send(DealDamage {
                 target: Entity::PLACEHOLDER,

@@ -75,24 +75,40 @@ impl ForgeCraftingState {
     /// Complete crafting: consume inputs, produce output.
     /// Crafts min(coal_qty, ore_qty) ingots, preserving any leftover resources.
     pub fn complete_crafting(&mut self) {
+        self.complete_crafting_with_bonus(0.0);
+    }
+
+    /// Complete crafting with a bonus chance for extra output.
+    /// The bonus_chance is 0.0-1.0 representing the chance per ingot for an extra.
+    pub fn complete_crafting_with_bonus(&mut self, bonus_chance: f32) {
+        use rand::Rng;
+
         let Some(output_id) = self.get_output_item() else {
             return;
         };
 
         let coal_qty = self.coal_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
         let ore_qty = self.ore_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
-        let output_qty = coal_qty.min(ore_qty);
+        let base_output = coal_qty.min(ore_qty);
 
-        if output_qty > 0 {
-            // Consume only what was used, keep leftovers
+        if base_output > 0 {
+            let mut rng = rand::thread_rng();
+            let mut bonus_count = 0u32;
+            for _ in 0..base_output {
+                if rng.gen_range(0.0..1.0) < bonus_chance {
+                    bonus_count += 1;
+                }
+            }
+            let output_qty = base_output + bonus_count;
+
             if let Some((_, qty)) = self.coal_slot.as_mut() {
-                *qty -= output_qty;
+                *qty -= base_output;
                 if *qty == 0 {
                     self.coal_slot = None;
                 }
             }
             if let Some((_, qty)) = self.ore_slot.as_mut() {
-                *qty -= output_qty;
+                *qty -= base_output;
                 if *qty == 0 {
                     self.ore_slot = None;
                 }

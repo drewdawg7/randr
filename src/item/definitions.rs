@@ -365,6 +365,67 @@ entity_macros::define_entity! {
             @sprite: "copper_ingot" in SpriteSheetKey::CraftingMaterials,
         }
 
+        BlueCrystal {
+            name: String::from("Blue Crystal"),
+            item_type: ItemType::Material(MaterialType::Gem),
+            quality: Some(ItemQuality::Normal),
+            stats: StatSheet::new(),
+            max_upgrades: 0,
+            max_stack_quantity: 99,
+            gold_value: 50,
+            @sprite: "sapphire_small" in SpriteSheetKey::CraftingMaterials,
+        }
+        RedCrystal {
+            name: String::from("Red Crystal"),
+            item_type: ItemType::Material(MaterialType::Gem),
+            quality: Some(ItemQuality::Normal),
+            stats: StatSheet::new(),
+            max_upgrades: 0,
+            max_stack_quantity: 99,
+            gold_value: 50,
+            @sprite: "ruby_small" in SpriteSheetKey::CraftingMaterials,
+        }
+        GreenCrystal {
+            name: String::from("Green Crystal"),
+            item_type: ItemType::Material(MaterialType::Gem),
+            quality: Some(ItemQuality::Normal),
+            stats: StatSheet::new(),
+            max_upgrades: 0,
+            max_stack_quantity: 99,
+            gold_value: 50,
+            @sprite: "emerald_small" in SpriteSheetKey::CraftingMaterials,
+        }
+        WhiteCrystal {
+            name: String::from("White Crystal"),
+            item_type: ItemType::Material(MaterialType::Gem),
+            quality: Some(ItemQuality::Normal),
+            stats: StatSheet::new(),
+            max_upgrades: 0,
+            max_stack_quantity: 99,
+            gold_value: 75,
+            @sprite: "diamond_small" in SpriteSheetKey::CraftingMaterials,
+        }
+        OrangeCrystal {
+            name: String::from("Orange Crystal"),
+            item_type: ItemType::Material(MaterialType::Gem),
+            quality: Some(ItemQuality::Normal),
+            stats: StatSheet::new(),
+            max_upgrades: 0,
+            max_stack_quantity: 99,
+            gold_value: 50,
+            @sprite: "garnet_small" in SpriteSheetKey::CraftingMaterials,
+        }
+        YellowCrystal {
+            name: String::from("Yellow Crystal"),
+            item_type: ItemType::Material(MaterialType::Gem),
+            quality: Some(ItemQuality::Normal),
+            stats: StatSheet::new(),
+            max_upgrades: 0,
+            max_stack_quantity: 99,
+            gold_value: 50,
+            @sprite: "peridot_small" in SpriteSheetKey::CraftingMaterials,
+        }
+
         Cowhide {
             name: String::from("Cowhide"),
             item_type: ItemType::Material(MaterialType::CraftingMaterial),
@@ -569,5 +630,10 @@ impl ItemId {
             id: *self,
             spec: self.spec().with_quality(quality),
         }
+    }
+
+    pub fn spawn_with_quality_bonus(&self, blacksmith_level: u32) -> Item {
+        let quality = ItemQuality::roll_with_bonus(blacksmith_level);
+        self.with_quality(quality).spawn()
     }
 }

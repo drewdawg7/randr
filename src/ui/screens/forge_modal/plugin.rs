@@ -48,6 +48,7 @@ fn handle_forge_close(
     mut active_modal: ResMut<crate::ui::screens::modal::ActiveModal>,
     active_forge: Option<Res<super::state::ActiveForgeEntity>>,
     game_sprites: Res<crate::assets::GameSprites>,
+    skills: Res<crate::skills::Skills>,
     mut forge_state_query: Query<(Entity, &mut crate::crafting_station::ForgeCraftingState)>,
     modal_query: Query<Entity, With<super::state::ForgeModalRoot>>,
 ) {
@@ -56,10 +57,17 @@ fn handle_forge_close(
     use crate::ui::animation::{AnimationConfig, SpriteAnimation};
     use crate::crafting_station::ForgeActiveTimer;
     use crate::ui::screens::modal::ModalType;
+    use crate::skills::{blacksmith_speed_multiplier, SkillType};
 
     if active_modal.modal != Some(ModalType::ForgeModal) {
         return;
     }
+
+    let blacksmith_level = skills
+        .skill(SkillType::Blacksmith)
+        .map(|s| s.level)
+        .unwrap_or(1);
+    let speed_mult = blacksmith_speed_multiplier(blacksmith_level);
 
     for action in action_reader.read() {
         if *action != GameAction::CloseModal {
@@ -85,9 +93,10 @@ fn handle_forge_close(
                                 looping: true,
                                 synchronized: false,
                             };
+                            let duration = 5.0 * speed_mult;
                             commands.entity(entity).insert((
                                 SpriteAnimation::new(&config),
-                                ForgeActiveTimer(Timer::from_seconds(5.0, TimerMode::Once)),
+                                ForgeActiveTimer(Timer::from_seconds(duration, TimerMode::Once)),
                             ));
                         }
                     }

@@ -2,6 +2,7 @@ use super::attack::Attack;
 use super::result::AttackResult;
 use crate::{
     inventory::Inventory,
+    skills::{combat_attack_bonus, combat_defense_bonus},
     stats::{HasStats, StatSheet, StatType},
 };
 
@@ -35,18 +36,20 @@ pub fn player_take_damage(stats: &mut StatSheet, amount: i32) {
     stats.decrease_stat(StatType::Health, amount);
 }
 
-pub fn player_attack_value(stats: &StatSheet, inventory: &Inventory) -> Attack {
+pub fn player_attack_value(stats: &StatSheet, inventory: &Inventory, combat_level: u32) -> Attack {
     let base = stats.attack();
     let equipment_bonus = inventory.sum_equipment_stats(StatType::Attack);
-    let total = base + equipment_bonus;
+    let skill_bonus = combat_attack_bonus(combat_level);
+    let total = base + equipment_bonus + skill_bonus;
     let variance = (total as f64 * ATTACK_VARIANCE).round() as i32;
     Attack::new((total - variance).max(1), total + variance)
 }
 
-pub fn player_effective_defense(stats: &StatSheet, inventory: &Inventory) -> i32 {
+pub fn player_effective_defense(stats: &StatSheet, inventory: &Inventory, combat_level: u32) -> i32 {
     let base = stats.defense();
     let equipment_bonus = inventory.sum_equipment_stats(StatType::Defense);
-    base + equipment_bonus
+    let skill_bonus = combat_defense_bonus(combat_level);
+    base + equipment_bonus + skill_bonus
 }
 
 pub fn player_effective_magicfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
@@ -96,8 +99,9 @@ pub fn player_attacks_entity(
     player_inventory: &Inventory,
     mob_health: &mut Health,
     mob_combat_stats: &CombatStats,
+    combat_level: u32,
 ) -> AttackResult {
-    let player_attack = player_attack_value(player_stats, player_inventory);
+    let player_attack = player_attack_value(player_stats, player_inventory, combat_level);
     let raw_damage = player_attack.roll_damage();
     let damage = apply_defense(raw_damage, mob_combat_stats.defense);
 
@@ -112,8 +116,9 @@ pub fn entity_attacks_player(
     mob_combat_stats: &CombatStats,
     player_stats: &mut StatSheet,
     player_inventory: &Inventory,
+    combat_level: u32,
 ) -> AttackResult {
-    let defense = player_effective_defense(player_stats, player_inventory);
+    let defense = player_effective_defense(player_stats, player_inventory, combat_level);
 
     let base_attack = mob_combat_stats.attack;
     let variance = (base_attack as f64 * ATTACK_VARIANCE).round() as i32;
