@@ -7,6 +7,7 @@ use crate::input::{GameAction, InputPlugin};
 use crate::location::{LocationId, StorePlugin};
 use crate::navigation::NavigationPlugin;
 use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
+use crate::skills::SkillsPlugin;
 use crate::states::{AppState, StateTransitionPlugin};
 use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
@@ -59,6 +60,7 @@ impl Plugin for GamePlugin {
             StorageTransactionsPlugin,
             MobPlugin,
             EconomyPlugin,
+            SkillsPlugin,
         ));
 
         app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, ItemDetailPanePlugin, ItemDetailDisplayPlugin, ItemStatsDisplayPlugin));
