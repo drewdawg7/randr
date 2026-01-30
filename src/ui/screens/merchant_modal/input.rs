@@ -83,7 +83,10 @@ pub fn handle_merchant_modal_select(
 
         if stock_focused {
             // BUY: Purchase item from merchant
-            let selected = stock_grids.get_single().unwrap().selected_index;
+            let Ok(stock_grid) = stock_grids.get_single() else {
+                continue;
+            };
+            let selected = stock_grid.selected_index;
 
             if let Some(store_item) = stock.items.get_mut(selected) {
                 if let Some(item) = store_item.display_item() {
@@ -108,7 +111,10 @@ pub fn handle_merchant_modal_select(
             }
         } else {
             // SELL: Sell item from player inventory
-            let selected = player_grids.get_single().unwrap().selected_index;
+            let Ok(player_grid) = player_grids.get_single() else {
+                continue;
+            };
+            let selected = player_grid.selected_index;
 
             let inv_items = inventory.get_inventory_items();
             if let Some(inv_item) = inv_items.get(selected) {

@@ -68,7 +68,10 @@ pub fn handle_inventory_modal_select(
 
         if eq_focused {
             // UNEQUIP: find the slot for the selected equipment item
-            let selected = equipment_grids.get_single().unwrap().selected_index;
+            let Ok(equipment_grid) = equipment_grids.get_single() else {
+                continue;
+            };
+            let selected = equipment_grid.selected_index;
             let equipped_slots: Vec<EquipmentSlot> = EquipmentSlot::all()
                 .iter()
                 .copied()
@@ -80,7 +83,10 @@ pub fn handle_inventory_modal_select(
             }
         } else {
             // EQUIP: get the backpack item and equip it
-            let selected = backpack_grids.get_single().unwrap().selected_index;
+            let Ok(backpack_grid) = backpack_grids.get_single() else {
+                continue;
+            };
+            let selected = backpack_grid.selected_index;
             let backpack_items = get_backpack_items(&inventory);
 
             if let Some(inv_item) = backpack_items.get(selected) {

@@ -140,11 +140,11 @@ pub fn handle_forge_modal_select(
                         inventory.decrease_item_quantity(item_id, quantity);
                         transfer_occurred = true;
                     } else if forge_state.coal_slot.as_ref().map(|(id, _)| *id) == Some(item_id) {
-                        // Stack onto existing
-                        let (_, existing_qty) = forge_state.coal_slot.as_mut().unwrap();
-                        *existing_qty += quantity;
-                        inventory.decrease_item_quantity(item_id, quantity);
-                        transfer_occurred = true;
+                        if let Some((_, existing_qty)) = forge_state.coal_slot.as_mut() {
+                            *existing_qty += quantity;
+                            inventory.decrease_item_quantity(item_id, quantity);
+                            transfer_occurred = true;
+                        }
                     }
                 } else if is_ore(item_id) {
                     // Move to ore slot
@@ -153,10 +153,11 @@ pub fn handle_forge_modal_select(
                         inventory.decrease_item_quantity(item_id, quantity);
                         transfer_occurred = true;
                     } else if forge_state.ore_slot.as_ref().map(|(id, _)| *id) == Some(item_id) {
-                        let (_, existing_qty) = forge_state.ore_slot.as_mut().unwrap();
-                        *existing_qty += quantity;
-                        inventory.decrease_item_quantity(item_id, quantity);
-                        transfer_occurred = true;
+                        if let Some((_, existing_qty)) = forge_state.ore_slot.as_mut() {
+                            *existing_qty += quantity;
+                            inventory.decrease_item_quantity(item_id, quantity);
+                            transfer_occurred = true;
+                        }
                     }
                 }
                 // Other items cannot be placed in forge slots
