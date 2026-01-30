@@ -6,11 +6,11 @@ use crate::inventory::Inventory;
 use crate::stats::{StatInstance, StatSheet, StatType};
 
 #[derive(Resource, Debug, Clone)]
-pub struct PlayerName(pub &'static str);
+pub struct PlayerName(pub String);
 
 impl Default for PlayerName {
     fn default() -> Self {
-        Self("Drew")
+        Self("Drew".to_string())
     }
 }
 

@@ -33,7 +33,7 @@ pub fn do_spawn_fight_modal(
     let mob_health = mob_query.get(mob_res.entity).ok();
     let (mob_current_hp, mob_max_hp) = mob_health.map(|h| (h.current, h.max)).unwrap_or((0, 1));
 
-    let player_name_str = player_name.0.to_string();
+    let player_name_str = player_name.0.clone();
     let player_hp = stats.hp();
     let player_max_hp = stats.max_hp();
     let mob_id = mob_res.mob_id;
