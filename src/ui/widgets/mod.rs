@@ -1,4 +1,5 @@
 mod item_detail_pane;
+mod item_detail_display;
 mod column;
 mod gold_display;
 mod icon_value_row;
@@ -14,6 +15,7 @@ mod stat_row;
 mod three_slice;
 
 pub use item_detail_pane::{ItemDetailPane, ItemDetailPaneContent, ItemDetailPanePlugin};
+pub use item_detail_display::{ItemDetailDisplay, ItemDetailDisplayPlugin, PriceDisplay};
 pub use column::{Column, ColumnPlugin};
 pub use nine_slice::spawn_nine_slice_panel;
 pub use row::{Row, RowPlugin};

@@ -11,6 +11,7 @@ Reusable components in `src/ui/widgets/`.
 | GoldDisplay | [gold_display.md](gold_display.md) |
 | ItemGrid (5x5) | [item_grid.md](item_grid.md) |
 | ItemDetailPane | [item_detail_pane.md](item_detail_pane.md) |
+| ItemDetailDisplay | `src/ui/widgets/item_detail_display.rs` |
 | OutlinedText | [outlined_text.md](outlined_text.md) |
 | Nine-slice panels | [nine_slice.md](nine_slice.md) |
 | Three-slice banners | [three_slice.md](three_slice.md) |

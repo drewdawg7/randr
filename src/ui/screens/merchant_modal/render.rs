@@ -1,12 +1,14 @@
 use bevy::prelude::*;
 
-use crate::assets::GameFonts;
 use crate::economy::WorthGold;
 use crate::inventory::{Inventory, ManagesEquipment, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
 use crate::ui::screens::InfoPanelSource;
-use crate::ui::widgets::{ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel, ItemStatsDisplay, OutlinedText};
+use crate::ui::widgets::{
+    ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
+    ItemGridFocusPanel, PriceDisplay,
+};
 use crate::ui::{Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{
@@ -177,11 +179,8 @@ pub fn update_merchant_detail_pane_source(
     }
 }
 
-/// Populates the detail pane content when the source, stock, or inventory changes.
-/// Uses Ref<ItemDetailPane> for change detection.
 pub fn populate_merchant_detail_pane_content(
     mut commands: Commands,
-    game_fonts: Res<GameFonts>,
     stock: Option<Res<MerchantStock>>,
     inventory: Res<Inventory>,
     panes: Query<Ref<ItemDetailPane>>,
@@ -191,11 +190,9 @@ pub fn populate_merchant_detail_pane_content(
         return;
     };
 
-    // Check for data changes that require refresh
     let data_changed = stock.is_changed() || inventory.is_changed();
 
     for pane in &panes {
-        // Check if we need to update: pane.source changed OR data changed
         if !pane.is_changed() && !data_changed {
             continue;
         }
@@ -204,21 +201,19 @@ pub fn populate_merchant_detail_pane_content(
             continue;
         };
 
-        // Despawn existing content children
         if let Some(children) = children {
             for &child in children.iter() {
                 commands.entity(child).despawn_recursive();
             }
         }
 
-        // Look up the selected item based on source
-        let item_info: Option<(&crate::item::Item, u32, Option<i32>)> = match pane.source {
+        let item_info: Option<(&crate::item::Item, u32, PriceDisplay)> = match pane.source {
             InfoPanelSource::Store { selected_index } => {
                 stock.items.get(selected_index).and_then(|store_item| {
                     store_item.display_item().map(|item| {
                         let qty = store_item.quantity() as u32;
-                        let price = item.purchase_price();
-                        (item, qty, Some(price))
+                        let price = PriceDisplay::Buy(item.purchase_price());
+                        (item, qty, price)
                     })
                 })
             }
@@ -226,8 +221,8 @@ pub fn populate_merchant_detail_pane_content(
                 .get_inventory_items()
                 .get(selected_index)
                 .map(|inv_item| {
-                    let price = inv_item.item.sell_price();
-                    (&inv_item.item, inv_item.quantity, Some(price))
+                    let price = PriceDisplay::Sell(inv_item.item.sell_price());
+                    (&inv_item.item, inv_item.quantity, price)
                 }),
             _ => None,
         };
@@ -236,71 +231,16 @@ pub fn populate_merchant_detail_pane_content(
             continue;
         };
 
-        // Spawn item details
+        let mut display = ItemDetailDisplay::new(item)
+            .with_quantity(quantity)
+            .with_price(price);
+
+        if let Some(comparison) = inventory.get_comparison_stats(item) {
+            display = display.with_comparison(comparison);
+        }
+
         commands.entity(content_entity).with_children(|parent| {
-            // Item name (quality-colored with black outline)
-            parent.spawn(
-                OutlinedText::new(&item.name)
-                    .with_font_size(16.0)
-                    .with_color(item.quality.color()),
-            );
-
-            // Item type
-            parent.spawn((
-                Text::new(format!("{}", item.item_type)),
-                game_fonts.pixel_font(14.0),
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-            ));
-
-            // Quality label
-            parent.spawn((
-                Text::new(item.quality.display_name()),
-                game_fonts.pixel_font(14.0),
-                TextColor(item.quality.color()),
-            ));
-
-            // Quantity
-            if quantity > 1 {
-                parent.spawn((
-                    Text::new(format!("Qty: {}", quantity)),
-                    game_fonts.pixel_font(14.0),
-                    TextColor(Color::srgb(0.3, 0.8, 0.3)),
-                ));
-            }
-
-            // Price (with label based on context)
-            if let Some(price) = price {
-                let price_label = match pane.source {
-                    InfoPanelSource::Store { .. } => format!("Price: {}g", price),
-                    InfoPanelSource::Inventory { .. } => format!("Sell: {}g", price),
-                    _ => format!("{}g", price),
-                };
-                parent.spawn((
-                    Text::new(price_label),
-                    game_fonts.pixel_font(14.0),
-                    TextColor(Color::srgb(0.9, 0.8, 0.2)),
-                ));
-            }
-
-            // Stats display with comparison for equipment items
-            let stats: Vec<_> = item
-                .stats
-                .stats()
-                .iter()
-                .map(|(t, si)| (*t, si.current_value))
-                .collect();
-            if !stats.is_empty() {
-                let mut display = ItemStatsDisplay::from_stats_iter(stats)
-                    .with_font_size(14.0)
-                    .with_color(Color::srgb(0.85, 0.85, 0.85));
-
-                // Add comparison for equipment items (both store and player inventory)
-                if let Some(comparison) = inventory.get_comparison_stats(item) {
-                    display = display.with_comparison(comparison);
-                }
-
-                parent.spawn(display);
-            }
+            parent.spawn(display);
         });
     }
 }

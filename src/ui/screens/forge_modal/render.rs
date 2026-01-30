@@ -8,8 +8,8 @@ use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
 use crate::ui::screens::InfoPanelSource;
 use crate::ui::widgets::{
-    spawn_outlined_quantity_text, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
-    ItemGridFocusPanel, ItemStatsDisplay, OutlinedQuantityConfig, OutlinedText,
+    spawn_outlined_quantity_text, ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent,
+    ItemGrid, ItemGridEntry, ItemGridFocusPanel, OutlinedQuantityConfig,
 };
 use crate::ui::{Modal, ModalBackground, SpawnModalExt};
 
@@ -461,18 +461,14 @@ pub fn update_forge_detail_pane_source(
     }
 }
 
-/// Populates the detail pane content when the source, inventory, or forge state changes.
-/// Uses Ref<ItemDetailPane> for change detection.
 pub fn populate_forge_detail_pane_content(
     mut commands: Commands,
-    game_fonts: Res<GameFonts>,
     inventory: Res<Inventory>,
     active_forge: Option<Res<ActiveForgeEntity>>,
     forge_state_query: Query<Ref<ForgeCraftingState>>,
     panes: Query<Ref<ItemDetailPane>>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
-    // Check for data changes that require refresh
     let inventory_changed = inventory.is_changed();
     let forge_state_changed = active_forge
         .as_ref()
@@ -481,7 +477,6 @@ pub fn populate_forge_detail_pane_content(
         .unwrap_or(false);
 
     for pane in &panes {
-        // Check if we need to update: pane.source changed OR data changed
         if !pane.is_changed() && !inventory_changed && !forge_state_changed {
             continue;
         }
@@ -490,14 +485,12 @@ pub fn populate_forge_detail_pane_content(
             continue;
         };
 
-        // Despawn existing content children
         if let Some(children) = children {
             for &child in children.iter() {
                 commands.entity(child).despawn_recursive();
             }
         }
 
-        // Get item info based on source
         let item_info: Option<(ItemId, u32)> = match pane.source {
             InfoPanelSource::ForgeSlot { slot } => active_forge
                 .as_ref()
@@ -519,53 +512,10 @@ pub fn populate_forge_detail_pane_content(
         };
 
         let item = item_id.spawn();
+        let display = ItemDetailDisplay::new(&item).with_quantity(quantity);
 
-        // Spawn item details
         commands.entity(content_entity).with_children(|parent| {
-            // Item name (quality-colored with black outline)
-            parent.spawn(
-                OutlinedText::new(&item.name)
-                    .with_font_size(16.0)
-                    .with_color(item.quality.color()),
-            );
-
-            // Item type
-            parent.spawn((
-                Text::new(format!("{}", item.item_type)),
-                game_fonts.pixel_font(14.0),
-                TextColor(Color::srgb(0.7, 0.7, 0.7)),
-            ));
-
-            // Quality label
-            parent.spawn((
-                Text::new(item.quality.display_name()),
-                game_fonts.pixel_font(14.0),
-                TextColor(item.quality.color()),
-            ));
-
-            // Quantity
-            if quantity > 1 {
-                parent.spawn((
-                    Text::new(format!("Qty: {}", quantity)),
-                    game_fonts.pixel_font(14.0),
-                    TextColor(Color::srgb(0.3, 0.8, 0.3)),
-                ));
-            }
-
-            // Stats display
-            let stats: Vec<_> = item
-                .stats
-                .stats()
-                .iter()
-                .map(|(t, si)| (*t, si.current_value))
-                .collect();
-            if !stats.is_empty() {
-                let display = ItemStatsDisplay::from_stats_iter(stats)
-                    .with_font_size(14.0)
-                    .with_color(Color::srgb(0.85, 0.85, 0.85));
-
-                parent.spawn(display);
-            }
+            parent.spawn(display);
         });
     }
 }
