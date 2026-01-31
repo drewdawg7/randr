@@ -235,7 +235,8 @@
       "Bash(for i in 416 417 418 419 420 421 422 423 424 425)",
       "Bash(do gh issue close $i --comment \"Resolved in commit 3758f4d\")",
       "WebFetch(domain:bon-rs.com)",
-      "Skill(bon)"
+      "Skill(bon)",
+      "WebFetch(domain:bevy-logging.github.io)"
     ]
   },
   "enabledMcpjsonServers": [
