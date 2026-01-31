@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
 use crate::dungeon::{
@@ -7,6 +8,7 @@ use crate::dungeon::{
 };
 use crate::input::NavigationDirection;
 
+#[instrument(level = "debug", skip_all)]
 pub fn handle_player_move(
     mut events: EventReader<PlayerMoveIntent>,
     mut result_events: EventWriter<MoveResult>,
@@ -78,6 +80,7 @@ fn all_cells_walkable(layout: Option<&DungeonLayout>, pos: GridPosition, size: G
         .all(|(x, y)| layout.is_walkable(x, y))
 }
 
+#[instrument(level = "debug", skip_all, fields(pos = ?pos), ret)]
 fn check_entity_collision(
     occupancy: &GridOccupancy,
     entity_query: &Query<&DungeonEntityMarker>,

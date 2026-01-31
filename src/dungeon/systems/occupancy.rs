@@ -1,7 +1,9 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 use crate::dungeon::{DungeonEntityMarker, GridOccupancy};
 
+#[instrument(level = "debug", skip_all, fields(entity = ?trigger.entity()))]
 pub fn track_entity_occupancy(
     trigger: Trigger<OnAdd, DungeonEntityMarker>,
     query: Query<&DungeonEntityMarker>,

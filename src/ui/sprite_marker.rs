@@ -5,6 +5,7 @@
 
 use bevy::ecs::system::{StaticSystemParam, SystemParam};
 use bevy::prelude::*;
+use tracing::instrument;
 
 use super::animation::{AnimationConfig, SpriteAnimation};
 
@@ -63,6 +64,7 @@ pub trait SpriteMarker: Component + Sized {
 /// This system detects entities with newly added marker components,
 /// resolves their sprite data using the trait implementation,
 /// removes the marker, and inserts the sprite components.
+#[instrument(level = "debug", skip_all, fields(marker_count = query.iter().count()))]
 pub fn populate_sprite_markers<M: SpriteMarker>(
     mut commands: Commands,
     query: Query<(Entity, &M), Added<M>>,
@@ -97,7 +99,10 @@ pub trait SpriteMarkerAppExt {
 
 impl SpriteMarkerAppExt for App {
     fn register_sprite_marker<M: SpriteMarker>(&mut self) -> &mut Self {
-        self.add_systems(Update, populate_sprite_markers::<M>);
+        self.add_systems(
+            Update,
+            populate_sprite_markers::<M>.run_if(any_with_component::<M>),
+        );
         self
     }
 }

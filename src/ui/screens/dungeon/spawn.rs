@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
@@ -173,6 +174,7 @@ fn spawn_grid_tiles(
     }
 }
 
+#[instrument(level = "debug", skip_all, fields(entity_count = layout.entities().len()))]
 fn spawn_entities(
     layer: &mut ChildBuilder,
     layout: &DungeonLayout,

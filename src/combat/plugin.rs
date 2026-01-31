@@ -45,8 +45,8 @@ impl Plugin for CombatPlugin {
                 Update,
                 (
                     process_player_attack.run_if(on_event::<PlayerAttackMob>),
-                    handle_mob_death,
-                    handle_player_death,
+                    handle_mob_death.run_if(on_event::<EntityDied>),
+                    handle_player_death.run_if(on_event::<EntityDied>),
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon))

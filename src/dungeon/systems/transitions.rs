@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 
-use crate::dungeon::events::{FloorReady, FloorTransition};
-use crate::dungeon::{DungeonRegistry, DungeonState, FloorType};
+use crate::dungeon::events::FloorTransition;
+use crate::dungeon::{DungeonRegistry, DungeonState, FloorType, SpawnFloor};
 use crate::location::LocationId;
 
 /// Handles all floor transitions by pattern matching on the variant.
 pub fn handle_floor_transition(
     mut events: EventReader<FloorTransition>,
-    mut result_events: EventWriter<FloorReady>,
+    mut spawn_events: EventWriter<SpawnFloor>,
     mut state: ResMut<DungeonState>,
     registry: Res<DungeonRegistry>,
 ) {
@@ -38,7 +38,7 @@ pub fn handle_floor_transition(
             .map(|f| f.floor_type())
             .unwrap_or(FloorType::CaveFloor);
 
-        result_events.send(FloorReady {
+        spawn_events.send(SpawnFloor {
             layout,
             player_pos: state.player_pos,
             player_size: state.player_size,

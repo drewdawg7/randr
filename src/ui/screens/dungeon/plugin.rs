@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::combat::ActiveCombat;
@@ -44,7 +45,7 @@ impl Plugin for DungeonScreenPlugin {
                     handle_dungeon_movement,
                     handle_move_result.run_if(on_event::<MoveResult>),
                     interpolate_positions,
-                    handle_interact_action,
+                    handle_interact_action.run_if(on_event::<GameAction>),
                     handle_npc_interaction.run_if(on_event::<NpcInteraction>),
                     handle_crafting_station_interaction.run_if(on_event::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_event::<MiningResult>),
@@ -87,6 +88,7 @@ fn enter_dungeon(
     });
 }
 
+#[instrument(level = "debug", skip_all)]
 fn handle_floor_ready(
     mut commands: Commands,
     mut events: EventReader<FloorReady>,
@@ -232,6 +234,7 @@ fn handle_move_result(
     }
 }
 
+#[instrument(level = "debug", skip_all, fields(player_pos = ?state.player_pos))]
 fn handle_interact_action(
     mut action_reader: EventReader<GameAction>,
     mut npc_events: EventWriter<NpcInteraction>,

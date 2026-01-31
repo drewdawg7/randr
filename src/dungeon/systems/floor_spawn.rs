@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 use crate::dungeon::{
     DungeonEntity, DungeonLayout, FloorMonsterCount, FloorReady, FloorType, GridOccupancy,
@@ -13,6 +14,7 @@ pub struct SpawnFloor {
     pub floor_type: FloorType,
 }
 
+#[instrument(level = "debug", skip_all)]
 pub fn prepare_floor(
     mut commands: Commands,
     mut events: EventReader<SpawnFloor>,

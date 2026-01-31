@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 /// Represents entity size in grid cells.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
@@ -97,6 +98,7 @@ impl GridOccupancy {
         })
     }
 
+    #[instrument(level = "debug", skip(self), fields(pos = ?pos, size = ?size, entity = ?entity))]
     pub fn occupy(&mut self, pos: GridPosition, size: GridSize, entity: Entity) {
         for (x, y) in pos.occupied_cells(size) {
             if let Some(i) = self.index(x, y) {
@@ -130,6 +132,7 @@ impl GridOccupancy {
     }
 
     /// Get entity occupying a cell.
+    #[instrument(level = "debug", skip(self), ret)]
     pub fn entity_at(&self, x: usize, y: usize) -> Option<Entity> {
         self.index(x, y)
             .and_then(|i| self.cells.get(i))
