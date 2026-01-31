@@ -236,7 +236,12 @@
       "Bash(do gh issue close $i --comment \"Resolved in commit 3758f4d\")",
       "WebFetch(domain:bon-rs.com)",
       "Skill(bon)",
-      "WebFetch(domain:bevy-logging.github.io)"
+      "WebFetch(domain:bevy-logging.github.io)",
+      "Skill(logging)",
+      "Bash(git -C /Users/drewstewart/code/game log --oneline -10)",
+      "WebFetch(domain:burgers.io)",
+      "Bash(git -C /Users/drewstewart/code/game status)",
+      "Bash(git -C /Users/drewstewart/code/game diff)"
     ]
   },
   "enabledMcpjsonServers": [
