@@ -1,6 +1,6 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
-use super::events::{DealDamage, EntityDied, PlayerAttackMob};
+use super::events::{DealDamage, EntityDied, PlayerAttackMob, VictoryAchieved};
 use super::system::{
     apply_victory_rewards_direct, entity_attacks_player, player_attacks_entity,
     player_effective_magicfind, process_player_defeat,
@@ -8,14 +8,15 @@ use super::system::{
 use crate::dungeon::{GridOccupancy, GridSize};
 use crate::entities::Progression;
 use crate::inventory::Inventory;
-use crate::loot::{collect_loot_drops, LootDrop};
+use crate::loot::collect_loot_drops;
 use crate::mob::{
-    CombatStats, DeathProcessed, GoldReward, Health, MobId, MobLootTable, MobMarker, XpReward,
+    CombatStats, DeathProcessed, GoldReward, Health, MobLootTable, MobMarker, XpReward,
 };
 use crate::player::PlayerGold;
 use crate::plugins::MobDefeated;
 use crate::skills::{SkillType, SkillXpGained, Skills};
 use crate::stats::StatSheet;
+use crate::states::AppState;
 use crate::ui::screens::FightModalMob;
 
 #[derive(SystemParam)]
@@ -26,6 +27,11 @@ struct PlayerResources<'w> {
     stats: ResMut<'w, StatSheet>,
 }
 
+#[derive(Resource)]
+pub struct ActiveCombat {
+    pub mob_entity: Entity,
+}
+
 pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
@@ -33,24 +39,19 @@ impl Plugin for CombatPlugin {
         app.add_event::<PlayerAttackMob>()
             .add_event::<DealDamage>()
             .add_event::<EntityDied>()
+            .add_event::<VictoryAchieved>()
             .add_systems(
                 Update,
                 (
                     process_player_attack.run_if(on_event::<PlayerAttackMob>),
-                    handle_mob_death.run_if(on_event::<EntityDied>),
-                    handle_player_death.run_if(on_event::<EntityDied>),
-                ),
+                    handle_mob_death,
+                    handle_player_death,
+                )
+                    .chain()
+                    .run_if(in_state(AppState::Dungeon))
+                    .run_if(resource_exists::<ActiveCombat>),
             );
     }
-}
-
-#[derive(Resource)]
-pub struct PendingVictory {
-    pub mob_id: MobId,
-    pub mob_name: String,
-    pub gold_gained: i32,
-    pub xp_gained: i32,
-    pub loot_drops: Vec<LootDrop>,
 }
 
 fn process_player_attack(
@@ -116,6 +117,7 @@ fn handle_mob_death(
     mut events: EventReader<EntityDied>,
     mut mob_defeated_events: EventWriter<MobDefeated>,
     mut skill_xp_events: EventWriter<SkillXpGained>,
+    mut victory_events: EventWriter<VictoryAchieved>,
     mut occupancy: ResMut<GridOccupancy>,
     mut player: PlayerResources,
     fight_mob: Option<Res<FightModalMob>>,
@@ -174,17 +176,20 @@ fn handle_mob_death(
         occupancy.vacate(fight_mob.pos, GridSize::single());
         commands.entity(event.entity).despawn_recursive();
 
-        commands.insert_resource(PendingVictory {
+        victory_events.send(VictoryAchieved {
             mob_id,
             mob_name,
             gold_gained: rewards.gold_gained,
             xp_gained: rewards.xp_gained,
             loot_drops,
         });
+
+        commands.remove_resource::<ActiveCombat>();
     }
 }
 
 fn handle_player_death(
+    mut commands: Commands,
     mut events: EventReader<EntityDied>,
     mut stats: ResMut<StatSheet>,
     mut player_gold: ResMut<PlayerGold>,
@@ -195,5 +200,6 @@ fn handle_player_death(
         }
 
         process_player_defeat(&mut stats, &mut player_gold);
+        commands.remove_resource::<ActiveCombat>();
     }
 }

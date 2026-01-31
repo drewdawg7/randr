@@ -5,8 +5,6 @@ use crate::ui::screens::health_bar::{init_sprite_health_bars, update_sprite_heal
 use crate::ui::screens::modal::in_fight_modal;
 use crate::ui::SpriteMarkerAppExt;
 
-use crate::combat::EntityDied;
-
 use crate::combat::PlayerAttackMob;
 
 use super::input::{
@@ -35,7 +33,7 @@ impl Plugin for FightModalPlugin {
                         update_sprite_health_bar_visuals,
                     )
                         .run_if(in_fight_modal),
-                    handle_combat_outcome.run_if(on_event::<EntityDied>),
+                    handle_combat_outcome,
                     trigger_attack_animation.run_if(on_event::<PlayerAttackMob>),
                 ),
             )

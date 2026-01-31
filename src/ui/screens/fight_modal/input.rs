@@ -1,7 +1,7 @@
 use bevy::ecs::world::Command;
 use bevy::prelude::*;
 
-use crate::combat::{EntityDied, PendingVictory, PlayerAttackMob};
+use crate::combat::{EntityDied, PlayerAttackMob, VictoryAchieved};
 use crate::input::{GameAction, NavigationDirection};
 use crate::mob::Health;
 use crate::ui::modal_registry::ModalCommands;
@@ -111,19 +111,18 @@ pub fn trigger_attack_animation(
 
 pub fn handle_combat_outcome(
     mut commands: Commands,
-    mut events: EventReader<EntityDied>,
-    pending_victory: Option<Res<PendingVictory>>,
+    mut death_events: EventReader<EntityDied>,
+    mut victory_events: EventReader<VictoryAchieved>,
     fight_mob: Option<Res<FightModalMob>>,
 ) {
-    for event in events.read() {
-        if fight_mob.is_none() {
-            continue;
-        }
-
-        if event.is_player {
+    for event in death_events.read() {
+        if event.is_player && fight_mob.is_some() {
             commands.close_modal::<FightModal>();
-        } else if let Some(ref victory) = pending_victory {
-            let fight_mob = fight_mob.as_ref().expect("checked above");
+        }
+    }
+
+    for victory in victory_events.read() {
+        if let Some(ref fight_mob) = fight_mob {
             commands.close_modal::<FightModal>();
 
             commands.queue(OpenResultsModalCommand(ResultsModalData {
@@ -134,7 +133,6 @@ pub fn handle_combat_outcome(
                 xp_gained: Some(victory.xp_gained),
                 loot_drops: victory.loot_drops.clone(),
             }));
-            commands.remove_resource::<PendingVictory>();
         }
     }
 }

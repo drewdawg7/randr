@@ -2,6 +2,7 @@
 
 use bevy::prelude::*;
 
+use crate::combat::ActiveCombat;
 use crate::dungeon::GridPosition;
 use crate::mob::{Health, MobId};
 use crate::ui::focus::SelectionState;
@@ -81,8 +82,6 @@ impl RegisteredModal for FightModal {
     }
 
     fn cleanup(world: &mut World) {
-        // Reset mob health to max if the fight was fled (not won).
-        // When mob is defeated, the entity is despawned before cleanup, so get_mut returns None.
         if let Some(fight_mob) = world.get_resource::<FightModalMob>() {
             let entity = fight_mob.entity;
             if let Some(mut health) = world.get_mut::<Health>(entity) {
@@ -91,6 +90,7 @@ impl RegisteredModal for FightModal {
         }
         world.remove_resource::<FightModalMob>();
         world.remove_resource::<FightModalButtonSelection>();
+        world.remove_resource::<ActiveCombat>();
     }
 }
 

@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::combat::ActiveCombat;
 use crate::crafting_station::{
     AnvilActiveTimer, AnvilCraftingState, CraftingStationType, ForgeActiveTimer,
     ForgeCraftingState,
@@ -215,16 +216,15 @@ fn handle_move_result(
                 walk_timer.0.reset();
             }
             MoveResult::TriggeredCombat { mob_id, entity, pos } => {
-                // Guard against triggering combat when a fight modal is already open
                 if fight_mob.is_some() {
                     continue;
                 }
-                // Combat data is now stored on the entity's components (MobCombatBundle)
                 commands.insert_resource(FightModalMob {
                     mob_id: *mob_id,
                     pos: *pos,
                     entity: *entity,
                 });
+                commands.insert_resource(ActiveCombat { mob_entity: *entity });
                 commands.trigger(OpenModal(ModalType::FightModal));
             }
             MoveResult::Blocked | MoveResult::TriggeredStairs | MoveResult::TriggeredDoor => {}
