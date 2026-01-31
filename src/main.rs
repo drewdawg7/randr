@@ -27,8 +27,8 @@ fn main() {
         .with(
             fmt::layer()
                 .with_writer(non_blocking)
-                .with_ansi(false)
-                .with_span_events(FmtSpan::ENTER),
+                .with_span_events(FmtSpan::ENTER)
+                .json(),
         )
         .init();
 

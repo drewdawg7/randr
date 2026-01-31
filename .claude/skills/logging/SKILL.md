@@ -76,3 +76,26 @@ Filter in `src/main.rs`: `"warn,game=debug"`
 - [ ] Used `skip_all` for systems
 - [ ] Added `fields()` only for key context
 - [ ] Avoided instrumenting hot loops
+
+## Querying JSON Logs
+
+Logs are stored as JSON Lines. Use `jq` to filter efficiently:
+
+```bash
+LOG=$(ls -t logs/*.log | head -1)
+
+# Errors only
+jq 'select(.level == "ERROR")' "$LOG"
+
+# Specific module
+jq 'select(.target | contains("combat"))' "$LOG"
+
+# Last N entries
+tail -50 "$LOG" | jq .
+
+# Span entries for function
+jq 'select(.span.name == "handle_player_move")' "$LOG"
+
+# Events with specific field
+jq 'select(.fields.entity != null)' "$LOG"
+```
