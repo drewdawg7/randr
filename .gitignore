@@ -3,3 +3,4 @@
 .claude/.session_state.json
 __pycache__/
 *.pyc
+/logs/

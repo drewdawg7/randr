@@ -1,4 +1,5 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
+use tracing::instrument;
 
 use super::events::{DealDamage, EntityDied, PlayerAttackMob, VictoryAchieved};
 use super::system::{
@@ -54,6 +55,7 @@ impl Plugin for CombatPlugin {
     }
 }
 
+#[instrument(level = "debug", skip_all)]
 fn process_player_attack(
     mut events: EventReader<PlayerAttackMob>,
     mut deal_damage_events: EventWriter<DealDamage>,
@@ -112,6 +114,7 @@ fn process_player_attack(
     }
 }
 
+#[instrument(level = "debug", skip_all)]
 fn handle_mob_death(
     mut commands: Commands,
     mut events: EventReader<EntityDied>,
@@ -188,6 +191,7 @@ fn handle_mob_death(
     }
 }
 
+#[instrument(level = "debug", skip_all)]
 fn handle_player_death(
     mut commands: Commands,
     mut events: EventReader<EntityDied>,

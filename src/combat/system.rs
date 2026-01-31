@@ -1,3 +1,5 @@
+use tracing::instrument;
+
 use super::attack::Attack;
 use super::result::AttackResult;
 use crate::{
@@ -13,6 +15,7 @@ pub fn calculate_damage_reduction(defense: i32) -> f64 {
     def / (def + DEFENSE_CONSTANT)
 }
 
+#[instrument(level = "debug", ret)]
 pub fn apply_defense(raw_damage: i32, defense: i32) -> i32 {
     let reduction = calculate_damage_reduction(defense);
     let damage_multiplier = 1.0 - reduction;
@@ -94,6 +97,7 @@ pub fn apply_victory_rewards_direct(
 
 use crate::mob::{CombatStats, Health};
 
+#[instrument(level = "debug", skip_all)]
 pub fn player_attacks_entity(
     player_stats: &StatSheet,
     player_inventory: &Inventory,
@@ -112,6 +116,7 @@ pub fn player_attacks_entity(
     }
 }
 
+#[instrument(level = "debug", skip_all)]
 pub fn entity_attacks_player(
     mob_combat_stats: &CombatStats,
     player_stats: &mut StatSheet,
