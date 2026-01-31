@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
+use crate::ui::screens::modal::in_monster_compendium_modal;
 
 use super::input::{handle_compendium_navigation, handle_compendium_tab};
 use super::render::{
@@ -21,13 +22,16 @@ impl Plugin for MonsterCompendiumPlugin {
                 Update,
                 (
                     modal_close_system::<MonsterCompendiumModal>,
-                    handle_compendium_tab,
-                    handle_compendium_navigation,
-                    update_monster_list_display,
-                    update_compendium_mob_sprite,
-                    update_stats_display,
-                    update_drops_display,
-                    update_drops_list_colors,
+                    (
+                        handle_compendium_tab,
+                        handle_compendium_navigation,
+                        update_monster_list_display,
+                        update_compendium_mob_sprite,
+                        update_stats_display,
+                        update_drops_display,
+                        update_drops_list_colors,
+                    )
+                        .run_if(in_monster_compendium_modal),
                 ),
             );
     }

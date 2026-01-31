@@ -22,7 +22,7 @@ impl Plugin for FightModalPlugin {
             .add_systems(
                 Update,
                 (
-                    handle_fight_modal_close,
+                    handle_fight_modal_close.run_if(in_fight_modal),
                     (
                         handle_fight_modal_navigation,
                         handle_fight_modal_select,
@@ -33,7 +33,7 @@ impl Plugin for FightModalPlugin {
                         update_sprite_health_bar_visuals,
                     )
                         .run_if(in_fight_modal),
-                    handle_combat_outcome,
+                    handle_combat_outcome.run_if(in_fight_modal),
                     trigger_attack_animation.run_if(on_event::<PlayerAttackMob>),
                 ),
             )

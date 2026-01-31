@@ -19,7 +19,7 @@ impl Plugin for ForgeModalPlugin {
                 Update,
                 (
                     // Custom close handler replaces modal_close_system - handles both crafting and normal close
-                    handle_forge_close,
+                    handle_forge_close.run_if(in_forge_modal),
                     (
                         handle_forge_modal_tab,
                         handle_forge_modal_navigation,

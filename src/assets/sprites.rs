@@ -1,5 +1,5 @@
 use bevy::{
-    asset::{io::Reader, AssetLoader, LoadContext},
+    asset::{io::Reader, AssetEvent, AssetLoader, LoadContext},
     prelude::*,
 };
 use serde::Deserialize;
@@ -229,7 +229,7 @@ impl Plugin for AssetPlugin {
             .init_resource::<GameFonts>()
             .init_resource::<PendingSpriteSheets>()
             .add_systems(PreStartup, load_assets)
-            .add_systems(Update, finalize_sprite_sheets);
+            .add_systems(Update, finalize_sprite_sheets.run_if(on_event::<AssetEvent<SpriteSheetMeta>>));
     }
 }
 

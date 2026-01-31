@@ -136,3 +136,8 @@ pub fn in_results_modal(active_modal: Res<ActiveModal>) -> bool {
 pub fn in_skills_modal(active_modal: Res<ActiveModal>) -> bool {
     active_modal.modal == Some(ModalType::SkillsModal)
 }
+
+/// Run condition: returns true when the monster compendium modal is active.
+pub fn in_monster_compendium_modal(active_modal: Res<ActiveModal>) -> bool {
+    active_modal.modal == Some(ModalType::MonsterCompendium)
+}

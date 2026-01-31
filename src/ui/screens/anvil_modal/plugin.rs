@@ -24,8 +24,8 @@ impl Plugin for AnvilModalPlugin {
             .add_systems(
                 Update,
                 (
-                    handle_anvil_close_with_crafting,
-                    modal_close_system::<AnvilModal>,
+                    handle_anvil_close_with_crafting.run_if(in_anvil_modal),
+                    modal_close_system::<AnvilModal>.run_if(in_anvil_modal),
                     (
                         handle_anvil_modal_tab,
                         handle_anvil_modal_navigation,
