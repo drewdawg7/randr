@@ -138,11 +138,7 @@ pub fn handle_forge_modal_select(
         if transfer_occurred {
             if let Ok(mut grid) = player_grids.get_single_mut() {
                 grid.items = ItemGridEntry::from_inventory(&inventory);
-                if !grid.items.is_empty() {
-                    grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
-                } else {
-                    grid.selected_index = 0;
-                }
+                grid.clamp_selection();
             }
         }
     }

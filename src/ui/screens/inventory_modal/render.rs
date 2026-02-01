@@ -28,20 +28,12 @@ pub fn sync_inventory_to_grids(
             .iter()
             .map(|inv_item| ItemGridEntry::from_inventory_item(inv_item))
             .collect();
-        if !eq_grid.items.is_empty() {
-            eq_grid.selected_index = eq_grid.selected_index.min(eq_grid.items.len() - 1);
-        } else {
-            eq_grid.selected_index = 0;
-        }
+        eq_grid.clamp_selection();
     }
 
     if let Ok(mut bp_grid) = backpack_grids.get_single_mut() {
         bp_grid.items = ItemGridEntry::from_inventory(&inventory);
-        if !bp_grid.items.is_empty() {
-            bp_grid.selected_index = bp_grid.selected_index.min(bp_grid.items.len() - 1);
-        } else {
-            bp_grid.selected_index = 0;
-        }
+        bp_grid.clamp_selection();
     }
 }
 

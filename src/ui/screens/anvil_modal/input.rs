@@ -107,11 +107,7 @@ pub fn handle_anvil_modal_select(
         // Recipe grid refresh is handled reactively via Changed<Inventory>
         if let Ok(mut grid) = player_grids.get_single_mut() {
             grid.items = ItemGridEntry::from_inventory(&inventory);
-            if !grid.items.is_empty() {
-                grid.selected_index = grid.selected_index.min(grid.items.len() - 1);
-            } else {
-                grid.selected_index = 0;
-            }
+            grid.clamp_selection();
         }
 
         // Close modal to start crafting animation

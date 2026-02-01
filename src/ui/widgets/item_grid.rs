@@ -80,6 +80,14 @@ impl Default for ItemGrid {
 pub struct ItemGridFocusPanel(pub FocusPanel);
 
 impl ItemGrid {
+    pub fn clamp_selection(&mut self) {
+        if self.items.is_empty() {
+            self.selected_index = 0;
+        } else {
+            self.selected_index = self.selected_index.min(self.items.len() - 1);
+        }
+    }
+
     /// Navigate the grid selection in the given direction.
     /// Allows navigation to all grid slots, including empty ones.
     pub fn navigate(&mut self, direction: NavigationDirection) {
