@@ -26,8 +26,9 @@ pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry, FloorMonsterCou
 pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
 pub use state::{DungeonState, TileWorldSize};
 pub use systems::{
-    handle_floor_transition, handle_mine_entity, handle_mob_defeated, handle_player_move,
-    on_map_created, prepare_floor, FloorSpawnConfig, MobSpawnEntry, SpawnFloor,
+    handle_floor_transition, handle_mine_entity, handle_mob_defeated, handle_player_collisions,
+    handle_player_move, on_map_created, prepare_floor, stop_player_when_idle, FloorSpawnConfig,
+    MobSpawnEntry, SpawnFloor,
 };
 pub use tile::{Tile, TileType};
 pub use tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};

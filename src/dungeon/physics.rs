@@ -5,7 +5,6 @@ pub enum GameLayer {
     #[default]
     Default,
     Player,
-    Tile,
     Mob,
     StaticEntity,
     Trigger,

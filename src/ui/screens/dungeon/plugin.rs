@@ -11,7 +11,7 @@ use crate::dungeon::{
     EntitySize, FloorReady, GameLayer, MineEntity, MiningResult, MoveResult, NpcInteraction,
     PlayerMoveIntent, SpawnFloor, TileWorldSize,
 };
-use crate::input::{GameAction, NavigationDirection};
+use crate::input::GameAction;
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
 use crate::location::LocationId;
 use crate::mob::MobId;
@@ -22,9 +22,9 @@ use crate::ui::screens::forge_modal::ActiveForgeEntity;
 use crate::ui::screens::merchant_modal::MerchantStock;
 use crate::ui::screens::modal::{ActiveModal, ModalType, OpenModal};
 use crate::ui::screens::results_modal::ResultsModalData;
-use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
+use crate::ui::{PlayerSpriteSheet, SpriteAnimation};
 
-use super::components::{DungeonPlayer, DungeonRoot, Interpolating, PendingPlayerSpawn, TargetPosition};
+use super::components::{DungeonPlayer, DungeonRoot, PendingPlayerSpawn};
 use super::spawn::{add_entity_visuals, spawn_floor_ui, spawn_player, TilemapConfigQuery};
 use super::systems::cleanup_dungeon;
 
@@ -45,7 +45,7 @@ impl Plugin for DungeonScreenPlugin {
                         .run_if(on_message::<GameAction>)
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     handle_move_result.run_if(on_message::<MoveResult>),
-                    interpolate_player_position.run_if(any_with_component::<Interpolating>),
+                    update_player_sprite_direction,
                     handle_interact_action
                         .run_if(on_message::<GameAction>)
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
@@ -105,7 +105,6 @@ fn handle_floor_ready(
     mut commands: Commands,
     mut events: MessageReader<FloorReady>,
     asset_server: Res<AssetServer>,
-    window: Single<&Window>,
     camera_query: Single<Entity, With<Camera2d>>,
     root_query: Query<Entity, With<DungeonRoot>>,
 ) {
@@ -118,7 +117,6 @@ fn handle_floor_ready(
             &mut commands,
             &asset_server,
             event.floor_type,
-            &window,
             *camera_query,
             event.map_width,
             event.map_height,
@@ -150,92 +148,38 @@ fn spawn_player_when_ready(
         return;
     }
 
-    spawn_player(&mut commands, &tilemap_query, pending.0, &player_sheet);
+    spawn_player(&mut commands, pending.0, &player_sheet);
     commands.remove_resource::<PendingPlayerSpawn>();
 }
 
-#[derive(Resource)]
-struct LastMoveDirection(NavigationDirection);
-
-const MOVE_SPEED: f32 = 256.0;
-
-#[instrument(level = "debug", skip_all)]
 fn handle_dungeon_movement(
-    mut commands: Commands,
     mut action_reader: MessageReader<GameAction>,
     mut move_events: MessageWriter<PlayerMoveIntent>,
 ) {
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
-            commands.insert_resource(LastMoveDirection(*direction));
             move_events.write(PlayerMoveIntent { direction: *direction });
         }
     }
 }
 
-#[instrument(level = "debug", skip_all)]
 fn handle_move_result(
     mut commands: Commands,
     mut events: MessageReader<MoveResult>,
-    last_direction: Option<Res<LastMoveDirection>>,
-    sheet: Res<PlayerSpriteSheet>,
     fight_mob: Option<Res<FightModalMob>>,
-    mut player_query: Query<
-        (
-            Entity,
-            &mut TargetPosition,
-            &mut Sprite,
-            &mut SpriteAnimation,
-            &mut PlayerWalkTimer,
-        ),
-        With<DungeonPlayer>,
-    >,
 ) {
     for event in events.read() {
-        match event {
-            MoveResult::Moved { new_pos } => {
-                let Ok((entity, mut target_pos, mut sprite, mut anim, mut walk_timer)) =
-                    player_query.single_mut()
-                else {
-                    continue;
-                };
-
-                target_pos.0 = *new_pos;
-                commands.entity(entity).insert(Interpolating);
-
-                if let Some(ref dir) = last_direction {
-                    match dir.0 {
-                        NavigationDirection::Left => sprite.flip_x = true,
-                        NavigationDirection::Right => sprite.flip_x = false,
-                        _ => {}
-                    }
-                }
-
-                let already_walking = anim.first_frame == sheet.walk_animation.first_frame;
-                if !already_walking {
-                    anim.first_frame = sheet.walk_animation.first_frame;
-                    anim.last_frame = sheet.walk_animation.last_frame;
-                    anim.current_frame = sheet.walk_animation.first_frame;
-                    anim.frame_duration = sheet.walk_animation.frame_duration;
-                    anim.synchronized = false;
-                    anim.timer =
-                        Timer::from_seconds(sheet.walk_animation.frame_duration, TimerMode::Repeating);
-                }
-                walk_timer.0.reset();
+        if let MoveResult::TriggeredCombat { mob_id, entity, pos } = event {
+            if fight_mob.is_some() {
+                continue;
             }
-            MoveResult::TriggeredCombat { mob_id, entity, pos } => {
-                if fight_mob.is_some() {
-                    continue;
-                }
-                commands.insert_resource(FightModalMob {
-                    mob_id: *mob_id,
-                    pos: *pos,
-                    entity: *entity,
-                });
-                commands.insert_resource(ActiveCombat { mob_entity: *entity });
-                commands.trigger(OpenModal(ModalType::FightModal));
-            }
-            MoveResult::Blocked | MoveResult::TriggeredStairs | MoveResult::TriggeredDoor => {}
+            commands.insert_resource(FightModalMob {
+                mob_id: *mob_id,
+                pos: *pos,
+                entity: *entity,
+            });
+            commands.insert_resource(ActiveCombat { mob_entity: *entity });
+            commands.trigger(OpenModal(ModalType::FightModal));
         }
     }
 }
@@ -418,34 +362,14 @@ fn handle_back_action(
     }
 }
 
-fn interpolate_player_position(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut query: Query<(Entity, &TargetPosition, &mut Transform), With<Interpolating>>,
+fn update_player_sprite_direction(
+    mut query: Query<(&LinearVelocity, &mut Sprite), With<DungeonPlayer>>,
 ) {
-    for (entity, target, mut transform) in &mut query {
-        let current = transform.translation.truncate();
-        if let Some(new_pos) = interpolate_step(current, target.0, time.delta_secs()) {
-            transform.translation.x = new_pos.x;
-            transform.translation.y = new_pos.y;
-        } else {
-            transform.translation.x = target.0.x;
-            transform.translation.y = target.0.y;
-            commands.entity(entity).remove::<Interpolating>();
+    for (velocity, mut sprite) in &mut query {
+        if velocity.x < -0.1 {
+            sprite.flip_x = true;
+        } else if velocity.x > 0.1 {
+            sprite.flip_x = false;
         }
-    }
-}
-
-#[instrument(level = "debug", skip_all, fields(?current, ?target, distance))]
-fn interpolate_step(current: Vec2, target: Vec2, delta_secs: f32) -> Option<Vec2> {
-    let delta = target - current;
-    let distance = delta.length();
-    tracing::Span::current().record("distance", distance);
-
-    if distance < 0.5 {
-        None
-    } else {
-        let step = MOVE_SPEED * delta_secs;
-        Some(current + delta.normalize() * step.min(distance))
     }
 }

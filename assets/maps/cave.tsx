@@ -9,6 +9,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="1">
   <properties>
@@ -18,6 +21,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="2">
   <properties>
@@ -27,6 +33,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="14">
   <properties>
@@ -36,6 +45,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="15">
   <properties>
@@ -45,6 +57,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="16">
   <properties>
@@ -54,6 +69,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="28">
   <properties>
@@ -63,6 +81,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="29">
   <properties>
@@ -72,6 +93,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="30">
   <properties>
@@ -81,6 +105,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="42">
   <properties>
@@ -90,6 +117,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="43">
   <properties>
@@ -99,6 +129,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="44">
   <properties>
@@ -108,6 +141,9 @@
     </properties>
    </property>
   </properties>
+  <objectgroup draworder="index" id="2">
+   <object id="1" x="0" y="0" width="32" height="32"/>
+  </objectgroup>
  </tile>
  <tile id="56">
   <properties>

@@ -1,8 +1,8 @@
 use std::collections::HashMap;
 
-use avian2d::prelude::*;
+use avian2d::prelude::{CollisionStart, Gravity, PhysicsPlugins, RigidBody};
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::{TiledPhysicsAvianBackend, TiledPhysicsPlugin};
+use bevy_ecs_tiled::prelude::{ColliderCreated, TiledEvent, TiledPhysicsAvianBackend, TiledPhysicsPlugin};
 
 use crate::dungeon::config::DungeonConfig;
 use crate::dungeon::events::{
@@ -14,7 +14,8 @@ use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::DungeonState;
 use crate::dungeon::systems::{
     handle_floor_transition, handle_mine_entity, handle_mob_defeated,
-    handle_player_move, on_map_created, prepare_floor, SpawnFloor,
+    handle_player_collisions, handle_player_move, on_map_created, prepare_floor,
+    stop_player_when_idle, SpawnFloor,
 };
 use crate::dungeon::tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 use crate::location::LocationId;
@@ -79,11 +80,14 @@ impl Plugin for DungeonPlugin {
             .add_message::<MineEntity>()
             .add_message::<MiningResult>()
             .add_observer(on_map_created)
+            .add_observer(on_collider_created)
             .add_systems(
                 Update,
                 (
                     prepare_floor.run_if(on_message::<SpawnFloor>),
                     handle_player_move.run_if(on_message::<PlayerMoveIntent>),
+                    stop_player_when_idle,
+                    handle_player_collisions.run_if(on_message::<CollisionStart>),
                     handle_floor_transition.run_if(on_message::<FloorTransition>),
                     handle_mine_entity.run_if(on_message::<MineEntity>),
                     handle_mob_defeated.run_if(on_message::<MobDefeated>),
@@ -149,4 +153,10 @@ impl DungeonBuilder {
             },
         }
     }
+}
+
+fn on_collider_created(trigger: On<TiledEvent<ColliderCreated>>, mut commands: Commands) {
+    commands
+        .entity(trigger.event().origin)
+        .insert(RigidBody::Static);
 }
