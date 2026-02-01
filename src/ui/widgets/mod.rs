@@ -1,3 +1,4 @@
+mod detail_pane_system;
 mod item_detail_pane;
 mod item_detail_display;
 mod column;
@@ -14,6 +15,7 @@ mod stack;
 mod stat_row;
 mod three_slice;
 
+pub use detail_pane_system::{update_detail_pane_source, DetailPaneContext};
 pub use item_detail_pane::{ItemDetailPane, ItemDetailPaneContent, ItemDetailPanePlugin};
 pub use item_detail_display::{ItemDetailDisplay, ItemDetailDisplayPlugin, PriceDisplay};
 pub use column::{Column, ColumnPlugin};

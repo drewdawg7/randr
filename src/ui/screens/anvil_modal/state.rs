@@ -1,9 +1,10 @@
-//! State types for the anvil modal.
-
 use bevy::prelude::*;
 
+use crate::ui::focus::FocusPanel;
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
+use crate::ui::widgets::{DetailPaneContext, ItemGrid};
+use crate::ui::InfoPanelSource;
 
 /// Marker component for the anvil modal root entity.
 #[derive(Component)]
@@ -16,6 +17,28 @@ pub struct AnvilRecipeGrid;
 /// Marker for the player inventory grid (right side).
 #[derive(Component)]
 pub struct AnvilPlayerGrid;
+
+pub struct AnvilDetailPane;
+
+impl DetailPaneContext for AnvilDetailPane {
+    type LeftGridMarker = AnvilRecipeGrid;
+    type RightGridMarker = AnvilPlayerGrid;
+
+    const LEFT_FOCUS: FocusPanel = FocusPanel::RecipeGrid;
+    const RIGHT_FOCUS: FocusPanel = FocusPanel::AnvilInventory;
+
+    fn source_from_left_grid(grid: &ItemGrid) -> InfoPanelSource {
+        InfoPanelSource::Recipe {
+            selected_index: grid.selected_index,
+        }
+    }
+
+    fn source_from_right_grid(grid: &ItemGrid) -> InfoPanelSource {
+        InfoPanelSource::Inventory {
+            selected_index: grid.selected_index,
+        }
+    }
+}
 
 /// Tracks which anvil entity the modal is open for.
 #[derive(Resource)]

@@ -3,8 +3,11 @@ use rand::Rng;
 
 use crate::item::ItemId;
 use crate::location::store::StoreItem;
+use crate::ui::focus::FocusPanel;
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
+use crate::ui::widgets::{DetailPaneContext, ItemGrid};
+use crate::ui::InfoPanelSource;
 
 /// Component marker for the merchant modal UI.
 #[derive(Component)]
@@ -17,6 +20,28 @@ pub struct MerchantStockGrid;
 /// Marker for the player inventory grid (right side).
 #[derive(Component)]
 pub struct MerchantPlayerGrid;
+
+pub struct MerchantDetailPane;
+
+impl DetailPaneContext for MerchantDetailPane {
+    type LeftGridMarker = MerchantStockGrid;
+    type RightGridMarker = MerchantPlayerGrid;
+
+    const LEFT_FOCUS: FocusPanel = FocusPanel::MerchantStock;
+    const RIGHT_FOCUS: FocusPanel = FocusPanel::PlayerInventory;
+
+    fn source_from_left_grid(grid: &ItemGrid) -> InfoPanelSource {
+        InfoPanelSource::Store {
+            selected_index: grid.selected_index,
+        }
+    }
+
+    fn source_from_right_grid(grid: &ItemGrid) -> InfoPanelSource {
+        InfoPanelSource::Inventory {
+            selected_index: grid.selected_index,
+        }
+    }
+}
 
 /// Resource holding the merchant's current stock.
 #[derive(Resource)]

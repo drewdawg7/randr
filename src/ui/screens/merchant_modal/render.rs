@@ -2,18 +2,16 @@ use bevy::prelude::*;
 
 use crate::economy::WorthGold;
 use crate::inventory::{Inventory, ManagesEquipment, ManagesItems};
-use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::focus::FocusPanel;
 use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
     ItemGridFocusPanel, PriceDisplay,
 };
-use crate::ui::{Modal, ModalBackground, SpawnModalExt};
+use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 
-use super::state::{
-    MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid,
-};
+use super::state::{MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
 
 /// Sync system that reactively updates grids when inventory or stock changes.
 /// Uses Bevy's native change detection via `is_changed()`.
@@ -112,64 +110,6 @@ pub fn spawn_merchant_modal_impl(
             }))
             .build(),
     );
-}
-
-/// Updates the detail pane source based on which grid is focused and selected.
-/// Only runs when focus or grid selection changes.
-pub fn update_merchant_detail_pane_source(
-    focus_state: Option<Res<FocusState>>,
-    stock_grids: Query<Ref<ItemGrid>, With<MerchantStockGrid>>,
-    player_grids: Query<Ref<ItemGrid>, With<MerchantPlayerGrid>>,
-    mut panes: Query<&mut ItemDetailPane>,
-) {
-    let Some(focus_state) = focus_state else {
-        return;
-    };
-
-    // Check if focus or any grid changed
-    let focus_changed = focus_state.is_changed();
-    let stock_grid_changed = stock_grids
-        .get_single()
-        .map(|g| g.is_changed())
-        .unwrap_or(false);
-    let player_grid_changed = player_grids
-        .get_single()
-        .map(|g| g.is_changed())
-        .unwrap_or(false);
-
-    if !focus_changed && !stock_grid_changed && !player_grid_changed {
-        return;
-    }
-
-    // Determine source from focused grid
-    let source = if focus_state.is_focused(FocusPanel::MerchantStock) {
-        stock_grids
-            .get_single()
-            .ok()
-            .map(|g| InfoPanelSource::Store {
-                selected_index: g.selected_index,
-            })
-    } else if focus_state.is_focused(FocusPanel::PlayerInventory) {
-        player_grids
-            .get_single()
-            .ok()
-            .map(|g| InfoPanelSource::Inventory {
-                selected_index: g.selected_index,
-            })
-    } else {
-        None
-    };
-
-    let Some(source) = source else {
-        return;
-    };
-
-    // Update pane source (only if different to avoid unnecessary Changed trigger)
-    for mut pane in &mut panes {
-        if pane.source != source {
-            pane.source = source;
-        }
-    }
 }
 
 pub fn populate_merchant_detail_pane_content(

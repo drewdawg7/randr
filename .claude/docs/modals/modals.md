@@ -42,6 +42,13 @@ Reference: `src/ui/screens/inventory_modal/` for a complete example.
 - `FocusState` - Resource tracking focused panel
 - `FocusPanel` - Enum of all focusable panels
 
+**File:** `src/ui/widgets/detail_pane_system.rs`
+
+- `DetailPaneContext` trait - Implement in `state.rs` for modals with two ItemGrids
+- `update_detail_pane_source::<C>` - Generic system that updates `ItemDetailPane.source` based on focus/grid state
+
+Reference: `inventory_modal/state.rs` for `InventoryDetailPane` implementation.
+
 ## Input Blocking
 
 Non-modal input handlers must check `ActiveModal` and return early if a modal is open.

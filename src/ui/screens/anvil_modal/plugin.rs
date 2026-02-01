@@ -1,19 +1,16 @@
 use bevy::prelude::*;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
-use crate::ui::focus::{tab_toggle_system, FocusPanel};
-use crate::crafting_station::AnvilCraftingState;
+use crate::crafting_station::{AnvilActiveTimer, AnvilCraftingState};
 use crate::ui::animation::{AnimationConfig, SpriteAnimation};
+use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
-use crate::crafting_station::AnvilActiveTimer;
 use crate::ui::screens::modal::{in_anvil_modal, ActiveModal, ModalType};
+use crate::ui::widgets::update_detail_pane_source;
 
-use super::input::{
-    handle_anvil_modal_navigation, handle_anvil_modal_select,
-    refresh_anvil_recipes,
-};
-use super::render::{populate_anvil_detail_pane_content, update_anvil_detail_pane_source};
-use super::state::{ActiveAnvilEntity, AnvilModal, AnvilModalRoot, CloseAnvilForCrafting};
+use super::input::{handle_anvil_modal_navigation, handle_anvil_modal_select, refresh_anvil_recipes};
+use super::render::populate_anvil_detail_pane_content;
+use super::state::{ActiveAnvilEntity, AnvilDetailPane, AnvilModal, AnvilModalRoot, CloseAnvilForCrafting};
 
 pub struct AnvilModalPlugin;
 
@@ -30,7 +27,7 @@ impl Plugin for AnvilModalPlugin {
                         handle_anvil_modal_navigation,
                         handle_anvil_modal_select,
                         refresh_anvil_recipes,
-                        update_anvil_detail_pane_source,
+                        update_detail_pane_source::<AnvilDetailPane>,
                         populate_anvil_detail_pane_content,
                     )
                         .run_if(in_anvil_modal),

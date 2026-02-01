@@ -1,18 +1,16 @@
-//! Rendering for the anvil modal.
-
 use bevy::prelude::*;
 
 use crate::assets::{GameFonts, GameSprites};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
-use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::focus::FocusPanel;
 use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
     ItemGridFocusPanel, ItemStatsDisplay, OutlinedText,
 };
-use crate::ui::{Modal, ModalBackground, SpawnModalExt};
+use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{AnvilModalRoot, AnvilPlayerGrid, AnvilRecipeGrid};
 
@@ -85,64 +83,6 @@ pub fn spawn_anvil_modal_impl(
             }))
             .build(),
     );
-}
-
-/// Updates the detail pane source based on which panel is focused and selected.
-/// Only runs when focus or grid selection changes.
-pub fn update_anvil_detail_pane_source(
-    focus_state: Option<Res<FocusState>>,
-    recipe_grids: Query<Ref<ItemGrid>, With<AnvilRecipeGrid>>,
-    player_grids: Query<Ref<ItemGrid>, With<AnvilPlayerGrid>>,
-    mut panes: Query<&mut ItemDetailPane>,
-) {
-    let Some(focus_state) = focus_state else {
-        return;
-    };
-
-    // Check if focus or any grid changed
-    let focus_changed = focus_state.is_changed();
-    let recipe_grid_changed = recipe_grids
-        .get_single()
-        .map(|g| g.is_changed())
-        .unwrap_or(false);
-    let player_grid_changed = player_grids
-        .get_single()
-        .map(|g| g.is_changed())
-        .unwrap_or(false);
-
-    if !focus_changed && !recipe_grid_changed && !player_grid_changed {
-        return;
-    }
-
-    // Determine source from focused panel
-    let source = if focus_state.is_focused(FocusPanel::RecipeGrid) {
-        recipe_grids
-            .get_single()
-            .ok()
-            .map(|g| InfoPanelSource::Recipe {
-                selected_index: g.selected_index,
-            })
-    } else if focus_state.is_focused(FocusPanel::AnvilInventory) {
-        player_grids
-            .get_single()
-            .ok()
-            .map(|g| InfoPanelSource::Inventory {
-                selected_index: g.selected_index,
-            })
-    } else {
-        None
-    };
-
-    let Some(source) = source else {
-        return;
-    };
-
-    // Update pane source (only if different to avoid unnecessary Changed trigger)
-    for mut pane in &mut panes {
-        if pane.source != source {
-            pane.source = source;
-        }
-    }
 }
 
 pub fn populate_anvil_detail_pane_content(

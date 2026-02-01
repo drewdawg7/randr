@@ -1,14 +1,14 @@
 use bevy::prelude::*;
 
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem, ManagesEquipment, ManagesItems};
-use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::focus::FocusPanel;
 use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
     ItemGridFocusPanel,
 };
-use crate::ui::{Modal, ModalBackground, SpawnModalExt};
+use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{BackpackGrid, EquipmentGrid, InventoryModalRoot};
 
@@ -97,64 +97,6 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
             }))
             .build(),
     );
-}
-
-/// Updates the detail pane source based on which grid is focused and selected.
-/// Only runs when focus or grid selection changes.
-pub fn update_inventory_detail_pane_source(
-    focus_state: Option<Res<FocusState>>,
-    equipment_grids: Query<Ref<ItemGrid>, With<EquipmentGrid>>,
-    backpack_grids: Query<Ref<ItemGrid>, With<BackpackGrid>>,
-    mut panes: Query<&mut ItemDetailPane>,
-) {
-    let Some(focus_state) = focus_state else {
-        return;
-    };
-
-    // Check if focus or any grid changed
-    let focus_changed = focus_state.is_changed();
-    let eq_changed = equipment_grids
-        .get_single()
-        .map(|g| g.is_changed())
-        .unwrap_or(false);
-    let bp_changed = backpack_grids
-        .get_single()
-        .map(|g| g.is_changed())
-        .unwrap_or(false);
-
-    if !focus_changed && !eq_changed && !bp_changed {
-        return;
-    }
-
-    // Determine source from focused grid
-    let source = if focus_state.is_focused(FocusPanel::EquipmentGrid) {
-        equipment_grids
-            .get_single()
-            .ok()
-            .map(|g| InfoPanelSource::Equipment {
-                selected_index: g.selected_index,
-            })
-    } else if focus_state.is_focused(FocusPanel::BackpackGrid) {
-        backpack_grids
-            .get_single()
-            .ok()
-            .map(|g| InfoPanelSource::Inventory {
-                selected_index: g.selected_index,
-            })
-    } else {
-        None
-    };
-
-    let Some(source) = source else {
-        return;
-    };
-
-    // Update pane source (only if different to avoid unnecessary Changed trigger)
-    for mut pane in &mut panes {
-        if pane.source != source {
-            pane.source = source;
-        }
-    }
 }
 
 pub fn populate_inventory_detail_pane_content(
