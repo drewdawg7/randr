@@ -3,18 +3,14 @@ use tracing::instrument;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::combat::ActiveCombat;
-use crate::crafting_station::{
-    AnvilActiveTimer, AnvilCraftingState, CraftingStationType, ForgeActiveTimer,
-    ForgeCraftingState,
-};
+use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
 use crate::dungeon::{
     CraftingStationInteraction, DungeonEntity, DungeonEntityMarker, DungeonRegistry, DungeonState,
     FloorReady, GridOccupancy, MineEntity, MiningResult, MoveResult, NpcInteraction,
     PlayerMoveIntent, SpawnFloor, TilesetGrid,
 };
 use crate::input::{GameAction, HeldDirection, NavigationDirection};
-use crate::inventory::{Inventory, ManagesItems};
-use crate::skills::{SkillType, SkillXpGained, Skills};
+use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
 use crate::location::LocationId;
 use crate::mob::MobId;
 use crate::states::AppState;
@@ -344,40 +340,13 @@ fn revert_forge_idle(
     mut commands: Commands,
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
-    skills: Res<Skills>,
-    mut xp_events: EventWriter<SkillXpGained>,
-    mut query: Query<(
-        Entity,
-        &mut ForgeActiveTimer,
-        &mut ImageNode,
-        Option<&mut ForgeCraftingState>,
-    )>,
+    mut crafting_events: EventWriter<ForgeCraftingCompleteEvent>,
+    mut query: Query<(Entity, &mut ForgeActiveTimer, &mut ImageNode)>,
 ) {
-    use crate::skills::blacksmith_bonus_item_chance;
-
-    let blacksmith_level = skills
-        .skill(SkillType::Blacksmith)
-        .map(|s| s.level)
-        .unwrap_or(1);
-    let bonus_chance = blacksmith_bonus_item_chance(blacksmith_level);
-
-    for (entity, mut timer, mut image, forge_state) in &mut query {
+    for (entity, mut timer, mut image) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
-            if let Some(mut state) = forge_state {
-                let coal_qty = state.coal_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
-                let ore_qty = state.ore_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
-                let ingot_count = coal_qty.min(ore_qty);
-
-                state.complete_crafting_with_bonus(bonus_chance);
-
-                if ingot_count > 0 {
-                    xp_events.send(SkillXpGained {
-                        skill: SkillType::Blacksmith,
-                        amount: ingot_count as u64 * 25,
-                    });
-                }
-            }
+            crafting_events.send(ForgeCraftingCompleteEvent { entity });
 
             if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
                 if let Some(idle_idx) = sheet.get("forge_1_idle") {
@@ -396,38 +365,13 @@ fn revert_anvil_idle(
     mut commands: Commands,
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
-    mut inventory: ResMut<Inventory>,
-    skills: Res<Skills>,
-    mut xp_events: EventWriter<SkillXpGained>,
-    mut query: Query<(
-        Entity,
-        &mut AnvilActiveTimer,
-        &mut ImageNode,
-        Option<&mut AnvilCraftingState>,
-    )>,
+    mut crafting_events: EventWriter<AnvilCraftingCompleteEvent>,
+    mut query: Query<(Entity, &mut AnvilActiveTimer, &mut ImageNode)>,
 ) {
-    let blacksmith_level = skills
-        .skill(SkillType::Blacksmith)
-        .map(|s| s.level)
-        .unwrap_or(1);
-
-    for (entity, mut timer, mut image, anvil_state) in &mut query {
+    for (entity, mut timer, mut image) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
-            if let Some(mut state) = anvil_state {
-                if let Some(recipe_id) = state.complete_crafting() {
-                    let spec = recipe_id.spec();
-                    let item = spec.output.spawn_with_quality_bonus(blacksmith_level);
-                    let _ = inventory.add_to_inv(item);
-
-                    let ingredient_count: u32 = spec.ingredients.values().sum();
-                    let xp_amount = 75 + (ingredient_count.saturating_sub(1) * 25);
-                    xp_events.send(SkillXpGained {
-                        skill: SkillType::Blacksmith,
-                        amount: xp_amount as u64,
-                    });
-                }
-            }
+            crafting_events.send(AnvilCraftingCompleteEvent { entity });
 
             if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
                 if let Some(idle_idx) = sheet.get("anvil_idle") {

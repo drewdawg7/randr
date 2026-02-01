@@ -61,17 +61,25 @@ Uses `spawn_modal_overlay` directly (no Modal builder):
 
 ## Buy/Sell Logic
 
-**Buying** (when MerchantStockGrid focused):
-- Check player has enough gold
-- Check inventory has space
-- Deduct gold via `PlayerGold::subtract()`
-- Add item via `inventory.add_to_inv()`
-- Remove from `MerchantStock`
+Transaction logic is separated into game module handlers (`src/game/merchant.rs`).
 
-**Selling** (when MerchantPlayerGrid focused):
-- Skip locked items
-- Add gold via `PlayerGold::add()`
-- Decrease quantity by 1 via `inventory.decrease_item_quantity()` (removes item when quantity reaches 0)
+### Events
+
+| Event | Purpose |
+|-------|---------|
+| `BuyItemEvent { stock_index }` | Request to buy item at index |
+| `SellItemEvent { inventory_index }` | Request to sell item at index |
+| `MerchantTransactionResult` | Result enum (success/failure variants) |
+
+### UI System (`handle_merchant_modal_select`)
+Emits events based on focused grid:
+- `BuyItemEvent` when MerchantStockGrid focused
+- `SellItemEvent` when MerchantPlayerGrid focused
+
+### Game Handler (`src/game/merchant.rs`)
+Handles actual transaction logic:
+- **Buying:** Validates gold/inventory space, deducts gold, adds item
+- **Selling:** Validates item not locked, adds gold, removes item
 
 Grids update automatically via `sync_merchant_grids` which uses Bevy's change detection.
 

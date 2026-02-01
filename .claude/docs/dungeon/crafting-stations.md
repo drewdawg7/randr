@@ -118,10 +118,15 @@ pub struct ForgeActiveTimer(pub Timer);  // 5 seconds
 pub struct AnvilActiveTimer(pub Timer);  // 3 seconds
 ```
 
-When timer expires, `revert_forge_idle` or `revert_anvil_idle` systems:
-1. Complete crafting (produce output)
+When timer expires, `revert_forge_idle` or `revert_anvil_idle` systems in the UI layer:
+1. Send crafting complete event (`ForgeCraftingCompleteEvent` or `AnvilCraftingCompleteEvent`)
 2. Revert sprite to idle
 3. Remove timer component
+
+Game logic handlers in `src/game/crafting_complete.rs` respond to the events:
+1. Apply blacksmith skill bonuses
+2. Complete crafting (produce output)
+3. Grant XP
 
 ## Behavior
 
@@ -150,6 +155,7 @@ When timer expires, `revert_forge_idle` or `revert_anvil_idle` systems:
 | `src/dungeon/entity.rs` | DungeonEntity::CraftingStation variant |
 | `src/dungeon/spawn.rs` | `.forge()` and `.anvil()` spawn methods |
 | `src/assets/sprites.rs` | SpriteSheetKey::CraftingStations |
+| `src/game/crafting_complete.rs` | Crafting completion events and game logic handlers |
 | `src/ui/screens/dungeon/plugin.rs` | Rendering, interaction, animation timers |
 | `src/ui/screens/forge_modal/` | Forge UI modal |
 | `src/ui/screens/anvil_modal/` | Anvil UI modal |

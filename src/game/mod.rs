@@ -1,6 +1,8 @@
 pub mod blacksmith;
 pub mod crafting;
+pub mod crafting_complete;
 pub mod items;
+pub mod merchant;
 pub mod player;
 pub mod storage;
 pub mod store_transactions;
@@ -21,4 +23,10 @@ pub use blacksmith::{
 pub use crafting::{BrewPotionEvent, BrewingResult, CraftingPlugin};
 pub use store_transactions::{
     StorageDepositEvent, StorageTransactionResult, StorageTransactionsPlugin, StorageWithdrawEvent,
+};
+pub use merchant::{
+    BuyItemEvent, MerchantPlugin, MerchantTransactionResult, SellItemEvent,
+};
+pub use crafting_complete::{
+    AnvilCraftingCompleteEvent, CraftingCompletePlugin, ForgeCraftingCompleteEvent,
 };
