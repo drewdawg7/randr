@@ -6,7 +6,8 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 
 use crate::crafting_station::CraftingStationType;
-use crate::dungeon::tile_components::can_have_entity;
+use crate::dungeon::tile_components::{can_have_entity, is_door, is_solid};
+use crate::dungeon::tile_index::TileIndex;
 use crate::dungeon::{DungeonEntity, DungeonEntityMarker, GridOccupancy, GridPosition, GridSize};
 use crate::mob::MobId;
 use crate::rock::RockType;
@@ -50,6 +51,22 @@ impl Default for FloorSpawnConfig {
             npc_chances: Vec::new(),
         }
     }
+}
+
+pub fn build_tile_index(
+    _trigger: On<TiledEvent<MapCreated>>,
+    mut commands: Commands,
+    solid_tiles: Query<&TilePos, With<is_solid>>,
+    door_tiles: Query<&TilePos, With<is_door>>,
+) {
+    let mut index = TileIndex::default();
+    for pos in solid_tiles.iter() {
+        index.solid.insert((pos.x, pos.y));
+    }
+    for pos in door_tiles.iter() {
+        index.doors.insert((pos.x, pos.y));
+    }
+    commands.insert_resource(index);
 }
 
 pub fn on_map_created(

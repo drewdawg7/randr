@@ -19,9 +19,23 @@ The `on_add_dungeon_floor` observer handles all rendering.
 
 ## Movement Rules
 
-- Only walkable tiles (`layout.is_walkable()`)
+- Only walkable tiles (via `TileIndex` resource)
 - Cannot move onto occupied cells (`GridOccupancy`)
 - Arrow keys → `GameAction::Navigate` events
+
+## TileIndex
+
+The `TileIndex` resource provides O(1) lookup for tile properties:
+
+```rust
+#[derive(Resource, Default)]
+pub struct TileIndex {
+    solid: HashSet<(u32, u32)>,
+    doors: HashSet<(u32, u32)>,
+}
+```
+
+Built by `build_tile_index` observer when map is created, querying `is_solid` and `is_door` tile components.
 
 ## Collision Handling
 
@@ -38,8 +52,8 @@ The `on_add_dungeon_floor` observer handles all rendering.
 Movement validates **all cells** player would occupy:
 
 ```rust
-fn all_cells_walkable(layout: &DungeonLayout, pos: GridPosition, size: GridSize) -> bool {
-    pos.occupied_cells(size).all(|(x, y)| layout.is_walkable(x, y))
+fn all_cells_walkable(tile_index: &TileIndex, pos: GridPosition, size: GridSize) -> bool {
+    pos.occupied_cells(size).all(|(x, y)| tile_index.is_walkable(x as u32, y as u32))
 }
 ```
 

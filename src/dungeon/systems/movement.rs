@@ -3,8 +3,8 @@ use tracing::instrument;
 
 use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
 use crate::dungeon::{
-    DungeonEntity, DungeonEntityMarker, DungeonLayout, DungeonState, GridOccupancy, GridPosition,
-    GridSize, TileType,
+    DungeonEntity, DungeonEntityMarker, DungeonState, GridOccupancy, GridPosition, GridSize,
+    TileIndex,
 };
 use crate::input::NavigationDirection;
 
@@ -16,7 +16,12 @@ pub fn handle_player_move(
     mut state: ResMut<DungeonState>,
     mut occupancy: ResMut<GridOccupancy>,
     entity_query: Query<&DungeonEntityMarker>,
+    tile_index: Option<Res<TileIndex>>,
 ) {
+    let Some(tile_index) = tile_index else {
+        return;
+    };
+
     for event in events.read() {
         let (dx, dy): (i32, i32) = match event.direction {
             NavigationDirection::Up => (0, -1),
@@ -30,16 +35,12 @@ pub fn handle_player_move(
             (state.player_pos.y as i32 + dy).max(0) as usize,
         );
 
-        if let Some(layout) = state.layout.as_ref() {
-            if let Some(tile) = layout.tile_at(new_pos.x, new_pos.y) {
-                if tile.tile_type == TileType::Door {
-                    transition_events.write(FloorTransition::EnterDoor);
-                    return;
-                }
-            }
+        if tile_index.is_door(new_pos.x as u32, new_pos.y as u32) {
+            transition_events.write(FloorTransition::EnterDoor);
+            return;
         }
 
-        if !all_cells_walkable(state.layout.as_ref(), new_pos, state.player_size) {
+        if !all_cells_walkable(&tile_index, new_pos, state.player_size) {
             result_events.write(MoveResult::Blocked);
             continue;
         }
@@ -72,12 +73,9 @@ pub fn handle_player_move(
     }
 }
 
-fn all_cells_walkable(layout: Option<&DungeonLayout>, pos: GridPosition, size: GridSize) -> bool {
-    let Some(layout) = layout else {
-        return false;
-    };
+fn all_cells_walkable(tile_index: &TileIndex, pos: GridPosition, size: GridSize) -> bool {
     pos.occupied_cells(size)
-        .all(|(x, y)| layout.is_walkable(x, y))
+        .all(|(x, y)| tile_index.is_walkable(x as u32, y as u32))
 }
 
 #[instrument(level = "debug", skip_all, fields(pos = ?pos), ret)]

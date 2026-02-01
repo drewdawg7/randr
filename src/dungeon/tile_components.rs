@@ -19,3 +19,7 @@ pub struct can_spawn_player;
 #[reflect(Component)]
 #[allow(non_camel_case_types)]
 pub struct is_door;
+
+#[derive(Component, Reflect, Default)]
+#[reflect(Component)]
+pub struct BlocksMovement;

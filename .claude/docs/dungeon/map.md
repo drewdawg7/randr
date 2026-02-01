@@ -38,7 +38,21 @@ let layout = tmx.to_layout();
 
 **Important:** Tiles without properties default to **solid walls**.
 
-**Door tiles:** When `is_door=true`, the tile maps to `TileType::Door`. Walking into a door tile triggers dungeon entry (see `plugin.rs:682`).
+**Door tiles:** When `is_door=true`, walking into a door tile triggers dungeon entry.
+
+## Tile Components
+
+bevy_ecs_tiled automatically creates tile entities with components based on TSX properties:
+
+| Component | Source Property | Usage |
+|-----------|-----------------|-------|
+| `is_solid` | `is_solid=true` | Blocks movement |
+| `is_door` | `is_door=true` | Door detection |
+| `can_have_entity` | `can_have_entity=true` | Entity spawning |
+| `can_spawn_player` | `can_spawn_player=true` | Player spawn |
+| `BlocksMovement` | N/A | For blocking entities |
+
+Components are registered in `DungeonPlugin` and indexed into `TileIndex` resource for O(1) lookups during movement.
 
 ## Tile ID Mapping
 
