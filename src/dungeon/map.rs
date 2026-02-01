@@ -1,446 +1,140 @@
-//! Map parser for loading Tiled maps into DungeonLayout.
-//!
-//! Parses Tiled Map Editor files (.tmx) and tilesets (.tsx) to create
-//! dungeon layouts with tile properties determining walkability and spawn rules.
+use bevy_ecs_tiled::prelude::*;
 
 use super::grid::GridPosition;
 use super::layout::DungeonLayout;
 use super::tile::{Tile, TileType};
-use std::collections::HashMap;
-use std::fs;
-use std::path::Path;
 
-/// Properties that can be defined on tiles in the TSX tileset.
-///
-/// Default: solid, no entity spawning, no player spawning.
-/// Only tiles explicitly marked with properties in TSX can be walkable.
-#[derive(Debug, Clone)]
-pub struct TileProperties {
-    pub is_solid: bool,
-    pub can_have_entity: bool,
-    pub can_spawn_player: bool,
-    pub is_door: bool,
-}
+pub fn map_to_layout(map: &tiled::Map) -> DungeonLayout {
+    let width = map.width as usize;
+    let height = map.height as usize;
 
-impl Default for TileProperties {
-    fn default() -> Self {
-        Self {
-            is_solid: true, // Tiles without properties are walls by default
-            can_have_entity: false,
-            can_spawn_player: false,
-            is_door: false,
-        }
-    }
-}
+    let mut layout = DungeonLayout::new(width, height);
+    let mut spawn_candidates: Vec<(usize, usize)> = Vec::new();
 
-/// Parsed tileset data from a TSX file.
-#[derive(Debug)]
-pub struct Tileset {
-    pub name: String,
-    pub tile_width: u32,
-    pub tile_height: u32,
-    pub tile_count: u32,
-    pub columns: u32,
-    pub image_source: String,
-    /// Tile properties indexed by tile ID (0-based, local to tileset).
-    pub tile_properties: HashMap<u32, TileProperties>,
-}
-
-/// Parsed map data from a TMX file.
-#[derive(Debug)]
-pub struct Map {
-    pub width: u32,
-    pub height: u32,
-    pub tile_width: u32,
-    pub tile_height: u32,
-    pub tileset: Tileset,
-    pub tileset_first_gid: u32,
-    /// Tile data as global IDs (0 = empty, firstgid+ = tileset tiles).
-    pub tile_data: Vec<u32>,
-}
-
-/// Errors that can occur during map/tileset parsing.
-#[derive(Debug)]
-pub enum MapError {
-    IoError(std::io::Error),
-    ParseError(String),
-    MissingAttribute(String),
-    MissingElement(String),
-}
-
-impl From<std::io::Error> for MapError {
-    fn from(e: std::io::Error) -> Self {
-        MapError::IoError(e)
-    }
-}
-
-impl std::fmt::Display for MapError {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            MapError::IoError(e) => write!(f, "IO error: {}", e),
-            MapError::ParseError(msg) => write!(f, "Parse error: {}", msg),
-            MapError::MissingAttribute(attr) => write!(f, "Missing attribute: {}", attr),
-            MapError::MissingElement(elem) => write!(f, "Missing element: {}", elem),
-        }
-    }
-}
-
-impl std::error::Error for MapError {}
-
-/// Parse a TSX tileset file.
-pub fn parse_tileset(path: &Path) -> Result<Tileset, MapError> {
-    let content = fs::read_to_string(path)?;
-    parse_tileset_content(&content)
-}
-
-/// Parse TSX content from a string.
-fn parse_tileset_content(content: &str) -> Result<Tileset, MapError> {
-    // Find tileset element
-    let tileset_start = content
-        .find("<tileset")
-        .ok_or_else(|| MapError::MissingElement("tileset".to_string()))?;
-    let tileset_end = content[tileset_start..]
-        .find('>')
-        .ok_or_else(|| MapError::ParseError("Unclosed tileset tag".to_string()))?;
-    let tileset_tag = &content[tileset_start..tileset_start + tileset_end + 1];
-
-    let name = extract_attr(tileset_tag, "name").unwrap_or_default();
-    let tile_width = extract_attr(tileset_tag, "tilewidth")
-        .and_then(|s| s.parse().ok())
-        .ok_or_else(|| MapError::MissingAttribute("tilewidth".to_string()))?;
-    let tile_height = extract_attr(tileset_tag, "tileheight")
-        .and_then(|s| s.parse().ok())
-        .ok_or_else(|| MapError::MissingAttribute("tileheight".to_string()))?;
-    let tile_count = extract_attr(tileset_tag, "tilecount")
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0);
-    let columns = extract_attr(tileset_tag, "columns")
-        .and_then(|s| s.parse().ok())
-        .unwrap_or(0);
-
-    // Find image source
-    let image_source = if let Some(img_start) = content.find("<image") {
-        let img_end = content[img_start..]
-            .find("/>")
-            .or_else(|| content[img_start..].find('>'))
-            .unwrap_or(0);
-        let img_tag = &content[img_start..img_start + img_end + 2];
-        extract_attr(img_tag, "source").unwrap_or_default()
-    } else {
-        String::new()
+    let Some(tile_layer) = map.layers().find_map(|layer| layer.as_tile_layer()) else {
+        return layout;
     };
 
-    // Parse tile properties
-    let mut tile_properties = HashMap::new();
-    let mut search_pos = 0;
+    for y in 0..height {
+        for x in 0..width {
+            let Some(layer_tile) = tile_layer.get_tile(x as i32, y as i32) else {
+                layout.set_tile(x, y, Tile::new(TileType::Empty));
+                continue;
+            };
 
-    while let Some(tile_start) = content[search_pos..].find("<tile ") {
-        let abs_start = search_pos + tile_start;
-        let tile_end = content[abs_start..]
-            .find("</tile>")
-            .or_else(|| content[abs_start..].find("/>"))
-            .unwrap_or(content.len() - abs_start);
-        let tile_section = &content[abs_start..abs_start + tile_end + 7.min(content.len() - abs_start - tile_end)];
+            let tile_data = layer_tile.get_tile();
+            let gid = layer_tile.id();
 
-        // Get tile ID
-        if let Some(id) = extract_attr(tile_section, "id").and_then(|s| s.parse::<u32>().ok()) {
-            let mut props = TileProperties::default();
+            let (tile_type, can_spawn_player) = if let Some(data) = tile_data {
+                let is_solid = get_bool_property(&data.properties, "is_solid").unwrap_or(true);
+                let is_door = get_bool_property(&data.properties, "is_door").unwrap_or(false);
+                let can_spawn = get_bool_property(&data.properties, "can_spawn_player").unwrap_or(false);
 
-            // Parse properties within this tile
-            let mut prop_pos = 0;
-            while let Some(prop_start) = tile_section[prop_pos..].find("<property ") {
-                let abs_prop_start = prop_pos + prop_start;
-                let prop_end = tile_section[abs_prop_start..]
-                    .find("/>")
-                    .unwrap_or(tile_section.len() - abs_prop_start);
-                let prop_tag = &tile_section[abs_prop_start..abs_prop_start + prop_end + 2];
-
-                if let (Some(name), Some(value)) =
-                    (extract_attr(prop_tag, "name"), extract_attr(prop_tag, "value"))
-                {
-                    match name.as_str() {
-                        "is_solid" => props.is_solid = value == "true",
-                        "can_have_entity" => props.can_have_entity = value == "true",
-                        "can_spawn_player" => props.can_spawn_player = value == "true",
-                        "is_door" => props.is_door = value == "true",
-                        _ => {}
-                    }
-                }
-                prop_pos = abs_prop_start + prop_end + 2;
-            }
-
-            tile_properties.insert(id, props);
-        }
-
-        search_pos = abs_start + tile_end + 1;
-    }
-
-    Ok(Tileset {
-        name,
-        tile_width,
-        tile_height,
-        tile_count,
-        columns,
-        image_source,
-        tile_properties,
-    })
-}
-
-/// Parse a TMX map file, loading its referenced tileset.
-pub fn parse_map(path: &Path) -> Result<Map, MapError> {
-    let content = fs::read_to_string(path)?;
-    parse_map_content(&content, path.parent())
-}
-
-/// Parse TMX content from a string.
-fn parse_map_content(content: &str, base_path: Option<&Path>) -> Result<Map, MapError> {
-    // Find map element
-    let map_start = content
-        .find("<map")
-        .ok_or_else(|| MapError::MissingElement("map".to_string()))?;
-    let map_end = content[map_start..]
-        .find('>')
-        .ok_or_else(|| MapError::ParseError("Unclosed map tag".to_string()))?;
-    let map_tag = &content[map_start..map_start + map_end + 1];
-
-    let width = extract_attr(map_tag, "width")
-        .and_then(|s| s.parse().ok())
-        .ok_or_else(|| MapError::MissingAttribute("width".to_string()))?;
-    let height = extract_attr(map_tag, "height")
-        .and_then(|s| s.parse().ok())
-        .ok_or_else(|| MapError::MissingAttribute("height".to_string()))?;
-    let tile_width = extract_attr(map_tag, "tilewidth")
-        .and_then(|s| s.parse().ok())
-        .ok_or_else(|| MapError::MissingAttribute("tilewidth".to_string()))?;
-    let tile_height = extract_attr(map_tag, "tileheight")
-        .and_then(|s| s.parse().ok())
-        .ok_or_else(|| MapError::MissingAttribute("tileheight".to_string()))?;
-
-    // Find tileset reference
-    let tileset_start = content
-        .find("<tileset")
-        .ok_or_else(|| MapError::MissingElement("tileset".to_string()))?;
-    let tileset_end = content[tileset_start..]
-        .find("/>")
-        .or_else(|| content[tileset_start..].find('>'))
-        .ok_or_else(|| MapError::ParseError("Unclosed tileset tag".to_string()))?;
-    let tileset_tag = &content[tileset_start..tileset_start + tileset_end + 2];
-
-    let first_gid = extract_attr(tileset_tag, "firstgid")
-        .and_then(|s| s.parse().ok())
-        .ok_or_else(|| MapError::MissingAttribute("firstgid".to_string()))?;
-
-    // Load external tileset
-    let tileset = if let Some(tsx_source) = extract_attr(tileset_tag, "source") {
-        let tsx_path = if let Some(base) = base_path {
-            base.join(&tsx_source)
-        } else {
-            Path::new(&tsx_source).to_path_buf()
-        };
-        parse_tileset(&tsx_path)?
-    } else {
-        // Embedded tileset (parse from same content)
-        parse_tileset_content(content)?
-    };
-
-    // Parse tile layer data
-    let data_start = content
-        .find("<data")
-        .ok_or_else(|| MapError::MissingElement("data".to_string()))?;
-    let data_content_start = content[data_start..]
-        .find('>')
-        .ok_or_else(|| MapError::ParseError("Unclosed data tag".to_string()))?;
-    let data_content_end = content[data_start..]
-        .find("</data>")
-        .ok_or_else(|| MapError::MissingElement("</data>".to_string()))?;
-
-    let csv_data = &content[data_start + data_content_start + 1..data_start + data_content_end];
-    let tile_data: Vec<u32> = csv_data
-        .split(',')
-        .filter_map(|s| s.trim().parse().ok())
-        .collect();
-
-    Ok(Map {
-        width,
-        height,
-        tile_width,
-        tile_height,
-        tileset,
-        tileset_first_gid: first_gid,
-        tile_data,
-    })
-}
-
-/// Extract an attribute value from an XML tag string.
-fn extract_attr(tag: &str, attr_name: &str) -> Option<String> {
-    let pattern = format!("{}=\"", attr_name);
-    if let Some(start) = tag.find(&pattern) {
-        let value_start = start + pattern.len();
-        if let Some(end) = tag[value_start..].find('"') {
-            return Some(tag[value_start..value_start + end].to_string());
-        }
-    }
-    None
-}
-
-/// Info needed to render tiles directly from tileset.
-#[derive(Debug, Clone)]
-pub struct TilesetRenderInfo {
-    pub columns: u32,
-    pub first_gid: u32,
-    pub tile_width: u32,
-    pub tile_height: u32,
-    pub image_path: String,
-}
-
-impl Map {
-    /// Get tileset rendering info for direct sprite lookup.
-    pub fn tileset_render_info(&self) -> TilesetRenderInfo {
-        TilesetRenderInfo {
-            columns: self.tileset.columns,
-            first_gid: self.tileset_first_gid,
-            tile_width: self.tileset.tile_width,
-            tile_height: self.tileset.tile_height,
-            image_path: self.tileset.image_source.clone(),
-        }
-    }
-
-    /// Convert the TMX map to a DungeonLayout.
-    ///
-    /// Maps TMX 1:1 without any modifications:
-    /// - Exact TMX dimensions are used (no trimming)
-    /// - Tile ID stored in each tile for direct sprite lookup
-    /// - Tile ID 0 → TileType::Empty (not rendered)
-    /// - `is_solid=true` → TileType::Wall
-    /// - `is_solid=false` → TileType::Floor
-    /// - `can_spawn_player=true` → candidate for player spawn
-    ///
-    /// The layout is created at 2x TMX resolution for finer collision.
-    /// Each TMX tile maps to a 2x2 block of cells in the layout.
-    pub fn to_layout(&self) -> DungeonLayout {
-        let tmx_width = self.width as usize;
-        let tmx_height = self.height as usize;
-        let width = tmx_width * 2;
-        let height = tmx_height * 2;
-
-        let mut layout = DungeonLayout::new(width, height);
-        let mut spawn_candidates: Vec<(usize, usize)> = Vec::new();
-
-        for tmx_y in 0..tmx_height {
-            for tmx_x in 0..tmx_width {
-                let idx = tmx_y * tmx_width + tmx_x;
-                let gid = self.tile_data.get(idx).copied().unwrap_or(0);
-
-                let tile_type = if gid == 0 {
-                    TileType::Empty
+                let tile_type = if is_door {
+                    TileType::Door
+                } else if is_solid {
+                    TileType::Wall
                 } else {
-                    let local_id = gid - self.tileset_first_gid;
-                    let props = self
-                        .tileset
-                        .tile_properties
-                        .get(&local_id)
-                        .cloned()
-                        .unwrap_or_default();
-
-                    if props.can_spawn_player {
-                        spawn_candidates.push((tmx_x * 2, tmx_y * 2));
-                    }
-
-                    if props.is_door {
-                        TileType::Door
-                    } else if props.is_solid {
-                        TileType::Wall
-                    } else {
-                        TileType::Floor
-                    }
+                    TileType::Floor
                 };
 
-                // Fill 2x2 block of cells for this TMX tile
-                // Only top-left cell stores the tileset_id for rendering
-                for dy in 0..2 {
-                    for dx in 0..2 {
-                        let x = tmx_x * 2 + dx;
-                        let y = tmx_y * 2 + dy;
-                        let tile = if dx == 0 && dy == 0 {
-                            Tile::new(tile_type).with_tileset_id(gid)
-                        } else {
-                            Tile::new(tile_type)
-                        };
-                        layout.set_tile(x, y, tile);
-                    }
+                (tile_type, can_spawn)
+            } else {
+                (TileType::Wall, false)
+            };
+
+            if can_spawn_player {
+                spawn_candidates.push((x, y));
+            }
+
+            let tile = Tile::new(tile_type).with_tileset_id(gid + 1);
+            layout.set_tile(x, y, tile);
+        }
+    }
+
+    if let Some(&(x, y)) = spawn_candidates.first() {
+        layout.entrance = (x, y);
+        if let Some(existing) = layout.tile_at(x, y) {
+            let tileset_id = existing.tileset_id;
+            let mut tile = Tile::new(TileType::SpawnPoint);
+            if let Some(id) = tileset_id {
+                tile = tile.with_tileset_id(id);
+            }
+            layout.set_tile(x, y, tile);
+        }
+    } else {
+        layout.entrance = (width / 2, height / 2);
+    }
+
+    layout
+}
+
+pub fn entity_spawn_positions(map: &tiled::Map) -> Vec<GridPosition> {
+    let width = map.width as usize;
+    let height = map.height as usize;
+    let mut positions = Vec::new();
+
+    let Some(tile_layer) = map.layers().find_map(|layer| layer.as_tile_layer()) else {
+        return positions;
+    };
+
+    for y in 0..height {
+        for x in 0..width {
+            let Some(layer_tile) = tile_layer.get_tile(x as i32, y as i32) else {
+                continue;
+            };
+
+            if let Some(data) = layer_tile.get_tile() {
+                let is_solid = get_bool_property(&data.properties, "is_solid").unwrap_or(true);
+                let can_entity = get_bool_property(&data.properties, "can_have_entity").unwrap_or(false);
+
+                if can_entity && !is_solid {
+                    positions.push(GridPosition::new(x, y));
                 }
             }
         }
+    }
 
-        // Set entrance to first spawn candidate or center
-        if let Some(&(x, y)) = spawn_candidates.first() {
-            layout.entrance = (x, y);
-            if let Some(existing) = layout.tile_at(x, y) {
-                let tileset_id = existing.tileset_id;
-                let mut tile = Tile::new(TileType::SpawnPoint);
-                if let Some(id) = tileset_id {
-                    tile = tile.with_tileset_id(id);
+    positions
+}
+
+pub fn player_spawn_positions(map: &tiled::Map) -> Vec<GridPosition> {
+    let width = map.width as usize;
+    let height = map.height as usize;
+    let mut positions = Vec::new();
+
+    let Some(tile_layer) = map.layers().find_map(|layer| layer.as_tile_layer()) else {
+        return positions;
+    };
+
+    for y in 0..height {
+        for x in 0..width {
+            let Some(layer_tile) = tile_layer.get_tile(x as i32, y as i32) else {
+                continue;
+            };
+
+            if let Some(data) = layer_tile.get_tile() {
+                let is_solid = get_bool_property(&data.properties, "is_solid").unwrap_or(true);
+                let can_spawn = get_bool_property(&data.properties, "can_spawn_player").unwrap_or(false);
+
+                if can_spawn && !is_solid {
+                    positions.push(GridPosition::new(x, y));
                 }
-                layout.set_tile(x, y, tile);
             }
+        }
+    }
+
+    positions
+}
+
+fn get_bool_property(properties: &tiled::Properties, name: &str) -> Option<bool> {
+    properties.get(name).and_then(|v| {
+        if let tiled::PropertyValue::BoolValue(b) = v {
+            Some(*b)
         } else {
-            layout.entrance = (width / 2, height / 2);
+            None
         }
-
-        layout
-    }
-
-    /// Get all tiles marked as valid for entity spawning.
-    /// Returns positions at 2x resolution to match layout coordinates.
-    pub fn entity_spawn_positions(&self) -> Vec<GridPosition> {
-        let width = self.width as usize;
-        let height = self.height as usize;
-        let mut positions = Vec::new();
-
-        for y in 0..height {
-            for x in 0..width {
-                let idx = y * width + x;
-                let gid = self.tile_data.get(idx).copied().unwrap_or(0);
-
-                if gid > 0 {
-                    let local_id = gid - self.tileset_first_gid;
-                    if let Some(props) = self.tileset.tile_properties.get(&local_id) {
-                        if props.can_have_entity && !props.is_solid {
-                            positions.push(GridPosition::new(x * 2, y * 2));
-                        }
-                    }
-                }
-            }
-        }
-
-        positions
-    }
-
-    /// Get all tiles marked as valid for player spawning.
-    /// Returns positions at 2x resolution to match layout coordinates.
-    pub fn player_spawn_positions(&self) -> Vec<GridPosition> {
-        let width = self.width as usize;
-        let height = self.height as usize;
-        let mut positions = Vec::new();
-
-        for y in 0..height {
-            for x in 0..width {
-                let idx = y * width + x;
-                let gid = self.tile_data.get(idx).copied().unwrap_or(0);
-
-                if gid > 0 {
-                    let local_id = gid - self.tileset_first_gid;
-                    if let Some(props) = self.tileset.tile_properties.get(&local_id) {
-                        if props.can_spawn_player && !props.is_solid {
-                            positions.push(GridPosition::new(x * 2, y * 2));
-                        }
-                    }
-                }
-            }
-        }
-
-        positions
-    }
+    })
 }
 
 #[cfg(test)]
@@ -448,83 +142,21 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_parse_tsx_content() {
-        let tsx = r#"<?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" name="cave" tilewidth="32" tileheight="32" tilecount="280" columns="14">
- <image source="Cave Tileset.png" width="448" height="640"/>
- <tile id="0">
-  <properties>
-   <property name="is_solid" type="bool" value="true"/>
-  </properties>
- </tile>
- <tile id="70">
-  <properties>
-   <property name="can_have_entity" type="bool" value="true"/>
-   <property name="can_spawn_player" type="bool" value="true"/>
-   <property name="is_solid" type="bool" value="false"/>
-  </properties>
- </tile>
-</tileset>"#;
+    fn test_load_cave_floor() {
+        let mut loader = tiled::Loader::new();
+        let map = loader.load_tmx_map("assets/maps/cave_floor.tmx").expect("Failed to load map");
 
-        let tileset = parse_tileset_content(tsx).unwrap();
-        assert_eq!(tileset.name, "cave");
-        assert_eq!(tileset.tile_width, 32);
-        assert_eq!(tileset.tile_height, 32);
-        assert_eq!(tileset.tile_count, 280);
-        assert_eq!(tileset.columns, 14);
-
-        let props_0 = tileset.tile_properties.get(&0).unwrap();
-        assert!(props_0.is_solid);
-        assert!(!props_0.can_have_entity);
-
-        let props_70 = tileset.tile_properties.get(&70).unwrap();
-        assert!(!props_70.is_solid);
-        assert!(props_70.can_have_entity);
-        assert!(props_70.can_spawn_player);
+        let layout = map_to_layout(&map);
+        assert_eq!(layout.width(), 15);
+        assert_eq!(layout.height(), 11);
     }
 
     #[test]
-    fn test_parse_tmx_to_layout() {
-        let tsx = r#"<?xml version="1.0" encoding="UTF-8"?>
-<tileset version="1.10" name="test" tilewidth="32" tileheight="32" tilecount="4" columns="2">
- <tile id="0"><properties><property name="is_solid" type="bool" value="true"/></properties></tile>
- <tile id="1"><properties><property name="is_solid" type="bool" value="false"/><property name="can_spawn_player" type="bool" value="true"/></properties></tile>
-</tileset>"#;
+    fn test_entity_spawn_positions() {
+        let mut loader = tiled::Loader::new();
+        let map = loader.load_tmx_map("assets/maps/cave_floor.tmx").expect("Failed to load map");
 
-        // TMX content shown for reference (not parsed in this unit test)
-        let _tmx = r#"<?xml version="1.0" encoding="UTF-8"?>
-<map version="1.10" width="3" height="3" tilewidth="32" tileheight="32">
- <tileset firstgid="1" source="test.tsx"/>
- <layer id="1" name="Tile Layer 1" width="3" height="3">
-  <data encoding="csv">
-1,1,1,
-1,2,1,
-1,1,1
-</data>
- </layer>
-</map>"#;
-
-        // Parse tileset directly for this test
-        let tileset = parse_tileset_content(tsx).unwrap();
-
-        // Create map with embedded tileset for test
-        let map = Map {
-            width: 3,
-            height: 3,
-            tile_width: 32,
-            tile_height: 32,
-            tileset,
-            tileset_first_gid: 1,
-            tile_data: vec![1, 1, 1, 1, 2, 1, 1, 1, 1],
-        };
-
-        let layout = map.to_layout();
-        assert_eq!(layout.width(), 3);
-        assert_eq!(layout.height(), 3);
-
-        // Center tile (1,1) should be walkable floor
-        assert!(layout.is_walkable(1, 1));
-        // Edge tiles should be walls
-        assert!(!layout.is_walkable(0, 0));
+        let positions = entity_spawn_positions(&map);
+        assert!(!positions.is_empty());
     }
 }

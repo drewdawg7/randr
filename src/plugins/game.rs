@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
 
 use crate::assets::AssetPlugin as GameAssetPlugin;
 use crate::dungeon::{DungeonPlugin, FloorId};
@@ -23,6 +24,7 @@ pub struct GamePlugin;
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
         app.add_plugins((
+            TiledPlugin::default(),
             StateTransitionPlugin,
             GameAssetPlugin,
             InputPlugin,
