@@ -4,7 +4,7 @@ use crate::assets::{FightBannerSlice, GameSprites, SpriteSheetKey};
 use crate::mob::Health;
 use crate::player::PlayerName;
 use crate::stats::{HasStats, StatSheet};
-use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBar};
+use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBarBundle};
 use crate::ui::widgets::spawn_three_slice_banner;
 use crate::ui::PlayerAttackTimer;
 use crate::ui::{Modal, SpawnModalExt};
@@ -104,16 +104,7 @@ fn spawn_player_column(
 
             column.spawn((
                 FightModalPlayerHealthBar,
-                SpriteHealthBar,
-                HealthBarValues {
-                    current: hp,
-                    max: max_hp,
-                },
-                Node {
-                    width: Val::Px(HEALTH_BAR_SIZE.0),
-                    height: Val::Px(HEALTH_BAR_SIZE.1),
-                    ..default()
-                },
+                SpriteHealthBarBundle::new(hp, max_hp, HEALTH_BAR_SIZE.0, HEALTH_BAR_SIZE.1),
             ));
 
             column.spawn((
@@ -177,16 +168,7 @@ fn spawn_mob_column(
 
             column.spawn((
                 FightModalMobHealthBar,
-                SpriteHealthBar,
-                HealthBarValues {
-                    current: current_hp,
-                    max: max_hp,
-                },
-                Node {
-                    width: Val::Px(HEALTH_BAR_SIZE.0),
-                    height: Val::Px(HEALTH_BAR_SIZE.1),
-                    ..default()
-                },
+                SpriteHealthBarBundle::new(current_hp, max_hp, HEALTH_BAR_SIZE.0, HEALTH_BAR_SIZE.1),
             ));
 
             column.spawn((

@@ -16,21 +16,18 @@ Sprite-based health bars with HP text overlay.
 
 ### Spawning a Health Bar
 
-Spawn a `SpriteHealthBar` entity with a `Node` for sizing and `HealthBarValues` for initial state:
+Use `SpriteHealthBarBundle` for spawning health bars:
 
 ```rust
-use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBar};
+use crate::ui::screens::health_bar::SpriteHealthBarBundle;
 
 parent.spawn((
-    SpriteHealthBar,
-    HealthBarValues { current: 50, max: 100 },
-    Node {
-        width: Val::Px(120.0),
-        height: Val::Px(16.0),
-        ..default()
-    },
+    MyHealthBarMarker,
+    SpriteHealthBarBundle::new(current_hp, max_hp, width, height),
 ));
 ```
+
+The bundle includes `SpriteHealthBar`, `HealthBarValues`, and `Node` with the specified dimensions.
 
 ### Initialization (`init_sprite_health_bars`)
 

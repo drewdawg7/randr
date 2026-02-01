@@ -181,6 +181,18 @@ This eliminates the 0.3s initial repeat delay between tile movements.
 - Walk animation: frames 13-18, 0.08s/frame, looping
 - Reverts to idle 0.3s after last movement completes
 
+### Player Spawning
+
+Use `DungeonPlayerBundle` to spawn the player entity with all required components:
+
+```rust
+use crate::ui::screens::dungeon::spawn::DungeonPlayerBundle;
+
+layer.spawn(DungeonPlayerBundle::new(player_pos, tile_size, entity_sprite_size));
+```
+
+The bundle includes `DungeonPlayer`, `DungeonPlayerSprite`, `TargetPosition`, `PlayerWalkTimer`, `ZIndex`, and `Node`.
+
 ## Player Movement (Code)
 ```rust
 occupancy.vacate(state.player_pos, state.player_size);

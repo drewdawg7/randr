@@ -16,6 +16,42 @@ use super::components::{
 };
 use super::constants::{BASE_TILE, ENTITY_VISUAL_SCALE};
 
+#[derive(Bundle)]
+pub struct DungeonPlayerBundle {
+    pub player: DungeonPlayer,
+    pub sprite: DungeonPlayerSprite,
+    pub target_pos: TargetPosition,
+    pub walk_timer: PlayerWalkTimer,
+    pub z_index: ZIndex,
+    pub node: Node,
+}
+
+impl DungeonPlayerBundle {
+    pub fn new(player_pos: GridPosition, tile_size: f32, entity_sprite_size: f32) -> Self {
+        let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
+        let player_px = Vec2::new(
+            player_pos.x as f32 * tile_size + entity_offset,
+            player_pos.y as f32 * tile_size + entity_offset,
+        );
+
+        Self {
+            player: DungeonPlayer,
+            sprite: DungeonPlayerSprite,
+            target_pos: TargetPosition(player_px),
+            walk_timer: PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
+            z_index: ZIndex(player_pos.y as i32 + 100),
+            node: Node {
+                position_type: PositionType::Absolute,
+                left: Val::Px(player_px.x),
+                top: Val::Px(player_px.y),
+                width: Val::Px(entity_sprite_size),
+                height: Val::Px(entity_sprite_size),
+                ..default()
+            },
+        }
+    }
+}
+
 use crate::ui::widgets::PlayerStats;
 
 pub fn spawn_floor_ui(
@@ -262,25 +298,5 @@ fn spawn_player(
     tile_size: f32,
     entity_sprite_size: f32,
 ) {
-    let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
-    let player_px = Vec2::new(
-        player_pos.x as f32 * tile_size + entity_offset,
-        player_pos.y as f32 * tile_size + entity_offset,
-    );
-
-    layer.spawn((
-        DungeonPlayer,
-        DungeonPlayerSprite,
-        TargetPosition(player_px),
-        PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
-        ZIndex(player_pos.y as i32 + 100),
-        Node {
-            position_type: PositionType::Absolute,
-            left: Val::Px(player_px.x),
-            top: Val::Px(player_px.y),
-            width: Val::Px(entity_sprite_size),
-            height: Val::Px(entity_sprite_size),
-            ..default()
-        },
-    ));
+    layer.spawn(DungeonPlayerBundle::new(player_pos, tile_size, entity_sprite_size));
 }

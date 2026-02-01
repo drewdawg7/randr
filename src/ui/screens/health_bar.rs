@@ -99,17 +99,18 @@ fn health_bar_slice(percent: f32) -> HealthBarSlice {
 #[derive(Bundle)]
 pub struct SpriteHealthBarBundle {
     pub marker: SpriteHealthBar,
+    pub values: HealthBarValues,
     pub node: Node,
 }
 
 impl SpriteHealthBarBundle {
-    pub fn new(align: AlignSelf) -> Self {
+    pub fn new(current: i32, max: i32, width: f32, height: f32) -> Self {
         Self {
             marker: SpriteHealthBar,
+            values: HealthBarValues { current, max },
             node: Node {
-                width: Val::Px(200.0),
-                height: Val::Px(20.0),
-                align_self: align,
+                width: Val::Px(width),
+                height: Val::Px(height),
                 ..default()
             },
         }
