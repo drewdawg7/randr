@@ -115,32 +115,38 @@ impl SpriteHealthBarBundle {
 pub fn init_sprite_health_bars(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
-    mut query: Query<(Entity, &mut Node), (With<SpriteHealthBar>, Without<ImageNode>)>,
+    mut query: Query<(Entity, &Health, &mut Node), (With<SpriteHealthBar>, Without<ImageNode>)>,
 ) {
     let Some(sheet) = game_sprites.get(SpriteSheetKey::UiAll) else {
         return;
     };
 
-    // Start with full health sprite
-    let Some(mut image) = sheet.image_node(HealthBarSlice::Health100.as_str()) else {
-        return;
-    };
-    image.image_mode = NodeImageMode::Sliced(TextureSlicer {
-        border: BorderRect {
-            min_inset: Vec2::new(3.0, 2.0),
-            max_inset: Vec2::new(3.0, 2.0),
-        },
-        ..default()
-    });
+    for (entity, health, mut node) in &mut query {
+        let percent = if health.max > 0 {
+            (health.current as f32 / health.max as f32 * 100.0).clamp(0.0, 100.0)
+        } else {
+            0.0
+        };
+        let slice = HealthBarSlice::for_percent(percent);
 
-    for (entity, mut node) in &mut query {
-        // Center children so HP text is centered on the bar
+        let Some(mut image) = sheet.image_node(slice.as_str()) else {
+            continue;
+        };
+        image.image_mode = NodeImageMode::Sliced(TextureSlicer {
+            border: BorderRect {
+                min_inset: Vec2::new(3.0, 2.0),
+                max_inset: Vec2::new(3.0, 2.0),
+            },
+            ..default()
+        });
+
         node.justify_content = JustifyContent::Center;
         node.align_items = AlignItems::Center;
 
-        commands.entity(entity).insert(image.clone()).with_child((
+        let hp_text = format!("{} / {}", health.current, health.max);
+        commands.entity(entity).insert(image).with_child((
             HealthBarText,
-            Text::new(""),
+            Text::new(hp_text),
             TextFont {
                 font_size: 10.0,
                 ..default()
