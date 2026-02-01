@@ -6,7 +6,7 @@ use super::system::{
     apply_victory_rewards_direct, entity_attacks_player, player_attacks_entity,
     player_effective_magicfind, process_player_defeat,
 };
-use crate::dungeon::{GridOccupancy, GridSize};
+use crate::dungeon::Occupancy;
 use crate::entities::Progression;
 use crate::inventory::Inventory;
 use crate::loot::collect_loot_drops;
@@ -121,7 +121,7 @@ fn handle_mob_death(
     mut mob_defeated_events: MessageWriter<MobDefeated>,
     mut skill_xp_events: MessageWriter<SkillXpGained>,
     mut victory_events: MessageWriter<VictoryAchieved>,
-    mut occupancy: ResMut<GridOccupancy>,
+    mut occupancy: Option<ResMut<Occupancy>>,
     mut player: PlayerResources,
     fight_mob: Option<Res<FightModalMob>>,
     mut mob_query: Query<(
@@ -137,7 +137,7 @@ fn handle_mob_death(
             continue;
         }
 
-        let Some(ref fight_mob) = fight_mob else {
+        let Some(ref _fight_mob) = fight_mob else {
             continue;
         };
 
@@ -176,7 +176,9 @@ fn handle_mob_death(
             amount: xp_reward.0 as u64,
         });
 
-        occupancy.vacate(fight_mob.pos, GridSize::single());
+        if let Some(ref mut occupancy) = occupancy {
+            occupancy.vacate(event.entity);
+        }
         commands.entity(event.entity).despawn();
 
         victory_events.write(VictoryAchieved {

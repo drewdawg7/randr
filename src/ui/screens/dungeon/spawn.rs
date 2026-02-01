@@ -4,13 +4,13 @@ use tracing::instrument;
 
 use crate::assets::GameSprites;
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
-use crate::dungeon::{map_path, DungeonEntity, DungeonEntityMarker, EntityRenderData, FloorType, TilePos};
+use crate::dungeon::{map_path, DungeonEntity, DungeonEntityMarker, EntityRenderData, FloorType};
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
 use crate::ui::widgets::PlayerStats;
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet, PlayerWalkTimer};
 
-use super::components::{DungeonPlayer, DungeonRoot, Interpolating, TargetPosition};
+use super::components::{DungeonPlayer, DungeonRoot, TargetPosition};
 
 const CHARACTER_SCALE: f32 = 2.0;
 
@@ -30,12 +30,13 @@ pub fn add_entity_visuals(
         return;
     };
 
-    let Some((world_pos, scale)) = tile_to_world(&tilemap_query, marker.pos) else {
-        return;
-    };
+    let scale = tilemap_query
+        .single()
+        .map(|(_, _, _, _, _, gt)| gt.to_scale_rotation_translation().0.x)
+        .unwrap_or(1.0);
 
-    let z = marker.pos.y as f32 * 0.01;
-    let world_pos = Vec3::new(world_pos.x, world_pos.y, z);
+    let z = marker.pos.y * 0.0001;
+    let world_pos = Vec3::new(marker.pos.x, marker.pos.y, z);
 
     match marker.entity_type.render_data() {
         EntityRenderData::SpriteSheet {
@@ -139,12 +140,13 @@ pub fn spawn_floor_ui(
 pub fn spawn_player(
     commands: &mut Commands,
     tilemap_query: &TilemapConfigQuery,
-    player_pos: TilePos,
+    player_pos: Vec2,
     player_sheet: &PlayerSpriteSheet,
 ) {
-    let Some((world_pos, scale)) = tile_to_world(tilemap_query, player_pos) else {
-        return;
-    };
+    let scale = tilemap_query
+        .single()
+        .map(|(_, _, _, _, _, gt)| gt.to_scale_rotation_translation().0.x)
+        .unwrap_or(1.0);
 
     let Some(texture) = player_sheet.texture.clone() else {
         return;
@@ -153,12 +155,11 @@ pub fn spawn_player(
         return;
     };
 
-    let z = player_pos.y as f32 * 0.01;
+    let z = player_pos.y * 0.0001;
 
     commands.spawn((
         DungeonPlayer,
-        TargetPosition(world_pos),
-        Interpolating,
+        TargetPosition(player_pos),
         PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
         Sprite::from_atlas_image(
             texture,
@@ -167,7 +168,7 @@ pub fn spawn_player(
                 index: player_sheet.animation.first_frame,
             },
         ),
-        Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, z))
+        Transform::from_translation(Vec3::new(player_pos.x, player_pos.y, z))
             .with_scale(Vec3::splat(scale * CHARACTER_SCALE)),
         SpriteAnimation::new(&player_sheet.animation),
     ));
@@ -187,14 +188,3 @@ pub type TilemapConfigQuery<'w, 's> = Query<
     With<TiledTilemap>,
 >;
 
-pub fn tile_to_world(tilemap_query: &TilemapConfigQuery, pos: TilePos) -> Option<(Vec2, f32)> {
-    let Ok((map_size, grid_size, tile_size, map_type, anchor, gt)) = tilemap_query.single() else {
-        return None;
-    };
-
-    let local_pos = pos.center_in_world(map_size, grid_size, tile_size, map_type, anchor);
-    let world_pos = gt.transform_point(local_pos.extend(0.0)).truncate();
-    let scale = gt.to_scale_rotation_translation().0.x;
-
-    Some((world_pos, scale))
-}

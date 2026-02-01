@@ -2,7 +2,7 @@ use std::ops::RangeInclusive;
 
 use bon::Builder;
 
-use super::grid::GridSize;
+use super::grid::EntitySize;
 use super::systems::spawning::{FloorSpawnConfig, MobSpawnEntry};
 use crate::mob::MobId;
 
@@ -15,7 +15,7 @@ pub enum SpawnEntityType {
 pub struct SpawnEntry {
     pub entity_type: SpawnEntityType,
     pub weight: u32,
-    pub size: GridSize,
+    pub size: EntitySize,
 }
 
 #[derive(Debug, Clone, Builder)]
@@ -49,7 +49,7 @@ use spawn_table_builder::State;
 
 impl<S: State> SpawnTableBuilder<S> {
     pub fn mob(mut self, mob_id: MobId, weight: u32) -> Self {
-        let size = mob_id.spec().grid_size;
+        let size = mob_id.spec().entity_size;
         self.entries.push(SpawnEntry {
             entity_type: SpawnEntityType::Mob(mob_id),
             weight,
@@ -129,7 +129,7 @@ mod tests {
         let entry = &table.entries[0];
         assert_eq!(entry.entity_type, SpawnEntityType::Mob(MobId::Goblin));
         assert_eq!(entry.weight, 1);
-        assert_eq!(entry.size, MobId::Goblin.spec().grid_size);
+        assert_eq!(entry.size, MobId::Goblin.spec().entity_size);
     }
 
     #[test]

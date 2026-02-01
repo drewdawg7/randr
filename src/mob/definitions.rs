@@ -1,6 +1,6 @@
 use std::ops::RangeInclusive;
 
-use crate::dungeon::GridSize;
+use crate::dungeon::EntitySize;
 use crate::item::ItemId;
 use crate::loot::LootTable;
 use crate::registry::RegistryDefaults;
@@ -17,7 +17,7 @@ entity_macros::define_entity! {
         pub dropped_xp: RangeInclusive<i32>,
         pub quality: MobQuality,
         pub loot: LootTable,
-        pub grid_size: GridSize,
+        pub entity_size: EntitySize,
     }
 
     id MobId;
@@ -35,7 +35,7 @@ entity_macros::define_entity! {
                 .with(ItemId::SlimeGel, 3, 4, 1..=4)
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         Cow {
             name: String::from("Cow"),
@@ -49,7 +49,7 @@ entity_macros::define_entity! {
                 .with(ItemId::Cowhide, 3, 4, 1..=3)
                 .with(ItemId::GoldRing, 1, 1000, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         Goblin {
             name: String::from("Goblin"),
@@ -64,7 +64,7 @@ entity_macros::define_entity! {
                 .with(ItemId::BasicShield, 1, 15, 1..=1)
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         DwarfDefender {
             name: String::from("Dwarf Defender"),
@@ -87,7 +87,7 @@ entity_macros::define_entity! {
                 .with(ItemId::IronSword, 1, 15, 1..=1)
                 .with(ItemId::CopperSword, 1, 20, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         DwarfWarrior {
             name: String::from("Dwarf Warrior"),
@@ -108,7 +108,7 @@ entity_macros::define_entity! {
                 .with(ItemId::IronGreaves, 1, 20, 1..=1)
                 .with(ItemId::IronLeggings, 1, 22, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         DwarfMiner {
             name: String::from("Dwarf Miner"),
@@ -127,7 +127,7 @@ entity_macros::define_entity! {
                 .with(ItemId::CopperIngot, 1, 12, 1..=1)
                 .with(ItemId::CopperPickaxe, 1, 20, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         DwarfKing {
             name: String::from("Dwarf King"),
@@ -155,7 +155,7 @@ entity_macros::define_entity! {
                 .with(ItemId::GoldOre, 1, 8, 1..=2)
                 .with(ItemId::GoldRing, 1, 10, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         Dragon {
             name: String::from("Dragon"),
@@ -169,7 +169,7 @@ entity_macros::define_entity! {
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
                 .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         BlackDragon {
             name: String::from("Black Dragon"),
@@ -183,7 +183,7 @@ entity_macros::define_entity! {
                 .with(ItemId::GoldRing, 1, 100, 1..=1)
                 .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1)
                 .build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
         Merchant {
             name: String::from("Merchant"),
@@ -194,7 +194,7 @@ entity_macros::define_entity! {
             dropped_gold: 0..=0,
             dropped_xp: 0..=0,
             loot: LootTable::new().build(),
-            grid_size: GridSize::single(),
+            entity_size: EntitySize::default(),
         }
     }
 }
@@ -216,7 +216,7 @@ impl MobSpec {
             dropped_xp: scale_range(&self.dropped_xp),
             quality: self.quality.clone(),
             loot: self.loot.clone(),
-            grid_size: self.grid_size,
+            entity_size: self.entity_size,
         }
     }
 
@@ -230,7 +230,7 @@ impl MobSpec {
             dropped_xp: self.dropped_xp.clone(),
             quality: self.quality.clone(),
             loot: self.loot.clone(),
-            grid_size: self.grid_size,
+            entity_size: self.entity_size,
         }
     }
 
@@ -244,7 +244,7 @@ impl MobSpec {
             dropped_xp: self.dropped_xp.clone(),
             quality,
             loot: self.loot.clone(),
-            grid_size: self.grid_size,
+            entity_size: self.entity_size,
         }
     }
 }
@@ -361,10 +361,10 @@ mod tests {
     }
 
     #[test]
-    fn all_mobs_have_grid_size() {
+    fn all_mobs_have_entity_size() {
         for mob_id in MobId::ALL {
             let spec = mob_id.spec();
-            assert!(spec.grid_size.cells() > 0);
+            assert!(spec.entity_size.width > 0.0 && spec.entity_size.height > 0.0);
         }
     }
 }

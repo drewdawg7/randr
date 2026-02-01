@@ -1,28 +1,27 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::TilePos;
 
 use crate::assets::SpriteSheetKey;
 use crate::crafting_station::CraftingStationType;
 use crate::mob::MobId;
 use crate::rock::RockType;
 
-use super::grid::GridSize;
+use super::grid::EntitySize;
 
 #[derive(Component)]
 pub struct DungeonEntityMarker {
-    pub pos: TilePos,
+    pub pos: Vec2,
     pub entity_type: DungeonEntity,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, PartialEq)]
 pub enum DungeonEntity {
-    Chest { variant: u8, size: GridSize },
-    Mob { mob_id: MobId, size: GridSize },
-    Npc { mob_id: MobId, size: GridSize },
-    Stairs { size: GridSize },
-    Rock { rock_type: RockType, sprite_variant: u8, size: GridSize },
-    CraftingStation { station_type: CraftingStationType, size: GridSize },
-    Door { size: GridSize },
+    Chest { variant: u8, size: EntitySize },
+    Mob { mob_id: MobId, size: EntitySize },
+    Npc { mob_id: MobId, size: EntitySize },
+    Stairs { size: EntitySize },
+    Rock { rock_type: RockType, sprite_variant: u8, size: EntitySize },
+    CraftingStation { station_type: CraftingStationType, size: EntitySize },
+    Door { size: EntitySize },
 }
 
 /// Describes how a DungeonEntity should be rendered in the grid.
@@ -37,8 +36,8 @@ pub enum EntityRenderData {
 }
 
 impl DungeonEntity {
-    /// Returns the grid size for this entity.
-    pub fn size(&self) -> GridSize {
+    /// Returns the size for this entity.
+    pub fn size(&self) -> EntitySize {
         match self {
             Self::Chest { size, .. } => *size,
             Self::Mob { size, .. } => *size,

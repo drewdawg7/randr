@@ -1,10 +1,18 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::TilePos;
 
 use crate::dungeon::floor::FloorId;
 use crate::dungeon::systems::spawning::FloorSpawnConfig;
-use crate::dungeon::{DungeonRegistry, GridSize};
+use crate::dungeon::{DungeonRegistry, EntitySize};
 use crate::location::LocationId;
+
+#[derive(Resource, Clone, Copy, Debug)]
+pub struct TileWorldSize(pub f32);
+
+impl Default for TileWorldSize {
+    fn default() -> Self {
+        Self(32.0)
+    }
+}
 
 #[derive(Resource, Default)]
 pub struct DungeonState {
@@ -13,8 +21,8 @@ pub struct DungeonState {
     pub floor_sequence: Vec<FloorId>,
     sequence_location: Option<LocationId>,
     pub dungeon_cleared: bool,
-    pub player_pos: TilePos,
-    pub player_size: GridSize,
+    pub player_pos: Vec2,
+    pub player_size: EntitySize,
 }
 
 impl DungeonState {
@@ -68,8 +76,8 @@ impl DungeonState {
     pub fn exit_dungeon(&mut self) {
         self.current_location = None;
         self.floor_index = 0;
-        self.player_pos = TilePos::default();
-        self.player_size = GridSize::default();
+        self.player_pos = Vec2::ZERO;
+        self.player_size = EntitySize::default();
     }
 
     pub fn get_spawn_config(&self) -> Option<FloorSpawnConfig> {

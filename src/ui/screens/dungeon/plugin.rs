@@ -7,10 +7,10 @@ use crate::combat::ActiveCombat;
 use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
 use crate::dungeon::{
     CraftingStationInteraction, DungeonEntity, DungeonEntityMarker, DungeonRegistry, DungeonState,
-    FloorReady, GridOccupancy, GridSize, MineEntity, MiningResult, MoveResult, NpcInteraction,
-    PlayerMoveIntent, SpawnFloor, TilePos,
+    EntitySize, FloorReady, MineEntity, MiningResult, MoveResult, NpcInteraction, Occupancy,
+    PlayerMoveIntent, SpawnFloor, TileWorldSize,
 };
-use crate::input::{GameAction, HeldDirection, NavigationDirection};
+use crate::input::{GameAction, NavigationDirection};
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
 use crate::location::LocationId;
 use crate::mob::MobId;
@@ -24,7 +24,7 @@ use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
 use super::components::{DungeonPlayer, DungeonRoot, Interpolating, PendingPlayerSpawn, TargetPosition};
-use super::spawn::{add_entity_visuals, spawn_floor_ui, spawn_player, tile_to_world, TilemapConfigQuery};
+use super::spawn::{add_entity_visuals, spawn_floor_ui, spawn_player, TilemapConfigQuery};
 use super::systems::cleanup_dungeon;
 
 pub struct DungeonScreenPlugin;
@@ -41,6 +41,7 @@ impl Plugin for DungeonScreenPlugin {
                     handle_floor_ready.run_if(on_message::<FloorReady>),
                     spawn_player_when_ready.run_if(resource_exists::<PendingPlayerSpawn>),
                     handle_dungeon_movement
+                        .run_if(on_message::<GameAction>)
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     handle_move_result.run_if(on_message::<MoveResult>),
                     interpolate_player_position.run_if(any_with_component::<Interpolating>),
@@ -83,8 +84,11 @@ fn enter_dungeon(
     let layout_id = floor_type.layout_id(false);
     let (map_width, map_height) = layout_id.dimensions();
 
-    state.player_pos = TilePos::new(map_width as u32 / 2, map_height as u32 / 2);
-    state.player_size = GridSize::single();
+    let tile_size = 32.0;
+    let center_x = (map_width as f32 / 2.0) * tile_size;
+    let center_y = (map_height as f32 / 2.0) * tile_size;
+    state.player_pos = Vec2::new(center_x, center_y);
+    state.player_size = EntitySize::new(tile_size, tile_size);
 
     spawn_floor.write(SpawnFloor {
         player_pos: state.player_pos,
@@ -152,46 +156,27 @@ fn spawn_player_when_ready(
 #[derive(Resource)]
 struct LastMoveDirection(NavigationDirection);
 
-const MOVE_INTERVAL: f32 = 0.1;
 const MOVE_SPEED: f32 = 256.0;
 
+#[instrument(level = "debug", skip_all)]
 fn handle_dungeon_movement(
     mut commands: Commands,
-    time: Res<Time>,
     mut action_reader: MessageReader<GameAction>,
     mut move_events: MessageWriter<PlayerMoveIntent>,
-    held_direction: Res<HeldDirection>,
-    mut move_timer: Local<f32>,
 ) {
-    let fresh_direction = action_reader.read().find_map(|a| match a {
-        GameAction::Navigate(dir) => Some(*dir),
-        _ => None,
-    });
-
-    if let Some(direction) = fresh_direction {
-        commands.insert_resource(LastMoveDirection(direction));
-        move_events.write(PlayerMoveIntent { direction });
-        *move_timer = MOVE_INTERVAL;
-        return;
-    }
-
-    if let Some(direction) = held_direction.0 {
-        *move_timer -= time.delta_secs();
-        if *move_timer <= 0.0 {
-            commands.insert_resource(LastMoveDirection(direction));
-            move_events.write(PlayerMoveIntent { direction });
-            *move_timer = MOVE_INTERVAL;
+    for action in action_reader.read() {
+        if let GameAction::Navigate(direction) = action {
+            commands.insert_resource(LastMoveDirection(*direction));
+            move_events.write(PlayerMoveIntent { direction: *direction });
         }
-    } else {
-        *move_timer = 0.0;
     }
 }
 
+#[instrument(level = "debug", skip_all)]
 fn handle_move_result(
     mut commands: Commands,
     mut events: MessageReader<MoveResult>,
     last_direction: Option<Res<LastMoveDirection>>,
-    tilemap_query: TilemapConfigQuery,
     sheet: Res<PlayerSpriteSheet>,
     fight_mob: Option<Res<FightModalMob>>,
     mut player_query: Query<
@@ -214,11 +199,7 @@ fn handle_move_result(
                     continue;
                 };
 
-                let Some((world_pos, _)) = tile_to_world(&tilemap_query, *new_pos) else {
-                    continue;
-                };
-
-                target_pos.0 = world_pos;
+                target_pos.0 = *new_pos;
                 commands.entity(entity).insert(Interpolating);
 
                 if let Some(ref dir) = last_direction {
@@ -265,7 +246,8 @@ fn handle_interact_action(
     mut crafting_events: MessageWriter<CraftingStationInteraction>,
     mut mine_events: MessageWriter<MineEntity>,
     state: Res<DungeonState>,
-    occupancy: Res<GridOccupancy>,
+    tile_size: Option<Res<TileWorldSize>>,
+    occupancy: Option<Res<Occupancy>>,
     entity_query: Query<&DungeonEntityMarker>,
 ) {
     let is_interact = action_reader.read().any(|a| *a == GameAction::Mine);
@@ -273,21 +255,22 @@ fn handle_interact_action(
         return;
     }
 
+    let Some(occupancy) = occupancy else {
+        return;
+    };
+
+    let step = tile_size.map(|t| t.0).unwrap_or(32.0);
     let px = state.player_pos.x;
     let py = state.player_pos.y;
-    let adjacent_cells: [(i32, i32); 4] = [
-        (px as i32, py as i32 - 1),
-        (px as i32, py as i32 + 1),
-        (px as i32 - 1, py as i32),
-        (px as i32 + 1, py as i32),
+    let adjacent_positions: [Vec2; 4] = [
+        Vec2::new(px, py - step),
+        Vec2::new(px, py + step),
+        Vec2::new(px - step, py),
+        Vec2::new(px + step, py),
     ];
 
-    for (x, y) in adjacent_cells {
-        if x < 0 || y < 0 {
-            continue;
-        }
-
-        let Some(entity) = occupancy.entity_at(x as u32, y as u32) else {
+    for pos in adjacent_positions {
+        let Some(entity) = occupancy.entity_at(pos, step / 2.0) else {
             continue;
         };
 
@@ -443,18 +426,27 @@ fn interpolate_player_position(
 ) {
     for (entity, target, mut transform) in &mut query {
         let current = transform.translation.truncate();
-        let delta = target.0 - current;
-        let distance = delta.length();
-
-        if distance < 0.5 {
+        if let Some(new_pos) = interpolate_step(current, target.0, time.delta_secs()) {
+            transform.translation.x = new_pos.x;
+            transform.translation.y = new_pos.y;
+        } else {
             transform.translation.x = target.0.x;
             transform.translation.y = target.0.y;
             commands.entity(entity).remove::<Interpolating>();
-        } else {
-            let step = MOVE_SPEED * time.delta_secs();
-            let new_pos = current + delta.normalize() * step.min(distance);
-            transform.translation.x = new_pos.x;
-            transform.translation.y = new_pos.y;
         }
+    }
+}
+
+#[instrument(level = "debug", skip_all, fields(?current, ?target, distance))]
+fn interpolate_step(current: Vec2, target: Vec2, delta_secs: f32) -> Option<Vec2> {
+    let delta = target - current;
+    let distance = delta.length();
+    tracing::Span::current().record("distance", distance);
+
+    if distance < 0.5 {
+        None
+    } else {
+        let step = MOVE_SPEED * delta_secs;
+        Some(current + delta.normalize() * step.min(distance))
     }
 }

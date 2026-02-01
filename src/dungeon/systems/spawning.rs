@@ -8,7 +8,7 @@ use rand::Rng;
 use crate::crafting_station::CraftingStationType;
 use crate::dungeon::tile_components::{can_have_entity, is_door, is_solid};
 use crate::dungeon::tile_index::TileIndex;
-use crate::dungeon::{DungeonEntity, DungeonEntityMarker, GridOccupancy, GridSize};
+use crate::dungeon::{DungeonEntity, DungeonEntityMarker, EntitySize, Occupancy, TileWorldSize};
 use crate::mob::MobId;
 use crate::rock::RockType;
 
@@ -69,12 +69,55 @@ pub fn build_tile_index(
     commands.insert_resource(index);
 }
 
+type TilemapQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static TilemapSize,
+        &'static TilemapGridSize,
+        &'static TilemapTileSize,
+        &'static TilemapType,
+        &'static TilemapAnchor,
+        &'static GlobalTransform,
+    ),
+    With<TiledTilemap>,
+>;
+
+struct SpawnContext<'a> {
+    tile_size: f32,
+    tilemap: Option<(
+        &'a TilemapSize,
+        &'a TilemapGridSize,
+        &'a TilemapTileSize,
+        &'a TilemapType,
+        &'a TilemapAnchor,
+        &'a GlobalTransform,
+    )>,
+}
+
+impl SpawnContext<'_> {
+    fn tile_to_world(&self, pos: TilePos) -> Vec2 {
+        if let Some((map_size, grid_size, tile_size, map_type, anchor, gt)) = self.tilemap {
+            let local_pos = pos.center_in_world(map_size, grid_size, tile_size, map_type, anchor);
+            gt.transform_point(local_pos.extend(0.0)).truncate()
+        } else {
+            Vec2::new(pos.x as f32 * self.tile_size, pos.y as f32 * self.tile_size)
+        }
+    }
+
+    fn entity_size(&self) -> EntitySize {
+        EntitySize::new(self.tile_size, self.tile_size)
+    }
+}
+
 pub fn on_map_created(
     _trigger: On<TiledEvent<MapCreated>>,
     mut commands: Commands,
     spawn_tiles: Query<&TilePos, With<can_have_entity>>,
+    tilemap_query: TilemapQuery,
+    tile_world_size: Option<Res<TileWorldSize>>,
     config: Option<Res<FloorSpawnConfig>>,
-    occupancy: Option<ResMut<GridOccupancy>>,
+    occupancy: Option<ResMut<Occupancy>>,
 ) {
     let Some(config) = config else {
         return;
@@ -82,6 +125,10 @@ pub fn on_map_created(
     let Some(mut occupancy) = occupancy else {
         return;
     };
+
+    let tile_size = tile_world_size.map(|t| t.0).unwrap_or(32.0);
+    let tilemap = tilemap_query.single().ok();
+    let ctx = SpawnContext { tile_size, tilemap };
 
     let mut rng = rand::thread_rng();
 
@@ -93,12 +140,12 @@ pub fn on_map_created(
 
     let mut used_positions: Vec<TilePos> = Vec::new();
 
-    spawn_chests(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &mut rng);
-    spawn_stairs(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &mut rng);
-    spawn_rocks(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &mut rng);
-    spawn_crafting_stations(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &mut rng);
-    spawn_npcs(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &mut rng);
-    spawn_mobs(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &mut rng);
+    spawn_chests(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &ctx, &mut rng);
+    spawn_stairs(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &ctx, &mut rng);
+    spawn_rocks(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &ctx, &mut rng);
+    spawn_crafting_stations(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &ctx, &mut rng);
+    spawn_npcs(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &ctx, &mut rng);
+    spawn_mobs(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &ctx, &mut rng);
 
     commands.remove_resource::<FloorSpawnConfig>();
 }
@@ -106,13 +153,11 @@ pub fn on_map_created(
 fn find_spawn_position(
     available: &[TilePos],
     used: &[TilePos],
-    occupancy: &GridOccupancy,
-    size: GridSize,
     rng: &mut impl Rng,
 ) -> Option<TilePos> {
     let candidates: Vec<_> = available
         .iter()
-        .filter(|pos| !used.contains(pos) && occupancy.can_place(**pos, size))
+        .filter(|pos| !used.contains(pos))
         .collect();
 
     candidates.choose(rng).copied().copied()
@@ -123,7 +168,8 @@ fn spawn_chests(
     config: &FloorSpawnConfig,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
-    occupancy: &mut GridOccupancy,
+    occupancy: &mut Occupancy,
+    ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
     if *config.chest.end() == 0 {
@@ -131,12 +177,14 @@ fn spawn_chests(
     }
 
     let count = rng.gen_range(config.chest.clone());
-    let size = GridSize::single();
+    let size = ctx.entity_size();
 
     for _ in 0..count {
-        let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+        let Some(tile_pos) = find_spawn_position(available, used, rng) else {
             break;
         };
+
+        let world_pos = ctx.tile_to_world(tile_pos);
 
         let entity_type = DungeonEntity::Chest {
             variant: rng.gen_range(0..4),
@@ -144,11 +192,11 @@ fn spawn_chests(
         };
 
         let entity = commands
-            .spawn(DungeonEntityMarker { pos, entity_type })
+            .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
             .id();
 
-        occupancy.occupy(pos, size, entity);
-        used.push(pos);
+        occupancy.occupy(world_pos, size, entity);
+        used.push(tile_pos);
     }
 }
 
@@ -157,7 +205,8 @@ fn spawn_stairs(
     config: &FloorSpawnConfig,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
-    occupancy: &mut GridOccupancy,
+    occupancy: &mut Occupancy,
+    ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
     if *config.stairs.end() == 0 {
@@ -165,21 +214,23 @@ fn spawn_stairs(
     }
 
     let count = rng.gen_range(config.stairs.clone());
-    let size = GridSize::single();
+    let size = ctx.entity_size();
 
     for _ in 0..count {
-        let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+        let Some(tile_pos) = find_spawn_position(available, used, rng) else {
             break;
         };
+
+        let world_pos = ctx.tile_to_world(tile_pos);
 
         let entity_type = DungeonEntity::Stairs { size };
 
         let entity = commands
-            .spawn(DungeonEntityMarker { pos, entity_type })
+            .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
             .id();
 
-        occupancy.occupy(pos, size, entity);
-        used.push(pos);
+        occupancy.occupy(world_pos, size, entity);
+        used.push(tile_pos);
     }
 }
 
@@ -188,7 +239,8 @@ fn spawn_rocks(
     config: &FloorSpawnConfig,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
-    occupancy: &mut GridOccupancy,
+    occupancy: &mut Occupancy,
+    ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
     if *config.rock.end() == 0 {
@@ -196,12 +248,14 @@ fn spawn_rocks(
     }
 
     let count = rng.gen_range(config.rock.clone());
-    let size = GridSize::single();
+    let size = ctx.entity_size();
 
     for _ in 0..count {
-        let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+        let Some(tile_pos) = find_spawn_position(available, used, rng) else {
             break;
         };
+
+        let world_pos = ctx.tile_to_world(tile_pos);
 
         let rock_type = match rng.gen_range(0..4u8) {
             0 => RockType::Coal,
@@ -217,11 +271,11 @@ fn spawn_rocks(
         };
 
         let entity = commands
-            .spawn(DungeonEntityMarker { pos, entity_type })
+            .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
             .id();
 
-        occupancy.occupy(pos, size, entity);
-        used.push(pos);
+        occupancy.occupy(world_pos, size, entity);
+        used.push(tile_pos);
     }
 }
 
@@ -230,10 +284,11 @@ fn spawn_crafting_stations(
     config: &FloorSpawnConfig,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
-    occupancy: &mut GridOccupancy,
+    occupancy: &mut Occupancy,
+    ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    let size = GridSize::single();
+    let size = ctx.entity_size();
 
     let forge_count = if *config.forge.end() > 0 {
         rng.gen_range(config.forge.clone())
@@ -244,9 +299,11 @@ fn spawn_crafting_stations(
     };
 
     for _ in 0..forge_count {
-        let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+        let Some(tile_pos) = find_spawn_position(available, used, rng) else {
             break;
         };
+
+        let world_pos = ctx.tile_to_world(tile_pos);
 
         let entity_type = DungeonEntity::CraftingStation {
             station_type: CraftingStationType::Forge,
@@ -254,11 +311,11 @@ fn spawn_crafting_stations(
         };
 
         let entity = commands
-            .spawn(DungeonEntityMarker { pos, entity_type })
+            .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
             .id();
 
-        occupancy.occupy(pos, size, entity);
-        used.push(pos);
+        occupancy.occupy(world_pos, size, entity);
+        used.push(tile_pos);
     }
 
     let anvil_count = if *config.anvil.end() > 0 {
@@ -270,9 +327,11 @@ fn spawn_crafting_stations(
     };
 
     for _ in 0..anvil_count {
-        let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+        let Some(tile_pos) = find_spawn_position(available, used, rng) else {
             break;
         };
+
+        let world_pos = ctx.tile_to_world(tile_pos);
 
         let entity_type = DungeonEntity::CraftingStation {
             station_type: CraftingStationType::Anvil,
@@ -280,11 +339,11 @@ fn spawn_crafting_stations(
         };
 
         let entity = commands
-            .spawn(DungeonEntityMarker { pos, entity_type })
+            .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
             .id();
 
-        occupancy.occupy(pos, size, entity);
-        used.push(pos);
+        occupancy.occupy(world_pos, size, entity);
+        used.push(tile_pos);
     }
 }
 
@@ -293,43 +352,48 @@ fn spawn_npcs(
     config: &FloorSpawnConfig,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
-    occupancy: &mut GridOccupancy,
+    occupancy: &mut Occupancy,
+    ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    let size = GridSize::single();
+    let size = ctx.entity_size();
 
     for (mob_id, count_range) in &config.npc_spawns {
         let count = rng.gen_range(count_range.clone());
         for _ in 0..count {
-            let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+            let Some(tile_pos) = find_spawn_position(available, used, rng) else {
                 break;
             };
+
+            let world_pos = ctx.tile_to_world(tile_pos);
 
             let entity_type = DungeonEntity::Npc { mob_id: *mob_id, size };
 
             let entity = commands
-                .spawn(DungeonEntityMarker { pos, entity_type })
+                .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
                 .id();
 
-            occupancy.occupy(pos, size, entity);
-            used.push(pos);
+            occupancy.occupy(world_pos, size, entity);
+            used.push(tile_pos);
         }
     }
 
     for (mob_id, probability) in &config.npc_chances {
         if rng.gen_bool(*probability) {
-            let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+            let Some(tile_pos) = find_spawn_position(available, used, rng) else {
                 continue;
             };
+
+            let world_pos = ctx.tile_to_world(tile_pos);
 
             let entity_type = DungeonEntity::Npc { mob_id: *mob_id, size };
 
             let entity = commands
-                .spawn(DungeonEntityMarker { pos, entity_type })
+                .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
                 .id();
 
-            occupancy.occupy(pos, size, entity);
-            used.push(pos);
+            occupancy.occupy(world_pos, size, entity);
+            used.push(tile_pos);
         }
     }
 }
@@ -339,24 +403,27 @@ fn spawn_mobs(
     config: &FloorSpawnConfig,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
-    occupancy: &mut GridOccupancy,
+    occupancy: &mut Occupancy,
+    ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
     for (mob_id, count) in &config.guaranteed_mobs {
-        let size = mob_id.spec().grid_size;
+        let size = mob_id.spec().entity_size;
         for _ in 0..*count {
-            let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+            let Some(tile_pos) = find_spawn_position(available, used, rng) else {
                 break;
             };
+
+            let world_pos = ctx.tile_to_world(tile_pos);
 
             let entity_type = DungeonEntity::Mob { mob_id: *mob_id, size };
 
             let entity = commands
-                .spawn(DungeonEntityMarker { pos, entity_type })
+                .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
                 .id();
 
-            occupancy.occupy(pos, size, entity);
-            used.push(pos);
+            occupancy.occupy(world_pos, size, entity);
+            used.push(tile_pos);
         }
     }
 
@@ -376,19 +443,21 @@ fn spawn_mobs(
             continue;
         };
 
-        let size = entry.mob_id.spec().grid_size;
-        let Some(pos) = find_spawn_position(available, used, occupancy, size, rng) else {
+        let size = entry.mob_id.spec().entity_size;
+        let Some(tile_pos) = find_spawn_position(available, used, rng) else {
             break;
         };
+
+        let world_pos = ctx.tile_to_world(tile_pos);
 
         let entity_type = DungeonEntity::Mob { mob_id: entry.mob_id, size };
 
         let entity = commands
-            .spawn(DungeonEntityMarker { pos, entity_type })
+            .spawn(DungeonEntityMarker { pos: world_pos, entity_type })
             .id();
 
-        occupancy.occupy(pos, size, entity);
-        used.push(pos);
+        occupancy.occupy(world_pos, size, entity);
+        used.push(tile_pos);
     }
 }
 

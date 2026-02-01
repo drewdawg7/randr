@@ -1,8 +1,7 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::TilePos;
 
 use crate::crafting_station::CraftingStationType;
-use crate::dungeon::{DungeonEntity, FloorType, GridSize};
+use crate::dungeon::{DungeonEntity, EntitySize, FloorType};
 use crate::input::NavigationDirection;
 use crate::loot::LootDrop;
 use crate::mob::MobId;
@@ -15,13 +14,13 @@ pub struct PlayerMoveIntent {
 #[derive(Message, Debug, Clone)]
 pub enum MoveResult {
     Moved {
-        new_pos: TilePos,
+        new_pos: Vec2,
     },
     Blocked,
     TriggeredCombat {
         mob_id: MobId,
         entity: Entity,
-        pos: TilePos,
+        pos: Vec2,
     },
     TriggeredStairs,
     TriggeredDoor,
@@ -36,8 +35,8 @@ pub enum FloorTransition {
 
 #[derive(Message, Debug, Clone)]
 pub struct FloorReady {
-    pub player_pos: TilePos,
-    pub player_size: GridSize,
+    pub player_pos: Vec2,
+    pub player_size: EntitySize,
     pub floor_type: FloorType,
     pub map_width: usize,
     pub map_height: usize,
@@ -57,7 +56,7 @@ pub struct CraftingStationInteraction {
 #[derive(Message, Debug, Clone)]
 pub struct MineEntity {
     pub entity: Entity,
-    pub pos: TilePos,
+    pub pos: Vec2,
     pub entity_type: DungeonEntity,
 }
 

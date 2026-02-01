@@ -1,5 +1,4 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::TilePos;
 
 use crate::combat::ActiveCombat;
 use crate::mob::{Health, MobId};
@@ -58,7 +57,7 @@ impl SpriteMarker for FightModalMobSprite {
 #[derive(Resource)]
 pub struct FightModalMob {
     pub mob_id: MobId,
-    pub pos: TilePos,
+    pub pos: Vec2,
     pub entity: Entity,
 }
 

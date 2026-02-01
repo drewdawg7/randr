@@ -1,7 +1,5 @@
 use bevy::prelude::*;
 
-use crate::dungeon::TilePos;
-
 #[derive(Component)]
 pub struct DungeonPlayer;
 
@@ -15,4 +13,4 @@ pub struct TargetPosition(pub Vec2);
 pub struct Interpolating;
 
 #[derive(Resource)]
-pub struct PendingPlayerSpawn(pub TilePos);
+pub struct PendingPlayerSpawn(pub Vec2);

@@ -1,13 +1,12 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::TilePos;
 use tracing::instrument;
 
-use crate::dungeon::{FloorMonsterCount, FloorReady, FloorType, GridOccupancy, GridSize};
+use crate::dungeon::{EntitySize, FloorMonsterCount, FloorReady, FloorType, Occupancy};
 
 #[derive(Message)]
 pub struct SpawnFloor {
-    pub player_pos: TilePos,
-    pub player_size: GridSize,
+    pub player_pos: Vec2,
+    pub player_size: EntitySize,
     pub floor_type: FloorType,
     pub map_width: usize,
     pub map_height: usize,
@@ -20,8 +19,8 @@ pub fn prepare_floor(
     mut floor_ready: MessageWriter<FloorReady>,
 ) {
     for event in events.read() {
-        let mut occupancy = GridOccupancy::new(event.map_width as u32, event.map_height as u32);
-        occupancy.mark_blocked(event.player_pos, event.player_size);
+        let mut occupancy = Occupancy::new();
+        occupancy.set_player(event.player_pos, event.player_size);
         commands.insert_resource(occupancy);
         commands.insert_resource(FloorMonsterCount(0));
 

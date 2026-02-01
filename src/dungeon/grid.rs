@@ -1,122 +1,114 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
-pub struct GridSize {
-    pub width: u8,
-    pub height: u8,
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct EntitySize {
+    pub width: f32,
+    pub height: f32,
 }
 
-impl GridSize {
-    pub const fn new(width: u8, height: u8) -> Self {
+impl Default for EntitySize {
+    fn default() -> Self {
+        Self {
+            width: 32.0,
+            height: 32.0,
+        }
+    }
+}
+
+impl EntitySize {
+    pub const fn new(width: f32, height: f32) -> Self {
         Self { width, height }
     }
 
-    pub const fn single() -> Self {
+    pub fn single(tile_size: f32) -> Self {
         Self {
-            width: 1,
-            height: 1,
+            width: tile_size,
+            height: tile_size,
         }
-    }
-
-    pub const fn cells(&self) -> usize {
-        self.width as usize * self.height as usize
-    }
-
-    pub fn cell_offsets(&self) -> impl Iterator<Item = (u8, u8)> {
-        let width = self.width;
-        let height = self.height;
-        (0..height).flat_map(move |y| (0..width).map(move |x| (x, y)))
     }
 }
 
-pub fn occupied_cells(pos: TilePos, size: GridSize) -> impl Iterator<Item = (u32, u32)> {
-    let base_x = pos.x;
-    let base_y = pos.y;
-    let width = size.width;
-    let height = size.height;
-    (0..height).flat_map(move |dy| (0..width).map(move |dx| (base_x + dx as u32, base_y + dy as u32)))
+#[derive(Debug, Clone, Copy)]
+struct OccupiedEntity {
+    entity: Entity,
+    pos: Vec2,
+    size: EntitySize,
 }
 
-#[derive(Resource)]
-pub struct GridOccupancy {
-    width: u32,
-    height: u32,
-    cells: Vec<Option<Entity>>,
-    blocked: Vec<bool>,
+#[derive(Resource, Default)]
+pub struct Occupancy {
+    entities: Vec<OccupiedEntity>,
+    player_pos: Option<Vec2>,
+    player_size: EntitySize,
 }
 
-impl GridOccupancy {
-    pub fn new(width: u32, height: u32) -> Self {
-        let size = (width * height) as usize;
-        Self {
-            width,
-            height,
-            cells: vec![None; size],
-            blocked: vec![false; size],
-        }
+impl Occupancy {
+    pub fn new() -> Self {
+        Self::default()
     }
 
-    fn index(&self, x: u32, y: u32) -> Option<usize> {
-        if x < self.width && y < self.height {
-            Some((y * self.width + x) as usize)
-        } else {
-            None
-        }
+    pub fn set_player(&mut self, pos: Vec2, size: EntitySize) {
+        self.player_pos = Some(pos);
+        self.player_size = size;
     }
 
-    pub fn is_occupied(&self, x: u32, y: u32) -> bool {
-        self.index(x, y)
-            .map(|i| self.cells[i].is_some() || self.blocked[i])
-            .unwrap_or(false)
+    pub fn update_player_pos(&mut self, pos: Vec2) {
+        self.player_pos = Some(pos);
     }
 
-    pub fn can_place(&self, pos: TilePos, size: GridSize) -> bool {
-        occupied_cells(pos, size).all(|(x, y)| {
-            self.index(x, y).is_some() && !self.is_occupied(x, y)
-        })
+    pub fn can_place(&self, pos: Vec2, size: EntitySize) -> bool {
+        !self.overlaps_any(pos, size)
     }
 
     #[instrument(level = "debug", skip(self), fields(pos = ?pos, size = ?size, entity = ?entity))]
-    pub fn occupy(&mut self, pos: TilePos, size: GridSize, entity: Entity) {
-        for (x, y) in occupied_cells(pos, size) {
-            if let Some(i) = self.index(x, y) {
-                self.cells[i] = Some(entity);
-            }
-        }
+    pub fn occupy(&mut self, pos: Vec2, size: EntitySize, entity: Entity) {
+        self.entities.push(OccupiedEntity { entity, pos, size });
     }
 
-    pub fn mark_blocked(&mut self, pos: TilePos, size: GridSize) {
-        for (x, y) in occupied_cells(pos, size) {
-            if let Some(i) = self.index(x, y) {
-                self.blocked[i] = true;
-            }
-        }
+    pub fn vacate(&mut self, entity: Entity) {
+        self.entities.retain(|e| e.entity != entity);
     }
 
-    pub fn unmark_blocked(&mut self, pos: TilePos, size: GridSize) {
-        for (x, y) in occupied_cells(pos, size) {
-            if let Some(i) = self.index(x, y) {
-                self.blocked[i] = false;
-            }
-        }
+    pub fn entity_at(&self, pos: Vec2, radius: f32) -> Option<Entity> {
+        self.entities
+            .iter()
+            .find(|e| Self::point_in_rect(pos, e.pos, e.size, radius))
+            .map(|e| e.entity)
     }
 
-    pub fn vacate(&mut self, pos: TilePos, size: GridSize) {
-        for (x, y) in occupied_cells(pos, size) {
-            if let Some(i) = self.index(x, y) {
-                self.cells[i] = None;
-            }
-        }
+    pub fn entity_overlapping(&self, pos: Vec2, size: EntitySize) -> Option<Entity> {
+        self.entities
+            .iter()
+            .find(|e| Self::rects_overlap(pos, size, e.pos, e.size))
+            .map(|e| e.entity)
     }
 
-    #[instrument(level = "debug", skip(self), ret)]
-    pub fn entity_at(&self, x: u32, y: u32) -> Option<Entity> {
-        self.index(x, y)
-            .and_then(|i| self.cells.get(i))
-            .copied()
-            .flatten()
+    fn overlaps_any(&self, pos: Vec2, size: EntitySize) -> bool {
+        if let Some(player_pos) = self.player_pos {
+            if Self::rects_overlap(pos, size, player_pos, self.player_size) {
+                return true;
+            }
+        }
+        self.entities
+            .iter()
+            .any(|e| Self::rects_overlap(pos, size, e.pos, e.size))
+    }
+
+    fn point_in_rect(point: Vec2, rect_pos: Vec2, rect_size: EntitySize, tolerance: f32) -> bool {
+        let half_w = rect_size.width / 2.0 + tolerance;
+        let half_h = rect_size.height / 2.0 + tolerance;
+        (point.x - rect_pos.x).abs() < half_w && (point.y - rect_pos.y).abs() < half_h
+    }
+
+    fn rects_overlap(pos1: Vec2, size1: EntitySize, pos2: Vec2, size2: EntitySize) -> bool {
+        let half_w1 = size1.width / 2.0;
+        let half_h1 = size1.height / 2.0;
+        let half_w2 = size2.width / 2.0;
+        let half_h2 = size2.height / 2.0;
+
+        (pos1.x - pos2.x).abs() < half_w1 + half_w2
+            && (pos1.y - pos2.y).abs() < half_h1 + half_h2
     }
 }
 
@@ -125,80 +117,41 @@ mod tests {
     use super::*;
 
     #[test]
-    fn grid_size_single() {
-        let size = GridSize::single();
-        assert_eq!(size.width, 1);
-        assert_eq!(size.height, 1);
-        assert_eq!(size.cells(), 1);
-    }
-
-    #[test]
-    fn grid_size_cells() {
-        let size = GridSize::new(3, 2);
-        assert_eq!(size.cells(), 6);
-    }
-
-    #[test]
-    fn grid_size_cell_offsets() {
-        let size = GridSize::new(2, 2);
-        let offsets: Vec<_> = size.cell_offsets().collect();
-        assert_eq!(offsets, vec![(0, 0), (1, 0), (0, 1), (1, 1)]);
-    }
-
-    #[test]
-    fn test_occupied_cells() {
-        let pos = TilePos::new(5, 3);
-        let size = GridSize::new(2, 2);
-        let cells: Vec<_> = occupied_cells(pos, size).collect();
-        assert_eq!(cells, vec![(5, 3), (6, 3), (5, 4), (6, 4)]);
-    }
-
-    #[test]
-    fn grid_occupancy_basic() {
-        let mut occupancy = GridOccupancy::new(10, 10);
-        assert!(!occupancy.is_occupied(5, 5));
-
+    fn occupancy_basic() {
+        let mut occupancy = Occupancy::new();
         let entity = Entity::from_raw_u32(1).unwrap();
-        let pos = TilePos::new(5, 5);
-        let size = GridSize::single();
+        let pos = Vec2::new(100.0, 100.0);
+        let size = EntitySize::new(32.0, 32.0);
 
         assert!(occupancy.can_place(pos, size));
         occupancy.occupy(pos, size, entity);
-        assert!(occupancy.is_occupied(5, 5));
         assert!(!occupancy.can_place(pos, size));
-        assert_eq!(occupancy.entity_at(5, 5), Some(entity));
+        assert_eq!(occupancy.entity_overlapping(pos, size), Some(entity));
 
-        occupancy.vacate(pos, size);
-        assert!(!occupancy.is_occupied(5, 5));
-        assert_eq!(occupancy.entity_at(5, 5), None);
+        occupancy.vacate(entity);
+        assert!(occupancy.can_place(pos, size));
     }
 
     #[test]
-    fn grid_occupancy_multi_cell() {
-        let mut occupancy = GridOccupancy::new(10, 10);
-        let entity = Entity::from_raw_u32(2).unwrap();
-        let pos = TilePos::new(2, 2);
-        let size = GridSize::new(3, 2);
+    fn occupancy_no_overlap() {
+        let mut occupancy = Occupancy::new();
+        let entity = Entity::from_raw_u32(1).unwrap();
+        let pos1 = Vec2::new(100.0, 100.0);
+        let pos2 = Vec2::new(200.0, 200.0);
+        let size = EntitySize::new(32.0, 32.0);
 
-        occupancy.occupy(pos, size, entity);
-
-        for (x, y) in occupied_cells(pos, size) {
-            assert!(occupancy.is_occupied(x, y));
-            assert_eq!(occupancy.entity_at(x, y), Some(entity));
-        }
-
-        assert!(!occupancy.is_occupied(1, 2));
-        assert!(!occupancy.is_occupied(5, 2));
+        occupancy.occupy(pos1, size, entity);
+        assert!(occupancy.can_place(pos2, size));
     }
 
     #[test]
-    fn grid_occupancy_out_of_bounds() {
-        let occupancy = GridOccupancy::new(5, 5);
-        assert!(!occupancy.is_occupied(10, 10));
-        assert_eq!(occupancy.entity_at(10, 10), None);
+    fn occupancy_player_collision() {
+        let mut occupancy = Occupancy::new();
+        let player_pos = Vec2::new(100.0, 100.0);
+        let player_size = EntitySize::new(32.0, 32.0);
+        occupancy.set_player(player_pos, player_size);
 
-        let pos = TilePos::new(4, 4);
-        let size = GridSize::new(2, 2);
-        assert!(!occupancy.can_place(pos, size));
+        assert!(!occupancy.can_place(player_pos, player_size));
+        assert!(occupancy.can_place(Vec2::new(200.0, 200.0), player_size));
     }
 }

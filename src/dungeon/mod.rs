@@ -19,11 +19,11 @@ pub use commands::DungeonCommands;
 pub use config::DungeonConfig;
 pub use entity::{DungeonEntity, DungeonEntityMarker, EntityRenderData};
 pub use floor::{FloorId, FloorSpec, FloorType};
-pub use grid::{occupied_cells, GridOccupancy, GridSize};
+pub use grid::{EntitySize, Occupancy};
 pub use layouts::LayoutId;
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry, FloorMonsterCount};
 pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
-pub use state::DungeonState;
+pub use state::{DungeonState, TileWorldSize};
 pub use systems::{
     handle_floor_transition, handle_mine_entity, handle_mob_defeated, handle_player_move,
     on_map_created, prepare_floor, FloorSpawnConfig, MobSpawnEntry, SpawnFloor,
