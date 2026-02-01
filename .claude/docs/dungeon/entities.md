@@ -12,17 +12,17 @@ Entities that can be spawned on dungeon tiles.
 ### DungeonEntity Enum (`src/dungeon/entity.rs`)
 ```rust
 pub enum DungeonEntity {
-    Chest { variant: u8, size: GridSize },                         // Uses chests sprite sheet (Slice_1)
-    Mob { mob_id: MobId, size: GridSize },                         // Any mob type (Goblin, Slime, etc.)
-    Npc { mob_id: MobId, size: GridSize },                         // Non-combat entities (blocks movement)
-    Stairs { size: GridSize },                                     // Advances player to next floor
-    Rock { rock_type: RockType, sprite_variant: u8, size: GridSize }, // Minable rocks (coal, copper, iron, gold)
-    CraftingStation { station_type: CraftingStationType, size: GridSize }, // Forge, Anvil
-    Door { size: GridSize },                                       // Transitions to another dungeon location
+    Chest { variant: u8, size: EntitySize },
+    Mob { mob_id: MobId, size: EntitySize },
+    Npc { mob_id: MobId, size: EntitySize },
+    Stairs { size: EntitySize },
+    Rock { rock_type: RockType, sprite_variant: u8, size: EntitySize },
+    CraftingStation { station_type: CraftingStationType, size: EntitySize },
+    Door { size: EntitySize },
 }
 ```
 
-Each variant includes a `size: GridSize` field indicating how many grid cells the entity occupies. Access via `entity.size()`.
+Each variant includes a `size: EntitySize` field indicating how many grid cells the entity occupies. Access via `entity.size()`.
 
 ### Grid Size
 - All entities are 1x1 in the logical grid (`GridSize::single()`)
@@ -35,19 +35,19 @@ All entity rendering is driven by `DungeonEntity::render_data()`, which returns 
 
 ```rust
 pub enum EntityRenderData {
-    /// Static sprite from a named sprite sheet (Chests, Rocks, DungeonTileset).
     SpriteSheet {
         sheet_key: SpriteSheetKey,
         sprite_name: &'static str,
     },
-    /// Animated mob sprite using the SpriteMarker observer system.
     AnimatedMob { mob_id: MobId },
+    Invisible,
 }
 ```
 
-The render loop in `render_dungeon_floor()` uses this to spawn entities with only 2 match arms:
-- `SpriteSheet` → looks up `game_sprites.get(sheet_key)` and spawns an `ImageNode`
-- `AnimatedMob` → spawns a `DungeonMobSprite { mob_id }` marker (populated by observer)
+The render loop in `add_entity_visuals()` uses this to spawn entities:
+- `SpriteSheet` → looks up sprite and spawns with collider + RigidBody
+- `AnimatedMob` → spawns animated mob sprite with collider + RigidBody
+- `Invisible` → spawns only Transform + Collider + Sensor (no visual)
 
 Adding a new entity type only requires:
 1. Adding the variant to `DungeonEntity`
@@ -85,9 +85,16 @@ Adding a new entity type only requires:
 ### Stairs Entity
 - `render_data()` returns `SpriteSheet { DungeonTileset, "stairs" }`
 - Always 1x1 (`GridSize::single()`)
-- On collision: inserts `AdvanceFloor` resource, triggering `advance_floor_system`
-- `advance_floor_system` despawns current dungeon UI, increments `floor_index`, calls `load_floor_layout()`, and respawns the dungeon screen with a fresh layout
+- On collision: triggers `FloorTransition::AdvanceFloor`
 - Spawned via `SpawnTable::stairs(count_range)` (e.g., `.stairs(1..=1)`)
+
+### Door Entity
+- `render_data()` returns `Invisible` (no sprite, collision detection only)
+- The door visual is the cave opening tile in the tilemap itself
+- Spawned automatically at tiles with `is_door` property
+- Uses `Sensor` collider so player can walk through
+- On collision: triggers `FloorTransition::EnterDoor`
+- Spawned by `spawn_doors()` in `on_map_created` observer
 
 ### NPC Entity
 - `render_data()` returns `AnimatedMob { mob_id }` (reuses mob sprite system)
@@ -106,7 +113,6 @@ Commands extension for dungeon entity lifecycle operations. Follows the same pat
 ```rust
 use crate::dungeon::DungeonCommands;
 
-// Despawn entity and vacate its occupancy grid cells
 commands.despawn_dungeon_entity(entity_id, entity_pos, GridSize::single());
 ```
 

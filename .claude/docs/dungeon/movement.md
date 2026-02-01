@@ -1,27 +1,62 @@
 # Player Movement
 
-Movement system in `src/ui/screens/dungeon/plugin.rs`.
+Movement system uses Avian2d physics in `src/dungeon/systems/movement.rs`.
 
-## DungeonFloor Observer
+## Physics-Based Movement
 
-Spawn `DungeonFloor` component to render a floor:
+Player movement uses Avian2d `LinearVelocity` for smooth physics:
 
 ```rust
-commands.spawn(DungeonFloor {
-    layout: layout.clone(),
-    player_pos: state.player_pos,
-    player_size: state.player_size,
-    floor_type: FloorType::BasicDungeonFloor,
-});
+velocity.0 = direction * PLAYER_SPEED;
 ```
 
-The `on_add_dungeon_floor` observer handles all rendering.
+Movement stops when no keys are pressed via `stop_player_when_idle`.
 
-## Movement Rules
+## Collision Handling
 
-- Only walkable tiles (via `TileIndex` resource)
-- Cannot move onto occupied cells (`GridOccupancy`)
-- Arrow keys → `GameAction::Navigate` events
+Collisions are detected via Avian2d `CollisionStart` events in `handle_player_collisions`:
+
+| Entity | Behavior |
+|--------|----------|
+| Mob | Triggers fight modal |
+| Door | Triggers `FloorTransition::EnterDoor` (pass-through sensor) |
+| Stairs | Triggers `FloorTransition::AdvanceFloor` |
+| Chest | Blocked (obstacle) |
+| Rock | Blocked until mined |
+| NPC | Opens merchant modal |
+
+## Door Collision
+
+Doors use `Sensor` colliders (pass-through):
+- Player walks through the door visual (cave opening tile)
+- Invisible sensor entity detects collision
+- Triggers `FloorTransition::EnterDoor` event
+- `handle_floor_transition` processes the transition
+
+## Player Collider
+
+Player has a 16x16 collider offset to align with sprite feet:
+
+```rust
+Collider::compound(vec![(
+    Vec2::new(0.0, -(32.0 / 2.0) + (16.0 / 2.0)),
+    0.0,
+    Collider::rectangle(16.0, 16.0),
+)])
+```
+
+## Collision Layers
+
+Defined in `src/dungeon/mod.rs`:
+
+| Layer | Collides With |
+|-------|---------------|
+| Player | Default, Mob, StaticEntity, Trigger |
+| Mob | Player |
+| StaticEntity | Player |
+| Trigger | Player |
+
+Doors and Stairs use `GameLayer::Trigger`.
 
 ## TileIndex
 
@@ -37,35 +72,14 @@ pub struct TileIndex {
 
 Built by `build_tile_index` observer when map is created, querying `is_solid` and `is_door` tile components.
 
-## Collision Handling
-
-| Entity | Behavior |
-|--------|----------|
-| Mob | Triggers fight modal |
-| Chest | Blocked (obstacle) |
-| Stairs | Advances floor |
-| Rock | Blocked until mined |
-| NPC | Opens merchant modal |
-
-## Multi-Cell Collision
-
-Movement validates **all cells** player would occupy:
-
-```rust
-fn all_cells_walkable(tile_index: &TileIndex, pos: GridPosition, size: GridSize) -> bool {
-    pos.occupied_cells(size).all(|(x, y)| tile_index.is_walkable(x as u32, y as u32))
-}
-```
-
 ## Key Functions
 
 | Function | Purpose |
 |----------|---------|
-| `spawn_dungeon_screen()` | Enter dungeon, load layout |
-| `on_add_dungeon_floor()` | Render UI hierarchy |
-| `handle_dungeon_movement()` | Process input, check collisions |
-| `advance_floor_system()` | Handle stairs interaction |
-| `cleanup_dungeon()` | Exit dungeon cleanup |
+| `handle_player_move` | Apply velocity from input |
+| `stop_player_when_idle` | Zero velocity when no keys pressed |
+| `handle_player_collisions` | Process collision events |
+| `handle_floor_transition` | Handle door/stairs transitions |
 
 ## GridOccupancy
 
@@ -78,17 +92,3 @@ occupancy.is_occupied(x, y);
 occupancy.entity_at(x, y);
 occupancy.vacate(pos, size);
 ```
-
-## SmoothPosition
-
-Visual interpolation for movement:
-
-```rust
-#[derive(Component)]
-pub struct SmoothPosition {
-    pub current: Vec2,
-    pub target: Vec2,
-}
-```
-
-Updated each frame to smoothly animate between grid positions.
