@@ -2,22 +2,19 @@ use bevy::prelude::*;
 
 use super::actions::{GameAction, HeldDirection, NavigationDirection};
 
-const REPEAT_INITIAL_DELAY: f32 = 0.3;
 const REPEAT_INTERVAL: f32 = 0.1;
 
 #[derive(Resource)]
 struct NavigationRepeatState {
     direction: Option<NavigationDirection>,
     timer: Timer,
-    repeating: bool,
 }
 
 impl Default for NavigationRepeatState {
     fn default() -> Self {
         Self {
             direction: None,
-            timer: Timer::from_seconds(REPEAT_INITIAL_DELAY, TimerMode::Once),
-            repeating: false,
+            timer: Timer::from_seconds(REPEAT_INTERVAL, TimerMode::Repeating),
         }
     }
 }
@@ -70,23 +67,15 @@ fn handle_keyboard_input(
     if let Some(dir) = new_press {
         action_writer.write(GameAction::Navigate(dir));
         repeat.direction = Some(dir);
-        repeat.timer = Timer::from_seconds(REPEAT_INITIAL_DELAY, TimerMode::Once);
-        repeat.repeating = false;
+        repeat.timer = Timer::from_seconds(REPEAT_INTERVAL, TimerMode::Repeating);
     } else if let Some(dir) = repeat.direction {
         if keyboard.pressed(direction_to_key(dir)) {
             repeat.timer.tick(time.delta());
-            if repeat.timer.just_finished() && !repeat.repeating {
-                repeat.repeating = true;
-                repeat.timer = Timer::from_seconds(REPEAT_INTERVAL, TimerMode::Repeating);
+            for _ in 0..repeat.timer.times_finished_this_tick() {
                 action_writer.write(GameAction::Navigate(dir));
-            } else if repeat.repeating {
-                for _ in 0..repeat.timer.times_finished_this_tick() {
-                    action_writer.write(GameAction::Navigate(dir));
-                }
             }
         } else {
             repeat.direction = None;
-            repeat.repeating = false;
         }
     }
 
