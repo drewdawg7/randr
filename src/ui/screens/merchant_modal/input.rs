@@ -7,23 +7,6 @@ use crate::ui::widgets::ItemGrid;
 
 use super::state::{MerchantPlayerGrid, MerchantStockGrid};
 
-/// System to handle Tab key toggling focus between merchant stock and player inventory grids.
-/// Only runs when merchant modal is active (via run_if condition).
-pub fn handle_merchant_modal_tab(
-    mut action_reader: EventReader<GameAction>,
-    mut focus_state: Option<ResMut<FocusState>>,
-) {
-    let Some(ref mut focus_state) = focus_state else {
-        return;
-    };
-
-    for action in action_reader.read() {
-        if *action == GameAction::NextTab {
-            focus_state.toggle_between(FocusPanel::MerchantStock, FocusPanel::PlayerInventory);
-        }
-    }
-}
-
 /// System to handle arrow key navigation within the focused merchant modal grid.
 /// Only runs when merchant modal is active (via run_if condition).
 pub fn handle_merchant_modal_navigation(

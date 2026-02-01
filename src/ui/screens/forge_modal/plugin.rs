@@ -1,9 +1,10 @@
 use bevy::prelude::*;
 
+use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::RegisterModalExt;
 use crate::ui::screens::modal::in_forge_modal;
 
-use super::input::{handle_forge_modal_navigation, handle_forge_modal_select, handle_forge_modal_tab};
+use super::input::{handle_forge_modal_navigation, handle_forge_modal_select};
 use super::render::{
     animate_forge_slot_selector, populate_forge_detail_pane_content, refresh_forge_slots,
     update_forge_detail_pane_source, update_forge_slot_selector,
@@ -18,10 +19,9 @@ impl Plugin for ForgeModalPlugin {
             .add_systems(
                 Update,
                 (
-                    // Custom close handler replaces modal_close_system - handles both crafting and normal close
                     handle_forge_close.run_if(in_forge_modal),
                     (
-                        handle_forge_modal_tab,
+                        tab_toggle_system(FocusPanel::ForgeCraftingSlots, FocusPanel::ForgeInventory),
                         handle_forge_modal_navigation,
                         handle_forge_modal_select,
                         refresh_forge_slots,

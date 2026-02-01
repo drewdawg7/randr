@@ -206,3 +206,22 @@ pub fn selection_background_system<M: Component, S: SelectionState + Resource>(
         }
     }
 }
+
+use crate::input::GameAction;
+
+pub fn tab_toggle_system(
+    first: FocusPanel,
+    second: FocusPanel,
+) -> impl FnMut(EventReader<GameAction>, Option<ResMut<FocusState>>) {
+    move |mut action_reader: EventReader<GameAction>, focus_state: Option<ResMut<FocusState>>| {
+        let Some(mut focus_state) = focus_state else {
+            return;
+        };
+
+        for action in action_reader.read() {
+            if *action == GameAction::NextTab {
+                focus_state.toggle_between(first, second);
+            }
+        }
+    }
+}

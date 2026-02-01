@@ -1,8 +1,7 @@
-//! Plugin for the anvil modal.
-
 use bevy::prelude::*;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::crafting_station::AnvilCraftingState;
 use crate::ui::animation::{AnimationConfig, SpriteAnimation};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
@@ -10,7 +9,7 @@ use crate::crafting_station::AnvilActiveTimer;
 use crate::ui::screens::modal::{in_anvil_modal, ActiveModal, ModalType};
 
 use super::input::{
-    handle_anvil_modal_navigation, handle_anvil_modal_select, handle_anvil_modal_tab,
+    handle_anvil_modal_navigation, handle_anvil_modal_select,
     refresh_anvil_recipes,
 };
 use super::render::{populate_anvil_detail_pane_content, update_anvil_detail_pane_source};
@@ -27,7 +26,7 @@ impl Plugin for AnvilModalPlugin {
                     handle_anvil_close_with_crafting.run_if(in_anvil_modal),
                     modal_close_system::<AnvilModal>.run_if(in_anvil_modal),
                     (
-                        handle_anvil_modal_tab,
+                        tab_toggle_system(FocusPanel::RecipeGrid, FocusPanel::AnvilInventory),
                         handle_anvil_modal_navigation,
                         handle_anvil_modal_select,
                         refresh_anvil_recipes,

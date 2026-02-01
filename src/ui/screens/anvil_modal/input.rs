@@ -14,21 +14,6 @@ use crate::ui::widgets::ItemGridEntry;
 use super::render::get_recipe_entries;
 use super::state::{ActiveAnvilEntity, AnvilPlayerGrid, AnvilRecipeGrid};
 
-/// Handle Tab key toggling focus between recipe grid and player inventory.
-/// Only runs when anvil modal is active (via run_if condition).
-pub fn handle_anvil_modal_tab(
-    mut action_reader: EventReader<GameAction>,
-    focus_state: Option<ResMut<FocusState>>,
-) {
-    let Some(mut focus_state) = focus_state else { return };
-
-    for action in action_reader.read() {
-        if *action == GameAction::NextTab {
-            focus_state.toggle_between(FocusPanel::RecipeGrid, FocusPanel::AnvilInventory);
-        }
-    }
-}
-
 /// Handle arrow key navigation within the anvil modal.
 /// Only runs when anvil modal is active (via run_if condition).
 pub fn handle_anvil_modal_navigation(

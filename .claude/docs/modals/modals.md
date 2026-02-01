@@ -6,259 +6,68 @@ Modals are full-screen UI overlays that block game interaction until closed.
 
 **File:** `src/ui/screens/modal.rs`
 
-### Resources
-- `ActiveModal` - Tracks which modal is currently open (only one at a time)
+- `ActiveModal` - Resource tracking which modal is open
 - `ModalType` - Enum of all modal types
+- `spawn_modal_overlay()` - Creates semi-transparent background
+- `in_*_modal()` - Run condition functions for each modal
 
-### Helpers
-- `spawn_modal_overlay(commands)` - Creates the semi-transparent background overlay
-- `create_modal_container()` - Standard modal container node
-- `create_modal_title(title)` - Title text bundle
-- `create_modal_section(text, color)` - Section text bundle
-- `create_modal_instruction(text)` - Instruction text bundle
-
-## Modal Registry System
+## Modal Registry
 
 **File:** `src/ui/modal_registry.rs`
 
-The modal registry provides type-safe commands for toggling modals:
+- `RegisteredModal` trait - Implement for type-safe modal handling
+- `ModalCommands` extension - `toggle_modal::<M>()`, `close_modal::<M>()`
+- `modal_close_system::<M>` - Generic close handler
 
-```rust
-use crate::ui::ModalCommands;
-use crate::ui::screens::inventory_modal::InventoryModal;
+See [modal-registry.md](modal-registry.md) for details.
 
-// Toggle a modal (open if closed, close if open)
-commands.toggle_modal::<InventoryModal>();
-
-// Close a specific modal
-commands.close_modal::<InventoryModal>();
-```
-
-See [modal-registry.md](modal-registry.md) for full documentation.
-
-## Modal Module Structure
-
-Modals should be organized as modules with separate files:
+## Module Structure
 
 ```
 src/ui/screens/my_modal/
-├── mod.rs        # Module declarations and re-exports only
-├── plugin.rs     # Plugin struct and impl
-├── constants.rs  # UI dimension constants
+├── mod.rs        # Re-exports
+├── plugin.rs     # Plugin, system registration
 ├── state.rs      # Components, resources, RegisteredModal impl
-├── input.rs      # Input handling systems
-└── render.rs     # Spawning and display systems
+├── input.rs      # Navigation/select handlers
+└── render.rs     # Spawn and display systems
 ```
 
-### mod.rs
+Reference: `src/ui/screens/inventory_modal/` for a complete example.
 
-Only module declarations and re-exports:
+## Shared Systems
 
-```rust
-mod constants;
-mod input;
-mod plugin;
-mod render;
-mod state;
+**File:** `src/ui/focus.rs`
 
-pub use plugin::MyModalPlugin;
-pub use state::MyModal;  // Export RegisteredModal type
-```
-
-### state.rs
-
-Components, resources, and `RegisteredModal` implementation:
-
-```rust
-use crate::ui::modal_registry::RegisteredModal;
-use crate::ui::screens::modal::ModalType;
-
-/// Component marker for the modal root UI
-#[derive(Component)]
-pub struct MyModalRoot;
-
-/// Selection state resource
-#[derive(Resource, Default)]
-pub struct MyModalSelection {
-    pub selected: usize,
-}
-
-/// Marker resource to trigger spawn
-#[derive(Resource)]
-pub struct SpawnMyModal;
-
-/// Type-safe handle for the modal
-pub struct MyModal;
-
-impl RegisteredModal for MyModal {
-    type Root = MyModalRoot;
-    const MODAL_TYPE: ModalType = ModalType::MyModal;
-
-    fn spawn(world: &mut World) {
-        world.resource_mut::<MyModalSelection>().reset();
-        world.insert_resource(SpawnMyModal);
-    }
-
-    // Optional: cleanup when modal closes
-    fn cleanup(world: &mut World) {
-        world.remove_resource::<SomeTemporaryResource>();
-    }
-}
-```
-
-### input.rs
-
-**Modal opening is handled by the navigation system** (see [navigation.md](../ui/navigation.md)).
-
-The input.rs file only needs to handle:
-1. **Internal navigation** - Up/down, select actions within the modal
-
-Close handling is automatic via `modal_close_system::<MyModal>` registered in the plugin.
-See [modal-registry.md](modal-registry.md) for details.
-
-**Run Conditions (Bevy Idiomatic):** Modal input systems use `run_if()` with modal-specific conditions
-instead of checking modal state inside each handler. This is more efficient (systems don't run at all
-when the wrong modal is active) and follows Bevy idioms.
-
-```rust
-// input.rs - no ActiveModal check needed; plugin uses run_if(in_my_modal)
-pub fn handle_navigation(
-    mut action_reader: EventReader<GameAction>,
-    focus_state: Option<ResMut<FocusState>>,
-) {
-    let Some(mut focus_state) = focus_state else { return };
-
-    for action in action_reader.read() {
-        match action {
-            GameAction::Navigate(dir) => { /* update selection */ }
-            GameAction::Select => { /* perform action */ }
-            _ => {}
-        }
-    }
-}
-```
-
-### render.rs
-
-Spawning and display systems:
-
-```rust
-pub fn spawn_modal(mut commands: Commands, ...) {
-    commands.remove_resource::<SpawnMyModal>();
-
-    let overlay = spawn_modal_overlay(&mut commands);
-    commands
-        .entity(overlay)
-        .insert(MyModalRoot)
-        .with_children(|parent| {
-            // Modal content
-        });
-}
-```
-
-### plugin.rs
-
-Plugin struct (note: no toggle handler, handled by NavigationPlugin):
-
-```rust
-use crate::ui::modal_registry::modal_close_system;
-use crate::ui::screens::modal::in_my_modal;
-
-pub struct MyModalPlugin;
-
-impl Plugin for MyModalPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<MyModalSelection>()
-            .add_systems(Update, (
-                modal_close_system::<MyModal>,
-                // Input systems use run_if - they only run when this modal is active
-                (
-                    handle_tab,
-                    handle_navigation,
-                    handle_select,
-                    update_display,
-                ).run_if(in_my_modal),
-                trigger_spawn_modal.run_if(resource_exists::<SpawnMyModal>),
-            ));
-    }
-}
-
-fn trigger_spawn_modal(
-    mut commands: Commands,
-    // ... resources needed for spawning
-) {
-    commands.remove_resource::<SpawnMyModal>();
-    spawn_modal(&mut commands, /* ... */);
-}
-```
-
-### Run Condition Functions
-
-Define run conditions in `src/ui/screens/modal.rs`:
-
-```rust
-pub fn in_my_modal(active_modal: Res<ActiveModal>) -> bool {
-    active_modal.modal == Some(ModalType::MyModal)
-}
-```
-
-Existing run conditions:
-- `in_inventory_modal` - Inventory modal
-- `in_merchant_modal` - Merchant modal
-- `in_forge_modal` - Forge modal
-- `in_anvil_modal` - Anvil modal
-
-## Examples
-
-| Modal | Files | RegisteredModal Type |
-|-------|-------|---------------------|
-| Inventory | `src/ui/screens/inventory_modal/` | `InventoryModal` |
-| Profile | `src/ui/screens/profile_modal.rs` | `ProfileModal` |
-| Monster Compendium | `src/ui/screens/monster_compendium/` | `MonsterCompendiumModal` |
+- `tab_toggle_system(FocusPanel, FocusPanel)` - Generic tab handler for dual-panel modals
+- `FocusState` - Resource tracking focused panel
+- `FocusPanel` - Enum of all focusable panels
 
 ## Input Blocking
 
-**Important:** Non-modal input handlers (town tabs, etc.) must check if a modal is open and return early:
+Non-modal input handlers must check `ActiveModal` and return early if a modal is open.
 
-```rust
-pub fn handle_tab_input(
-    // ... other params
-    active_modal: Res<ActiveModal>,
-) {
-    if active_modal.modal.is_some() {
-        return;
-    }
-    // ... handle input
-}
-```
+Files implementing this:
+- `src/ui/screens/town/systems.rs`
+- `src/ui/screens/town/tabs/*/input.rs`
 
-Files that implement this pattern:
-- `src/ui/screens/town/systems.rs` - `handle_tab_navigation`
-- `src/ui/screens/town/tabs/blacksmith/input.rs` - `handle_blacksmith_input`
-- `src/ui/screens/town/tabs/store/input.rs` - `handle_store_input`
-- `src/ui/screens/town/tabs/alchemist/input.rs` - `handle_alchemist_input`
-- `src/ui/screens/town/tabs/field.rs` - `handle_field_input`
+## Existing Modals
+
+| Modal | Directory | Type |
+|-------|-----------|------|
+| Inventory | `inventory_modal/` | `InventoryModal` |
+| Merchant | `merchant_modal/` | `MerchantModal` |
+| Forge | `forge_modal/` | `ForgeModal` |
+| Anvil | `anvil_modal/` | `AnvilModal` |
+| Profile | `profile_modal.rs` | `ProfileModal` |
+| Monster Compendium | `monster_compendium/` | `MonsterCompendiumModal` |
 
 ## Adding a New Modal
 
-1. Add variant to `ModalType` enum in `src/ui/screens/modal.rs`
-2. Create module directory structure (see above)
-3. Implement `RegisteredModal` for a `MyModal` struct in `state.rs`
-4. Add spawn trigger resource and system in plugin
-5. Add match arm in `handle_modal_toggle` in `src/navigation/systems.rs`:
-   ```rust
-   ModalType::MyModal => commands.toggle_modal::<MyModal>(),
-   ```
-6. Add `GameAction` variant for opening (if needed) in `src/input/actions.rs`
-7. Configure navigation in `NavigationPlugin` in `src/plugins/game.rs`:
-   ```rust
-   NavigationPlugin::new()
-       .state(AppState::Town)
-           .on(GameAction::OpenMyModal, ModalType::MyModal)
-       .build()
-   ```
-8. Register modal plugin in `src/plugins/game.rs`
-9. Export `MyModal` from `src/ui/screens/mod.rs`
+1. Add variant to `ModalType` in `src/ui/screens/modal.rs`
+2. Create module with structure above
+3. Implement `RegisteredModal` in `state.rs`
+4. Add match arm in `handle_modal_toggle` in `src/navigation/systems.rs`
+5. Configure in `NavigationPlugin` in `src/plugins/game.rs`
+6. Register plugin in `src/plugins/game.rs`
 
-See [navigation.md](../ui/navigation.md) for full navigation system documentation.
-See [modal-registry.md](modal-registry.md) for full modal registry documentation.
+See [modal-registry.md](modal-registry.md) and [navigation.md](../ui/navigation.md).

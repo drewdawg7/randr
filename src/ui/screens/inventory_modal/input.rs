@@ -8,21 +8,6 @@ use crate::ui::widgets::ItemGrid;
 use super::render::get_backpack_items;
 use super::state::{BackpackGrid, EquipmentGrid};
 
-/// System to handle Tab key toggling focus between equipment and backpack grids.
-/// Only runs when inventory modal is active (via run_if condition).
-pub fn handle_inventory_modal_tab(
-    mut action_reader: EventReader<GameAction>,
-    focus_state: Option<ResMut<FocusState>>,
-) {
-    let Some(mut focus_state) = focus_state else { return };
-
-    for action in action_reader.read() {
-        if *action == GameAction::NextTab {
-            focus_state.toggle_between(FocusPanel::EquipmentGrid, FocusPanel::BackpackGrid);
-        }
-    }
-}
-
 /// System to handle arrow key navigation within the focused inventory grid.
 /// Only runs when inventory modal is active (via run_if condition).
 pub fn handle_inventory_modal_navigation(
