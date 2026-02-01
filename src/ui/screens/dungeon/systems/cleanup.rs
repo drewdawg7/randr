@@ -2,7 +2,7 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 use super::super::components::DungeonRoot;
-use crate::dungeon::{DungeonState, Occupancy};
+use crate::dungeon::DungeonState;
 
 pub fn cleanup_dungeon(
     mut commands: Commands,
@@ -17,5 +17,4 @@ pub fn cleanup_dungeon(
         commands.entity(entity).despawn();
     }
     state.exit_dungeon();
-    commands.remove_resource::<Occupancy>();
 }

@@ -1,3 +1,4 @@
+use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
@@ -7,7 +8,7 @@ use crate::combat::ActiveCombat;
 use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
 use crate::dungeon::{
     CraftingStationInteraction, DungeonEntity, DungeonEntityMarker, DungeonRegistry, DungeonState,
-    EntitySize, FloorReady, MineEntity, MiningResult, MoveResult, NpcInteraction, Occupancy,
+    EntitySize, FloorReady, GameLayer, MineEntity, MiningResult, MoveResult, NpcInteraction,
     PlayerMoveIntent, SpawnFloor, TileWorldSize,
 };
 use crate::input::{GameAction, NavigationDirection};
@@ -247,17 +248,13 @@ fn handle_interact_action(
     mut mine_events: MessageWriter<MineEntity>,
     state: Res<DungeonState>,
     tile_size: Option<Res<TileWorldSize>>,
-    occupancy: Option<Res<Occupancy>>,
+    spatial_query: SpatialQuery,
     entity_query: Query<&DungeonEntityMarker>,
 ) {
     let is_interact = action_reader.read().any(|a| *a == GameAction::Mine);
     if !is_interact {
         return;
     }
-
-    let Some(occupancy) = occupancy else {
-        return;
-    };
 
     let step = tile_size.map(|t| t.0).unwrap_or(32.0);
     let px = state.player_pos.x;
@@ -269,36 +266,38 @@ fn handle_interact_action(
         Vec2::new(px + step, py),
     ];
 
+    let filter = SpatialQueryFilter::from_mask([GameLayer::StaticEntity, GameLayer::Mob]);
+
     for pos in adjacent_positions {
-        let Some(entity) = occupancy.entity_at(pos, step / 2.0) else {
-            continue;
-        };
+        let intersections = spatial_query.point_intersections(pos, &filter);
 
-        let Ok(marker) = entity_query.get(entity) else {
-            continue;
-        };
+        for entity in intersections {
+            let Ok(marker) = entity_query.get(entity) else {
+                continue;
+            };
 
-        match &marker.entity_type {
-            DungeonEntity::Npc { mob_id, .. } => {
-                npc_events.write(NpcInteraction { mob_id: *mob_id });
-                return;
+            match &marker.entity_type {
+                DungeonEntity::Npc { mob_id, .. } => {
+                    npc_events.write(NpcInteraction { mob_id: *mob_id });
+                    return;
+                }
+                DungeonEntity::CraftingStation { station_type, .. } => {
+                    crafting_events.write(CraftingStationInteraction {
+                        entity,
+                        station_type: *station_type,
+                    });
+                    return;
+                }
+                DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. } => {
+                    mine_events.write(MineEntity {
+                        entity,
+                        pos: marker.pos,
+                        entity_type: marker.entity_type,
+                    });
+                    return;
+                }
+                _ => {}
             }
-            DungeonEntity::CraftingStation { station_type, .. } => {
-                crafting_events.write(CraftingStationInteraction {
-                    entity,
-                    station_type: *station_type,
-                });
-                return;
-            }
-            DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. } => {
-                mine_events.write(MineEntity {
-                    entity,
-                    pos: marker.pos,
-                    entity_type: marker.entity_type,
-                });
-                return;
-            }
-            _ => {}
         }
     }
 }

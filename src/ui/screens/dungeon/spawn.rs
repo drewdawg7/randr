@@ -1,10 +1,11 @@
+use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
 
 use crate::assets::GameSprites;
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
-use crate::dungeon::{map_path, DungeonEntity, DungeonEntityMarker, EntityRenderData, FloorType};
+use crate::dungeon::{map_path, DungeonEntity, DungeonEntityMarker, EntityRenderData, FloorType, GameLayer};
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
 use crate::ui::widgets::PlayerStats;
@@ -38,6 +39,10 @@ pub fn add_entity_visuals(
     let z = marker.pos.y * 0.0001;
     let world_pos = Vec3::new(marker.pos.x, marker.pos.y, z);
 
+    let size = marker.entity_type.size();
+    let collider = Collider::rectangle(size.width * scale * 0.9, size.height * scale * 0.9);
+    let (rigid_body, layers) = physics_components_for_entity(&marker.entity_type);
+
     match marker.entity_type.render_data() {
         EntityRenderData::SpriteSheet {
             sheet_key,
@@ -49,6 +54,9 @@ pub fn add_entity_visuals(
                     entity_cmd.insert((
                         sprite,
                         Transform::from_translation(world_pos).with_scale(Vec3::splat(scale)),
+                        rigid_body,
+                        collider,
+                        layers,
                     ));
                     match marker.entity_type {
                         DungeonEntity::CraftingStation {
@@ -82,9 +90,29 @@ pub fn add_entity_visuals(
                     Transform::from_translation(world_pos)
                         .with_scale(Vec3::splat(scale * CHARACTER_SCALE)),
                     SpriteAnimation::new(&sheet.animation),
+                    rigid_body,
+                    collider,
+                    layers,
                 ));
             }
         }
+    }
+}
+
+fn physics_components_for_entity(entity_type: &DungeonEntity) -> (RigidBody, CollisionLayers) {
+    match entity_type {
+        DungeonEntity::Mob { .. } => (
+            RigidBody::Kinematic,
+            CollisionLayers::new(GameLayer::Mob, [GameLayer::Player]),
+        ),
+        DungeonEntity::Stairs { .. } | DungeonEntity::Door { .. } => (
+            RigidBody::Static,
+            CollisionLayers::new(GameLayer::Trigger, [GameLayer::Player]),
+        ),
+        _ => (
+            RigidBody::Static,
+            CollisionLayers::new(GameLayer::StaticEntity, [GameLayer::Player]),
+        ),
     }
 }
 
@@ -156,6 +184,7 @@ pub fn spawn_player(
     };
 
     let z = player_pos.y * 0.0001;
+    let player_collider_size = 32.0 * scale * 0.9;
 
     commands.spawn((
         DungeonPlayer,
@@ -171,6 +200,17 @@ pub fn spawn_player(
         Transform::from_translation(Vec3::new(player_pos.x, player_pos.y, z))
             .with_scale(Vec3::splat(scale * CHARACTER_SCALE)),
         SpriteAnimation::new(&player_sheet.animation),
+        RigidBody::Kinematic,
+        Collider::rectangle(player_collider_size, player_collider_size),
+        CollisionLayers::new(
+            GameLayer::Player,
+            [
+                GameLayer::Tile,
+                GameLayer::Mob,
+                GameLayer::StaticEntity,
+                GameLayer::Trigger,
+            ],
+        ),
     ));
 }
 

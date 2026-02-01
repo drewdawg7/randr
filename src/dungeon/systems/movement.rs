@@ -1,11 +1,11 @@
+use avian2d::prelude::*;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::{TilemapGridSize, TilemapSize};
 use tracing::instrument;
 
 use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
-use crate::dungeon::grid::rects_overlap;
-use crate::dungeon::tile_components::{is_door, is_solid};
-use crate::dungeon::{DungeonEntity, DungeonEntityMarker, DungeonState, EntitySize, Occupancy};
+use crate::dungeon::tile_components::is_door;
+use crate::dungeon::{DungeonEntity, DungeonEntityMarker, DungeonState, GameLayer};
 use crate::input::NavigationDirection;
 
 #[instrument(level = "debug", skip_all, fields(player_pos = ?state.player_pos, player_size = ?state.player_size))]
@@ -14,23 +14,18 @@ pub fn handle_player_move(
     mut result_events: MessageWriter<MoveResult>,
     mut transition_events: MessageWriter<FloorTransition>,
     mut state: ResMut<DungeonState>,
-    occupancy: Option<ResMut<Occupancy>>,
+    spatial_query: SpatialQuery,
     entity_query: Query<&DungeonEntityMarker>,
-    solid_tiles: Query<&GlobalTransform, (With<is_solid>, Without<is_door>)>,
-    door_tiles: Query<&GlobalTransform, With<is_door>>,
+    door_query: Query<(), With<is_door>>,
     tilemap_query: Query<(&TilemapGridSize, &GlobalTransform), With<TilemapSize>>,
 ) {
-    let Some(mut occupancy) = occupancy else {
-        return;
-    };
-
     let Ok((grid_size, map_transform)) = tilemap_query.single() else {
         return;
     };
 
     let scale = map_transform.to_scale_rotation_translation().0.x;
     let tile_world_size = grid_size.x * scale;
-    let tile_size = EntitySize::single(tile_world_size);
+    let player_collider_size = state.player_size.width * scale * 0.9;
 
     for event in events.read() {
         let delta: Vec2 = match event.direction {
@@ -42,66 +37,79 @@ pub fn handle_player_move(
 
         let new_pos = state.player_pos + delta;
 
-        if overlaps_any_tile(&door_tiles, new_pos, state.player_size, tile_size) {
-            transition_events.write(FloorTransition::EnterDoor);
-            return;
-        }
+        let filter = SpatialQueryFilter::from_mask([
+            GameLayer::Tile,
+            GameLayer::Mob,
+            GameLayer::StaticEntity,
+            GameLayer::Trigger,
+        ]);
 
-        if overlaps_any_tile(&solid_tiles, new_pos, state.player_size, tile_size) {
-            result_events.write(MoveResult::Blocked);
-            continue;
-        }
+        let intersections = spatial_query.shape_intersections(
+            &Collider::rectangle(player_collider_size, player_collider_size),
+            new_pos,
+            0.0,
+            &filter,
+        );
 
-        if let Some((entity_type, entity, pos)) =
-            check_entity_collision(&occupancy, &entity_query, new_pos, state.player_size)
-        {
-            match entity_type {
-                DungeonEntity::Mob { mob_id, .. } => {
+        if let Some(result) = process_collisions(&intersections, &entity_query, &door_query) {
+            match result {
+                CollisionResult::Blocked => {
+                    result_events.write(MoveResult::Blocked);
+                }
+                CollisionResult::Combat { mob_id, entity, pos } => {
                     result_events.write(MoveResult::TriggeredCombat { mob_id, entity, pos });
                 }
-                DungeonEntity::Door { .. } => {
+                CollisionResult::Door => {
                     transition_events.write(FloorTransition::EnterDoor);
                 }
-                DungeonEntity::Stairs { .. } => {
+                CollisionResult::Stairs => {
                     transition_events.write(FloorTransition::AdvanceFloor);
-                }
-                _ => {
-                    result_events.write(MoveResult::Blocked);
                 }
             }
             continue;
         }
 
-        occupancy.update_player_pos(new_pos);
         state.player_pos = new_pos;
-
         result_events.write(MoveResult::Moved { new_pos });
     }
 }
 
-fn overlaps_any_tile<F: bevy::ecs::query::QueryFilter>(
-    tiles: &Query<&GlobalTransform, F>,
-    pos: Vec2,
-    player_size: EntitySize,
-    tile_size: EntitySize,
-) -> bool {
-    tiles.iter().any(|tile_transform| {
-        let tile_pos = tile_transform.translation().truncate();
-        rects_overlap(pos, player_size, tile_pos, tile_size)
-    })
+enum CollisionResult {
+    Blocked,
+    Combat {
+        mob_id: crate::mob::MobId,
+        entity: Entity,
+        pos: Vec2,
+    },
+    Door,
+    Stairs,
 }
 
-#[instrument(level = "debug", skip_all, fields(pos = ?pos), ret)]
-fn check_entity_collision(
-    occupancy: &Occupancy,
+fn process_collisions(
+    intersections: &[Entity],
     entity_query: &Query<&DungeonEntityMarker>,
-    pos: Vec2,
-    size: EntitySize,
-) -> Option<(DungeonEntity, Entity, Vec2)> {
-    if let Some(entity) = occupancy.entity_overlapping(pos, size) {
+    door_query: &Query<(), With<is_door>>,
+) -> Option<CollisionResult> {
+    for &entity in intersections {
         if let Ok(marker) = entity_query.get(entity) {
-            return Some((marker.entity_type, entity, marker.pos));
+            return Some(match marker.entity_type {
+                DungeonEntity::Mob { mob_id, .. } => CollisionResult::Combat {
+                    mob_id,
+                    entity,
+                    pos: marker.pos,
+                },
+                DungeonEntity::Door { .. } => CollisionResult::Door,
+                DungeonEntity::Stairs { .. } => CollisionResult::Stairs,
+                _ => CollisionResult::Blocked,
+            });
         }
+
+        if door_query.get(entity).is_ok() {
+            return Some(CollisionResult::Door);
+        }
+
+        return Some(CollisionResult::Blocked);
     }
+
     None
 }

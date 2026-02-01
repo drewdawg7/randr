@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use tracing::instrument;
 
-use crate::dungeon::{EntitySize, FloorMonsterCount, FloorReady, FloorType, Occupancy};
+use crate::dungeon::{EntitySize, FloorMonsterCount, FloorReady, FloorType};
 
 #[derive(Message)]
 pub struct SpawnFloor {
@@ -19,9 +19,6 @@ pub fn prepare_floor(
     mut floor_ready: MessageWriter<FloorReady>,
 ) {
     for event in events.read() {
-        let mut occupancy = Occupancy::new();
-        occupancy.set_player(event.player_pos, event.player_size);
-        commands.insert_resource(occupancy);
         commands.insert_resource(FloorMonsterCount(0));
 
         floor_ready.write(FloorReady {
