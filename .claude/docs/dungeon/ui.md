@@ -147,12 +147,17 @@ pub struct SmoothPosition {
 }
 ```
 
-### Interpolation System (`interpolate_positions`)
-Runs each frame, moves `current` toward `target` at constant speed:
+### Interpolation System (`interpolate_player_position`)
+Only runs when entities have the `Interpolating` marker component (performance optimization):
+```rust
+interpolate_player_position.run_if(any_with_component::<Interpolating>)
+```
+Moves toward target at constant speed, removes `Interpolating` when complete:
 ```rust
 let speed = MOVE_SPEED * tile_size;
 let step = speed * time.delta_secs();
 pos.current += delta.normalize() * step.min(distance);
+// When distance < 0.5, snaps to target and removes Interpolating
 ```
 
 ### Movement Flow
@@ -191,7 +196,7 @@ use crate::ui::screens::dungeon::spawn::DungeonPlayerBundle;
 layer.spawn(DungeonPlayerBundle::new(player_pos, tile_size, entity_sprite_size));
 ```
 
-The bundle includes `DungeonPlayer`, `DungeonPlayerSprite`, `TargetPosition`, `PlayerWalkTimer`, `ZIndex`, and `Node`.
+The bundle includes `DungeonPlayer`, `DungeonPlayerSprite`, `TargetPosition`, `Interpolating`, `PlayerWalkTimer`, `ZIndex`, and `Node`.
 
 ## Player Movement (Code)
 ```rust

@@ -23,7 +23,7 @@ use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::MobSpriteSheets;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
-use super::components::{DungeonPlayer, DungeonRoot, TargetPosition, TileSizes};
+use super::components::{DungeonPlayer, DungeonRoot, Interpolating, TargetPosition, TileSizes};
 use super::constants::ENTITY_VISUAL_SCALE;
 use super::spawn::spawn_floor_ui;
 use super::systems::cleanup_dungeon;
@@ -41,7 +41,7 @@ impl Plugin for DungeonScreenPlugin {
                     handle_dungeon_movement
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     handle_move_result.run_if(on_event::<MoveResult>),
-                    interpolate_player_position,
+                    interpolate_player_position.run_if(any_with_component::<Interpolating>),
                     handle_interact_action
                         .run_if(on_event::<GameAction>)
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
@@ -161,14 +161,20 @@ fn handle_move_result(
     sheet: Res<PlayerSpriteSheet>,
     fight_mob: Option<Res<FightModalMob>>,
     mut player_query: Query<
-        (&mut TargetPosition, &mut ImageNode, &mut SpriteAnimation, &mut PlayerWalkTimer),
+        (
+            Entity,
+            &mut TargetPosition,
+            &mut ImageNode,
+            &mut SpriteAnimation,
+            &mut PlayerWalkTimer,
+        ),
         With<DungeonPlayer>,
     >,
 ) {
     for event in events.read() {
         match event {
             MoveResult::Moved { new_pos } => {
-                let Ok((mut target_pos, mut player_image, mut anim, mut walk_timer)) =
+                let Ok((entity, mut target_pos, mut player_image, mut anim, mut walk_timer)) =
                     player_query.get_single_mut()
                 else {
                     continue;
@@ -181,6 +187,7 @@ fn handle_move_result(
                     new_pos.x as f32 * tile_size + entity_offset,
                     new_pos.y as f32 * tile_size + entity_offset,
                 );
+                commands.entity(entity).insert(Interpolating);
 
                 if let Some(ref dir) = last_direction {
                     match dir.0 {
@@ -398,13 +405,14 @@ fn handle_back_action(
 }
 
 fn interpolate_player_position(
+    mut commands: Commands,
     time: Res<Time>,
     tile_sizes: Option<Res<TileSizes>>,
-    mut query: Query<(&TargetPosition, &mut Node), With<DungeonPlayer>>,
+    mut query: Query<(Entity, &TargetPosition, &mut Node), With<Interpolating>>,
 ) {
     let Some(tile_sizes) = tile_sizes else { return };
 
-    for (target, mut node) in &mut query {
+    for (entity, target, mut node) in &mut query {
         let current_x = match node.left {
             Val::Px(px) => px,
             _ => continue,
@@ -420,6 +428,7 @@ fn interpolate_player_position(
         if distance < 0.5 {
             node.left = Val::Px(target.0.x);
             node.top = Val::Px(target.0.y);
+            commands.entity(entity).remove::<Interpolating>();
         } else {
             let speed = MOVE_SPEED * tile_sizes.tile_size;
             let step = speed * time.delta_secs();

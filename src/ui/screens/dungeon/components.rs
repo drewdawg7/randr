@@ -26,3 +26,6 @@ pub struct DungeonContainer;
 
 #[derive(Component)]
 pub struct TargetPosition(pub Vec2);
+
+#[derive(Component)]
+pub struct Interpolating;

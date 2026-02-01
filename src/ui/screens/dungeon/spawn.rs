@@ -12,7 +12,7 @@ use crate::ui::{DungeonMobSprite, DungeonPlayerSprite, MobSpriteSheets, PlayerWa
 
 use super::components::{
     DungeonCell, DungeonContainer, DungeonGrid, DungeonPlayer, DungeonRoot, EntityLayer,
-    TargetPosition, TileSizes,
+    Interpolating, TargetPosition, TileSizes,
 };
 use super::constants::{BASE_TILE, ENTITY_VISUAL_SCALE};
 
@@ -21,6 +21,7 @@ pub struct DungeonPlayerBundle {
     pub player: DungeonPlayer,
     pub sprite: DungeonPlayerSprite,
     pub target_pos: TargetPosition,
+    pub interpolating: Interpolating,
     pub walk_timer: PlayerWalkTimer,
     pub z_index: ZIndex,
     pub node: Node,
@@ -38,6 +39,7 @@ impl DungeonPlayerBundle {
             player: DungeonPlayer,
             sprite: DungeonPlayerSprite,
             target_pos: TargetPosition(player_px),
+            interpolating: Interpolating,
             walk_timer: PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
             z_index: ZIndex(player_pos.y as i32 + 100),
             node: Node {
