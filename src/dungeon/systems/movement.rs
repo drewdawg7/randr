@@ -1,6 +1,6 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
-use tracing::instrument;
+use tracing::{debug, instrument};
 
 use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
 use crate::dungeon::tile_components::is_door;
@@ -13,10 +13,10 @@ const PLAYER_SPEED: f32 = 200.0;
 #[instrument(level = "debug", skip_all, fields(event_count = events.len()))]
 pub fn handle_player_move(
     mut events: MessageReader<PlayerMoveIntent>,
-    mut player_query: Query<&mut LinearVelocity, With<DungeonPlayer>>,
+    mut player_query: Query<(&mut LinearVelocity, &Transform, &Collider), With<DungeonPlayer>>,
 ) {
     for event in events.read() {
-        let Ok(mut velocity) = player_query.single_mut() else {
+        let Ok((mut velocity, transform, collider)) = player_query.single_mut() else {
             continue;
         };
 
@@ -26,6 +26,20 @@ pub fn handle_player_move(
             NavigationDirection::Left => Vec2::NEG_X,
             NavigationDirection::Right => Vec2::X,
         };
+
+        let pos = transform.translation;
+        let shape = collider.shape_scaled();
+        let aabb = shape.compute_local_aabb();
+        debug!(
+            player_x = pos.x,
+            player_y = pos.y,
+            collider_min_x = pos.x + aabb.mins.x,
+            collider_min_y = pos.y + aabb.mins.y,
+            collider_max_x = pos.x + aabb.maxs.x,
+            collider_max_y = pos.y + aabb.maxs.y,
+            direction = ?event.direction,
+            "player moving"
+        );
 
         velocity.0 = direction * PLAYER_SPEED;
     }

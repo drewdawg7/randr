@@ -145,7 +145,7 @@ pub fn spawn_floor_ui(
         });
 }
 
-#[instrument(level = "debug", skip_all, fields(?player_pos))]
+#[instrument(level = "debug", skip_all, fields(?player_pos, collider_w = 16.0, collider_h = 20.0))]
 pub fn spawn_player(
     commands: &mut Commands,
     player_pos: Vec2,
@@ -159,7 +159,6 @@ pub fn spawn_player(
     };
 
     let z = player_pos.y * 0.0001;
-    let player_collider_size = 32.0 * 0.9;
 
     commands.spawn((
         DungeonPlayer,
@@ -175,7 +174,11 @@ pub fn spawn_player(
         RigidBody::Dynamic,
         LinearVelocity::default(),
         LockedAxes::ROTATION_LOCKED,
-        Collider::rectangle(player_collider_size, player_collider_size),
+        Collider::compound(vec![(
+            Vec2::new(0.0, -(32.0 / 2.0) + (16.0 / 2.0)),
+            0.0,
+            Collider::rectangle(16.0, 16.0),
+        )]),
         CollisionLayers::new(
             GameLayer::Player,
             [

@@ -1,8 +1,10 @@
 use std::collections::HashMap;
 
-use avian2d::prelude::{CollisionStart, Gravity, PhysicsPlugins, RigidBody};
+use avian2d::prelude::{Collider, CollisionStart, Gravity, PhysicsPlugins, RigidBody, Sensor};
+use bevy::color::palettes::css::RED;
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::{ColliderCreated, TiledEvent, TiledPhysicsAvianBackend, TiledPhysicsPlugin};
+use tracing::{debug, instrument};
 
 use crate::dungeon::config::DungeonConfig;
 use crate::dungeon::events::{
@@ -22,6 +24,7 @@ use crate::location::LocationId;
 
 #[derive(Resource, Default)]
 pub struct FloorMonsterCount(pub usize);
+
 
 #[derive(Resource, Clone, Debug)]
 pub struct DungeonRegistry {
@@ -91,6 +94,7 @@ impl Plugin for DungeonPlugin {
                     handle_floor_transition.run_if(on_message::<FloorTransition>),
                     handle_mine_entity.run_if(on_message::<MineEntity>),
                     handle_mob_defeated.run_if(on_message::<MobDefeated>),
+                    debug_draw_colliders,
                 ),
             );
     }
@@ -155,8 +159,61 @@ impl DungeonBuilder {
     }
 }
 
-fn on_collider_created(trigger: On<TiledEvent<ColliderCreated>>, mut commands: Commands) {
-    commands
-        .entity(trigger.event().origin)
-        .insert(RigidBody::Static);
+#[instrument(level = "debug", skip_all)]
+fn on_collider_created(
+    trigger: On<TiledEvent<ColliderCreated>>,
+    mut commands: Commands,
+    parent_query: Query<&ChildOf>,
+    door_query: Query<&is_door>,
+    collider_query: Query<(&Collider, &GlobalTransform)>,
+) {
+    let collider_entity = trigger.event().origin;
+
+    if let Ok((collider, transform)) = collider_query.get(collider_entity) {
+        let pos = transform.translation();
+        let shape = collider.shape_scaled();
+        let aabb = shape.compute_local_aabb();
+        debug!(
+            entity = ?collider_entity,
+            pos_x = pos.x,
+            pos_y = pos.y,
+            aabb_min_x = aabb.mins.x,
+            aabb_min_y = aabb.mins.y,
+            aabb_max_x = aabb.maxs.x,
+            aabb_max_y = aabb.maxs.y,
+            "wall collider created"
+        );
+    }
+
+    if let Ok(child_of) = parent_query.get(collider_entity) {
+        if door_query.get(child_of.parent()).is_ok() {
+            commands.entity(collider_entity).insert((Sensor, is_door(true)));
+            return;
+        }
+    }
+
+    commands.entity(collider_entity).insert(RigidBody::Static);
+}
+
+fn debug_draw_colliders(
+    colliders: Query<(&GlobalTransform, &Collider), With<RigidBody>>,
+    mut gizmos: Gizmos,
+) {
+    for (transform, collider) in &colliders {
+        let pos = transform.translation().truncate();
+        let aabb = collider.shape_scaled().compute_local_aabb();
+        let half_extents = Vec2::new(
+            (aabb.maxs.x - aabb.mins.x) / 2.0,
+            (aabb.maxs.y - aabb.mins.y) / 2.0,
+        );
+        let center_offset = Vec2::new(
+            (aabb.maxs.x + aabb.mins.x) / 2.0,
+            (aabb.maxs.y + aabb.mins.y) / 2.0,
+        );
+        gizmos.rect_2d(
+            Isometry2d::from_translation(pos + center_offset),
+            half_extents * 2.0,
+            RED,
+        );
+    }
 }
