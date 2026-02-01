@@ -1,25 +1,26 @@
 use bevy::prelude::*;
+use bevy::reflect::TypePath;
 
-#[derive(Component, Reflect, Default)]
-#[reflect(Component)]
-#[allow(non_camel_case_types)]
-pub struct is_solid;
+macro_rules! tile_property {
+    ($name:ident) => {
+        #[derive(Component, Reflect, Default)]
+        #[reflect(Component, Default, type_path = false)]
+        #[allow(non_camel_case_types)]
+        pub struct $name(pub bool);
 
-#[derive(Component, Reflect, Default)]
-#[reflect(Component)]
-#[allow(non_camel_case_types)]
-pub struct can_have_entity;
+        impl TypePath for $name {
+            fn type_path() -> &'static str {
+                stringify!($name)
+            }
 
-#[derive(Component, Reflect, Default)]
-#[reflect(Component)]
-#[allow(non_camel_case_types)]
-pub struct can_spawn_player;
+            fn short_type_path() -> &'static str {
+                stringify!($name)
+            }
+        }
+    };
+}
 
-#[derive(Component, Reflect, Default)]
-#[reflect(Component)]
-#[allow(non_camel_case_types)]
-pub struct is_door;
-
-#[derive(Component, Reflect, Default)]
-#[reflect(Component)]
-pub struct BlocksMovement;
+tile_property!(is_solid);
+tile_property!(can_have_entity);
+tile_property!(can_spawn_player);
+tile_property!(is_door);
