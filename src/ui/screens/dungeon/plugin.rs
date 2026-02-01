@@ -50,8 +50,8 @@ impl Plugin for DungeonScreenPlugin {
                     handle_crafting_station_interaction.run_if(on_event::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_event::<MiningResult>),
                     handle_back_action,
-                    revert_forge_idle,
-                    revert_anvil_idle,
+                    revert_forge_idle.run_if(any_with_component::<ForgeActiveTimer>),
+                    revert_anvil_idle.run_if(any_with_component::<AnvilActiveTimer>),
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon)),

@@ -11,8 +11,14 @@ pub struct PlayerStatsPlugin;
 
 impl Plugin for PlayerStatsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(on_add_player_stats)
-            .add_systems(Update, (update_gold_display, update_hp_display, update_xp_display));
+        app.add_observer(on_add_player_stats).add_systems(
+            Update,
+            (
+                update_gold_display.run_if(resource_changed::<PlayerGold>),
+                update_hp_display.run_if(resource_changed::<StatSheet>),
+                update_xp_display.run_if(resource_changed::<Progression>),
+            ),
+        );
     }
 }
 
@@ -126,39 +132,30 @@ fn on_add_player_stats(
     });
 }
 
-/// System to update gold display when PlayerGold resource changes.
 fn update_gold_display(gold: Res<PlayerGold>, mut query: Query<&mut Text, With<PlayerGoldText>>) {
-    if gold.is_changed() {
-        for mut text in query.iter_mut() {
-            **text = format!("{}", gold.0);
-        }
+    for mut text in query.iter_mut() {
+        **text = format!("{}", gold.0);
     }
 }
 
-/// System to update HP display when StatSheet resource changes.
 fn update_hp_display(stats: Res<StatSheet>, mut query: Query<&mut Text, With<PlayerHpText>>) {
-    if stats.is_changed() {
-        let hp = stats.value(StatType::Health);
-        let max_hp = stats.max_value(StatType::Health);
-        for mut text in query.iter_mut() {
-            **text = format!("{}/{}", hp, max_hp);
-        }
+    let hp = stats.value(StatType::Health);
+    let max_hp = stats.max_value(StatType::Health);
+    for mut text in query.iter_mut() {
+        **text = format!("{}/{}", hp, max_hp);
     }
 }
 
-/// System to update XP/Level display when Progression resource changes.
 fn update_xp_display(
     progression: Res<Progression>,
     mut query: Query<&mut Text, With<PlayerXpText>>,
 ) {
-    if progression.is_changed() {
-        for mut text in query.iter_mut() {
-            **text = format!(
-                "Level: {}  XP: {}/{}",
-                progression.level,
-                progression.xp,
-                Progression::xp_to_next_level(progression.level)
-            );
-        }
+    for mut text in query.iter_mut() {
+        **text = format!(
+            "Level: {}  XP: {}/{}",
+            progression.level,
+            progression.xp,
+            Progression::xp_to_next_level(progression.level)
+        );
     }
 }

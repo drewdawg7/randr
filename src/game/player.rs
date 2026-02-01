@@ -61,7 +61,10 @@ impl Plugin for PlayerPlugin {
             .add_event::<PlayerHealed>()
             .add_event::<PlayerLeveledUp>()
             .add_event::<GoldChanged>()
-            .add_systems(Update, handle_level_up);
+            .add_systems(
+                Update,
+                handle_level_up.run_if(resource_changed::<Progression>),
+            );
     }
 }
 

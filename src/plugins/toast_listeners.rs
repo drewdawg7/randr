@@ -28,12 +28,29 @@ impl Plugin for ToastListenersPlugin {
         app.add_systems(
             Update,
             (
-                listen_player_events,
-                listen_item_events,
-                listen_combat_events,
-                listen_economy_events,
-                listen_brewing_events,
-                listen_skill_events,
+                listen_player_events.run_if(
+                    on_event::<PlayerLeveledUp>
+                        .or(on_event::<PlayerHealed>)
+                        .or(on_event::<GoldChanged>),
+                ),
+                listen_item_events.run_if(
+                    on_event::<ItemPickedUp>
+                        .or(on_event::<ItemEquipped>)
+                        .or(on_event::<ItemUnequipped>)
+                        .or(on_event::<ItemUsed>)
+                        .or(on_event::<ItemDropped>)
+                        .or(on_event::<ItemDeposited>)
+                        .or(on_event::<ItemWithdrawn>),
+                ),
+                listen_combat_events.run_if(on_event::<MobDefeated>),
+                listen_economy_events.run_if(
+                    on_event::<GoldEarned>
+                        .or(on_event::<GoldSpent>)
+                        .or(on_event::<LootCollected>)
+                        .or(on_event::<TransactionCompleted>),
+                ),
+                listen_brewing_events.run_if(on_event::<BrewingResult>),
+                listen_skill_events.run_if(on_event::<SkillLeveledUp>),
             ),
         );
     }
