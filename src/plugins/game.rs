@@ -13,7 +13,7 @@ use crate::ui::screens::modal::ModalType;
 use crate::ui::screens::{
     AnvilModalPlugin, DungeonScreenPlugin, FightModalPlugin, ForgeModalPlugin,
     InventoryModalPlugin, KeybindsPlugin, MainMenuPlugin, MerchantModalPlugin, ModalPlugin,
-    MonsterCompendiumPlugin, ProfilePlugin, ResultsModalPlugin, SkillsModalPlugin, TownPlugin,
+    MonsterCompendiumPlugin, ProfilePlugin, ResultsModalPlugin, SkillsModalPlugin,
 };
 use crate::ui::widgets::{ItemDetailPanePlugin, ItemDetailDisplayPlugin, ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, OutlinedTextPlugin, PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin};
 use crate::ui::{MobAnimationPlugin, PlayerSpritePlugin};
@@ -27,11 +27,6 @@ impl Plugin for GamePlugin {
             GameAssetPlugin,
             InputPlugin,
             NavigationPlugin::new()
-                .state(AppState::Town)
-                    .on(GameAction::OpenInventory, ModalType::Inventory)
-                    .on(GameAction::OpenProfile, ModalType::Profile)
-                    .on(GameAction::OpenCompendium, ModalType::MonsterCompendium)
-                    .on(GameAction::OpenSkills, ModalType::SkillsModal)
                 .state(AppState::Dungeon)
                     .on(GameAction::OpenInventory, ModalType::Inventory)
                     .on(GameAction::OpenProfile, ModalType::Profile)
@@ -78,7 +73,6 @@ impl Plugin for GamePlugin {
             AnvilModalPlugin,
             MonsterCompendiumPlugin,
             KeybindsPlugin,
-            TownPlugin,
             DungeonScreenPlugin,
             FightModalPlugin,
             ResultsModalPlugin,

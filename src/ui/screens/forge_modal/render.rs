@@ -6,7 +6,7 @@ use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
-use crate::ui::screens::InfoPanelSource;
+use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     spawn_outlined_quantity_text, ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent,
     ItemGrid, ItemGridEntry, ItemGridFocusPanel, OutlinedQuantityConfig,

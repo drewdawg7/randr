@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem, ManagesEquipment, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
-use crate::ui::screens::InfoPanelSource;
+use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
     ItemGridFocusPanel,

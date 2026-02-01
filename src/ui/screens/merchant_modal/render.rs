@@ -4,7 +4,7 @@ use crate::economy::WorthGold;
 use crate::inventory::{Inventory, ManagesEquipment, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
-use crate::ui::screens::InfoPanelSource;
+use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
     ItemGridFocusPanel, PriceDisplay,

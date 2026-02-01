@@ -53,8 +53,8 @@ mod tests {
 
     #[test]
     fn navigation_target_from_app_state() {
-        let target: NavigationTarget = AppState::Town.into();
-        assert_eq!(target, NavigationTarget::State(AppState::Town));
+        let target: NavigationTarget = AppState::Dungeon.into();
+        assert_eq!(target, NavigationTarget::State(AppState::Dungeon));
     }
 
     #[test]
@@ -67,18 +67,18 @@ mod tests {
     fn lookup_returns_state_specific_transition() {
         let mut table = NavigationTable::default();
         table.state_transitions.insert(
-            (AppState::Town, GameAction::Select),
+            (AppState::Dungeon, GameAction::Select),
             NavigationTarget::State(AppState::Dungeon),
         );
 
-        let result = table.lookup(AppState::Town, GameAction::Select);
+        let result = table.lookup(AppState::Dungeon, GameAction::Select);
         assert_eq!(result, Some(NavigationTarget::State(AppState::Dungeon)));
     }
 
     #[test]
     fn lookup_returns_none_for_missing_transition() {
         let table = NavigationTable::default();
-        let result = table.lookup(AppState::Town, GameAction::Select);
+        let result = table.lookup(AppState::Dungeon, GameAction::Select);
         assert!(result.is_none());
     }
 
@@ -90,7 +90,7 @@ mod tests {
             NavigationTarget::Modal(ModalType::Inventory),
         );
 
-        let result = table.lookup(AppState::Town, GameAction::OpenInventory);
+        let result = table.lookup(AppState::Dungeon, GameAction::OpenInventory);
         assert_eq!(result, Some(NavigationTarget::Modal(ModalType::Inventory)));
 
         let result2 = table.lookup(AppState::Dungeon, GameAction::OpenInventory);
@@ -105,11 +105,11 @@ mod tests {
             NavigationTarget::State(AppState::Menu),
         );
         table.state_transitions.insert(
-            (AppState::Town, GameAction::Select),
+            (AppState::Dungeon, GameAction::Select),
             NavigationTarget::State(AppState::Dungeon),
         );
 
-        let town_result = table.lookup(AppState::Town, GameAction::Select);
+        let town_result = table.lookup(AppState::Dungeon, GameAction::Select);
         assert_eq!(town_result, Some(NavigationTarget::State(AppState::Dungeon)));
 
         let menu_result = table.lookup(AppState::Menu, GameAction::Select);

@@ -1,6 +1,7 @@
 pub mod animation;
 pub mod focus;
 pub mod hints;
+pub mod info_panel_source;
 pub mod menu;
 pub mod mob_animation;
 pub mod modal;
@@ -16,6 +17,7 @@ pub mod widgets;
 pub use animation::*;
 pub use focus::*;
 pub use hints::*;
+pub use info_panel_source::InfoPanelSource;
 pub use menu::*;
 pub use mob_animation::*;
 pub use modal::{Modal, ModalBackground, SpawnModalExt};

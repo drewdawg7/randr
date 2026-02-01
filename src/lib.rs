@@ -9,7 +9,6 @@ pub mod loot;
 pub mod mob;
 pub mod navigation;
 pub mod player;
-pub mod town;
 pub mod ui;
 pub mod entities;
 pub mod combat;

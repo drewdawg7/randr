@@ -10,7 +10,6 @@ use bevy::prelude::*;
 pub enum AppState {
     #[default]
     Menu,
-    Town,
     Dungeon,
     Profile,
     Keybinds,
@@ -82,25 +81,25 @@ mod tests {
     #[test]
     fn came_from_returns_true_when_just_entered_from_state() {
         let prev = PreviousState {
-            state: Some(AppState::Town),
+            state: Some(AppState::Dungeon),
             just_entered: true,
         };
-        assert!(prev.came_from(AppState::Town));
+        assert!(prev.came_from(AppState::Dungeon));
     }
 
     #[test]
     fn came_from_returns_false_when_not_just_entered() {
         let prev = PreviousState {
-            state: Some(AppState::Town),
+            state: Some(AppState::Dungeon),
             just_entered: false,
         };
-        assert!(!prev.came_from(AppState::Town));
+        assert!(!prev.came_from(AppState::Dungeon));
     }
 
     #[test]
     fn came_from_returns_false_when_different_state() {
         let prev = PreviousState {
-            state: Some(AppState::Town),
+            state: Some(AppState::Menu),
             just_entered: true,
         };
         assert!(!prev.came_from(AppState::Dungeon));
@@ -112,18 +111,18 @@ mod tests {
             state: None,
             just_entered: true,
         };
-        assert!(!prev.came_from(AppState::Town));
+        assert!(!prev.came_from(AppState::Dungeon));
     }
 
     #[test]
     fn acknowledge_entry_clears_just_entered() {
         let mut prev = PreviousState {
-            state: Some(AppState::Town),
+            state: Some(AppState::Dungeon),
             just_entered: true,
         };
         prev.acknowledge_entry();
         assert!(!prev.just_entered);
-        assert_eq!(prev.state, Some(AppState::Town));
+        assert_eq!(prev.state, Some(AppState::Dungeon));
     }
 
     #[test]
