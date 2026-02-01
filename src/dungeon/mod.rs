@@ -11,7 +11,6 @@ pub mod state;
 pub mod systems;
 pub mod tile;
 pub mod tile_components;
-pub mod tile_index;
 pub mod tiled;
 
 pub use bevy_ecs_tiled::prelude::TilePos;
@@ -19,7 +18,7 @@ pub use commands::DungeonCommands;
 pub use config::DungeonConfig;
 pub use entity::{DungeonEntity, DungeonEntityMarker, EntityRenderData};
 pub use floor::{FloorId, FloorSpec, FloorType};
-pub use grid::{EntitySize, Occupancy};
+pub use grid::{rects_overlap, EntitySize, Occupancy};
 pub use layouts::LayoutId;
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry, FloorMonsterCount};
 pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
@@ -30,7 +29,6 @@ pub use systems::{
 };
 pub use tile::{Tile, TileType};
 pub use tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
-pub use tile_index::TileIndex;
 pub use tiled::map_path;
 
 pub use events::{

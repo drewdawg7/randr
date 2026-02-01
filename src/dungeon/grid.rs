@@ -43,6 +43,16 @@ pub struct Occupancy {
     player_size: EntitySize,
 }
 
+pub fn rects_overlap(pos1: Vec2, size1: EntitySize, pos2: Vec2, size2: EntitySize) -> bool {
+    let half_w1 = size1.width / 2.0;
+    let half_h1 = size1.height / 2.0;
+    let half_w2 = size2.width / 2.0;
+    let half_h2 = size2.height / 2.0;
+
+    (pos1.x - pos2.x).abs() < half_w1 + half_w2
+        && (pos1.y - pos2.y).abs() < half_h1 + half_h2
+}
+
 impl Occupancy {
     pub fn new() -> Self {
         Self::default()
@@ -77,6 +87,7 @@ impl Occupancy {
             .map(|e| e.entity)
     }
 
+    #[instrument(level = "debug", skip(self), ret)]
     pub fn entity_overlapping(&self, pos: Vec2, size: EntitySize) -> Option<Entity> {
         self.entities
             .iter()
@@ -102,13 +113,7 @@ impl Occupancy {
     }
 
     fn rects_overlap(pos1: Vec2, size1: EntitySize, pos2: Vec2, size2: EntitySize) -> bool {
-        let half_w1 = size1.width / 2.0;
-        let half_h1 = size1.height / 2.0;
-        let half_w2 = size2.width / 2.0;
-        let half_h2 = size2.height / 2.0;
-
-        (pos1.x - pos2.x).abs() < half_w1 + half_w2
-            && (pos1.y - pos2.y).abs() < half_h1 + half_h2
+        rects_overlap(pos1, size1, pos2, size2)
     }
 }
 

@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 
+use avian2d::prelude::*;
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::{TiledPhysicsAvianBackend, TiledPhysicsPlugin};
 
 use crate::dungeon::config::DungeonConfig;
 use crate::dungeon::events::{
@@ -11,8 +13,8 @@ use crate::plugins::MobDefeated;
 use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::DungeonState;
 use crate::dungeon::systems::{
-    build_tile_index, handle_floor_transition, handle_mine_entity, handle_mob_defeated,
-    handle_player_move, on_map_created, prepare_floor, track_entity_occupancy, SpawnFloor,
+    handle_floor_transition, handle_mine_entity, handle_mob_defeated,
+    handle_player_move, on_map_created, prepare_floor, SpawnFloor,
 };
 use crate::dungeon::tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 use crate::location::LocationId;
@@ -58,7 +60,10 @@ pub struct DungeonPlugin {
 
 impl Plugin for DungeonPlugin {
     fn build(&self, app: &mut App) {
-        app.register_type::<is_solid>()
+        app.add_plugins(PhysicsPlugins::default().with_length_unit(32.0))
+            .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default())
+            .insert_resource(Gravity::ZERO)
+            .register_type::<is_solid>()
             .register_type::<can_have_entity>()
             .register_type::<can_spawn_player>()
             .register_type::<is_door>()
@@ -73,8 +78,6 @@ impl Plugin for DungeonPlugin {
             .add_message::<CraftingStationInteraction>()
             .add_message::<MineEntity>()
             .add_message::<MiningResult>()
-            .add_observer(track_entity_occupancy)
-            .add_observer(build_tile_index)
             .add_observer(on_map_created)
             .add_systems(
                 Update,

@@ -1,13 +1,14 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::{TilemapGridSize, TilemapSize};
 use tracing::instrument;
 
 use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
-use crate::dungeon::{
-    DungeonEntity, DungeonEntityMarker, DungeonState, Occupancy, TileIndex, TileWorldSize,
-};
+use crate::dungeon::grid::rects_overlap;
+use crate::dungeon::tile_components::{is_door, is_solid};
+use crate::dungeon::{DungeonEntity, DungeonEntityMarker, DungeonState, EntitySize, Occupancy};
 use crate::input::NavigationDirection;
 
-#[instrument(level = "debug", skip_all, fields(player_pos = ?state.player_pos))]
+#[instrument(level = "debug", skip_all, fields(player_pos = ?state.player_pos, player_size = ?state.player_size))]
 pub fn handle_player_move(
     mut events: MessageReader<PlayerMoveIntent>,
     mut result_events: MessageWriter<MoveResult>,
@@ -15,37 +16,38 @@ pub fn handle_player_move(
     mut state: ResMut<DungeonState>,
     occupancy: Option<ResMut<Occupancy>>,
     entity_query: Query<&DungeonEntityMarker>,
-    tile_index: Option<Res<TileIndex>>,
-    tile_size: Option<Res<TileWorldSize>>,
+    solid_tiles: Query<&GlobalTransform, (With<is_solid>, Without<is_door>)>,
+    door_tiles: Query<&GlobalTransform, With<is_door>>,
+    tilemap_query: Query<(&TilemapGridSize, &GlobalTransform), With<TilemapSize>>,
 ) {
-    let Some(tile_index) = tile_index else {
-        return;
-    };
     let Some(mut occupancy) = occupancy else {
         return;
     };
 
-    let step = tile_size.map(|t| t.0).unwrap_or(32.0);
+    let Ok((grid_size, map_transform)) = tilemap_query.single() else {
+        return;
+    };
+
+    let scale = map_transform.to_scale_rotation_translation().0.x;
+    let tile_world_size = grid_size.x * scale;
+    let tile_size = EntitySize::single(tile_world_size);
 
     for event in events.read() {
         let delta: Vec2 = match event.direction {
-            NavigationDirection::Up => Vec2::new(0.0, step),
-            NavigationDirection::Down => Vec2::new(0.0, -step),
-            NavigationDirection::Left => Vec2::new(-step, 0.0),
-            NavigationDirection::Right => Vec2::new(step, 0.0),
+            NavigationDirection::Up => Vec2::new(0.0, tile_world_size),
+            NavigationDirection::Down => Vec2::new(0.0, -tile_world_size),
+            NavigationDirection::Left => Vec2::new(-tile_world_size, 0.0),
+            NavigationDirection::Right => Vec2::new(tile_world_size, 0.0),
         };
 
         let new_pos = state.player_pos + delta;
 
-        let tile_x = (new_pos.x / step).floor() as u32;
-        let tile_y = (new_pos.y / step).floor() as u32;
-
-        if tile_index.is_door(tile_x, tile_y) {
+        if overlaps_any_tile(&door_tiles, new_pos, state.player_size, tile_size) {
             transition_events.write(FloorTransition::EnterDoor);
             return;
         }
 
-        if !tile_index.is_walkable(tile_x, tile_y) {
+        if overlaps_any_tile(&solid_tiles, new_pos, state.player_size, tile_size) {
             result_events.write(MoveResult::Blocked);
             continue;
         }
@@ -77,12 +79,24 @@ pub fn handle_player_move(
     }
 }
 
+fn overlaps_any_tile<F: bevy::ecs::query::QueryFilter>(
+    tiles: &Query<&GlobalTransform, F>,
+    pos: Vec2,
+    player_size: EntitySize,
+    tile_size: EntitySize,
+) -> bool {
+    tiles.iter().any(|tile_transform| {
+        let tile_pos = tile_transform.translation().truncate();
+        rects_overlap(pos, player_size, tile_pos, tile_size)
+    })
+}
+
 #[instrument(level = "debug", skip_all, fields(pos = ?pos), ret)]
 fn check_entity_collision(
     occupancy: &Occupancy,
     entity_query: &Query<&DungeonEntityMarker>,
     pos: Vec2,
-    size: crate::dungeon::EntitySize,
+    size: EntitySize,
 ) -> Option<(DungeonEntity, Entity, Vec2)> {
     if let Some(entity) = occupancy.entity_overlapping(pos, size) {
         if let Ok(marker) = entity_query.get(entity) {
