@@ -16,6 +16,24 @@ use crate::crafting_station::CraftingStationType;
 use crate::mob::MobId;
 use crate::rock::RockType;
 
+fn spawn_n<R: Rng>(
+    layout: &mut DungeonLayout,
+    rng: &mut R,
+    count: u32,
+    grid_size: GridSize,
+    mut entity_fn: impl FnMut(&mut R) -> DungeonEntity,
+) -> u32 {
+    let mut spawned = 0;
+    for _ in 0..count {
+        let areas = layout.spawn_areas(grid_size);
+        if let Some(&pos) = areas.choose(rng) {
+            layout.add_entity(pos, entity_fn(rng));
+            spawned += 1;
+        }
+    }
+    spawned
+}
+
 /// A single spawn rule that can place entities in a layout.
 ///
 /// Rules are composable and applied in sequence. Each rule returns
@@ -97,24 +115,12 @@ impl ChestSpawner {
 impl SpawnRule for ChestSpawner {
     fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
         let count = rng.gen_range(self.count.clone());
-        let mut spawned = 0;
-
-        for _ in 0..count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                let variant = rng.gen_range(0..4);
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::Chest {
-                        variant,
-                        size: GridSize::single(),
-                    },
-                );
-                spawned += 1;
+        spawn_n(layout, rng, count, GridSize::single(), |rng| {
+            DungeonEntity::Chest {
+                variant: rng.gen_range(0..4),
+                size: GridSize::single(),
             }
-        }
-
-        spawned
+        })
     }
 }
 
@@ -133,22 +139,11 @@ impl StairsSpawner {
 impl SpawnRule for StairsSpawner {
     fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
         let count = rng.gen_range(self.count.clone());
-        let mut spawned = 0;
-
-        for _ in 0..count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::Stairs {
-                        size: GridSize::single(),
-                    },
-                );
-                spawned += 1;
+        spawn_n(layout, rng, count, GridSize::single(), |_| {
+            DungeonEntity::Stairs {
+                size: GridSize::single(),
             }
-        }
-
-        spawned
+        })
     }
 }
 
@@ -167,31 +162,19 @@ impl RockSpawner {
 impl SpawnRule for RockSpawner {
     fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
         let count = rng.gen_range(self.count.clone());
-        let mut spawned = 0;
-
-        for _ in 0..count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                let rock_type = match rng.gen_range(0..4u8) {
-                    0 => RockType::Coal,
-                    1 => RockType::Copper,
-                    2 => RockType::Iron,
-                    _ => RockType::Gold,
-                };
-                let sprite_variant = rng.gen_range(0..2u8);
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::Rock {
-                        rock_type,
-                        sprite_variant,
-                        size: GridSize::single(),
-                    },
-                );
-                spawned += 1;
+        spawn_n(layout, rng, count, GridSize::single(), |rng| {
+            let rock_type = match rng.gen_range(0..4u8) {
+                0 => RockType::Coal,
+                1 => RockType::Copper,
+                2 => RockType::Iron,
+                _ => RockType::Gold,
+            };
+            DungeonEntity::Rock {
+                rock_type,
+                sprite_variant: rng.gen_range(0..2u8),
+                size: GridSize::single(),
             }
-        }
-
-        spawned
+        })
     }
 }
 
@@ -214,23 +197,13 @@ impl CraftingStationSpawner {
 impl SpawnRule for CraftingStationSpawner {
     fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
         let count = rng.gen_range(self.count.clone());
-        let mut spawned = 0;
-
-        for _ in 0..count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::CraftingStation {
-                        station_type: self.station_type,
-                        size: GridSize::single(),
-                    },
-                );
-                spawned += 1;
+        let station_type = self.station_type;
+        spawn_n(layout, rng, count, GridSize::single(), |_| {
+            DungeonEntity::CraftingStation {
+                station_type,
+                size: GridSize::single(),
             }
-        }
-
-        spawned
+        })
     }
 }
 
@@ -250,23 +223,13 @@ impl NpcSpawner {
 impl SpawnRule for NpcSpawner {
     fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
         let count = rng.gen_range(self.count.clone());
-        let mut spawned = 0;
-
-        for _ in 0..count {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::Npc {
-                        mob_id: self.mob_id,
-                        size: GridSize::single(),
-                    },
-                );
-                spawned += 1;
+        let mob_id = self.mob_id;
+        spawn_n(layout, rng, count, GridSize::single(), |_| {
+            DungeonEntity::Npc {
+                mob_id,
+                size: GridSize::single(),
             }
-        }
-
-        spawned
+        })
     }
 }
 
@@ -286,17 +249,10 @@ impl GuaranteedMobSpawner {
 impl SpawnRule for GuaranteedMobSpawner {
     fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
         let size = self.mob_id.spec().grid_size;
-        let mut spawned = 0;
-
-        for _ in 0..self.count {
-            let areas = layout.spawn_areas(size);
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(pos, DungeonEntity::Mob { mob_id: self.mob_id, size });
-                spawned += 1;
-            }
-        }
-
-        spawned
+        let mob_id = self.mob_id;
+        spawn_n(layout, rng, self.count, size, |_| {
+            DungeonEntity::Mob { mob_id, size }
+        })
     }
 }
 
@@ -402,20 +358,16 @@ impl ProbabilityCraftingStationSpawner {
 
 impl SpawnRule for ProbabilityCraftingStationSpawner {
     fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
-        if rng.gen_bool(self.probability) {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::CraftingStation {
-                        station_type: self.station_type,
-                        size: GridSize::single(),
-                    },
-                );
-                return 1;
-            }
+        if !rng.gen_bool(self.probability) {
+            return 0;
         }
-        0
+        let station_type = self.station_type;
+        spawn_n(layout, rng, 1, GridSize::single(), |_| {
+            DungeonEntity::CraftingStation {
+                station_type,
+                size: GridSize::single(),
+            }
+        })
     }
 }
 
@@ -434,20 +386,16 @@ impl ProbabilityNpcSpawner {
 
 impl SpawnRule for ProbabilityNpcSpawner {
     fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
-        if rng.gen_bool(self.probability) {
-            let areas = layout.spawn_areas(GridSize::single());
-            if let Some(&pos) = areas.choose(rng) {
-                layout.add_entity(
-                    pos,
-                    DungeonEntity::Npc {
-                        mob_id: self.mob_id,
-                        size: GridSize::single(),
-                    },
-                );
-                return 1;
-            }
+        if !rng.gen_bool(self.probability) {
+            return 0;
         }
-        0
+        let mob_id = self.mob_id;
+        spawn_n(layout, rng, 1, GridSize::single(), |_| {
+            DungeonEntity::Npc {
+                mob_id,
+                size: GridSize::single(),
+            }
+        })
     }
 }
 
