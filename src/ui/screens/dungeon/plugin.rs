@@ -184,25 +184,27 @@ fn handle_move_result(
     }
 }
 
-#[instrument(level = "debug", skip_all, fields(player_pos = ?state.player_pos))]
+#[instrument(level = "debug", skip_all)]
 fn handle_interact_action(
     mut action_reader: MessageReader<GameAction>,
     mut npc_events: MessageWriter<NpcInteraction>,
     mut crafting_events: MessageWriter<CraftingStationInteraction>,
     mut mine_events: MessageWriter<MineEntity>,
-    state: Res<DungeonState>,
     tile_size: Option<Res<TileWorldSize>>,
     spatial_query: SpatialQuery,
     entity_query: Query<&DungeonEntityMarker>,
+    player_query: Query<&Position, With<DungeonPlayer>>,
 ) {
     let is_interact = action_reader.read().any(|a| *a == GameAction::Mine);
     if !is_interact {
         return;
     }
 
+    let Ok(&Position(Vec2 { x: px, y: py })) = player_query.single() else {
+        return;
+    };
+
     let step = tile_size.map(|t| t.0).unwrap_or(32.0);
-    let px = state.player_pos.x;
-    let py = state.player_pos.y;
     let adjacent_positions: [Vec2; 4] = [
         Vec2::new(px, py - step),
         Vec2::new(px, py + step),
