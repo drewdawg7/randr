@@ -155,7 +155,7 @@ pub struct GridSelector {
 }
 
 fn on_add_item_grid(
-    trigger: On<OnAdd, ItemGrid>,
+    trigger: On<Add, ItemGrid>,
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     game_fonts: Res<GameFonts>,
@@ -318,14 +318,14 @@ fn update_grid_items(
             continue;
         };
 
-        for &child in container_children.iter() {
+        for child in container_children.iter() {
             let Ok((cell_entity, grid_cell, cell_children)) = grid_cells.get(child) else {
                 continue;
             };
 
             // Remove existing item sprites and quantity text from this cell
             if let Some(children) = cell_children {
-                for &cell_child in children.iter() {
+                for cell_child in children.iter() {
                     if item_sprites.contains(cell_child) || quantity_texts.contains(cell_child) {
                         if commands.get_entity(cell_child).is_some() {
                             commands.entity(cell_child).despawn();
@@ -407,9 +407,9 @@ fn update_grid_selector(
         };
 
         // Remove existing selector from this grid only (check children of grid cells)
-        for &child in container_children.iter() {
+        for child in container_children.iter() {
             if let Ok((_, _, Some(cell_children))) = grid_cells.get(child) {
-                for &cell_child in cell_children.iter() {
+                for cell_child in cell_children.iter() {
                     if selectors.contains(cell_child) {
                         if commands.get_entity(cell_child).is_some() {
                             commands.entity(cell_child).despawn();
@@ -425,7 +425,7 @@ fn update_grid_selector(
         }
 
         // Find the selected cell and add selector
-        for &child in container_children.iter() {
+        for child in container_children.iter() {
             if let Ok((cell_entity, grid_cell, _)) = grid_cells.get(child) {
                 if grid_cell.index == item_grid.selected_index {
                     // Skip if cell entity no longer exists

@@ -175,7 +175,7 @@ fn handle_move_result(
         match event {
             MoveResult::Moved { new_pos } => {
                 let Ok((entity, mut target_pos, mut player_image, mut anim, mut walk_timer)) =
-                    player_query.get_single_mut()
+                    player_query.single_mut()
                 else {
                     continue;
                 };

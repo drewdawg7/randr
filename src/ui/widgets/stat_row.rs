@@ -41,7 +41,7 @@ pub struct StatRow {
 }
 
 fn on_add_stat_row(
-    trigger: On<OnAdd, StatRow>,
+    trigger: On<Add, StatRow>,
     mut commands: Commands,
     query: Query<&StatRow>,
 ) {

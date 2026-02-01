@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::assets::{GameSprites, NineSlice};
 
 pub fn spawn_nine_slice_panel<S: NineSlice>(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
     width: f32,
     height: f32,

@@ -101,7 +101,7 @@ pub fn spawn_forge_modal_impl(
 
 /// Spawn the 3-slot horizontal crafting area.
 fn spawn_crafting_slots(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
     game_fonts: &GameFonts,
     forge_state: Option<&ForgeCraftingState>,
@@ -121,11 +121,11 @@ fn spawn_crafting_slots(
                 flex_direction: FlexDirection::Column,
                 align_items: AlignItems::Center,
                 padding: UiRect::all(Val::Px(8.0)),
+                border_radius: BorderRadius::all(Val::Px(4.0)),
                 ..default()
             },
             BackgroundColor(Color::srgba(0.1, 0.08, 0.06, 0.9)),
             BorderColor::all(Color::srgb(0.5, 0.4, 0.3)),
-            BorderRadius::all(Val::Px(4.0)),
         ))
         .with_children(|container| {
             // Row of 3 slots
@@ -174,7 +174,7 @@ fn spawn_crafting_slots(
 
 /// Spawn a single crafting slot with label.
 fn spawn_slot(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
     game_fonts: &GameFonts,
     slot_type: ForgeSlotIndex,
@@ -234,7 +234,7 @@ fn spawn_slot(
 
 /// Spawn item sprite and quantity in a slot.
 fn spawn_slot_item(
-    cell: &mut ChildBuilder,
+    cell: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
     game_fonts: &GameFonts,
     item_id: ItemId,
@@ -268,7 +268,7 @@ fn spawn_slot_item(
 }
 
 /// Spawn selector sprite in a slot.
-fn spawn_slot_selector(cell: &mut ChildBuilder, game_sprites: &GameSprites) {
+fn spawn_slot_selector(cell: &mut ChildSpawnerCommands, game_sprites: &GameSprites) {
     if let Some(selectors_sheet) = game_sprites.get(SpriteSheetKey::UiSelectors) {
         if let (Some(idx1), Some(idx2), Some(img)) = (
             selectors_sheet.get(UiSelectorsSlice::SelectorFrame1.as_str()),
@@ -334,7 +334,7 @@ pub fn refresh_forge_slots(
     for (cell_entity, slot_cell, children) in &slot_cells {
         // Remove existing item sprites and quantity text from this cell
         if let Some(children) = children {
-            for &child in children.iter() {
+            for child in children.iter() {
                 if item_sprites.contains(child) || quantity_texts.contains(child) {
                     if commands.get_entity(child).is_some() {
                         commands.entity(child).despawn();
@@ -375,7 +375,7 @@ pub fn update_forge_slot_selector(
     // Remove all existing selectors from forge slots
     for (_, _, children) in &slot_cells {
         if let Some(children) = children {
-            for &child in children.iter() {
+            for child in children.iter() {
                 if selectors.contains(child) {
                     if commands.get_entity(child).is_some() {
                         commands.entity(child).despawn();
@@ -426,7 +426,7 @@ pub fn update_forge_detail_pane_source(
     let focus_changed = focus_state.is_changed();
     let modal_state_changed = modal_state.is_changed();
     let grid_changed = player_grids
-        .get_single()
+        .single()
         .map(|g| g.is_changed())
         .unwrap_or(false);
 
@@ -441,7 +441,7 @@ pub fn update_forge_detail_pane_source(
         })
     } else if focus_state.is_focused(FocusPanel::ForgeInventory) {
         player_grids
-            .get_single()
+            .single()
             .ok()
             .map(|g| InfoPanelSource::Inventory {
                 selected_index: g.selected_index,
@@ -482,12 +482,12 @@ pub fn populate_forge_detail_pane_content(
             continue;
         }
 
-        let Ok((content_entity, children)) = content_query.get_single() else {
+        let Ok((content_entity, children)) = content_query.single() else {
             continue;
         };
 
         if let Some(children) = children {
-            for &child in children.iter() {
+            for child in children.iter() {
                 commands.entity(child).despawn();
             }
         }

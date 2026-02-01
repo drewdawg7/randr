@@ -22,7 +22,7 @@ pub struct ItemDetailPane {
 pub struct ItemDetailPaneContent;
 
 fn on_add_item_detail_pane(
-    trigger: On<OnAdd, ItemDetailPane>,
+    trigger: On<Add, ItemDetailPane>,
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     panels: Query<&ItemDetailPane>,

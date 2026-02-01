@@ -21,11 +21,11 @@ pub fn handle_inventory_modal_navigation(
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
             if focus_state.is_focused(FocusPanel::EquipmentGrid) {
-                if let Ok(mut grid) = equipment_grids.get_single_mut() {
+                if let Ok(mut grid) = equipment_grids.single_mut() {
                     grid.navigate(*direction);
                 }
             } else if focus_state.is_focused(FocusPanel::BackpackGrid) {
-                if let Ok(mut grid) = backpack_grids.get_single_mut() {
+                if let Ok(mut grid) = backpack_grids.single_mut() {
                     grid.navigate(*direction);
                 }
             }
@@ -53,7 +53,7 @@ pub fn handle_inventory_modal_select(
 
         if eq_focused {
             // UNEQUIP: find the slot for the selected equipment item
-            let Ok(equipment_grid) = equipment_grids.get_single() else {
+            let Ok(equipment_grid) = equipment_grids.single() else {
                 continue;
             };
             let selected = equipment_grid.selected_index;
@@ -68,7 +68,7 @@ pub fn handle_inventory_modal_select(
             }
         } else {
             // EQUIP: get the backpack item and equip it
-            let Ok(backpack_grid) = backpack_grids.get_single() else {
+            let Ok(backpack_grid) = backpack_grids.single() else {
                 continue;
             };
             let selected = backpack_grid.selected_index;

@@ -123,7 +123,7 @@ fn spawn_keybinds_screen(mut commands: Commands) {
 }
 
 /// Helper to spawn a keybind category section.
-fn spawn_category(parent: &mut ChildBuilder, category: KeybindCategory) {
+fn spawn_category(parent: &mut ChildSpawnerCommands, category: KeybindCategory) {
     parent
         .spawn(column_node(10.0))
         .with_children(|parent| {
@@ -149,7 +149,7 @@ fn spawn_category(parent: &mut ChildBuilder, category: KeybindCategory) {
 }
 
 /// Helper to spawn a keybind row with key and description.
-fn spawn_keybind_row(parent: &mut ChildBuilder, key: &str, description: &str) {
+fn spawn_keybind_row(parent: &mut ChildSpawnerCommands, key: &str, description: &str) {
     parent
         .spawn(Node {
             flex_direction: FlexDirection::Row,
@@ -215,7 +215,7 @@ fn despawn_keybinds_screen(
     mut commands: Commands,
     keybinds_root: Query<Entity, With<KeybindsScreenRoot>>,
 ) {
-    if let Ok(entity) = keybinds_root.get_single() {
+    if let Ok(entity) = keybinds_root.single() {
         commands.entity(entity).despawn();
     }
 }

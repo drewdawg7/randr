@@ -301,7 +301,7 @@ fn populate_menu_background(
 
 /// System to despawn the main menu UI.
 fn despawn_main_menu(mut commands: Commands, menu_root: Query<Entity, With<MainMenuRoot>>) {
-    if let Ok(entity) = menu_root.get_single() {
+    if let Ok(entity) = menu_root.single() {
         commands.entity(entity).despawn();
     }
 }

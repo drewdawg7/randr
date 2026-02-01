@@ -32,7 +32,7 @@ pub fn sync_merchant_grids(
 
     // Update stock grid if stock changed
     if stock.is_changed() {
-        if let Ok(mut grid) = stock_grids.get_single_mut() {
+        if let Ok(mut grid) = stock_grids.single_mut() {
             grid.items = get_merchant_stock_entries(&stock);
             grid.clamp_selection();
         }
@@ -40,7 +40,7 @@ pub fn sync_merchant_grids(
 
     // Update player grid if inventory changed
     if inventory.is_changed() {
-        if let Ok(mut grid) = player_grids.get_single_mut() {
+        if let Ok(mut grid) = player_grids.single_mut() {
             grid.items = ItemGridEntry::from_inventory(&inventory);
             grid.clamp_selection();
         }
@@ -130,12 +130,12 @@ pub fn populate_merchant_detail_pane_content(
             continue;
         }
 
-        let Ok((content_entity, children)) = content_query.get_single() else {
+        let Ok((content_entity, children)) = content_query.single() else {
             continue;
         };
 
         if let Some(children) = children {
-            for &child in children.iter() {
+            for child in children.iter() {
                 commands.entity(child).despawn();
             }
         }

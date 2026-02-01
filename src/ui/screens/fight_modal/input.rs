@@ -93,7 +93,7 @@ pub fn trigger_attack_animation(
     mut sprite_query: Query<(&mut SpriteAnimation, &mut PlayerAttackTimer)>,
 ) {
     for _ in events.read() {
-        if let Ok((mut anim, mut attack_timer)) = sprite_query.get_single_mut() {
+        if let Ok((mut anim, mut attack_timer)) = sprite_query.single_mut() {
             anim.first_frame = sheet.attack_animation.first_frame;
             anim.last_frame = sheet.attack_animation.last_frame;
             anim.current_frame = sheet.attack_animation.first_frame;

@@ -28,12 +28,12 @@ pub fn handle_anvil_modal_navigation(
         if let GameAction::Navigate(direction) = action {
             if focus_state.is_focused(FocusPanel::RecipeGrid) {
                 // Navigate recipe grid
-                if let Ok(mut grid) = recipe_grids.get_single_mut() {
+                if let Ok(mut grid) = recipe_grids.single_mut() {
                     grid.navigate(*direction);
                 }
             } else if focus_state.is_focused(FocusPanel::AnvilInventory) {
                 // Navigate player inventory
-                if let Ok(mut grid) = player_grids.get_single_mut() {
+                if let Ok(mut grid) = player_grids.single_mut() {
                     grid.navigate(*direction);
                 }
             }
@@ -73,7 +73,7 @@ pub fn handle_anvil_modal_select(
             continue;
         }
 
-        let Ok(recipe_grid) = recipe_grids.get_single() else {
+        let Ok(recipe_grid) = recipe_grids.single() else {
             continue;
         };
 
@@ -105,7 +105,7 @@ pub fn handle_anvil_modal_select(
 
         // Refresh inventory grid
         // Recipe grid refresh is handled reactively via Changed<Inventory>
-        if let Ok(mut grid) = player_grids.get_single_mut() {
+        if let Ok(mut grid) = player_grids.single_mut() {
             grid.items = ItemGridEntry::from_inventory(&inventory);
             grid.clamp_selection();
         }
@@ -125,7 +125,7 @@ pub fn refresh_anvil_recipes(
         return;
     }
 
-    if let Ok(mut grid) = recipe_grids.get_single_mut() {
+    if let Ok(mut grid) = recipe_grids.single_mut() {
         grid.items = get_recipe_entries(&inventory);
     }
 }

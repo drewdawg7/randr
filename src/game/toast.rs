@@ -200,7 +200,7 @@ fn update_toast_ui(
     container_query: Query<Entity, With<ToastContainer>>,
     toast_elements: Query<Entity, With<ToastElement>>,
 ) {
-    let container = match container_query.get_single() {
+    let container = match container_query.single() {
         Ok(entity) => entity,
         Err(_) => return,
     };

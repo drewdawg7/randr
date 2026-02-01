@@ -22,11 +22,11 @@ pub fn handle_merchant_modal_navigation(
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
             if focus_state.is_focused(FocusPanel::MerchantStock) {
-                if let Ok(mut grid) = stock_grids.get_single_mut() {
+                if let Ok(mut grid) = stock_grids.single_mut() {
                     grid.navigate(*direction);
                 }
             } else if focus_state.is_focused(FocusPanel::PlayerInventory) {
-                if let Ok(mut grid) = player_grids.get_single_mut() {
+                if let Ok(mut grid) = player_grids.single_mut() {
                     grid.navigate(*direction);
                 }
             }
@@ -54,14 +54,14 @@ pub fn handle_merchant_modal_select(
         }
 
         if focus_state.is_focused(FocusPanel::MerchantStock) {
-            let Ok(stock_grid) = stock_grids.get_single() else {
+            let Ok(stock_grid) = stock_grids.single() else {
                 continue;
             };
             buy_events.write(BuyItemEvent {
                 stock_index: stock_grid.selected_index,
             });
         } else if focus_state.is_focused(FocusPanel::PlayerInventory) {
-            let Ok(player_grid) = player_grids.get_single() else {
+            let Ok(player_grid) = player_grids.single() else {
                 continue;
             };
             sell_events.write(SellItemEvent {

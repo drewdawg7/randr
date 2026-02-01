@@ -13,7 +13,7 @@ const MODAL_FONT_SIZE: f32 = 16.0;
 /// Uses smaller text (14px) with darker gray color.
 /// Uses `margin: UiRect::top(Val::Auto)` to push the hint to the bottom
 /// of a flex column container.
-pub fn spawn_navigation_hint(parent: &mut ChildBuilder, hint: &str) {
+pub fn spawn_navigation_hint(parent: &mut ChildSpawnerCommands, hint: &str) {
     parent.spawn((
         Text::new(hint),
         TextFont {
@@ -32,7 +32,7 @@ pub fn spawn_navigation_hint(parent: &mut ChildBuilder, hint: &str) {
 ///
 /// Uses larger text (16px) with lighter gray color.
 /// Does not include auto-margin - caller controls positioning.
-pub fn spawn_modal_hint(parent: &mut ChildBuilder, hint: &str) {
+pub fn spawn_modal_hint(parent: &mut ChildSpawnerCommands, hint: &str) {
     parent.spawn((
         Text::new(hint),
         TextFont {

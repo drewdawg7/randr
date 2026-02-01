@@ -105,7 +105,7 @@ fn handle_forge_close(
         }
 
         // Always close the modal
-        if let Ok(modal_entity) = modal_query.get_single() {
+        if let Ok(modal_entity) = modal_query.single() {
             commands.entity(modal_entity).despawn();
         }
         active_modal.modal = None;

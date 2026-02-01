@@ -154,7 +154,7 @@ pub fn spawn_floor_ui(
 }
 
 fn spawn_grid_tiles(
-    grid: &mut ChildBuilder,
+    grid: &mut ChildSpawnerCommands,
     layout: &DungeonLayout,
     floor_type: FloorType,
     tileset: &TilesetGrid,
@@ -212,7 +212,7 @@ fn spawn_grid_tiles(
 
 #[instrument(level = "debug", skip_all, fields(entity_count = layout.entities().len()))]
 fn spawn_entities(
-    layer: &mut ChildBuilder,
+    layer: &mut ChildSpawnerCommands,
     layout: &DungeonLayout,
     tile_size: f32,
     base_tile_size: f32,
@@ -295,7 +295,7 @@ fn spawn_entities(
 }
 
 fn spawn_player(
-    layer: &mut ChildBuilder,
+    layer: &mut ChildSpawnerCommands,
     player_pos: GridPosition,
     tile_size: f32,
     entity_sprite_size: f32,

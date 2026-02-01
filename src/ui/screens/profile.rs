@@ -220,7 +220,7 @@ fn despawn_profile_screen(
     mut commands: Commands,
     profile_root: Query<Entity, With<ProfileScreenRoot>>,
 ) {
-    if let Ok(entity) = profile_root.get_single() {
+    if let Ok(entity) = profile_root.single() {
         commands.entity(entity).despawn();
     }
 }

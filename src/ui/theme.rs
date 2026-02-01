@@ -86,7 +86,7 @@ where
         *bg_color = new_bg.into();
 
         // Update child text
-        for &child in children.iter() {
+        for child in children.iter() {
             if let Ok((mut text, mut color)) = text_query.get_mut(child) {
                 let prefix = selection_prefix(is_selected);
                 **text = format!("{}{}", prefix, item.name());

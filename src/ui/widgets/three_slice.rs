@@ -14,12 +14,12 @@ use crate::ui::text::UiText;
 /// - `S`: A type implementing [`ThreeSlice`] that defines the slices, dimensions, and sprite sheet.
 ///
 /// # Arguments
-/// - `parent`: The parent entity's `ChildBuilder`
+/// - `parent`: The parent entity's `ChildSpawnerCommands`
 /// - `game_sprites`: The game sprites resource for sprite lookups
 /// - `width`: Total width of the banner
 /// - `text`: Optional text to display centered on the banner
 pub fn spawn_three_slice_banner<S: ThreeSlice>(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
     width: f32,
     text: Option<&str>,

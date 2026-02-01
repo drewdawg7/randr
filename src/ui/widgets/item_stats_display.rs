@@ -33,7 +33,7 @@ pub struct ItemStatsDisplay {
 }
 
 fn on_add_item_stats_display(
-    trigger: On<OnAdd, ItemStatsDisplay>,
+    trigger: On<Add, ItemStatsDisplay>,
     mut commands: Commands,
     query: Query<&ItemStatsDisplay>,
     game_sprites: Res<GameSprites>,

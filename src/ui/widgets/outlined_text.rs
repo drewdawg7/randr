@@ -24,7 +24,7 @@ impl Default for OutlinedQuantityConfig {
 }
 
 pub fn spawn_outlined_quantity_text<M: Bundle>(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     game_fonts: &GameFonts,
     quantity: u32,
     config: OutlinedQuantityConfig,
@@ -101,7 +101,7 @@ pub struct OutlinedText {
 }
 
 fn on_add_outlined_text(
-    trigger: On<OnAdd, OutlinedText>,
+    trigger: On<Add, OutlinedText>,
     mut commands: Commands,
     query: Query<&OutlinedText>,
     game_fonts: Res<GameFonts>,

@@ -38,7 +38,7 @@ impl Default for ModalBackground {
     }
 }
 
-type ContentFn = Box<dyn FnOnce(&mut ChildBuilder) + Send + Sync>;
+type ContentFn = Box<dyn FnOnce(&mut ChildSpawnerCommands) + Send + Sync>;
 type RootMarkerFn = Box<dyn FnOnce(&mut EntityCommands) + Send + Sync>;
 
 #[derive(Builder)]
@@ -147,7 +147,7 @@ impl SpawnModalExt for Commands<'_, '_> {
 }
 
 fn spawn_solid_modal(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     title: Option<String>,
     hints: Vec<String>,
     size: Option<(f32, f32)>,
@@ -223,7 +223,7 @@ fn spawn_solid_modal(
 }
 
 fn spawn_atlas_modal(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     size: Option<(f32, f32)>,
     texture: Handle<Image>,
     layout: Handle<TextureAtlasLayout>,

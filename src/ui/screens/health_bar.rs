@@ -127,10 +127,8 @@ pub fn init_sprite_health_bars(
     };
     image.image_mode = NodeImageMode::Sliced(TextureSlicer {
         border: BorderRect {
-            left: 3.0,
-            right: 3.0,
-            top: 2.0,
-            bottom: 2.0,
+            min_inset: Vec2::new(3.0, 2.0),
+            max_inset: Vec2::new(3.0, 2.0),
         },
         ..default()
     });
@@ -181,7 +179,7 @@ pub fn update_sprite_health_bar_visuals(
         }
 
         for child in children.iter() {
-            if let Ok(mut text) = text_query.get_mut(*child) {
+            if let Ok(mut text) = text_query.get_mut(child) {
                 let hp_str = format!("{} / {}", health.current, health.max);
                 if **text != hp_str {
                     **text = hp_str;
@@ -212,7 +210,7 @@ pub fn update_health_bar(
     if let Ok(bar_children) = children.get(bar_entity) {
         for child in bar_children.iter() {
             // Update sprite
-            if let Ok(mut image_node) = sprite_query.get_mut(*child) {
+            if let Ok(mut image_node) = sprite_query.get_mut(child) {
                 if let Some(index) = sheet.get(slice.as_str()) {
                     if let Some(atlas) = &mut image_node.texture_atlas {
                         atlas.index = index;
@@ -220,7 +218,7 @@ pub fn update_health_bar(
                 }
             }
             // Update text
-            if let Ok(mut text) = text_query.get_mut(*child) {
+            if let Ok(mut text) = text_query.get_mut(child) {
                 **text = format!("{}/{}", current, max);
             }
         }

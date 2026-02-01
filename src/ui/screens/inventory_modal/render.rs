@@ -23,7 +23,7 @@ pub fn sync_inventory_to_grids(
         return;
     }
 
-    if let Ok(mut eq_grid) = equipment_grids.get_single_mut() {
+    if let Ok(mut eq_grid) = equipment_grids.single_mut() {
         eq_grid.items = get_equipment_items(&inventory)
             .iter()
             .map(|inv_item| ItemGridEntry::from_inventory_item(inv_item))
@@ -31,7 +31,7 @@ pub fn sync_inventory_to_grids(
         eq_grid.clamp_selection();
     }
 
-    if let Ok(mut bp_grid) = backpack_grids.get_single_mut() {
+    if let Ok(mut bp_grid) = backpack_grids.single_mut() {
         bp_grid.items = ItemGridEntry::from_inventory(&inventory);
         bp_grid.clamp_selection();
     }
@@ -112,12 +112,12 @@ pub fn populate_inventory_detail_pane_content(
             continue;
         }
 
-        let Ok((content_entity, children)) = content_query.get_single() else {
+        let Ok((content_entity, children)) = content_query.single() else {
             continue;
         };
 
         if let Some(children) = children {
-            for &child in children.iter() {
+            for child in children.iter() {
                 commands.entity(child).despawn();
             }
         }

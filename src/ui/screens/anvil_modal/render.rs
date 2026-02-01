@@ -99,12 +99,12 @@ pub fn populate_anvil_detail_pane_content(
             continue;
         }
 
-        let Ok((content_entity, children)) = content_query.get_single() else {
+        let Ok((content_entity, children)) = content_query.single() else {
             continue;
         };
 
         if let Some(children) = children {
-            for &child in children.iter() {
+            for child in children.iter() {
                 commands.entity(child).despawn();
             }
         }

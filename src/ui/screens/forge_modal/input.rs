@@ -34,7 +34,7 @@ pub fn handle_forge_modal_navigation(
                     }
                 }
             } else if focus_state.is_focused(FocusPanel::ForgeInventory) {
-                if let Ok(mut grid) = player_grids.get_single_mut() {
+                if let Ok(mut grid) = player_grids.single_mut() {
                     grid.navigate(*direction);
                 }
             }
@@ -95,7 +95,7 @@ pub fn handle_forge_modal_select(
             }
         } else {
             let selected = player_grids
-                .get_single()
+                .single()
                 .map(|g| g.selected_index)
                 .unwrap_or(0);
 
@@ -136,7 +136,7 @@ pub fn handle_forge_modal_select(
         // Refresh inventory grid when transfer occurred
         // Forge slot display is handled reactively via Changed<ForgeCraftingState>
         if transfer_occurred {
-            if let Ok(mut grid) = player_grids.get_single_mut() {
+            if let Ok(mut grid) = player_grids.single_mut() {
                 grid.items = ItemGridEntry::from_inventory(&inventory);
                 grid.clamp_selection();
             }

@@ -80,7 +80,7 @@ pub fn do_spawn_fight_modal(
 }
 
 fn spawn_player_column(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
     player_name: &str,
     hp: i32,
@@ -143,7 +143,7 @@ fn spawn_player_column(
 }
 
 fn spawn_mob_column(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
     mob_name: &str,
     mob_id: crate::mob::MobId,
@@ -200,7 +200,7 @@ pub fn update_button_sprites(
 
     let ok_selected = selection.selected == FightModalButton::Ok;
 
-    if let Ok(mut image) = ok_query.get_single_mut() {
+    if let Ok(mut image) = ok_query.single_mut() {
         let key = if ok_selected {
             SpriteSheetKey::OkButtonSelected
         } else {
@@ -218,7 +218,7 @@ pub fn update_button_sprites(
         }
     }
 
-    if let Ok(mut image) = cancel_query.get_single_mut() {
+    if let Ok(mut image) = cancel_query.single_mut() {
         let key = if ok_selected {
             SpriteSheetKey::CancelButton
         } else {
@@ -242,7 +242,7 @@ pub fn update_mob_health_bar(
     mut bar_query: Query<&mut Health, (With<FightModalMobHealthBar>, Without<MobMarker>)>,
     mob_query: Query<&Health, (With<MobMarker>, Changed<Health>)>,
 ) {
-    let Ok(mut bar_health) = bar_query.get_single_mut() else {
+    let Ok(mut bar_health) = bar_query.single_mut() else {
         return;
     };
     let Ok(mob_health) = mob_query.get(fight_mob.entity) else {
@@ -259,7 +259,7 @@ pub fn update_player_health_bar(
     if !stats.is_changed() {
         return;
     }
-    let Ok(mut health) = bar_query.get_single_mut() else {
+    let Ok(mut health) = bar_query.single_mut() else {
         return;
     };
     health.current = stats.hp();

@@ -47,7 +47,7 @@ pub fn do_spawn_monster_compendium(
 }
 
 /// Spawn the left page with the monster list.
-fn spawn_left_page(book: &mut ChildBuilder, monsters: &CompendiumMonsters) {
+fn spawn_left_page(book: &mut ChildSpawnerCommands, monsters: &CompendiumMonsters) {
     book.spawn(Node {
         position_type: PositionType::Absolute,
         left: Val::Px(LEFT_PAGE_LEFT),
@@ -79,7 +79,7 @@ fn spawn_left_page(book: &mut ChildBuilder, monsters: &CompendiumMonsters) {
     });
 }
 
-fn spawn_right_page(book: &mut ChildBuilder) {
+fn spawn_right_page(book: &mut ChildSpawnerCommands) {
     book.spawn(Node {
         position_type: PositionType::Absolute,
         left: Val::Px(RIGHT_PAGE_LEFT),
@@ -212,7 +212,7 @@ pub fn update_stats_display(
 
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else { return };
-    let Ok((section_entity, mut node)) = stats_section.get_single_mut() else { return };
+    let Ok((section_entity, mut node)) = stats_section.single_mut() else { return };
 
     let is_visible = view_state.view == CompendiumDetailView::Stats;
     node.display = if is_visible {
@@ -225,7 +225,7 @@ pub fn update_stats_display(
         return;
     }
 
-    commands.entity(section_entity).despawn_descendants();
+    commands.entity(section_entity).despawn();
     commands.entity(section_entity).with_children(|parent| {
         spawn_stat_item(
             parent,
@@ -284,7 +284,7 @@ pub fn update_stats_display(
 }
 
 fn spawn_stat_item(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     icon_slice: ItemDetailIconsSlice,
     label: &str,
     range: &RangeInclusive<i32>,
@@ -342,7 +342,7 @@ pub fn update_drops_display(
 
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else { return };
-    let Ok((section_entity, mut node)) = drops_section.get_single_mut() else { return };
+    let Ok((section_entity, mut node)) = drops_section.single_mut() else { return };
 
     let is_visible = view_state.view == CompendiumDetailView::Drops;
     node.display = if is_visible {
@@ -362,7 +362,7 @@ pub fn update_drops_display(
         .as_ref()
         .map_or(false, |f| f.is_focused(FocusPanel::CompendiumDropsList));
 
-    commands.entity(section_entity).despawn_descendants();
+    commands.entity(section_entity).despawn();
     commands.entity(section_entity).with_children(|parent| {
         parent.spawn((
             Text::new("Drops:"),
@@ -387,7 +387,7 @@ pub fn update_drops_display(
 }
 
 fn spawn_drop_row(
-    parent: &mut ChildBuilder,
+    parent: &mut ChildSpawnerCommands,
     idx: usize,
     drop: &DropEntry,
     game_sprites: &GameSprites,
@@ -451,7 +451,7 @@ pub fn update_drops_list_colors(
         let is_selected = drops_focused && item.0 == drops_state.selected;
         let color = if is_selected { SELECTED_COLOR } else { NORMAL_COLOR };
 
-        for &child in children.iter() {
+        for child in children.iter() {
             if let Ok(mut text_color) = texts.get_mut(child) {
                 *text_color = TextColor(color);
             }
