@@ -327,7 +327,7 @@ fn update_grid_items(
             if let Some(children) = cell_children {
                 for cell_child in children.iter() {
                     if item_sprites.contains(cell_child) || quantity_texts.contains(cell_child) {
-                        if commands.get_entity(cell_child).is_some() {
+                        if commands.get_entity(cell_child).is_ok() {
                             commands.entity(cell_child).despawn();
                         }
                     }
@@ -394,7 +394,7 @@ fn update_grid_selector(
         }
 
         // Skip if the grid entity is being despawned
-        if commands.get_entity(grid_entity).is_none() {
+        if commands.get_entity(grid_entity).is_err() {
             continue;
         }
 
@@ -411,7 +411,7 @@ fn update_grid_selector(
             if let Ok((_, _, Some(cell_children))) = grid_cells.get(child) {
                 for cell_child in cell_children.iter() {
                     if selectors.contains(cell_child) {
-                        if commands.get_entity(cell_child).is_some() {
+                        if commands.get_entity(cell_child).is_ok() {
                             commands.entity(cell_child).despawn();
                         }
                     }
@@ -429,7 +429,7 @@ fn update_grid_selector(
             if let Ok((cell_entity, grid_cell, _)) = grid_cells.get(child) {
                 if grid_cell.index == item_grid.selected_index {
                     // Skip if cell entity no longer exists
-                    if commands.get_entity(cell_entity).is_none() {
+                    if commands.get_entity(cell_entity).is_err() {
                         break;
                     }
 

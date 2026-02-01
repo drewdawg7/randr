@@ -336,7 +336,7 @@ pub fn refresh_forge_slots(
         if let Some(children) = children {
             for child in children.iter() {
                 if item_sprites.contains(child) || quantity_texts.contains(child) {
-                    if commands.get_entity(child).is_some() {
+                    if commands.get_entity(child).is_ok() {
                         commands.entity(child).despawn();
                     }
                 }
@@ -377,7 +377,7 @@ pub fn update_forge_slot_selector(
         if let Some(children) = children {
             for child in children.iter() {
                 if selectors.contains(child) {
-                    if commands.get_entity(child).is_some() {
+                    if commands.get_entity(child).is_ok() {
                         commands.entity(child).despawn();
                     }
                 }
