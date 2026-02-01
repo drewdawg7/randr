@@ -59,16 +59,17 @@ impl Plugin for StateTransitionPlugin {
                 StateTransition,
                 track_state_transitions.run_if(state_changed::<AppState>),
             )
-            .add_systems(Update, handle_state_transition_requests);
+            .add_systems(
+                Update,
+                handle_state_transition_requests.run_if(on_event::<RequestMineEvent>),
+            );
     }
 }
 
-/// System that handles state transition request events.
 fn handle_state_transition_requests(
     mut mine_events: EventReader<RequestMineEvent>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
-    // Process mine requests
     if mine_events.read().next().is_some() {
         next_state.set(AppState::Mine);
     }
