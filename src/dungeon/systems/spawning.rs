@@ -6,7 +6,7 @@ use rand::seq::SliceRandom;
 use rand::Rng;
 
 use crate::crafting_station::CraftingStationType;
-use crate::dungeon::tile_components::can_have_entity;
+use crate::dungeon::tile_components::{can_have_entity, is_door};
 use crate::dungeon::{DungeonEntity, DungeonEntityMarker, EntitySize, TileWorldSize};
 use crate::mob::MobId;
 use crate::rock::RockType;
@@ -97,17 +97,22 @@ pub fn on_map_created(
     _trigger: On<TiledEvent<MapCreated>>,
     mut commands: Commands,
     spawn_tiles: Query<(&TilePos, &can_have_entity)>,
+    door_tiles: Query<(&TilePos, &is_door)>,
     tilemap_query: TilemapQuery,
     tile_world_size: Option<Res<TileWorldSize>>,
     config: Option<Res<FloorSpawnConfig>>,
 ) {
-    let Some(config) = config else {
-        return;
-    };
-
     let tile_size = tile_world_size.map(|t| t.0).unwrap_or(32.0);
     let tilemap = tilemap_query.single().ok();
     let ctx = SpawnContext { tile_size, tilemap };
+
+    let mut used_positions: Vec<TilePos> = Vec::new();
+
+    spawn_doors(&mut commands, &door_tiles, &mut used_positions, &ctx);
+
+    let Some(config) = config else {
+        return;
+    };
 
     let mut rng = rand::thread_rng();
 
@@ -120,8 +125,6 @@ pub fn on_map_created(
     if available.is_empty() {
         return;
     }
-
-    let mut used_positions: Vec<TilePos> = Vec::new();
 
     spawn_chests(&mut commands, &config, &available, &mut used_positions, &ctx, &mut rng);
     spawn_stairs(&mut commands, &config, &available, &mut used_positions, &ctx, &mut rng);
@@ -144,6 +147,22 @@ fn find_spawn_position(
         .collect();
 
     candidates.choose(rng).copied().copied()
+}
+
+fn spawn_doors(
+    commands: &mut Commands,
+    door_tiles: &Query<(&TilePos, &is_door)>,
+    used: &mut Vec<TilePos>,
+    ctx: &SpawnContext,
+) {
+    let size = ctx.entity_size();
+
+    for (tile_pos, _) in door_tiles.iter() {
+        let world_pos = ctx.tile_to_world(*tile_pos);
+        let entity_type = DungeonEntity::Door { size };
+        commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+        used.push(*tile_pos);
+    }
 }
 
 fn spawn_chests(

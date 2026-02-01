@@ -33,6 +33,7 @@ pub enum EntityRenderData {
     },
     /// Animated mob sprite using the SpriteMarker observer system.
     AnimatedMob { mob_id: MobId },
+    Invisible,
 }
 
 impl DungeonEntity {
@@ -68,10 +69,7 @@ impl DungeonEntity {
                 sheet_key: SpriteSheetKey::CraftingStations,
                 sprite_name: station_type.sprite_name(),
             },
-            Self::Door { .. } => EntityRenderData::SpriteSheet {
-                sheet_key: SpriteSheetKey::DungeonTileset,
-                sprite_name: "gate",
-            },
+            Self::Door { .. } => EntityRenderData::Invisible,
             Self::Mob { mob_id, .. } => EntityRenderData::AnimatedMob { mob_id: *mob_id },
             Self::Npc { mob_id, .. } => EntityRenderData::AnimatedMob { mob_id: *mob_id },
         }

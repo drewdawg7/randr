@@ -33,7 +33,7 @@ pub fn add_entity_visuals(
 
     let size = marker.entity_type.size();
     let collider = Collider::rectangle(size.width * 0.9, size.height * 0.9);
-    let (rigid_body, layers) = physics_components_for_entity(&marker.entity_type);
+    let (physics_body, layers) = physics_components_for_entity(&marker.entity_type);
 
     match marker.entity_type.render_data() {
         EntityRenderData::SpriteSheet {
@@ -46,10 +46,17 @@ pub fn add_entity_visuals(
                     entity_cmd.insert((
                         sprite,
                         Transform::from_translation(world_pos),
-                        rigid_body,
                         collider,
                         layers,
                     ));
+                    match physics_body {
+                        PhysicsBody::Rigid(rigid_body) => {
+                            entity_cmd.insert(rigid_body);
+                        }
+                        PhysicsBody::Sensor => {
+                            entity_cmd.insert(Sensor);
+                        }
+                    }
                     match marker.entity_type {
                         DungeonEntity::CraftingStation {
                             station_type: CraftingStationType::Forge,
@@ -70,7 +77,8 @@ pub fn add_entity_visuals(
         }
         EntityRenderData::AnimatedMob { mob_id } => {
             if let Some(sheet) = mob_sheets.get(mob_id) {
-                commands.entity(entity).insert((
+                let mut entity_cmd = commands.entity(entity);
+                entity_cmd.insert((
                     MobCombatBundle::from_mob_id(mob_id),
                     Sprite::from_atlas_image(
                         sheet.texture.clone(),
@@ -81,27 +89,52 @@ pub fn add_entity_visuals(
                     ),
                     Transform::from_translation(world_pos),
                     SpriteAnimation::new(&sheet.animation),
-                    rigid_body,
                     collider,
                     layers,
                 ));
+                match physics_body {
+                    PhysicsBody::Rigid(rigid_body) => {
+                        entity_cmd.insert(rigid_body);
+                    }
+                    PhysicsBody::Sensor => {
+                        entity_cmd.insert(Sensor);
+                    }
+                }
             }
+        }
+        EntityRenderData::Invisible => {
+            let mut entity_cmd = commands.entity(entity);
+            entity_cmd.insert((
+                Transform::from_translation(world_pos),
+                collider,
+                layers,
+                Sensor,
+            ));
         }
     }
 }
 
-fn physics_components_for_entity(entity_type: &DungeonEntity) -> (RigidBody, CollisionLayers) {
+enum PhysicsBody {
+    Rigid(RigidBody),
+    Sensor,
+}
+
+fn physics_components_for_entity(entity_type: &DungeonEntity) -> (PhysicsBody, CollisionLayers) {
     match entity_type {
         DungeonEntity::Mob { .. } => (
-            RigidBody::Kinematic,
+            PhysicsBody::Rigid(RigidBody::Kinematic),
             CollisionLayers::new(GameLayer::Mob, [GameLayer::Player]),
         ),
-        DungeonEntity::Stairs { .. } | DungeonEntity::Door { .. } => (
-            RigidBody::Static,
+        DungeonEntity::Stairs { .. } => (
+            PhysicsBody::Rigid(RigidBody::Static),
+            CollisionLayers::new(GameLayer::Trigger, [GameLayer::Player]),
+        ),
+        DungeonEntity::Door { .. } => (
+            PhysicsBody::Sensor,
             CollisionLayers::new(GameLayer::Trigger, [GameLayer::Player]),
         ),
         _ => (
-            RigidBody::Static,
+            PhysicsBody::Rigid(RigidBody::Static),
             CollisionLayers::new(GameLayer::StaticEntity, [GameLayer::Player]),
         ),
     }
