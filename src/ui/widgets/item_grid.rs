@@ -17,8 +17,16 @@ pub struct ItemGridPlugin;
 impl Plugin for ItemGridPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(on_add_item_grid)
-            // Run in PostUpdate to avoid race with UI refresh systems in Update
-            .add_systems(PostUpdate, (update_grid_items, update_grid_selector, animate_grid_selector).chain());
+            .add_systems(
+                PostUpdate,
+                (update_grid_items, update_grid_selector).chain(),
+            )
+            .add_systems(
+                PostUpdate,
+                animate_grid_selector
+                    .after(update_grid_selector)
+                    .run_if(any_with_component::<GridSelector>),
+            );
     }
 }
 
