@@ -1,7 +1,3 @@
-use crate::dungeon::DungeonLayout;
-
-use super::{cave_floor, home_floor};
-
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum LayoutId {
     CaveFloor,
@@ -9,15 +5,12 @@ pub enum LayoutId {
 }
 
 impl LayoutId {
-    pub fn layout(&self) -> DungeonLayout {
+    pub const ALL: &'static [LayoutId] = &[LayoutId::CaveFloor, LayoutId::HomeFloor];
+
+    pub fn dimensions(&self) -> (usize, usize) {
         match self {
-            LayoutId::CaveFloor => cave_floor::create(),
-            LayoutId::HomeFloor => home_floor::create(),
+            LayoutId::CaveFloor => (15, 11),
+            LayoutId::HomeFloor => (10, 10),
         }
     }
-
-    pub const ALL: &'static [LayoutId] = &[
-        LayoutId::CaveFloor,
-        LayoutId::HomeFloor,
-    ];
 }

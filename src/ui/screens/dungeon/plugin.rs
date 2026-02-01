@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
@@ -6,8 +7,8 @@ use crate::combat::ActiveCombat;
 use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
 use crate::dungeon::{
     CraftingStationInteraction, DungeonEntity, DungeonEntityMarker, DungeonRegistry, DungeonState,
-    FloorReady, GridOccupancy, MineEntity, MiningResult, MoveResult, NpcInteraction,
-    PlayerMoveIntent, SpawnFloor,
+    FloorReady, GridOccupancy, GridSize, MineEntity, MiningResult, MoveResult, NpcInteraction,
+    PlayerMoveIntent, SpawnFloor, TilePos,
 };
 use crate::input::{GameAction, HeldDirection, NavigationDirection};
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -22,8 +23,8 @@ use crate::ui::screens::modal::{ActiveModal, ModalType, OpenModal};
 use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
-use super::components::{DungeonPlayer, DungeonRoot, Interpolating, TargetPosition, TileSizes};
-use super::spawn::{add_entity_visuals, spawn_floor_ui};
+use super::components::{DungeonPlayer, DungeonRoot, Interpolating, PendingPlayerSpawn, TargetPosition};
+use super::spawn::{add_entity_visuals, spawn_floor_ui, spawn_player, tile_transform};
 use super::systems::cleanup_dungeon;
 
 pub struct DungeonScreenPlugin;
@@ -31,12 +32,14 @@ pub struct DungeonScreenPlugin;
 impl Plugin for DungeonScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(add_entity_visuals)
+            .add_observer(on_map_created_queue_player_spawn)
             .add_systems(OnEnter(AppState::Dungeon), enter_dungeon)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
                 Update,
                 (
                     handle_floor_ready.run_if(on_message::<FloorReady>),
+                    spawn_player_when_ready.run_if(resource_exists::<PendingPlayerSpawn>),
                     handle_dungeon_movement
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     handle_move_result.run_if(on_message::<MoveResult>),
@@ -67,25 +70,28 @@ fn enter_dungeon(
         state.enter_dungeon(LocationId::Home, &registry);
     }
 
-    let Some((_, spawn_config)) = state.load_floor_layout() else {
+    let Some(spawn_config) = state.get_spawn_config() else {
         return;
     };
     commands.insert_resource(spawn_config);
 
-    let Some(layout) = state.layout.clone() else {
-        return;
-    };
-
-    let floor_type = state
-        .current_floor()
+    let floor_id = state.current_floor();
+    let floor_type = floor_id
         .map(|f| f.floor_type())
         .unwrap_or(crate::dungeon::FloorType::CaveFloor);
 
+    let layout_id = floor_type.layout_id(false);
+    let (map_width, map_height) = layout_id.dimensions();
+
+    state.player_pos = TilePos::new(map_width as u32 / 2, map_height as u32 / 2);
+    state.player_size = GridSize::single();
+
     spawn_floor.write(SpawnFloor {
-        layout,
         player_pos: state.player_pos,
         player_size: state.player_size,
         floor_type,
+        map_width,
+        map_height,
     });
 }
 
@@ -94,7 +100,6 @@ fn handle_floor_ready(
     mut commands: Commands,
     mut events: MessageReader<FloorReady>,
     asset_server: Res<AssetServer>,
-    player_sheet: Res<PlayerSpriteSheet>,
     window: Single<&Window>,
     camera_query: Single<Entity, With<Camera2d>>,
     root_query: Query<Entity, With<DungeonRoot>>,
@@ -103,26 +108,57 @@ fn handle_floor_ready(
         for entity in &root_query {
             commands.entity(entity).despawn();
         }
-        commands.remove_resource::<TileSizes>();
 
         spawn_floor_ui(
             &mut commands,
             &asset_server,
-            &event.layout,
-            event.player_pos,
             event.floor_type,
-            &player_sheet,
             &window,
             *camera_query,
+            event.map_width,
+            event.map_height,
         );
     }
+}
+
+fn on_map_created_queue_player_spawn(
+    _trigger: On<TiledEvent<MapCreated>>,
+    mut commands: Commands,
+    state: Res<DungeonState>,
+    existing_player: Query<Entity, With<DungeonPlayer>>,
+) {
+    for entity in &existing_player {
+        commands.entity(entity).despawn();
+    }
+
+    commands.insert_resource(PendingPlayerSpawn(state.player_pos));
+}
+
+#[instrument(level = "debug", skip_all, fields(
+    player_pos = ?pending.0,
+    tiles_with_gt = tile_query.iter().count(),
+    tiles_without_gt = tiles_only.iter().count()
+))]
+fn spawn_player_when_ready(
+    mut commands: Commands,
+    pending: Res<PendingPlayerSpawn>,
+    tile_query: Query<(&TilePos, &GlobalTransform)>,
+    tiles_only: Query<&TilePos>,
+    player_sheet: Res<PlayerSpriteSheet>,
+) {
+    if tile_query.is_empty() {
+        return;
+    }
+
+    spawn_player(&mut commands, &tile_query, pending.0, &player_sheet);
+    commands.remove_resource::<PendingPlayerSpawn>();
 }
 
 #[derive(Resource)]
 struct LastMoveDirection(NavigationDirection);
 
 const MOVE_INTERVAL: f32 = 0.1;
-const MOVE_SPEED: f32 = 8.0;
+const MOVE_SPEED: f32 = 256.0;
 
 fn handle_dungeon_movement(
     mut commands: Commands,
@@ -160,7 +196,7 @@ fn handle_move_result(
     mut commands: Commands,
     mut events: MessageReader<MoveResult>,
     last_direction: Option<Res<LastMoveDirection>>,
-    tile_sizes: Res<TileSizes>,
+    tile_query: Query<(&TilePos, &GlobalTransform)>,
     sheet: Res<PlayerSpriteSheet>,
     fight_mob: Option<Res<FightModalMob>>,
     mut player_query: Query<
@@ -183,12 +219,11 @@ fn handle_move_result(
                     continue;
                 };
 
-                let tile_size = tile_sizes.tile_size;
-                let map_height = tile_sizes.map_height;
+                let Some((world_pos, _)) = tile_transform(&tile_query, *new_pos) else {
+                    continue;
+                };
 
-                let world_x = new_pos.x as f32 * tile_size + tile_size / 2.0;
-                let world_y = (map_height - 1 - new_pos.y) as f32 * tile_size + tile_size / 2.0;
-                target_pos.0 = Vec2::new(world_x, world_y);
+                target_pos.0 = world_pos;
                 commands.entity(entity).insert(Interpolating);
 
                 if let Some(ref dir) = last_direction {
@@ -257,7 +292,7 @@ fn handle_interact_action(
             continue;
         }
 
-        let Some(entity) = occupancy.entity_at(x as usize, y as usize) else {
+        let Some(entity) = occupancy.entity_at(x as u32, y as u32) else {
             continue;
         };
 
@@ -409,11 +444,8 @@ fn handle_back_action(
 fn interpolate_player_position(
     mut commands: Commands,
     time: Res<Time>,
-    tile_sizes: Option<Res<TileSizes>>,
     mut query: Query<(Entity, &TargetPosition, &mut Transform), With<Interpolating>>,
 ) {
-    let Some(tile_sizes) = tile_sizes else { return };
-
     for (entity, target, mut transform) in &mut query {
         let current = transform.translation.truncate();
         let delta = target.0 - current;
@@ -424,8 +456,7 @@ fn interpolate_player_position(
             transform.translation.y = target.0.y;
             commands.entity(entity).remove::<Interpolating>();
         } else {
-            let speed = MOVE_SPEED * tile_sizes.tile_size;
-            let step = speed * time.delta_secs();
+            let step = MOVE_SPEED * time.delta_secs();
             let new_pos = current + delta.normalize() * step.min(distance);
             transform.translation.x = new_pos.x;
             transform.translation.y = new_pos.y;

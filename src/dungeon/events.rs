@@ -1,7 +1,8 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::TilePos;
 
 use crate::crafting_station::CraftingStationType;
-use crate::dungeon::{DungeonEntity, DungeonLayout, FloorType, GridPosition, GridSize};
+use crate::dungeon::{DungeonEntity, FloorType, GridSize};
 use crate::input::NavigationDirection;
 use crate::loot::LootDrop;
 use crate::mob::MobId;
@@ -14,60 +15,52 @@ pub struct PlayerMoveIntent {
 #[derive(Message, Debug, Clone)]
 pub enum MoveResult {
     Moved {
-        new_pos: GridPosition,
+        new_pos: TilePos,
     },
     Blocked,
     TriggeredCombat {
         mob_id: MobId,
         entity: Entity,
-        pos: GridPosition,
+        pos: TilePos,
     },
     TriggeredStairs,
     TriggeredDoor,
 }
 
-/// Floor transition event (UI -> Game Logic).
 #[derive(Message, Debug, Clone)]
 pub enum FloorTransition {
-    /// Player stepped on stairs - advance to next floor.
     AdvanceFloor,
-    /// Player entered a door - enter main dungeon.
     EnterDoor,
-    /// Dungeon cleared - return to home.
     ReturnToHome,
 }
 
-/// Result when a floor transition completes (Game Logic -> UI).
 #[derive(Message, Debug, Clone)]
 pub struct FloorReady {
-    pub layout: DungeonLayout,
-    pub player_pos: GridPosition,
+    pub player_pos: TilePos,
     pub player_size: GridSize,
     pub floor_type: FloorType,
+    pub map_width: usize,
+    pub map_height: usize,
 }
 
-/// Player interacted with an NPC.
 #[derive(Message, Debug, Clone)]
 pub struct NpcInteraction {
     pub mob_id: MobId,
 }
 
-/// Player interacted with a crafting station.
 #[derive(Message, Debug, Clone)]
 pub struct CraftingStationInteraction {
     pub entity: Entity,
     pub station_type: CraftingStationType,
 }
 
-/// Player mined an entity (chest or rock).
 #[derive(Message, Debug, Clone)]
 pub struct MineEntity {
     pub entity: Entity,
-    pub pos: GridPosition,
+    pub pos: TilePos,
     pub entity_type: DungeonEntity,
 }
 
-/// Result of mining an entity (Game Logic -> UI).
 #[derive(Message, Debug, Clone)]
 pub struct MiningResult {
     pub entity_type: DungeonEntity,

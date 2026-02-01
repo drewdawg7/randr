@@ -1,9 +1,10 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::TilePos;
 use tracing::instrument;
 
 use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
 use crate::dungeon::{
-    DungeonEntity, DungeonEntityMarker, DungeonState, GridOccupancy, GridPosition, GridSize,
+    occupied_cells, DungeonEntity, DungeonEntityMarker, DungeonState, GridOccupancy, GridSize,
     TileIndex,
 };
 use crate::input::NavigationDirection;
@@ -30,12 +31,11 @@ pub fn handle_player_move(
             NavigationDirection::Right => (1, 0),
         };
 
-        let new_pos = GridPosition::new(
-            (state.player_pos.x as i32 + dx).max(0) as usize,
-            (state.player_pos.y as i32 + dy).max(0) as usize,
-        );
+        let new_x = (state.player_pos.x as i32 + dx).max(0) as u32;
+        let new_y = (state.player_pos.y as i32 + dy).max(0) as u32;
+        let new_pos = TilePos::new(new_x, new_y);
 
-        if tile_index.is_door(new_pos.x as u32, new_pos.y as u32) {
+        if tile_index.is_door(new_pos.x, new_pos.y) {
             transition_events.write(FloorTransition::EnterDoor);
             return;
         }
@@ -73,19 +73,18 @@ pub fn handle_player_move(
     }
 }
 
-fn all_cells_walkable(tile_index: &TileIndex, pos: GridPosition, size: GridSize) -> bool {
-    pos.occupied_cells(size)
-        .all(|(x, y)| tile_index.is_walkable(x as u32, y as u32))
+fn all_cells_walkable(tile_index: &TileIndex, pos: TilePos, size: GridSize) -> bool {
+    occupied_cells(pos, size).all(|(x, y)| tile_index.is_walkable(x, y))
 }
 
 #[instrument(level = "debug", skip_all, fields(pos = ?pos), ret)]
 fn check_entity_collision(
     occupancy: &GridOccupancy,
     entity_query: &Query<&DungeonEntityMarker>,
-    pos: GridPosition,
+    pos: TilePos,
     size: GridSize,
-) -> Option<(DungeonEntity, Entity, GridPosition)> {
-    for (x, y) in pos.occupied_cells(size) {
+) -> Option<(DungeonEntity, Entity, TilePos)> {
+    for (x, y) in occupied_cells(pos, size) {
         if let Some(entity) = occupancy.entity_at(x, y) {
             if let Ok(marker) = entity_query.get(entity) {
                 return Some((marker.entity_type, entity, marker.pos));

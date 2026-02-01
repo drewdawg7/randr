@@ -1,9 +1,7 @@
-//! Fight modal state and components.
-
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::TilePos;
 
 use crate::combat::ActiveCombat;
-use crate::dungeon::GridPosition;
 use crate::mob::{Health, MobId};
 use crate::ui::focus::SelectionState;
 use crate::ui::modal_registry::RegisteredModal;
@@ -57,15 +55,10 @@ impl SpriteMarker for FightModalMobSprite {
     }
 }
 
-/// Resource storing the mob encountered for the fight modal.
-/// Combat data is queried from the entity's components (Health, CombatStats, etc.)
 #[derive(Resource)]
 pub struct FightModalMob {
-    /// Mob type for sprite lookup and name display
     pub mob_id: MobId,
-    /// Grid position for clearing occupancy after defeat
-    pub pos: GridPosition,
-    /// Entity reference for despawning and querying combat components
+    pub pos: TilePos,
     pub entity: Entity,
 }
 

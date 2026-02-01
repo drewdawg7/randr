@@ -1,12 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Resource)]
-pub struct TileSizes {
-    pub tile_size: f32,
-    pub base_tile_size: f32,
-    pub map_height: usize,
-}
-
+use crate::dungeon::TilePos;
 
 #[derive(Component)]
 pub struct DungeonPlayer;
@@ -19,3 +13,6 @@ pub struct TargetPosition(pub Vec2);
 
 #[derive(Component)]
 pub struct Interpolating;
+
+#[derive(Resource)]
+pub struct PendingPlayerSpawn(pub TilePos);

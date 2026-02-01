@@ -1,15 +1,16 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::TilePos;
 
 use crate::assets::SpriteSheetKey;
 use crate::crafting_station::CraftingStationType;
 use crate::mob::MobId;
 use crate::rock::RockType;
 
-use super::grid::{GridPosition, GridSize};
+use super::grid::GridSize;
 
 #[derive(Component)]
 pub struct DungeonEntityMarker {
-    pub pos: GridPosition,
+    pub pos: TilePos,
     pub entity_type: DungeonEntity,
 }
 

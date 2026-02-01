@@ -8,7 +8,7 @@ use rand::Rng;
 use crate::crafting_station::CraftingStationType;
 use crate::dungeon::tile_components::{can_have_entity, is_door, is_solid};
 use crate::dungeon::tile_index::TileIndex;
-use crate::dungeon::{DungeonEntity, DungeonEntityMarker, GridOccupancy, GridPosition, GridSize};
+use crate::dungeon::{DungeonEntity, DungeonEntityMarker, GridOccupancy, GridSize};
 use crate::mob::MobId;
 use crate::rock::RockType;
 
@@ -85,16 +85,13 @@ pub fn on_map_created(
 
     let mut rng = rand::thread_rng();
 
-    let available: Vec<GridPosition> = spawn_tiles
-        .iter()
-        .map(|pos| GridPosition::new(pos.x as usize, pos.y as usize))
-        .collect();
+    let available: Vec<TilePos> = spawn_tiles.iter().copied().collect();
 
     if available.is_empty() {
         return;
     }
 
-    let mut used_positions: Vec<GridPosition> = Vec::new();
+    let mut used_positions: Vec<TilePos> = Vec::new();
 
     spawn_chests(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &mut rng);
     spawn_stairs(&mut commands, &config, &available, &mut used_positions, &mut occupancy, &mut rng);
@@ -107,12 +104,12 @@ pub fn on_map_created(
 }
 
 fn find_spawn_position(
-    available: &[GridPosition],
-    used: &[GridPosition],
+    available: &[TilePos],
+    used: &[TilePos],
     occupancy: &GridOccupancy,
     size: GridSize,
     rng: &mut impl Rng,
-) -> Option<GridPosition> {
+) -> Option<TilePos> {
     let candidates: Vec<_> = available
         .iter()
         .filter(|pos| !used.contains(pos) && occupancy.can_place(**pos, size))
@@ -124,8 +121,8 @@ fn find_spawn_position(
 fn spawn_chests(
     commands: &mut Commands,
     config: &FloorSpawnConfig,
-    available: &[GridPosition],
-    used: &mut Vec<GridPosition>,
+    available: &[TilePos],
+    used: &mut Vec<TilePos>,
     occupancy: &mut GridOccupancy,
     rng: &mut impl Rng,
 ) {
@@ -158,8 +155,8 @@ fn spawn_chests(
 fn spawn_stairs(
     commands: &mut Commands,
     config: &FloorSpawnConfig,
-    available: &[GridPosition],
-    used: &mut Vec<GridPosition>,
+    available: &[TilePos],
+    used: &mut Vec<TilePos>,
     occupancy: &mut GridOccupancy,
     rng: &mut impl Rng,
 ) {
@@ -189,8 +186,8 @@ fn spawn_stairs(
 fn spawn_rocks(
     commands: &mut Commands,
     config: &FloorSpawnConfig,
-    available: &[GridPosition],
-    used: &mut Vec<GridPosition>,
+    available: &[TilePos],
+    used: &mut Vec<TilePos>,
     occupancy: &mut GridOccupancy,
     rng: &mut impl Rng,
 ) {
@@ -231,8 +228,8 @@ fn spawn_rocks(
 fn spawn_crafting_stations(
     commands: &mut Commands,
     config: &FloorSpawnConfig,
-    available: &[GridPosition],
-    used: &mut Vec<GridPosition>,
+    available: &[TilePos],
+    used: &mut Vec<TilePos>,
     occupancy: &mut GridOccupancy,
     rng: &mut impl Rng,
 ) {
@@ -294,8 +291,8 @@ fn spawn_crafting_stations(
 fn spawn_npcs(
     commands: &mut Commands,
     config: &FloorSpawnConfig,
-    available: &[GridPosition],
-    used: &mut Vec<GridPosition>,
+    available: &[TilePos],
+    used: &mut Vec<TilePos>,
     occupancy: &mut GridOccupancy,
     rng: &mut impl Rng,
 ) {
@@ -340,8 +337,8 @@ fn spawn_npcs(
 fn spawn_mobs(
     commands: &mut Commands,
     config: &FloorSpawnConfig,
-    available: &[GridPosition],
-    used: &mut Vec<GridPosition>,
+    available: &[TilePos],
+    used: &mut Vec<TilePos>,
     occupancy: &mut GridOccupancy,
     rng: &mut impl Rng,
 ) {

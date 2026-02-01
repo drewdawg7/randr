@@ -1,8 +1,9 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::TilePos;
 
 use crate::dungeon::floor::FloorId;
 use crate::dungeon::systems::spawning::FloorSpawnConfig;
-use crate::dungeon::{DungeonLayout, DungeonRegistry, GridPosition, GridSize};
+use crate::dungeon::{DungeonRegistry, GridSize};
 use crate::location::LocationId;
 
 #[derive(Resource, Default)]
@@ -12,8 +13,7 @@ pub struct DungeonState {
     pub floor_sequence: Vec<FloorId>,
     sequence_location: Option<LocationId>,
     pub dungeon_cleared: bool,
-    pub layout: Option<DungeonLayout>,
-    pub player_pos: GridPosition,
+    pub player_pos: TilePos,
     pub player_size: GridSize,
 }
 
@@ -46,7 +46,6 @@ impl DungeonState {
         let floor_count = config.floor_count();
 
         self.floor_index += 1;
-        self.layout = None;
 
         if self.floor_index >= floor_count {
             self.dungeon_cleared = true;
@@ -69,30 +68,14 @@ impl DungeonState {
     pub fn exit_dungeon(&mut self) {
         self.current_location = None;
         self.floor_index = 0;
-        self.layout = None;
-        self.player_pos = GridPosition::default();
+        self.player_pos = TilePos::default();
         self.player_size = GridSize::default();
     }
 
-    pub fn load_floor_layout(&mut self) -> Option<(&DungeonLayout, FloorSpawnConfig)> {
+    pub fn get_spawn_config(&self) -> Option<FloorSpawnConfig> {
         let floor_id = self.current_floor()?;
         let spec = floor_id.spec();
-        let layout = spec.layout_id.layout();
-        let spawn_config = spec.spawn_table.to_config();
-
-        self.player_pos = layout
-            .iter()
-            .find(|(_, _, tile)| {
-                matches!(
-                    tile.tile_type,
-                    crate::dungeon::TileType::PlayerSpawn | crate::dungeon::TileType::SpawnPoint
-                )
-            })
-            .map_or(GridPosition::default(), |(x, y, _)| GridPosition::new(x, y));
-
-        self.player_size = GridSize::single();
-        self.layout = Some(layout);
-        self.layout.as_ref().map(|l| (l, spawn_config))
+        Some(spec.spawn_table.to_config())
     }
 
     pub fn is_in_dungeon(&self) -> bool {

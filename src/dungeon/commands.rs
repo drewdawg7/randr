@@ -1,23 +1,22 @@
 use bevy::ecs::system::Command;
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::TilePos;
 
-use crate::dungeon::{GridOccupancy, GridPosition, GridSize};
+use crate::dungeon::{GridOccupancy, GridSize};
 
-/// Extension trait for dungeon entity operations on `Commands`.
 pub trait DungeonCommands {
-    /// Despawn a dungeon entity and vacate its position in the occupancy grid.
-    fn despawn_dungeon_entity(&mut self, entity: Entity, pos: GridPosition, size: GridSize);
+    fn despawn_dungeon_entity(&mut self, entity: Entity, pos: TilePos, size: GridSize);
 }
 
 impl DungeonCommands for Commands<'_, '_> {
-    fn despawn_dungeon_entity(&mut self, entity: Entity, pos: GridPosition, size: GridSize) {
+    fn despawn_dungeon_entity(&mut self, entity: Entity, pos: TilePos, size: GridSize) {
         self.queue(DespawnDungeonEntity { entity, pos, size });
     }
 }
 
 struct DespawnDungeonEntity {
     entity: Entity,
-    pos: GridPosition,
+    pos: TilePos,
     size: GridSize,
 }
 

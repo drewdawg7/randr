@@ -1,17 +1,16 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::TilePos;
 use tracing::instrument;
 
-use crate::dungeon::{
-    DungeonEntity, DungeonLayout, FloorMonsterCount, FloorReady, FloorType, GridOccupancy,
-    GridPosition, GridSize,
-};
+use crate::dungeon::{FloorMonsterCount, FloorReady, FloorType, GridOccupancy, GridSize};
 
 #[derive(Message)]
 pub struct SpawnFloor {
-    pub layout: DungeonLayout,
-    pub player_pos: GridPosition,
+    pub player_pos: TilePos,
     pub player_size: GridSize,
     pub floor_type: FloorType,
+    pub map_width: usize,
+    pub map_height: usize,
 }
 
 #[instrument(level = "debug", skip_all)]
@@ -21,24 +20,17 @@ pub fn prepare_floor(
     mut floor_ready: MessageWriter<FloorReady>,
 ) {
     for event in events.read() {
-        let layout = &event.layout;
-
-        let mut occupancy = GridOccupancy::new(layout.width(), layout.height());
+        let mut occupancy = GridOccupancy::new(event.map_width as u32, event.map_height as u32);
         occupancy.mark_blocked(event.player_pos, event.player_size);
         commands.insert_resource(occupancy);
-
-        let mob_count = layout
-            .entities()
-            .iter()
-            .filter(|(_, e)| matches!(e, DungeonEntity::Mob { .. }))
-            .count();
-        commands.insert_resource(FloorMonsterCount(mob_count));
+        commands.insert_resource(FloorMonsterCount(0));
 
         floor_ready.write(FloorReady {
-            layout: event.layout.clone(),
             player_pos: event.player_pos,
             player_size: event.player_size,
             floor_type: event.floor_type,
+            map_width: event.map_width,
+            map_height: event.map_height,
         });
     }
 }
