@@ -6,6 +6,7 @@ use crate::mob::MobId;
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub enum FloorType {
     CaveFloor,
+    HomeFloor,
 }
 
 impl FloorType {
@@ -39,6 +40,9 @@ impl FloorType {
     }
 
     pub fn layout_id(&self, _is_final: bool) -> LayoutId {
-        LayoutId::CaveFloor
+        match self {
+            FloorType::CaveFloor => LayoutId::CaveFloor,
+            FloorType::HomeFloor => LayoutId::HomeFloor,
+        }
     }
 }

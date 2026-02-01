@@ -80,6 +80,9 @@ entity_macros::define_data! {
 
 impl FloorId {
     pub fn floor_type(&self) -> FloorType {
-        FloorType::CaveFloor
+        match self {
+            FloorId::HomeFloor => FloorType::HomeFloor,
+            _ => FloorType::CaveFloor,
+        }
     }
 }

@@ -13,6 +13,7 @@ pub mod spawn_rules;
 pub mod state;
 pub mod systems;
 pub mod tile;
+pub mod tile_components;
 pub mod tiled;
 
 pub use commands::DungeonCommands;
@@ -36,6 +37,7 @@ pub use systems::{
     prepare_floor, SpawnFloor,
 };
 pub use tile::{Tile, TileType};
+pub use tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 pub use tiled::map_path;
 
 pub use events::{

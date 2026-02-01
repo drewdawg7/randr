@@ -14,6 +14,7 @@ use crate::dungeon::systems::{
     handle_floor_transition, handle_mine_entity, handle_mob_defeated, handle_player_move,
     prepare_floor, track_entity_occupancy, SpawnFloor,
 };
+use crate::dungeon::tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 use crate::location::LocationId;
 
 #[derive(Resource, Default)]
@@ -57,7 +58,11 @@ pub struct DungeonPlugin {
 
 impl Plugin for DungeonPlugin {
     fn build(&self, app: &mut App) {
-        app.insert_resource(self.registry.clone())
+        app.register_type::<is_solid>()
+            .register_type::<can_have_entity>()
+            .register_type::<can_spawn_player>()
+            .register_type::<is_door>()
+            .insert_resource(self.registry.clone())
             .init_resource::<DungeonState>()
             .add_message::<FloorTransition>()
             .add_message::<FloorReady>()
