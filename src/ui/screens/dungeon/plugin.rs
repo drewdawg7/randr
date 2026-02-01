@@ -24,7 +24,7 @@ use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
 use super::components::{DungeonPlayer, DungeonRoot, Interpolating, PendingPlayerSpawn, TargetPosition};
-use super::spawn::{add_entity_visuals, spawn_floor_ui, spawn_player, tile_transform};
+use super::spawn::{add_entity_visuals, spawn_floor_ui, spawn_player, tile_to_world, TilemapConfigQuery};
 use super::systems::cleanup_dungeon;
 
 pub struct DungeonScreenPlugin;
@@ -134,23 +134,18 @@ fn on_map_created_queue_player_spawn(
     commands.insert_resource(PendingPlayerSpawn(state.player_pos));
 }
 
-#[instrument(level = "debug", skip_all, fields(
-    player_pos = ?pending.0,
-    tiles_with_gt = tile_query.iter().count(),
-    tiles_without_gt = tiles_only.iter().count()
-))]
+#[instrument(level = "debug", skip_all, fields(player_pos = ?pending.0))]
 fn spawn_player_when_ready(
     mut commands: Commands,
     pending: Res<PendingPlayerSpawn>,
-    tile_query: Query<(&TilePos, &GlobalTransform)>,
-    tiles_only: Query<&TilePos>,
+    tilemap_query: TilemapConfigQuery,
     player_sheet: Res<PlayerSpriteSheet>,
 ) {
-    if tile_query.is_empty() {
+    if tilemap_query.is_empty() {
         return;
     }
 
-    spawn_player(&mut commands, &tile_query, pending.0, &player_sheet);
+    spawn_player(&mut commands, &tilemap_query, pending.0, &player_sheet);
     commands.remove_resource::<PendingPlayerSpawn>();
 }
 
@@ -196,7 +191,7 @@ fn handle_move_result(
     mut commands: Commands,
     mut events: MessageReader<MoveResult>,
     last_direction: Option<Res<LastMoveDirection>>,
-    tile_query: Query<(&TilePos, &GlobalTransform)>,
+    tilemap_query: TilemapConfigQuery,
     sheet: Res<PlayerSpriteSheet>,
     fight_mob: Option<Res<FightModalMob>>,
     mut player_query: Query<
@@ -219,7 +214,7 @@ fn handle_move_result(
                     continue;
                 };
 
-                let Some((world_pos, _)) = tile_transform(&tile_query, *new_pos) else {
+                let Some((world_pos, _)) = tile_to_world(&tilemap_query, *new_pos) else {
                     continue;
                 };
 

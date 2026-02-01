@@ -19,7 +19,7 @@ pub fn add_entity_visuals(
     trigger: On<Add, DungeonEntityMarker>,
     mut commands: Commands,
     marker_query: Query<&DungeonEntityMarker>,
-    tile_query: Query<(&TilePos, &GlobalTransform)>,
+    tilemap_query: TilemapConfigQuery,
     game_sprites: Res<GameSprites>,
     mob_sheets: Res<MobSpriteSheets>,
 ) {
@@ -28,7 +28,7 @@ pub fn add_entity_visuals(
         return;
     };
 
-    let Some((world_pos, scale)) = tile_transform(&tile_query, marker.pos) else {
+    let Some((world_pos, scale)) = tile_to_world(&tilemap_query, marker.pos) else {
         return;
     };
 
@@ -132,14 +132,14 @@ pub fn spawn_floor_ui(
         });
 }
 
-#[instrument(level = "debug", skip_all, fields(?player_pos, tile_count = tile_query.iter().count()))]
+#[instrument(level = "debug", skip_all, fields(?player_pos))]
 pub fn spawn_player(
     commands: &mut Commands,
-    tile_query: &Query<(&TilePos, &GlobalTransform)>,
+    tilemap_query: &TilemapConfigQuery,
     player_pos: TilePos,
     player_sheet: &PlayerSpriteSheet,
 ) {
-    let Some((world_pos, scale)) = tile_transform(tile_query, player_pos) else {
+    let Some((world_pos, scale)) = tile_to_world(tilemap_query, player_pos) else {
         return;
     };
 
@@ -170,9 +170,28 @@ pub fn spawn_player(
     ));
 }
 
-pub fn tile_transform(tile_query: &Query<(&TilePos, &GlobalTransform)>, target: TilePos) -> Option<(Vec2, f32)> {
-    tile_query
-        .iter()
-        .find(|(pos, _)| pos.x == target.x && pos.y == target.y)
-        .map(|(_, gt)| (gt.translation().truncate(), gt.scale().x))
+pub type TilemapConfigQuery<'w, 's> = Query<
+    'w,
+    's,
+    (
+        &'static TilemapSize,
+        &'static TilemapGridSize,
+        &'static TilemapTileSize,
+        &'static TilemapType,
+        &'static TilemapAnchor,
+        &'static GlobalTransform,
+    ),
+    With<TiledTilemap>,
+>;
+
+pub fn tile_to_world(tilemap_query: &TilemapConfigQuery, pos: TilePos) -> Option<(Vec2, f32)> {
+    let Ok((map_size, grid_size, tile_size, map_type, anchor, gt)) = tilemap_query.single() else {
+        return None;
+    };
+
+    let local_pos = pos.center_in_world(map_size, grid_size, tile_size, map_type, anchor);
+    let world_pos = gt.transform_point(local_pos.extend(0.0)).truncate();
+    let scale = gt.to_scale_rotation_translation().0.x;
+
+    Some((world_pos, scale))
 }
