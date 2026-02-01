@@ -114,6 +114,27 @@ pub struct GridCell {
     pub index: usize,
 }
 
+#[derive(Bundle)]
+pub struct GridCellBundle {
+    pub cell: GridCell,
+    pub node: Node,
+}
+
+impl GridCellBundle {
+    pub fn new(index: usize) -> Self {
+        Self {
+            cell: GridCell { index },
+            node: Node {
+                width: Val::Px(CELL_SIZE),
+                height: Val::Px(CELL_SIZE),
+                justify_content: JustifyContent::Center,
+                align_items: AlignItems::Center,
+                ..default()
+            },
+        }
+    }
+}
+
 /// Marker for the selector sprite with animation state.
 #[derive(Component)]
 pub struct GridSelector {
@@ -196,16 +217,7 @@ fn on_add_item_grid(
             ))
             .with_children(|grid| {
                 for i in 0..(grid_size * grid_size) {
-                    let mut cell = grid.spawn((
-                        GridCell { index: i },
-                        Node {
-                            width: Val::Px(CELL_SIZE),
-                            height: Val::Px(CELL_SIZE),
-                            justify_content: JustifyContent::Center,
-                            align_items: AlignItems::Center,
-                            ..default()
-                        },
-                    ));
+                    let mut cell = grid.spawn(GridCellBundle::new(i));
                     if let Some(ref img) = cell_image {
                         cell.insert(img.clone());
                     }
