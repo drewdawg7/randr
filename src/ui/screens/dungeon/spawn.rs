@@ -32,7 +32,16 @@ pub fn add_entity_visuals(
     let world_pos = Vec3::new(marker.pos.x, marker.pos.y, z);
 
     let size = marker.entity_type.size();
-    let collider = Collider::rectangle(size.width * 0.9, size.height * 0.9);
+    let collider = match &marker.entity_type {
+        DungeonEntity::CraftingStation { station_type: CraftingStationType::Forge, .. } => {
+            Collider::compound(vec![(
+                Vec2::new(0.0, -8.0),
+                0.0,
+                Collider::rectangle(size.width * 0.75, size.height),
+            )])
+        }
+        _ => Collider::rectangle(size.width * 0.9, size.height * 0.9),
+    };
     let (physics_body, layers) = physics_components_for_entity(&marker.entity_type);
 
     match marker.entity_type.render_data() {
