@@ -10,9 +10,9 @@ use crate::input::NavigationDirection;
 
 #[instrument(level = "debug", skip_all)]
 pub fn handle_player_move(
-    mut events: EventReader<PlayerMoveIntent>,
-    mut result_events: EventWriter<MoveResult>,
-    mut transition_events: EventWriter<FloorTransition>,
+    mut events: MessageReader<PlayerMoveIntent>,
+    mut result_events: MessageWriter<MoveResult>,
+    mut transition_events: MessageWriter<FloorTransition>,
     mut state: ResMut<DungeonState>,
     mut occupancy: ResMut<GridOccupancy>,
     entity_query: Query<&DungeonEntityMarker>,
@@ -33,14 +33,14 @@ pub fn handle_player_move(
         if let Some(layout) = state.layout.as_ref() {
             if let Some(tile) = layout.tile_at(new_pos.x, new_pos.y) {
                 if tile.tile_type == TileType::Door {
-                    transition_events.send(FloorTransition::EnterDoor);
+                    transition_events.write(FloorTransition::EnterDoor);
                     return;
                 }
             }
         }
 
         if !all_cells_walkable(state.layout.as_ref(), new_pos, state.player_size) {
-            result_events.send(MoveResult::Blocked);
+            result_events.write(MoveResult::Blocked);
             continue;
         }
 
@@ -49,16 +49,16 @@ pub fn handle_player_move(
         {
             match entity_type {
                 DungeonEntity::Mob { mob_id, .. } => {
-                    result_events.send(MoveResult::TriggeredCombat { mob_id, entity, pos });
+                    result_events.write(MoveResult::TriggeredCombat { mob_id, entity, pos });
                 }
                 DungeonEntity::Door { .. } => {
-                    transition_events.send(FloorTransition::EnterDoor);
+                    transition_events.write(FloorTransition::EnterDoor);
                 }
                 DungeonEntity::Stairs { .. } => {
-                    transition_events.send(FloorTransition::AdvanceFloor);
+                    transition_events.write(FloorTransition::AdvanceFloor);
                 }
                 _ => {
-                    result_events.send(MoveResult::Blocked);
+                    result_events.write(MoveResult::Blocked);
                 }
             }
             continue;
@@ -68,7 +68,7 @@ pub fn handle_player_move(
         occupancy.mark_blocked(new_pos, state.player_size);
         state.player_pos = new_pos;
 
-        result_events.send(MoveResult::Moved { new_pos });
+        result_events.write(MoveResult::Moved { new_pos });
     }
 }
 

@@ -205,7 +205,7 @@ fn create_text_progress_bar(current: i32, max: i32, width: usize) -> String {
 
 /// System to handle Back action to return to Menu.
 fn handle_back_action(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
     for action in action_reader.read() {
@@ -221,6 +221,6 @@ fn despawn_profile_screen(
     profile_root: Query<Entity, With<ProfileScreenRoot>>,
 ) {
     if let Ok(entity) = profile_root.get_single() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }

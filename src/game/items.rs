@@ -5,7 +5,7 @@ use crate::inventory::EquipmentSlot;
 use crate::item::ItemId;
 
 /// Event fired when an item is equipped
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ItemEquipped {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
@@ -13,7 +13,7 @@ pub struct ItemEquipped {
 }
 
 /// Event fired when an item is unequipped
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ItemUnequipped {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
@@ -21,14 +21,14 @@ pub struct ItemUnequipped {
 }
 
 /// Event fired when an item is used (consumables, etc.)
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ItemUsed {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
 }
 
 /// Event fired when an item is dropped from inventory
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ItemDropped {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
@@ -36,7 +36,7 @@ pub struct ItemDropped {
 }
 
 /// Event fired when an item is picked up into inventory
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ItemPickedUp {
     pub item_uuid: Uuid,
     pub item_id: ItemId,

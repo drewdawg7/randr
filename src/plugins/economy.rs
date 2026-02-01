@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::item::Item;
 
 /// Event fired when loot is dropped from a source (mob, chest, mining, etc.)
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct LootDropped {
     /// The items that were dropped
     pub items: Vec<LootDrop>,
@@ -19,7 +19,7 @@ pub struct LootDrop {
 }
 
 /// Event fired when a player collects loot
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct LootCollected {
     /// The items that were collected
     pub items: Vec<LootDrop>,
@@ -28,7 +28,7 @@ pub struct LootCollected {
 }
 
 /// Event fired when a player earns gold
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct GoldEarned {
     /// Amount of gold earned
     pub amount: i32,
@@ -37,7 +37,7 @@ pub struct GoldEarned {
 }
 
 /// Event fired when a player spends gold
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct GoldSpent {
     /// Amount of gold spent
     pub amount: i32,
@@ -46,7 +46,7 @@ pub struct GoldSpent {
 }
 
 /// Event fired when a transaction (purchase/sale) is completed
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct TransactionCompleted {
     /// Item involved in the transaction
     pub item: Item,

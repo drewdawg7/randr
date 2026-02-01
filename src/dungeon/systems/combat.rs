@@ -6,8 +6,8 @@ use crate::dungeon::{DungeonRegistry, DungeonState};
 use crate::plugins::MobDefeated;
 
 pub fn handle_mob_defeated(
-    mut events: EventReader<MobDefeated>,
-    mut transition_events: EventWriter<FloorTransition>,
+    mut events: MessageReader<MobDefeated>,
+    mut transition_events: MessageWriter<FloorTransition>,
     mut count: ResMut<FloorMonsterCount>,
     state: Res<DungeonState>,
     registry: Res<DungeonRegistry>,
@@ -18,7 +18,7 @@ pub fn handle_mob_defeated(
         }
 
         if count.0 == 0 && state.is_current_floor_final(&registry) {
-            transition_events.send(FloorTransition::ReturnToHome);
+            transition_events.write(FloorTransition::ReturnToHome);
         }
     }
 }

@@ -10,7 +10,7 @@ use super::state::{
 };
 
 pub fn handle_compendium_tab(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     active_modal: Res<ActiveModal>,
     mut focus_state: Option<ResMut<FocusState>>,
 ) {
@@ -31,7 +31,7 @@ pub fn handle_compendium_tab(
 }
 
 pub fn handle_compendium_navigation(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,
     mut list_state: ResMut<CompendiumListState>,

@@ -97,7 +97,7 @@ impl ToastQueue {
     }
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ShowToast {
     pub toast_type: ToastType,
     pub message: String,
@@ -176,7 +176,7 @@ fn spawn_toast_container(mut commands: Commands) {
 }
 
 fn handle_toast_events(
-    mut toast_events: EventReader<ShowToast>,
+    mut toast_events: MessageReader<ShowToast>,
     mut toast_queue: ResMut<ToastQueue>,
     time: Res<Time>,
 ) {
@@ -206,7 +206,7 @@ fn update_toast_ui(
     };
 
     for entity in toast_elements.iter() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 
     let toasts = toast_queue.toasts();
@@ -231,7 +231,7 @@ fn spawn_toast_element(commands: &mut Commands, parent: Entity, index: usize, to
                     ..default()
                 },
                 BackgroundColor(bg_color),
-                BorderColor(color),
+                BorderColor::all(color),
             ))
             .with_children(|parent| {
                 parent.spawn((

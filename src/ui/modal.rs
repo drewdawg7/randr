@@ -183,7 +183,7 @@ fn spawn_solid_modal(
                 ..default()
             },
             BackgroundColor(background),
-            BorderColor(border),
+            BorderColor::all(border),
         ))
         .with_children(|container| {
             if let Some(title_text) = title {

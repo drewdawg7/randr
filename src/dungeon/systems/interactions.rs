@@ -12,9 +12,9 @@ use crate::stats::{StatSheet, StatType};
 /// Handles mining interactions (chests and rocks).
 pub fn handle_mine_entity(
     mut commands: Commands,
-    mut events: EventReader<MineEntity>,
-    mut result_events: EventWriter<MiningResult>,
-    mut xp_events: EventWriter<SkillXpGained>,
+    mut events: MessageReader<MineEntity>,
+    mut result_events: MessageWriter<MiningResult>,
+    mut xp_events: MessageWriter<SkillXpGained>,
     stats: Res<StatSheet>,
     mut inventory: ResMut<Inventory>,
 ) {
@@ -24,7 +24,7 @@ pub fn handle_mine_entity(
         let loot_drops = match &event.entity_type {
             DungeonEntity::Chest { .. } => Chest::default().roll_drops(magic_find),
             DungeonEntity::Rock { rock_type, .. } => {
-                xp_events.send(SkillXpGained {
+                xp_events.write(SkillXpGained {
                     skill: SkillType::Mining,
                     amount: rock_type.mining_xp(),
                 });
@@ -36,7 +36,7 @@ pub fn handle_mine_entity(
         collect_loot_drops(&mut *inventory, &loot_drops);
         commands.despawn_dungeon_entity(event.entity, event.pos, GridSize::single());
 
-        result_events.send(MiningResult {
+        result_events.write(MiningResult {
             entity_type: event.entity_type.clone(),
             loot_drops,
         });

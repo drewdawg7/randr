@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::mob::MobId;
 
 /// Event fired when a mob is defeated (ECS-based combat)
-#[derive(Event)]
+#[derive(Message)]
 pub struct MobDefeated {
     pub mob_id: MobId,
 }

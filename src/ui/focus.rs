@@ -212,8 +212,8 @@ use crate::input::GameAction;
 pub fn tab_toggle_system(
     first: FocusPanel,
     second: FocusPanel,
-) -> impl FnMut(EventReader<GameAction>, Option<ResMut<FocusState>>) {
-    move |mut action_reader: EventReader<GameAction>, focus_state: Option<ResMut<FocusState>>| {
+) -> impl FnMut(MessageReader<GameAction>, Option<ResMut<FocusState>>) {
+    move |mut action_reader: MessageReader<GameAction>, focus_state: Option<ResMut<FocusState>>| {
         let Some(mut focus_state) = focus_state else {
             return;
         };

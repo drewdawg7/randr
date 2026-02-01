@@ -102,7 +102,7 @@ impl<M: RegisteredModal> Command for ToggleModalCommand<M> {
 /// writing a per-modal close handler.
 pub fn modal_close_system<M: RegisteredModal>(
     mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     active_modal: Res<ActiveModal>,
 ) {
     if active_modal.modal != Some(M::MODAL_TYPE) {
@@ -182,7 +182,7 @@ impl<M: RegisteredModal> Command for DespawnModalCommand<M> {
         // Find and despawn the modal entity if it exists
         let mut query = world.query_filtered::<Entity, With<M::Root>>();
         if let Some(entity) = query.iter(world).next() {
-            world.entity_mut(entity).despawn_recursive();
+            world.entity_mut(entity).despawn();
         }
         // Always clear ActiveModal and run cleanup, even if entity wasn't found.
         // This prevents ActiveModal from getting stuck if spawn failed or entity was already despawned.

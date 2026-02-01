@@ -124,7 +124,7 @@ fn spawn_crafting_slots(
                 ..default()
             },
             BackgroundColor(Color::srgba(0.1, 0.08, 0.06, 0.9)),
-            BorderColor(Color::srgb(0.5, 0.4, 0.3)),
+            BorderColor::all(Color::srgb(0.5, 0.4, 0.3)),
             BorderRadius::all(Val::Px(4.0)),
         ))
         .with_children(|container| {
@@ -337,7 +337,7 @@ pub fn refresh_forge_slots(
             for &child in children.iter() {
                 if item_sprites.contains(child) || quantity_texts.contains(child) {
                     if commands.get_entity(child).is_some() {
-                        commands.entity(child).despawn_recursive();
+                        commands.entity(child).despawn();
                     }
                 }
             }
@@ -378,7 +378,7 @@ pub fn update_forge_slot_selector(
             for &child in children.iter() {
                 if selectors.contains(child) {
                     if commands.get_entity(child).is_some() {
-                        commands.entity(child).despawn_recursive();
+                        commands.entity(child).despawn();
                     }
                 }
             }
@@ -488,7 +488,7 @@ pub fn populate_forge_detail_pane_content(
 
         if let Some(children) = children {
             for &child in children.iter() {
-                commands.entity(child).despawn_recursive();
+                commands.entity(child).despawn();
             }
         }
 

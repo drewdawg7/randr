@@ -328,7 +328,7 @@ fn update_grid_items(
                 for &cell_child in children.iter() {
                     if item_sprites.contains(cell_child) || quantity_texts.contains(cell_child) {
                         if commands.get_entity(cell_child).is_some() {
-                            commands.entity(cell_child).despawn_recursive();
+                            commands.entity(cell_child).despawn();
                         }
                     }
                 }
@@ -412,7 +412,7 @@ fn update_grid_selector(
                 for &cell_child in cell_children.iter() {
                     if selectors.contains(cell_child) {
                         if commands.get_entity(cell_child).is_some() {
-                            commands.entity(cell_child).despawn_recursive();
+                            commands.entity(cell_child).despawn();
                         }
                     }
                 }

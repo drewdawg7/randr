@@ -16,7 +16,7 @@ use crate::ui::screens::skills_modal::SkillsModal;
 /// Central system that handles all navigation actions.
 pub fn handle_navigation(
     mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     current_state: Res<State<AppState>>,
     mut next_state: ResMut<NextState<AppState>>,
     nav_table: Res<NavigationTable>,

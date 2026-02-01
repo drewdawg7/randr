@@ -411,7 +411,7 @@ fn build_sprite_sheet(
 }
 
 fn finalize_sprite_sheets(
-    mut events: EventReader<AssetEvent<SpriteSheetMeta>>,
+    mut events: MessageReader<AssetEvent<SpriteSheetMeta>>,
     meta_assets: Res<Assets<SpriteSheetMeta>>,
     pending: Res<PendingSpriteSheets>,
     mut game_sprites: ResMut<GameSprites>,

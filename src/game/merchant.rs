@@ -5,17 +5,17 @@ use crate::inventory::{Inventory, ManagesItems};
 use crate::player::PlayerGold;
 use crate::ui::screens::merchant_modal::MerchantStock;
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct BuyItemEvent {
     pub stock_index: usize,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct SellItemEvent {
     pub inventory_index: usize,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub enum MerchantTransactionResult {
     BuySuccess { item_name: String, price: i32 },
     BuyFailedNotEnoughGold { need: i32, have: i32 },
@@ -44,8 +44,8 @@ impl Plugin for MerchantPlugin {
 }
 
 fn handle_buy_item(
-    mut buy_events: EventReader<BuyItemEvent>,
-    mut result_events: EventWriter<MerchantTransactionResult>,
+    mut buy_events: MessageReader<BuyItemEvent>,
+    mut result_events: MessageWriter<MerchantTransactionResult>,
     mut player_gold: ResMut<PlayerGold>,
     mut inventory: ResMut<Inventory>,
     mut stock: Option<ResMut<MerchantStock>>,
@@ -56,12 +56,12 @@ fn handle_buy_item(
 
     for event in buy_events.read() {
         let Some(store_item) = stock.items.get_mut(event.stock_index) else {
-            result_events.send(MerchantTransactionResult::BuyFailedNoItem);
+            result_events.write(MerchantTransactionResult::BuyFailedNoItem);
             continue;
         };
 
         let Some(item) = store_item.display_item() else {
-            result_events.send(MerchantTransactionResult::BuyFailedNoItem);
+            result_events.write(MerchantTransactionResult::BuyFailedNoItem);
             continue;
         };
 
@@ -69,7 +69,7 @@ fn handle_buy_item(
         let item_name = item.name.clone();
 
         if player_gold.0 < price {
-            result_events.send(MerchantTransactionResult::BuyFailedNotEnoughGold {
+            result_events.write(MerchantTransactionResult::BuyFailedNotEnoughGold {
                 need: price,
                 have: player_gold.0,
             });
@@ -77,36 +77,36 @@ fn handle_buy_item(
         }
 
         if inventory.get_inventory_items().len() >= inventory.max_slots() {
-            result_events.send(MerchantTransactionResult::BuyFailedInventoryFull);
+            result_events.write(MerchantTransactionResult::BuyFailedInventoryFull);
             continue;
         }
 
         let Some(purchased_item) = store_item.take_item() else {
-            result_events.send(MerchantTransactionResult::BuyFailedNoItem);
+            result_events.write(MerchantTransactionResult::BuyFailedNoItem);
             continue;
         };
 
         player_gold.subtract(price);
         let _ = inventory.add_to_inv(purchased_item);
-        result_events.send(MerchantTransactionResult::BuySuccess { item_name, price });
+        result_events.write(MerchantTransactionResult::BuySuccess { item_name, price });
     }
 }
 
 fn handle_sell_item(
-    mut sell_events: EventReader<SellItemEvent>,
-    mut result_events: EventWriter<MerchantTransactionResult>,
+    mut sell_events: MessageReader<SellItemEvent>,
+    mut result_events: MessageWriter<MerchantTransactionResult>,
     mut player_gold: ResMut<PlayerGold>,
     mut inventory: ResMut<Inventory>,
 ) {
     for event in sell_events.read() {
         let inv_items = inventory.get_inventory_items();
         let Some(inv_item) = inv_items.get(event.inventory_index) else {
-            result_events.send(MerchantTransactionResult::SellFailedNoItem);
+            result_events.write(MerchantTransactionResult::SellFailedNoItem);
             continue;
         };
 
         if inv_item.item.is_locked {
-            result_events.send(MerchantTransactionResult::SellFailedItemLocked);
+            result_events.write(MerchantTransactionResult::SellFailedItemLocked);
             continue;
         }
 
@@ -116,7 +116,7 @@ fn handle_sell_item(
 
         player_gold.add(sell_price);
         inventory.decrease_item_quantity(item_id, 1);
-        result_events.send(MerchantTransactionResult::SellSuccess {
+        result_events.write(MerchantTransactionResult::SellSuccess {
             item_name,
             price: sell_price,
         });

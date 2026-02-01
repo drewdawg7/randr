@@ -14,14 +14,14 @@ pub struct ActiveModal {
 ///
 /// Use `commands.trigger(OpenModal(ModalType::Inventory))` to trigger.
 /// The modal registry observers will handle the actual spawning.
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct OpenModal(pub ModalType);
 
 /// Event to request closing a modal.
 ///
 /// Use `commands.trigger(CloseModal(ModalType::Inventory))` to trigger.
 /// The modal registry observers will handle the actual closing and cleanup.
-#[derive(Event, Debug, Clone, Copy)]
+#[derive(Message, Debug, Clone, Copy)]
 pub struct CloseModal(pub ModalType);
 
 /// Types of modals available in the game.

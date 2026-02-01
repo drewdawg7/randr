@@ -9,7 +9,7 @@ pub fn cleanup_dungeon(
     mut state: ResMut<DungeonState>,
 ) {
     for entity in &query {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
     state.exit_dungeon();
     commands.remove_resource::<GridOccupancy>();

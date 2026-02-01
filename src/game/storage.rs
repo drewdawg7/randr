@@ -3,13 +3,13 @@ use bevy::prelude::*;
 use crate::storage::Storage;
 
 /// Event fired when an item is deposited into storage
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ItemDeposited {
     pub item_name: String,
 }
 
 /// Event fired when an item is withdrawn from storage
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ItemWithdrawn {
     pub item_name: String,
 }

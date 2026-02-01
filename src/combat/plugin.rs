@@ -57,9 +57,9 @@ impl Plugin for CombatPlugin {
 
 #[instrument(level = "debug", skip_all)]
 fn process_player_attack(
-    mut events: EventReader<PlayerAttackMob>,
-    mut deal_damage_events: EventWriter<DealDamage>,
-    mut entity_died_events: EventWriter<EntityDied>,
+    mut events: MessageReader<PlayerAttackMob>,
+    mut deal_damage_events: MessageWriter<DealDamage>,
+    mut entity_died_events: MessageWriter<EntityDied>,
     mut stats: ResMut<StatSheet>,
     inventory: Res<Inventory>,
     skills: Res<Skills>,
@@ -83,14 +83,14 @@ fn process_player_attack(
             combat_level,
         );
 
-        deal_damage_events.send(DealDamage {
+        deal_damage_events.write(DealDamage {
             target: event.target,
             amount: 0,
             source_name: "Player".to_string(),
         });
 
         if result.target_died {
-            entity_died_events.send(EntityDied {
+            entity_died_events.write(EntityDied {
                 entity: event.target,
                 is_player: false,
             });
@@ -98,14 +98,14 @@ fn process_player_attack(
             let counter_result =
                 entity_attacks_player(mob_combat_stats, &mut stats, &inventory, combat_level);
 
-            deal_damage_events.send(DealDamage {
+            deal_damage_events.write(DealDamage {
                 target: Entity::PLACEHOLDER,
                 amount: 0,
                 source_name: "Enemy".to_string(),
             });
 
             if counter_result.target_died {
-                entity_died_events.send(EntityDied {
+                entity_died_events.write(EntityDied {
                     entity: Entity::PLACEHOLDER,
                     is_player: true,
                 });
@@ -117,10 +117,10 @@ fn process_player_attack(
 #[instrument(level = "debug", skip_all)]
 fn handle_mob_death(
     mut commands: Commands,
-    mut events: EventReader<EntityDied>,
-    mut mob_defeated_events: EventWriter<MobDefeated>,
-    mut skill_xp_events: EventWriter<SkillXpGained>,
-    mut victory_events: EventWriter<VictoryAchieved>,
+    mut events: MessageReader<EntityDied>,
+    mut mob_defeated_events: MessageWriter<MobDefeated>,
+    mut skill_xp_events: MessageWriter<SkillXpGained>,
+    mut victory_events: MessageWriter<VictoryAchieved>,
     mut occupancy: ResMut<GridOccupancy>,
     mut player: PlayerResources,
     fight_mob: Option<Res<FightModalMob>>,
@@ -169,17 +169,17 @@ fn handle_mob_death(
 
         collect_loot_drops(&mut *player.inventory, &loot_drops);
 
-        mob_defeated_events.send(MobDefeated { mob_id });
+        mob_defeated_events.write(MobDefeated { mob_id });
 
-        skill_xp_events.send(SkillXpGained {
+        skill_xp_events.write(SkillXpGained {
             skill: SkillType::Combat,
             amount: xp_reward.0 as u64,
         });
 
         occupancy.vacate(fight_mob.pos, GridSize::single());
-        commands.entity(event.entity).despawn_recursive();
+        commands.entity(event.entity).despawn();
 
-        victory_events.send(VictoryAchieved {
+        victory_events.write(VictoryAchieved {
             mob_id,
             mob_name,
             gold_gained: rewards.gold_gained,
@@ -194,7 +194,7 @@ fn handle_mob_death(
 #[instrument(level = "debug", skip_all)]
 fn handle_player_death(
     mut commands: Commands,
-    mut events: EventReader<EntityDied>,
+    mut events: MessageReader<EntityDied>,
     mut stats: ResMut<StatSheet>,
     mut player_gold: ResMut<PlayerGold>,
 ) {

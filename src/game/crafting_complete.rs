@@ -4,12 +4,12 @@ use crate::crafting_station::{AnvilCraftingState, ForgeCraftingState};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::skills::{blacksmith_bonus_item_chance, SkillType, SkillXpGained, Skills};
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ForgeCraftingCompleteEvent {
     pub entity: Entity,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct AnvilCraftingCompleteEvent {
     pub entity: Entity,
 }
@@ -31,8 +31,8 @@ impl Plugin for CraftingCompletePlugin {
 }
 
 fn handle_forge_crafting_complete(
-    mut events: EventReader<ForgeCraftingCompleteEvent>,
-    mut xp_events: EventWriter<SkillXpGained>,
+    mut events: MessageReader<ForgeCraftingCompleteEvent>,
+    mut xp_events: MessageWriter<SkillXpGained>,
     skills: Res<Skills>,
     mut forge_query: Query<&mut ForgeCraftingState>,
 ) {
@@ -54,7 +54,7 @@ fn handle_forge_crafting_complete(
         state.complete_crafting_with_bonus(bonus_chance);
 
         if ingot_count > 0 {
-            xp_events.send(SkillXpGained {
+            xp_events.write(SkillXpGained {
                 skill: SkillType::Blacksmith,
                 amount: ingot_count as u64 * 25,
             });
@@ -63,8 +63,8 @@ fn handle_forge_crafting_complete(
 }
 
 fn handle_anvil_crafting_complete(
-    mut events: EventReader<AnvilCraftingCompleteEvent>,
-    mut xp_events: EventWriter<SkillXpGained>,
+    mut events: MessageReader<AnvilCraftingCompleteEvent>,
+    mut xp_events: MessageWriter<SkillXpGained>,
     mut inventory: ResMut<Inventory>,
     skills: Res<Skills>,
     mut anvil_query: Query<&mut AnvilCraftingState>,
@@ -89,7 +89,7 @@ fn handle_anvil_crafting_complete(
 
         let ingredient_count: u32 = spec.ingredients.values().sum();
         let xp_amount = 75 + (ingredient_count.saturating_sub(1) * 25);
-        xp_events.send(SkillXpGained {
+        xp_events.write(SkillXpGained {
             skill: SkillType::Blacksmith,
             amount: xp_amount as u64,
         });

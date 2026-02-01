@@ -7,7 +7,7 @@ use crate::player::{default_player_stats, PlayerGold, PlayerName};
 use crate::stats::StatSheet;
 
 /// Event fired when the player takes damage
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct PlayerDamaged {
     pub amount: i32,
     pub current_hp: i32,
@@ -15,7 +15,7 @@ pub struct PlayerDamaged {
 }
 
 /// Event fired when the player is healed
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct PlayerHealed {
     pub amount: i32,
     pub current_hp: i32,
@@ -23,14 +23,14 @@ pub struct PlayerHealed {
 }
 
 /// Event fired when the player levels up
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct PlayerLeveledUp {
     pub new_level: u32,
     pub old_level: u32,
 }
 
 /// Event fired when the player's gold changes
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct GoldChanged {
     pub amount: i32,
     pub new_total: i32,
@@ -73,7 +73,7 @@ fn handle_level_up(
     progression: Res<Progression>,
     mut stats: ResMut<StatSheet>,
     mut prev_level: ResMut<PlayerPreviousLevel>,
-    mut level_up_events: EventWriter<PlayerLeveledUp>,
+    mut level_up_events: MessageWriter<PlayerLeveledUp>,
 ) {
     let current_level = progression.level;
     if current_level > prev_level.0 {
@@ -88,7 +88,7 @@ fn handle_level_up(
             stats.increase_stat_max(crate::stats::StatType::Health, 5);
             stats.increase_stat(crate::stats::StatType::Attack, 1);
 
-            level_up_events.send(PlayerLeveledUp {
+            level_up_events.write(PlayerLeveledUp {
                 new_level: level as u32,
                 old_level: (level - 1) as u32,
             });

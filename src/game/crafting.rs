@@ -3,12 +3,12 @@ use bevy::prelude::*;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct BrewPotionEvent {
     pub recipe_id: RecipeId,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub enum BrewingResult {
     Success { item_name: String },
     InsufficientIngredients { recipe_name: String },
@@ -27,8 +27,8 @@ impl Plugin for CraftingPlugin {
 }
 
 fn handle_brew_potion(
-    mut brew_events: EventReader<BrewPotionEvent>,
-    mut result_events: EventWriter<BrewingResult>,
+    mut brew_events: MessageReader<BrewPotionEvent>,
+    mut result_events: MessageWriter<BrewingResult>,
     mut inventory: ResMut<Inventory>,
 ) {
     for event in brew_events.read() {
@@ -39,7 +39,7 @@ fn handle_brew_potion(
         let recipe_name = recipe.name().to_string();
 
         if !recipe.can_craft(&*inventory) {
-            result_events.send(BrewingResult::InsufficientIngredients { recipe_name });
+            result_events.write(BrewingResult::InsufficientIngredients { recipe_name });
             continue;
         }
 
@@ -50,15 +50,15 @@ fn handle_brew_potion(
 
                 match inventory.add_to_inv(item) {
                     Ok(_) => {
-                        result_events.send(BrewingResult::Success { item_name });
+                        result_events.write(BrewingResult::Success { item_name });
                     }
                     Err(_) => {
-                        result_events.send(BrewingResult::InventoryFull { item_name });
+                        result_events.write(BrewingResult::InventoryFull { item_name });
                     }
                 }
             }
             Err(_) => {
-                result_events.send(BrewingResult::CraftingFailed { recipe_name });
+                result_events.write(BrewingResult::CraftingFailed { recipe_name });
             }
         }
     }

@@ -17,7 +17,7 @@ use super::state::{ActiveAnvilEntity, AnvilPlayerGrid, AnvilRecipeGrid};
 /// Handle arrow key navigation within the anvil modal.
 /// Only runs when anvil modal is active (via run_if condition).
 pub fn handle_anvil_modal_navigation(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut recipe_grids: Query<&mut ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
     mut player_grids: Query<&mut ItemGrid, (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>)>,
@@ -45,7 +45,7 @@ pub fn handle_anvil_modal_navigation(
 /// Only runs when anvil modal is active (via run_if condition).
 pub fn handle_anvil_modal_select(
     mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     active_anvil: Option<Res<ActiveAnvilEntity>>,
     mut inventory: ResMut<Inventory>,

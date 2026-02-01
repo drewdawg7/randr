@@ -155,7 +155,7 @@ fn spawn_main_menu(mut commands: Commands) {
 
 /// System to handle menu navigation using GameAction events.
 fn handle_menu_navigation(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     mut menu_selection: ResMut<MenuSelection>,
 ) {
     for action in action_reader.read() {
@@ -173,10 +173,10 @@ fn handle_menu_navigation(
 
 /// System to handle menu selection and state transitions.
 fn handle_menu_selection(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     menu_selection: Res<MenuSelection>,
     mut next_state: ResMut<NextState<AppState>>,
-    mut app_exit: EventWriter<AppExit>,
+    mut app_exit: MessageWriter<AppExit>,
 ) {
     for action in action_reader.read() {
         if *action == GameAction::Select {
@@ -191,7 +191,7 @@ fn handle_menu_selection(
                 }
                 2 => {
                     // Quit
-                    app_exit.send(AppExit::Success);
+                    app_exit.write(AppExit::Success);
                 }
                 _ => {}
             }
@@ -302,6 +302,6 @@ fn populate_menu_background(
 /// System to despawn the main menu UI.
 fn despawn_main_menu(mut commands: Commands, menu_root: Query<Entity, With<MainMenuRoot>>) {
     if let Ok(entity) = menu_root.get_single() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }

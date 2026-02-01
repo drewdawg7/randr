@@ -58,7 +58,7 @@ fn handle_keyboard_input(
     keyboard: Res<ButtonInput<KeyCode>>,
     mut repeat: ResMut<NavigationRepeatState>,
     mut held: ResMut<HeldDirection>,
-    mut action_writer: EventWriter<GameAction>,
+    mut action_writer: MessageWriter<GameAction>,
 ) {
     let mut new_press = None;
     for key in keyboard.get_just_pressed() {
@@ -68,7 +68,7 @@ fn handle_keyboard_input(
     }
 
     if let Some(dir) = new_press {
-        action_writer.send(GameAction::Navigate(dir));
+        action_writer.write(GameAction::Navigate(dir));
         repeat.direction = Some(dir);
         repeat.timer = Timer::from_seconds(REPEAT_INITIAL_DELAY, TimerMode::Once);
         repeat.repeating = false;
@@ -78,10 +78,10 @@ fn handle_keyboard_input(
             if repeat.timer.just_finished() && !repeat.repeating {
                 repeat.repeating = true;
                 repeat.timer = Timer::from_seconds(REPEAT_INTERVAL, TimerMode::Repeating);
-                action_writer.send(GameAction::Navigate(dir));
+                action_writer.write(GameAction::Navigate(dir));
             } else if repeat.repeating {
                 for _ in 0..repeat.timer.times_finished_this_tick() {
-                    action_writer.send(GameAction::Navigate(dir));
+                    action_writer.write(GameAction::Navigate(dir));
                 }
             }
         } else {
@@ -91,47 +91,47 @@ fn handle_keyboard_input(
     }
 
     if keyboard.just_pressed(KeyCode::Enter) {
-        action_writer.send(GameAction::Select);
+        action_writer.write(GameAction::Select);
     }
 
     if keyboard.just_pressed(KeyCode::Backspace) {
-        action_writer.send(GameAction::Back);
+        action_writer.write(GameAction::Back);
     }
 
     if keyboard.just_pressed(KeyCode::Tab) {
         if keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight) {
-            action_writer.send(GameAction::PrevTab);
+            action_writer.write(GameAction::PrevTab);
         } else {
-            action_writer.send(GameAction::NextTab);
+            action_writer.write(GameAction::NextTab);
         }
     }
 
     if keyboard.just_pressed(KeyCode::Space) {
-        action_writer.send(GameAction::Mine);
+        action_writer.write(GameAction::Mine);
     }
 
     if keyboard.just_pressed(KeyCode::KeyI) {
-        action_writer.send(GameAction::OpenInventory);
+        action_writer.write(GameAction::OpenInventory);
     }
     if keyboard.just_pressed(KeyCode::KeyP) {
-        action_writer.send(GameAction::OpenProfile);
+        action_writer.write(GameAction::OpenProfile);
     }
     if keyboard.just_pressed(KeyCode::Slash)
         && (keyboard.pressed(KeyCode::ShiftLeft) || keyboard.pressed(KeyCode::ShiftRight))
     {
-        action_writer.send(GameAction::OpenKeybinds);
+        action_writer.write(GameAction::OpenKeybinds);
     }
 
     if keyboard.just_pressed(KeyCode::Escape) {
-        action_writer.send(GameAction::CloseModal);
+        action_writer.write(GameAction::CloseModal);
     }
 
     if keyboard.just_pressed(KeyCode::KeyB) {
-        action_writer.send(GameAction::OpenCompendium);
+        action_writer.write(GameAction::OpenCompendium);
     }
 
     if keyboard.just_pressed(KeyCode::KeyK) {
-        action_writer.send(GameAction::OpenSkills);
+        action_writer.write(GameAction::OpenSkills);
     }
 
     held.0 = repeat.direction;

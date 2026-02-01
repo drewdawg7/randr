@@ -5,27 +5,27 @@ use crate::inventory::{FindsItems, Inventory, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
 use crate::player::PlayerGold;
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct UpgradeItemEvent {
     pub item_uuid: Uuid,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct UpgradeQualityEvent {
     pub item_uuid: Uuid,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct SmeltRecipeEvent {
     pub recipe_id: RecipeId,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct ForgeRecipeEvent {
     pub recipe_id: RecipeId,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub enum BlacksmithResult {
     UpgradeSuccess {
         item_name: String,
@@ -138,7 +138,7 @@ impl CraftingOperation {
 fn process_crafting_recipe(
     recipe_id: RecipeId,
     operation: CraftingOperation,
-    result_events: &mut EventWriter<BlacksmithResult>,
+    result_events: &mut MessageWriter<BlacksmithResult>,
     inventory: &mut Inventory,
 ) -> bool {
     let Ok(recipe) = Recipe::new(recipe_id) else {
@@ -148,7 +148,7 @@ fn process_crafting_recipe(
     let recipe_name = recipe.name().to_string();
 
     if !recipe.can_craft(inventory) {
-        result_events.send(operation.fail_ingredients_result(recipe_name));
+        result_events.write(operation.fail_ingredients_result(recipe_name));
         info!("Not enough ingredients to {}", operation.verb());
         return false;
     }
@@ -160,12 +160,12 @@ fn process_crafting_recipe(
 
             match inventory.add_to_inv(item) {
                 Ok(_) => {
-                    result_events.send(operation.success_result(item_name.clone()));
+                    result_events.write(operation.success_result(item_name.clone()));
                     info!("{} {}", operation.past_verb(), item_name);
                     true
                 }
                 Err(_) => {
-                    result_events.send(operation.fail_full_result(item_name));
+                    result_events.write(operation.fail_full_result(item_name));
                     info!("Inventory full!");
                     false
                 }
@@ -182,8 +182,8 @@ pub fn calculate_upgrade_cost(item: &crate::item::Item) -> i32 {
 }
 
 fn handle_upgrade_item(
-    mut upgrade_events: EventReader<UpgradeItemEvent>,
-    mut result_events: EventWriter<BlacksmithResult>,
+    mut upgrade_events: MessageReader<UpgradeItemEvent>,
+    mut result_events: MessageWriter<BlacksmithResult>,
     mut gold: ResMut<PlayerGold>,
     mut inventory: ResMut<Inventory>,
 ) {
@@ -197,13 +197,13 @@ fn handle_upgrade_item(
         let can_upgrade = inv_item.item.num_upgrades < inv_item.item.max_upgrades;
 
         if !can_upgrade {
-            result_events.send(BlacksmithResult::UpgradeFailedMaxLevel { item_name });
+            result_events.write(BlacksmithResult::UpgradeFailedMaxLevel { item_name });
             info!("Item is already at max upgrade level");
             continue;
         }
 
         if gold.0 < upgrade_cost {
-            result_events.send(BlacksmithResult::UpgradeFailedNotEnoughGold {
+            result_events.write(BlacksmithResult::UpgradeFailedNotEnoughGold {
                 need: upgrade_cost,
                 have: gold.0,
             });
@@ -215,7 +215,7 @@ fn handle_upgrade_item(
 
         if let Some(inv_item_mut) = inventory.find_item_by_uuid_mut(event.item_uuid) {
             if let Ok(result) = inv_item_mut.item.upgrade() {
-                result_events.send(BlacksmithResult::UpgradeSuccess {
+                result_events.write(BlacksmithResult::UpgradeSuccess {
                     item_name: inv_item_mut.item.name.clone(),
                     new_level: result.new_level,
                     gold_spent: upgrade_cost,
@@ -230,8 +230,8 @@ fn handle_upgrade_item(
 }
 
 fn handle_upgrade_quality(
-    mut quality_events: EventReader<UpgradeQualityEvent>,
-    mut result_events: EventWriter<BlacksmithResult>,
+    mut quality_events: MessageReader<UpgradeQualityEvent>,
+    mut result_events: MessageWriter<BlacksmithResult>,
     mut inventory: ResMut<Inventory>,
 ) {
     for event in quality_events.read() {
@@ -244,7 +244,7 @@ fn handle_upgrade_quality(
             .find_item_by_id(crate::item::ItemId::QualityUpgradeStone)
             .is_none()
         {
-            result_events.send(BlacksmithResult::QualityUpgradeFailedNoStone);
+            result_events.write(BlacksmithResult::QualityUpgradeFailedNoStone);
             info!("You need a Magic Rock (Quality Upgrade Stone) to improve quality");
             continue;
         }
@@ -256,14 +256,14 @@ fn handle_upgrade_quality(
 
                     inventory.decrease_item_quantity(crate::item::ItemId::QualityUpgradeStone, 1);
 
-                    result_events.send(BlacksmithResult::QualityUpgradeSuccess {
+                    result_events.write(BlacksmithResult::QualityUpgradeSuccess {
                         item_name: item_name.clone(),
                         new_quality: quality_name.clone(),
                     });
                     info!("Upgraded {} to {} quality", item_name, quality_name);
                 }
                 Err(_) => {
-                    result_events.send(BlacksmithResult::QualityUpgradeFailedMaxQuality {
+                    result_events.write(BlacksmithResult::QualityUpgradeFailedMaxQuality {
                         item_name,
                     });
                     info!("Item is already at max quality");
@@ -274,8 +274,8 @@ fn handle_upgrade_quality(
 }
 
 fn handle_smelt_recipe(
-    mut smelt_events: EventReader<SmeltRecipeEvent>,
-    mut result_events: EventWriter<BlacksmithResult>,
+    mut smelt_events: MessageReader<SmeltRecipeEvent>,
+    mut result_events: MessageWriter<BlacksmithResult>,
     mut inventory: ResMut<Inventory>,
 ) {
     for event in smelt_events.read() {
@@ -289,8 +289,8 @@ fn handle_smelt_recipe(
 }
 
 fn handle_forge_recipe(
-    mut forge_events: EventReader<ForgeRecipeEvent>,
-    mut result_events: EventWriter<BlacksmithResult>,
+    mut forge_events: MessageReader<ForgeRecipeEvent>,
+    mut result_events: MessageWriter<BlacksmithResult>,
     mut inventory: ResMut<Inventory>,
 ) {
     for event in forge_events.read() {

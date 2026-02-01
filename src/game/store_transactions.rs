@@ -3,17 +3,17 @@ use bevy::prelude::*;
 use crate::game::{ItemDeposited, ItemWithdrawn, Storage};
 use crate::inventory::{FindsItems, HasInventory, Inventory, ManagesItems};
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct StorageWithdrawEvent {
     pub storage_index: usize,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct StorageDepositEvent {
     pub inventory_index: usize,
 }
 
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub enum StorageTransactionResult {
     WithdrawSuccess { item_name: String },
     WithdrawFailedInventoryFull,
@@ -39,9 +39,9 @@ impl Plugin for StorageTransactionsPlugin {
 }
 
 fn handle_storage_withdraw(
-    mut withdraw_events: EventReader<StorageWithdrawEvent>,
-    mut result_events: EventWriter<StorageTransactionResult>,
-    mut withdrawn_events: EventWriter<ItemWithdrawn>,
+    mut withdraw_events: MessageReader<StorageWithdrawEvent>,
+    mut result_events: MessageWriter<StorageTransactionResult>,
+    mut withdrawn_events: MessageWriter<ItemWithdrawn>,
     mut inventory: ResMut<Inventory>,
     mut storage: ResMut<Storage>,
 ) {
@@ -53,7 +53,7 @@ fn handle_storage_withdraw(
         let item_uuid = inv_item.uuid();
 
         if inventory.items.len() >= inventory.max_slots() {
-            result_events.send(StorageTransactionResult::WithdrawFailedInventoryFull);
+            result_events.write(StorageTransactionResult::WithdrawFailedInventoryFull);
             info!("Inventory is full! Cannot withdraw item.");
             continue;
         }
@@ -63,10 +63,10 @@ fn handle_storage_withdraw(
         };
 
         if inventory.add_to_inv(inv_item.item).is_ok() {
-            result_events.send(StorageTransactionResult::WithdrawSuccess {
+            result_events.write(StorageTransactionResult::WithdrawSuccess {
                 item_name: item_name.clone(),
             });
-            withdrawn_events.send(ItemWithdrawn {
+            withdrawn_events.write(ItemWithdrawn {
                 item_name: item_name.clone(),
             });
             info!("Withdrew {} from storage", item_name);
@@ -75,9 +75,9 @@ fn handle_storage_withdraw(
 }
 
 fn handle_storage_deposit(
-    mut deposit_events: EventReader<StorageDepositEvent>,
-    mut result_events: EventWriter<StorageTransactionResult>,
-    mut deposited_events: EventWriter<ItemDeposited>,
+    mut deposit_events: MessageReader<StorageDepositEvent>,
+    mut result_events: MessageWriter<StorageTransactionResult>,
+    mut deposited_events: MessageWriter<ItemDeposited>,
     mut inventory: ResMut<Inventory>,
     mut storage: ResMut<Storage>,
 ) {
@@ -89,7 +89,7 @@ fn handle_storage_deposit(
         let item_uuid = inv_item.uuid();
 
         if storage.inventory().items.len() >= storage.inventory().max_slots() {
-            result_events.send(StorageTransactionResult::DepositFailed {
+            result_events.write(StorageTransactionResult::DepositFailed {
                 reason: "Storage is full".to_string(),
             });
             info!("Storage is full! Cannot deposit item.");
@@ -103,10 +103,10 @@ fn handle_storage_deposit(
         storage
             .add_to_inv(inv_item.item)
             .expect("Storage capacity already verified");
-        result_events.send(StorageTransactionResult::DepositSuccess {
+        result_events.write(StorageTransactionResult::DepositSuccess {
             item_name: item_name.clone(),
         });
-        deposited_events.send(ItemDeposited {
+        deposited_events.write(ItemDeposited {
             item_name: item_name.clone(),
         });
         info!("Deposited {} into storage", item_name);

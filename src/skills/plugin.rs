@@ -15,9 +15,9 @@ impl Plugin for SkillsPlugin {
 }
 
 fn process_xp_gained(
-    mut events: EventReader<SkillXpGained>,
+    mut events: MessageReader<SkillXpGained>,
     mut skills: ResMut<Skills>,
-    mut level_up_events: EventWriter<SkillLeveledUp>,
+    mut level_up_events: MessageWriter<SkillLeveledUp>,
 ) {
     for event in events.read() {
         let Some(skill) = skills.skill_mut(event.skill) else {
@@ -32,7 +32,7 @@ fn process_xp_gained(
         }
 
         if skill.level > old_level {
-            level_up_events.send(SkillLeveledUp {
+            level_up_events.write(SkillLeveledUp {
                 skill: event.skill,
                 old_level,
                 new_level: skill.level,

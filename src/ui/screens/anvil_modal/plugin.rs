@@ -97,7 +97,7 @@ fn handle_anvil_close_with_crafting(
 
         // Close the modal by despawning it
         if let Ok(modal_entity) = modal_query.get_single() {
-            commands.entity(modal_entity).despawn_recursive();
+            commands.entity(modal_entity).despawn();
         }
         active_modal.modal = None;
 

@@ -11,7 +11,7 @@ use super::state::ResultsModal;
 /// System to handle closing the results modal on Enter or Escape.
 pub fn handle_results_modal_close(
     mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     active_modal: Res<ActiveModal>,
 ) {
     // Always consume events to advance reader cursor (prevents stale event processing)

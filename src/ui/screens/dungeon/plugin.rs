@@ -61,7 +61,7 @@ impl Plugin for DungeonScreenPlugin {
 fn enter_dungeon(
     registry: Res<DungeonRegistry>,
     mut state: ResMut<DungeonState>,
-    mut spawn_floor: EventWriter<SpawnFloor>,
+    mut spawn_floor: MessageWriter<SpawnFloor>,
 ) {
     if !state.is_in_dungeon() {
         state.enter_dungeon(LocationId::Home, &registry);
@@ -78,7 +78,7 @@ fn enter_dungeon(
         .map(|f| f.floor_type())
         .unwrap_or(crate::dungeon::FloorType::CaveFloor);
 
-    spawn_floor.send(SpawnFloor {
+    spawn_floor.write(SpawnFloor {
         layout,
         player_pos: state.player_pos,
         player_size: state.player_size,
@@ -89,7 +89,7 @@ fn enter_dungeon(
 #[instrument(level = "debug", skip_all)]
 fn handle_floor_ready(
     mut commands: Commands,
-    mut events: EventReader<FloorReady>,
+    mut events: MessageReader<FloorReady>,
     game_sprites: Res<GameSprites>,
     mob_sheets: Res<MobSpriteSheets>,
     tileset: Res<TilesetGrid>,
@@ -98,7 +98,7 @@ fn handle_floor_ready(
 ) {
     for event in events.read() {
         for entity in &root_query {
-            commands.entity(entity).despawn_recursive();
+            commands.entity(entity).despawn();
         }
         commands.remove_resource::<TileSizes>();
 
@@ -124,8 +124,8 @@ const MOVE_SPEED: f32 = 8.0;
 fn handle_dungeon_movement(
     mut commands: Commands,
     time: Res<Time>,
-    mut action_reader: EventReader<GameAction>,
-    mut move_events: EventWriter<PlayerMoveIntent>,
+    mut action_reader: MessageReader<GameAction>,
+    mut move_events: MessageWriter<PlayerMoveIntent>,
     held_direction: Res<HeldDirection>,
     mut move_timer: Local<f32>,
 ) {
@@ -136,7 +136,7 @@ fn handle_dungeon_movement(
 
     if let Some(direction) = fresh_direction {
         commands.insert_resource(LastMoveDirection(direction));
-        move_events.send(PlayerMoveIntent { direction });
+        move_events.write(PlayerMoveIntent { direction });
         *move_timer = MOVE_INTERVAL;
         return;
     }
@@ -145,7 +145,7 @@ fn handle_dungeon_movement(
         *move_timer -= time.delta_secs();
         if *move_timer <= 0.0 {
             commands.insert_resource(LastMoveDirection(direction));
-            move_events.send(PlayerMoveIntent { direction });
+            move_events.write(PlayerMoveIntent { direction });
             *move_timer = MOVE_INTERVAL;
         }
     } else {
@@ -155,7 +155,7 @@ fn handle_dungeon_movement(
 
 fn handle_move_result(
     mut commands: Commands,
-    mut events: EventReader<MoveResult>,
+    mut events: MessageReader<MoveResult>,
     last_direction: Option<Res<LastMoveDirection>>,
     tile_sizes: Res<TileSizes>,
     sheet: Res<PlayerSpriteSheet>,
@@ -228,10 +228,10 @@ fn handle_move_result(
 
 #[instrument(level = "debug", skip_all, fields(player_pos = ?state.player_pos))]
 fn handle_interact_action(
-    mut action_reader: EventReader<GameAction>,
-    mut npc_events: EventWriter<NpcInteraction>,
-    mut crafting_events: EventWriter<CraftingStationInteraction>,
-    mut mine_events: EventWriter<MineEntity>,
+    mut action_reader: MessageReader<GameAction>,
+    mut npc_events: MessageWriter<NpcInteraction>,
+    mut crafting_events: MessageWriter<CraftingStationInteraction>,
+    mut mine_events: MessageWriter<MineEntity>,
     state: Res<DungeonState>,
     occupancy: Res<GridOccupancy>,
     entity_query: Query<&DungeonEntityMarker>,
@@ -265,18 +265,18 @@ fn handle_interact_action(
 
         match &marker.entity_type {
             DungeonEntity::Npc { mob_id, .. } => {
-                npc_events.send(NpcInteraction { mob_id: *mob_id });
+                npc_events.write(NpcInteraction { mob_id: *mob_id });
                 return;
             }
             DungeonEntity::CraftingStation { station_type, .. } => {
-                crafting_events.send(CraftingStationInteraction {
+                crafting_events.write(CraftingStationInteraction {
                     entity,
                     station_type: *station_type,
                 });
                 return;
             }
             DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. } => {
-                mine_events.send(MineEntity {
+                mine_events.write(MineEntity {
                     entity,
                     pos: marker.pos,
                     entity_type: marker.entity_type,
@@ -288,7 +288,7 @@ fn handle_interact_action(
     }
 }
 
-fn handle_npc_interaction(mut commands: Commands, mut events: EventReader<NpcInteraction>) {
+fn handle_npc_interaction(mut commands: Commands, mut events: MessageReader<NpcInteraction>) {
     for event in events.read() {
         if event.mob_id == MobId::Merchant {
             commands.insert_resource(MerchantStock::generate());
@@ -299,7 +299,7 @@ fn handle_npc_interaction(mut commands: Commands, mut events: EventReader<NpcInt
 
 fn handle_crafting_station_interaction(
     mut commands: Commands,
-    mut events: EventReader<CraftingStationInteraction>,
+    mut events: MessageReader<CraftingStationInteraction>,
     forge_query: Query<&ForgeActiveTimer>,
     anvil_query: Query<&AnvilActiveTimer>,
 ) {
@@ -321,7 +321,7 @@ fn handle_crafting_station_interaction(
     }
 }
 
-fn handle_mining_result(mut commands: Commands, mut events: EventReader<MiningResult>) {
+fn handle_mining_result(mut commands: Commands, mut events: MessageReader<MiningResult>) {
     for event in events.read() {
         let title = match &event.entity_type {
             DungeonEntity::Chest { .. } => "Chest Opened!".to_string(),
@@ -347,13 +347,13 @@ fn revert_forge_idle(
     mut commands: Commands,
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
-    mut crafting_events: EventWriter<ForgeCraftingCompleteEvent>,
+    mut crafting_events: MessageWriter<ForgeCraftingCompleteEvent>,
     mut query: Query<(Entity, &mut ForgeActiveTimer, &mut ImageNode)>,
 ) {
     for (entity, mut timer, mut image) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
-            crafting_events.send(ForgeCraftingCompleteEvent { entity });
+            crafting_events.write(ForgeCraftingCompleteEvent { entity });
 
             if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
                 if let Some(idle_idx) = sheet.get("forge_1_idle") {
@@ -372,13 +372,13 @@ fn revert_anvil_idle(
     mut commands: Commands,
     time: Res<Time>,
     game_sprites: Res<GameSprites>,
-    mut crafting_events: EventWriter<AnvilCraftingCompleteEvent>,
+    mut crafting_events: MessageWriter<AnvilCraftingCompleteEvent>,
     mut query: Query<(Entity, &mut AnvilActiveTimer, &mut ImageNode)>,
 ) {
     for (entity, mut timer, mut image) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
-            crafting_events.send(AnvilCraftingCompleteEvent { entity });
+            crafting_events.write(AnvilCraftingCompleteEvent { entity });
 
             if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
                 if let Some(idle_idx) = sheet.get("anvil_idle") {
@@ -394,7 +394,7 @@ fn revert_anvil_idle(
 }
 
 fn handle_back_action(
-    mut action_events: EventReader<GameAction>,
+    mut action_events: MessageReader<GameAction>,
     mut next_state: ResMut<NextState<AppState>>,
 ) {
     for action in action_events.read() {

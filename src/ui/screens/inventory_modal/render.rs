@@ -118,7 +118,7 @@ pub fn populate_inventory_detail_pane_content(
 
         if let Some(children) = children {
             for &child in children.iter() {
-                commands.entity(child).despawn_recursive();
+                commands.entity(child).despawn();
             }
         }
 

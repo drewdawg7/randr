@@ -44,7 +44,7 @@ impl Plugin for ForgeModalPlugin {
 /// Handles CloseModal action: starts crafting if ready, then closes the modal.
 fn handle_forge_close(
     mut commands: Commands,
-    mut action_reader: EventReader<crate::input::GameAction>,
+    mut action_reader: MessageReader<crate::input::GameAction>,
     mut active_modal: ResMut<crate::ui::screens::modal::ActiveModal>,
     active_forge: Option<Res<super::state::ActiveForgeEntity>>,
     game_sprites: Res<crate::assets::GameSprites>,
@@ -106,7 +106,7 @@ fn handle_forge_close(
 
         // Always close the modal
         if let Ok(modal_entity) = modal_query.get_single() {
-            commands.entity(modal_entity).despawn_recursive();
+            commands.entity(modal_entity).despawn();
         }
         active_modal.modal = None;
 

@@ -7,21 +7,21 @@ use crate::player::PlayerGold;
 use super::Store;
 
 /// Event to purchase an item from the store.
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct PurchaseEvent {
     /// Index into store inventory
     pub index: usize,
 }
 
 /// Event to sell an item from player's inventory.
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub struct SellEvent {
     /// Index into player's inventory
     pub inventory_index: usize,
 }
 
 /// Result event for store transactions.
-#[derive(Event, Debug, Clone)]
+#[derive(Message, Debug, Clone)]
 pub enum TransactionResult {
     PurchaseSuccess { item_name: String, price: i32 },
     PurchaseFailedInsufficientGold { need: i32, have: i32 },
@@ -32,8 +32,8 @@ pub enum TransactionResult {
 
 /// Handle purchase events.
 pub fn handle_purchase(
-    mut events: EventReader<PurchaseEvent>,
-    mut result_events: EventWriter<TransactionResult>,
+    mut events: MessageReader<PurchaseEvent>,
+    mut result_events: MessageWriter<TransactionResult>,
     mut store: ResMut<Store>,
     mut gold: ResMut<PlayerGold>,
     mut inventory: ResMut<Inventory>,
@@ -45,7 +45,7 @@ pub fn handle_purchase(
 
         // Take item from store
         let Some(item) = store_item.take_item() else {
-            result_events.send(TransactionResult::PurchaseFailedOutOfStock);
+            result_events.write(TransactionResult::PurchaseFailedOutOfStock);
             continue;
         };
 
@@ -56,7 +56,7 @@ pub fn handle_purchase(
         if gold.0 < price {
             // Not enough gold - put item back
             store.inventory[event.index].items.push(item);
-            result_events.send(TransactionResult::PurchaseFailedInsufficientGold {
+            result_events.write(TransactionResult::PurchaseFailedInsufficientGold {
                 need: price,
                 have: gold.0,
             });
@@ -67,13 +67,13 @@ pub fn handle_purchase(
         if inventory.add_to_inv(item.clone()).is_err() {
             // Inventory full - put item back
             store.inventory[event.index].items.push(item);
-            result_events.send(TransactionResult::PurchaseFailedInventoryFull);
+            result_events.write(TransactionResult::PurchaseFailedInventoryFull);
             continue;
         }
 
         // Deduct gold
         gold.subtract(price);
-        result_events.send(TransactionResult::PurchaseSuccess {
+        result_events.write(TransactionResult::PurchaseSuccess {
             item_name,
             price,
         });
@@ -82,8 +82,8 @@ pub fn handle_purchase(
 
 /// Handle sell events.
 pub fn handle_sell(
-    mut events: EventReader<SellEvent>,
-    mut result_events: EventWriter<TransactionResult>,
+    mut events: MessageReader<SellEvent>,
+    mut result_events: MessageWriter<TransactionResult>,
     mut gold: ResMut<PlayerGold>,
     mut inventory: ResMut<Inventory>,
 ) {
@@ -105,7 +105,7 @@ pub fn handle_sell(
         gold.add(sell_price);
         inventory.decrease_item_quantity(item_id, 1);
 
-        result_events.send(TransactionResult::SellSuccess {
+        result_events.write(TransactionResult::SellSuccess {
             item_name,
             price: sell_price,
         });

@@ -12,7 +12,7 @@ use crate::ui::widgets::ItemGridEntry;
 use super::state::{ActiveForgeEntity, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex};
 
 pub fn handle_forge_modal_navigation(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut modal_state: Option<ResMut<ForgeModalState>>,
     mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
@@ -43,7 +43,7 @@ pub fn handle_forge_modal_navigation(
 }
 
 pub fn handle_forge_modal_select(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
     active_forge: Option<Res<ActiveForgeEntity>>,

@@ -22,7 +22,7 @@ impl Command for OpenResultsModalCommand {
 
 pub fn handle_fight_modal_close(
     mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     active_modal: Res<ActiveModal>,
 ) {
     if active_modal.modal != Some(ModalType::FightModal) {
@@ -37,7 +37,7 @@ pub fn handle_fight_modal_close(
 }
 
 pub fn handle_fight_modal_navigation(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     selection: Option<ResMut<FightModalButtonSelection>>,
 ) {
     let Some(mut selection) = selection else { return };
@@ -52,8 +52,8 @@ pub fn handle_fight_modal_navigation(
 
 pub fn handle_fight_modal_select(
     mut commands: Commands,
-    mut action_reader: EventReader<GameAction>,
-    mut attack_events: EventWriter<PlayerAttackMob>,
+    mut action_reader: MessageReader<GameAction>,
+    mut attack_events: MessageWriter<PlayerAttackMob>,
     selection: Res<FightModalButtonSelection>,
     fight_mob: Option<Res<FightModalMob>>,
     mob_query: Query<&Health>,
@@ -76,7 +76,7 @@ pub fn handle_fight_modal_select(
                     continue;
                 }
 
-                attack_events.send(PlayerAttackMob {
+                attack_events.write(PlayerAttackMob {
                     target: fight_mob.entity,
                 });
             }
@@ -88,7 +88,7 @@ pub fn handle_fight_modal_select(
 }
 
 pub fn trigger_attack_animation(
-    mut events: EventReader<PlayerAttackMob>,
+    mut events: MessageReader<PlayerAttackMob>,
     sheet: Res<PlayerSpriteSheet>,
     mut sprite_query: Query<(&mut SpriteAnimation, &mut PlayerAttackTimer)>,
 ) {
@@ -111,8 +111,8 @@ pub fn trigger_attack_animation(
 
 pub fn handle_combat_outcome(
     mut commands: Commands,
-    mut death_events: EventReader<EntityDied>,
-    mut victory_events: EventReader<VictoryAchieved>,
+    mut death_events: MessageReader<EntityDied>,
+    mut victory_events: MessageReader<VictoryAchieved>,
     fight_mob: Option<Res<FightModalMob>>,
 ) {
     for event in death_events.read() {

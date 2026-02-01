@@ -11,7 +11,7 @@ use super::state::{BackpackGrid, EquipmentGrid};
 /// System to handle arrow key navigation within the focused inventory grid.
 /// Only runs when inventory modal is active (via run_if condition).
 pub fn handle_inventory_modal_navigation(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
     mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
@@ -36,7 +36,7 @@ pub fn handle_inventory_modal_navigation(
 /// System to handle Enter key equipping/unequipping items in the inventory modal.
 /// Only runs when inventory modal is active (via run_if condition).
 pub fn handle_inventory_modal_select(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut inventory: ResMut<Inventory>,
     equipment_grids: Query<&ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,

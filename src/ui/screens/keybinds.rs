@@ -193,7 +193,7 @@ fn spawn_keybind_row(parent: &mut ChildBuilder, key: &str, description: &str) {
 
 /// System to handle Close action to return to previous state.
 fn handle_close_action(
-    mut action_reader: EventReader<GameAction>,
+    mut action_reader: MessageReader<GameAction>,
     mut next_state: ResMut<NextState<AppState>>,
     previous_state: Res<crate::states::PreviousState>,
 ) {
@@ -216,6 +216,6 @@ fn despawn_keybinds_screen(
     keybinds_root: Query<Entity, With<KeybindsScreenRoot>>,
 ) {
     if let Ok(entity) = keybinds_root.get_single() {
-        commands.entity(entity).despawn_recursive();
+        commands.entity(entity).despawn();
     }
 }

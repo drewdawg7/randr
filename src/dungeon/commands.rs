@@ -27,7 +27,7 @@ impl Command for DespawnDungeonEntity {
             occupancy.vacate(self.pos, self.size);
         }
         if let Ok(entity) = world.get_entity_mut(self.entity) {
-            entity.despawn_recursive();
+            entity.despawn();
         }
     }
 }

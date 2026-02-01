@@ -6,7 +6,7 @@ use crate::dungeon::{
     GridPosition, GridSize,
 };
 
-#[derive(Event)]
+#[derive(Message)]
 pub struct SpawnFloor {
     pub layout: DungeonLayout,
     pub player_pos: GridPosition,
@@ -17,8 +17,8 @@ pub struct SpawnFloor {
 #[instrument(level = "debug", skip_all)]
 pub fn prepare_floor(
     mut commands: Commands,
-    mut events: EventReader<SpawnFloor>,
-    mut floor_ready: EventWriter<FloorReady>,
+    mut events: MessageReader<SpawnFloor>,
+    mut floor_ready: MessageWriter<FloorReady>,
 ) {
     for event in events.read() {
         let layout = &event.layout;
@@ -34,7 +34,7 @@ pub fn prepare_floor(
             .count();
         commands.insert_resource(FloorMonsterCount(mob_count));
 
-        floor_ready.send(FloorReady {
+        floor_ready.write(FloorReady {
             layout: event.layout.clone(),
             player_pos: event.player_pos,
             player_size: event.player_size,

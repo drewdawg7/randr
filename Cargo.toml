@@ -12,7 +12,7 @@ path = "src/lib.rs"
 
 [dependencies]
 rand = "0.8"
-bevy = "0.15"
+bevy = "0.18"
 uuid = { version = "1.0", features = ["v4", "serde"] }
 entity_macros = { path = "entity_macros" }
 serde = { version = "1.0", features = ["derive"] }
