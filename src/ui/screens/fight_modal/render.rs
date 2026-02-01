@@ -239,7 +239,7 @@ pub fn update_button_sprites(
 
 pub fn update_mob_health_bar(
     fight_mob: Res<FightModalMob>,
-    mut bar_query: Query<&mut Health, With<FightModalMobHealthBar>>,
+    mut bar_query: Query<&mut Health, (With<FightModalMobHealthBar>, Without<MobMarker>)>,
     mob_query: Query<&Health, (With<MobMarker>, Changed<Health>)>,
 ) {
     let Ok(mut bar_health) = bar_query.get_single_mut() else {
