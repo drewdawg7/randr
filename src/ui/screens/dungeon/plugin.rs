@@ -42,10 +42,13 @@ impl Plugin for DungeonScreenPlugin {
                 Update,
                 (
                     handle_floor_ready.run_if(on_event::<FloorReady>),
-                    handle_dungeon_movement,
+                    handle_dungeon_movement
+                        .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     handle_move_result.run_if(on_event::<MoveResult>),
                     interpolate_player_position,
-                    handle_interact_action.run_if(on_event::<GameAction>),
+                    handle_interact_action
+                        .run_if(on_event::<GameAction>)
+                        .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     handle_npc_interaction.run_if(on_event::<NpcInteraction>),
                     handle_crafting_station_interaction.run_if(on_event::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_event::<MiningResult>),
@@ -128,13 +131,8 @@ fn handle_dungeon_movement(
     mut action_reader: EventReader<GameAction>,
     mut move_events: EventWriter<PlayerMoveIntent>,
     held_direction: Res<HeldDirection>,
-    active_modal: Res<ActiveModal>,
     mut move_timer: Local<f32>,
 ) {
-    if active_modal.modal.is_some() {
-        return;
-    }
-
     let fresh_direction = action_reader.read().find_map(|a| match a {
         GameAction::Navigate(dir) => Some(*dir),
         _ => None,
@@ -233,13 +231,8 @@ fn handle_interact_action(
     mut mine_events: EventWriter<MineEntity>,
     state: Res<DungeonState>,
     occupancy: Res<GridOccupancy>,
-    active_modal: Res<ActiveModal>,
     entity_query: Query<&DungeonEntityMarker>,
 ) {
-    if active_modal.modal.is_some() {
-        return;
-    }
-
     let is_interact = action_reader.read().any(|a| *a == GameAction::Mine);
     if !is_interact {
         return;
