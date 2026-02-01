@@ -25,6 +25,9 @@ use crate::location::LocationId;
 #[derive(Resource, Default)]
 pub struct FloorMonsterCount(pub usize);
 
+#[derive(Component)]
+pub struct TiledWallCollider;
+
 
 #[derive(Resource, Clone, Debug)]
 pub struct DungeonRegistry {
@@ -192,7 +195,7 @@ fn on_collider_created(
         }
     }
 
-    commands.entity(collider_entity).insert(RigidBody::Static);
+    commands.entity(collider_entity).insert((RigidBody::Static, TiledWallCollider));
 }
 
 fn debug_draw_colliders(

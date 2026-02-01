@@ -22,7 +22,7 @@ pub use floor::{FloorId, FloorSpec, FloorType};
 pub use grid::EntitySize;
 pub use physics::GameLayer;
 pub use layouts::LayoutId;
-pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry, FloorMonsterCount};
+pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry, FloorMonsterCount, TiledWallCollider};
 pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
 pub use state::{DungeonState, TileWorldSize};
 pub use systems::{
