@@ -195,7 +195,7 @@ pub enum SpriteSheetLoaderError {
     Parse(#[from] serde_json::Error),
 }
 
-#[derive(Default)]
+#[derive(Default, TypePath)]
 pub struct SpriteSheetMetaLoader;
 
 impl AssetLoader for SpriteSheetMetaLoader {
@@ -292,7 +292,7 @@ impl SpriteSheet {
         use bevy::ui::widget::NodeImageMode;
         self.image_node(name).map(|img| {
             img.with_mode(NodeImageMode::Sliced(TextureSlicer {
-                border: BorderRect::square(border),
+                border: BorderRect::all(border),
                 ..default()
             }))
         })

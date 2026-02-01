@@ -3,13 +3,13 @@ use tracing::instrument;
 
 use crate::dungeon::{DungeonEntityMarker, GridOccupancy};
 
-#[instrument(level = "debug", skip_all, fields(entity = ?trigger.entity()))]
+#[instrument(level = "debug", skip_all, fields(entity = ?trigger.entity))]
 pub fn track_entity_occupancy(
     trigger: On<Add, DungeonEntityMarker>,
     query: Query<&DungeonEntityMarker>,
     mut occupancy: ResMut<GridOccupancy>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(marker) = query.get(entity) else {
         return;
     };

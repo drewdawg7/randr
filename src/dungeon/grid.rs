@@ -179,7 +179,7 @@ mod tests {
         let mut occupancy = GridOccupancy::new(10, 10);
         assert!(!occupancy.is_occupied(5, 5));
 
-        let entity = Entity::from_raw_u32(1);
+        let entity = Entity::from_raw_u32(1).unwrap();
         let pos = GridPosition::new(5, 5);
         let size = GridSize::single();
 
@@ -197,7 +197,7 @@ mod tests {
     #[test]
     fn grid_occupancy_multi_cell() {
         let mut occupancy = GridOccupancy::new(10, 10);
-        let entity = Entity::from_raw_u32(2);
+        let entity = Entity::from_raw_u32(2).unwrap();
         let pos = GridPosition::new(2, 2);
         let size = GridSize::new(3, 2);
 

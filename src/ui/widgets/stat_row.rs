@@ -45,7 +45,7 @@ fn on_add_stat_row(
     mut commands: Commands,
     query: Query<&StatRow>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(stat_row) = query.get(entity) else {
         return;
     };

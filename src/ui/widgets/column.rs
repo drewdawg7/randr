@@ -113,7 +113,7 @@ fn on_add_column(
     mut commands: Commands,
     query: Query<&Column>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(column) = query.get(entity) else {
         return;
     };

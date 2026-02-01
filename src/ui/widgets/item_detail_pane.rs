@@ -27,7 +27,7 @@ fn on_add_item_detail_pane(
     game_sprites: Res<GameSprites>,
     panels: Query<&ItemDetailPane>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let _panel = panels.get(entity).ok();
 
     let panel_width = 280.0;

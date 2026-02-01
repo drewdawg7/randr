@@ -162,7 +162,7 @@ fn on_add_item_grid(
     focus_state: Option<Res<FocusState>>,
     item_grids: Query<(&ItemGrid, Option<&ItemGridFocusPanel>)>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let (item_grid, focus_panel) = item_grids.get(entity).ok().unzip();
     let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
     let grid_size = item_grid.map(|g| g.grid_size).unwrap_or(4);

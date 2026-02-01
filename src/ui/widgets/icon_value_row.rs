@@ -129,7 +129,7 @@ fn on_add_icon_value_row(
     query: Query<&IconValueRow>,
     game_sprites: Res<GameSprites>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(row_data) = query.get(entity) else {
         return;
     };

@@ -46,7 +46,7 @@ fn on_add_player_stats(
     gold: Res<PlayerGold>,
     game_sprites: Res<GameSprites>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
 
     // Get sprite images
     let heart_image = game_sprites

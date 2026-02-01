@@ -143,7 +143,7 @@ pub fn on_open_modal<M: RegisteredModal>(
     trigger: On<OpenModal>,
     mut commands: Commands,
 ) {
-    if trigger.0 != M::MODAL_TYPE {
+    if trigger.event().0 != M::MODAL_TYPE {
         return;
     }
     commands.queue(SpawnModalCommand::<M>(PhantomData));
@@ -156,7 +156,7 @@ pub fn on_close_modal<M: RegisteredModal>(
     trigger: On<CloseModal>,
     mut commands: Commands,
 ) {
-    if trigger.0 != M::MODAL_TYPE {
+    if trigger.event().0 != M::MODAL_TYPE {
         return;
     }
     commands.queue(DespawnModalCommand::<M>(PhantomData));

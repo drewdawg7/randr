@@ -28,7 +28,7 @@ fn on_add_gold_display(
     query: Query<&GoldDisplay>,
     game_sprites: Res<GameSprites>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(gold_display) = query.get(entity) else {
         return;
     };

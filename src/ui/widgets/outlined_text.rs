@@ -106,7 +106,7 @@ fn on_add_outlined_text(
     query: Query<&OutlinedText>,
     game_fonts: Res<GameFonts>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(outlined) = query.get(entity) else {
         return;
     };

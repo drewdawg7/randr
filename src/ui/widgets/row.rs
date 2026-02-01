@@ -109,7 +109,7 @@ impl Row {
 }
 
 fn on_add_row(trigger: On<Add, Row>, mut commands: Commands, query: Query<&Row>) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(row) = query.get(entity) else {
         return;
     };

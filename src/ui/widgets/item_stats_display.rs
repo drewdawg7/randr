@@ -39,7 +39,7 @@ fn on_add_item_stats_display(
     game_sprites: Res<GameSprites>,
     game_fonts: Res<GameFonts>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(display) = query.get(entity) else {
         return;
     };

@@ -72,7 +72,7 @@ fn on_add_item_detail_display(
     query: Query<&ItemDetailDisplay>,
     game_fonts: Res<GameFonts>,
 ) {
-    let entity = trigger.entity();
+    let entity = trigger.entity;
     let Ok(display) = query.get(entity) else {
         return;
     };
