@@ -12,6 +12,8 @@ use crate::ui::{MobSpriteSheets, PlayerSpriteSheet, PlayerWalkTimer};
 
 use super::components::{DungeonPlayer, DungeonRoot, Interpolating, TargetPosition};
 
+const CHARACTER_SCALE: f32 = 2.0;
+
 #[derive(Component)]
 pub struct DungeonCamera;
 
@@ -76,7 +78,8 @@ pub fn add_entity_visuals(
                             index: sheet.animation.first_frame,
                         },
                     ),
-                    Transform::from_translation(world_pos).with_scale(Vec3::splat(scale)),
+                    Transform::from_translation(world_pos)
+                        .with_scale(Vec3::splat(scale * CHARACTER_SCALE)),
                     SpriteAnimation::new(&sheet.animation),
                 ));
             }
@@ -165,7 +168,7 @@ pub fn spawn_player(
             },
         ),
         Transform::from_translation(Vec3::new(world_pos.x, world_pos.y, z))
-            .with_scale(Vec3::splat(scale)),
+            .with_scale(Vec3::splat(scale * CHARACTER_SCALE)),
         SpriteAnimation::new(&player_sheet.animation),
     ));
 }
