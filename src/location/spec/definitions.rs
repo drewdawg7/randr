@@ -11,7 +11,6 @@ use std::collections::HashMap;
 use std::time::Duration;
 
 use crate::item::ItemId;
-use crate::rock::RockId;
 use crate::mob::MobId;
 use crate::registry::RegistryDefaults;
 
@@ -26,7 +25,6 @@ pub enum LocationData {
     Blacksmith(BlacksmithData),
     Alchemist(AlchemistData),
     Field(FieldData),
-    Mine(MineData),
     Dungeon(DungeonData),
 }
 
@@ -50,11 +48,6 @@ pub struct AlchemistData {
 #[derive(Clone, Debug)]
 pub struct FieldData {
     pub mob_weights: HashMap<MobId, i32>,
-}
-
-#[derive(Clone, Debug)]
-pub struct MineData {
-    pub rock_weights: HashMap<RockId, i32>,
 }
 
 #[derive(Clone, Debug)]
@@ -133,23 +126,6 @@ entity_macros::define_data! {
             }),
         }
 
-        // ─────────────────────────────────────────────────────────────────────
-        // Resource Locations
-        // ─────────────────────────────────────────────────────────────────────
-        VillageMine {
-            name: "Village Mine",
-            description: "A dark mine rich with ore deposits",
-            refresh_interval: None,
-            min_level: None,
-            data: LocationData::Mine(MineData {
-                rock_weights: HashMap::from([
-                    (RockId::Iron, 50),
-                    (RockId::Coal, 30),
-                    (RockId::Gold, 20),
-                ]),
-            }),
-        }
-
         Home {
             name: "Home",
             description: "Your starting home with a door to the dungeon",
@@ -188,7 +164,6 @@ pub enum LocationType {
     Commerce(CommerceSubtype),
     Crafting(CraftingSubtype),
     Combat(CombatSubtype),
-    Resource(ResourceSubtype),
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -208,11 +183,6 @@ pub enum CombatSubtype {
     Dungeon,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
-pub enum ResourceSubtype {
-    Mine,
-}
-
 impl LocationId {
     /// Get the category type for this location
     pub fn location_type(&self) -> LocationType {
@@ -221,7 +191,6 @@ impl LocationId {
             LocationId::VillageBlacksmith => LocationType::Crafting(CraftingSubtype::Blacksmith),
             LocationId::VillageAlchemist => LocationType::Crafting(CraftingSubtype::Alchemist),
             LocationId::VillageField => LocationType::Combat(CombatSubtype::Field),
-            LocationId::VillageMine => LocationType::Resource(ResourceSubtype::Mine),
             LocationId::Home | LocationId::MainDungeon => {
                 LocationType::Combat(CombatSubtype::Dungeon)
             }

@@ -11,8 +11,7 @@ pub use blacksmith::{Blacksmith, BlacksmithError};
 pub use spec::LocationId;
 pub use field::Field;
 pub use spec::{
-    AlchemistData, BlacksmithData, FieldData, LocationData, LocationSpec,
-    MineData, StoreData,
+    AlchemistData, BlacksmithData, FieldData, LocationData, LocationSpec, StoreData,
 };
 pub use store::{sell_player_item, PurchaseEvent, SellEvent, Store, StoreError, StorePlugin, TransactionResult};
 pub use traits::{Location, Refreshable};

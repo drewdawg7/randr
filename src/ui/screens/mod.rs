@@ -7,7 +7,6 @@ pub mod inventory_modal;
 mod keybinds;
 mod main_menu;
 pub mod merchant_modal;
-mod mine;
 pub mod modal;
 pub mod monster_compendium;
 mod profile;
@@ -30,7 +29,6 @@ pub use inventory_modal::InventoryModalPlugin;
 pub use keybinds::KeybindsPlugin;
 pub use main_menu::MainMenuPlugin;
 pub use merchant_modal::MerchantModalPlugin;
-pub use mine::MinePlugin;
 pub use modal::{
     ActiveModal, CloseModal, ModalOverlayBundle, ModalPlugin, ModalType, OpenModal,
     MODAL_OVERLAY_COLOR, MODAL_OVERLAY_Z_INDEX,

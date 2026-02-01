@@ -1,14 +1,6 @@
 use bevy::prelude::*;
 
 // ============================================================================
-// State Transition Events
-// ============================================================================
-
-/// Event requesting transition to Mine state.
-#[derive(Event, Debug, Clone)]
-pub struct RequestMineEvent;
-
-// ============================================================================
 // Application State
 // ============================================================================
 
@@ -21,7 +13,6 @@ pub enum AppState {
     Town,
     Dungeon,
     Profile,
-    Mine,
     Keybinds,
 }
 
@@ -54,24 +45,10 @@ impl Plugin for StateTransitionPlugin {
     fn build(&self, app: &mut App) {
         app.init_state::<AppState>()
             .init_resource::<PreviousState>()
-            .add_event::<RequestMineEvent>()
             .add_systems(
                 StateTransition,
                 track_state_transitions.run_if(state_changed::<AppState>),
-            )
-            .add_systems(
-                Update,
-                handle_state_transition_requests.run_if(on_event::<RequestMineEvent>),
             );
-    }
-}
-
-fn handle_state_transition_requests(
-    mut mine_events: EventReader<RequestMineEvent>,
-    mut next_state: ResMut<NextState<AppState>>,
-) {
-    if mine_events.read().next().is_some() {
-        next_state.set(AppState::Mine);
     }
 }
 
