@@ -84,40 +84,54 @@ pub fn tick_animation_clock(time: Res<Time>, mut clock: ResMut<AnimationClock>) 
     clock.elapsed += time.delta_secs();
 }
 
-/// System to animate all sprites with `SpriteAnimation` component.
+/// System to animate UI sprites (ImageNode) with `SpriteAnimation` component.
 pub fn animate_sprites(
     time: Res<Time>,
     clock: Res<AnimationClock>,
     mut query: Query<(&mut SpriteAnimation, &mut ImageNode)>,
 ) {
     for (mut animation, mut image) in &mut query {
-        if animation.synchronized && animation.looping {
-            // Derive frame from global clock so all same-config animations stay in phase
-            let frame_count = animation.last_frame - animation.first_frame + 1;
-            let total_frames_elapsed =
-                (clock.elapsed / animation.frame_duration) as usize;
-            animation.current_frame =
-                animation.first_frame + (total_frames_elapsed % frame_count);
-        } else {
-            // Per-entity timer for non-synchronized or non-looping animations
-            animation.timer.tick(time.delta());
-            for _ in 0..animation.timer.times_finished_this_tick() {
-                if animation.current_frame >= animation.last_frame {
-                    if animation.looping {
-                        animation.current_frame = animation.first_frame;
-                    } else {
-                        break;
-                    }
-                } else {
-                    animation.current_frame += 1;
-                }
-            }
-        }
-
-        // Always sync image to current_frame (handles external changes like animation switches)
+        advance_animation(&time, &clock, &mut animation);
         if let Some(ref mut atlas) = image.texture_atlas {
             if atlas.index != animation.current_frame {
                 atlas.index = animation.current_frame;
+            }
+        }
+    }
+}
+
+/// System to animate world-space sprites (Sprite) with `SpriteAnimation` component.
+pub fn animate_world_sprites(
+    time: Res<Time>,
+    clock: Res<AnimationClock>,
+    mut query: Query<(&mut SpriteAnimation, &mut Sprite)>,
+) {
+    for (mut animation, mut sprite) in &mut query {
+        advance_animation(&time, &clock, &mut animation);
+        if let Some(ref mut atlas) = sprite.texture_atlas {
+            if atlas.index != animation.current_frame {
+                atlas.index = animation.current_frame;
+            }
+        }
+    }
+}
+
+fn advance_animation(time: &Time, clock: &AnimationClock, animation: &mut SpriteAnimation) {
+    if animation.synchronized && animation.looping {
+        let frame_count = animation.last_frame - animation.first_frame + 1;
+        let total_frames_elapsed = (clock.elapsed / animation.frame_duration) as usize;
+        animation.current_frame = animation.first_frame + (total_frames_elapsed % frame_count);
+    } else {
+        animation.timer.tick(time.delta());
+        for _ in 0..animation.timer.times_finished_this_tick() {
+            if animation.current_frame >= animation.last_frame {
+                if animation.looping {
+                    animation.current_frame = animation.first_frame;
+                } else {
+                    break;
+                }
+            } else {
+                animation.current_frame += 1;
             }
         }
     }

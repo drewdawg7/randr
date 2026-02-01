@@ -14,7 +14,6 @@ use crate::dungeon::systems::{
     handle_floor_transition, handle_mine_entity, handle_mob_defeated, handle_player_move,
     prepare_floor, track_entity_occupancy, SpawnFloor,
 };
-use crate::dungeon::tileset::{init_tileset_grid, TilesetGrid};
 use crate::location::LocationId;
 
 #[derive(Resource, Default)]
@@ -60,7 +59,6 @@ impl Plugin for DungeonPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(self.registry.clone())
             .init_resource::<DungeonState>()
-            .init_resource::<TilesetGrid>()
             .add_message::<FloorTransition>()
             .add_message::<FloorReady>()
             .add_message::<SpawnFloor>()
@@ -71,7 +69,6 @@ impl Plugin for DungeonPlugin {
             .add_message::<MineEntity>()
             .add_message::<MiningResult>()
             .add_observer(track_entity_occupancy)
-            .add_systems(Startup, init_tileset)
             .add_systems(
                 Update,
                 (
@@ -83,14 +80,6 @@ impl Plugin for DungeonPlugin {
                 ),
             );
     }
-}
-
-fn init_tileset(
-    asset_server: Res<AssetServer>,
-    mut layouts: ResMut<Assets<TextureAtlasLayout>>,
-    mut tileset: ResMut<TilesetGrid>,
-) {
-    *tileset = init_tileset_grid(&asset_server, &mut layouts);
 }
 
 impl DungeonPlugin {

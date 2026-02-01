@@ -8,14 +8,12 @@ pub mod layout;
 pub mod layouts;
 pub mod map;
 pub mod plugin;
-pub mod rendering;
 pub mod spawn;
 pub mod spawn_rules;
 pub mod state;
 pub mod systems;
 pub mod tile;
 pub mod tiled;
-pub mod tileset;
 
 pub use commands::DungeonCommands;
 pub use config::DungeonConfig;
@@ -26,7 +24,6 @@ pub use layout::DungeonLayout;
 pub use layouts::LayoutId;
 pub use map::{entity_spawn_positions, map_to_layout, player_spawn_positions};
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry, FloorMonsterCount};
-pub use rendering::{resolve_tile, ResolvedTile};
 pub use spawn::{SpawnEntityType, SpawnEntry, SpawnTable};
 pub use spawn_rules::{
     ChestSpawner, ComposedSpawnRules, CraftingStationSpawner, FixedPositionSpawner,
@@ -39,8 +36,7 @@ pub use systems::{
     prepare_floor, SpawnFloor,
 };
 pub use tile::{Tile, TileType};
-pub use tiled::{load_floor_map, map_path};
-pub use tileset::{init_tileset_grid, TilesetGrid};
+pub use tiled::map_path;
 
 pub use events::{
     CraftingStationInteraction, FloorReady, FloorTransition, MineEntity, MiningResult, MoveResult,

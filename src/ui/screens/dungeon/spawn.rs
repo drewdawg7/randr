@@ -1,70 +1,35 @@
 use bevy::prelude::*;
+use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
 
-use crate::assets::{GameSprites, SpriteSheetKey};
+use crate::assets::GameSprites;
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
 use crate::dungeon::{
-    resolve_tile, DungeonEntity, DungeonEntityMarker, DungeonLayout, EntityRenderData, FloorType,
-    GridPosition, TilesetGrid,
+    map_path, DungeonEntity, DungeonEntityMarker, DungeonLayout, EntityRenderData, FloorType,
+    GridPosition, LayoutId,
 };
 use crate::mob::MobCombatBundle;
-use crate::ui::{DungeonMobSprite, DungeonPlayerSprite, MobSpriteSheets, PlayerWalkTimer};
+use crate::ui::animation::SpriteAnimation;
+use crate::ui::{MobSpriteSheets, PlayerSpriteSheet, PlayerWalkTimer};
+use crate::ui::widgets::PlayerStats;
 
-use super::components::{
-    DungeonCell, DungeonContainer, DungeonGrid, DungeonPlayer, DungeonRoot, EntityLayer,
-    Interpolating, TargetPosition, TileSizes,
-};
+use super::components::{DungeonPlayer, DungeonRoot, Interpolating, TargetPosition, TileSizes};
 use super::constants::{BASE_TILE, ENTITY_VISUAL_SCALE};
 
-#[derive(Bundle)]
-pub struct DungeonPlayerBundle {
-    pub player: DungeonPlayer,
-    pub sprite: DungeonPlayerSprite,
-    pub target_pos: TargetPosition,
-    pub interpolating: Interpolating,
-    pub walk_timer: PlayerWalkTimer,
-    pub z_index: ZIndex,
-    pub node: Node,
-}
-
-impl DungeonPlayerBundle {
-    pub fn new(player_pos: GridPosition, tile_size: f32, entity_sprite_size: f32) -> Self {
-        let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
-        let player_px = Vec2::new(
-            player_pos.x as f32 * tile_size + entity_offset,
-            player_pos.y as f32 * tile_size + entity_offset,
-        );
-
-        Self {
-            player: DungeonPlayer,
-            sprite: DungeonPlayerSprite,
-            target_pos: TargetPosition(player_px),
-            interpolating: Interpolating,
-            walk_timer: PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
-            z_index: ZIndex(player_pos.y as i32 + 100),
-            node: Node {
-                position_type: PositionType::Absolute,
-                left: Val::Px(player_px.x),
-                top: Val::Px(player_px.y),
-                width: Val::Px(entity_sprite_size),
-                height: Val::Px(entity_sprite_size),
-                ..default()
-            },
-        }
-    }
-}
-
-use crate::ui::widgets::PlayerStats;
+#[derive(Component)]
+pub struct DungeonCamera;
 
 pub fn spawn_floor_ui(
     commands: &mut Commands,
+    asset_server: &AssetServer,
     layout: &DungeonLayout,
     player_pos: GridPosition,
     floor_type: FloorType,
     game_sprites: &GameSprites,
     mob_sheets: &MobSpriteSheets,
-    tileset: &TilesetGrid,
+    player_sheet: &PlayerSpriteSheet,
     window: &Window,
+    camera_entity: Entity,
 ) {
     let available_width = window.width() - 20.0;
     let available_height = window.height() - 50.0;
@@ -75,11 +40,23 @@ pub fn spawn_floor_ui(
 
     let base_tile_size = max_tile_from_width.min(max_tile_from_height).max(BASE_TILE);
     let tile_size = base_tile_size * tile_scale;
+    let map_height = layout.height();
 
-    commands.insert_resource(TileSizes { tile_size, base_tile_size });
+    commands.insert_resource(TileSizes {
+        tile_size,
+        base_tile_size,
+        map_height,
+    });
 
-    let grid_width = tile_size * layout.width() as f32;
-    let grid_height = tile_size * layout.height() as f32;
+    let layout_id = floor_type.layout_id(false);
+    spawn_tilemap(commands, asset_server, layout_id, tile_size);
+
+    let center_x = (layout.width() as f32 * tile_size) / 2.0;
+    let center_y = (map_height as f32 * tile_size) / 2.0;
+    commands.entity(camera_entity).insert((
+        DungeonCamera,
+        Transform::from_xyz(center_x, center_y, 999.0),
+    ));
 
     commands
         .spawn((
@@ -90,167 +67,69 @@ pub fn spawn_floor_ui(
                 flex_direction: FlexDirection::Column,
                 ..default()
             },
-            BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         ))
         .with_children(|parent| {
             parent.spawn(PlayerStats);
-
-            parent
-                .spawn((
-                    DungeonContainer,
-                    Node {
-                        width: Val::Px(grid_width),
-                        height: Val::Px(grid_height),
-                        ..default()
-                    },
-                ))
-                .with_children(|container| {
-                    container
-                        .spawn((
-                            DungeonGrid,
-                            Node {
-                                display: Display::Grid,
-                                grid_template_columns: vec![GridTrack::px(tile_size); layout.width()],
-                                grid_template_rows: vec![GridTrack::px(tile_size); layout.height()],
-                                ..default()
-                            },
-                        ))
-                        .with_children(|grid| {
-                            spawn_grid_tiles(grid, layout, floor_type, tileset, game_sprites);
-                        });
-
-                    let entity_sprite_size = ENTITY_VISUAL_SCALE * base_tile_size;
-
-                    container
-                        .spawn((
-                            EntityLayer,
-                            Node {
-                                position_type: PositionType::Absolute,
-                                width: Val::Px(grid_width),
-                                height: Val::Px(grid_height),
-                                ..default()
-                            },
-                        ))
-                        .with_children(|layer| {
-                            spawn_entities(
-                                layer,
-                                layout,
-                                tile_size,
-                                base_tile_size,
-                                entity_sprite_size,
-                                game_sprites,
-                                mob_sheets,
-                            );
-
-                            spawn_player(
-                                layer,
-                                player_pos,
-                                tile_size,
-                                entity_sprite_size,
-                            );
-                        });
-                });
         });
+
+    let entity_sprite_size = ENTITY_VISUAL_SCALE * base_tile_size;
+
+    spawn_entities(
+        commands,
+        layout,
+        tile_size,
+        entity_sprite_size,
+        map_height,
+        game_sprites,
+        mob_sheets,
+    );
+
+    spawn_player(
+        commands,
+        player_pos,
+        tile_size,
+        entity_sprite_size,
+        map_height,
+        player_sheet,
+    );
 }
 
-fn spawn_grid_tiles(
-    grid: &mut ChildSpawnerCommands,
-    layout: &DungeonLayout,
-    floor_type: FloorType,
-    tileset: &TilesetGrid,
-    game_sprites: &GameSprites,
+fn spawn_tilemap(
+    commands: &mut Commands,
+    asset_server: &AssetServer,
+    layout_id: LayoutId,
+    tile_size: f32,
 ) {
-    for y in 0..layout.height() {
-        for x in 0..layout.width() {
-            grid.spawn((
-                DungeonCell,
-                Node {
-                    grid_column: GridPlacement::start(x as i16 + 1),
-                    grid_row: GridPlacement::start(y as i16 + 1),
-                    ..default()
-                },
-            ))
-            .with_children(|cell| {
-                if let Some(tile) = layout.tile_at(x, y) {
-                    if let Some(tileset_id) = tile.tileset_id {
-                        if let Some(img) = tileset.image_node_for_tile(tileset_id) {
-                            cell.spawn((
-                                img,
-                                Node {
-                                    position_type: PositionType::Absolute,
-                                    width: Val::Percent(100.0),
-                                    height: Val::Percent(100.0),
-                                    ..default()
-                                },
-                            ));
-                        }
-                    } else if let Some(resolved) = resolve_tile(floor_type, layout, x, y) {
-                        if let Some(sheet) = game_sprites.get(resolved.tileset_key) {
-                            if let Some(mut img) = sheet.image_node(resolved.slice_name) {
-                                if resolved.flip_x {
-                                    img.flip_x = true;
-                                }
-                                cell.spawn((
-                                    img,
-                                    Node {
-                                        position_type: PositionType::Absolute,
-                                        width: Val::Percent(100.0),
-                                        height: Val::Percent(100.0),
-                                        ..default()
-                                    },
-                                ));
-                            }
-                        }
-                    }
-                }
-            });
-        }
-    }
+    let path = map_path(layout_id);
+    let map_handle: Handle<TiledMapAsset> = asset_server.load(path);
+    let scale = tile_size / 32.0;
+
+    commands.spawn((
+        TiledMap(map_handle),
+        Transform::from_scale(Vec3::splat(scale)),
+    ));
+}
+
+fn grid_to_world(grid_x: usize, grid_y: usize, tile_size: f32, map_height: usize) -> Vec3 {
+    let world_x = grid_x as f32 * tile_size + tile_size / 2.0;
+    let world_y = (map_height - 1 - grid_y) as f32 * tile_size + tile_size / 2.0;
+    let z = grid_y as f32 * 0.01;
+    Vec3::new(world_x, world_y, z)
 }
 
 #[instrument(level = "debug", skip_all, fields(entity_count = layout.entities().len()))]
 fn spawn_entities(
-    layer: &mut ChildSpawnerCommands,
+    commands: &mut Commands,
     layout: &DungeonLayout,
     tile_size: f32,
-    base_tile_size: f32,
     entity_sprite_size: f32,
+    map_height: usize,
     game_sprites: &GameSprites,
     mob_sheets: &MobSpriteSheets,
 ) {
     for (pos, entity) in layout.entities() {
-        let (visual_width, visual_height) = match entity.render_data() {
-            EntityRenderData::AnimatedMob { mob_id } => {
-                let frame_size = mob_sheets
-                    .get(mob_id)
-                    .map(|s| s.frame_size)
-                    .unwrap_or(UVec2::splat(32));
-                let aspect = frame_size.x as f32 / frame_size.y as f32;
-                (entity_sprite_size * aspect, entity_sprite_size)
-            }
-            EntityRenderData::SpriteSheet { sheet_key: SpriteSheetKey::CraftingStations, sprite_name } => {
-                if sprite_name.starts_with("anvil") {
-                    (entity_sprite_size, base_tile_size)
-                } else {
-                    (entity_sprite_size, entity_sprite_size)
-                }
-            }
-            _ => (base_tile_size, base_tile_size),
-        };
-
-        let offset_x = -(visual_width - tile_size) / 2.0;
-        let offset_y = -(visual_height - tile_size) / 2.0;
-        let left = pos.x as f32 * tile_size + offset_x;
-        let top = pos.y as f32 * tile_size + offset_y;
-
-        let entity_node = Node {
-            position_type: PositionType::Absolute,
-            left: Val::Px(left),
-            top: Val::Px(top),
-            width: Val::Px(visual_width),
-            height: Val::Px(visual_height),
-            ..default()
-        };
+        let world_pos = grid_to_world(pos.x, pos.y, tile_size, map_height);
+        let scale = entity_sprite_size / 32.0;
 
         let marker = DungeonEntityMarker {
             pos: *pos,
@@ -258,20 +137,29 @@ fn spawn_entities(
         };
 
         match entity.render_data() {
-            EntityRenderData::SpriteSheet { sheet_key, sprite_name } => {
+            EntityRenderData::SpriteSheet {
+                sheet_key,
+                sprite_name,
+            } => {
                 if let Some(sheet) = game_sprites.get(sheet_key) {
-                    if let Some(img) = sheet.image_node(sprite_name) {
-                        let mut entity_cmd = layer.spawn((
+                    if let Some(sprite) = sheet.sprite(sprite_name) {
+                        let mut entity_cmd = commands.spawn((
                             marker,
-                            ZIndex(pos.y as i32),
-                            img,
-                            entity_node,
+                            sprite,
+                            Transform::from_translation(world_pos)
+                                .with_scale(Vec3::splat(scale)),
                         ));
                         match entity {
-                            DungeonEntity::CraftingStation { station_type: CraftingStationType::Forge, .. } => {
+                            DungeonEntity::CraftingStation {
+                                station_type: CraftingStationType::Forge,
+                                ..
+                            } => {
                                 entity_cmd.insert(ForgeCraftingState::default());
                             }
-                            DungeonEntity::CraftingStation { station_type: CraftingStationType::Anvil, .. } => {
+                            DungeonEntity::CraftingStation {
+                                station_type: CraftingStationType::Anvil,
+                                ..
+                            } => {
                                 entity_cmd.insert(AnvilCraftingState::default());
                             }
                             _ => {}
@@ -280,23 +168,58 @@ fn spawn_entities(
                 }
             }
             EntityRenderData::AnimatedMob { mob_id } => {
-                layer.spawn((
-                    marker,
-                    DungeonMobSprite { mob_id },
-                    MobCombatBundle::from_mob_id(mob_id),
-                    ZIndex(pos.y as i32),
-                    entity_node,
-                ));
+                if let Some(sheet) = mob_sheets.get(mob_id) {
+                    commands.spawn((
+                        marker,
+                        MobCombatBundle::from_mob_id(mob_id),
+                        Sprite::from_atlas_image(
+                            sheet.texture.clone(),
+                            TextureAtlas {
+                                layout: sheet.layout.clone(),
+                                index: sheet.animation.first_frame,
+                            },
+                        ),
+                        Transform::from_translation(world_pos)
+                            .with_scale(Vec3::splat(scale)),
+                        SpriteAnimation::new(&sheet.animation),
+                    ));
+                }
             }
         }
     }
 }
 
 fn spawn_player(
-    layer: &mut ChildSpawnerCommands,
+    commands: &mut Commands,
     player_pos: GridPosition,
     tile_size: f32,
     entity_sprite_size: f32,
+    map_height: usize,
+    player_sheet: &PlayerSpriteSheet,
 ) {
-    layer.spawn(DungeonPlayerBundle::new(player_pos, tile_size, entity_sprite_size));
+    let world_pos = grid_to_world(player_pos.x, player_pos.y, tile_size, map_height);
+    let scale = entity_sprite_size / 32.0;
+
+    let Some(texture) = player_sheet.texture.clone() else {
+        return;
+    };
+    let Some(layout) = player_sheet.layout.clone() else {
+        return;
+    };
+
+    commands.spawn((
+        DungeonPlayer,
+        TargetPosition(Vec2::new(world_pos.x, world_pos.y)),
+        Interpolating,
+        PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
+        Sprite::from_atlas_image(
+            texture,
+            TextureAtlas {
+                layout,
+                index: player_sheet.animation.first_frame,
+            },
+        ),
+        Transform::from_translation(world_pos).with_scale(Vec3::splat(scale)),
+        SpriteAnimation::new(&player_sheet.animation),
+    ));
 }

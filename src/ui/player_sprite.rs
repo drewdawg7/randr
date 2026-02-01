@@ -14,7 +14,9 @@ pub struct PlayerSpritePlugin;
 
 impl Plugin for PlayerSpritePlugin {
     fn build(&self, app: &mut App) {
-        use super::animation::{animate_sprites, tick_animation_clock, AnimationClock};
+        use super::animation::{
+            animate_sprites, animate_world_sprites, tick_animation_clock, AnimationClock,
+        };
 
         app.init_resource::<PlayerSpriteSheet>()
             .init_resource::<AnimationClock>()
@@ -24,6 +26,7 @@ impl Plugin for PlayerSpritePlugin {
                 (
                     tick_animation_clock,
                     animate_sprites,
+                    animate_world_sprites,
                     revert_player_idle,
                     revert_attack_idle,
                 )

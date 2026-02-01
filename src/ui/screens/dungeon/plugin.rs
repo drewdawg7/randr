@@ -7,7 +7,7 @@ use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActive
 use crate::dungeon::{
     CraftingStationInteraction, DungeonEntity, DungeonEntityMarker, DungeonRegistry, DungeonState,
     FloorReady, GridOccupancy, MineEntity, MiningResult, MoveResult, NpcInteraction,
-    PlayerMoveIntent, SpawnFloor, TilesetGrid,
+    PlayerMoveIntent, SpawnFloor,
 };
 use crate::input::{GameAction, HeldDirection, NavigationDirection};
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -24,7 +24,6 @@ use crate::ui::MobSpriteSheets;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
 use super::components::{DungeonPlayer, DungeonRoot, Interpolating, TargetPosition, TileSizes};
-use super::constants::ENTITY_VISUAL_SCALE;
 use super::spawn::spawn_floor_ui;
 use super::systems::cleanup_dungeon;
 
@@ -90,10 +89,12 @@ fn enter_dungeon(
 fn handle_floor_ready(
     mut commands: Commands,
     mut events: MessageReader<FloorReady>,
+    asset_server: Res<AssetServer>,
     game_sprites: Res<GameSprites>,
     mob_sheets: Res<MobSpriteSheets>,
-    tileset: Res<TilesetGrid>,
+    player_sheet: Res<PlayerSpriteSheet>,
     window: Single<&Window>,
+    camera_query: Single<Entity, With<Camera2d>>,
     root_query: Query<Entity, With<DungeonRoot>>,
 ) {
     for event in events.read() {
@@ -104,13 +105,15 @@ fn handle_floor_ready(
 
         spawn_floor_ui(
             &mut commands,
+            &asset_server,
             &event.layout,
             event.player_pos,
             event.floor_type,
             &game_sprites,
             &mob_sheets,
-            &tileset,
+            &player_sheet,
             &window,
+            *camera_query,
         );
     }
 }
@@ -164,7 +167,7 @@ fn handle_move_result(
         (
             Entity,
             &mut TargetPosition,
-            &mut ImageNode,
+            &mut Sprite,
             &mut SpriteAnimation,
             &mut PlayerWalkTimer,
         ),
@@ -174,25 +177,24 @@ fn handle_move_result(
     for event in events.read() {
         match event {
             MoveResult::Moved { new_pos } => {
-                let Ok((entity, mut target_pos, mut player_image, mut anim, mut walk_timer)) =
+                let Ok((entity, mut target_pos, mut sprite, mut anim, mut walk_timer)) =
                     player_query.single_mut()
                 else {
                     continue;
                 };
 
                 let tile_size = tile_sizes.tile_size;
-                let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_sizes.base_tile_size;
-                let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
-                target_pos.0 = Vec2::new(
-                    new_pos.x as f32 * tile_size + entity_offset,
-                    new_pos.y as f32 * tile_size + entity_offset,
-                );
+                let map_height = tile_sizes.map_height;
+
+                let world_x = new_pos.x as f32 * tile_size + tile_size / 2.0;
+                let world_y = (map_height - 1 - new_pos.y) as f32 * tile_size + tile_size / 2.0;
+                target_pos.0 = Vec2::new(world_x, world_y);
                 commands.entity(entity).insert(Interpolating);
 
                 if let Some(ref dir) = last_direction {
                     match dir.0 {
-                        NavigationDirection::Left => player_image.flip_x = true,
-                        NavigationDirection::Right => player_image.flip_x = false,
+                        NavigationDirection::Left => sprite.flip_x = true,
+                        NavigationDirection::Right => sprite.flip_x = false,
                         _ => {}
                     }
                 }
@@ -408,33 +410,25 @@ fn interpolate_player_position(
     mut commands: Commands,
     time: Res<Time>,
     tile_sizes: Option<Res<TileSizes>>,
-    mut query: Query<(Entity, &TargetPosition, &mut Node), With<Interpolating>>,
+    mut query: Query<(Entity, &TargetPosition, &mut Transform), With<Interpolating>>,
 ) {
     let Some(tile_sizes) = tile_sizes else { return };
 
-    for (entity, target, mut node) in &mut query {
-        let current_x = match node.left {
-            Val::Px(px) => px,
-            _ => continue,
-        };
-        let current_y = match node.top {
-            Val::Px(px) => px,
-            _ => continue,
-        };
-        let current = Vec2::new(current_x, current_y);
+    for (entity, target, mut transform) in &mut query {
+        let current = transform.translation.truncate();
         let delta = target.0 - current;
         let distance = delta.length();
 
         if distance < 0.5 {
-            node.left = Val::Px(target.0.x);
-            node.top = Val::Px(target.0.y);
+            transform.translation.x = target.0.x;
+            transform.translation.y = target.0.y;
             commands.entity(entity).remove::<Interpolating>();
         } else {
             let speed = MOVE_SPEED * tile_sizes.tile_size;
             let step = speed * time.delta_secs();
             let new_pos = current + delta.normalize() * step.min(distance);
-            node.left = Val::Px(new_pos.x);
-            node.top = Val::Px(new_pos.y);
+            transform.translation.x = new_pos.x;
+            transform.translation.y = new_pos.y;
         }
     }
 }
