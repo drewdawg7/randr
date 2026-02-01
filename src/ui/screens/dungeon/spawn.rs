@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
-use tracing::instrument;
 
 use crate::assets::GameSprites;
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
@@ -19,14 +18,86 @@ use super::constants::{BASE_TILE, ENTITY_VISUAL_SCALE};
 #[derive(Component)]
 pub struct DungeonCamera;
 
+pub fn add_entity_visuals(
+    trigger: On<Add, DungeonEntityMarker>,
+    mut commands: Commands,
+    query: Query<&DungeonEntityMarker>,
+    game_sprites: Res<GameSprites>,
+    mob_sheets: Res<MobSpriteSheets>,
+    tile_sizes: Option<Res<TileSizes>>,
+) {
+    let Some(tile_sizes) = tile_sizes else {
+        return;
+    };
+
+    let entity = trigger.entity;
+    let Ok(marker) = query.get(entity) else {
+        return;
+    };
+
+    let world_pos = grid_to_world(
+        marker.pos.x,
+        marker.pos.y,
+        tile_sizes.tile_size,
+        tile_sizes.map_height,
+    );
+    let scale = (ENTITY_VISUAL_SCALE * tile_sizes.base_tile_size) / 32.0;
+
+    match marker.entity_type.render_data() {
+        EntityRenderData::SpriteSheet {
+            sheet_key,
+            sprite_name,
+        } => {
+            if let Some(sheet) = game_sprites.get(sheet_key) {
+                if let Some(sprite) = sheet.sprite(sprite_name) {
+                    let mut entity_cmd = commands.entity(entity);
+                    entity_cmd.insert((
+                        sprite,
+                        Transform::from_translation(world_pos).with_scale(Vec3::splat(scale)),
+                    ));
+                    match marker.entity_type {
+                        DungeonEntity::CraftingStation {
+                            station_type: CraftingStationType::Forge,
+                            ..
+                        } => {
+                            entity_cmd.insert(ForgeCraftingState::default());
+                        }
+                        DungeonEntity::CraftingStation {
+                            station_type: CraftingStationType::Anvil,
+                            ..
+                        } => {
+                            entity_cmd.insert(AnvilCraftingState::default());
+                        }
+                        _ => {}
+                    }
+                }
+            }
+        }
+        EntityRenderData::AnimatedMob { mob_id } => {
+            if let Some(sheet) = mob_sheets.get(mob_id) {
+                commands.entity(entity).insert((
+                    MobCombatBundle::from_mob_id(mob_id),
+                    Sprite::from_atlas_image(
+                        sheet.texture.clone(),
+                        TextureAtlas {
+                            layout: sheet.layout.clone(),
+                            index: sheet.animation.first_frame,
+                        },
+                    ),
+                    Transform::from_translation(world_pos).with_scale(Vec3::splat(scale)),
+                    SpriteAnimation::new(&sheet.animation),
+                ));
+            }
+        }
+    }
+}
+
 pub fn spawn_floor_ui(
     commands: &mut Commands,
     asset_server: &AssetServer,
     layout: &DungeonLayout,
     player_pos: GridPosition,
     floor_type: FloorType,
-    game_sprites: &GameSprites,
-    mob_sheets: &MobSpriteSheets,
     player_sheet: &PlayerSpriteSheet,
     window: &Window,
     camera_entity: Entity,
@@ -74,16 +145,6 @@ pub fn spawn_floor_ui(
 
     let entity_sprite_size = ENTITY_VISUAL_SCALE * base_tile_size;
 
-    spawn_entities(
-        commands,
-        layout,
-        tile_size,
-        entity_sprite_size,
-        map_height,
-        game_sprites,
-        mob_sheets,
-    );
-
     spawn_player(
         commands,
         player_pos,
@@ -115,78 +176,6 @@ fn grid_to_world(grid_x: usize, grid_y: usize, tile_size: f32, map_height: usize
     let world_y = (map_height - 1 - grid_y) as f32 * tile_size + tile_size / 2.0;
     let z = grid_y as f32 * 0.01;
     Vec3::new(world_x, world_y, z)
-}
-
-#[instrument(level = "debug", skip_all, fields(entity_count = layout.entities().len()))]
-fn spawn_entities(
-    commands: &mut Commands,
-    layout: &DungeonLayout,
-    tile_size: f32,
-    entity_sprite_size: f32,
-    map_height: usize,
-    game_sprites: &GameSprites,
-    mob_sheets: &MobSpriteSheets,
-) {
-    for (pos, entity) in layout.entities() {
-        let world_pos = grid_to_world(pos.x, pos.y, tile_size, map_height);
-        let scale = entity_sprite_size / 32.0;
-
-        let marker = DungeonEntityMarker {
-            pos: *pos,
-            entity_type: *entity,
-        };
-
-        match entity.render_data() {
-            EntityRenderData::SpriteSheet {
-                sheet_key,
-                sprite_name,
-            } => {
-                if let Some(sheet) = game_sprites.get(sheet_key) {
-                    if let Some(sprite) = sheet.sprite(sprite_name) {
-                        let mut entity_cmd = commands.spawn((
-                            marker,
-                            sprite,
-                            Transform::from_translation(world_pos)
-                                .with_scale(Vec3::splat(scale)),
-                        ));
-                        match entity {
-                            DungeonEntity::CraftingStation {
-                                station_type: CraftingStationType::Forge,
-                                ..
-                            } => {
-                                entity_cmd.insert(ForgeCraftingState::default());
-                            }
-                            DungeonEntity::CraftingStation {
-                                station_type: CraftingStationType::Anvil,
-                                ..
-                            } => {
-                                entity_cmd.insert(AnvilCraftingState::default());
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-            }
-            EntityRenderData::AnimatedMob { mob_id } => {
-                if let Some(sheet) = mob_sheets.get(mob_id) {
-                    commands.spawn((
-                        marker,
-                        MobCombatBundle::from_mob_id(mob_id),
-                        Sprite::from_atlas_image(
-                            sheet.texture.clone(),
-                            TextureAtlas {
-                                layout: sheet.layout.clone(),
-                                index: sheet.animation.first_frame,
-                            },
-                        ),
-                        Transform::from_translation(world_pos)
-                            .with_scale(Vec3::splat(scale)),
-                        SpriteAnimation::new(&sheet.animation),
-                    ));
-                }
-            }
-        }
-    }
 }
 
 fn spawn_player(

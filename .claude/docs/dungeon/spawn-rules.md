@@ -1,222 +1,128 @@
-# Spawn Rules
+# Floor Entity Spawning
 
-Composable entity placement system for dungeon layouts.
+ECS-based entity spawning system that queries tile components to place dungeon entities.
 
-## Core Concepts
+## Architecture
 
-The `SpawnRule` trait enables modular entity spawning. Each rule encapsulates specific placement logic, and rules can be composed via `ComposedSpawnRules`.
+### FloorSpawnConfig Resource (`src/dungeon/systems/spawning.rs`)
 
-### SpawnRule Trait (`src/dungeon/spawn_rules.rs`)
+Holds spawn parameters for the current floor:
 
 ```rust
-pub trait SpawnRule {
-    fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32;
+#[derive(Resource)]
+pub struct FloorSpawnConfig {
+    pub chest: RangeInclusive<u32>,
+    pub stairs: RangeInclusive<u32>,
+    pub rock: RangeInclusive<u32>,
+    pub forge: RangeInclusive<u32>,
+    pub anvil: RangeInclusive<u32>,
+    pub forge_chance: Option<f64>,
+    pub anvil_chance: Option<f64>,
+    pub weighted_mobs: Vec<MobSpawnEntry>,
+    pub mob_count: RangeInclusive<u32>,
+    pub guaranteed_mobs: Vec<(MobId, u32)>,
+    pub npc_spawns: Vec<(MobId, RangeInclusive<u32>)>,
+    pub npc_chances: Vec<(MobId, f64)>,
 }
 ```
 
-Returns the count of entities spawned.
+### SpawnTable (`src/dungeon/spawn.rs`)
 
-### SpawnRuleKind Enum
-
-Enum-based wrapper for type-safe composition without `dyn`:
-
-```rust
-pub enum SpawnRuleKind {
-    Chest(ChestSpawner),
-    Stairs(StairsSpawner),
-    Rock(RockSpawner),
-    CraftingStation(CraftingStationSpawner),
-    ProbabilityCraftingStation(ProbabilityCraftingStationSpawner),
-    Npc(NpcSpawner),
-    ProbabilityNpc(ProbabilityNpcSpawner),
-    GuaranteedMob(GuaranteedMobSpawner),
-    WeightedMob(WeightedMobSpawner),
-    FixedPosition(FixedPositionSpawner),
-}
-```
-
-### ComposedSpawnRules
-
-Applies rules in sequence, summing spawn counts:
-
-```rust
-use crate::dungeon::{ComposedSpawnRules, SpawnRuleKind, ChestSpawner, StairsSpawner};
-
-let rules = ComposedSpawnRules::new()
-    .add(SpawnRuleKind::Chest(ChestSpawner::new(1..=2)))
-    .add(SpawnRuleKind::Stairs(StairsSpawner::new(1..=1)));
-
-let total = rules.apply(&mut layout, &mut rng);
-```
-
-## Individual Spawners
-
-### ChestSpawner
-Spawns chests with random variants (0-3).
-
-```rust
-ChestSpawner::new(count: RangeInclusive<u32>)
-```
-
-### StairsSpawner
-Spawns stairs that advance the player to the next floor.
-
-```rust
-StairsSpawner::new(count: RangeInclusive<u32>)
-```
-
-### RockSpawner
-Spawns rocks with random types (Copper, Coal, Tin).
-
-```rust
-RockSpawner::new(count: RangeInclusive<u32>)
-```
-
-### CraftingStationSpawner
-Spawns crafting stations (Forge, Anvil) with a count range.
-
-```rust
-CraftingStationSpawner::new(station_type: CraftingStationType, count: RangeInclusive<u32>)
-```
-
-### ProbabilityCraftingStationSpawner
-Spawns 1 crafting station with a given probability (0.0 to 1.0).
-
-```rust
-ProbabilityCraftingStationSpawner::new(station_type: CraftingStationType, probability: f64)
-```
-
-### NpcSpawner
-Spawns NPCs (non-combat, blocks movement) with a count range.
-
-```rust
-NpcSpawner::new(mob_id: MobId, count: RangeInclusive<u32>)
-```
-
-### ProbabilityNpcSpawner
-Spawns 1 NPC with a given probability (0.0 to 1.0).
-
-```rust
-ProbabilityNpcSpawner::new(mob_id: MobId, probability: f64)
-```
-
-### GuaranteedMobSpawner
-Spawns an exact count of a specific mob type.
-
-```rust
-GuaranteedMobSpawner::new(mob_id: MobId, count: u32)
-```
-
-### WeightedMobSpawner
-Spawns mobs using weighted random selection.
-
-```rust
-WeightedMobSpawner::new()
-    .mob(MobId::Goblin, 5)   // Weight 5
-    .mob(MobId::Slime, 3)    // Weight 3
-    .count(3..=5)            // Spawn 3-5 total
-```
-
-### FixedPositionSpawner
-Spawns an entity at a specific grid position.
-
-```rust
-FixedPositionSpawner::new(pos: GridPosition, entity: DungeonEntity)
-```
-
-## SpawnTable Integration
-
-`SpawnTable` uses `ComposedSpawnRules` internally:
-
-```rust
-// SpawnTable builds rules internally
-let table = SpawnTable::new()
-    .chest(1..=2)
-    .stairs(1..=1)
-    .mob(MobId::Goblin, 3)
-    .mob_count(2..=4);
-
-table.apply(&mut layout, &mut rng);
-```
-
-### Probability-Based Spawning
-
-For spawning with exact probability control (e.g., "33% chance to spawn 1"), use probability methods:
+Builder pattern for defining spawn rules in floor definitions:
 
 ```rust
 SpawnTable::new()
-    .rock(0..=4)                        // 0-4 rocks (uniform random)
-    .forge_chance(0.33)                 // 33% chance of 1 forge
-    .anvil_chance(0.33)                 // 33% chance of 1 anvil
-    .npc_chance(MobId::Merchant, 0.33)  // 33% chance of 1 merchant
+    .chest(1..=2)
+    .stairs(1..=1)
+    .mob(MobId::Goblin, 5)
+    .mob(MobId::Slime, 3)
+    .mob_count(3..=4)
+    .guaranteed_mob(MobId::DwarfKing, 1)
+    .forge_chance(0.33)
+    .npc(MobId::Merchant, 1..=1)
+    .build()
 ```
 
-**When to use count ranges vs probability:**
-- Count range (`0..=4`): Each value in range has equal probability (e.g., 20% for 0, 20% for 1, etc.)
-- Probability (`0.33`): Exactly 33% chance to spawn 1, 67% chance to spawn 0
+Convert to config with `.to_config()` or `FloorSpawnConfig::from(&table)`.
 
-The `SpawnTable` maintains backward compatibility while delegating to individual spawners.
+## Spawning Flow
 
-## Adding New Spawner Types
+1. **Floor Load**: `DungeonState::load_floor_layout()` returns `FloorSpawnConfig`
+2. **Resource Insert**: Caller inserts `FloorSpawnConfig` as resource
+3. **Tilemap Load**: bevy_ecs_tiled loads TMX, creates tile entities with `can_have_entity` component
+4. **Map Created Event**: `TiledEvent<MapCreated>` fires when map finishes loading
+5. **Entity Spawn**: `on_map_created` observer queries tiles, spawns entities with `DungeonEntityMarker`
+6. **Visual Setup**: `add_entity_visuals` observer adds sprites/transforms when `DungeonEntityMarker` is added
+7. **Occupancy Track**: `track_entity_occupancy` observer marks grid cells as occupied
 
-1. Create the spawner struct with configuration:
+## Key Systems
+
+### on_map_created (`src/dungeon/systems/spawning.rs`)
+
+Observer triggered by `TiledEvent<MapCreated>`:
+
 ```rust
-#[derive(Clone)]
-pub struct TrapSpawner {
-    count: RangeInclusive<u32>,
-    trap_type: TrapType,
-}
+fn on_map_created(
+    _trigger: On<TiledEvent<MapCreated>>,
+    mut commands: Commands,
+    spawn_tiles: Query<&TilePos, With<can_have_entity>>,
+    config: Option<Res<FloorSpawnConfig>>,
+    occupancy: Option<ResMut<GridOccupancy>>,
+)
 ```
 
-2. Implement `SpawnRule`:
+Queries tiles with `can_have_entity`, spawns entities with `DungeonEntityMarker`.
+
+### add_entity_visuals (`src/ui/screens/dungeon/spawn.rs`)
+
+Observer triggered by `Add<DungeonEntityMarker>`:
+
 ```rust
-impl SpawnRule for TrapSpawner {
-    fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) -> u32 {
-        let count = rng.gen_range(self.count.clone());
-        // ... spawn logic
-        spawned
-    }
-}
+fn add_entity_visuals(
+    trigger: On<Add, DungeonEntityMarker>,
+    mut commands: Commands,
+    query: Query<&DungeonEntityMarker>,
+    game_sprites: Res<GameSprites>,
+    mob_sheets: Res<MobSpriteSheets>,
+    tile_sizes: Option<Res<TileSizes>>,
+)
 ```
 
-3. Add variant to `SpawnRuleKind`:
-```rust
-pub enum SpawnRuleKind {
-    // ... existing variants
-    Trap(TrapSpawner),
-}
-```
+Adds visual components (sprites, transforms) based on entity type.
 
-4. Update `SpawnRuleKind::apply()` match arm.
+## Spawn Order
 
-5. Export from `mod.rs`.
+Entities spawn in this order (in on_map_created):
+1. Chests
+2. Stairs
+3. Rocks
+4. Forges (count range, then probability)
+5. Anvils (count range, then probability)
+6. NPCs (count range, then probability)
+7. Guaranteed mobs
+8. Weighted mobs
+
+## Tile Components
+
+Spawning queries tiles with these components (from Tiled custom properties):
+
+- `can_have_entity` - Tile can have a dungeon entity spawned on it
+- `can_spawn_player` - Tile can be player spawn point
+- `is_solid` - Tile blocks movement
+- `is_door` - Tile is a door
 
 ## File Structure
 
 ```
 src/dungeon/
-    spawn.rs        # SpawnTable (high-level API)
-    spawn_rules.rs  # SpawnRule trait + spawner implementations
+    spawn.rs              # SpawnTable builder
+    systems/spawning.rs   # FloorSpawnConfig, on_map_created observer
+src/ui/screens/dungeon/
+    spawn.rs              # add_entity_visuals observer
 ```
-
-## Spawn Order
-
-When using `SpawnTable`, entities spawn in this order:
-1. Chests (count range)
-2. Stairs (count range)
-3. Rocks (count range)
-4. Forges (count range)
-5. Forges (probability)
-6. Anvils (count range)
-7. Anvils (probability)
-8. NPCs (count range)
-9. NPCs (probability)
-10. Guaranteed mobs
-11. Weighted mobs
-
-Each spawner uses `layout.spawn_areas(size)` to find valid positions, ensuring entities never overlap.
 
 ## Related
 
 - [mod.md](mod.md) - Dungeon module overview
-- [entities.md](entities.md) - DungeonEntity enum and spawning
+- [entities.md](entities.md) - DungeonEntity enum
+- [spawning.md](spawning.md) - SpawnTable usage in floor definitions

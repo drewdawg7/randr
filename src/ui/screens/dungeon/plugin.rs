@@ -20,18 +20,18 @@ use crate::ui::screens::forge_modal::ActiveForgeEntity;
 use crate::ui::screens::merchant_modal::MerchantStock;
 use crate::ui::screens::modal::{ActiveModal, ModalType, OpenModal};
 use crate::ui::screens::results_modal::ResultsModalData;
-use crate::ui::MobSpriteSheets;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
 use super::components::{DungeonPlayer, DungeonRoot, Interpolating, TargetPosition, TileSizes};
-use super::spawn::spawn_floor_ui;
+use super::spawn::{add_entity_visuals, spawn_floor_ui};
 use super::systems::cleanup_dungeon;
 
 pub struct DungeonScreenPlugin;
 
 impl Plugin for DungeonScreenPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(OnEnter(AppState::Dungeon), enter_dungeon)
+        app.add_observer(add_entity_visuals)
+            .add_systems(OnEnter(AppState::Dungeon), enter_dungeon)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
                 Update,
@@ -58,6 +58,7 @@ impl Plugin for DungeonScreenPlugin {
 }
 
 fn enter_dungeon(
+    mut commands: Commands,
     registry: Res<DungeonRegistry>,
     mut state: ResMut<DungeonState>,
     mut spawn_floor: MessageWriter<SpawnFloor>,
@@ -66,7 +67,10 @@ fn enter_dungeon(
         state.enter_dungeon(LocationId::Home, &registry);
     }
 
-    state.load_floor_layout();
+    let Some((_, spawn_config)) = state.load_floor_layout() else {
+        return;
+    };
+    commands.insert_resource(spawn_config);
 
     let Some(layout) = state.layout.clone() else {
         return;
@@ -90,8 +94,6 @@ fn handle_floor_ready(
     mut commands: Commands,
     mut events: MessageReader<FloorReady>,
     asset_server: Res<AssetServer>,
-    game_sprites: Res<GameSprites>,
-    mob_sheets: Res<MobSpriteSheets>,
     player_sheet: Res<PlayerSpriteSheet>,
     window: Single<&Window>,
     camera_query: Single<Entity, With<Camera2d>>,
@@ -109,8 +111,6 @@ fn handle_floor_ready(
             &event.layout,
             event.player_pos,
             event.floor_type,
-            &game_sprites,
-            &mob_sheets,
             &player_sheet,
             &window,
             *camera_query,

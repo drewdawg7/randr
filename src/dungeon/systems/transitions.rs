@@ -4,8 +4,8 @@ use crate::dungeon::events::FloorTransition;
 use crate::dungeon::{DungeonRegistry, DungeonState, FloorType, SpawnFloor};
 use crate::location::LocationId;
 
-/// Handles all floor transitions by pattern matching on the variant.
 pub fn handle_floor_transition(
+    mut commands: Commands,
     mut events: MessageReader<FloorTransition>,
     mut spawn_events: MessageWriter<SpawnFloor>,
     mut state: ResMut<DungeonState>,
@@ -27,7 +27,10 @@ pub fn handle_floor_transition(
             }
         }
 
-        state.load_floor_layout();
+        let Some((_, spawn_config)) = state.load_floor_layout() else {
+            continue;
+        };
+        commands.insert_resource(spawn_config);
 
         let Some(layout) = state.layout.clone() else {
             continue;

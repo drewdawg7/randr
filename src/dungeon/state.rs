@@ -1,8 +1,8 @@
 use bevy::prelude::*;
-use rand::thread_rng;
 
-use crate::dungeon::{DungeonLayout, DungeonRegistry, GridPosition, GridSize};
 use crate::dungeon::floor::FloorId;
+use crate::dungeon::systems::spawning::FloorSpawnConfig;
+use crate::dungeon::{DungeonLayout, DungeonRegistry, GridPosition, GridSize};
 use crate::location::LocationId;
 
 #[derive(Resource, Default)]
@@ -74,13 +74,11 @@ impl DungeonState {
         self.player_size = GridSize::default();
     }
 
-    pub fn load_floor_layout(&mut self) -> Option<&DungeonLayout> {
+    pub fn load_floor_layout(&mut self) -> Option<(&DungeonLayout, FloorSpawnConfig)> {
         let floor_id = self.current_floor()?;
         let spec = floor_id.spec();
-        let mut layout = spec.layout_id.layout();
-
-        let spawn_table = &spec.spawn_table;
-        spawn_table.apply(&mut layout, &mut thread_rng());
+        let layout = spec.layout_id.layout();
+        let spawn_config = spec.spawn_table.to_config();
 
         self.player_pos = layout
             .iter()
@@ -94,7 +92,7 @@ impl DungeonState {
 
         self.player_size = GridSize::single();
         self.layout = Some(layout);
-        self.layout.as_ref()
+        self.layout.as_ref().map(|l| (l, spawn_config))
     }
 
     pub fn is_in_dungeon(&self) -> bool {

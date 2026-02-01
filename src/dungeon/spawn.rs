@@ -1,16 +1,9 @@
 use std::ops::RangeInclusive;
 
 use bon::Builder;
-use rand::Rng;
 
 use super::grid::GridSize;
-use super::layout::DungeonLayout;
-use super::spawn_rules::{
-    ChestSpawner, ComposedSpawnRules, CraftingStationSpawner, GuaranteedMobSpawner, NpcSpawner,
-    ProbabilityCraftingStationSpawner, ProbabilityNpcSpawner, RockSpawner, SpawnRule,
-    SpawnRuleKind, StairsSpawner, WeightedMobSpawner,
-};
-use crate::crafting_station::CraftingStationType;
+use super::systems::spawning::{FloorSpawnConfig, MobSpawnEntry};
 use crate::mob::MobId;
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -90,96 +83,43 @@ impl SpawnTable {
         Self::builder()
     }
 
-    fn build_rules(&self) -> ComposedSpawnRules {
-        let mut rules = ComposedSpawnRules::new();
-
-        if *self.chest.end() > 0 {
-            rules.push(SpawnRuleKind::Chest(ChestSpawner::new(self.chest.clone())));
+    pub fn to_config(&self) -> FloorSpawnConfig {
+        FloorSpawnConfig {
+            chest: self.chest.clone(),
+            stairs: self.stairs.clone(),
+            rock: self.rock.clone(),
+            forge: self.forge.clone(),
+            anvil: self.anvil.clone(),
+            forge_chance: self.forge_chance,
+            anvil_chance: self.anvil_chance,
+            weighted_mobs: self
+                .entries
+                .iter()
+                .map(|e| {
+                    let SpawnEntityType::Mob(mob_id) = e.entity_type;
+                    MobSpawnEntry {
+                        mob_id,
+                        weight: e.weight,
+                    }
+                })
+                .collect(),
+            mob_count: self.mob_count.clone(),
+            guaranteed_mobs: self.guaranteed_mobs.clone(),
+            npc_spawns: self.npc_spawns.clone(),
+            npc_chances: self.npc_chances.clone(),
         }
-
-        if *self.stairs.end() > 0 {
-            rules.push(SpawnRuleKind::Stairs(StairsSpawner::new(self.stairs.clone())));
-        }
-
-        if *self.rock.end() > 0 {
-            rules.push(SpawnRuleKind::Rock(RockSpawner::new(self.rock.clone())));
-        }
-
-        if *self.forge.end() > 0 {
-            rules.push(SpawnRuleKind::CraftingStation(CraftingStationSpawner::new(
-                CraftingStationType::Forge,
-                self.forge.clone(),
-            )));
-        }
-
-        if let Some(probability) = self.forge_chance {
-            rules.push(SpawnRuleKind::ProbabilityCraftingStation(
-                ProbabilityCraftingStationSpawner::new(CraftingStationType::Forge, probability),
-            ));
-        }
-
-        if *self.anvil.end() > 0 {
-            rules.push(SpawnRuleKind::CraftingStation(CraftingStationSpawner::new(
-                CraftingStationType::Anvil,
-                self.anvil.clone(),
-            )));
-        }
-
-        if let Some(probability) = self.anvil_chance {
-            rules.push(SpawnRuleKind::ProbabilityCraftingStation(
-                ProbabilityCraftingStationSpawner::new(CraftingStationType::Anvil, probability),
-            ));
-        }
-
-        for (mob_id, count_range) in &self.npc_spawns {
-            rules.push(SpawnRuleKind::Npc(NpcSpawner::new(*mob_id, count_range.clone())));
-        }
-
-        for (mob_id, probability) in &self.npc_chances {
-            rules.push(SpawnRuleKind::ProbabilityNpc(ProbabilityNpcSpawner::new(
-                *mob_id, *probability,
-            )));
-        }
-
-        for (mob_id, count) in &self.guaranteed_mobs {
-            rules.push(SpawnRuleKind::GuaranteedMob(GuaranteedMobSpawner::new(*mob_id, *count)));
-        }
-
-        if !self.entries.is_empty() && *self.mob_count.end() > 0 {
-            let mut weighted = WeightedMobSpawner::new().count(self.mob_count.clone());
-            for entry in &self.entries {
-                let SpawnEntityType::Mob(mob_id) = entry.entity_type;
-                weighted = weighted.mob(mob_id, entry.weight);
-            }
-            rules.push(SpawnRuleKind::WeightedMob(weighted));
-        }
-
-        rules
     }
+}
 
-    pub fn apply(&self, layout: &mut DungeonLayout, rng: &mut impl Rng) {
-        self.build_rules().apply(layout, rng);
+impl From<&SpawnTable> for FloorSpawnConfig {
+    fn from(table: &SpawnTable) -> Self {
+        table.to_config()
     }
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::dungeon::{DungeonEntity, DungeonLayout, Tile, TileType};
-
-    fn create_test_layout(width: usize, height: usize) -> DungeonLayout {
-        let mut layout = DungeonLayout::new(width, height);
-        for y in 0..height {
-            for x in 0..width {
-                if x == 0 || x == width - 1 || y == 0 || y == height - 1 {
-                    layout.set_tile(x, y, Tile::new(TileType::Wall));
-                } else {
-                    layout.set_tile(x, y, Tile::new(TileType::Floor));
-                }
-            }
-        }
-        layout
-    }
 
     #[test]
     fn mob_entry_stores_size_from_spec() {
@@ -193,116 +133,90 @@ mod tests {
     }
 
     #[test]
-    fn spawn_table_applies_chests() {
-        let mut rng = rand::thread_rng();
-        let mut layout = create_test_layout(10, 10);
+    fn to_config_converts_chest_range() {
+        let table = SpawnTable::new().chest(2..=5).build();
+        let config = table.to_config();
 
-        SpawnTable::new()
-            .chest(2..=2)
-            .build()
-            .apply(&mut layout, &mut rng);
-
-        let chests: Vec<_> = layout
-            .entities()
-            .iter()
-            .filter(|(_, e)| matches!(e, DungeonEntity::Chest { .. }))
-            .collect();
-        assert_eq!(chests.len(), 2);
+        assert_eq!(config.chest, 2..=5);
     }
 
     #[test]
-    fn spawn_table_applies_mobs_with_size() {
-        let mut rng = rand::thread_rng();
-        let mut layout = create_test_layout(20, 20);
+    fn to_config_converts_weighted_mobs() {
+        let table = SpawnTable::new()
+            .mob(MobId::Goblin, 5)
+            .mob(MobId::Slime, 3)
+            .mob_count(3..=4)
+            .build();
+        let config = table.to_config();
 
-        SpawnTable::new()
-            .mob(MobId::Goblin, 1)
-            .mob_count(1..=1)
-            .build()
-            .apply(&mut layout, &mut rng);
-
-        let mobs: Vec<_> = layout
-            .entities()
-            .iter()
-            .filter(|(_, e)| matches!(e, DungeonEntity::Mob { .. }))
-            .collect();
-        assert_eq!(mobs.len(), 1);
-
-        if let (_, DungeonEntity::Mob { size, .. }) = mobs[0] {
-            assert_eq!(*size, MobId::Goblin.spec().grid_size);
-        } else {
-            panic!("Expected Mob entity");
-        }
+        assert_eq!(config.weighted_mobs.len(), 2);
+        assert_eq!(config.weighted_mobs[0].mob_id, MobId::Goblin);
+        assert_eq!(config.weighted_mobs[0].weight, 5);
+        assert_eq!(config.weighted_mobs[1].mob_id, MobId::Slime);
+        assert_eq!(config.weighted_mobs[1].weight, 3);
+        assert_eq!(config.mob_count, 3..=4);
     }
 
     #[test]
-    fn entities_do_not_overlap() {
-        let mut rng = rand::thread_rng();
-        let mut layout = create_test_layout(30, 30);
+    fn to_config_converts_guaranteed_mobs() {
+        let table = SpawnTable::new()
+            .guaranteed_mob(MobId::DwarfKing, 1)
+            .guaranteed_mob(MobId::DwarfWarrior, 2)
+            .build();
+        let config = table.to_config();
 
-        SpawnTable::new()
-            .mob(MobId::Goblin, 1)
-            .mob(MobId::Slime, 1)
-            .mob_count(3..=3)
-            .chest(2..=2)
-            .build()
-            .apply(&mut layout, &mut rng);
-
-        let entities = layout.entities();
-
-        for (i, (pos1, entity1)) in entities.iter().enumerate() {
-            for (pos2, entity2) in entities.iter().skip(i + 1) {
-                let overlaps = pos1
-                    .occupied_cells(entity1.size())
-                    .any(|(x1, y1)| pos2.occupied_cells(entity2.size()).any(|(x2, y2)| x1 == x2 && y1 == y2));
-                assert!(!overlaps, "Entities overlap at positions {:?} and {:?}", pos1, pos2);
-            }
-        }
+        assert_eq!(config.guaranteed_mobs.len(), 2);
+        assert!(config.guaranteed_mobs.contains(&(MobId::DwarfKing, 1)));
+        assert!(config.guaranteed_mobs.contains(&(MobId::DwarfWarrior, 2)));
     }
 
     #[test]
-    fn empty_spawn_table_adds_nothing() {
-        let mut rng = rand::thread_rng();
-        let mut layout = create_test_layout(10, 10);
+    fn to_config_converts_npc_spawns() {
+        let table = SpawnTable::new()
+            .npc(MobId::Merchant, 1..=1)
+            .npc_chance(MobId::Merchant, 0.33)
+            .build();
+        let config = table.to_config();
 
-        SpawnTable::empty().build().apply(&mut layout, &mut rng);
-
-        assert!(layout.entities().is_empty());
+        assert_eq!(config.npc_spawns.len(), 1);
+        assert_eq!(config.npc_spawns[0], (MobId::Merchant, 1..=1));
+        assert_eq!(config.npc_chances.len(), 1);
+        assert_eq!(config.npc_chances[0].0, MobId::Merchant);
     }
 
     #[test]
-    fn spawn_table_applies_rocks() {
-        let mut rng = rand::thread_rng();
-        let mut layout = create_test_layout(10, 10);
+    fn to_config_converts_crafting_stations() {
+        let table = SpawnTable::new()
+            .forge(1..=1)
+            .anvil(2..=2)
+            .forge_chance(0.33)
+            .anvil_chance(0.5)
+            .build();
+        let config = table.to_config();
 
-        SpawnTable::new()
-            .rock(2..=2)
-            .build()
-            .apply(&mut layout, &mut rng);
-
-        let rocks: Vec<_> = layout
-            .entities()
-            .iter()
-            .filter(|(_, e)| matches!(e, DungeonEntity::Rock { .. }))
-            .collect();
-        assert_eq!(rocks.len(), 2);
+        assert_eq!(config.forge, 1..=1);
+        assert_eq!(config.anvil, 2..=2);
+        assert_eq!(config.forge_chance, Some(0.33));
+        assert_eq!(config.anvil_chance, Some(0.5));
     }
 
     #[test]
-    fn rocks_are_1x1_size() {
-        let mut rng = rand::thread_rng();
-        let mut layout = create_test_layout(10, 10);
+    fn empty_spawn_table_creates_empty_config() {
+        let table = SpawnTable::empty().build();
+        let config = table.to_config();
 
-        SpawnTable::new()
-            .rock(3..=3)
-            .build()
-            .apply(&mut layout, &mut rng);
+        assert_eq!(*config.chest.end(), 0);
+        assert_eq!(*config.stairs.end(), 0);
+        assert!(config.weighted_mobs.is_empty());
+        assert!(config.guaranteed_mobs.is_empty());
+    }
 
-        for (_, entity) in layout.entities() {
-            if matches!(entity, DungeonEntity::Rock { .. }) {
-                assert_eq!(entity.size(), GridSize::single());
-            }
-        }
+    #[test]
+    fn from_trait_works() {
+        let table = SpawnTable::new().rock(3..=3).build();
+        let config: FloorSpawnConfig = (&table).into();
+
+        assert_eq!(config.rock, 3..=3);
     }
 }
 
