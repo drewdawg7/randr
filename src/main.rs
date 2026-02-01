@@ -39,7 +39,7 @@ fn main() {
                 .set(WindowPlugin {
                     primary_window: Some(Window {
                         title: "R&R".into(),
-                        resolution: (1280., 720.).into(),
+                        resolution: (1280u32, 720u32).into(),
                         present_mode: bevy::window::PresentMode::AutoVsync,
                         ..default()
                     }),

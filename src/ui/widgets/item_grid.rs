@@ -313,7 +313,7 @@ fn update_grid_items(
         // Find the GridContainer child
         let Some(container_children) = item_grid_children
             .iter()
-            .find_map(|&child| grid_containers.get(child).ok())
+            .find_map(|child| grid_containers.get(child).ok())
         else {
             continue;
         };
@@ -401,7 +401,7 @@ fn update_grid_selector(
         // Find the GridContainer child to get the actual grid cells
         let Some(container_children) = item_grid_children
             .iter()
-            .find_map(|&child| grid_containers.get(child).ok())
+            .find_map(|child| grid_containers.get(child).ok())
         else {
             continue;
         };
