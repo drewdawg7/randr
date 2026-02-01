@@ -95,22 +95,6 @@ impl ToastQueue {
     pub fn clear(&mut self) {
         self.toasts.clear();
     }
-
-    pub fn error(&mut self, message: impl Into<String>, current_time: Duration) {
-        self.push(Toast::new(ToastType::Error, message, current_time));
-    }
-
-    pub fn success(&mut self, message: impl Into<String>, current_time: Duration) {
-        self.push(Toast::new(ToastType::Success, message, current_time));
-    }
-
-    pub fn info(&mut self, message: impl Into<String>, current_time: Duration) {
-        self.push(Toast::new(ToastType::Info, message, current_time));
-    }
-
-    pub fn warning(&mut self, message: impl Into<String>, current_time: Duration) {
-        self.push(Toast::new(ToastType::Warning, message, current_time));
-    }
 }
 
 #[derive(Event, Debug, Clone)]
