@@ -195,15 +195,6 @@ smooth_pos.target = Vec2::new(
 smooth_pos.moving = true;
 ```
 
-## Window Resize
-`handle_window_resize` updates:
-1. Grid track sizes (columns and rows)
-2. Container dimensions (width and height)
-3. EntityLayer dimensions (width and height)
-4. Player `SmoothPosition` (recalculate current/target from grid pos)
-5. Player node (left, top, width, height)
-6. Entity nodes (left, top, width, height based on entity type)
-
 ## CaveTileSlice
 
 Visual tile enum for cave tileset at `src/assets/sprite_slices.rs`:

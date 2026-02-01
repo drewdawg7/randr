@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use super::super::components::{DungeonRoot, UiScale};
+use super::super::components::DungeonRoot;
 use crate::dungeon::{DungeonState, GridOccupancy};
 
 pub fn cleanup_dungeon(
@@ -12,6 +12,5 @@ pub fn cleanup_dungeon(
         commands.entity(entity).despawn_recursive();
     }
     state.exit_dungeon();
-    commands.remove_resource::<UiScale>();
     commands.remove_resource::<GridOccupancy>();
 }

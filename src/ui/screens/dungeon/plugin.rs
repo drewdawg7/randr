@@ -27,10 +27,10 @@ use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::MobSpriteSheets;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
-use super::components::{DungeonPlayer, DungeonRoot, TargetPosition, TileSizes, UiScale};
+use super::components::{DungeonPlayer, DungeonRoot, TargetPosition, TileSizes};
 use super::constants::ENTITY_VISUAL_SCALE;
 use super::spawn::spawn_floor_ui;
-use super::systems::{cleanup_dungeon, handle_window_resize};
+use super::systems::cleanup_dungeon;
 
 pub struct DungeonScreenPlugin;
 
@@ -50,7 +50,6 @@ impl Plugin for DungeonScreenPlugin {
                     handle_crafting_station_interaction.run_if(on_event::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_event::<MiningResult>),
                     handle_back_action,
-                    handle_window_resize,
                     revert_forge_idle,
                     revert_anvil_idle,
                 )
@@ -102,7 +101,6 @@ fn handle_floor_ready(
         for entity in &root_query {
             commands.entity(entity).despawn_recursive();
         }
-        commands.remove_resource::<UiScale>();
         commands.remove_resource::<TileSizes>();
 
         spawn_floor_ui(

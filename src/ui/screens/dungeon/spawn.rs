@@ -12,7 +12,7 @@ use crate::ui::{DungeonMobSprite, DungeonPlayerSprite, MobSpriteSheets, PlayerWa
 
 use super::components::{
     DungeonCell, DungeonContainer, DungeonGrid, DungeonPlayer, DungeonRoot, EntityLayer,
-    TargetPosition, TileSizes, UiScale,
+    TargetPosition, TileSizes,
 };
 use super::constants::{BASE_TILE, ENTITY_VISUAL_SCALE};
 
@@ -38,8 +38,6 @@ pub fn spawn_floor_ui(
     let base_tile_size = max_tile_from_width.min(max_tile_from_height).max(BASE_TILE);
     let tile_size = base_tile_size * tile_scale;
 
-    let scale = (base_tile_size / BASE_TILE).round().max(1.0) as u32;
-    commands.insert_resource(UiScale(scale));
     commands.insert_resource(TileSizes { tile_size, base_tile_size });
 
     let grid_width = tile_size * layout.width() as f32;
