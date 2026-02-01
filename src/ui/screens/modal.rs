@@ -81,8 +81,8 @@ pub struct ModalPlugin;
 impl Plugin for ModalPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ActiveModal>()
-            .add_event::<OpenModal>()
-            .add_event::<CloseModal>();
+            .add_message::<OpenModal>()
+            .add_message::<CloseModal>();
     }
 }
 

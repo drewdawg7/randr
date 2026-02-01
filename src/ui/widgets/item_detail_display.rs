@@ -67,7 +67,7 @@ impl From<&Item> for ItemData {
 }
 
 fn on_add_item_detail_display(
-    trigger: Trigger<OnAdd, ItemDetailDisplay>,
+    trigger: On<OnAdd, ItemDetailDisplay>,
     mut commands: Commands,
     query: Query<&ItemDetailDisplay>,
     game_fonts: Res<GameFonts>,

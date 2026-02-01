@@ -71,18 +71,18 @@ pub struct BlacksmithPlugin;
 
 impl Plugin for BlacksmithPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<UpgradeItemEvent>()
-            .add_event::<UpgradeQualityEvent>()
-            .add_event::<SmeltRecipeEvent>()
-            .add_event::<ForgeRecipeEvent>()
-            .add_event::<BlacksmithResult>()
+        app.add_message::<UpgradeItemEvent>()
+            .add_message::<UpgradeQualityEvent>()
+            .add_message::<SmeltRecipeEvent>()
+            .add_message::<ForgeRecipeEvent>()
+            .add_message::<BlacksmithResult>()
             .add_systems(
                 Update,
                 (
-                    handle_upgrade_item.run_if(on_event::<UpgradeItemEvent>),
-                    handle_upgrade_quality.run_if(on_event::<UpgradeQualityEvent>),
-                    handle_smelt_recipe.run_if(on_event::<SmeltRecipeEvent>),
-                    handle_forge_recipe.run_if(on_event::<ForgeRecipeEvent>),
+                    handle_upgrade_item.run_if(on_message::<UpgradeItemEvent>),
+                    handle_upgrade_quality.run_if(on_message::<UpgradeQualityEvent>),
+                    handle_smelt_recipe.run_if(on_message::<SmeltRecipeEvent>),
+                    handle_forge_recipe.run_if(on_message::<ForgeRecipeEvent>),
                 ),
             );
     }

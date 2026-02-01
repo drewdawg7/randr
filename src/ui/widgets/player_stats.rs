@@ -39,7 +39,7 @@ pub struct PlayerHpText;
 pub struct PlayerXpText;
 
 fn on_add_player_stats(
-    trigger: Trigger<OnAdd, PlayerStats>,
+    trigger: On<OnAdd, PlayerStats>,
     mut commands: Commands,
     stats: Res<StatSheet>,
     progression: Res<Progression>,

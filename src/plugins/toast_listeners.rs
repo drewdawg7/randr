@@ -29,28 +29,28 @@ impl Plugin for ToastListenersPlugin {
             Update,
             (
                 listen_player_events.run_if(
-                    on_event::<PlayerLeveledUp>
-                        .or(on_event::<PlayerHealed>)
-                        .or(on_event::<GoldChanged>),
+                    on_message::<PlayerLeveledUp>
+                        .or(on_message::<PlayerHealed>)
+                        .or(on_message::<GoldChanged>),
                 ),
                 listen_item_events.run_if(
-                    on_event::<ItemPickedUp>
-                        .or(on_event::<ItemEquipped>)
-                        .or(on_event::<ItemUnequipped>)
-                        .or(on_event::<ItemUsed>)
-                        .or(on_event::<ItemDropped>)
-                        .or(on_event::<ItemDeposited>)
-                        .or(on_event::<ItemWithdrawn>),
+                    on_message::<ItemPickedUp>
+                        .or(on_message::<ItemEquipped>)
+                        .or(on_message::<ItemUnequipped>)
+                        .or(on_message::<ItemUsed>)
+                        .or(on_message::<ItemDropped>)
+                        .or(on_message::<ItemDeposited>)
+                        .or(on_message::<ItemWithdrawn>),
                 ),
-                listen_combat_events.run_if(on_event::<MobDefeated>),
+                listen_combat_events.run_if(on_message::<MobDefeated>),
                 listen_economy_events.run_if(
-                    on_event::<GoldEarned>
-                        .or(on_event::<GoldSpent>)
-                        .or(on_event::<LootCollected>)
-                        .or(on_event::<TransactionCompleted>),
+                    on_message::<GoldEarned>
+                        .or(on_message::<GoldSpent>)
+                        .or(on_message::<LootCollected>)
+                        .or(on_message::<TransactionCompleted>),
                 ),
-                listen_brewing_events.run_if(on_event::<BrewingResult>),
-                listen_skill_events.run_if(on_event::<SkillLeveledUp>),
+                listen_brewing_events.run_if(on_message::<BrewingResult>),
+                listen_skill_events.run_if(on_message::<SkillLeveledUp>),
             ),
         );
     }

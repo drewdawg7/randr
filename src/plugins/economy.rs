@@ -61,10 +61,10 @@ pub struct EconomyPlugin;
 
 impl Plugin for EconomyPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<LootDropped>()
-            .add_event::<LootCollected>()
-            .add_event::<GoldEarned>()
-            .add_event::<GoldSpent>()
-            .add_event::<TransactionCompleted>();
+        app.add_message::<LootDropped>()
+            .add_message::<LootCollected>()
+            .add_message::<GoldEarned>()
+            .add_message::<GoldSpent>()
+            .add_message::<TransactionCompleted>();
     }
 }

@@ -14,7 +14,7 @@ pub struct NavigationPlugin {
 impl Plugin for NavigationPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(self.table.clone())
-            .add_systems(Update, handle_navigation.run_if(on_event::<GameAction>));
+            .add_systems(Update, handle_navigation.run_if(on_message::<GameAction>));
     }
 }
 

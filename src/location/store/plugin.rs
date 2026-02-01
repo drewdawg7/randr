@@ -18,14 +18,14 @@ impl Plugin for StorePlugin {
         ]);
 
         app.insert_resource(store)
-            .add_event::<PurchaseEvent>()
-            .add_event::<SellEvent>()
-            .add_event::<TransactionResult>()
+            .add_message::<PurchaseEvent>()
+            .add_message::<SellEvent>()
+            .add_message::<TransactionResult>()
             .add_systems(
                 Update,
                 (
-                    events::handle_purchase.run_if(on_event::<PurchaseEvent>),
-                    events::handle_sell.run_if(on_event::<SellEvent>),
+                    events::handle_purchase.run_if(on_message::<PurchaseEvent>),
+                    events::handle_sell.run_if(on_message::<SellEvent>),
                 ),
             );
     }

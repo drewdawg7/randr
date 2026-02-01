@@ -37,16 +37,16 @@ pub struct CombatPlugin;
 
 impl Plugin for CombatPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<PlayerAttackMob>()
-            .add_event::<DealDamage>()
-            .add_event::<EntityDied>()
-            .add_event::<VictoryAchieved>()
+        app.add_message::<PlayerAttackMob>()
+            .add_message::<DealDamage>()
+            .add_message::<EntityDied>()
+            .add_message::<VictoryAchieved>()
             .add_systems(
                 Update,
                 (
-                    process_player_attack.run_if(on_event::<PlayerAttackMob>),
-                    handle_mob_death.run_if(on_event::<EntityDied>),
-                    handle_player_death.run_if(on_event::<EntityDied>),
+                    process_player_attack.run_if(on_message::<PlayerAttackMob>),
+                    handle_mob_death.run_if(on_message::<EntityDied>),
+                    handle_player_death.run_if(on_message::<EntityDied>),
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon))

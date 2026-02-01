@@ -124,7 +124,7 @@ impl IconValueRow {
 }
 
 fn on_add_icon_value_row(
-    trigger: Trigger<OnAdd, IconValueRow>,
+    trigger: On<OnAdd, IconValueRow>,
     mut commands: Commands,
     query: Query<&IconValueRow>,
     game_sprites: Res<GameSprites>,

@@ -108,7 +108,7 @@ impl Row {
     }
 }
 
-fn on_add_row(trigger: Trigger<OnAdd, Row>, mut commands: Commands, query: Query<&Row>) {
+fn on_add_row(trigger: On<OnAdd, Row>, mut commands: Commands, query: Query<&Row>) {
     let entity = trigger.entity();
     let Ok(row) = query.get(entity) else {
         return;

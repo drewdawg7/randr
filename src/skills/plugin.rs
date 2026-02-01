@@ -8,9 +8,9 @@ pub struct SkillsPlugin;
 impl Plugin for SkillsPlugin {
     fn build(&self, app: &mut App) {
         app.insert_resource(Skills::new())
-            .add_event::<SkillXpGained>()
-            .add_event::<SkillLeveledUp>()
-            .add_systems(Update, process_xp_gained.run_if(on_event::<SkillXpGained>));
+            .add_message::<SkillXpGained>()
+            .add_message::<SkillLeveledUp>()
+            .add_systems(Update, process_xp_gained.run_if(on_message::<SkillXpGained>));
     }
 }
 

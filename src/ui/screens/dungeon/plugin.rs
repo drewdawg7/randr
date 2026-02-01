@@ -37,17 +37,17 @@ impl Plugin for DungeonScreenPlugin {
             .add_systems(
                 Update,
                 (
-                    handle_floor_ready.run_if(on_event::<FloorReady>),
+                    handle_floor_ready.run_if(on_message::<FloorReady>),
                     handle_dungeon_movement
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
-                    handle_move_result.run_if(on_event::<MoveResult>),
+                    handle_move_result.run_if(on_message::<MoveResult>),
                     interpolate_player_position.run_if(any_with_component::<Interpolating>),
                     handle_interact_action
-                        .run_if(on_event::<GameAction>)
+                        .run_if(on_message::<GameAction>)
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
-                    handle_npc_interaction.run_if(on_event::<NpcInteraction>),
-                    handle_crafting_station_interaction.run_if(on_event::<CraftingStationInteraction>),
-                    handle_mining_result.run_if(on_event::<MiningResult>),
+                    handle_npc_interaction.run_if(on_message::<NpcInteraction>),
+                    handle_crafting_station_interaction.run_if(on_message::<CraftingStationInteraction>),
+                    handle_mining_result.run_if(on_message::<MiningResult>),
                     handle_back_action,
                     revert_forge_idle.run_if(any_with_component::<ForgeActiveTimer>),
                     revert_anvil_idle.run_if(any_with_component::<AnvilActiveTimer>),

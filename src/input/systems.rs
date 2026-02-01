@@ -26,8 +26,8 @@ pub struct InputPlugin;
 
 impl Plugin for InputPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<GameAction>()
-            .add_event::<NavigationDirection>()
+        app.add_message::<GameAction>()
+            .add_message::<NavigationDirection>()
             .init_resource::<NavigationRepeatState>()
             .init_resource::<HeldDirection>()
             .add_systems(PreUpdate, handle_keyboard_input);
@@ -137,6 +137,6 @@ fn handle_keyboard_input(
     held.0 = repeat.direction;
 }
 
-pub fn clear_game_action_events(mut events: ResMut<Events<GameAction>>) {
+pub fn clear_game_action_events(mut events: ResMut<Messages<GameAction>>) {
     events.clear();
 }

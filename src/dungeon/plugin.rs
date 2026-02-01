@@ -61,25 +61,25 @@ impl Plugin for DungeonPlugin {
         app.insert_resource(self.registry.clone())
             .init_resource::<DungeonState>()
             .init_resource::<TilesetGrid>()
-            .add_event::<FloorTransition>()
-            .add_event::<FloorReady>()
-            .add_event::<SpawnFloor>()
-            .add_event::<PlayerMoveIntent>()
-            .add_event::<MoveResult>()
-            .add_event::<NpcInteraction>()
-            .add_event::<CraftingStationInteraction>()
-            .add_event::<MineEntity>()
-            .add_event::<MiningResult>()
+            .add_message::<FloorTransition>()
+            .add_message::<FloorReady>()
+            .add_message::<SpawnFloor>()
+            .add_message::<PlayerMoveIntent>()
+            .add_message::<MoveResult>()
+            .add_message::<NpcInteraction>()
+            .add_message::<CraftingStationInteraction>()
+            .add_message::<MineEntity>()
+            .add_message::<MiningResult>()
             .add_observer(track_entity_occupancy)
             .add_systems(Startup, init_tileset)
             .add_systems(
                 Update,
                 (
-                    prepare_floor.run_if(on_event::<SpawnFloor>),
-                    handle_player_move.run_if(on_event::<PlayerMoveIntent>),
-                    handle_floor_transition.run_if(on_event::<FloorTransition>),
-                    handle_mine_entity.run_if(on_event::<MineEntity>),
-                    handle_mob_defeated.run_if(on_event::<MobDefeated>),
+                    prepare_floor.run_if(on_message::<SpawnFloor>),
+                    handle_player_move.run_if(on_message::<PlayerMoveIntent>),
+                    handle_floor_transition.run_if(on_message::<FloorTransition>),
+                    handle_mine_entity.run_if(on_message::<MineEntity>),
+                    handle_mob_defeated.run_if(on_message::<MobDefeated>),
                 ),
             );
     }

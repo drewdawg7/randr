@@ -229,7 +229,7 @@ impl Plugin for AssetPlugin {
             .init_resource::<GameFonts>()
             .init_resource::<PendingSpriteSheets>()
             .add_systems(PreStartup, load_assets)
-            .add_systems(Update, finalize_sprite_sheets.run_if(on_event::<AssetEvent<SpriteSheetMeta>>));
+            .add_systems(Update, finalize_sprite_sheets.run_if(on_message::<AssetEvent<SpriteSheetMeta>>));
     }
 }
 

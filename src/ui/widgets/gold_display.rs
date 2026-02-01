@@ -23,7 +23,7 @@ pub struct GoldDisplay {
 }
 
 fn on_add_gold_display(
-    trigger: Trigger<OnAdd, GoldDisplay>,
+    trigger: On<OnAdd, GoldDisplay>,
     mut commands: Commands,
     query: Query<&GoldDisplay>,
     game_sprites: Res<GameSprites>,

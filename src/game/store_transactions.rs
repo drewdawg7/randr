@@ -25,14 +25,14 @@ pub struct StorageTransactionsPlugin;
 
 impl Plugin for StorageTransactionsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<StorageWithdrawEvent>()
-            .add_event::<StorageDepositEvent>()
-            .add_event::<StorageTransactionResult>()
+        app.add_message::<StorageWithdrawEvent>()
+            .add_message::<StorageDepositEvent>()
+            .add_message::<StorageTransactionResult>()
             .add_systems(
                 Update,
                 (
-                    handle_storage_withdraw.run_if(on_event::<StorageWithdrawEvent>),
-                    handle_storage_deposit.run_if(on_event::<StorageDepositEvent>),
+                    handle_storage_withdraw.run_if(on_message::<StorageWithdrawEvent>),
+                    handle_storage_deposit.run_if(on_message::<StorageDepositEvent>),
                 ),
             );
     }

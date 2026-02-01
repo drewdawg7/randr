@@ -146,7 +146,7 @@ pub struct ToastPlugin;
 impl Plugin for ToastPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<ToastQueue>()
-            .add_event::<ShowToast>()
+            .add_message::<ShowToast>()
             .add_systems(Startup, spawn_toast_container)
             .add_systems(
                 Update,

@@ -18,13 +18,13 @@ pub struct CraftingCompletePlugin;
 
 impl Plugin for CraftingCompletePlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<ForgeCraftingCompleteEvent>()
-            .add_event::<AnvilCraftingCompleteEvent>()
+        app.add_message::<ForgeCraftingCompleteEvent>()
+            .add_message::<AnvilCraftingCompleteEvent>()
             .add_systems(
                 Update,
                 (
-                    handle_forge_crafting_complete.run_if(on_event::<ForgeCraftingCompleteEvent>),
-                    handle_anvil_crafting_complete.run_if(on_event::<AnvilCraftingCompleteEvent>),
+                    handle_forge_crafting_complete.run_if(on_message::<ForgeCraftingCompleteEvent>),
+                    handle_anvil_crafting_complete.run_if(on_message::<AnvilCraftingCompleteEvent>),
                 ),
             );
     }

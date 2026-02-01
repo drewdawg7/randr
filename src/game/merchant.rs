@@ -30,14 +30,14 @@ pub struct MerchantPlugin;
 
 impl Plugin for MerchantPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<BuyItemEvent>()
-            .add_event::<SellItemEvent>()
-            .add_event::<MerchantTransactionResult>()
+        app.add_message::<BuyItemEvent>()
+            .add_message::<SellItemEvent>()
+            .add_message::<MerchantTransactionResult>()
             .add_systems(
                 Update,
                 (
-                    handle_buy_item.run_if(on_event::<BuyItemEvent>),
-                    handle_sell_item.run_if(on_event::<SellItemEvent>),
+                    handle_buy_item.run_if(on_message::<BuyItemEvent>),
+                    handle_sell_item.run_if(on_message::<SellItemEvent>),
                 ),
             );
     }

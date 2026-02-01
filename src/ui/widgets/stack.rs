@@ -101,7 +101,7 @@ impl Stack {
     }
 }
 
-fn on_add_stack(trigger: Trigger<OnAdd, Stack>, mut commands: Commands, query: Query<&Stack>) {
+fn on_add_stack(trigger: On<OnAdd, Stack>, mut commands: Commands, query: Query<&Stack>) {
     let entity = trigger.entity();
     let Ok(stack) = query.get(entity) else {
         return;

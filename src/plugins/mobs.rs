@@ -13,6 +13,6 @@ pub struct MobPlugin;
 
 impl Plugin for MobPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<MobDefeated>();
+        app.add_message::<MobDefeated>();
     }
 }

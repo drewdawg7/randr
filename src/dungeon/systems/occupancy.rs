@@ -5,7 +5,7 @@ use crate::dungeon::{DungeonEntityMarker, GridOccupancy};
 
 #[instrument(level = "debug", skip_all, fields(entity = ?trigger.entity()))]
 pub fn track_entity_occupancy(
-    trigger: Trigger<OnAdd, DungeonEntityMarker>,
+    trigger: On<OnAdd, DungeonEntityMarker>,
     query: Query<&DungeonEntityMarker>,
     mut occupancy: ResMut<GridOccupancy>,
 ) {

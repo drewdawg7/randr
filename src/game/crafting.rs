@@ -20,9 +20,9 @@ pub struct CraftingPlugin;
 
 impl Plugin for CraftingPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<BrewPotionEvent>()
-            .add_event::<BrewingResult>()
-            .add_systems(Update, handle_brew_potion.run_if(on_event::<BrewPotionEvent>));
+        app.add_message::<BrewPotionEvent>()
+            .add_message::<BrewingResult>()
+            .add_systems(Update, handle_brew_potion.run_if(on_message::<BrewPotionEvent>));
     }
 }
 

@@ -18,7 +18,7 @@
 
 use std::marker::PhantomData;
 
-use bevy::ecs::world::Command;
+use bevy::ecs::system::Command;
 use bevy::prelude::*;
 
 use crate::input::GameAction;
@@ -140,7 +140,7 @@ impl<M: RegisteredModal> Command for CloseModalCommand<M> {
 ///
 /// Register per-modal observers via `register_modal_observer::<M>`.
 pub fn on_open_modal<M: RegisteredModal>(
-    trigger: Trigger<OpenModal>,
+    trigger: On<OpenModal>,
     mut commands: Commands,
 ) {
     if trigger.0 != M::MODAL_TYPE {
@@ -153,7 +153,7 @@ pub fn on_open_modal<M: RegisteredModal>(
 ///
 /// Register per-modal observers via `register_modal_observer::<M>`.
 pub fn on_close_modal<M: RegisteredModal>(
-    trigger: Trigger<CloseModal>,
+    trigger: On<CloseModal>,
     mut commands: Commands,
 ) {
     if trigger.0 != M::MODAL_TYPE {

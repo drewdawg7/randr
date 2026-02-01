@@ -101,7 +101,7 @@ pub struct OutlinedText {
 }
 
 fn on_add_outlined_text(
-    trigger: Trigger<OnAdd, OutlinedText>,
+    trigger: On<OnAdd, OutlinedText>,
     mut commands: Commands,
     query: Query<&OutlinedText>,
     game_fonts: Res<GameFonts>,

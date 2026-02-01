@@ -109,7 +109,7 @@ impl Column {
 }
 
 fn on_add_column(
-    trigger: Trigger<OnAdd, Column>,
+    trigger: On<OnAdd, Column>,
     mut commands: Commands,
     query: Query<&Column>,
 ) {

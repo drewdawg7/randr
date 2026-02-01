@@ -57,10 +57,10 @@ impl Plugin for PlayerPlugin {
             .insert_resource(inventory)
             .insert_resource(default_player_stats())
             .insert_resource(PlayerPreviousLevel(1))
-            .add_event::<PlayerDamaged>()
-            .add_event::<PlayerHealed>()
-            .add_event::<PlayerLeveledUp>()
-            .add_event::<GoldChanged>()
+            .add_message::<PlayerDamaged>()
+            .add_message::<PlayerHealed>()
+            .add_message::<PlayerLeveledUp>()
+            .add_message::<GoldChanged>()
             .add_systems(
                 Update,
                 handle_level_up.run_if(resource_changed::<Progression>),

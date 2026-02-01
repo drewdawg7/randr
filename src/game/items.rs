@@ -52,10 +52,10 @@ pub struct ItemPlugin;
 
 impl Plugin for ItemPlugin {
     fn build(&self, app: &mut App) {
-        app.add_event::<ItemEquipped>()
-            .add_event::<ItemUnequipped>()
-            .add_event::<ItemUsed>()
-            .add_event::<ItemDropped>()
-            .add_event::<ItemPickedUp>();
+        app.add_message::<ItemEquipped>()
+            .add_message::<ItemUnequipped>()
+            .add_message::<ItemUsed>()
+            .add_message::<ItemDropped>()
+            .add_message::<ItemPickedUp>();
     }
 }

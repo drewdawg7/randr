@@ -20,7 +20,7 @@ pub struct StoragePlugin;
 impl Plugin for StoragePlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<Storage>()
-            .add_event::<ItemDeposited>()
-            .add_event::<ItemWithdrawn>();
+            .add_message::<ItemDeposited>()
+            .add_message::<ItemWithdrawn>();
     }
 }

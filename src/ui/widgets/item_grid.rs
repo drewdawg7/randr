@@ -155,7 +155,7 @@ pub struct GridSelector {
 }
 
 fn on_add_item_grid(
-    trigger: Trigger<OnAdd, ItemGrid>,
+    trigger: On<OnAdd, ItemGrid>,
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     game_fonts: Res<GameFonts>,

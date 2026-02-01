@@ -1,4 +1,4 @@
-use bevy::ecs::world::Command;
+use bevy::ecs::system::Command;
 use bevy::prelude::*;
 
 use crate::combat::{EntityDied, PlayerAttackMob, VictoryAchieved};

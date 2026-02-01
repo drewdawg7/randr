@@ -34,7 +34,7 @@ impl Plugin for FightModalPlugin {
                     )
                         .run_if(in_fight_modal),
                     handle_combat_outcome.run_if(in_fight_modal),
-                    trigger_attack_animation.run_if(on_event::<PlayerAttackMob>),
+                    trigger_attack_animation.run_if(on_message::<PlayerAttackMob>),
                 ),
             )
             .register_sprite_marker::<FightModalPlayerSprite>()
