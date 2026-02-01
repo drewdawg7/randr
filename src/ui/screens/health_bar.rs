@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy::ui::widget::NodeImageMode;
 
 use crate::assets::{GameSprites, HealthBarSlice, SpriteSheet, SpriteSheetKey};
+use crate::mob::Health;
 
 /// Component marker for a health bar container.
 #[derive(Component)]
@@ -81,13 +82,6 @@ impl HealthBarTextBundle {
 #[derive(Component)]
 pub struct HealthBarText;
 
-/// Component that drives health bar sprite and text updates.
-/// Set `current` and `max` values, and the health bar system handles rendering.
-#[derive(Component)]
-pub struct HealthBarValues {
-    pub current: i32,
-    pub max: i32,
-}
 
 /// Get the sprite slice for a given health percentage.
 fn health_bar_slice(percent: f32) -> HealthBarSlice {
@@ -99,7 +93,7 @@ fn health_bar_slice(percent: f32) -> HealthBarSlice {
 #[derive(Bundle)]
 pub struct SpriteHealthBarBundle {
     pub marker: SpriteHealthBar,
-    pub values: HealthBarValues,
+    pub health: Health,
     pub node: Node,
 }
 
@@ -107,7 +101,7 @@ impl SpriteHealthBarBundle {
     pub fn new(current: i32, max: i32, width: f32, height: f32) -> Self {
         Self {
             marker: SpriteHealthBar,
-            values: HealthBarValues { current, max },
+            health: Health { current, max },
             node: Node {
                 width: Val::Px(width),
                 height: Val::Px(height),
@@ -158,13 +152,11 @@ pub fn init_sprite_health_bars(
     }
 }
 
-/// System to update sprite health bars based on their `HealthBarValues`.
-/// Updates both the atlas index on the `ImageNode` and the `HealthBarText` child.
 pub fn update_sprite_health_bar_visuals(
     game_sprites: Res<GameSprites>,
     mut bar_query: Query<
-        (&HealthBarValues, &mut ImageNode, &Children),
-        With<SpriteHealthBar>,
+        (&Health, &mut ImageNode, &Children),
+        (With<SpriteHealthBar>, Changed<Health>),
     >,
     mut text_query: Query<&mut Text, With<HealthBarText>>,
 ) {
@@ -172,9 +164,9 @@ pub fn update_sprite_health_bar_visuals(
         return;
     };
 
-    for (values, mut image, children) in &mut bar_query {
-        let percent = if values.max > 0 {
-            (values.current as f32 / values.max as f32 * 100.0).clamp(0.0, 100.0)
+    for (health, mut image, children) in &mut bar_query {
+        let percent = if health.max > 0 {
+            (health.current as f32 / health.max as f32 * 100.0).clamp(0.0, 100.0)
         } else {
             0.0
         };
@@ -190,7 +182,7 @@ pub fn update_sprite_health_bar_visuals(
 
         for child in children.iter() {
             if let Ok(mut text) = text_query.get_mut(*child) {
-                let hp_str = format!("{} / {}", values.current, values.max);
+                let hp_str = format!("{} / {}", health.current, health.max);
                 if **text != hp_str {
                     **text = hp_str;
                 }

@@ -1,10 +1,10 @@
 use bevy::prelude::*;
 
 use crate::assets::{FightBannerSlice, GameSprites, SpriteSheetKey};
-use crate::mob::Health;
+use crate::mob::{Health, MobMarker};
 use crate::player::PlayerName;
 use crate::stats::{HasStats, StatSheet};
-use crate::ui::screens::health_bar::{HealthBarValues, SpriteHealthBarBundle};
+use crate::ui::screens::health_bar::SpriteHealthBarBundle;
 use crate::ui::widgets::spawn_three_slice_banner;
 use crate::ui::PlayerAttackTimer;
 use crate::ui::{Modal, SpawnModalExt};
@@ -239,29 +239,29 @@ pub fn update_button_sprites(
 
 pub fn update_mob_health_bar(
     fight_mob: Res<FightModalMob>,
-    mut bar_query: Query<&mut HealthBarValues, With<FightModalMobHealthBar>>,
-    mob_query: Query<&Health, Changed<Health>>,
+    mut bar_query: Query<&mut Health, With<FightModalMobHealthBar>>,
+    mob_query: Query<&Health, (With<MobMarker>, Changed<Health>)>,
 ) {
-    let Ok(mut values) = bar_query.get_single_mut() else {
+    let Ok(mut bar_health) = bar_query.get_single_mut() else {
         return;
     };
-    let Ok(health) = mob_query.get(fight_mob.entity) else {
+    let Ok(mob_health) = mob_query.get(fight_mob.entity) else {
         return;
     };
-    values.current = health.current;
-    values.max = health.max;
+    bar_health.current = mob_health.current;
+    bar_health.max = mob_health.max;
 }
 
 pub fn update_player_health_bar(
     stats: Res<StatSheet>,
-    mut bar_query: Query<&mut HealthBarValues, With<FightModalPlayerHealthBar>>,
+    mut bar_query: Query<&mut Health, With<FightModalPlayerHealthBar>>,
 ) {
     if !stats.is_changed() {
         return;
     }
-    let Ok(mut values) = bar_query.get_single_mut() else {
+    let Ok(mut health) = bar_query.get_single_mut() else {
         return;
     };
-    values.current = stats.hp();
-    values.max = stats.max_hp();
+    health.current = stats.hp();
+    health.max = stats.max_hp();
 }

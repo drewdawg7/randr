@@ -23,8 +23,8 @@ pub use forge_modal::ForgeModalPlugin;
 pub use monster_compendium::MonsterCompendiumPlugin;
 pub use health_bar::{
     init_sprite_health_bars, update_health_bar, update_sprite_health_bar_visuals, HealthBar,
-    HealthBarBundle, HealthBarNameBundle, HealthBarText, HealthBarTextBundle, HealthBarValues,
-    SpriteHealthBar, SpriteHealthBarBundle,
+    HealthBarBundle, HealthBarNameBundle, HealthBarText, HealthBarTextBundle, SpriteHealthBar,
+    SpriteHealthBarBundle,
 };
 pub use inventory_modal::InventoryModalPlugin;
 pub use keybinds::KeybindsPlugin;
