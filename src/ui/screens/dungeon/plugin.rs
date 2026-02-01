@@ -27,10 +27,10 @@ use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::MobSpriteSheets;
 use crate::ui::{PlayerSpriteSheet, PlayerWalkTimer, SpriteAnimation};
 
-use super::components::{DungeonPlayer, DungeonRoot, SmoothPosition, TileSizes, UiScale};
+use super::components::{DungeonPlayer, DungeonRoot, TargetPosition, TileSizes, UiScale};
 use super::constants::ENTITY_VISUAL_SCALE;
 use super::spawn::spawn_floor_ui;
-use super::systems::{cleanup_dungeon, handle_window_resize, interpolate_positions};
+use super::systems::{cleanup_dungeon, handle_window_resize};
 
 pub struct DungeonScreenPlugin;
 
@@ -44,7 +44,7 @@ impl Plugin for DungeonScreenPlugin {
                     handle_floor_ready.run_if(on_event::<FloorReady>),
                     handle_dungeon_movement,
                     handle_move_result.run_if(on_event::<MoveResult>),
-                    interpolate_positions,
+                    interpolate_player_position,
                     handle_interact_action.run_if(on_event::<GameAction>),
                     handle_npc_interaction.run_if(on_event::<NpcInteraction>),
                     handle_crafting_station_interaction.run_if(on_event::<CraftingStationInteraction>),
@@ -121,50 +121,44 @@ fn handle_floor_ready(
 #[derive(Resource)]
 struct LastMoveDirection(NavigationDirection);
 
+const MOVE_INTERVAL: f32 = 0.1;
+const MOVE_SPEED: f32 = 8.0;
+
 fn handle_dungeon_movement(
     mut commands: Commands,
+    time: Res<Time>,
     mut action_reader: EventReader<GameAction>,
     mut move_events: EventWriter<PlayerMoveIntent>,
     held_direction: Res<HeldDirection>,
     active_modal: Res<ActiveModal>,
-    player_query: Query<&SmoothPosition, With<DungeonPlayer>>,
-    mut was_moving: Local<bool>,
+    mut move_timer: Local<f32>,
 ) {
     if active_modal.modal.is_some() {
         return;
     }
-
-    let Ok(smooth_pos) = player_query.get_single() else {
-        return;
-    };
 
     let fresh_direction = action_reader.read().find_map(|a| match a {
         GameAction::Navigate(dir) => Some(*dir),
         _ => None,
     });
 
-    if smooth_pos.moving {
-        *was_moving = true;
+    if let Some(direction) = fresh_direction {
+        commands.insert_resource(LastMoveDirection(direction));
+        move_events.send(PlayerMoveIntent { direction });
+        *move_timer = MOVE_INTERVAL;
         return;
     }
 
-    // Determine direction: fresh press takes priority, then held key (only after a move completed)
-    let direction = fresh_direction.or_else(|| {
-        if *was_moving {
-            held_direction.0
-        } else {
-            None
+    if let Some(direction) = held_direction.0 {
+        *move_timer -= time.delta_secs();
+        if *move_timer <= 0.0 {
+            commands.insert_resource(LastMoveDirection(direction));
+            move_events.send(PlayerMoveIntent { direction });
+            *move_timer = MOVE_INTERVAL;
         }
-    });
-
-    let Some(direction) = direction else {
-        *was_moving = false;
-        return;
-    };
-
-    *was_moving = false;
-    commands.insert_resource(LastMoveDirection(direction));
-    move_events.send(PlayerMoveIntent { direction });
+    } else {
+        *move_timer = 0.0;
+    }
 }
 
 fn handle_move_result(
@@ -175,14 +169,14 @@ fn handle_move_result(
     sheet: Res<PlayerSpriteSheet>,
     fight_mob: Option<Res<FightModalMob>>,
     mut player_query: Query<
-        (&mut SmoothPosition, &mut ImageNode, &mut SpriteAnimation, &mut PlayerWalkTimer),
+        (&mut TargetPosition, &mut ImageNode, &mut SpriteAnimation, &mut PlayerWalkTimer),
         With<DungeonPlayer>,
     >,
 ) {
     for event in events.read() {
         match event {
             MoveResult::Moved { new_pos } => {
-                let Ok((mut smooth_pos, mut player_image, mut anim, mut walk_timer)) =
+                let Ok((mut target_pos, mut player_image, mut anim, mut walk_timer)) =
                     player_query.get_single_mut()
                 else {
                     continue;
@@ -191,11 +185,10 @@ fn handle_move_result(
                 let tile_size = tile_sizes.tile_size;
                 let entity_sprite_size = ENTITY_VISUAL_SCALE * tile_sizes.base_tile_size;
                 let entity_offset = -(entity_sprite_size - tile_size) / 2.0;
-                smooth_pos.target = Vec2::new(
+                target_pos.0 = Vec2::new(
                     new_pos.x as f32 * tile_size + entity_offset,
                     new_pos.y as f32 * tile_size + entity_offset,
                 );
-                smooth_pos.moving = true;
 
                 if let Some(ref dir) = last_direction {
                     match dir.0 {
@@ -465,6 +458,39 @@ fn handle_back_action(
     for action in action_events.read() {
         if matches!(action, GameAction::Back) {
             next_state.set(AppState::Menu);
+        }
+    }
+}
+
+fn interpolate_player_position(
+    time: Res<Time>,
+    tile_sizes: Option<Res<TileSizes>>,
+    mut query: Query<(&TargetPosition, &mut Node), With<DungeonPlayer>>,
+) {
+    let Some(tile_sizes) = tile_sizes else { return };
+
+    for (target, mut node) in &mut query {
+        let current_x = match node.left {
+            Val::Px(px) => px,
+            _ => continue,
+        };
+        let current_y = match node.top {
+            Val::Px(px) => px,
+            _ => continue,
+        };
+        let current = Vec2::new(current_x, current_y);
+        let delta = target.0 - current;
+        let distance = delta.length();
+
+        if distance < 0.5 {
+            node.left = Val::Px(target.0.x);
+            node.top = Val::Px(target.0.y);
+        } else {
+            let speed = MOVE_SPEED * tile_sizes.tile_size;
+            let step = speed * time.delta_secs();
+            let new_pos = current + delta.normalize() * step.min(distance);
+            node.left = Val::Px(new_pos.x);
+            node.top = Val::Px(new_pos.y);
         }
     }
 }

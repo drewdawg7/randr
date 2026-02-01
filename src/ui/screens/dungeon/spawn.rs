@@ -12,7 +12,7 @@ use crate::ui::{DungeonMobSprite, DungeonPlayerSprite, MobSpriteSheets, PlayerWa
 
 use super::components::{
     DungeonCell, DungeonContainer, DungeonGrid, DungeonPlayer, DungeonRoot, EntityLayer,
-    SmoothPosition, TileSizes, UiScale,
+    TargetPosition, TileSizes, UiScale,
 };
 use super::constants::{BASE_TILE, ENTITY_VISUAL_SCALE};
 
@@ -273,12 +273,8 @@ fn spawn_player(
     layer.spawn((
         DungeonPlayer,
         DungeonPlayerSprite,
+        TargetPosition(player_px),
         PlayerWalkTimer(Timer::from_seconds(0.3, TimerMode::Once)),
-        SmoothPosition {
-            current: player_px,
-            target: player_px,
-            moving: false,
-        },
         ZIndex(player_pos.y as i32 + 100),
         Node {
             position_type: PositionType::Absolute,

@@ -4,6 +4,8 @@
 
 use bevy::prelude::*;
 
+use crate::input::HeldDirection;
+
 use super::animation::{AnimationConfig, SpriteAnimation};
 use super::sprite_marker::{SpriteData, SpriteMarker, SpriteMarkerAppExt};
 
@@ -139,11 +141,12 @@ fn revert_attack_idle(
 fn revert_player_idle(
     time: Res<Time>,
     sheet: Res<PlayerSpriteSheet>,
+    held_direction: Res<HeldDirection>,
     mut query: Query<(&mut PlayerWalkTimer, &mut SpriteAnimation)>,
 ) {
     for (mut timer, mut anim) in &mut query {
         timer.0.tick(time.delta());
-        if timer.0.just_finished() {
+        if timer.0.just_finished() && held_direction.0.is_none() {
             anim.first_frame = sheet.animation.first_frame;
             anim.last_frame = sheet.animation.last_frame;
             anim.current_frame = sheet.animation.first_frame;

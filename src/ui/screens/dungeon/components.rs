@@ -21,13 +21,6 @@ pub struct TileSizes {
 }
 
 #[derive(Component)]
-pub struct SmoothPosition {
-    pub current: Vec2,
-    pub target: Vec2,
-    pub moving: bool,
-}
-
-#[derive(Component)]
 pub struct EntityLayer;
 
 #[derive(Component)]
@@ -44,3 +37,6 @@ pub struct DungeonGrid;
 
 #[derive(Component)]
 pub struct DungeonContainer;
+
+#[derive(Component)]
+pub struct TargetPosition(pub Vec2);
