@@ -11,6 +11,16 @@ pub enum CraftingStationType {
     Anvil,
 }
 
+#[derive(Event, Debug, Clone, Copy)]
+pub struct ForgeTimerFinished {
+    pub entity: Entity,
+}
+
+#[derive(Event, Debug, Clone, Copy)]
+pub struct AnvilTimerFinished {
+    pub entity: Entity,
+}
+
 #[derive(Component)]
 pub struct ForgeActiveTimer(pub Timer);
 

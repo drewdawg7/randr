@@ -5,7 +5,9 @@ use tracing::instrument;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::combat::ActiveCombat;
-use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
+use crate::crafting_station::{
+    AnvilActiveTimer, AnvilTimerFinished, CraftingStationType, ForgeActiveTimer, ForgeTimerFinished,
+};
 use crate::dungeon::{
     ChestEntity, CraftingStationEntity, CraftingStationInteraction, DungeonEntityMarker,
     DungeonRegistry, DungeonState, EntitySize, FloorReady, GameLayer, MineEntity,
@@ -35,6 +37,8 @@ impl Plugin for DungeonScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(add_entity_visuals)
             .add_observer(on_map_created_queue_player_spawn)
+            .add_observer(on_forge_timer_finished)
+            .add_observer(on_anvil_timer_finished)
             .add_systems(OnEnter(AppState::Dungeon), enter_dungeon)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
@@ -54,8 +58,8 @@ impl Plugin for DungeonScreenPlugin {
                     handle_crafting_station_interaction.run_if(on_message::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_message::<MiningResult>),
                     handle_back_action,
-                    revert_forge_idle.run_if(any_with_component::<ForgeActiveTimer>),
-                    revert_anvil_idle.run_if(any_with_component::<AnvilActiveTimer>),
+                    poll_forge_timers.run_if(any_with_component::<ForgeActiveTimer>),
+                    poll_anvil_timers.run_if(any_with_component::<AnvilActiveTimer>),
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon)),
@@ -313,54 +317,82 @@ fn handle_mining_result(mut commands: Commands, mut events: MessageReader<Mining
     }
 }
 
-fn revert_forge_idle(
+fn poll_forge_timers(
     mut commands: Commands,
     time: Res<Time>,
-    game_sprites: Res<GameSprites>,
-    mut crafting_events: MessageWriter<ForgeCraftingCompleteEvent>,
-    mut query: Query<(Entity, &mut ForgeActiveTimer, &mut ImageNode)>,
+    mut query: Query<(Entity, &mut ForgeActiveTimer)>,
 ) {
-    for (entity, mut timer, mut image) in &mut query {
+    for (entity, mut timer) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
-            crafting_events.write(ForgeCraftingCompleteEvent { entity });
-
-            if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
-                if let Some(idle_idx) = sheet.get("forge_1_idle") {
-                    if let Some(ref mut atlas) = image.texture_atlas {
-                        atlas.index = idle_idx;
-                    }
-                }
-            }
-            commands.entity(entity).remove::<ForgeActiveTimer>();
-            commands.entity(entity).remove::<SpriteAnimation>();
+            commands.trigger(ForgeTimerFinished { entity });
         }
     }
 }
 
-fn revert_anvil_idle(
+fn poll_anvil_timers(
     mut commands: Commands,
     time: Res<Time>,
-    game_sprites: Res<GameSprites>,
-    mut crafting_events: MessageWriter<AnvilCraftingCompleteEvent>,
-    mut query: Query<(Entity, &mut AnvilActiveTimer, &mut ImageNode)>,
+    mut query: Query<(Entity, &mut AnvilActiveTimer)>,
 ) {
-    for (entity, mut timer, mut image) in &mut query {
+    for (entity, mut timer) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
-            crafting_events.write(AnvilCraftingCompleteEvent { entity });
-
-            if let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) {
-                if let Some(idle_idx) = sheet.get("anvil_idle") {
-                    if let Some(ref mut atlas) = image.texture_atlas {
-                        atlas.index = idle_idx;
-                    }
-                }
-            }
-            commands.entity(entity).remove::<AnvilActiveTimer>();
-            commands.entity(entity).remove::<SpriteAnimation>();
+            commands.trigger(AnvilTimerFinished { entity });
         }
     }
+}
+
+fn on_forge_timer_finished(
+    trigger: On<ForgeTimerFinished>,
+    mut commands: Commands,
+    game_sprites: Res<GameSprites>,
+    mut crafting_events: MessageWriter<ForgeCraftingCompleteEvent>,
+    mut query: Query<&mut ImageNode>,
+) {
+    let entity = trigger.event().entity;
+
+    crafting_events.write(ForgeCraftingCompleteEvent { entity });
+
+    if let Some(idle_idx) = game_sprites
+        .get(SpriteSheetKey::CraftingStations)
+        .and_then(|sheet| sheet.get(CraftingStationType::Forge.sprite_name()))
+    {
+        if let Ok(mut image) = query.get_mut(entity) {
+            if let Some(ref mut atlas) = image.texture_atlas {
+                atlas.index = idle_idx;
+            }
+        }
+    }
+
+    commands.entity(entity).remove::<ForgeActiveTimer>();
+    commands.entity(entity).remove::<SpriteAnimation>();
+}
+
+fn on_anvil_timer_finished(
+    trigger: On<AnvilTimerFinished>,
+    mut commands: Commands,
+    game_sprites: Res<GameSprites>,
+    mut crafting_events: MessageWriter<AnvilCraftingCompleteEvent>,
+    mut query: Query<&mut ImageNode>,
+) {
+    let entity = trigger.event().entity;
+
+    crafting_events.write(AnvilCraftingCompleteEvent { entity });
+
+    if let Some(idle_idx) = game_sprites
+        .get(SpriteSheetKey::CraftingStations)
+        .and_then(|sheet| sheet.get(CraftingStationType::Anvil.sprite_name()))
+    {
+        if let Ok(mut image) = query.get_mut(entity) {
+            if let Some(ref mut atlas) = image.texture_atlas {
+                atlas.index = idle_idx;
+            }
+        }
+    }
+
+    commands.entity(entity).remove::<AnvilActiveTimer>();
+    commands.entity(entity).remove::<SpriteAnimation>();
 }
 
 fn handle_back_action(
