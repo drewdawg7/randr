@@ -55,6 +55,8 @@ pub struct SpriteAnimation {
 - `synchronized: true` — frame derived from global `AnimationClock` (all same-config animations stay in phase)
 - `synchronized: false` — per-entity timer (for triggered animations like walk/attack/death)
 
+The `AnimationClock` ticks every frame unconditionally to maintain consistent timing, even when no `SpriteAnimation` components exist. The animation application systems only run when animations are present.
+
 ## Existing Implementations
 
 ### Player Sprites
