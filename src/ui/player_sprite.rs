@@ -21,14 +21,10 @@ impl Plugin for PlayerSpritePlugin {
         app.init_resource::<PlayerSpriteSheet>()
             .init_resource::<AnimationClock>()
             .add_systems(PreStartup, load_player_sprite_sheet)
+            .add_systems(Update, tick_animation_clock)
             .add_systems(
                 Update,
-                (
-                    tick_animation_clock,
-                    animate_sprites,
-                    animate_world_sprites,
-                )
-                    .chain()
+                (animate_sprites, animate_world_sprites)
                     .run_if(any_with_component::<SpriteAnimation>),
             )
             .add_systems(
