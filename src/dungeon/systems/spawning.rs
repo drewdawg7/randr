@@ -5,6 +5,7 @@ use rand::Rng;
 use tracing::instrument;
 
 use crate::crafting_station::CraftingStationType;
+use crate::dungeon::constants::DEFAULT_TILE_SIZE;
 use crate::dungeon::spawn::{MobSpawnEntry, SpawnTable};
 use crate::dungeon::tile_components::{can_have_entity, is_door};
 use crate::dungeon::{
@@ -81,7 +82,7 @@ pub fn on_map_created(
     tile_world_size: Option<Res<TileWorldSize>>,
     config: Option<Res<SpawnTable>>,
 ) {
-    let tile_size = tile_world_size.map(|t| t.0).unwrap_or(32.0);
+    let tile_size = tile_world_size.map(|t| t.0).unwrap_or(DEFAULT_TILE_SIZE);
     let tilemap = tilemap_query.single().ok();
     let floor_root = floor_root_query.single().ok();
     let ctx = SpawnContext { tile_size, tilemap, floor_root };

@@ -1,3 +1,5 @@
+use crate::dungeon::constants::DEFAULT_TILE_SIZE;
+
 #[derive(Debug, Clone, Copy, PartialEq)]
 pub struct EntitySize {
     pub width: f32,
@@ -7,8 +9,8 @@ pub struct EntitySize {
 impl Default for EntitySize {
     fn default() -> Self {
         Self {
-            width: 32.0,
-            height: 32.0,
+            width: DEFAULT_TILE_SIZE,
+            height: DEFAULT_TILE_SIZE,
         }
     }
 }

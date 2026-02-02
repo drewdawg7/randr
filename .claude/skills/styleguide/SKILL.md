@@ -18,4 +18,5 @@ description: Use when code has been changed in order to ensure the code aligns w
 2. **Abstract**: If it is possible abstract code to make it more readable, modular, and composable.
 3. **Pure Functions**: Functions should be kept pure with minimal side effects wherever possible.
 4. **ECS**: Use an ECS wherever possible. Do not use global state outside of the ECS system.
+5. **UPDATE OUT OF SCOPE**: If you notice a styleguide issue, even if its not in scope of your ticket, fix it regardless. Commit the changes so they are easy to find.
 

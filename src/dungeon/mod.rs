@@ -1,5 +1,6 @@
 pub mod commands;
 pub mod config;
+pub mod constants;
 pub mod entity;
 pub mod events;
 pub mod floor;
@@ -21,7 +22,7 @@ pub use entity::{
     ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, MobEntity, NpcEntity,
     RockEntity, StairsEntity,
 };
-pub use floor::{FloorId, FloorSpec, FloorType};
+pub use floor::{FloorId, FloorSpec};
 pub use grid::EntitySize;
 pub use physics::GameLayer;
 pub use layouts::LayoutId;

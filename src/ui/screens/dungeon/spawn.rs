@@ -6,26 +6,20 @@ use tracing::instrument;
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
 use crate::dungeon::systems::on_map_created;
+use crate::dungeon::constants::{
+    CAMERA_Z, COLLIDER_SCALE, DEFAULT_TILE_SIZE, FORGE_COLLIDER_OFFSET_Y, FORGE_COLLIDER_SCALE,
+    MOB_COLLIDER_OFFSET_Y, MOB_COLLIDER_SIZE, PLAYER_COLLIDER_SIZE, STAIRS_COLLIDER_SCALE,
+    Z_ORDER_FACTOR,
+};
 use crate::dungeon::{
-    map_path, ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, FloorType,
-    GameLayer, MobEntity, NpcEntity, RockEntity, StairsEntity,
+    map_path, ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, GameLayer,
+    LayoutId, MobEntity, NpcEntity, RockEntity, StairsEntity,
 };
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet};
 
 use super::components::{DungeonPlayer, DungeonRoot, FloorRoot};
-
-const Z_ORDER_FACTOR: f32 = 0.0001;
-const COLLIDER_SCALE: f32 = 0.9;
-const STAIRS_COLLIDER_SCALE: f32 = 0.6;
-const FORGE_COLLIDER_SCALE: f32 = 0.75;
-const FORGE_COLLIDER_OFFSET_Y: f32 = -8.0;
-const MOB_COLLIDER_SIZE: f32 = 16.0;
-const MOB_COLLIDER_OFFSET_Y: f32 = -8.0;
-const DEFAULT_TILE_SIZE: f32 = 32.0;
-const CAMERA_Z: f32 = 999.0;
-const PLAYER_COLLIDER_SIZE: f32 = 16.0;
 
 #[derive(Component)]
 pub struct DungeonCamera;
@@ -288,14 +282,12 @@ fn add_animated_mob(
 pub fn spawn_floor_ui(
     commands: &mut Commands,
     asset_server: &AssetServer,
-    floor_type: FloorType,
+    layout_id: LayoutId,
     camera_entity: Entity,
     map_width: usize,
     map_height: usize,
 ) {
     let tile_size = DEFAULT_TILE_SIZE;
-
-    let layout_id = floor_type.layout_id(false);
     let path = map_path(layout_id);
     let map_handle: Handle<TiledMapAsset> = asset_server.load(path);
 

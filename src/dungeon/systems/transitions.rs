@@ -1,7 +1,8 @@
 use bevy::prelude::*;
 
 use crate::dungeon::events::FloorTransition;
-use crate::dungeon::{DungeonRegistry, DungeonState, EntitySize, FloorType, SpawnFloor, TileWorldSize};
+use crate::dungeon::constants::DEFAULT_TILE_SIZE;
+use crate::dungeon::{DungeonRegistry, DungeonState, EntitySize, LayoutId, SpawnFloor, TileWorldSize};
 use crate::location::LocationId;
 
 pub fn handle_floor_transition(
@@ -33,15 +34,13 @@ pub fn handle_floor_transition(
         };
         commands.insert_resource(spawn_config);
 
-        let floor_type = state
+        let layout_id = state
             .current_floor()
-            .map(|f| f.floor_type())
-            .unwrap_or(FloorType::CaveFloor);
-
-        let layout_id = floor_type.layout_id(false);
+            .map(|f| f.layout_id())
+            .unwrap_or(LayoutId::CaveFloor);
         let (map_width, map_height) = layout_id.dimensions();
 
-        let tile_size = tile_world_size.as_ref().map(|t| t.0).unwrap_or(32.0);
+        let tile_size = tile_world_size.as_ref().map(|t| t.0).unwrap_or(DEFAULT_TILE_SIZE);
         let center_x = (map_width as f32 / 2.0) * tile_size;
         let center_y = (map_height as f32 / 2.0) * tile_size;
         state.player_pos = Vec2::new(center_x, center_y);
@@ -50,7 +49,7 @@ pub fn handle_floor_transition(
         spawn_events.write(SpawnFloor {
             player_pos: state.player_pos,
             player_size: state.player_size,
-            floor_type,
+            layout_id,
             map_width,
             map_height,
         });

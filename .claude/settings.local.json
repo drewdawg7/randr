@@ -247,7 +247,8 @@
       "Bash(for i in 450 451 452 453 454 455 456)",
       "Bash(do)",
       "WebFetch(domain:bevyengine.org)",
-      "Bash(cargo search:*)"
+      "Bash(cargo search:*)",
+      "Skill(styleguide)"
     ]
   },
   "enabledMcpjsonServers": [

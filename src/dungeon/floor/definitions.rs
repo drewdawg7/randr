@@ -1,4 +1,3 @@
-use super::floor_type::FloorType;
 use crate::dungeon::layouts::LayoutId;
 use crate::dungeon::spawn::SpawnTable;
 use crate::mob::MobId;
@@ -79,10 +78,7 @@ entity_macros::define_data! {
 }
 
 impl FloorId {
-    pub fn floor_type(&self) -> FloorType {
-        match self {
-            FloorId::HomeFloor => FloorType::HomeFloor,
-            _ => FloorType::CaveFloor,
-        }
+    pub fn layout_id(&self) -> LayoutId {
+        self.spec().layout_id
     }
 }
