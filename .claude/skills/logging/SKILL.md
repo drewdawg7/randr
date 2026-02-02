@@ -1,6 +1,6 @@
 ---
 name: logging
-description: Adds tracing instrumentation to Rust code. Use when adding #[instrument], debugging systems, or viewing logs.
+description: Adds tracing instrumentation to Rust code. Use when adding [instrument], debugging systems, or viewing logs.
 ---
 
 # Logging

@@ -3,7 +3,10 @@
 ## Important Reminders (MANDATORY)
 1. Do not add comments to code unless there is a really good reason too. Clean up exisitng comments you come across.
 2. Do not use unwrap in non-test code.
-
+3. BEFORE ANY CHANGE TO ANYTHING, WHETHER ITS DOCS, CODE, CLAUDE SKILLS, ETC, MAKE SURE YOU ARE NOT ON THE MAIN BRANCH.
+4. WHENEVER YOU MAKE A BUNDLE OF CHANGES COMMIT THEM.
+5. DO NOT LOOK AT SOURCE CODE FOR CRATES, SEARCH FOR DOCS ONLINE INSTEAD
+6. CONSULT .claude/docs FREQUENTLY.
 ## Code Change Workflow
 **Use the `updating-code` skill for ALL code changes.** It contains the full workflow.
 
