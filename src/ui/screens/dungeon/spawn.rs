@@ -40,6 +40,16 @@ pub fn add_entity_visuals(
                 Collider::rectangle(size.width * 0.75, size.height),
             )])
         }
+        DungeonEntity::Mob { .. } => {
+            Collider::compound(vec![(
+                Vec2::new(0.0, -8.0),
+                0.0,
+                Collider::rectangle(16.0, 16.0),
+            )])
+        }
+        DungeonEntity::Stairs { .. } => {
+            Collider::rectangle(size.width * 0.6, size.height * 0.6)
+        }
         _ => Collider::rectangle(size.width * 0.9, size.height * 0.9),
     };
     let (physics_body, layers) = physics_components_for_entity(&marker.entity_type);

@@ -199,24 +199,87 @@ fn on_collider_created(
 }
 
 fn debug_draw_colliders(
-    colliders: Query<(&GlobalTransform, &Collider), With<RigidBody>>,
+    colliders: Query<(&GlobalTransform, &Collider), Without<TiledWallCollider>>,
+    wall_colliders: Query<(&GlobalTransform, &Collider), With<TiledWallCollider>>,
     mut gizmos: Gizmos,
 ) {
     for (transform, collider) in &colliders {
         let pos = transform.translation().truncate();
-        let aabb = collider.shape_scaled().compute_local_aabb();
-        let half_extents = Vec2::new(
-            (aabb.maxs.x - aabb.mins.x) / 2.0,
-            (aabb.maxs.y - aabb.mins.y) / 2.0,
-        );
-        let center_offset = Vec2::new(
-            (aabb.maxs.x + aabb.mins.x) / 2.0,
-            (aabb.maxs.y + aabb.mins.y) / 2.0,
-        );
-        gizmos.rect_2d(
-            Isometry2d::from_translation(pos + center_offset),
-            half_extents * 2.0,
-            RED,
-        );
+        let shape = collider.shape_scaled();
+
+        if let Some(compound) = shape.as_compound() {
+            for (iso, child_shape) in compound.shapes() {
+                let child_pos = pos + Vec2::new(iso.translation.x, iso.translation.y);
+                let aabb = child_shape.compute_local_aabb();
+                let half_extents = Vec2::new(
+                    (aabb.maxs.x - aabb.mins.x) / 2.0,
+                    (aabb.maxs.y - aabb.mins.y) / 2.0,
+                );
+                let center_offset = Vec2::new(
+                    (aabb.maxs.x + aabb.mins.x) / 2.0,
+                    (aabb.maxs.y + aabb.mins.y) / 2.0,
+                );
+                gizmos.rect_2d(
+                    Isometry2d::from_translation(child_pos + center_offset),
+                    half_extents * 2.0,
+                    RED,
+                );
+            }
+        } else {
+            let aabb = shape.compute_local_aabb();
+            let half_extents = Vec2::new(
+                (aabb.maxs.x - aabb.mins.x) / 2.0,
+                (aabb.maxs.y - aabb.mins.y) / 2.0,
+            );
+            let center_offset = Vec2::new(
+                (aabb.maxs.x + aabb.mins.x) / 2.0,
+                (aabb.maxs.y + aabb.mins.y) / 2.0,
+            );
+            gizmos.rect_2d(
+                Isometry2d::from_translation(pos + center_offset),
+                half_extents * 2.0,
+                RED,
+            );
+        }
+    }
+
+    for (transform, collider) in &wall_colliders {
+        let pos = transform.translation().truncate();
+        let shape = collider.shape_scaled();
+
+        if let Some(compound) = shape.as_compound() {
+            for (iso, child_shape) in compound.shapes() {
+                let child_pos = pos + Vec2::new(iso.translation.x, -iso.translation.y);
+                let aabb = child_shape.compute_local_aabb();
+                let half_extents = Vec2::new(
+                    (aabb.maxs.x - aabb.mins.x) / 2.0,
+                    (aabb.maxs.y - aabb.mins.y) / 2.0,
+                );
+                let center_offset = Vec2::new(
+                    (aabb.maxs.x + aabb.mins.x) / 2.0,
+                    (aabb.maxs.y + aabb.mins.y) / 2.0,
+                );
+                gizmos.rect_2d(
+                    Isometry2d::from_translation(child_pos + center_offset),
+                    half_extents * 2.0,
+                    RED,
+                );
+            }
+        } else {
+            let aabb = shape.compute_local_aabb();
+            let half_extents = Vec2::new(
+                (aabb.maxs.x - aabb.mins.x) / 2.0,
+                (aabb.maxs.y - aabb.mins.y) / 2.0,
+            );
+            let center_offset = Vec2::new(
+                (aabb.maxs.x + aabb.mins.x) / 2.0,
+                (aabb.maxs.y + aabb.mins.y) / 2.0,
+            );
+            gizmos.rect_2d(
+                Isometry2d::from_translation(pos + center_offset),
+                half_extents * 2.0,
+                RED,
+            );
+        }
     }
 }
