@@ -9,7 +9,7 @@ use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActive
 use crate::dungeon::{
     CraftingStationInteraction, DungeonEntity, DungeonEntityMarker, DungeonRegistry, DungeonState,
     EntitySize, FloorReady, GameLayer, MineEntity, MiningResult, MoveResult, NpcInteraction,
-    PlayerMoveIntent, SpawnFloor, TiledWallCollider, TileWorldSize,
+    PlayerMoveIntent, SpawnFloor, TileWorldSize,
 };
 use crate::input::GameAction;
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -24,7 +24,7 @@ use crate::ui::screens::modal::{ActiveModal, ModalType, OpenModal};
 use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::{PlayerSpriteSheet, SpriteAnimation};
 
-use super::components::{DungeonPlayer, DungeonRoot, PendingPlayerSpawn};
+use super::components::{DungeonPlayer, FloorRoot, PendingPlayerSpawn};
 use super::spawn::{add_entity_visuals, spawn_floor_ui, spawn_player, TilemapConfigQuery};
 use super::systems::cleanup_dungeon;
 
@@ -106,21 +106,11 @@ fn handle_floor_ready(
     mut events: MessageReader<FloorReady>,
     asset_server: Res<AssetServer>,
     camera_query: Single<Entity, With<Camera2d>>,
-    root_query: Query<Entity, With<DungeonRoot>>,
-    entity_query: Query<Entity, With<DungeonEntityMarker>>,
-    wall_collider_query: Query<Entity, With<TiledWallCollider>>,
+    floor_root_query: Query<Entity, With<FloorRoot>>,
 ) {
     for event in events.read() {
-        for entity in &root_query {
-            commands.entity(entity).despawn();
-        }
-
-        for entity in &entity_query {
-            commands.entity(entity).despawn();
-        }
-
-        for entity in &wall_collider_query {
-            commands.entity(entity).despawn();
+        if let Ok(floor_root) = floor_root_query.single() {
+            commands.entity(floor_root).despawn();
         }
 
         spawn_floor_ui(

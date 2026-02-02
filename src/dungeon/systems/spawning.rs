@@ -10,6 +10,7 @@ use crate::dungeon::tile_components::{can_have_entity, is_door};
 use crate::dungeon::{DungeonEntity, DungeonEntityMarker, EntitySize, TileWorldSize};
 use crate::mob::MobId;
 use crate::rock::RockType;
+use crate::ui::screens::FloorRoot;
 
 #[derive(Debug, Clone)]
 pub struct MobSpawnEntry {
@@ -76,6 +77,7 @@ struct SpawnContext<'a> {
         &'a TilemapAnchor,
         &'a GlobalTransform,
     )>,
+    floor_root: Option<Entity>,
 }
 
 impl SpawnContext<'_> {
@@ -91,6 +93,13 @@ impl SpawnContext<'_> {
     fn entity_size(&self) -> EntitySize {
         EntitySize::new(self.tile_size, self.tile_size)
     }
+
+    fn spawn_entity(&self, commands: &mut Commands, marker: DungeonEntityMarker) {
+        let entity = commands.spawn(marker).id();
+        if let Some(root) = self.floor_root {
+            commands.entity(entity).insert(ChildOf(root));
+        }
+    }
 }
 
 pub fn on_map_created(
@@ -99,12 +108,14 @@ pub fn on_map_created(
     spawn_tiles: Query<(&TilePos, &can_have_entity)>,
     door_tiles: Query<(&TilePos, &is_door)>,
     tilemap_query: TilemapQuery,
+    floor_root_query: Query<Entity, With<FloorRoot>>,
     tile_world_size: Option<Res<TileWorldSize>>,
     config: Option<Res<FloorSpawnConfig>>,
 ) {
     let tile_size = tile_world_size.map(|t| t.0).unwrap_or(32.0);
     let tilemap = tilemap_query.single().ok();
-    let ctx = SpawnContext { tile_size, tilemap };
+    let floor_root = floor_root_query.single().ok();
+    let ctx = SpawnContext { tile_size, tilemap, floor_root };
 
     let mut used_positions: Vec<TilePos> = Vec::new();
 
@@ -160,7 +171,7 @@ fn spawn_doors(
     for (tile_pos, _) in door_tiles.iter() {
         let world_pos = ctx.tile_to_world(*tile_pos);
         let entity_type = DungeonEntity::Door { size };
-        commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
         used.push(*tile_pos);
     }
 }
@@ -192,7 +203,7 @@ fn spawn_chests(
             size,
         };
 
-        commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
         used.push(tile_pos);
     }
 }
@@ -221,7 +232,7 @@ fn spawn_stairs(
 
         let entity_type = DungeonEntity::Stairs { size };
 
-        commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
         used.push(tile_pos);
     }
 }
@@ -261,7 +272,7 @@ fn spawn_rocks(
             size,
         };
 
-        commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
         used.push(tile_pos);
     }
 }
@@ -296,7 +307,7 @@ fn spawn_crafting_stations(
             size,
         };
 
-        commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
         used.push(tile_pos);
     }
 
@@ -320,7 +331,7 @@ fn spawn_crafting_stations(
             size,
         };
 
-        commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
         used.push(tile_pos);
     }
 }
@@ -346,7 +357,7 @@ fn spawn_npcs(
 
             let entity_type = DungeonEntity::Npc { mob_id: *mob_id, size };
 
-            commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+            ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
             used.push(tile_pos);
         }
     }
@@ -361,7 +372,7 @@ fn spawn_npcs(
 
             let entity_type = DungeonEntity::Npc { mob_id: *mob_id, size };
 
-            commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+            ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
             used.push(tile_pos);
         }
     }
@@ -386,7 +397,7 @@ fn spawn_mobs(
 
             let entity_type = DungeonEntity::Mob { mob_id: *mob_id, size };
 
-            commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+            ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
             used.push(tile_pos);
         }
     }
@@ -416,7 +427,7 @@ fn spawn_mobs(
 
         let entity_type = DungeonEntity::Mob { mob_id: entry.mob_id, size };
 
-        commands.spawn(DungeonEntityMarker { pos: world_pos, entity_type });
+        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
         used.push(tile_pos);
     }
 }

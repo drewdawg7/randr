@@ -11,7 +11,7 @@ use crate::ui::animation::SpriteAnimation;
 use crate::ui::widgets::PlayerStats;
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet};
 
-use super::components::{DungeonPlayer, DungeonRoot};
+use super::components::{DungeonPlayer, DungeonRoot, FloorRoot};
 
 #[derive(Component)]
 pub struct DungeonCamera;
@@ -173,7 +173,9 @@ pub fn spawn_floor_ui(
     let path = map_path(layout_id);
     let map_handle: Handle<TiledMapAsset> = asset_server.load(path);
 
-    commands.spawn(TiledMap(map_handle));
+    let floor_root = commands.spawn((FloorRoot, Transform::default(), Visibility::default())).id();
+
+    commands.spawn((TiledMap(map_handle), ChildOf(floor_root)));
 
     let center_x = (map_width as f32 * tile_size) / 2.0;
     let center_y = (map_height as f32 * tile_size) / 2.0;
@@ -185,6 +187,7 @@ pub fn spawn_floor_ui(
     commands
         .spawn((
             DungeonRoot,
+            ChildOf(floor_root),
             Node {
                 width: Val::Percent(100.0),
                 height: Val::Percent(100.0),

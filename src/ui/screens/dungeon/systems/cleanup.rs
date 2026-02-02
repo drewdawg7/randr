@@ -1,20 +1,15 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::*;
 
-use super::super::components::DungeonRoot;
+use super::super::components::FloorRoot;
 use crate::dungeon::DungeonState;
 
 pub fn cleanup_dungeon(
     mut commands: Commands,
-    root_query: Query<Entity, With<DungeonRoot>>,
-    tilemap_query: Query<Entity, With<TiledMap>>,
+    floor_root_query: Query<Entity, With<FloorRoot>>,
     mut state: ResMut<DungeonState>,
 ) {
-    for entity in &root_query {
-        commands.entity(entity).despawn();
-    }
-    for entity in &tilemap_query {
-        commands.entity(entity).despawn();
+    if let Ok(floor_root) = floor_root_query.single() {
+        commands.entity(floor_root).despawn();
     }
     state.exit_dungeon();
 }
