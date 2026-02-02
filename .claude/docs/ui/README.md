@@ -2,6 +2,7 @@
 
 | Topic | File |
 |-------|------|
+| Camera, window, zoom | [rendering.md](rendering.md) |
 | row_node, column_node, layout helpers | [ui-nodes.md](ui-nodes.md) |
 | Decoupling UI from registries | [ui-display-data.md](ui-display-data.md) |
 | SelectionState trait, list navigation | [focus.md](focus.md) |
