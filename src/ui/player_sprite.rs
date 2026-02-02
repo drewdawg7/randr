@@ -27,10 +27,16 @@ impl Plugin for PlayerSpritePlugin {
                     tick_animation_clock,
                     animate_sprites,
                     animate_world_sprites,
-                    revert_player_idle,
-                    revert_attack_idle,
                 )
-                    .chain(),
+                    .chain()
+                    .run_if(any_with_component::<SpriteAnimation>),
+            )
+            .add_systems(
+                Update,
+                (
+                    revert_player_idle.run_if(any_with_component::<PlayerWalkTimer>),
+                    revert_attack_idle.run_if(any_with_component::<PlayerAttackTimer>),
+                ),
             )
             .register_sprite_marker::<DungeonPlayerSprite>();
     }
