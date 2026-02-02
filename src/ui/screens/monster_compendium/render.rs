@@ -202,7 +202,7 @@ pub fn update_stats_display(
     view_state: Res<CompendiumViewState>,
     monsters: Option<Res<CompendiumMonsters>>,
     game_sprites: Res<GameSprites>,
-    mut stats_section: Query<(Entity, &mut Node), With<CompendiumStatsSection>>,
+    mut stats_section: Query<(Entity, &mut Node, Option<&Children>), With<CompendiumStatsSection>>,
     added: Query<Entity, Added<CompendiumStatsSection>>,
 ) {
     let needs_update = list_state.is_changed() || view_state.is_changed() || !added.is_empty();
@@ -212,7 +212,7 @@ pub fn update_stats_display(
 
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else { return };
-    let Ok((section_entity, mut node)) = stats_section.single_mut() else { return };
+    let Ok((section_entity, mut node, children)) = stats_section.single_mut() else { return };
 
     let is_visible = view_state.view == CompendiumDetailView::Stats;
     node.display = if is_visible {
@@ -225,7 +225,11 @@ pub fn update_stats_display(
         return;
     }
 
-    commands.entity(section_entity).despawn();
+    if let Some(children) = children {
+        for child in children.iter() {
+            commands.entity(child).despawn();
+        }
+    }
     commands.entity(section_entity).with_children(|parent| {
         spawn_stat_item(
             parent,
@@ -332,7 +336,7 @@ pub fn update_drops_display(
     monsters: Option<Res<CompendiumMonsters>>,
     focus_state: Option<Res<FocusState>>,
     game_sprites: Res<GameSprites>,
-    mut drops_section: Query<(Entity, &mut Node), With<CompendiumDropsSection>>,
+    mut drops_section: Query<(Entity, &mut Node, Option<&Children>), With<CompendiumDropsSection>>,
     added: Query<Entity, Added<CompendiumDropsSection>>,
 ) {
     let needs_update = list_state.is_changed() || view_state.is_changed() || !added.is_empty();
@@ -342,7 +346,7 @@ pub fn update_drops_display(
 
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else { return };
-    let Ok((section_entity, mut node)) = drops_section.single_mut() else { return };
+    let Ok((section_entity, mut node, children)) = drops_section.single_mut() else { return };
 
     let is_visible = view_state.view == CompendiumDetailView::Drops;
     node.display = if is_visible {
@@ -362,7 +366,11 @@ pub fn update_drops_display(
         .as_ref()
         .map_or(false, |f| f.is_focused(FocusPanel::CompendiumDropsList));
 
-    commands.entity(section_entity).despawn();
+    if let Some(children) = children {
+        for child in children.iter() {
+            commands.entity(child).despawn();
+        }
+    }
     commands.entity(section_entity).with_children(|parent| {
         parent.spawn((
             Text::new("Drops:"),
