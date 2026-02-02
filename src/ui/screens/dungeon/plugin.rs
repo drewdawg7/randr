@@ -18,7 +18,7 @@ use crate::input::GameAction;
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
 use crate::location::LocationId;
 use crate::mob::MobId;
-use crate::states::AppState;
+use crate::states::{AppState, StateTransitionRequest};
 use crate::ui::screens::anvil_modal::ActiveAnvilEntity;
 use crate::ui::screens::fight_modal::state::FightModalMob;
 use crate::ui::screens::forge_modal::ActiveForgeEntity;
@@ -397,11 +397,11 @@ fn on_anvil_timer_finished(
 
 fn handle_back_action(
     mut action_events: MessageReader<GameAction>,
-    mut next_state: ResMut<NextState<AppState>>,
+    mut state_requests: MessageWriter<StateTransitionRequest>,
 ) {
     for action in action_events.read() {
         if matches!(action, GameAction::Back) {
-            next_state.set(AppState::Menu);
+            state_requests.write(StateTransitionRequest::Menu);
         }
     }
 }

@@ -1,3 +1,3 @@
 mod app_state;
 
-pub use app_state::{AppState, PreviousState, StateTransitionPlugin};
+pub use app_state::{AppState, PreviousState, StateTransitionPlugin, StateTransitionRequest};

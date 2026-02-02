@@ -4,10 +4,9 @@ use crate::entities::Progression;
 use crate::game::{PlayerGold, PlayerName};
 use crate::input::GameAction;
 use crate::stats::{HasStats, StatSheet};
-use crate::states::AppState;
+use crate::states::{AppState, StateTransitionRequest};
 use crate::ui::widgets::StatRow;
 
-/// Plugin that manages the profile/stats screen.
 pub struct ProfilePlugin;
 
 impl Plugin for ProfilePlugin {
@@ -21,11 +20,9 @@ impl Plugin for ProfilePlugin {
     }
 }
 
-/// Component marker for the profile screen UI root.
 #[derive(Component)]
 struct ProfileScreenRoot;
 
-/// System to spawn the profile screen UI.
 fn spawn_profile_screen(
     mut commands: Commands,
     name: Res<PlayerName>,
@@ -33,7 +30,6 @@ fn spawn_profile_screen(
     stats: Res<StatSheet>,
     prog: Res<Progression>,
 ) {
-    // Root container
     commands
         .spawn((
             ProfileScreenRoot,
@@ -49,7 +45,6 @@ fn spawn_profile_screen(
             BackgroundColor(Color::srgb(0.1, 0.1, 0.15)),
         ))
         .with_children(|parent| {
-            // Title - Character Name
             parent.spawn((
                 Text::new(format!("{}'s Profile", name.0)),
                 TextFont {
@@ -63,7 +58,6 @@ fn spawn_profile_screen(
                 },
             ));
 
-            // Stats container
             parent
                 .spawn(Node {
                     flex_direction: FlexDirection::Column,
@@ -123,7 +117,6 @@ fn spawn_profile_screen(
                             .build(),
                     );
 
-                    // XP Bar
                     let xp_current = prog.xp;
                     let xp_needed = Progression::xp_to_next_level(prog.level);
                     let xp_percent = (xp_current as f32 / xp_needed as f32 * 100.0) as i32;
@@ -137,7 +130,6 @@ fn spawn_profile_screen(
                             ..default()
                         })
                         .with_children(|parent| {
-                            // XP Label
                             parent.spawn((
                                 Text::new(format!("XP: {} / {} ({}%)", xp_current, xp_needed, xp_percent)),
                                 TextFont {
@@ -147,7 +139,6 @@ fn spawn_profile_screen(
                                 TextColor(Color::srgb(0.8, 0.5, 1.0)),
                             ));
 
-                            // XP Bar
                             parent.spawn((
                                 Text::new(xp_bar),
                                 TextFont {
@@ -159,7 +150,6 @@ fn spawn_profile_screen(
                         });
                 });
 
-            // Instructions
             parent.spawn((
                 Text::new("Press Backspace to return to Menu"),
                 TextFont {
@@ -175,7 +165,6 @@ fn spawn_profile_screen(
         });
 }
 
-/// Creates a text-based progress bar like "[=====>    ] 50%"
 fn create_text_progress_bar(current: i32, max: i32, width: usize) -> String {
     let filled_count = if max > 0 {
         ((current as f32 / max as f32) * width as f32) as usize
@@ -186,7 +175,6 @@ fn create_text_progress_bar(current: i32, max: i32, width: usize) -> String {
 
     let mut bar = String::from("[");
 
-    // Filled portion with arrow
     if filled_count > 0 {
         for _ in 0..(filled_count - 1) {
             bar.push('=');
@@ -194,7 +182,6 @@ fn create_text_progress_bar(current: i32, max: i32, width: usize) -> String {
         bar.push('>');
     }
 
-    // Empty portion
     for _ in filled_count..width {
         bar.push(' ');
     }
@@ -203,19 +190,17 @@ fn create_text_progress_bar(current: i32, max: i32, width: usize) -> String {
     bar
 }
 
-/// System to handle Back action to return to Menu.
 fn handle_back_action(
     mut action_reader: MessageReader<GameAction>,
-    mut next_state: ResMut<NextState<AppState>>,
+    mut state_requests: MessageWriter<StateTransitionRequest>,
 ) {
     for action in action_reader.read() {
         if *action == GameAction::Back {
-            next_state.set(AppState::Menu);
+            state_requests.write(StateTransitionRequest::Menu);
         }
     }
 }
 
-/// System to despawn the profile screen UI.
 fn despawn_profile_screen(
     mut commands: Commands,
     profile_root: Query<Entity, With<ProfileScreenRoot>>,

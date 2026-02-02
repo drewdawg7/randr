@@ -1,10 +1,9 @@
 use bevy::prelude::*;
 
 use crate::input::GameAction;
-use crate::states::AppState;
+use crate::states::{AppState, PreviousState, StateTransitionRequest};
 use crate::ui::column_node;
 
-/// Plugin that manages the keybinds modal screen.
 pub struct KeybindsPlugin;
 
 impl Plugin for KeybindsPlugin {
@@ -18,17 +17,14 @@ impl Plugin for KeybindsPlugin {
     }
 }
 
-/// Component marker for the keybinds screen UI root.
 #[derive(Component)]
 struct KeybindsScreenRoot;
 
-/// Keybind category for organizing controls.
 struct KeybindCategory {
     name: &'static str,
     bindings: Vec<(&'static str, &'static str)>,
 }
 
-/// System to spawn the keybinds screen UI.
 fn spawn_keybinds_screen(mut commands: Commands) {
     let categories = vec![
         KeybindCategory {
@@ -56,7 +52,6 @@ fn spawn_keybinds_screen(mut commands: Commands) {
         },
     ];
 
-    // Root container with semi-transparent overlay
     commands
         .spawn((
             KeybindsScreenRoot,
@@ -72,7 +67,6 @@ fn spawn_keybinds_screen(mut commands: Commands) {
             BackgroundColor(Color::srgba(0.0, 0.0, 0.0, 0.85)),
         ))
         .with_children(|parent| {
-            // Modal container
             parent
                 .spawn(Node {
                     flex_direction: FlexDirection::Column,
@@ -82,7 +76,6 @@ fn spawn_keybinds_screen(mut commands: Commands) {
                     ..default()
                 })
                 .with_children(|parent| {
-                    // Title
                     parent.spawn((
                         Text::new("Keybinds & Controls"),
                         TextFont {
@@ -96,7 +89,6 @@ fn spawn_keybinds_screen(mut commands: Commands) {
                         },
                     ));
 
-                    // Categories container
                     parent
                         .spawn(column_node(30.0))
                         .with_children(|parent| {
@@ -105,7 +97,6 @@ fn spawn_keybinds_screen(mut commands: Commands) {
                             }
                         });
 
-                    // Instructions
                     parent.spawn((
                         Text::new("Press Escape to close"),
                         TextFont {
@@ -122,12 +113,10 @@ fn spawn_keybinds_screen(mut commands: Commands) {
         });
 }
 
-/// Helper to spawn a keybind category section.
 fn spawn_category(parent: &mut ChildSpawnerCommands, category: KeybindCategory) {
     parent
         .spawn(column_node(10.0))
         .with_children(|parent| {
-            // Category name
             parent.spawn((
                 Text::new(category.name),
                 TextFont {
@@ -141,14 +130,12 @@ fn spawn_category(parent: &mut ChildSpawnerCommands, category: KeybindCategory) 
                 },
             ));
 
-            // Keybindings
             for (key, description) in category.bindings {
                 spawn_keybind_row(parent, key, description);
             }
         });
 }
 
-/// Helper to spawn a keybind row with key and description.
 fn spawn_keybind_row(parent: &mut ChildSpawnerCommands, key: &str, description: &str) {
     parent
         .spawn(Node {
@@ -159,7 +146,6 @@ fn spawn_keybind_row(parent: &mut ChildSpawnerCommands, key: &str, description: 
             ..default()
         })
         .with_children(|parent| {
-            // Key indicator (styled like a key cap)
             parent
                 .spawn(Node {
                     padding: UiRect::new(Val::Px(12.0), Val::Px(12.0), Val::Px(6.0), Val::Px(6.0)),
@@ -179,7 +165,6 @@ fn spawn_keybind_row(parent: &mut ChildSpawnerCommands, key: &str, description: 
                     ));
                 });
 
-            // Description
             parent.spawn((
                 Text::new(description),
                 TextFont {
@@ -191,26 +176,21 @@ fn spawn_keybind_row(parent: &mut ChildSpawnerCommands, key: &str, description: 
         });
 }
 
-/// System to handle Close action to return to previous state.
 fn handle_close_action(
     mut action_reader: MessageReader<GameAction>,
-    mut next_state: ResMut<NextState<AppState>>,
-    previous_state: Res<crate::states::PreviousState>,
+    mut state_requests: MessageWriter<StateTransitionRequest>,
+    previous_state: Res<PreviousState>,
 ) {
     for action in action_reader.read() {
         if *action == GameAction::CloseModal {
-            // Return to the previous state
-            if let Some(prev_state) = previous_state.state {
-                next_state.set(prev_state);
-            } else {
-                // Fallback to Menu if no previous state
-                next_state.set(AppState::Menu);
-            }
+            let target: StateTransitionRequest = previous_state
+                .state
+                .map_or(StateTransitionRequest::Menu, Into::into);
+            state_requests.write(target);
         }
     }
 }
 
-/// System to despawn the keybinds screen UI.
 fn despawn_keybinds_screen(
     mut commands: Commands,
     keybinds_root: Query<Entity, With<KeybindsScreenRoot>>,

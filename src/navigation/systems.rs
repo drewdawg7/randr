@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::input::GameAction;
-use crate::states::AppState;
+use crate::states::{AppState, StateTransitionRequest};
 use crate::ui::screens::modal::ModalType;
 use crate::ui::ModalCommands;
 
@@ -13,12 +13,11 @@ use crate::ui::screens::merchant_modal::MerchantModal;
 use crate::ui::screens::monster_compendium::MonsterCompendiumModal;
 use crate::ui::screens::skills_modal::SkillsModal;
 
-/// Central system that handles all navigation actions.
 pub fn handle_navigation(
     mut commands: Commands,
     mut action_reader: MessageReader<GameAction>,
     current_state: Res<State<AppState>>,
-    mut next_state: ResMut<NextState<AppState>>,
+    mut state_requests: MessageWriter<StateTransitionRequest>,
     nav_table: Res<NavigationTable>,
 ) {
     for action in action_reader.read() {
@@ -28,9 +27,8 @@ pub fn handle_navigation(
 
         match target {
             NavigationTarget::State(state) => {
-                // Don't transition if we're already in this state
                 if **current_state != state {
-                    next_state.set(state);
+                    state_requests.write(state.into());
                 }
             }
             NavigationTarget::Modal(modal_type) => {
@@ -40,9 +38,6 @@ pub fn handle_navigation(
     }
 }
 
-/// Handle modal toggle for different modal types.
-///
-/// Uses the `ModalCommands` extension trait for type-safe modal operations.
 fn handle_modal_toggle(commands: &mut Commands, modal_type: ModalType) {
     match modal_type {
         ModalType::Inventory => commands.toggle_modal::<InventoryModal>(),

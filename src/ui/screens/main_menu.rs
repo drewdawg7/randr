@@ -2,9 +2,8 @@ use bevy::prelude::*;
 
 use crate::assets::{GameFonts, GameSprites, SpriteSheetKey, UiAllSlice};
 use crate::input::{GameAction, NavigationDirection};
-use crate::states::AppState;
+use crate::states::{AppState, StateTransitionRequest};
 
-/// Plugin that manages the main menu screen.
 pub struct MainMenuPlugin;
 
 impl Plugin for MainMenuPlugin {
@@ -26,14 +25,13 @@ impl Plugin for MainMenuPlugin {
     }
 }
 
-/// Resource tracking the currently selected menu option.
 #[derive(Resource, Default)]
 pub struct MenuSelection {
     pub index: usize,
 }
 
 impl MenuSelection {
-    const MENU_ITEMS: usize = 3; // Town, Profile, Quit
+    const MENU_ITEMS: usize = 3;
 
     pub fn up(&mut self) {
         if self.index > 0 {
@@ -48,11 +46,9 @@ impl MenuSelection {
     }
 }
 
-/// Component marker for the main menu UI root.
 #[derive(Component)]
 struct MainMenuRoot;
 
-/// Component for menu items that use sprites instead of text.
 #[derive(Component)]
 struct SpriteMenuItem {
     index: usize,
@@ -60,17 +56,13 @@ struct SpriteMenuItem {
     selected_slice: &'static str,
 }
 
-/// Marker component for the randr title banner.
 #[derive(Component)]
 struct RandrTitle;
 
-/// Marker component indicating the background needs to be populated.
 #[derive(Component)]
 struct NeedsBackground;
 
-/// System to spawn the main menu UI.
 fn spawn_main_menu(mut commands: Commands) {
-    // Root container with placeholder background (populated by system when asset loads)
     commands
         .spawn((
             MainMenuRoot,
@@ -86,7 +78,6 @@ fn spawn_main_menu(mut commands: Commands) {
             BackgroundColor(Color::srgb(0.1, 0.1, 0.1)),
         ))
         .with_children(|parent| {
-            // Title banner with "randr" text (populated by system)
             parent.spawn((
                 RandrTitle,
                 Node {
@@ -99,7 +90,6 @@ fn spawn_main_menu(mut commands: Commands) {
                 },
             ));
 
-            // Menu options container
             parent
                 .spawn(Node {
                     flex_direction: FlexDirection::Column,
@@ -107,8 +97,6 @@ fn spawn_main_menu(mut commands: Commands) {
                     ..default()
                 })
                 .with_children(|parent| {
-                    // Town - uses sprite (placeholder, populated by system)
-                    // Original sprite is 47x14, scale 3x to match 32px text
                     parent.spawn((
                         SpriteMenuItem {
                             index: 0,
@@ -121,8 +109,6 @@ fn spawn_main_menu(mut commands: Commands) {
                             ..default()
                         },
                     ));
-                    // Profile - uses sprite
-                    // Original sprite is 47x14, scale 3x to match 32px text
                     parent.spawn((
                         SpriteMenuItem {
                             index: 1,
@@ -135,8 +121,6 @@ fn spawn_main_menu(mut commands: Commands) {
                             ..default()
                         },
                     ));
-                    // Quit - uses sprite
-                    // Original sprite is 47x14, scale 3x to match 32px text
                     parent.spawn((
                         SpriteMenuItem {
                             index: 2,
@@ -153,7 +137,6 @@ fn spawn_main_menu(mut commands: Commands) {
         });
 }
 
-/// System to handle menu navigation using GameAction events.
 fn handle_menu_navigation(
     mut action_reader: MessageReader<GameAction>,
     mut menu_selection: ResMut<MenuSelection>,
@@ -171,26 +154,22 @@ fn handle_menu_navigation(
     }
 }
 
-/// System to handle menu selection and state transitions.
 fn handle_menu_selection(
     mut action_reader: MessageReader<GameAction>,
     menu_selection: Res<MenuSelection>,
-    mut next_state: ResMut<NextState<AppState>>,
+    mut state_requests: MessageWriter<StateTransitionRequest>,
     mut app_exit: MessageWriter<AppExit>,
 ) {
     for action in action_reader.read() {
         if *action == GameAction::Select {
             match menu_selection.index {
                 0 => {
-                    // Dungeon
-                    next_state.set(AppState::Dungeon);
+                    state_requests.write(StateTransitionRequest::Dungeon);
                 }
                 1 => {
-                    // Profile
-                    next_state.set(AppState::Profile);
+                    state_requests.write(StateTransitionRequest::Profile);
                 }
                 2 => {
-                    // Quit
                     app_exit.write(AppExit::Success);
                 }
                 _ => {}
@@ -199,12 +178,10 @@ fn handle_menu_selection(
     }
 }
 
-/// System to reset the menu selection to the first item.
 fn reset_menu_selection(mut menu_selection: ResMut<MenuSelection>) {
     menu_selection.index = 0;
 }
 
-/// System to populate and update sprite menu items based on selection.
 fn update_sprite_menu_items(
     mut commands: Commands,
     menu_selection: Res<MenuSelection>,
@@ -228,13 +205,11 @@ fn update_sprite_menu_items(
 
         match image_node {
             Some(mut node) => {
-                // Update existing sprite's atlas index
                 if let Some(atlas) = &mut node.texture_atlas {
                     atlas.index = index;
                 }
             }
             None => {
-                // First time - insert the ImageNode
                 if let Some(img) = ui_all.image_node(slice_name) {
                     commands.entity(entity).insert(img);
                 }
@@ -243,7 +218,6 @@ fn update_sprite_menu_items(
     }
 }
 
-/// System to populate the randr title banner with sprite and text.
 fn populate_randr_title(
     mut commands: Commands,
     query: Query<Entity, With<RandrTitle>>,
@@ -277,7 +251,6 @@ fn populate_randr_title(
     }
 }
 
-/// System to populate the menu background when the asset loads.
 fn populate_menu_background(
     mut commands: Commands,
     query: Query<Entity, With<NeedsBackground>>,
@@ -299,7 +272,6 @@ fn populate_menu_background(
     }
 }
 
-/// System to despawn the main menu UI.
 fn despawn_main_menu(mut commands: Commands, menu_root: Query<Entity, With<MainMenuRoot>>) {
     if let Ok(entity) = menu_root.single() {
         commands.entity(entity).despawn();
