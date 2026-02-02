@@ -8,10 +8,16 @@ use tracing::instrument;
 
 use crate::crafting_station::CraftingStationType;
 use crate::dungeon::tile_components::{can_have_entity, is_door};
-use crate::dungeon::{DungeonEntity, DungeonEntityMarker, EntitySize, TileWorldSize};
+use crate::dungeon::{
+    ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, EntitySize, MobEntity,
+    NpcEntity, RockEntity, StairsEntity, TileWorldSize,
+};
 use crate::mob::MobId;
 use crate::rock::RockType;
 use crate::ui::screens::FloorRoot;
+
+const CHEST_VARIANT_COUNT: u8 = 4;
+const ROCK_SPRITE_VARIANT_COUNT: u8 = 2;
 
 #[derive(Debug, Clone)]
 pub struct MobSpawnEntry {
@@ -95,8 +101,12 @@ impl SpawnContext<'_> {
         EntitySize::new(self.tile_size, self.tile_size)
     }
 
-    fn spawn_entity(&self, commands: &mut Commands, marker: DungeonEntityMarker) {
-        let entity = commands.spawn(marker).id();
+    fn spawn_entity<C: Component>(&self, commands: &mut Commands, world_pos: Vec2, component: C) {
+        let marker = DungeonEntityMarker {
+            pos: world_pos,
+            size: self.entity_size(),
+        };
+        let entity = commands.spawn((marker, component)).id();
         if let Some(root) = self.floor_root {
             commands.entity(entity).insert(ChildOf(root));
         }
@@ -162,24 +172,24 @@ fn find_spawn_position(
     candidates.choose(rng).copied().copied()
 }
 
-fn spawn_n_entities<R: Rng, F>(
+fn spawn_n_entities<R: Rng, C: Component, F>(
     commands: &mut Commands,
     count: u32,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
     ctx: &SpawnContext,
     rng: &mut R,
-    mut create_entity: F,
+    mut create_component: F,
 ) where
-    F: FnMut(&mut R) -> DungeonEntity,
+    F: FnMut(&mut R) -> C,
 {
     for _ in 0..count {
         let Some(tile_pos) = find_spawn_position(available, used, rng) else {
             break;
         };
         let world_pos = ctx.tile_to_world(tile_pos);
-        let entity_type = create_entity(rng);
-        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
+        let component = create_component(rng);
+        ctx.spawn_entity(commands, world_pos, component);
         used.push(tile_pos);
     }
 }
@@ -190,12 +200,9 @@ fn spawn_doors(
     used: &mut Vec<TilePos>,
     ctx: &SpawnContext,
 ) {
-    let size = ctx.entity_size();
-
     for (tile_pos, _) in door_tiles.iter() {
         let world_pos = ctx.tile_to_world(*tile_pos);
-        let entity_type = DungeonEntity::Door { size };
-        ctx.spawn_entity(commands, DungeonEntityMarker { pos: world_pos, entity_type });
+        ctx.spawn_entity(commands, world_pos, DoorEntity);
         used.push(*tile_pos);
     }
 }
@@ -213,13 +220,9 @@ fn spawn_chests(
     }
 
     let count = rng.gen_range(config.chest.clone());
-    let size = ctx.entity_size();
 
-    spawn_n_entities(commands, count, available, used, ctx, rng, |rng| {
-        DungeonEntity::Chest {
-            variant: rng.gen_range(0..4),
-            size,
-        }
+    spawn_n_entities(commands, count, available, used, ctx, rng, |rng| ChestEntity {
+        variant: rng.gen_range(0..CHEST_VARIANT_COUNT),
     });
 }
 
@@ -236,11 +239,8 @@ fn spawn_stairs(
     }
 
     let count = rng.gen_range(config.stairs.clone());
-    let size = ctx.entity_size();
 
-    spawn_n_entities(commands, count, available, used, ctx, rng, |_| {
-        DungeonEntity::Stairs { size }
-    });
+    spawn_n_entities(commands, count, available, used, ctx, rng, |_| StairsEntity);
 }
 
 fn spawn_rocks(
@@ -256,20 +256,15 @@ fn spawn_rocks(
     }
 
     let count = rng.gen_range(config.rock.clone());
-    let size = ctx.entity_size();
 
     spawn_n_entities(commands, count, available, used, ctx, rng, |rng| {
-        let rock_type = match rng.gen_range(0..4u8) {
-            0 => RockType::Coal,
-            1 => RockType::Copper,
-            2 => RockType::Iron,
-            _ => RockType::Gold,
-        };
+        let rock_type = *[RockType::Coal, RockType::Copper, RockType::Iron, RockType::Gold]
+            .choose(rng)
+            .expect("array is non-empty");
 
-        DungeonEntity::Rock {
+        RockEntity {
             rock_type,
-            sprite_variant: rng.gen_range(0..2u8),
-            size,
+            sprite_variant: rng.gen_range(0..ROCK_SPRITE_VARIANT_COUNT),
         }
     });
 }
@@ -282,8 +277,6 @@ fn spawn_crafting_stations(
     ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    let size = ctx.entity_size();
-
     let forge_count = if *config.forge.end() > 0 {
         rng.gen_range(config.forge.clone())
     } else if let Some(prob) = config.forge_chance {
@@ -293,9 +286,8 @@ fn spawn_crafting_stations(
     };
 
     spawn_n_entities(commands, forge_count, available, used, ctx, rng, |_| {
-        DungeonEntity::CraftingStation {
+        CraftingStationEntity {
             station_type: CraftingStationType::Forge,
-            size,
         }
     });
 
@@ -308,9 +300,8 @@ fn spawn_crafting_stations(
     };
 
     spawn_n_entities(commands, anvil_count, available, used, ctx, rng, |_| {
-        DungeonEntity::CraftingStation {
+        CraftingStationEntity {
             station_type: CraftingStationType::Anvil,
-            size,
         }
     });
 }
@@ -323,22 +314,16 @@ fn spawn_npcs(
     ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    let size = ctx.entity_size();
-
     for (mob_id, count_range) in &config.npc_spawns {
         let count = rng.gen_range(count_range.clone());
         let mob_id = *mob_id;
-        spawn_n_entities(commands, count, available, used, ctx, rng, |_| {
-            DungeonEntity::Npc { mob_id, size }
-        });
+        spawn_n_entities(commands, count, available, used, ctx, rng, |_| NpcEntity { mob_id });
     }
 
     for (mob_id, probability) in &config.npc_chances {
         if rng.gen_bool(*probability) {
             let mob_id = *mob_id;
-            spawn_n_entities(commands, 1, available, used, ctx, rng, |_| {
-                DungeonEntity::Npc { mob_id, size }
-            });
+            spawn_n_entities(commands, 1, available, used, ctx, rng, |_| NpcEntity { mob_id });
         }
     }
 }
@@ -352,11 +337,8 @@ fn spawn_mobs(
     rng: &mut impl Rng,
 ) {
     for (mob_id, count) in &config.guaranteed_mobs {
-        let size = mob_id.spec().entity_size;
         let mob_id = *mob_id;
-        spawn_n_entities(commands, *count, available, used, ctx, rng, |_| {
-            DungeonEntity::Mob { mob_id, size }
-        });
+        spawn_n_entities(commands, *count, available, used, ctx, rng, |_| MobEntity { mob_id });
     }
 
     if config.weighted_mobs.is_empty() || *config.mob_count.end() == 0 {
@@ -374,8 +356,7 @@ fn spawn_mobs(
     spawn_n_entities(commands, count, available, used, ctx, rng, |rng| {
         let entry = weighted_select(weighted_mobs, total_weight, rng)
             .expect("weighted_mobs is non-empty with non-zero total weight");
-        let size = entry.mob_id.spec().entity_size;
-        DungeonEntity::Mob { mob_id: entry.mob_id, size }
+        MobEntity { mob_id: entry.mob_id }
     });
 }
 

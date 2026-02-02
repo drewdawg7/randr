@@ -4,7 +4,7 @@ use tracing::{debug, instrument};
 
 use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
 use crate::dungeon::tile_components::is_door;
-use crate::dungeon::{DungeonEntity, DungeonEntityMarker};
+use crate::dungeon::{DoorEntity, DungeonEntityMarker, MobEntity, StairsEntity};
 use crate::input::NavigationDirection;
 use crate::ui::screens::DungeonPlayer;
 
@@ -73,8 +73,11 @@ pub fn handle_player_collisions(
     mut result_events: MessageWriter<MoveResult>,
     mut transition_events: MessageWriter<FloorTransition>,
     player_query: Query<Entity, With<DungeonPlayer>>,
-    entity_query: Query<&DungeonEntityMarker>,
-    door_query: Query<(), With<is_door>>,
+    marker_query: Query<&DungeonEntityMarker>,
+    mob_query: Query<&MobEntity>,
+    stairs_query: Query<(), With<StairsEntity>>,
+    door_entity_query: Query<(), With<DoorEntity>>,
+    door_tile_query: Query<(), With<is_door>>,
 ) {
     let Ok(player_entity) = player_query.single() else {
         return;
@@ -89,27 +92,28 @@ pub fn handle_player_collisions(
             continue;
         };
 
-        if let Ok(marker) = entity_query.get(other) {
-            match marker.entity_type {
-                DungeonEntity::Mob { mob_id, .. } => {
-                    result_events.write(MoveResult::TriggeredCombat {
-                        mob_id,
-                        entity: other,
-                        pos: marker.pos,
-                    });
-                }
-                DungeonEntity::Door { .. } => {
-                    transition_events.write(FloorTransition::EnterDoor);
-                }
-                DungeonEntity::Stairs { .. } => {
-                    transition_events.write(FloorTransition::AdvanceFloor);
-                }
-                _ => {}
+        if let Ok(mob) = mob_query.get(other) {
+            if let Ok(marker) = marker_query.get(other) {
+                result_events.write(MoveResult::TriggeredCombat {
+                    mob_id: mob.mob_id,
+                    entity: other,
+                    pos: marker.pos,
+                });
             }
             continue;
         }
 
-        if door_query.get(other).is_ok() {
+        if door_entity_query.get(other).is_ok() {
+            transition_events.write(FloorTransition::EnterDoor);
+            continue;
+        }
+
+        if stairs_query.get(other).is_ok() {
+            transition_events.write(FloorTransition::AdvanceFloor);
+            continue;
+        }
+
+        if door_tile_query.get(other).is_ok() {
             transition_events.write(FloorTransition::EnterDoor);
         }
     }

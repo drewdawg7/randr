@@ -3,15 +3,29 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
 
-use crate::assets::GameSprites;
+use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
 use crate::dungeon::systems::on_map_created;
-use crate::dungeon::{map_path, DungeonEntity, DungeonEntityMarker, EntityRenderData, FloorType, GameLayer};
+use crate::dungeon::{
+    map_path, ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, FloorType,
+    GameLayer, MobEntity, NpcEntity, RockEntity, StairsEntity,
+};
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet};
 
 use super::components::{DungeonPlayer, DungeonRoot, FloorRoot};
+
+const Z_ORDER_FACTOR: f32 = 0.0001;
+const COLLIDER_SCALE: f32 = 0.9;
+const STAIRS_COLLIDER_SCALE: f32 = 0.6;
+const FORGE_COLLIDER_SCALE: f32 = 0.75;
+const FORGE_COLLIDER_OFFSET_Y: f32 = -8.0;
+const MOB_COLLIDER_SIZE: f32 = 16.0;
+const MOB_COLLIDER_OFFSET_Y: f32 = -8.0;
+const DEFAULT_TILE_SIZE: f32 = 32.0;
+const CAMERA_Z: f32 = 999.0;
+const PLAYER_COLLIDER_SIZE: f32 = 16.0;
 
 #[derive(Component)]
 pub struct DungeonCamera;
@@ -62,6 +76,13 @@ pub fn add_entity_visuals(
     trigger: On<Add, DungeonEntityMarker>,
     mut commands: Commands,
     marker_query: Query<&DungeonEntityMarker>,
+    chest_query: Query<&ChestEntity>,
+    rock_query: Query<&RockEntity>,
+    stairs_query: Query<(), With<StairsEntity>>,
+    crafting_query: Query<&CraftingStationEntity>,
+    door_query: Query<(), With<DoorEntity>>,
+    mob_query: Query<&MobEntity>,
+    npc_query: Query<&NpcEntity>,
     game_sprites: Res<GameSprites>,
     mob_sheets: Res<MobSpriteSheets>,
 ) {
@@ -70,104 +91,198 @@ pub fn add_entity_visuals(
         return;
     };
 
-    let z = marker.pos.y * 0.0001;
+    let z = marker.pos.y * Z_ORDER_FACTOR;
     let world_pos = Vec3::new(marker.pos.x, marker.pos.y, z);
 
-    let collider = collider_for_entity(&marker.entity_type);
-    let collision_layers = collision_layers_for_entity(&marker.entity_type);
+    if let Ok(_chest) = chest_query.get(entity) {
+        add_static_sprite(
+            &mut commands,
+            entity,
+            world_pos,
+            marker.size,
+            SpriteSheetKey::Chests,
+            "Slice_1",
+            CollisionLayers::new(GameLayer::StaticEntity, [GameLayer::Player]),
+            &game_sprites,
+        );
+        return;
+    }
 
-    match marker.entity_type.render_data() {
-        EntityRenderData::SpriteSheet { sheet_key, sprite_name } => {
-            let Some(sheet) = game_sprites.get(sheet_key) else {
-                return;
-            };
-            let Some(sprite) = sheet.sprite(sprite_name) else {
-                return;
-            };
+    if let Ok(rock) = rock_query.get(entity) {
+        let (sheet_key, sprite_name) = rock.rock_type.sprite_data(rock.sprite_variant);
+        add_static_sprite(
+            &mut commands,
+            entity,
+            world_pos,
+            marker.size,
+            sheet_key,
+            sprite_name,
+            CollisionLayers::new(GameLayer::StaticEntity, [GameLayer::Player]),
+            &game_sprites,
+        );
+        return;
+    }
 
-            commands.entity(entity).insert(StaticEntityBundle {
-                sprite,
-                transform: Transform::from_translation(world_pos),
-                collider,
-                collision_layers,
-                rigid_body: RigidBody::Static,
-            });
+    if stairs_query.get(entity).is_ok() {
+        let collider = Collider::rectangle(
+            marker.size.width * STAIRS_COLLIDER_SCALE,
+            marker.size.height * STAIRS_COLLIDER_SCALE,
+        );
+        let Some(sheet) = game_sprites.get(SpriteSheetKey::DungeonTileset) else {
+            return;
+        };
+        let Some(sprite) = sheet.sprite("stairs") else {
+            return;
+        };
+        commands.entity(entity).insert(SensorEntityBundle {
+            transform: Transform::from_translation(world_pos),
+            collider,
+            collision_layers: CollisionLayers::new(GameLayer::Trigger, [GameLayer::Player]),
+            sensor: Sensor,
+        });
+        commands.entity(entity).insert(sprite);
+        return;
+    }
 
-            if let DungeonEntity::CraftingStation { station_type, .. } = marker.entity_type {
-                match station_type {
-                    CraftingStationType::Forge => {
-                        commands.entity(entity).insert(ForgeCraftingState::default());
-                    }
-                    CraftingStationType::Anvil => {
-                        commands.entity(entity).insert(AnvilCraftingState::default());
-                    }
-                }
+    if let Ok(crafting) = crafting_query.get(entity) {
+        let (collider, collision_layers) = match crafting.station_type {
+            CraftingStationType::Forge => (
+                Collider::compound(vec![(
+                    Vec2::new(0.0, FORGE_COLLIDER_OFFSET_Y),
+                    0.0,
+                    Collider::rectangle(marker.size.width * FORGE_COLLIDER_SCALE, marker.size.height),
+                )]),
+                CollisionLayers::new(GameLayer::StaticEntity, [GameLayer::Player]),
+            ),
+            CraftingStationType::Anvil => (
+                Collider::rectangle(
+                    marker.size.width * COLLIDER_SCALE,
+                    marker.size.height * COLLIDER_SCALE,
+                ),
+                CollisionLayers::new(GameLayer::StaticEntity, [GameLayer::Player]),
+            ),
+        };
+
+        let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) else {
+            return;
+        };
+        let Some(sprite) = sheet.sprite(crafting.station_type.sprite_name()) else {
+            return;
+        };
+
+        commands.entity(entity).insert(StaticEntityBundle {
+            sprite,
+            transform: Transform::from_translation(world_pos),
+            collider,
+            collision_layers,
+            rigid_body: RigidBody::Static,
+        });
+
+        match crafting.station_type {
+            CraftingStationType::Forge => {
+                commands.entity(entity).insert(ForgeCraftingState::default());
+            }
+            CraftingStationType::Anvil => {
+                commands.entity(entity).insert(AnvilCraftingState::default());
             }
         }
-        EntityRenderData::AnimatedMob { mob_id } => {
-            let Some(sheet) = mob_sheets.get(mob_id) else {
-                return;
-            };
+        return;
+    }
 
-            commands.entity(entity).insert(AnimatedMobBundle {
-                combat: MobCombatBundle::from_mob_id(mob_id),
-                sprite: Sprite::from_atlas_image(
-                    sheet.texture.clone(),
-                    TextureAtlas {
-                        layout: sheet.layout.clone(),
-                        index: sheet.animation.first_frame,
-                    },
-                ),
-                transform: Transform::from_translation(world_pos),
-                animation: SpriteAnimation::new(&sheet.animation),
-                collider,
-                collision_layers,
-                rigid_body: RigidBody::Kinematic,
-            });
-        }
-        EntityRenderData::Invisible => {
-            commands.entity(entity).insert(SensorEntityBundle {
-                transform: Transform::from_translation(world_pos),
-                collider,
-                collision_layers,
-                sensor: Sensor,
-            });
-        }
+    if door_query.get(entity).is_ok() {
+        let collider = Collider::rectangle(
+            marker.size.width * COLLIDER_SCALE,
+            marker.size.height * COLLIDER_SCALE,
+        );
+        commands.entity(entity).insert(SensorEntityBundle {
+            transform: Transform::from_translation(world_pos),
+            collider,
+            collision_layers: CollisionLayers::new(GameLayer::Trigger, [GameLayer::Player]),
+            sensor: Sensor,
+        });
+        return;
+    }
+
+    if let Ok(mob) = mob_query.get(entity) {
+        add_animated_mob(
+            &mut commands,
+            entity,
+            world_pos,
+            mob.mob_id,
+            &mob_sheets,
+        );
+        return;
+    }
+
+    if let Ok(npc) = npc_query.get(entity) {
+        add_animated_mob(
+            &mut commands,
+            entity,
+            world_pos,
+            npc.mob_id,
+            &mob_sheets,
+        );
     }
 }
 
-fn collider_for_entity(entity_type: &DungeonEntity) -> Collider {
-    let size = entity_type.size();
-    match entity_type {
-        DungeonEntity::CraftingStation { station_type: CraftingStationType::Forge, .. } => {
-            Collider::compound(vec![(
-                Vec2::new(0.0, -8.0),
-                0.0,
-                Collider::rectangle(size.width * 0.75, size.height),
-            )])
-        }
-        DungeonEntity::Mob { .. } | DungeonEntity::Npc { .. } => {
-            Collider::compound(vec![(
-                Vec2::new(0.0, -8.0),
-                0.0,
-                Collider::rectangle(16.0, 16.0),
-            )])
-        }
-        DungeonEntity::Stairs { .. } => Collider::rectangle(size.width * 0.6, size.height * 0.6),
-        _ => Collider::rectangle(size.width * 0.9, size.height * 0.9),
-    }
+fn add_static_sprite(
+    commands: &mut Commands,
+    entity: Entity,
+    world_pos: Vec3,
+    size: crate::dungeon::EntitySize,
+    sheet_key: SpriteSheetKey,
+    sprite_name: &str,
+    collision_layers: CollisionLayers,
+    game_sprites: &GameSprites,
+) {
+    let Some(sheet) = game_sprites.get(sheet_key) else {
+        return;
+    };
+    let Some(sprite) = sheet.sprite(sprite_name) else {
+        return;
+    };
+    let collider = Collider::rectangle(size.width * COLLIDER_SCALE, size.height * COLLIDER_SCALE);
+    commands.entity(entity).insert(StaticEntityBundle {
+        sprite,
+        transform: Transform::from_translation(world_pos),
+        collider,
+        collision_layers,
+        rigid_body: RigidBody::Static,
+    });
 }
 
-fn collision_layers_for_entity(entity_type: &DungeonEntity) -> CollisionLayers {
-    match entity_type {
-        DungeonEntity::Mob { .. } | DungeonEntity::Npc { .. } => {
-            CollisionLayers::new(GameLayer::Mob, [GameLayer::Player])
-        }
-        DungeonEntity::Stairs { .. } | DungeonEntity::Door { .. } => {
-            CollisionLayers::new(GameLayer::Trigger, [GameLayer::Player])
-        }
-        _ => CollisionLayers::new(GameLayer::StaticEntity, [GameLayer::Player]),
-    }
+fn add_animated_mob(
+    commands: &mut Commands,
+    entity: Entity,
+    world_pos: Vec3,
+    mob_id: crate::mob::MobId,
+    mob_sheets: &MobSpriteSheets,
+) {
+    let Some(sheet) = mob_sheets.get(mob_id) else {
+        return;
+    };
+    let collider = Collider::compound(vec![(
+        Vec2::new(0.0, MOB_COLLIDER_OFFSET_Y),
+        0.0,
+        Collider::rectangle(MOB_COLLIDER_SIZE, MOB_COLLIDER_SIZE),
+    )]);
+    let collision_layers = CollisionLayers::new(GameLayer::Mob, [GameLayer::Player]);
+
+    commands.entity(entity).insert(AnimatedMobBundle {
+        combat: MobCombatBundle::from_mob_id(mob_id),
+        sprite: Sprite::from_atlas_image(
+            sheet.texture.clone(),
+            TextureAtlas {
+                layout: sheet.layout.clone(),
+                index: sheet.animation.first_frame,
+            },
+        ),
+        transform: Transform::from_translation(world_pos),
+        animation: SpriteAnimation::new(&sheet.animation),
+        collider,
+        collision_layers,
+        rigid_body: RigidBody::Kinematic,
+    });
 }
 
 pub fn spawn_floor_ui(
@@ -178,7 +293,7 @@ pub fn spawn_floor_ui(
     map_width: usize,
     map_height: usize,
 ) {
-    let tile_size = 32.0;
+    let tile_size = DEFAULT_TILE_SIZE;
 
     let layout_id = floor_type.layout_id(false);
     let path = map_path(layout_id);
@@ -194,7 +309,7 @@ pub fn spawn_floor_ui(
     let center_y = (map_height as f32 * tile_size) / 2.0;
     commands.entity(camera_entity).insert((
         DungeonCamera,
-        Transform::from_xyz(center_x, center_y, 999.0),
+        Transform::from_xyz(center_x, center_y, CAMERA_Z),
     ));
 
     commands.spawn((
@@ -218,7 +333,8 @@ pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &Pl
         return;
     };
 
-    let z = player_pos.y * 0.0001;
+    let z = player_pos.y * Z_ORDER_FACTOR;
+    let collider_offset_y = -(DEFAULT_TILE_SIZE / 2.0) + (PLAYER_COLLIDER_SIZE / 2.0);
 
     commands.spawn(PlayerBundle {
         marker: DungeonPlayer,
@@ -235,9 +351,9 @@ pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &Pl
         velocity: LinearVelocity::default(),
         locked_axes: LockedAxes::ROTATION_LOCKED,
         collider: Collider::compound(vec![(
-            Vec2::new(0.0, -(32.0 / 2.0) + (16.0 / 2.0)),
+            Vec2::new(0.0, collider_offset_y),
             0.0,
-            Collider::rectangle(16.0, 16.0),
+            Collider::rectangle(PLAYER_COLLIDER_SIZE, PLAYER_COLLIDER_SIZE),
         )]),
         collision_layers: CollisionLayers::new(
             GameLayer::Player,

@@ -7,9 +7,10 @@ use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::combat::ActiveCombat;
 use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
 use crate::dungeon::{
-    CraftingStationInteraction, DungeonEntity, DungeonEntityMarker, DungeonRegistry, DungeonState,
-    EntitySize, FloorReady, GameLayer, MineEntity, MiningResult, MoveResult, NpcInteraction,
-    PlayerMoveIntent, SpawnFloor, TileWorldSize,
+    ChestEntity, CraftingStationEntity, CraftingStationInteraction, DungeonEntityMarker,
+    DungeonRegistry, DungeonState, EntitySize, FloorReady, GameLayer, MineEntity,
+    MineableEntityType, MiningResult, MoveResult, NpcEntity, NpcInteraction, PlayerMoveIntent,
+    RockEntity, SpawnFloor, TileWorldSize,
 };
 use crate::input::GameAction;
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -192,7 +193,11 @@ fn handle_interact_action(
     mut mine_events: MessageWriter<MineEntity>,
     tile_size: Option<Res<TileWorldSize>>,
     spatial_query: SpatialQuery,
-    entity_query: Query<&DungeonEntityMarker>,
+    marker_query: Query<&DungeonEntityMarker>,
+    npc_query: Query<&NpcEntity>,
+    crafting_query: Query<&CraftingStationEntity>,
+    chest_query: Query<(), With<ChestEntity>>,
+    rock_query: Query<&RockEntity>,
     player_query: Query<&Position, With<DungeonPlayer>>,
 ) {
     let is_interact = action_reader.read().any(|a| *a == GameAction::Mine);
@@ -218,31 +223,39 @@ fn handle_interact_action(
         let intersections = spatial_query.point_intersections(pos, &filter);
 
         for entity in intersections {
-            let Ok(marker) = entity_query.get(entity) else {
+            let Ok(marker) = marker_query.get(entity) else {
                 continue;
             };
 
-            match &marker.entity_type {
-                DungeonEntity::Npc { mob_id, .. } => {
-                    npc_events.write(NpcInteraction { mob_id: *mob_id });
-                    return;
-                }
-                DungeonEntity::CraftingStation { station_type, .. } => {
-                    crafting_events.write(CraftingStationInteraction {
-                        entity,
-                        station_type: *station_type,
-                    });
-                    return;
-                }
-                DungeonEntity::Chest { .. } | DungeonEntity::Rock { .. } => {
-                    mine_events.write(MineEntity {
-                        entity,
-                        pos: marker.pos,
-                        entity_type: marker.entity_type,
-                    });
-                    return;
-                }
-                _ => {}
+            if let Ok(npc) = npc_query.get(entity) {
+                npc_events.write(NpcInteraction { mob_id: npc.mob_id });
+                return;
+            }
+
+            if let Ok(crafting) = crafting_query.get(entity) {
+                crafting_events.write(CraftingStationInteraction {
+                    entity,
+                    station_type: crafting.station_type,
+                });
+                return;
+            }
+
+            if chest_query.get(entity).is_ok() {
+                mine_events.write(MineEntity {
+                    entity,
+                    pos: marker.pos,
+                    mineable_type: MineableEntityType::Chest,
+                });
+                return;
+            }
+
+            if let Ok(rock) = rock_query.get(entity) {
+                mine_events.write(MineEntity {
+                    entity,
+                    pos: marker.pos,
+                    mineable_type: MineableEntityType::Rock { rock_type: rock.rock_type },
+                });
+                return;
             }
         }
     }
@@ -283,12 +296,11 @@ fn handle_crafting_station_interaction(
 
 fn handle_mining_result(mut commands: Commands, mut events: MessageReader<MiningResult>) {
     for event in events.read() {
-        let title = match &event.entity_type {
-            DungeonEntity::Chest { .. } => "Chest Opened!".to_string(),
-            DungeonEntity::Rock { rock_type, .. } => {
+        let title = match &event.mineable_type {
+            MineableEntityType::Chest => "Chest Opened!".to_string(),
+            MineableEntityType::Rock { rock_type } => {
                 format!("{} Mined!", rock_type.display_name())
             }
-            _ => "Loot!".to_string(),
         };
 
         commands.insert_resource(ResultsModalData {

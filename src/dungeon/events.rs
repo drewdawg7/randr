@@ -1,10 +1,11 @@
 use bevy::prelude::*;
 
 use crate::crafting_station::CraftingStationType;
-use crate::dungeon::{DungeonEntity, EntitySize, FloorType};
+use crate::dungeon::{EntitySize, FloorType};
 use crate::input::NavigationDirection;
 use crate::loot::LootDrop;
 use crate::mob::MobId;
+use crate::rock::RockType;
 
 #[derive(Message, Debug, Clone)]
 pub struct PlayerMoveIntent {
@@ -53,15 +54,21 @@ pub struct CraftingStationInteraction {
     pub station_type: CraftingStationType,
 }
 
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub enum MineableEntityType {
+    Chest,
+    Rock { rock_type: RockType },
+}
+
 #[derive(Message, Debug, Clone)]
 pub struct MineEntity {
     pub entity: Entity,
     pub pos: Vec2,
-    pub entity_type: DungeonEntity,
+    pub mineable_type: MineableEntityType,
 }
 
 #[derive(Message, Debug, Clone)]
 pub struct MiningResult {
-    pub entity_type: DungeonEntity,
+    pub mineable_type: MineableEntityType,
     pub loot_drops: Vec<LootDrop>,
 }

@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::chest::Chest;
-use crate::dungeon::events::{MineEntity, MiningResult};
-use crate::dungeon::{DungeonCommands, DungeonEntity};
+use crate::dungeon::events::{MineEntity, MineableEntityType, MiningResult};
+use crate::dungeon::DungeonCommands;
 use crate::inventory::Inventory;
 use crate::loot::{collect_loot_drops, HasLoot};
 use crate::rock::Rock;
@@ -20,23 +20,22 @@ pub fn handle_mine_entity(
     for event in events.read() {
         let magic_find = stats.value(StatType::MagicFind);
 
-        let loot_drops = match &event.entity_type {
-            DungeonEntity::Chest { .. } => Chest::default().roll_drops(magic_find),
-            DungeonEntity::Rock { rock_type, .. } => {
+        let loot_drops = match &event.mineable_type {
+            MineableEntityType::Chest => Chest::default().roll_drops(magic_find),
+            MineableEntityType::Rock { rock_type } => {
                 xp_events.write(SkillXpGained {
                     skill: SkillType::Mining,
                     amount: rock_type.mining_xp(),
                 });
                 Rock::new(*rock_type).roll_drops(magic_find)
             }
-            _ => continue,
         };
 
         collect_loot_drops(&mut *inventory, &loot_drops);
         commands.despawn_dungeon_entity(event.entity);
 
         result_events.write(MiningResult {
-            entity_type: event.entity_type.clone(),
+            mineable_type: event.mineable_type,
             loot_drops,
         });
     }

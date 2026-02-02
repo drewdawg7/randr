@@ -17,7 +17,10 @@ pub mod tiled;
 pub use bevy_ecs_tiled::prelude::TilePos;
 pub use commands::DungeonCommands;
 pub use config::DungeonConfig;
-pub use entity::{DungeonEntity, DungeonEntityMarker, EntityRenderData};
+pub use entity::{
+    ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, MobEntity, NpcEntity,
+    RockEntity, StairsEntity,
+};
 pub use floor::{FloorId, FloorSpec, FloorType};
 pub use grid::EntitySize;
 pub use physics::GameLayer;
@@ -35,6 +38,6 @@ pub use tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 pub use tiled::map_path;
 
 pub use events::{
-    CraftingStationInteraction, FloorReady, FloorTransition, MineEntity, MiningResult, MoveResult,
-    NpcInteraction, PlayerMoveIntent,
+    CraftingStationInteraction, FloorReady, FloorTransition, MineEntity, MineableEntityType,
+    MiningResult, MoveResult, NpcInteraction, PlayerMoveIntent,
 };
