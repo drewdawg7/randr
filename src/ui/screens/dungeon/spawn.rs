@@ -5,6 +5,7 @@ use tracing::instrument;
 
 use crate::assets::GameSprites;
 use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraftingState};
+use crate::dungeon::systems::on_map_created;
 use crate::dungeon::{map_path, DungeonEntity, DungeonEntityMarker, EntityRenderData, FloorType, GameLayer};
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
@@ -175,7 +176,9 @@ pub fn spawn_floor_ui(
 
     let floor_root = commands.spawn((FloorRoot, Transform::default(), Visibility::default())).id();
 
-    commands.spawn((TiledMap(map_handle), ChildOf(floor_root)));
+    commands
+        .spawn((TiledMap(map_handle), ChildOf(floor_root)))
+        .observe(on_map_created);
 
     let center_x = (map_width as f32 * tile_size) / 2.0;
     let center_y = (map_height as f32 * tile_size) / 2.0;

@@ -15,7 +15,7 @@ use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::DungeonState;
 use crate::dungeon::systems::{
     handle_floor_transition, handle_mine_entity, handle_mob_defeated,
-    handle_player_collisions, handle_player_move, on_map_created, prepare_floor,
+    handle_player_collisions, handle_player_move, prepare_floor,
     stop_player_when_idle, SpawnFloor,
 };
 use crate::dungeon::tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
@@ -84,7 +84,6 @@ impl Plugin for DungeonPlugin {
             .add_message::<CraftingStationInteraction>()
             .add_message::<MineEntity>()
             .add_message::<MiningResult>()
-            .add_observer(on_map_created)
             .add_observer(on_collider_created)
             .add_systems(
                 Update,

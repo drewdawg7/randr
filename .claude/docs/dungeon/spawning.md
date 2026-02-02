@@ -2,6 +2,18 @@
 
 Spawn system in `src/dungeon/systems/spawning.rs`.
 
+## Observer Registration
+
+The `on_map_created` observer is attached directly to the TiledMap entity using `.observe()`:
+
+```rust
+commands
+    .spawn((TiledMap(map_handle), ChildOf(floor_root)))
+    .observe(on_map_created);
+```
+
+**Important**: Use entity-scoped observers (`.observe()`) not global observers (`.add_observer()`). Global observers receive propagated events from the entire hierarchy, causing duplicate spawning when TiledMap is a child of FloorRoot.
+
 ## SpawnTable (`src/dungeon/spawn.rs`)
 
 High-level declarative API:

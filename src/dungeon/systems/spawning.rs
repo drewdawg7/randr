@@ -4,6 +4,7 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use rand::seq::SliceRandom;
 use rand::Rng;
+use tracing::instrument;
 
 use crate::crafting_station::CraftingStationType;
 use crate::dungeon::tile_components::{can_have_entity, is_door};
@@ -102,6 +103,7 @@ impl SpawnContext<'_> {
     }
 }
 
+#[instrument(level = "debug", skip_all)]
 pub fn on_map_created(
     _trigger: On<TiledEvent<MapCreated>>,
     mut commands: Commands,
