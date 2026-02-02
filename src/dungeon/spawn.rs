@@ -1,10 +1,16 @@
 use std::ops::RangeInclusive;
 
+use bevy::prelude::*;
 use bon::Builder;
 
 use super::grid::EntitySize;
-use super::systems::spawning::{FloorSpawnConfig, MobSpawnEntry};
 use crate::mob::MobId;
+
+#[derive(Debug, Clone)]
+pub struct MobSpawnEntry {
+    pub mob_id: MobId,
+    pub weight: u32,
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum SpawnEntityType {
@@ -18,7 +24,7 @@ pub struct SpawnEntry {
     pub size: EntitySize,
 }
 
-#[derive(Debug, Clone, Builder)]
+#[derive(Debug, Clone, Resource, Builder)]
 pub struct SpawnTable {
     #[builder(field)]
     entries: Vec<SpawnEntry>,
@@ -83,37 +89,61 @@ impl SpawnTable {
         Self::builder()
     }
 
-    pub fn to_config(&self) -> FloorSpawnConfig {
-        FloorSpawnConfig {
-            chest: self.chest.clone(),
-            stairs: self.stairs.clone(),
-            rock: self.rock.clone(),
-            forge: self.forge.clone(),
-            anvil: self.anvil.clone(),
-            forge_chance: self.forge_chance,
-            anvil_chance: self.anvil_chance,
-            weighted_mobs: self
-                .entries
-                .iter()
-                .map(|e| {
-                    let SpawnEntityType::Mob(mob_id) = e.entity_type;
-                    MobSpawnEntry {
-                        mob_id,
-                        weight: e.weight,
-                    }
-                })
-                .collect(),
-            mob_count: self.mob_count.clone(),
-            guaranteed_mobs: self.guaranteed_mobs.clone(),
-            npc_spawns: self.npc_spawns.clone(),
-            npc_chances: self.npc_chances.clone(),
-        }
+    pub fn weighted_mobs(&self) -> Vec<MobSpawnEntry> {
+        self.entries
+            .iter()
+            .map(|e| {
+                let SpawnEntityType::Mob(mob_id) = e.entity_type;
+                MobSpawnEntry {
+                    mob_id,
+                    weight: e.weight,
+                }
+            })
+            .collect()
     }
-}
 
-impl From<&SpawnTable> for FloorSpawnConfig {
-    fn from(table: &SpawnTable) -> Self {
-        table.to_config()
+    pub fn mob_count(&self) -> &RangeInclusive<u32> {
+        &self.mob_count
+    }
+
+    pub fn guaranteed_mobs(&self) -> &[(MobId, u32)] {
+        &self.guaranteed_mobs
+    }
+
+    pub fn npc_spawns(&self) -> &[(MobId, RangeInclusive<u32>)] {
+        &self.npc_spawns
+    }
+
+    pub fn npc_chances(&self) -> &[(MobId, f64)] {
+        &self.npc_chances
+    }
+
+    pub fn chest(&self) -> &RangeInclusive<u32> {
+        &self.chest
+    }
+
+    pub fn stairs(&self) -> &RangeInclusive<u32> {
+        &self.stairs
+    }
+
+    pub fn rock(&self) -> &RangeInclusive<u32> {
+        &self.rock
+    }
+
+    pub fn forge(&self) -> &RangeInclusive<u32> {
+        &self.forge
+    }
+
+    pub fn anvil(&self) -> &RangeInclusive<u32> {
+        &self.anvil
+    }
+
+    pub fn forge_chance(&self) -> Option<f64> {
+        self.forge_chance
+    }
+
+    pub fn anvil_chance(&self) -> Option<f64> {
+        self.anvil_chance
     }
 }
 
@@ -133,90 +163,83 @@ mod tests {
     }
 
     #[test]
-    fn to_config_converts_chest_range() {
+    fn chest_range() {
         let table = SpawnTable::new().chest(2..=5).build();
-        let config = table.to_config();
-
-        assert_eq!(config.chest, 2..=5);
+        assert_eq!(*table.chest(), 2..=5);
     }
 
     #[test]
-    fn to_config_converts_weighted_mobs() {
+    fn weighted_mobs() {
         let table = SpawnTable::new()
             .mob(MobId::Goblin, 5)
             .mob(MobId::Slime, 3)
             .mob_count(3..=4)
             .build();
-        let config = table.to_config();
 
-        assert_eq!(config.weighted_mobs.len(), 2);
-        assert_eq!(config.weighted_mobs[0].mob_id, MobId::Goblin);
-        assert_eq!(config.weighted_mobs[0].weight, 5);
-        assert_eq!(config.weighted_mobs[1].mob_id, MobId::Slime);
-        assert_eq!(config.weighted_mobs[1].weight, 3);
-        assert_eq!(config.mob_count, 3..=4);
+        let mobs = table.weighted_mobs();
+        assert_eq!(mobs.len(), 2);
+        assert_eq!(mobs[0].mob_id, MobId::Goblin);
+        assert_eq!(mobs[0].weight, 5);
+        assert_eq!(mobs[1].mob_id, MobId::Slime);
+        assert_eq!(mobs[1].weight, 3);
+        assert_eq!(*table.mob_count(), 3..=4);
     }
 
     #[test]
-    fn to_config_converts_guaranteed_mobs() {
+    fn guaranteed_mobs() {
         let table = SpawnTable::new()
             .guaranteed_mob(MobId::DwarfKing, 1)
             .guaranteed_mob(MobId::DwarfWarrior, 2)
             .build();
-        let config = table.to_config();
 
-        assert_eq!(config.guaranteed_mobs.len(), 2);
-        assert!(config.guaranteed_mobs.contains(&(MobId::DwarfKing, 1)));
-        assert!(config.guaranteed_mobs.contains(&(MobId::DwarfWarrior, 2)));
+        let mobs = table.guaranteed_mobs();
+        assert_eq!(mobs.len(), 2);
+        assert!(mobs.contains(&(MobId::DwarfKing, 1)));
+        assert!(mobs.contains(&(MobId::DwarfWarrior, 2)));
     }
 
     #[test]
-    fn to_config_converts_npc_spawns() {
+    fn npc_spawns() {
         let table = SpawnTable::new()
             .npc(MobId::Merchant, 1..=1)
             .npc_chance(MobId::Merchant, 0.33)
             .build();
-        let config = table.to_config();
 
-        assert_eq!(config.npc_spawns.len(), 1);
-        assert_eq!(config.npc_spawns[0], (MobId::Merchant, 1..=1));
-        assert_eq!(config.npc_chances.len(), 1);
-        assert_eq!(config.npc_chances[0].0, MobId::Merchant);
+        assert_eq!(table.npc_spawns().len(), 1);
+        assert_eq!(table.npc_spawns()[0], (MobId::Merchant, 1..=1));
+        assert_eq!(table.npc_chances().len(), 1);
+        assert_eq!(table.npc_chances()[0].0, MobId::Merchant);
     }
 
     #[test]
-    fn to_config_converts_crafting_stations() {
+    fn crafting_stations() {
         let table = SpawnTable::new()
             .forge(1..=1)
             .anvil(2..=2)
             .forge_chance(0.33)
             .anvil_chance(0.5)
             .build();
-        let config = table.to_config();
 
-        assert_eq!(config.forge, 1..=1);
-        assert_eq!(config.anvil, 2..=2);
-        assert_eq!(config.forge_chance, Some(0.33));
-        assert_eq!(config.anvil_chance, Some(0.5));
+        assert_eq!(*table.forge(), 1..=1);
+        assert_eq!(*table.anvil(), 2..=2);
+        assert_eq!(table.forge_chance(), Some(0.33));
+        assert_eq!(table.anvil_chance(), Some(0.5));
     }
 
     #[test]
-    fn empty_spawn_table_creates_empty_config() {
+    fn empty_spawn_table() {
         let table = SpawnTable::empty().build();
-        let config = table.to_config();
 
-        assert_eq!(*config.chest.end(), 0);
-        assert_eq!(*config.stairs.end(), 0);
-        assert!(config.weighted_mobs.is_empty());
-        assert!(config.guaranteed_mobs.is_empty());
+        assert_eq!(*table.chest().end(), 0);
+        assert_eq!(*table.stairs().end(), 0);
+        assert!(table.weighted_mobs().is_empty());
+        assert!(table.guaranteed_mobs().is_empty());
     }
 
     #[test]
-    fn from_trait_works() {
+    fn rock_range() {
         let table = SpawnTable::new().rock(3..=3).build();
-        let config: FloorSpawnConfig = (&table).into();
-
-        assert_eq!(config.rock, 3..=3);
+        assert_eq!(*table.rock(), 3..=3);
     }
 }
 

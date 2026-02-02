@@ -1,5 +1,3 @@
-use std::ops::RangeInclusive;
-
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use rand::seq::SliceRandom;
@@ -7,58 +5,17 @@ use rand::Rng;
 use tracing::instrument;
 
 use crate::crafting_station::CraftingStationType;
+use crate::dungeon::spawn::{MobSpawnEntry, SpawnTable};
 use crate::dungeon::tile_components::{can_have_entity, is_door};
 use crate::dungeon::{
     ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, EntitySize, MobEntity,
     NpcEntity, RockEntity, StairsEntity, TileWorldSize,
 };
-use crate::mob::MobId;
 use crate::rock::RockType;
 use crate::ui::screens::FloorRoot;
 
 const CHEST_VARIANT_COUNT: u8 = 4;
 const ROCK_SPRITE_VARIANT_COUNT: u8 = 2;
-
-#[derive(Debug, Clone)]
-pub struct MobSpawnEntry {
-    pub mob_id: MobId,
-    pub weight: u32,
-}
-
-#[derive(Resource, Debug, Clone)]
-pub struct FloorSpawnConfig {
-    pub chest: RangeInclusive<u32>,
-    pub stairs: RangeInclusive<u32>,
-    pub rock: RangeInclusive<u32>,
-    pub forge: RangeInclusive<u32>,
-    pub anvil: RangeInclusive<u32>,
-    pub forge_chance: Option<f64>,
-    pub anvil_chance: Option<f64>,
-    pub weighted_mobs: Vec<MobSpawnEntry>,
-    pub mob_count: RangeInclusive<u32>,
-    pub guaranteed_mobs: Vec<(MobId, u32)>,
-    pub npc_spawns: Vec<(MobId, RangeInclusive<u32>)>,
-    pub npc_chances: Vec<(MobId, f64)>,
-}
-
-impl Default for FloorSpawnConfig {
-    fn default() -> Self {
-        Self {
-            chest: 0..=0,
-            stairs: 0..=0,
-            rock: 0..=0,
-            forge: 0..=0,
-            anvil: 0..=0,
-            forge_chance: None,
-            anvil_chance: None,
-            weighted_mobs: Vec::new(),
-            mob_count: 0..=0,
-            guaranteed_mobs: Vec::new(),
-            npc_spawns: Vec::new(),
-            npc_chances: Vec::new(),
-        }
-    }
-}
 
 type TilemapQuery<'w, 's> = Query<
     'w,
@@ -122,7 +79,7 @@ pub fn on_map_created(
     tilemap_query: TilemapQuery,
     floor_root_query: Query<Entity, With<FloorRoot>>,
     tile_world_size: Option<Res<TileWorldSize>>,
-    config: Option<Res<FloorSpawnConfig>>,
+    config: Option<Res<SpawnTable>>,
 ) {
     let tile_size = tile_world_size.map(|t| t.0).unwrap_or(32.0);
     let tilemap = tilemap_query.single().ok();
@@ -156,7 +113,7 @@ pub fn on_map_created(
     spawn_npcs(&mut commands, &config, &available, &mut used_positions, &ctx, &mut rng);
     spawn_mobs(&mut commands, &config, &available, &mut used_positions, &ctx, &mut rng);
 
-    commands.remove_resource::<FloorSpawnConfig>();
+    commands.remove_resource::<SpawnTable>();
 }
 
 fn find_spawn_position(
@@ -209,17 +166,17 @@ fn spawn_doors(
 
 fn spawn_chests(
     commands: &mut Commands,
-    config: &FloorSpawnConfig,
+    config: &SpawnTable,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
     ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    if *config.chest.end() == 0 {
+    if *config.chest().end() == 0 {
         return;
     }
 
-    let count = rng.gen_range(config.chest.clone());
+    let count = rng.gen_range(config.chest().clone());
 
     spawn_n_entities(commands, count, available, used, ctx, rng, |rng| ChestEntity {
         variant: rng.gen_range(0..CHEST_VARIANT_COUNT),
@@ -228,40 +185,40 @@ fn spawn_chests(
 
 fn spawn_stairs(
     commands: &mut Commands,
-    config: &FloorSpawnConfig,
+    config: &SpawnTable,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
     ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    if *config.stairs.end() == 0 {
+    if *config.stairs().end() == 0 {
         return;
     }
 
-    let count = rng.gen_range(config.stairs.clone());
+    let count = rng.gen_range(config.stairs().clone());
 
     spawn_n_entities(commands, count, available, used, ctx, rng, |_| StairsEntity);
 }
 
 fn spawn_rocks(
     commands: &mut Commands,
-    config: &FloorSpawnConfig,
+    config: &SpawnTable,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
     ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    if *config.rock.end() == 0 {
+    if *config.rock().end() == 0 {
         return;
     }
 
-    let count = rng.gen_range(config.rock.clone());
+    let count = rng.gen_range(config.rock().clone());
+
+    const ROCK_TYPES: [RockType; 4] =
+        [RockType::Coal, RockType::Copper, RockType::Iron, RockType::Gold];
 
     spawn_n_entities(commands, count, available, used, ctx, rng, |rng| {
-        let rock_type = *[RockType::Coal, RockType::Copper, RockType::Iron, RockType::Gold]
-            .choose(rng)
-            .expect("array is non-empty");
-
+        let rock_type = ROCK_TYPES[rng.gen_range(0..ROCK_TYPES.len())];
         RockEntity {
             rock_type,
             sprite_variant: rng.gen_range(0..ROCK_SPRITE_VARIANT_COUNT),
@@ -271,15 +228,15 @@ fn spawn_rocks(
 
 fn spawn_crafting_stations(
     commands: &mut Commands,
-    config: &FloorSpawnConfig,
+    config: &SpawnTable,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
     ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    let forge_count = if *config.forge.end() > 0 {
-        rng.gen_range(config.forge.clone())
-    } else if let Some(prob) = config.forge_chance {
+    let forge_count = if *config.forge().end() > 0 {
+        rng.gen_range(config.forge().clone())
+    } else if let Some(prob) = config.forge_chance() {
         if rng.gen_bool(prob) { 1 } else { 0 }
     } else {
         0
@@ -291,9 +248,9 @@ fn spawn_crafting_stations(
         }
     });
 
-    let anvil_count = if *config.anvil.end() > 0 {
-        rng.gen_range(config.anvil.clone())
-    } else if let Some(prob) = config.anvil_chance {
+    let anvil_count = if *config.anvil().end() > 0 {
+        rng.gen_range(config.anvil().clone())
+    } else if let Some(prob) = config.anvil_chance() {
         if rng.gen_bool(prob) { 1 } else { 0 }
     } else {
         0
@@ -308,19 +265,19 @@ fn spawn_crafting_stations(
 
 fn spawn_npcs(
     commands: &mut Commands,
-    config: &FloorSpawnConfig,
+    config: &SpawnTable,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
     ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    for (mob_id, count_range) in &config.npc_spawns {
+    for (mob_id, count_range) in config.npc_spawns() {
         let count = rng.gen_range(count_range.clone());
         let mob_id = *mob_id;
         spawn_n_entities(commands, count, available, used, ctx, rng, |_| NpcEntity { mob_id });
     }
 
-    for (mob_id, probability) in &config.npc_chances {
+    for (mob_id, probability) in config.npc_chances() {
         if rng.gen_bool(*probability) {
             let mob_id = *mob_id;
             spawn_n_entities(commands, 1, available, used, ctx, rng, |_| NpcEntity { mob_id });
@@ -330,32 +287,33 @@ fn spawn_npcs(
 
 fn spawn_mobs(
     commands: &mut Commands,
-    config: &FloorSpawnConfig,
+    config: &SpawnTable,
     available: &[TilePos],
     used: &mut Vec<TilePos>,
     ctx: &SpawnContext,
     rng: &mut impl Rng,
 ) {
-    for (mob_id, count) in &config.guaranteed_mobs {
+    for (mob_id, count) in config.guaranteed_mobs() {
         let mob_id = *mob_id;
         spawn_n_entities(commands, *count, available, used, ctx, rng, |_| MobEntity { mob_id });
     }
 
-    if config.weighted_mobs.is_empty() || *config.mob_count.end() == 0 {
+    let weighted_mobs = config.weighted_mobs();
+    if weighted_mobs.is_empty() || *config.mob_count().end() == 0 {
         return;
     }
 
-    let total_weight: u32 = config.weighted_mobs.iter().map(|e| e.weight).sum();
+    let total_weight: u32 = weighted_mobs.iter().map(|e| e.weight).sum();
     if total_weight == 0 {
         return;
     }
 
-    let count = rng.gen_range(config.mob_count.clone());
-    let weighted_mobs = &config.weighted_mobs;
+    let count = rng.gen_range(config.mob_count().clone());
 
     spawn_n_entities(commands, count, available, used, ctx, rng, |rng| {
-        let entry = weighted_select(weighted_mobs, total_weight, rng)
-            .expect("weighted_mobs is non-empty with non-zero total weight");
+        let Some(entry) = weighted_select(&weighted_mobs, total_weight, rng) else {
+            return MobEntity { mob_id: weighted_mobs[0].mob_id };
+        };
         MobEntity { mob_id: entry.mob_id }
     });
 }
@@ -385,14 +343,7 @@ fn weighted_select<'a>(
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn floor_spawn_config_default() {
-        let config = FloorSpawnConfig::default();
-        assert_eq!(*config.chest.end(), 0);
-        assert_eq!(*config.stairs.end(), 0);
-        assert!(config.weighted_mobs.is_empty());
-    }
+    use crate::mob::MobId;
 
     #[test]
     fn weighted_select_returns_entry() {

@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::dungeon::floor::FloorId;
-use crate::dungeon::systems::spawning::FloorSpawnConfig;
+use crate::dungeon::spawn::SpawnTable;
 use crate::dungeon::{DungeonRegistry, EntitySize};
 use crate::location::LocationId;
 
@@ -80,10 +80,10 @@ impl DungeonState {
         self.player_size = EntitySize::default();
     }
 
-    pub fn get_spawn_config(&self) -> Option<FloorSpawnConfig> {
+    pub fn get_spawn_config(&self) -> Option<SpawnTable> {
         let floor_id = self.current_floor()?;
         let spec = floor_id.spec();
-        Some(spec.spawn_table.to_config())
+        Some(spec.spawn_table.clone())
     }
 
     pub fn is_in_dungeon(&self) -> bool {
