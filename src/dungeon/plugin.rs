@@ -12,7 +12,7 @@ use crate::dungeon::events::{
 };
 use crate::plugins::MobDefeated;
 use crate::dungeon::floor::FloorId;
-use crate::dungeon::state::DungeonState;
+use crate::dungeon::state::{DungeonState, TileWorldSize};
 use crate::dungeon::systems::{
     handle_floor_transition, handle_mine_entity, handle_mob_defeated,
     handle_player_collisions, handle_player_move, prepare_floor,
@@ -26,7 +26,6 @@ pub struct FloorMonsterCount(pub usize);
 
 #[derive(Component)]
 pub struct TiledWallCollider;
-
 
 #[derive(Resource, Clone, Debug)]
 pub struct DungeonRegistry {
@@ -66,7 +65,7 @@ pub struct DungeonPlugin {
 
 impl Plugin for DungeonPlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins(PhysicsPlugins::default().with_length_unit(32.0))
+        app.add_plugins(PhysicsPlugins::default().with_length_unit(TileWorldSize::default().0))
             .add_plugins(TiledPhysicsPlugin::<TiledPhysicsAvianBackend>::default())
             .insert_resource(Gravity::ZERO)
             .register_type::<is_solid>()
@@ -101,10 +100,10 @@ impl Plugin for DungeonPlugin {
 }
 
 impl DungeonPlugin {
-    pub fn new() -> DungeonBuilder {
+    pub fn new() -> DungeonBuilder<NoLocation> {
         DungeonBuilder {
             configs: HashMap::new(),
-            current_location: None,
+            state: NoLocation,
         }
     }
 }
@@ -119,24 +118,37 @@ impl Default for DungeonPlugin {
     }
 }
 
-pub struct DungeonBuilder {
+pub struct NoLocation;
+pub struct HasLocation(LocationId);
+
+pub struct DungeonBuilder<S = NoLocation> {
     configs: HashMap<LocationId, DungeonConfig>,
-    current_location: Option<LocationId>,
+    state: S,
 }
 
-impl DungeonBuilder {
-    pub fn location(mut self, id: LocationId) -> Self {
-        self.current_location = Some(id);
+impl DungeonBuilder<NoLocation> {
+    pub fn location(mut self, id: LocationId) -> DungeonBuilder<HasLocation> {
         self.configs
             .entry(id)
             .or_insert(DungeonConfig::new(Vec::new()));
+        DungeonBuilder {
+            configs: self.configs,
+            state: HasLocation(id),
+        }
+    }
+}
+
+impl DungeonBuilder<HasLocation> {
+    pub fn location(mut self, id: LocationId) -> Self {
+        self.configs
+            .entry(id)
+            .or_insert(DungeonConfig::new(Vec::new()));
+        self.state = HasLocation(id);
         self
     }
 
     pub fn floor(mut self, floor: FloorId) -> Self {
-        let location = self
-            .current_location
-            .expect("floor() called before location()");
+        let location = self.state.0;
         if let Some(config) = self.configs.get_mut(&location) {
             let mut floors = config.floors().to_vec();
             floors.push(floor);
@@ -146,11 +158,6 @@ impl DungeonBuilder {
     }
 
     pub fn build(self) -> DungeonPlugin {
-        assert!(
-            !self.configs.is_empty(),
-            "DungeonPlugin requires at least one location to be registered"
-        );
-
         DungeonPlugin {
             registry: DungeonRegistry {
                 configs: self.configs,
