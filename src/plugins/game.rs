@@ -7,7 +7,7 @@ use crate::game::{BlacksmithPlugin, CombatPlugin, CraftingCompletePlugin, Crafti
 use crate::input::{GameAction, InputPlugin};
 use crate::location::{LocationId, StorePlugin};
 use crate::navigation::NavigationPlugin;
-use crate::plugins::{EconomyPlugin, MobPlugin, ToastListenersPlugin};
+use crate::plugins::{EconomyPlugin, MobPlugin, PhysicsDebugTogglePlugin, ToastListenersPlugin};
 use crate::skills::SkillsPlugin;
 use crate::states::{AppState, StateTransitionPlugin};
 use crate::ui::screens::modal::ModalType;
@@ -60,6 +60,7 @@ impl Plugin for GamePlugin {
             StorageTransactionsPlugin,
             MobPlugin,
             EconomyPlugin,
+            PhysicsDebugTogglePlugin,
             SkillsPlugin,
         ));
 
