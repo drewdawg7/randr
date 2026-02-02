@@ -9,7 +9,6 @@ use crate::dungeon::systems::on_map_created;
 use crate::dungeon::{map_path, DungeonEntity, DungeonEntityMarker, EntityRenderData, FloorType, GameLayer};
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
-use crate::ui::widgets::PlayerStats;
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet};
 
 use super::components::{DungeonPlayer, DungeonRoot, FloorRoot};
@@ -187,20 +186,16 @@ pub fn spawn_floor_ui(
         Transform::from_xyz(center_x, center_y, 999.0),
     ));
 
-    commands
-        .spawn((
-            DungeonRoot,
-            ChildOf(floor_root),
-            Node {
-                width: Val::Percent(100.0),
-                height: Val::Percent(100.0),
-                flex_direction: FlexDirection::Column,
-                ..default()
-            },
-        ))
-        .with_children(|parent| {
-            parent.spawn(PlayerStats);
-        });
+    commands.spawn((
+        DungeonRoot,
+        ChildOf(floor_root),
+        Node {
+            width: Val::Percent(100.0),
+            height: Val::Percent(100.0),
+            flex_direction: FlexDirection::Column,
+            ..default()
+        },
+    ));
 }
 
 #[instrument(level = "debug", skip_all, fields(?player_pos, collider_w = 16.0, collider_h = 20.0))]

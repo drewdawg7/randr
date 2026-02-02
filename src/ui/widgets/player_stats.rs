@@ -11,15 +11,21 @@ pub struct PlayerStatsPlugin;
 
 impl Plugin for PlayerStatsPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(on_add_player_stats).add_systems(
-            Update,
-            (
-                update_gold_display.run_if(resource_changed::<PlayerGold>),
-                update_hp_display.run_if(resource_changed::<StatSheet>),
-                update_xp_display.run_if(resource_changed::<Progression>),
-            ),
-        );
+        app.add_observer(on_add_player_stats)
+            .add_systems(Startup, spawn_player_stats)
+            .add_systems(
+                Update,
+                (
+                    update_gold_display.run_if(resource_changed::<PlayerGold>),
+                    update_hp_display.run_if(resource_changed::<StatSheet>),
+                    update_xp_display.run_if(resource_changed::<Progression>),
+                ),
+            );
     }
+}
+
+fn spawn_player_stats(mut commands: Commands) {
+    commands.spawn(PlayerStats);
 }
 
 /// Marker for player stats widget. Observer populates with sprites.
@@ -64,6 +70,7 @@ fn on_add_player_stats(
 
     let mut entity_commands = commands.entity(entity);
     entity_commands.insert(Node {
+        width: Val::Percent(100.0),
         flex_direction: FlexDirection::Row,
         padding: UiRect::all(Val::Px(10.0)),
         column_gap: Val::Px(15.0),

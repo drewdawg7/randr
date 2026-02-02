@@ -1,5 +1,5 @@
 use bevy::{
-    asset::{io::Reader, AssetEvent, AssetLoader, LoadContext},
+    asset::{io::Reader, AssetLoader, LoadContext},
     prelude::*,
 };
 use serde::Deserialize;
@@ -227,9 +227,7 @@ impl Plugin for AssetPlugin {
             .init_asset_loader::<SpriteSheetMetaLoader>()
             .init_resource::<GameSprites>()
             .init_resource::<GameFonts>()
-            .init_resource::<PendingSpriteSheets>()
-            .add_systems(PreStartup, load_assets)
-            .add_systems(Update, finalize_sprite_sheets.run_if(on_message::<AssetEvent<SpriteSheetMeta>>));
+            .add_systems(PreStartup, load_sprites);
     }
 }
 
@@ -372,86 +370,45 @@ impl GameSprites {
         self.sheets.insert(key, sheet);
     }
 
-    fn contains(&self, key: SpriteSheetKey) -> bool {
-        self.sheets.contains_key(&key)
-    }
 }
 
-#[derive(Resource, Default)]
-struct PendingSpriteSheets {
-    handles: HashMap<SpriteSheetKey, Handle<SpriteSheetMeta>>,
-}
-
-fn build_sprite_sheet(
-    meta: &SpriteSheetMeta,
-    name: &str,
-    asset_server: &AssetServer,
-    texture_atlas_layouts: &mut Assets<TextureAtlasLayout>,
-) -> SpriteSheet {
-    let png_path = if meta.meta.image.is_empty() {
-        format!("sprites/{}.png", name)
-    } else {
-        meta.meta.image.clone()
-    };
-    let (layout, sprites) = meta.to_layout();
-    let layout_handle = texture_atlas_layouts.add(layout);
-    let texture = asset_server.load(&png_path);
-
-    info!(
-        "Loaded sprite sheet '{}' with {} sprites",
-        name,
-        sprites.len()
-    );
-
-    SpriteSheet {
-        texture,
-        layout: layout_handle,
-        sprites,
-    }
-}
-
-fn finalize_sprite_sheets(
-    mut events: MessageReader<AssetEvent<SpriteSheetMeta>>,
-    meta_assets: Res<Assets<SpriteSheetMeta>>,
-    pending: Res<PendingSpriteSheets>,
+fn load_sprites(
+    asset_server: Res<AssetServer>,
     mut game_sprites: ResMut<GameSprites>,
-    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
-    asset_server: Res<AssetServer>,
-) {
-    for event in events.read() {
-        let AssetEvent::LoadedWithDependencies { id } = event else {
-            continue;
-        };
-
-        for (key, handle) in &pending.handles {
-            if handle.id() == *id && !game_sprites.contains(*key) {
-                if let Some(meta) = meta_assets.get(*id) {
-                    let sheet = build_sprite_sheet(
-                        meta,
-                        key.asset_name(),
-                        &asset_server,
-                        &mut texture_atlas_layouts,
-                    );
-                    game_sprites.insert(*key, sheet);
-                }
-            }
-        }
-    }
-}
-
-fn load_assets(
-    asset_server: Res<AssetServer>,
     mut game_fonts: ResMut<GameFonts>,
-    mut pending: ResMut<PendingSpriteSheets>,
+    mut texture_atlas_layouts: ResMut<Assets<TextureAtlasLayout>>,
 ) {
     game_fonts.pixel = asset_server.load("fonts/FantasyRPGtitle.ttf");
 
     for key in SpriteSheetKey::all() {
-        let path = format!("sprites/{}.json", key.asset_name());
-        pending.handles.insert(key, asset_server.load(&path));
-    }
+        let json_path = format!("assets/sprites/{}.json", key.asset_name());
+        let Ok(json_str) = std::fs::read_to_string(&json_path) else {
+            continue;
+        };
+        let meta: SpriteSheetMeta = serde_json::from_str(&json_str)
+            .unwrap_or_else(|e| panic!("Failed to parse {}: {}", json_path, e));
 
-    info!("Asset loading initiated");
+        let png_path = if meta.meta.image.is_empty() {
+            format!("sprites/{}.png", key.asset_name())
+        } else {
+            meta.meta.image.clone()
+        };
+        let (layout, sprites) = meta.to_layout();
+        let layout_handle = texture_atlas_layouts.add(layout);
+        let texture = asset_server.load(&png_path);
+
+        info!(
+            "Loaded sprite sheet '{}' with {} sprites",
+            key.asset_name(),
+            sprites.len()
+        );
+
+        game_sprites.insert(key, SpriteSheet {
+            texture,
+            layout: layout_handle,
+            sprites,
+        });
+    }
 }
 
 #[cfg(test)]
