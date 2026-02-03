@@ -14,6 +14,13 @@ impl Default for TileWorldSize {
     }
 }
 
+#[derive(Resource, Clone, Copy, Debug, Default)]
+pub struct TilemapInfo {
+    pub tile_size: Vec2,
+    pub world_size: Vec2,
+    pub center: Vec2,
+}
+
 #[derive(Resource, Default)]
 pub struct DungeonState {
     pub current_location: Option<LocationId>,
