@@ -284,10 +284,7 @@ pub fn spawn_floor_ui(
     asset_server: &AssetServer,
     layout_id: LayoutId,
     camera_entity: Entity,
-    map_width: usize,
-    map_height: usize,
 ) {
-    let tile_size = DEFAULT_TILE_SIZE;
     let path = map_path(layout_id);
     let map_handle: Handle<TiledMapAsset> = asset_server.load(path);
 
@@ -297,12 +294,7 @@ pub fn spawn_floor_ui(
         .spawn((TiledMap(map_handle), ChildOf(floor_root)))
         .observe(on_map_created);
 
-    let center_x = (map_width as f32 * tile_size) / 2.0;
-    let center_y = (map_height as f32 * tile_size) / 2.0;
-    commands.entity(camera_entity).insert((
-        DungeonCamera,
-        Transform::from_xyz(center_x, center_y, CAMERA_Z),
-    ));
+    commands.entity(camera_entity).insert(DungeonCamera);
 
     commands.spawn((
         DungeonRoot,
@@ -314,6 +306,10 @@ pub fn spawn_floor_ui(
             ..default()
         },
     ));
+}
+
+pub fn position_camera(commands: &mut Commands, camera_entity: Entity, center: Vec2) {
+    commands.entity(camera_entity).insert(Transform::from_xyz(center.x, center.y, CAMERA_Z));
 }
 
 #[instrument(level = "debug", skip_all, fields(?player_pos, collider_w = 16.0, collider_h = 20.0))]
@@ -360,17 +356,4 @@ pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &Pl
     });
 }
 
-pub type TilemapConfigQuery<'w, 's> = Query<
-    'w,
-    's,
-    (
-        &'static TilemapSize,
-        &'static TilemapGridSize,
-        &'static TilemapTileSize,
-        &'static TilemapType,
-        &'static TilemapAnchor,
-        &'static GlobalTransform,
-    ),
-    With<TiledTilemap>,
->;
 

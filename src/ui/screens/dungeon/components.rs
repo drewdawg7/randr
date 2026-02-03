@@ -10,4 +10,4 @@ pub struct DungeonRoot;
 pub struct FloorRoot;
 
 #[derive(Resource)]
-pub struct PendingPlayerSpawn(pub Vec2);
+pub struct PendingPlayerSpawn;

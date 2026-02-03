@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::crafting_station::CraftingStationType;
-use crate::dungeon::{EntitySize, LayoutId};
+use crate::dungeon::LayoutId;
 use crate::input::NavigationDirection;
 use crate::loot::LootDrop;
 use crate::mob::MobId;
@@ -36,11 +36,7 @@ pub enum FloorTransition {
 
 #[derive(Message, Debug, Clone)]
 pub struct FloorReady {
-    pub player_pos: Vec2,
-    pub player_size: EntitySize,
     pub layout_id: LayoutId,
-    pub map_width: usize,
-    pub map_height: usize,
 }
 
 #[derive(Message, Debug, Clone)]

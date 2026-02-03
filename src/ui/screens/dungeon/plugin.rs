@@ -10,9 +10,9 @@ use crate::crafting_station::{
 };
 use crate::dungeon::{
     ChestEntity, CraftingStationEntity, CraftingStationInteraction, DungeonEntityMarker,
-    DungeonRegistry, DungeonState, EntitySize, FloorReady, GameLayer, MineEntity,
+    DungeonRegistry, DungeonState, FloorReady, GameLayer, MineEntity,
     MineableEntityType, MiningResult, MoveResult, NpcEntity, NpcInteraction, PlayerMoveIntent,
-    RockEntity, SpawnFloor, TileWorldSize,
+    RockEntity, SpawnFloor, TileWorldSize, TilemapInfo,
 };
 use crate::input::GameAction;
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -28,7 +28,7 @@ use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::{PlayerSpriteSheet, SpriteAnimation};
 
 use super::components::{DungeonPlayer, FloorRoot, PendingPlayerSpawn};
-use super::spawn::{add_entity_visuals, spawn_floor_ui, spawn_player, TilemapConfigQuery};
+use super::spawn::{add_entity_visuals, position_camera, spawn_floor_ui, spawn_player, DungeonCamera};
 use super::systems::cleanup_dungeon;
 
 pub struct DungeonScreenPlugin;
@@ -86,21 +86,8 @@ fn enter_dungeon(
         .current_floor()
         .map(|f| f.layout_id())
         .unwrap_or(crate::dungeon::LayoutId::CaveFloor);
-    let (map_width, map_height) = layout_id.dimensions();
 
-    let tile_size = crate::dungeon::constants::DEFAULT_TILE_SIZE;
-    let center_x = (map_width as f32 / 2.0) * tile_size;
-    let center_y = (map_height as f32 / 2.0) * tile_size;
-    state.player_pos = Vec2::new(center_x, center_y);
-    state.player_size = EntitySize::new(tile_size, tile_size);
-
-    spawn_floor.write(SpawnFloor {
-        player_pos: state.player_pos,
-        player_size: state.player_size,
-        layout_id,
-        map_width,
-        map_height,
-    });
+    spawn_floor.write(SpawnFloor { layout_id });
 }
 
 #[instrument(level = "debug", skip_all)]
@@ -121,8 +108,6 @@ fn handle_floor_ready(
             &asset_server,
             event.layout_id,
             *camera_query,
-            event.map_width,
-            event.map_height,
         );
     }
 }
@@ -130,28 +115,32 @@ fn handle_floor_ready(
 fn on_map_created_queue_player_spawn(
     _trigger: On<TiledEvent<MapCreated>>,
     mut commands: Commands,
-    state: Res<DungeonState>,
     existing_player: Query<Entity, With<DungeonPlayer>>,
 ) {
     for entity in &existing_player {
         commands.entity(entity).despawn();
     }
 
-    commands.insert_resource(PendingPlayerSpawn(state.player_pos));
+    commands.insert_resource(PendingPlayerSpawn);
 }
 
-#[instrument(level = "debug", skip_all, fields(player_pos = ?pending.0))]
+#[instrument(level = "debug", skip_all)]
 fn spawn_player_when_ready(
     mut commands: Commands,
-    pending: Res<PendingPlayerSpawn>,
-    tilemap_query: TilemapConfigQuery,
+    tilemap_info: Option<Res<TilemapInfo>>,
     player_sheet: Res<PlayerSpriteSheet>,
+    camera_query: Query<Entity, With<DungeonCamera>>,
 ) {
-    if tilemap_query.is_empty() {
+    let Some(info) = tilemap_info else {
         return;
+    };
+
+    spawn_player(&mut commands, info.center, &player_sheet);
+
+    if let Ok(camera_entity) = camera_query.single() {
+        position_camera(&mut commands, camera_entity, info.center);
     }
 
-    spawn_player(&mut commands, pending.0, &player_sheet);
     commands.remove_resource::<PendingPlayerSpawn>();
 }
 
