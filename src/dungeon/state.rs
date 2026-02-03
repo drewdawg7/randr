@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::dungeon::floor::FloorId;
 use crate::dungeon::spawn::SpawnTable;
-use crate::dungeon::{DungeonRegistry, EntitySize};
+use crate::dungeon::DungeonRegistry;
 use crate::location::LocationId;
 
 #[derive(Resource, Clone, Copy, Debug)]
@@ -28,8 +28,6 @@ pub struct DungeonState {
     pub floor_sequence: Vec<FloorId>,
     sequence_location: Option<LocationId>,
     pub dungeon_cleared: bool,
-    pub player_pos: Vec2,
-    pub player_size: EntitySize,
 }
 
 impl DungeonState {
@@ -83,8 +81,6 @@ impl DungeonState {
     pub fn exit_dungeon(&mut self) {
         self.current_location = None;
         self.floor_index = 0;
-        self.player_pos = Vec2::ZERO;
-        self.player_size = EntitySize::default();
     }
 
     pub fn get_spawn_config(&self) -> Option<SpawnTable> {
