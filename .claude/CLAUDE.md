@@ -1,18 +1,27 @@
 # Project Guidelines
 
+## Self Improvement
+- If the user corrects you in anyway, immediately update .claude/lessons.md with the pattern. This must happen immediately, before proceeding with anything else.
+- Write rules for yourself to prevent the same mistake from occuring
+- Review the lessons prior to starting work- whether that's planning, exploration, or making changes.
+- Continually update and iterate on lessons in order to lessen how often you need to be corrected.
+
+## Subagent Strategy
+- Use subagents liberally to keep main context window clean.
+- Offload research, exploration, and parallel analysis to subagents.
+- One task per subagent for focused execution.
+
 ## Important Reminders (MANDATORY)
-1. Do not add comments to code unless there is a really good reason too. Clean up exisitng comments you come across.
-2. Do not use unwrap in non-test code.
-3. BEFORE ANY CHANGE TO ANYTHING, WHETHER ITS DOCS, CODE, CLAUDE SKILLS, ETC, MAKE SURE YOU ARE NOT ON THE MAIN BRANCH.
-4. WHENEVER YOU MAKE A BUNDLE OF CHANGES COMMIT THEM.
-5. DO NOT LOOK AT SOURCE CODE FOR CRATES, SEARCH FOR DOCS ONLINE INSTEAD
-6. CONSULT .claude/docs FREQUENTLY.
-7. USE THE styleguide SKILL TO REVIEW CODE CHANGES IN YOUR PLAN OR AFTER THEY HAVE BEEN MADE
-8. YOU DO NOT NEED TO OPEN A PR. ONCE THE USER VERIFIES YOU JUST NEED TO MERGE INTO MAIN AND PUSH.
+1. BEFORE ANY CHANGE TO ANYTHING, WHETHER ITS DOCS, CODE, CLAUDE SKILLS, ETC, MAKE SURE YOU ARE NOT ON THE MAIN BRANCH.
+2. WHENEVER YOU MAKE A BUNDLE OF CHANGES COMMIT THEM.
+3. DO NOT LOOK AT SOURCE CODE FOR CRATES, SEARCH FOR DOCS ONLINE INSTEAD
+4. CONSULT .claude/docs FREQUENTLY.
+5. USE THE styleguide SKILL TO REVIEW CODE CHANGES IN YOUR PLAN OR AFTER THEY HAVE BEEN MADE
+6. YOU DO NOT NEED TO OPEN A PR. ONCE THE USER VERIFIES YOU JUST NEED TO MERGE INTO MAIN AND PUSH.
+
 ## Code Change Workflow
 **Use the `updating-code` skill for ALL code changes.** It contains the full workflow.
 
-**Use the `sprites` skill for sprite or UI changes.**
 
 ## Rust Navigation Rules (MANDATORY)
 
@@ -32,9 +41,6 @@ For structural patterns across files, use `ast-grep --pattern 'PATTERN' --lang r
 - Branches: `type/description` (e.g., `feat/add-inventory`)
 - Commits: conventional (`feat:`, `fix:`, `refactor:`)
 - Tests: changed modules only
-
-## Sprites
-Use the `sprites` skill when working with sprite sheets, Aseprite exports, or adding sprites to UI.
 
 ## Project Documentation
 
