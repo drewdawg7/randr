@@ -15,8 +15,6 @@ use crate::dungeon::{
 use crate::rock::RockType;
 use crate::ui::screens::FloorRoot;
 
-const CHEST_VARIANT_COUNT: u8 = 4;
-const ROCK_SPRITE_VARIANT_COUNT: u8 = 2;
 const POSITION_PROXIMITY_THRESHOLD: f32 = 1.0;
 
 type TilemapQuery<'w, 's> = Query<
@@ -220,9 +218,7 @@ fn spawn_chests(
 
     let count = rng.gen_range(config.chest().clone());
 
-    spawn_n_entities(commands, count, available, used, ctx, rng, |rng| ChestEntity {
-        variant: rng.gen_range(0..CHEST_VARIANT_COUNT),
-    });
+    spawn_n_entities(commands, count, available, used, ctx, rng, |_| ChestEntity);
 }
 
 fn spawn_stairs(
@@ -256,14 +252,11 @@ fn spawn_rocks(
 
     let count = rng.gen_range(config.rock().clone());
 
-    const ROCK_TYPES: [RockType; 4] =
-        [RockType::Coal, RockType::Copper, RockType::Iron, RockType::Gold];
-
     spawn_n_entities(commands, count, available, used, ctx, rng, |rng| {
-        let rock_type = ROCK_TYPES[rng.gen_range(0..ROCK_TYPES.len())];
+        let rock_type = *RockType::ALL.choose(rng).unwrap_or(&RockType::Coal);
         RockEntity {
             rock_type,
-            sprite_variant: rng.gen_range(0..ROCK_SPRITE_VARIANT_COUNT),
+            sprite_variant: rng.gen_range(0..RockType::SPRITE_VARIANT_COUNT),
         }
     });
 }

@@ -17,6 +17,9 @@ impl RockType {
         RockType::Gold,
     ];
 
+    /// Number of sprite variants per rock type.
+    pub const SPRITE_VARIANT_COUNT: u8 = 2;
+
     pub fn display_name(&self) -> &'static str {
         match self {
             Self::Coal => "Coal Rock",

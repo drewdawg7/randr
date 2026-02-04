@@ -14,11 +14,9 @@ pub struct DungeonEntityMarker {
     pub size: EntitySize,
 }
 
-#[derive(Component, Debug, Clone, Copy, PartialEq)]
+#[derive(Component, Debug, Clone, Copy, PartialEq, Default)]
 #[require(RigidBody::Static, CollisionLayers = static_entity_layers())]
-pub struct ChestEntity {
-    pub variant: u8,
-}
+pub struct ChestEntity;
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
 #[require(RigidBody::Static, CollisionLayers = static_entity_layers())]
