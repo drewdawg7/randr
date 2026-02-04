@@ -39,3 +39,8 @@
 - Run the styleguide skill before every commit to catch issues early.
 - Don't run unnecessary commands (like `git status`) when you already know the state from your own actions.
 - Don't ask permission to commit. Just commit when the work is ready.
+
+## Following Instructions
+- When the user explicitly says NOT to do something (e.g., "do not look at other project skills"), follow that instruction exactly.
+- Don't assume existing project patterns are valid examples when told to use external sources instead.
+- Read user instructions carefully before starting work.
