@@ -8,9 +8,8 @@ use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraf
 use crate::dungeon::systems::on_map_created;
 use crate::assets::DungeonTileSlice;
 use crate::dungeon::constants::{
-    CHEST_SPRITE_NAME, COLLIDER_SCALE, DEFAULT_TILE_SIZE, FORGE_COLLIDER_OFFSET_Y,
-    FORGE_COLLIDER_SCALE, MOB_COLLIDER_OFFSET_Y, MOB_COLLIDER_SIZE, PLAYER_COLLIDER_SIZE,
-    STAIRS_COLLIDER_SCALE,
+    CHEST_SPRITE_NAME, FORGE_COLLIDER, MOB_COLLIDER, PLAYER_COLLIDER, STAIRS_COLLIDER,
+    STATIC_COLLIDER,
 };
 use crate::dungeon::{
     map_path, ChestEntity, CraftingStationEntity, DepthSorting, DoorEntity, DungeonEntityMarker,
@@ -113,10 +112,8 @@ pub fn add_entity_visuals(
     }
 
     if stairs_query.get(entity).is_ok() {
-        let collider = Collider::rectangle(
-            marker.size.width * STAIRS_COLLIDER_SCALE,
-            marker.size.height * STAIRS_COLLIDER_SCALE,
-        );
+        let sprite_size = Vec2::new(marker.size.width, marker.size.height);
+        let collider = STAIRS_COLLIDER.create_collider(sprite_size);
         let Some(sheet) = game_sprites.get(SpriteSheetKey::DungeonTileset) else {
             return;
         };
@@ -132,16 +129,10 @@ pub fn add_entity_visuals(
     }
 
     if let Ok(crafting) = crafting_query.get(entity) {
+        let sprite_size = Vec2::new(marker.size.width, marker.size.height);
         let collider = match crafting.station_type {
-            CraftingStationType::Forge => Collider::compound(vec![(
-                Vec2::new(0.0, FORGE_COLLIDER_OFFSET_Y),
-                0.0,
-                Collider::rectangle(marker.size.width * FORGE_COLLIDER_SCALE, marker.size.height),
-            )]),
-            CraftingStationType::Anvil => Collider::rectangle(
-                marker.size.width * COLLIDER_SCALE,
-                marker.size.height * COLLIDER_SCALE,
-            ),
+            CraftingStationType::Forge => FORGE_COLLIDER.create_collider(sprite_size),
+            CraftingStationType::Anvil => STATIC_COLLIDER.create_collider(sprite_size),
         };
 
         let Some(sheet) = game_sprites.get(SpriteSheetKey::CraftingStations) else {
@@ -169,10 +160,8 @@ pub fn add_entity_visuals(
     }
 
     if door_query.get(entity).is_ok() {
-        let collider = Collider::rectangle(
-            marker.size.width * COLLIDER_SCALE,
-            marker.size.height * COLLIDER_SCALE,
-        );
+        let sprite_size = Vec2::new(marker.size.width, marker.size.height);
+        let collider = STATIC_COLLIDER.create_collider(sprite_size);
         commands.entity(entity).insert(SensorEntityBundle {
             transform: Transform::from_translation(world_pos),
             collider,
@@ -217,7 +206,8 @@ fn add_static_sprite(
     let Some(sprite) = sheet.sprite(sprite_name) else {
         return;
     };
-    let collider = Collider::rectangle(size.width * COLLIDER_SCALE, size.height * COLLIDER_SCALE);
+    let sprite_size = Vec2::new(size.width, size.height);
+    let collider = STATIC_COLLIDER.create_collider(sprite_size);
     commands.entity(entity).insert(StaticEntityBundle {
         sprite,
         transform: Transform::from_translation(world_pos),
@@ -235,11 +225,8 @@ fn add_animated_mob(
     let Some(sheet) = mob_sheets.get(mob_id) else {
         return;
     };
-    let collider = Collider::compound(vec![(
-        Vec2::new(0.0, MOB_COLLIDER_OFFSET_Y),
-        0.0,
-        Collider::rectangle(MOB_COLLIDER_SIZE, MOB_COLLIDER_SIZE),
-    )]);
+    let sprite_size = sheet.frame_size.as_vec2();
+    let collider = MOB_COLLIDER.create_collider(sprite_size);
 
     commands.entity(entity).insert(AnimatedMobBundle {
         combat: MobCombatBundle::from_mob_id(mob_id),
@@ -289,7 +276,7 @@ pub fn position_camera(commands: &mut Commands, camera_entity: Entity, center: V
     commands.entity(camera_entity).insert(Transform::from_xyz(center.x, center.y, depth.camera_z));
 }
 
-#[instrument(level = "debug", skip_all, fields(?player_pos, collider_w = 16.0, collider_h = 20.0))]
+#[instrument(level = "debug", skip_all, fields(?player_pos))]
 pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &PlayerSpriteSheet, depth: &DepthSorting) {
     let Some(texture) = player_sheet.texture.clone() else {
         return;
@@ -299,7 +286,8 @@ pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &Pl
     };
 
     let z = depth.entity_z(player_pos.y);
-    let collider_offset_y = -(DEFAULT_TILE_SIZE / 2.0) + (PLAYER_COLLIDER_SIZE / 2.0);
+    let sprite_size = player_sheet.frame_size.as_vec2();
+    let collider = PLAYER_COLLIDER.create_collider(sprite_size);
 
     commands.spawn(PlayerBundle {
         marker: DungeonPlayer,
@@ -315,11 +303,7 @@ pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &Pl
         rigid_body: RigidBody::Dynamic,
         velocity: LinearVelocity::default(),
         locked_axes: LockedAxes::ROTATION_LOCKED,
-        collider: Collider::compound(vec![(
-            Vec2::new(0.0, collider_offset_y),
-            0.0,
-            Collider::rectangle(PLAYER_COLLIDER_SIZE, PLAYER_COLLIDER_SIZE),
-        )]),
+        collider,
         collision_layers: CollisionLayers::new(
             GameLayer::Player,
             [

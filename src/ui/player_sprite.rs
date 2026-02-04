@@ -46,6 +46,8 @@ pub struct PlayerSpriteSheet {
     pub animation: AnimationConfig,
     pub walk_animation: AnimationConfig,
     pub attack_animation: AnimationConfig,
+    /// Frame dimensions in pixels (used for collider sizing).
+    pub frame_size: UVec2,
 }
 
 impl PlayerSpriteSheet {
@@ -98,6 +100,7 @@ fn load_player_sprite_sheet(
 
     player_sheet.texture = Some(texture);
     player_sheet.layout = Some(layout_handle);
+    player_sheet.frame_size = UVec2::splat(32);
     player_sheet.animation = AnimationConfig {
         first_frame: 0,
         last_frame: 3,
