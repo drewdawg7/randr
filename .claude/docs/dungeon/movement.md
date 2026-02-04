@@ -7,10 +7,28 @@ Movement system uses Avian2d physics in `src/dungeon/systems/movement.rs`.
 Player movement uses Avian2d `LinearVelocity` for smooth physics:
 
 ```rust
-velocity.0 = direction * PLAYER_SPEED;
+let speed = movement.pixels_per_second(tile_size.0);
+velocity.0 = direction * speed;
 ```
 
 Movement stops when no keys are pressed via `stop_player_when_idle`.
+
+## MovementConfig
+
+Speed is expressed in tiles per second via `MovementConfig` resource:
+
+```rust
+pub struct MovementConfig {
+    pub tiles_per_second: f32,  // default: 6.25
+}
+
+impl MovementConfig {
+    pub fn pixels_per_second(&self, tile_size: f32) -> f32;
+    pub fn flip_threshold(&self, tile_size: f32) -> f32;  // 1% of max speed
+}
+```
+
+Sprite flip direction uses `flip_threshold()` to determine when velocity is significant enough to change facing.
 
 ## Collision Handling
 
