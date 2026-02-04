@@ -13,8 +13,9 @@
 - Use `ast-grep --pattern 'PATTERN' --lang rust src/` for structural patterns across files.
 
 ## Logging
-- Use `#[instrument]` attribute for tracing, not `debug!` macro calls or `Span::current().record()`.
-- Put computed values directly in `fields()`: `#[instrument(fields(count = query.iter().count()))]`
+- Use `#[instrument]` attribute for tracing, not `debug!` macro calls.
+- Put computed values directly in `fields()` when possible: `#[instrument(fields(count = query.iter().count()))]`
+- When values can only be computed inside the function body, use `Span::current().record()` with empty field declarations: `#[instrument(fields(coal_qty))]` then `tracing::Span::current().record("coal_qty", value);`
 
 ## Debugging
 - When debugging, add instrumentation and test immediately rather than endlessly analyzing code. Logs provide concrete answers faster than speculation.
