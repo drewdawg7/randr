@@ -9,3 +9,18 @@ pub enum GameLayer {
     StaticEntity,
     Trigger,
 }
+
+/// Collision layers for static entities (chests, rocks, crafting stations)
+pub fn static_entity_layers() -> CollisionLayers {
+    CollisionLayers::new(GameLayer::StaticEntity, [GameLayer::Player])
+}
+
+/// Collision layers for trigger entities (stairs, doors)
+pub fn trigger_layers() -> CollisionLayers {
+    CollisionLayers::new(GameLayer::Trigger, [GameLayer::Player])
+}
+
+/// Collision layers for mobs and NPCs
+pub fn mob_layers() -> CollisionLayers {
+    CollisionLayers::new(GameLayer::Mob, [GameLayer::Player])
+}

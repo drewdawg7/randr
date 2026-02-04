@@ -1,4 +1,5 @@
 pub const DEFAULT_TILE_SIZE: f32 = 32.0;
+pub const CHEST_SPRITE_NAME: &str = "Slice_1";
 pub const Z_ORDER_FACTOR: f32 = 0.0001;
 pub const COLLIDER_SCALE: f32 = 0.9;
 pub const STAIRS_COLLIDER_SCALE: f32 = 0.6;
