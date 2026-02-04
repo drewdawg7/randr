@@ -5,7 +5,6 @@ use rand::Rng;
 use tracing::instrument;
 
 use crate::crafting_station::CraftingStationType;
-use crate::dungeon::constants::DEFAULT_TILE_SIZE;
 use crate::dungeon::spawn::{MobSpawnEntry, SpawnTable};
 use crate::dungeon::tile_components::{can_have_entity, is_door};
 use crate::dungeon::{
@@ -101,25 +100,34 @@ pub fn on_map_created(
     door_tiles: Query<(&TilePos, &is_door)>,
     tilemap_query: TilemapQuery,
     floor_root_query: Query<Entity, With<FloorRoot>>,
-    tile_world_size: Option<Res<TileWorldSize>>,
     config: Option<Res<SpawnTable>>,
 ) {
-    let tile_size = tile_world_size.map(|t| t.0).unwrap_or(DEFAULT_TILE_SIZE);
-    let floor_root = floor_root_query.single().ok();
-    let ctx = SpawnContext { tile_size, floor_root };
-
-    let Some((map_size, grid_size, tile_size, map_type, anchor, transform)) =
+    let Some((map_size, grid_size, tilemap_tile_size, map_type, anchor, transform)) =
         tilemap_query.single().ok()
     else {
         return;
     };
 
-    let tilemap = TilemapData { map_size, grid_size, tile_size, map_type, anchor, transform };
+    // Set TileWorldSize from TMX data (map is source of truth)
+    let tile_size = tilemap_tile_size.x;
+    commands.insert_resource(TileWorldSize(tile_size));
 
-    let info = compute_tilemap_info(map_size, tile_size, transform);
+    let floor_root = floor_root_query.single().ok();
+    let ctx = SpawnContext { tile_size, floor_root };
+
+    let tilemap = TilemapData {
+        map_size,
+        grid_size,
+        tile_size: tilemap_tile_size,
+        map_type,
+        anchor,
+        transform,
+    };
+
+    let info = compute_tilemap_info(map_size, tilemap_tile_size, transform);
     commands.insert_resource(info);
 
-    let depth_sorting = compute_depth_sorting(map_size, tile_size);
+    let depth_sorting = compute_depth_sorting(map_size, tilemap_tile_size);
     commands.insert_resource(depth_sorting);
 
     let mut used_positions: Vec<Vec2> = Vec::new();
