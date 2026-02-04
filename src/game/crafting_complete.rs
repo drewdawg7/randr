@@ -56,7 +56,10 @@ fn handle_forge_crafting_complete(
 
 #[instrument(level = "debug", skip_all, fields(
     entity = ?entity,
-    has_forge_state = forge_query.contains(entity)
+    has_forge_state = forge_query.contains(entity),
+    coal_qty,
+    ore_qty,
+    product_slot_after
 ))]
 fn process_forge_complete_event(
     entity: Entity,
@@ -72,7 +75,12 @@ fn process_forge_complete_event(
     let ore_qty = state.ore_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
     let ingot_count = coal_qty.min(ore_qty);
 
+    tracing::Span::current().record("coal_qty", coal_qty);
+    tracing::Span::current().record("ore_qty", ore_qty);
+
     state.complete_crafting_with_bonus(bonus_chance);
+
+    tracing::Span::current().record("product_slot_after", state.product_slot.is_some());
 
     if ingot_count > 0 {
         xp_events.write(SkillXpGained {

@@ -4,7 +4,10 @@ use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
 
 use crate::combat::ActiveCombat;
-use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
+use crate::crafting_station::{
+    AnvilActiveTimer, AnvilCraftingStarted, CraftingStationType, ForgeActiveTimer,
+    ForgeCraftingStarted,
+};
 use crate::dungeon::{
     ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction, DepthSorting,
     DungeonEntityMarker, DungeonRegistry, DungeonState, FloorReady, GameLayer, MerchantInteraction,
@@ -23,6 +26,10 @@ use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::PlayerSpriteSheet;
 
 use super::components::{DungeonPlayer, FloorRoot, PendingPlayerSpawn};
+use super::crafting_animation::{
+    handle_anvil_crafting_started, handle_forge_crafting_started, on_anvil_timer_finished,
+    on_forge_timer_finished,
+};
 use super::spawn::{add_entity_visuals, position_camera, spawn_floor_ui, spawn_player, DungeonCamera};
 use super::systems::cleanup_dungeon;
 
@@ -32,6 +39,8 @@ impl Plugin for DungeonScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(add_entity_visuals)
             .add_observer(on_map_created_queue_player_spawn)
+            .add_observer(on_forge_timer_finished)
+            .add_observer(on_anvil_timer_finished)
             .add_systems(OnEnter(AppState::Dungeon), enter_dungeon)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
@@ -50,6 +59,8 @@ impl Plugin for DungeonScreenPlugin {
                     handle_crafting_station_interaction.run_if(on_message::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_message::<MiningResult>),
                     handle_back_action,
+                    handle_forge_crafting_started.run_if(on_message::<ForgeCraftingStarted>),
+                    handle_anvil_crafting_started.run_if(on_message::<AnvilCraftingStarted>),
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon)),

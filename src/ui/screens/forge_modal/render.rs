@@ -357,6 +357,13 @@ pub fn update_forge_slot_selector(
         return;
     };
 
+    let focus_changed = focus_state.as_ref().map(|f| f.is_changed()).unwrap_or(false);
+    let modal_changed = modal_state.is_changed();
+
+    if !focus_changed && !modal_changed {
+        return;
+    }
+
     for (_, _, children) in &slot_cells {
         if let Some(children) = children {
             for child in children.iter() {

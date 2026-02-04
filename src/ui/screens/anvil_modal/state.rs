@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::ui::focus::FocusPanel;
+use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
 use crate::ui::widgets::{DetailPaneContext, ItemGrid};
@@ -44,12 +44,6 @@ impl DetailPaneContext for AnvilDetailPane {
 #[derive(Resource)]
 pub struct ActiveAnvilEntity(pub Entity);
 
-// AnvilModalState removed - focus is now tracked via FocusState resource
-
-/// Trigger resource to close modal and start crafting.
-#[derive(Resource)]
-pub struct CloseAnvilForCrafting;
-
 /// Implements RegisteredModal for the anvil modal.
 pub struct AnvilModal;
 
@@ -63,6 +57,7 @@ impl RegisteredModal for AnvilModal {
 
     fn cleanup(world: &mut World) {
         world.remove_resource::<ActiveAnvilEntity>();
+        world.remove_resource::<FocusState>();
     }
 }
 

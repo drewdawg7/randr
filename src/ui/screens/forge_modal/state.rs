@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::ui::focus::FocusState;
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
 
@@ -69,6 +70,7 @@ impl RegisteredModal for ForgeModal {
     fn cleanup(world: &mut World) {
         world.remove_resource::<ForgeModalState>();
         world.remove_resource::<ActiveForgeEntity>();
+        world.remove_resource::<FocusState>();
     }
 }
 

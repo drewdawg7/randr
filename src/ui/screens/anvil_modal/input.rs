@@ -2,17 +2,18 @@
 
 use bevy::prelude::*;
 
-use crate::crafting_station::AnvilCraftingState;
+use crate::crafting_station::{AnvilCraftingState, TryStartAnvilCrafting};
 use crate::input::GameAction;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
 use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::modal_registry::ModalCommands;
 use crate::ui::widgets::ItemGrid;
 
 use crate::ui::widgets::ItemGridEntry;
 
 use super::render::get_recipe_entries;
-use super::state::{ActiveAnvilEntity, AnvilPlayerGrid, AnvilRecipeGrid};
+use super::state::{ActiveAnvilEntity, AnvilModal, AnvilPlayerGrid, AnvilRecipeGrid};
 
 /// Handle arrow key navigation within the anvil modal.
 /// Only runs when anvil modal is active (via run_if condition).
@@ -46,6 +47,7 @@ pub fn handle_anvil_modal_navigation(
 pub fn handle_anvil_modal_select(
     mut commands: Commands,
     mut action_reader: MessageReader<GameAction>,
+    mut try_start_events: MessageWriter<TryStartAnvilCrafting>,
     focus_state: Option<Res<FocusState>>,
     active_anvil: Option<Res<ActiveAnvilEntity>>,
     mut inventory: ResMut<Inventory>,
@@ -99,19 +101,20 @@ pub fn handle_anvil_modal_select(
             inventory.decrease_item_quantity(*item_id, *required);
         }
 
-        // Set anvil to crafting state
+        // Set selected recipe
         anvil_state.selected_recipe = Some(*recipe_id);
-        anvil_state.is_crafting = true;
 
         // Refresh inventory grid
-        // Recipe grid refresh is handled reactively via Changed<Inventory>
         if let Ok(mut grid) = player_grids.single_mut() {
             grid.items = ItemGridEntry::from_inventory(&inventory);
             grid.clamp_selection();
         }
 
-        // Close modal to start crafting animation
-        commands.insert_resource(crate::ui::screens::anvil_modal::state::CloseAnvilForCrafting);
+        // Emit event to start crafting and close modal
+        try_start_events.write(TryStartAnvilCrafting {
+            entity: active_anvil.0,
+        });
+        commands.close_modal::<AnvilModal>();
     }
 }
 

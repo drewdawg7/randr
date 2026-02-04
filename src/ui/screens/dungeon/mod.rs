@@ -1,4 +1,5 @@
 mod components;
+mod crafting_animation;
 pub mod plugin;
 mod spawn;
 mod systems;

@@ -1,23 +1,30 @@
 use bevy::prelude::*;
 use tracing::instrument;
 
-use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
-use crate::ui::SpriteAnimation;
 
-use super::{
-    AnvilActiveTimer, AnvilTimerFinished, CraftingStationType, ForgeActiveTimer, ForgeTimerFinished,
+use super::anvil::handle_try_start_anvil_crafting;
+use super::events::{
+    AnvilCraftingStarted, ForgeCraftingStarted, TryStartAnvilCrafting, TryStartForgeCrafting,
 };
+use super::forge::handle_try_start_forge_crafting;
+use super::{AnvilActiveTimer, AnvilTimerFinished, ForgeActiveTimer, ForgeTimerFinished};
 
 pub struct CraftingStationPlugin;
 
 impl Plugin for CraftingStationPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(on_forge_timer_finished)
+        app.add_message::<TryStartForgeCrafting>()
+            .add_message::<ForgeCraftingStarted>()
+            .add_message::<TryStartAnvilCrafting>()
+            .add_message::<AnvilCraftingStarted>()
+            .add_observer(on_forge_timer_finished)
             .add_observer(on_anvil_timer_finished)
             .add_systems(
                 Update,
                 (
+                    handle_try_start_forge_crafting.run_if(on_message::<TryStartForgeCrafting>),
+                    handle_try_start_anvil_crafting.run_if(on_message::<TryStartAnvilCrafting>),
                     poll_forge_timers.run_if(any_with_component::<ForgeActiveTimer>),
                     poll_anvil_timers.run_if(any_with_component::<AnvilActiveTimer>),
                 ),
@@ -55,51 +62,19 @@ fn poll_anvil_timers(
 fn on_forge_timer_finished(
     trigger: On<ForgeTimerFinished>,
     mut commands: Commands,
-    game_sprites: Res<GameSprites>,
     mut crafting_events: MessageWriter<ForgeCraftingCompleteEvent>,
-    mut query: Query<&mut Sprite>,
 ) {
     let entity = trigger.event().entity;
-
     crafting_events.write(ForgeCraftingCompleteEvent { entity });
-
-    if let Some(idle_idx) = game_sprites
-        .get(SpriteSheetKey::CraftingStations)
-        .and_then(|sheet| sheet.get(CraftingStationType::Forge.sprite_name()))
-    {
-        if let Ok(mut sprite) = query.get_mut(entity) {
-            if let Some(ref mut atlas) = sprite.texture_atlas {
-                atlas.index = idle_idx;
-            }
-        }
-    }
-
     commands.entity(entity).remove::<ForgeActiveTimer>();
-    commands.entity(entity).remove::<SpriteAnimation>();
 }
 
 fn on_anvil_timer_finished(
     trigger: On<AnvilTimerFinished>,
     mut commands: Commands,
-    game_sprites: Res<GameSprites>,
     mut crafting_events: MessageWriter<AnvilCraftingCompleteEvent>,
-    mut query: Query<&mut Sprite>,
 ) {
     let entity = trigger.event().entity;
-
     crafting_events.write(AnvilCraftingCompleteEvent { entity });
-
-    if let Some(idle_idx) = game_sprites
-        .get(SpriteSheetKey::CraftingStations)
-        .and_then(|sheet| sheet.get(CraftingStationType::Anvil.sprite_name()))
-    {
-        if let Ok(mut sprite) = query.get_mut(entity) {
-            if let Some(ref mut atlas) = sprite.texture_atlas {
-                atlas.index = idle_idx;
-            }
-        }
-    }
-
     commands.entity(entity).remove::<AnvilActiveTimer>();
-    commands.entity(entity).remove::<SpriteAnimation>();
 }
