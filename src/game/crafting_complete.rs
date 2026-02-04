@@ -45,22 +45,40 @@ fn handle_forge_crafting_complete(
     let bonus_chance = blacksmith_bonus_item_chance(blacksmith_level);
 
     for event in events.read() {
-        let Ok(mut state) = forge_query.get_mut(event.entity) else {
-            continue;
-        };
+        process_forge_complete_event(
+            event.entity,
+            bonus_chance,
+            &mut forge_query,
+            &mut xp_events,
+        );
+    }
+}
 
-        let coal_qty = state.coal_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
-        let ore_qty = state.ore_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
-        let ingot_count = coal_qty.min(ore_qty);
+#[instrument(level = "debug", skip_all, fields(
+    entity = ?entity,
+    has_forge_state = forge_query.contains(entity)
+))]
+fn process_forge_complete_event(
+    entity: Entity,
+    bonus_chance: f32,
+    forge_query: &mut Query<&mut ForgeCraftingState>,
+    xp_events: &mut MessageWriter<SkillXpGained>,
+) {
+    let Ok(mut state) = forge_query.get_mut(entity) else {
+        return;
+    };
 
-        state.complete_crafting_with_bonus(bonus_chance);
+    let coal_qty = state.coal_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
+    let ore_qty = state.ore_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
+    let ingot_count = coal_qty.min(ore_qty);
 
-        if ingot_count > 0 {
-            xp_events.write(SkillXpGained {
-                skill: SkillType::Blacksmith,
-                amount: ingot_count as u64 * 25,
-            });
-        }
+    state.complete_crafting_with_bonus(bonus_chance);
+
+    if ingot_count > 0 {
+        xp_events.write(SkillXpGained {
+            skill: SkillType::Blacksmith,
+            amount: ingot_count as u64 * 25,
+        });
     }
 }
 

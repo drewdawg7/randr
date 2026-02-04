@@ -57,7 +57,7 @@ fn on_forge_timer_finished(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     mut crafting_events: MessageWriter<ForgeCraftingCompleteEvent>,
-    mut query: Query<&mut ImageNode>,
+    mut query: Query<&mut Sprite>,
 ) {
     let entity = trigger.event().entity;
 
@@ -67,8 +67,8 @@ fn on_forge_timer_finished(
         .get(SpriteSheetKey::CraftingStations)
         .and_then(|sheet| sheet.get(CraftingStationType::Forge.sprite_name()))
     {
-        if let Ok(mut image) = query.get_mut(entity) {
-            if let Some(ref mut atlas) = image.texture_atlas {
+        if let Ok(mut sprite) = query.get_mut(entity) {
+            if let Some(ref mut atlas) = sprite.texture_atlas {
                 atlas.index = idle_idx;
             }
         }
@@ -83,7 +83,7 @@ fn on_anvil_timer_finished(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     mut crafting_events: MessageWriter<AnvilCraftingCompleteEvent>,
-    mut query: Query<&mut ImageNode>,
+    mut query: Query<&mut Sprite>,
 ) {
     let entity = trigger.event().entity;
 
@@ -93,8 +93,8 @@ fn on_anvil_timer_finished(
         .get(SpriteSheetKey::CraftingStations)
         .and_then(|sheet| sheet.get(CraftingStationType::Anvil.sprite_name()))
     {
-        if let Ok(mut image) = query.get_mut(entity) {
-            if let Some(ref mut atlas) = image.texture_atlas {
+        if let Ok(mut sprite) = query.get_mut(entity) {
+            if let Some(ref mut atlas) = sprite.texture_atlas {
                 atlas.index = idle_idx;
             }
         }

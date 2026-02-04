@@ -43,12 +43,6 @@ pub fn handle_forge_modal_navigation(
     }
 }
 
-#[instrument(level = "debug", skip_all, fields(
-    has_focus = focus_state.is_some(),
-    has_modal_state = modal_state.is_some(),
-    has_active_forge = active_forge.is_some(),
-    active_forge_entity = ?active_forge.as_ref().map(|f| f.0)
-))]
 pub fn handle_forge_modal_select(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
@@ -59,89 +53,23 @@ pub fn handle_forge_modal_select(
     mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
 ) {
     let Some(focus_state) = focus_state else { return };
-
-    let Some(modal_state) = modal_state else {
-        return;
-    };
-
-    let Some(active_forge) = active_forge else {
-        return;
-    };
-
-    let Ok(mut forge_state) = forge_state_query.get_mut(active_forge.0) else {
-        return;
-    };
+    let Some(modal_state) = modal_state else { return };
+    let Some(active_forge) = active_forge else { return };
 
     for action in action_reader.read() {
         if *action != GameAction::Select {
             continue;
         }
 
-        let mut transfer_occurred = false;
+        let transfer_occurred = process_forge_select(
+            &focus_state,
+            &modal_state,
+            active_forge.0,
+            &mut inventory,
+            &mut forge_state_query,
+            &player_grids,
+        );
 
-        if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
-            match modal_state.selected_slot {
-                ForgeSlotIndex::Coal => {
-                    if let Some((item_id, quantity)) = forge_state.coal_slot.take() {
-                        add_items_to_inventory(&mut inventory, item_id, quantity);
-                        transfer_occurred = true;
-                    }
-                }
-                ForgeSlotIndex::Ore => {
-                    if let Some((item_id, quantity)) = forge_state.ore_slot.take() {
-                        add_items_to_inventory(&mut inventory, item_id, quantity);
-                        transfer_occurred = true;
-                    }
-                }
-                ForgeSlotIndex::Product => {
-                    if let Some((item_id, quantity)) = forge_state.product_slot.take() {
-                        add_items_to_inventory(&mut inventory, item_id, quantity);
-                        transfer_occurred = true;
-                    }
-                }
-            }
-        } else {
-            let selected = player_grids
-                .single()
-                .map(|g| g.selected_index)
-                .unwrap_or(0);
-
-            let inv_items = inventory.get_inventory_items();
-            if let Some(inv_item) = inv_items.get(selected) {
-                let item_id = inv_item.item.item_id;
-                let quantity = inv_item.quantity;
-
-                if is_coal(item_id) {
-                    if forge_state.coal_slot.is_none() {
-                        forge_state.coal_slot = Some((item_id, quantity));
-                        inventory.decrease_item_quantity(item_id, quantity);
-                        transfer_occurred = true;
-                    } else if forge_state.coal_slot.as_ref().map(|(id, _)| *id) == Some(item_id) {
-                        if let Some((_, existing_qty)) = forge_state.coal_slot.as_mut() {
-                            *existing_qty += quantity;
-                            inventory.decrease_item_quantity(item_id, quantity);
-                            transfer_occurred = true;
-                        }
-                    }
-                } else if is_ore(item_id) {
-                    if forge_state.ore_slot.is_none() {
-                        forge_state.ore_slot = Some((item_id, quantity));
-                        inventory.decrease_item_quantity(item_id, quantity);
-                        transfer_occurred = true;
-                    } else if forge_state.ore_slot.as_ref().map(|(id, _)| *id) == Some(item_id) {
-                        if let Some((_, existing_qty)) = forge_state.ore_slot.as_mut() {
-                            *existing_qty += quantity;
-                            inventory.decrease_item_quantity(item_id, quantity);
-                            transfer_occurred = true;
-                        }
-                    }
-                }
-                // Other items cannot be placed in forge slots
-            }
-        }
-
-        // Refresh inventory grid when transfer occurred
-        // Forge slot display is handled reactively via Changed<ForgeCraftingState>
         if transfer_occurred {
             if let Ok(mut grid) = player_grids.single_mut() {
                 grid.items = ItemGridEntry::from_inventory(&inventory);
@@ -149,6 +77,87 @@ pub fn handle_forge_modal_select(
             }
         }
     }
+}
+
+#[instrument(level = "debug", skip_all, fields(
+    selected_slot = ?modal_state.selected_slot,
+    has_forge_state = forge_state_query.contains(entity),
+    is_crafting_slots_focused = focus_state.is_focused(FocusPanel::ForgeCraftingSlots),
+    product_slot_has_items = forge_state_query.get(entity).map(|s| s.product_slot.is_some()).unwrap_or(false)
+))]
+fn process_forge_select(
+    focus_state: &FocusState,
+    modal_state: &ForgeModalState,
+    entity: Entity,
+    inventory: &mut Inventory,
+    forge_state_query: &mut Query<&mut ForgeCraftingState>,
+    player_grids: &Query<&mut ItemGrid, With<ForgePlayerGrid>>,
+) -> bool {
+    let Ok(mut forge_state) = forge_state_query.get_mut(entity) else {
+        return false;
+    };
+
+    if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
+        match modal_state.selected_slot {
+            ForgeSlotIndex::Coal => {
+                if let Some((item_id, quantity)) = forge_state.coal_slot.take() {
+                    add_items_to_inventory(inventory, item_id, quantity);
+                    return true;
+                }
+            }
+            ForgeSlotIndex::Ore => {
+                if let Some((item_id, quantity)) = forge_state.ore_slot.take() {
+                    add_items_to_inventory(inventory, item_id, quantity);
+                    return true;
+                }
+            }
+            ForgeSlotIndex::Product => {
+                if let Some((item_id, quantity)) = forge_state.product_slot.take() {
+                    add_items_to_inventory(inventory, item_id, quantity);
+                    return true;
+                }
+            }
+        }
+    } else {
+        let selected = player_grids
+            .single()
+            .map(|g| g.selected_index)
+            .unwrap_or(0);
+
+        let inv_items = inventory.get_inventory_items();
+        if let Some(inv_item) = inv_items.get(selected) {
+            let item_id = inv_item.item.item_id;
+            let quantity = inv_item.quantity;
+
+            if is_coal(item_id) {
+                if forge_state.coal_slot.is_none() {
+                    forge_state.coal_slot = Some((item_id, quantity));
+                    inventory.decrease_item_quantity(item_id, quantity);
+                    return true;
+                } else if forge_state.coal_slot.as_ref().map(|(id, _)| *id) == Some(item_id) {
+                    if let Some((_, existing_qty)) = forge_state.coal_slot.as_mut() {
+                        *existing_qty += quantity;
+                        inventory.decrease_item_quantity(item_id, quantity);
+                        return true;
+                    }
+                }
+            } else if is_ore(item_id) {
+                if forge_state.ore_slot.is_none() {
+                    forge_state.ore_slot = Some((item_id, quantity));
+                    inventory.decrease_item_quantity(item_id, quantity);
+                    return true;
+                } else if forge_state.ore_slot.as_ref().map(|(id, _)| *id) == Some(item_id) {
+                    if let Some((_, existing_qty)) = forge_state.ore_slot.as_mut() {
+                        *existing_qty += quantity;
+                        inventory.decrease_item_quantity(item_id, quantity);
+                        return true;
+                    }
+                }
+            }
+        }
+    }
+
+    false
 }
 
 /// Check if an item is coal.
