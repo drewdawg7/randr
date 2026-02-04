@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 use crate::crafting_station::{AnvilCraftingState, ForgeCraftingState};
 use crate::inventory::{Inventory, ManagesItems};
@@ -30,6 +31,7 @@ impl Plugin for CraftingCompletePlugin {
     }
 }
 
+#[instrument(level = "debug", skip_all, fields(event_count = events.len()))]
 fn handle_forge_crafting_complete(
     mut events: MessageReader<ForgeCraftingCompleteEvent>,
     mut xp_events: MessageWriter<SkillXpGained>,

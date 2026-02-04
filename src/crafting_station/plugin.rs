@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -50,6 +51,7 @@ fn poll_anvil_timers(
     }
 }
 
+#[instrument(level = "debug", skip_all, fields(entity = ?trigger.event().entity))]
 fn on_forge_timer_finished(
     trigger: On<ForgeTimerFinished>,
     mut commands: Commands,

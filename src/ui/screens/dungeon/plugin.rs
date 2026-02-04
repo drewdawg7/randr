@@ -248,6 +248,7 @@ fn handle_interact_action(
     }
 }
 
+#[instrument(level = "debug", skip_all, fields(event_count = events.len()))]
 fn handle_crafting_station_interaction(
     mut commands: Commands,
     mut events: MessageReader<CraftingStationInteraction>,

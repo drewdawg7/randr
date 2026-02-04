@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use tracing::instrument;
 
 use crate::crafting_station::ForgeCraftingState;
 use crate::input::{GameAction, NavigationDirection};
@@ -42,6 +43,12 @@ pub fn handle_forge_modal_navigation(
     }
 }
 
+#[instrument(level = "debug", skip_all, fields(
+    has_focus = focus_state.is_some(),
+    has_modal_state = modal_state.is_some(),
+    has_active_forge = active_forge.is_some(),
+    active_forge_entity = ?active_forge.as_ref().map(|f| f.0)
+))]
 pub fn handle_forge_modal_select(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
