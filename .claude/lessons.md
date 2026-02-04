@@ -37,3 +37,4 @@
 - Commit changes as you go. After completing a logical unit of work, run styleguide then commit immediately. Don't accumulate uncommitted changes.
 - Run the styleguide skill before every commit to catch issues early.
 - Don't run unnecessary commands (like `git status`) when you already know the state from your own actions.
+- Don't ask permission to commit. Just commit when the work is ready.
