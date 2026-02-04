@@ -9,8 +9,8 @@ use crate::dungeon::constants::DEFAULT_TILE_SIZE;
 use crate::dungeon::spawn::{MobSpawnEntry, SpawnTable};
 use crate::dungeon::tile_components::{can_have_entity, is_door};
 use crate::dungeon::{
-    ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, EntitySize, MobEntity,
-    NpcEntity, RockEntity, StairsEntity, TileWorldSize, TilemapInfo,
+    ChestEntity, CraftingStationEntity, DepthSorting, DoorEntity, DungeonEntityMarker, EntitySize,
+    MobEntity, NpcEntity, RockEntity, StairsEntity, TileWorldSize, TilemapInfo,
 };
 use crate::rock::RockType;
 use crate::ui::screens::FloorRoot;
@@ -91,6 +91,10 @@ fn compute_tilemap_info(
     TilemapInfo { tile_size: tile_vec, world_size, center }
 }
 
+fn compute_depth_sorting(tilemap_size: &TilemapSize, tile_size: &TilemapTileSize) -> DepthSorting {
+    DepthSorting::from_map(tilemap_size.y as f32, tile_size.y)
+}
+
 #[instrument(level = "debug", skip_all, fields(spawn_count = spawn_tiles.iter().count(), door_count = door_tiles.iter().count()))]
 pub fn on_map_created(
     _trigger: On<TiledEvent<MapCreated>>,
@@ -116,6 +120,9 @@ pub fn on_map_created(
 
     let info = compute_tilemap_info(map_size, tile_size, transform);
     commands.insert_resource(info);
+
+    let depth_sorting = compute_depth_sorting(map_size, tile_size);
+    commands.insert_resource(depth_sorting);
 
     let mut used_positions: Vec<Vec2> = Vec::new();
 

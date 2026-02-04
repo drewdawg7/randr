@@ -8,13 +8,13 @@ use crate::crafting_station::{AnvilCraftingState, CraftingStationType, ForgeCraf
 use crate::dungeon::systems::on_map_created;
 use crate::assets::DungeonTileSlice;
 use crate::dungeon::constants::{
-    CAMERA_Z, CHEST_SPRITE_NAME, COLLIDER_SCALE, DEFAULT_TILE_SIZE, FORGE_COLLIDER_OFFSET_Y,
+    CHEST_SPRITE_NAME, COLLIDER_SCALE, DEFAULT_TILE_SIZE, FORGE_COLLIDER_OFFSET_Y,
     FORGE_COLLIDER_SCALE, MOB_COLLIDER_OFFSET_Y, MOB_COLLIDER_SIZE, PLAYER_COLLIDER_SIZE,
-    STAIRS_COLLIDER_SCALE, Z_ORDER_FACTOR,
+    STAIRS_COLLIDER_SCALE,
 };
 use crate::dungeon::{
-    map_path, ChestEntity, CraftingStationEntity, DoorEntity, DungeonEntityMarker, GameLayer,
-    LayoutId, MobEntity, NpcEntity, RockEntity, StairsEntity,
+    map_path, ChestEntity, CraftingStationEntity, DepthSorting, DoorEntity, DungeonEntityMarker,
+    GameLayer, LayoutId, MobEntity, NpcEntity, RockEntity, StairsEntity,
 };
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
@@ -74,13 +74,15 @@ pub fn add_entity_visuals(
     npc_query: Query<&NpcEntity>,
     game_sprites: Res<GameSprites>,
     mob_sheets: Res<MobSpriteSheets>,
+    depth_sorting: Option<Res<DepthSorting>>,
 ) {
     let entity = trigger.entity;
     let Ok(marker) = marker_query.get(entity) else {
         return;
     };
 
-    let z = marker.pos.y * Z_ORDER_FACTOR;
+    let depth = depth_sorting.map(|d| *d).unwrap_or_default();
+    let z = depth.entity_z(marker.pos.y);
     let world_pos = Vec3::new(marker.pos.x, marker.pos.y, z);
 
     if let Ok(_chest) = chest_query.get(entity) {
@@ -283,12 +285,12 @@ pub fn spawn_floor_ui(
     ));
 }
 
-pub fn position_camera(commands: &mut Commands, camera_entity: Entity, center: Vec2) {
-    commands.entity(camera_entity).insert(Transform::from_xyz(center.x, center.y, CAMERA_Z));
+pub fn position_camera(commands: &mut Commands, camera_entity: Entity, center: Vec2, depth: &DepthSorting) {
+    commands.entity(camera_entity).insert(Transform::from_xyz(center.x, center.y, depth.camera_z));
 }
 
 #[instrument(level = "debug", skip_all, fields(?player_pos, collider_w = 16.0, collider_h = 20.0))]
-pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &PlayerSpriteSheet) {
+pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &PlayerSpriteSheet, depth: &DepthSorting) {
     let Some(texture) = player_sheet.texture.clone() else {
         return;
     };
@@ -296,7 +298,7 @@ pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &Pl
         return;
     };
 
-    let z = player_pos.y * Z_ORDER_FACTOR;
+    let z = depth.entity_z(player_pos.y);
     let collider_offset_y = -(DEFAULT_TILE_SIZE / 2.0) + (PLAYER_COLLIDER_SIZE / 2.0);
 
     commands.spawn(PlayerBundle {

@@ -9,10 +9,10 @@ use crate::crafting_station::{
     AnvilActiveTimer, AnvilTimerFinished, CraftingStationType, ForgeActiveTimer, ForgeTimerFinished,
 };
 use crate::dungeon::{
-    ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction, DungeonEntityMarker,
-    DungeonRegistry, DungeonState, FloorReady, GameLayer, MerchantInteraction, MineableEntityType,
-    MiningResult, MoveResult, NpcEntity, PlayerMoveIntent, RockEntity, RockMined, SpawnFloor,
-    TileWorldSize, TilemapInfo,
+    ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction, DepthSorting,
+    DungeonEntityMarker, DungeonRegistry, DungeonState, FloorReady, GameLayer, MerchantInteraction,
+    MineableEntityType, MiningResult, MoveResult, NpcEntity, PlayerMoveIntent, RockEntity, RockMined,
+    SpawnFloor, TileWorldSize, TilemapInfo,
 };
 use crate::input::GameAction;
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -126,6 +126,7 @@ fn on_map_created_queue_player_spawn(
 fn spawn_player_when_ready(
     mut commands: Commands,
     tilemap_info: Option<Res<TilemapInfo>>,
+    depth_sorting: Option<Res<DepthSorting>>,
     player_sheet: Res<PlayerSpriteSheet>,
     camera_query: Query<Entity, With<DungeonCamera>>,
 ) {
@@ -133,10 +134,12 @@ fn spawn_player_when_ready(
         return;
     };
 
-    spawn_player(&mut commands, info.center, &player_sheet);
+    let depth = depth_sorting.map(|d| *d).unwrap_or_default();
+
+    spawn_player(&mut commands, info.center, &player_sheet, &depth);
 
     if let Ok(camera_entity) = camera_query.single() {
-        position_camera(&mut commands, camera_entity, info.center);
+        position_camera(&mut commands, camera_entity, info.center, &depth);
     }
 
     commands.remove_resource::<PendingPlayerSpawn>();

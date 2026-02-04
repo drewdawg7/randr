@@ -21,6 +21,33 @@ pub struct TilemapInfo {
     pub center: Vec2,
 }
 
+#[derive(Resource, Clone, Copy, Debug)]
+pub struct DepthSorting {
+    pub factor: f32,
+    pub camera_z: f32,
+}
+
+impl DepthSorting {
+    pub fn from_map(map_height_tiles: f32, tile_size: f32) -> Self {
+        let max_world_y = (map_height_tiles * tile_size).max(1.0);
+        Self {
+            factor: 1.0 / max_world_y,
+            camera_z: 10.0,
+        }
+    }
+
+    #[inline]
+    pub fn entity_z(&self, y: f32) -> f32 {
+        y * self.factor
+    }
+}
+
+impl Default for DepthSorting {
+    fn default() -> Self {
+        Self { factor: 0.0001, camera_z: 999.0 }
+    }
+}
+
 #[derive(Resource, Default)]
 pub struct DungeonState {
     pub current_location: Option<LocationId>,

@@ -1,11 +1,9 @@
 pub const DEFAULT_TILE_SIZE: f32 = 32.0;
 pub const CHEST_SPRITE_NAME: &str = "Slice_1";
-pub const Z_ORDER_FACTOR: f32 = 0.0001;
 pub const COLLIDER_SCALE: f32 = 0.9;
 pub const STAIRS_COLLIDER_SCALE: f32 = 0.6;
 pub const FORGE_COLLIDER_SCALE: f32 = 0.75;
 pub const FORGE_COLLIDER_OFFSET_Y: f32 = -8.0;
 pub const MOB_COLLIDER_SIZE: f32 = 16.0;
 pub const MOB_COLLIDER_OFFSET_Y: f32 = -8.0;
-pub const CAMERA_Z: f32 = 999.0;
 pub const PLAYER_COLLIDER_SIZE: f32 = 16.0;

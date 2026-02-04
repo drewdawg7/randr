@@ -27,7 +27,7 @@ pub use physics::GameLayer;
 pub use layouts::LayoutId;
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry, FloorMonsterCount, HasLocation, NoLocation, TiledWallCollider};
 pub use spawn::{MobSpawnEntry, SpawnEntityType, SpawnEntry, SpawnTable};
-pub use state::{DungeonState, TileWorldSize, TilemapInfo};
+pub use state::{DepthSorting, DungeonState, TileWorldSize, TilemapInfo};
 pub use systems::{
     handle_floor_transition, handle_mob_defeated, handle_player_collisions, handle_player_move,
     on_map_created, prepare_floor, stop_player_when_idle, SpawnFloor,
