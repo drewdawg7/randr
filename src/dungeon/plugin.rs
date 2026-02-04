@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 
-use avian2d::prelude::{Collider, CollisionStart, Gravity, PhysicsPlugins, RigidBody, Sensor};
+use avian2d::prelude::{Collider, CollisionEnd, CollisionStart, Gravity, PhysicsPlugins, RigidBody, Sensor};
 use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::{ColliderCreated, TiledEvent, TiledPhysicsAvianBackend, TiledPhysicsPlugin};
 use tracing::{debug, instrument};
@@ -8,14 +8,14 @@ use tracing::{debug, instrument};
 use crate::dungeon::config::DungeonConfig;
 use crate::dungeon::events::{
     CraftingStationInteraction, FloorReady, FloorTransition, MiningResult, MoveResult,
-    PlayerMoveIntent,
+    OverlappingCraftingStation, PlayerMoveIntent,
 };
 use crate::plugins::MobDefeated;
 use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::{DungeonState, MovementConfig, TileWorldSize};
 use crate::dungeon::systems::{
-    handle_floor_transition, handle_mob_defeated, handle_player_collisions, handle_player_move,
-    prepare_floor, stop_player_when_idle, SpawnFloor,
+    handle_floor_transition, handle_mob_defeated, handle_player_collision_end,
+    handle_player_collisions, handle_player_move, prepare_floor, stop_player_when_idle, SpawnFloor,
 };
 use crate::dungeon::tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 use crate::location::LocationId;
@@ -75,6 +75,7 @@ impl Plugin for DungeonPlugin {
             .init_resource::<DungeonState>()
             .init_resource::<TileWorldSize>()
             .init_resource::<MovementConfig>()
+            .init_resource::<OverlappingCraftingStation>()
             .add_message::<FloorTransition>()
             .add_message::<FloorReady>()
             .add_message::<SpawnFloor>()
@@ -90,6 +91,7 @@ impl Plugin for DungeonPlugin {
                     handle_player_move.run_if(on_message::<PlayerMoveIntent>),
                     stop_player_when_idle,
                     handle_player_collisions.run_if(on_message::<CollisionStart>),
+                    handle_player_collision_end.run_if(on_message::<CollisionEnd>),
                     handle_floor_transition.run_if(on_message::<FloorTransition>),
                     handle_mob_defeated.run_if(on_message::<MobDefeated>),
                 ),

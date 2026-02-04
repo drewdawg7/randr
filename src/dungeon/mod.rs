@@ -39,5 +39,5 @@ pub use tiled::map_path;
 
 pub use events::{
     ChestMined, CraftingStationInteraction, FloorReady, FloorTransition, MerchantInteraction,
-    MineableEntityType, MiningResult, MoveResult, PlayerMoveIntent, RockMined,
+    MineableEntityType, MiningResult, MoveResult, OverlappingCraftingStation, PlayerMoveIntent, RockMined,
 };

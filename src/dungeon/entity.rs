@@ -42,7 +42,7 @@ pub struct NpcEntity {
 }
 
 #[derive(Component, Debug, Clone, Copy, PartialEq)]
-#[require(RigidBody::Static, CollisionLayers = static_entity_layers())]
+#[require(RigidBody::Static, Sensor, CollisionLayers = trigger_layers())]
 pub struct CraftingStationEntity {
     pub station_type: CraftingStationType,
 }

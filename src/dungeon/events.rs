@@ -74,3 +74,6 @@ pub struct MiningResult {
     pub mineable_type: MineableEntityType,
     pub loot_drops: Vec<LootDrop>,
 }
+
+#[derive(Resource, Default, Debug)]
+pub struct OverlappingCraftingStation(pub Option<Entity>);

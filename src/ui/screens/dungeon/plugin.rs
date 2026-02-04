@@ -11,8 +11,8 @@ use crate::crafting_station::{
 use crate::dungeon::{
     ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction, DepthSorting,
     DungeonEntityMarker, DungeonRegistry, DungeonState, FloorReady, GameLayer, MerchantInteraction,
-    MineableEntityType, MiningResult, MovementConfig, MoveResult, NpcEntity, PlayerMoveIntent, RockEntity, RockMined,
-    SpawnFloor, TileWorldSize, TilemapInfo,
+    MineableEntityType, MiningResult, MovementConfig, MoveResult, NpcEntity, OverlappingCraftingStation,
+    PlayerMoveIntent, RockEntity, RockMined, SpawnFloor, TileWorldSize, TilemapInfo,
 };
 use crate::input::GameAction;
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -182,6 +182,7 @@ fn handle_interact_action(
     mut commands: Commands,
     mut action_reader: MessageReader<GameAction>,
     mut crafting_events: MessageWriter<CraftingStationInteraction>,
+    overlapping_station: Res<OverlappingCraftingStation>,
     tile_size: Option<Res<TileWorldSize>>,
     spatial_query: SpatialQuery,
     marker_query: Query<&DungeonEntityMarker>,
@@ -194,6 +195,16 @@ fn handle_interact_action(
     let is_interact = action_reader.read().any(|a| *a == GameAction::Mine);
     if !is_interact {
         return;
+    }
+
+    if let Some(entity) = overlapping_station.0 {
+        if let Ok(crafting) = crafting_query.get(entity) {
+            crafting_events.write(CraftingStationInteraction {
+                entity,
+                station_type: crafting.station_type,
+            });
+            return;
+        }
     }
 
     let Ok(&Position(Vec2 { x: px, y: py })) = player_query.single() else {
@@ -222,14 +233,6 @@ fn handle_interact_action(
                 if npc.mob_id == MobId::Merchant {
                     commands.trigger(MerchantInteraction { entity });
                 }
-                return;
-            }
-
-            if let Ok(crafting) = crafting_query.get(entity) {
-                crafting_events.write(CraftingStationInteraction {
-                    entity,
-                    station_type: crafting.station_type,
-                });
                 return;
             }
 

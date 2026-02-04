@@ -2,9 +2,9 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 use tracing::{debug, instrument};
 
-use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
+use crate::dungeon::events::{FloorTransition, MoveResult, OverlappingCraftingStation, PlayerMoveIntent};
 use crate::dungeon::tile_components::is_door;
-use crate::dungeon::{DoorEntity, DungeonEntityMarker, MobEntity, MovementConfig, StairsEntity, TileWorldSize};
+use crate::dungeon::{CraftingStationEntity, DoorEntity, DungeonEntityMarker, MobEntity, MovementConfig, StairsEntity, TileWorldSize};
 use crate::input::NavigationDirection;
 use crate::ui::screens::DungeonPlayer;
 
@@ -74,9 +74,11 @@ pub fn handle_player_collisions(
     mut collision_events: MessageReader<CollisionStart>,
     mut result_events: MessageWriter<MoveResult>,
     mut transition_events: MessageWriter<FloorTransition>,
+    mut overlapping_station: ResMut<OverlappingCraftingStation>,
     player_query: Query<Entity, With<DungeonPlayer>>,
     marker_query: Query<&DungeonEntityMarker>,
     mob_query: Query<&MobEntity>,
+    crafting_query: Query<(), With<CraftingStationEntity>>,
     stairs_query: Query<(), With<StairsEntity>>,
     door_entity_query: Query<(), With<DoorEntity>>,
     door_tile_query: Query<(), With<is_door>>,
@@ -105,6 +107,11 @@ pub fn handle_player_collisions(
             continue;
         }
 
+        if crafting_query.get(other).is_ok() {
+            overlapping_station.0 = Some(other);
+            continue;
+        }
+
         if door_entity_query.get(other).is_ok() {
             transition_events.write(FloorTransition::EnterDoor);
             continue;
@@ -117,6 +124,32 @@ pub fn handle_player_collisions(
 
         if door_tile_query.get(other).is_ok() {
             transition_events.write(FloorTransition::EnterDoor);
+        }
+    }
+}
+
+#[instrument(level = "debug", skip_all, fields(collision_count = collision_events.len()))]
+pub fn handle_player_collision_end(
+    mut collision_events: MessageReader<CollisionEnd>,
+    mut overlapping_station: ResMut<OverlappingCraftingStation>,
+    player_query: Query<Entity, With<DungeonPlayer>>,
+    crafting_query: Query<(), With<CraftingStationEntity>>,
+) {
+    let Ok(player_entity) = player_query.single() else {
+        return;
+    };
+
+    for event in collision_events.read() {
+        let other = if event.collider1 == player_entity {
+            event.collider2
+        } else if event.collider2 == player_entity {
+            event.collider1
+        } else {
+            continue;
+        };
+
+        if crafting_query.get(other).is_ok() && overlapping_station.0 == Some(other) {
+            overlapping_station.0 = None;
         }
     }
 }
