@@ -9,10 +9,10 @@ use crate::crafting_station::{
     AnvilActiveTimer, AnvilTimerFinished, CraftingStationType, ForgeActiveTimer, ForgeTimerFinished,
 };
 use crate::dungeon::{
-    ChestEntity, CraftingStationEntity, CraftingStationInteraction, DungeonEntityMarker,
-    DungeonRegistry, DungeonState, FloorReady, GameLayer, MineEntity,
-    MineableEntityType, MiningResult, MoveResult, NpcEntity, NpcInteraction, PlayerMoveIntent,
-    RockEntity, SpawnFloor, TileWorldSize, TilemapInfo,
+    ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction, DungeonEntityMarker,
+    DungeonRegistry, DungeonState, FloorReady, GameLayer, MerchantInteraction, MineableEntityType,
+    MiningResult, MoveResult, NpcEntity, PlayerMoveIntent, RockEntity, RockMined, SpawnFloor,
+    TileWorldSize, TilemapInfo,
 };
 use crate::input::GameAction;
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
@@ -22,7 +22,6 @@ use crate::states::{AppState, StateTransitionRequest};
 use crate::ui::screens::anvil_modal::ActiveAnvilEntity;
 use crate::ui::screens::fight_modal::state::FightModalMob;
 use crate::ui::screens::forge_modal::ActiveForgeEntity;
-use crate::ui::screens::merchant_modal::MerchantStock;
 use crate::ui::screens::modal::{ActiveModal, ModalType, OpenModal};
 use crate::ui::screens::results_modal::ResultsModalData;
 use crate::ui::{PlayerSpriteSheet, SpriteAnimation};
@@ -54,7 +53,6 @@ impl Plugin for DungeonScreenPlugin {
                     handle_interact_action
                         .run_if(on_message::<GameAction>)
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
-                    handle_npc_interaction.run_if(on_message::<NpcInteraction>),
                     handle_crafting_station_interaction.run_if(on_message::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_message::<MiningResult>),
                     handle_back_action,
@@ -178,10 +176,9 @@ fn handle_move_result(
 
 #[instrument(level = "debug", skip_all)]
 fn handle_interact_action(
+    mut commands: Commands,
     mut action_reader: MessageReader<GameAction>,
-    mut npc_events: MessageWriter<NpcInteraction>,
     mut crafting_events: MessageWriter<CraftingStationInteraction>,
-    mut mine_events: MessageWriter<MineEntity>,
     tile_size: Option<Res<TileWorldSize>>,
     spatial_query: SpatialQuery,
     marker_query: Query<&DungeonEntityMarker>,
@@ -219,7 +216,9 @@ fn handle_interact_action(
             };
 
             if let Ok(npc) = npc_query.get(entity) {
-                npc_events.write(NpcInteraction { mob_id: npc.mob_id });
+                if npc.mob_id == MobId::Merchant {
+                    commands.trigger(MerchantInteraction { entity });
+                }
                 return;
             }
 
@@ -232,31 +231,21 @@ fn handle_interact_action(
             }
 
             if chest_query.get(entity).is_ok() {
-                mine_events.write(MineEntity {
+                commands.trigger(ChestMined {
                     entity,
                     pos: marker.pos,
-                    mineable_type: MineableEntityType::Chest,
                 });
                 return;
             }
 
             if let Ok(rock) = rock_query.get(entity) {
-                mine_events.write(MineEntity {
+                commands.trigger(RockMined {
                     entity,
                     pos: marker.pos,
-                    mineable_type: MineableEntityType::Rock { rock_type: rock.rock_type },
+                    rock_type: rock.rock_type,
                 });
                 return;
             }
-        }
-    }
-}
-
-fn handle_npc_interaction(mut commands: Commands, mut events: MessageReader<NpcInteraction>) {
-    for event in events.read() {
-        if event.mob_id == MobId::Merchant {
-            commands.insert_resource(MerchantStock::generate());
-            commands.trigger(OpenModal(ModalType::MerchantModal));
         }
     }
 }

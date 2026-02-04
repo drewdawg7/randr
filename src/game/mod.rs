@@ -3,6 +3,8 @@ pub mod crafting;
 pub mod crafting_complete;
 pub mod items;
 pub mod merchant;
+pub mod mining;
+pub mod npc_interactions;
 pub mod player;
 pub mod storage;
 pub mod store_transactions;
@@ -30,3 +32,5 @@ pub use merchant::{
 pub use crafting_complete::{
     AnvilCraftingCompleteEvent, CraftingCompletePlugin, ForgeCraftingCompleteEvent,
 };
+pub use mining::MiningPlugin;
+pub use npc_interactions::NpcInteractionsPlugin;
