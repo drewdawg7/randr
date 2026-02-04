@@ -15,7 +15,6 @@ pub mod tile;
 pub mod tile_components;
 pub mod tiled;
 
-pub use bevy_ecs_tiled::prelude::TilePos;
 pub use commands::DungeonCommands;
 pub use config::DungeonConfig;
 pub use entity::{
