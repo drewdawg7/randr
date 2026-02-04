@@ -23,11 +23,11 @@ fn main() {
 
     tracing_subscriber::registry()
         .with(filter)
-        .with(fmt::layer().with_span_events(FmtSpan::ENTER))
+        .with(fmt::layer().with_span_events(FmtSpan::ENTER | FmtSpan::CLOSE))
         .with(
             fmt::layer()
                 .with_writer(non_blocking)
-                .with_span_events(FmtSpan::ENTER)
+                .with_span_events(FmtSpan::ENTER | FmtSpan::CLOSE)
                 .json(),
         )
         .init();
