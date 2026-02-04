@@ -1,8 +1,12 @@
 use bevy::prelude::*;
 
+use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
+use crate::ui::SpriteAnimation;
 
-use super::{AnvilActiveTimer, AnvilTimerFinished, ForgeActiveTimer, ForgeTimerFinished};
+use super::{
+    AnvilActiveTimer, AnvilTimerFinished, CraftingStationType, ForgeActiveTimer, ForgeTimerFinished,
+};
 
 pub struct CraftingStationPlugin;
 
@@ -49,19 +53,51 @@ fn poll_anvil_timers(
 fn on_forge_timer_finished(
     trigger: On<ForgeTimerFinished>,
     mut commands: Commands,
+    game_sprites: Res<GameSprites>,
     mut crafting_events: MessageWriter<ForgeCraftingCompleteEvent>,
+    mut query: Query<&mut ImageNode>,
 ) {
     let entity = trigger.event().entity;
+
     crafting_events.write(ForgeCraftingCompleteEvent { entity });
+
+    if let Some(idle_idx) = game_sprites
+        .get(SpriteSheetKey::CraftingStations)
+        .and_then(|sheet| sheet.get(CraftingStationType::Forge.sprite_name()))
+    {
+        if let Ok(mut image) = query.get_mut(entity) {
+            if let Some(ref mut atlas) = image.texture_atlas {
+                atlas.index = idle_idx;
+            }
+        }
+    }
+
     commands.entity(entity).remove::<ForgeActiveTimer>();
+    commands.entity(entity).remove::<SpriteAnimation>();
 }
 
 fn on_anvil_timer_finished(
     trigger: On<AnvilTimerFinished>,
     mut commands: Commands,
+    game_sprites: Res<GameSprites>,
     mut crafting_events: MessageWriter<AnvilCraftingCompleteEvent>,
+    mut query: Query<&mut ImageNode>,
 ) {
     let entity = trigger.event().entity;
+
     crafting_events.write(AnvilCraftingCompleteEvent { entity });
+
+    if let Some(idle_idx) = game_sprites
+        .get(SpriteSheetKey::CraftingStations)
+        .and_then(|sheet| sheet.get(CraftingStationType::Anvil.sprite_name()))
+    {
+        if let Ok(mut image) = query.get_mut(entity) {
+            if let Some(ref mut atlas) = image.texture_atlas {
+                atlas.index = idle_idx;
+            }
+        }
+    }
+
     commands.entity(entity).remove::<AnvilActiveTimer>();
+    commands.entity(entity).remove::<SpriteAnimation>();
 }

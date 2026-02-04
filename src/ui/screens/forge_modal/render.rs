@@ -91,7 +91,7 @@ pub fn spawn_forge_modal_impl(
                         },
                     ));
                     row.spawn(ItemDetailPane {
-                        source: InfoPanelSource::Inventory { selected_index: 0 },
+                        source: InfoPanelSource::None,
                     });
                 });
             }))

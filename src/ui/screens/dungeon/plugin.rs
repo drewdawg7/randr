@@ -3,11 +3,8 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
 
-use crate::assets::{GameSprites, SpriteSheetKey};
 use crate::combat::ActiveCombat;
-use crate::crafting_station::{
-    AnvilActiveTimer, AnvilTimerFinished, CraftingStationType, ForgeActiveTimer, ForgeTimerFinished,
-};
+use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
 use crate::dungeon::{
     ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction, DepthSorting,
     DungeonEntityMarker, DungeonRegistry, DungeonState, FloorReady, GameLayer, MerchantInteraction,
@@ -23,7 +20,7 @@ use crate::ui::screens::fight_modal::state::FightModalMob;
 use crate::ui::screens::forge_modal::ActiveForgeEntity;
 use crate::ui::screens::modal::{ActiveModal, ModalType, OpenModal};
 use crate::ui::screens::results_modal::ResultsModalData;
-use crate::ui::{PlayerSpriteSheet, SpriteAnimation};
+use crate::ui::PlayerSpriteSheet;
 
 use super::components::{DungeonPlayer, FloorRoot, PendingPlayerSpawn};
 use super::spawn::{add_entity_visuals, position_camera, spawn_floor_ui, spawn_player, DungeonCamera};
@@ -35,8 +32,6 @@ impl Plugin for DungeonScreenPlugin {
     fn build(&self, app: &mut App) {
         app.add_observer(add_entity_visuals)
             .add_observer(on_map_created_queue_player_spawn)
-            .add_observer(on_forge_timer_finished)
-            .add_observer(on_anvil_timer_finished)
             .add_systems(OnEnter(AppState::Dungeon), enter_dungeon)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
@@ -296,50 +291,6 @@ fn handle_mining_result(mut commands: Commands, mut events: MessageReader<Mining
         });
         commands.trigger(OpenModal(ModalType::ResultsModal));
     }
-}
-
-fn on_forge_timer_finished(
-    trigger: On<ForgeTimerFinished>,
-    mut commands: Commands,
-    game_sprites: Res<GameSprites>,
-    mut query: Query<&mut ImageNode>,
-) {
-    let entity = trigger.event().entity;
-
-    if let Some(idle_idx) = game_sprites
-        .get(SpriteSheetKey::CraftingStations)
-        .and_then(|sheet| sheet.get(CraftingStationType::Forge.sprite_name()))
-    {
-        if let Ok(mut image) = query.get_mut(entity) {
-            if let Some(ref mut atlas) = image.texture_atlas {
-                atlas.index = idle_idx;
-            }
-        }
-    }
-
-    commands.entity(entity).remove::<SpriteAnimation>();
-}
-
-fn on_anvil_timer_finished(
-    trigger: On<AnvilTimerFinished>,
-    mut commands: Commands,
-    game_sprites: Res<GameSprites>,
-    mut query: Query<&mut ImageNode>,
-) {
-    let entity = trigger.event().entity;
-
-    if let Some(idle_idx) = game_sprites
-        .get(SpriteSheetKey::CraftingStations)
-        .and_then(|sheet| sheet.get(CraftingStationType::Anvil.sprite_name()))
-    {
-        if let Ok(mut image) = query.get_mut(entity) {
-            if let Some(ref mut atlas) = image.texture_atlas {
-                atlas.index = idle_idx;
-            }
-        }
-    }
-
-    commands.entity(entity).remove::<SpriteAnimation>();
 }
 
 fn handle_back_action(
