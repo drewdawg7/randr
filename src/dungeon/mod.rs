@@ -22,6 +22,7 @@ pub use entity::{
     RockEntity, StairsEntity,
 };
 pub use floor::{FloorId, FloorSpec};
+pub use constants::{ColliderConfig, FORGE_COLLIDER, MOB_COLLIDER, PLAYER_COLLIDER, STAIRS_COLLIDER, STATIC_COLLIDER};
 pub use grid::EntitySize;
 pub use physics::GameLayer;
 pub use layouts::LayoutId;
