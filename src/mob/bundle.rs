@@ -28,7 +28,6 @@ impl MobCombatBundle {
         let spec = mob_id.spec();
         let mut rng = rand::thread_rng();
 
-        // Calculate stats with the same logic as Mob::spawn
         let hp_min = spec.max_health.start();
         let hp_max = spec.max_health.end();
         let hp_median = (hp_min + hp_max) as f32 / 2.0;
@@ -39,7 +38,6 @@ impl MobCombatBundle {
         let defense = rng.gen_range(*spec.defense.start()..=*spec.defense.end());
         let base_gold = rng.gen_range(*spec.dropped_gold.start()..=*spec.dropped_gold.end());
 
-        // XP and gold bonus based on HP roll
         let excess_ratio = if hp > hp_median {
             (hp - hp_median) / (*hp_max as f32 - hp_median)
         } else {

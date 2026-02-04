@@ -61,7 +61,6 @@ pub trait HasStats {
         self.stats_mut().decrease_stat_max(stat, amount);
     }
 
-    // Stat getters
     fn magicfind(&self) -> i32 {self.value(StatType::MagicFind)}
     fn goldfind(&self) -> i32 {self.value(StatType::GoldFind)}
     fn mining(&self) -> i32 {self.value(StatType::Mining)}

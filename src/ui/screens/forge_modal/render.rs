@@ -107,8 +107,8 @@ fn spawn_crafting_slots(
     forge_state: Option<&ForgeCraftingState>,
     _modal_state: &ForgeModalState,
 ) {
-    // Calculate dimensions for the slots container
-    let slots_width = 3.0 * SLOT_SIZE + 2.0 * SLOT_GAP + 32.0; // Extra padding
+    let slots_width = 3.0 * SLOT_SIZE + 2.0 * SLOT_GAP + 32.0;
+
     let slots_height = SLOT_SIZE + 40.0; // Room for labels
 
     // Selector is not shown initially - update_forge_slot_selector will add it when needed
@@ -128,7 +128,6 @@ fn spawn_crafting_slots(
             BorderColor::all(Color::srgb(0.5, 0.4, 0.3)),
         ))
         .with_children(|container| {
-            // Row of 3 slots
             container
                 .spawn(Node {
                     flex_direction: FlexDirection::Row,
@@ -136,7 +135,6 @@ fn spawn_crafting_slots(
                     ..default()
                 })
                 .with_children(|slot_row| {
-                    // Coal slot (not selected initially since inventory is focused)
                     spawn_slot(
                         slot_row,
                         game_sprites,
@@ -147,7 +145,6 @@ fn spawn_crafting_slots(
                         false,
                     );
 
-                    // Ore slot
                     spawn_slot(
                         slot_row,
                         game_sprites,
@@ -158,7 +155,6 @@ fn spawn_crafting_slots(
                         false,
                     );
 
-                    // Product slot
                     spawn_slot(
                         slot_row,
                         game_sprites,
@@ -190,7 +186,6 @@ fn spawn_slot(
             ..default()
         })
         .with_children(|slot_column| {
-            // Slot cell
             let mut slot_entity = slot_column.spawn((
                 ForgeSlotCell { slot_type },
                 Node {
@@ -203,7 +198,6 @@ fn spawn_slot(
                 },
             ));
 
-            // Add cell background
             if let Some(cell_img) = game_sprites
                 .get(SpriteSheetKey::GridSlot)
                 .and_then(|s| s.image_node(GridSlotSlice::Slot.as_str()))
@@ -212,18 +206,15 @@ fn spawn_slot(
             }
 
             slot_entity.with_children(|cell| {
-                // Item sprite if slot has contents
                 if let Some((item_id, quantity)) = contents {
                     spawn_slot_item(cell, game_sprites, game_fonts, item_id, quantity);
                 }
 
-                // Selector if selected
                 if is_selected {
                     spawn_slot_selector(cell, game_sprites);
                 }
             });
 
-            // Label below slot
             slot_column.spawn((
                 Text::new(label),
                 game_fonts.pixel_font(LABEL_FONT_SIZE),
@@ -254,7 +245,6 @@ fn spawn_slot_item(
             icon_img,
         ));
 
-        // Quantity text if > 1
         if quantity > 1 {
             spawn_outlined_quantity_text(
                 cell,
@@ -325,14 +315,11 @@ pub fn refresh_forge_slots(
         return;
     };
 
-    // Only refresh if forge state has changed (Changed filter)
     let Ok(forge_state) = forge_state_query.get(active_forge.0) else {
         return;
     };
 
-    // Update each slot's contents
     for (cell_entity, slot_cell, children) in &slot_cells {
-        // Remove existing item sprites and quantity text from this cell
         if let Some(children) = children {
             for child in children.iter() {
                 if item_sprites.contains(child) || quantity_texts.contains(child) {
@@ -343,14 +330,12 @@ pub fn refresh_forge_slots(
             }
         }
 
-        // Get the contents for this slot
         let contents = match slot_cell.slot_type {
             ForgeSlotIndex::Coal => forge_state.coal_slot,
             ForgeSlotIndex::Ore => forge_state.ore_slot,
             ForgeSlotIndex::Product => forge_state.product_slot,
         };
 
-        // Add new item sprite if slot has contents
         if let Some((item_id, quantity)) = contents {
             commands.entity(cell_entity).with_children(|cell| {
                 spawn_slot_item(cell, &game_sprites, &game_fonts, item_id, quantity);
@@ -372,7 +357,6 @@ pub fn update_forge_slot_selector(
         return;
     };
 
-    // Remove all existing selectors from forge slots
     for (_, _, children) in &slot_cells {
         if let Some(children) = children {
             for child in children.iter() {
@@ -385,7 +369,6 @@ pub fn update_forge_slot_selector(
         }
     }
 
-    // Only add selector if crafting slots are focused
     let crafting_focused = focus_state
         .as_ref()
         .map(|s| s.is_focused(FocusPanel::ForgeCraftingSlots))
@@ -395,7 +378,6 @@ pub fn update_forge_slot_selector(
         return;
     }
 
-    // Find the selected slot and add selector
     for (cell_entity, slot_cell, _) in &slot_cells {
         if slot_cell.slot_type == modal_state.selected_slot {
             commands.entity(cell_entity).with_children(|cell| {
@@ -422,7 +404,6 @@ pub fn update_forge_detail_pane_source(
         return;
     };
 
-    // Check if focus, modal state, or grid changed
     let focus_changed = focus_state.is_changed();
     let modal_state_changed = modal_state.is_changed();
     let grid_changed = player_grids
@@ -434,7 +415,6 @@ pub fn update_forge_detail_pane_source(
         return;
     }
 
-    // Determine source from focused panel
     let source = if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
         Some(InfoPanelSource::ForgeSlot {
             slot: modal_state.selected_slot,
@@ -454,7 +434,6 @@ pub fn update_forge_detail_pane_source(
         return;
     };
 
-    // Update pane source (only if different to avoid unnecessary Changed trigger)
     for mut pane in &mut panes {
         if pane.source != source {
             pane.source = source;
