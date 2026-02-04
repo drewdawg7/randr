@@ -24,11 +24,36 @@ type TilemapQuery<'w, 's> = Query<
     's,
     (
         &'static TilemapSize,
+        &'static TilemapGridSize,
         &'static TilemapTileSize,
+        &'static TilemapType,
+        &'static TilemapAnchor,
         &'static GlobalTransform,
     ),
     With<TiledTilemap>,
 >;
+
+struct TilemapData<'a> {
+    map_size: &'a TilemapSize,
+    grid_size: &'a TilemapGridSize,
+    tile_size: &'a TilemapTileSize,
+    map_type: &'a TilemapType,
+    anchor: &'a TilemapAnchor,
+    transform: &'a GlobalTransform,
+}
+
+impl TilemapData<'_> {
+    fn tile_to_world(&self, pos: &TilePos) -> Vec2 {
+        let local = pos.center_in_world(
+            self.map_size,
+            self.grid_size,
+            self.tile_size,
+            self.map_type,
+            self.anchor,
+        );
+        self.transform.transform_point(local.extend(0.0)).truncate()
+    }
+}
 
 struct SpawnContext {
     tile_size: f32,
@@ -66,12 +91,12 @@ fn compute_tilemap_info(
     TilemapInfo { tile_size: tile_vec, world_size, center }
 }
 
-#[instrument(level = "debug", skip_all)]
+#[instrument(level = "debug", skip_all, fields(spawn_count = spawn_tiles.iter().count(), door_count = door_tiles.iter().count()))]
 pub fn on_map_created(
     _trigger: On<TiledEvent<MapCreated>>,
     mut commands: Commands,
-    spawn_tiles: Query<(&GlobalTransform, &can_have_entity)>,
-    door_tiles: Query<(&GlobalTransform, &is_door)>,
+    spawn_tiles: Query<(&TilePos, &can_have_entity)>,
+    door_tiles: Query<(&TilePos, &is_door)>,
     tilemap_query: TilemapQuery,
     floor_root_query: Query<Entity, With<FloorRoot>>,
     tile_world_size: Option<Res<TileWorldSize>>,
@@ -81,14 +106,20 @@ pub fn on_map_created(
     let floor_root = floor_root_query.single().ok();
     let ctx = SpawnContext { tile_size, floor_root };
 
-    if let Some((map_size, map_tile_size, transform)) = tilemap_query.single().ok() {
-        let info = compute_tilemap_info(map_size, map_tile_size, transform);
-        commands.insert_resource(info);
-    }
+    let Some((map_size, grid_size, tile_size, map_type, anchor, transform)) =
+        tilemap_query.single().ok()
+    else {
+        return;
+    };
+
+    let tilemap = TilemapData { map_size, grid_size, tile_size, map_type, anchor, transform };
+
+    let info = compute_tilemap_info(map_size, tile_size, transform);
+    commands.insert_resource(info);
 
     let mut used_positions: Vec<Vec2> = Vec::new();
 
-    spawn_doors(&mut commands, &door_tiles, &mut used_positions, &ctx);
+    spawn_doors(&mut commands, &door_tiles, &mut used_positions, &ctx, &tilemap);
 
     let Some(config) = config else {
         return;
@@ -99,7 +130,7 @@ pub fn on_map_created(
     let available: Vec<Vec2> = spawn_tiles
         .iter()
         .filter(|(_, can_spawn)| can_spawn.0)
-        .map(|(transform, _)| transform.translation().truncate())
+        .map(|(tile_pos, _)| tilemap.tile_to_world(tile_pos))
         .collect();
 
     if available.is_empty() {
@@ -156,12 +187,13 @@ fn spawn_n_entities<R: Rng, C: Component, F>(
 
 fn spawn_doors(
     commands: &mut Commands,
-    door_tiles: &Query<(&GlobalTransform, &is_door)>,
+    door_tiles: &Query<(&TilePos, &is_door)>,
     used: &mut Vec<Vec2>,
     ctx: &SpawnContext,
+    tilemap: &TilemapData,
 ) {
-    for (transform, _) in door_tiles.iter() {
-        let world_pos = transform.translation().truncate();
+    for (tile_pos, _) in door_tiles.iter() {
+        let world_pos = tilemap.tile_to_world(tile_pos);
         ctx.spawn_entity(commands, world_pos, DoorEntity);
         used.push(world_pos);
     }

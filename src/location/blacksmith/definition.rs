@@ -103,14 +103,13 @@ impl Blacksmith {
         operation: UpgradeOperation,
     ) -> Result<UpgradeOperationResult, BlacksmithError> {
         for slot in EquipmentSlot::all() {
-            if let Some(equipped) = inventory.equipment().get(slot) {
-                if equipped.item.item_uuid == item_uuid {
-                    if let Some(mut inv_item) = inventory.equipment_mut().remove(slot) {
-                        let result = operation.execute(gold, inventory, &mut inv_item.item);
-                        inventory.equipment_mut().insert(*slot, inv_item);
-                        return result;
-                    }
-                }
+            if let Some(equipped) = inventory.equipment().get(slot)
+                && equipped.item.item_uuid == item_uuid
+                && let Some(mut inv_item) = inventory.equipment_mut().remove(slot)
+            {
+                let result = operation.execute(gold, inventory, &mut inv_item.item);
+                inventory.equipment_mut().insert(*slot, inv_item);
+                return result;
             }
         }
 
