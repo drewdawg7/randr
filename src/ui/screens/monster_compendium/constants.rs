@@ -36,3 +36,8 @@ pub const STAT_FONT_SIZE: f32 = 12.0;
 pub const DROP_ROW_HEIGHT: f32 = 18.0;
 pub const DROP_ICON_SIZE: f32 = 16.0;
 pub const DROP_FONT_SIZE: f32 = 12.0;
+
+// Shared layout
+pub const SECTION_PADDING: f32 = 10.0;
+pub const ICON_TEXT_GAP: f32 = 4.0;
+pub const STAT_COLUMN_GAP: f32 = 16.0;

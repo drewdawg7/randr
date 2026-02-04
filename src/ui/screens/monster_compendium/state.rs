@@ -9,7 +9,7 @@ use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
 use crate::ui::{FocusPanel, FocusState, SelectionState};
 
-use super::render::do_spawn_monster_compendium;
+use super::spawn::do_spawn_monster_compendium;
 
 /// Component marker for the monster compendium UI.
 #[derive(Component)]
