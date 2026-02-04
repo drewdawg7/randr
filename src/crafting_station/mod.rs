@@ -1,5 +1,9 @@
 //! Crafting station types for dungeon entities.
 
+mod plugin;
+
+pub use plugin::CraftingStationPlugin;
+
 use bevy::prelude::*;
 
 use crate::item::recipe::RecipeId;

@@ -15,7 +15,6 @@ use crate::dungeon::{
     PlayerMoveIntent, RockEntity, RockMined, SpawnFloor, TileWorldSize, TilemapInfo,
 };
 use crate::input::GameAction;
-use crate::game::{AnvilCraftingCompleteEvent, ForgeCraftingCompleteEvent};
 use crate::location::LocationId;
 use crate::mob::MobId;
 use crate::states::{AppState, StateTransitionRequest};
@@ -56,8 +55,6 @@ impl Plugin for DungeonScreenPlugin {
                     handle_crafting_station_interaction.run_if(on_message::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_message::<MiningResult>),
                     handle_back_action,
-                    poll_forge_timers.run_if(any_with_component::<ForgeActiveTimer>),
-                    poll_anvil_timers.run_if(any_with_component::<AnvilActiveTimer>),
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon)),
@@ -301,42 +298,13 @@ fn handle_mining_result(mut commands: Commands, mut events: MessageReader<Mining
     }
 }
 
-fn poll_forge_timers(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut query: Query<(Entity, &mut ForgeActiveTimer)>,
-) {
-    for (entity, mut timer) in &mut query {
-        timer.0.tick(time.delta());
-        if timer.0.just_finished() {
-            commands.trigger(ForgeTimerFinished { entity });
-        }
-    }
-}
-
-fn poll_anvil_timers(
-    mut commands: Commands,
-    time: Res<Time>,
-    mut query: Query<(Entity, &mut AnvilActiveTimer)>,
-) {
-    for (entity, mut timer) in &mut query {
-        timer.0.tick(time.delta());
-        if timer.0.just_finished() {
-            commands.trigger(AnvilTimerFinished { entity });
-        }
-    }
-}
-
 fn on_forge_timer_finished(
     trigger: On<ForgeTimerFinished>,
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
-    mut crafting_events: MessageWriter<ForgeCraftingCompleteEvent>,
     mut query: Query<&mut ImageNode>,
 ) {
     let entity = trigger.event().entity;
-
-    crafting_events.write(ForgeCraftingCompleteEvent { entity });
 
     if let Some(idle_idx) = game_sprites
         .get(SpriteSheetKey::CraftingStations)
@@ -349,7 +317,6 @@ fn on_forge_timer_finished(
         }
     }
 
-    commands.entity(entity).remove::<ForgeActiveTimer>();
     commands.entity(entity).remove::<SpriteAnimation>();
 }
 
@@ -357,12 +324,9 @@ fn on_anvil_timer_finished(
     trigger: On<AnvilTimerFinished>,
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
-    mut crafting_events: MessageWriter<AnvilCraftingCompleteEvent>,
     mut query: Query<&mut ImageNode>,
 ) {
     let entity = trigger.event().entity;
-
-    crafting_events.write(AnvilCraftingCompleteEvent { entity });
 
     if let Some(idle_idx) = game_sprites
         .get(SpriteSheetKey::CraftingStations)
@@ -375,7 +339,6 @@ fn on_anvil_timer_finished(
         }
     }
 
-    commands.entity(entity).remove::<AnvilActiveTimer>();
     commands.entity(entity).remove::<SpriteAnimation>();
 }
 

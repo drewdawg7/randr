@@ -2,6 +2,7 @@ use bevy::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 
 use crate::assets::AssetPlugin as GameAssetPlugin;
+use crate::crafting_station::CraftingStationPlugin;
 use crate::dungeon::{DungeonPlugin, FloorId};
 use crate::game::{BlacksmithPlugin, CombatPlugin, CraftingCompletePlugin, CraftingPlugin, ItemPlugin, MerchantPlugin, MiningPlugin, NpcInteractionsPlugin, PlayerPlugin, StoragePlugin, StorageTransactionsPlugin, ToastPlugin};
 use crate::input::{GameAction, InputPlugin};
@@ -56,6 +57,7 @@ impl Plugin for GamePlugin {
         app.add_plugins((
             BlacksmithPlugin,
             CraftingCompletePlugin,
+            CraftingStationPlugin,
             MerchantPlugin,
             MiningPlugin,
             NpcInteractionsPlugin,
