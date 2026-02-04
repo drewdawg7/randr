@@ -41,19 +41,6 @@ impl ForgeSlotIndex {
         }
     }
 
-    #[allow(dead_code)]
-    pub fn from_index(index: usize) -> Self {
-        match index {
-            0 => Self::Coal,
-            1 => Self::Ore,
-            _ => Self::Product,
-        }
-    }
-
-    #[allow(dead_code)]
-    pub fn as_index(self) -> usize {
-        self as usize
-    }
 }
 
 /// Tracks forge slot selection state.
