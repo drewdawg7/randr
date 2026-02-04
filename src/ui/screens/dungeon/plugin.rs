@@ -11,7 +11,7 @@ use crate::crafting_station::{
 use crate::dungeon::{
     ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction, DepthSorting,
     DungeonEntityMarker, DungeonRegistry, DungeonState, FloorReady, GameLayer, MerchantInteraction,
-    MineableEntityType, MiningResult, MoveResult, NpcEntity, PlayerMoveIntent, RockEntity, RockMined,
+    MineableEntityType, MiningResult, MovementConfig, MoveResult, NpcEntity, PlayerMoveIntent, RockEntity, RockMined,
     SpawnFloor, TileWorldSize, TilemapInfo,
 };
 use crate::input::GameAction;
@@ -389,11 +389,15 @@ fn handle_back_action(
 
 fn update_player_sprite_direction(
     mut query: Query<(&LinearVelocity, &mut Sprite), With<DungeonPlayer>>,
+    movement: Res<MovementConfig>,
+    tile_size: Res<TileWorldSize>,
 ) {
+    let threshold = movement.flip_threshold(tile_size.0);
+
     for (velocity, mut sprite) in &mut query {
-        if velocity.x < -0.1 {
+        if velocity.x < -threshold {
             sprite.flip_x = true;
-        } else if velocity.x > 0.1 {
+        } else if velocity.x > threshold {
             sprite.flip_x = false;
         }
     }

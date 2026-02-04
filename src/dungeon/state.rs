@@ -14,6 +14,29 @@ impl Default for TileWorldSize {
     }
 }
 
+#[derive(Resource, Clone, Copy, Debug)]
+pub struct MovementConfig {
+    pub tiles_per_second: f32,
+}
+
+impl Default for MovementConfig {
+    fn default() -> Self {
+        Self {
+            tiles_per_second: 6.25,
+        }
+    }
+}
+
+impl MovementConfig {
+    pub fn pixels_per_second(&self, tile_size: f32) -> f32 {
+        self.tiles_per_second * tile_size
+    }
+
+    pub fn flip_threshold(&self, tile_size: f32) -> f32 {
+        self.pixels_per_second(tile_size) * 0.01
+    }
+}
+
 #[derive(Resource, Clone, Copy, Debug, Default)]
 pub struct TilemapInfo {
     pub tile_size: Vec2,

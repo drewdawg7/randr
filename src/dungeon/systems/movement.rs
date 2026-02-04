@@ -4,17 +4,19 @@ use tracing::{debug, instrument};
 
 use crate::dungeon::events::{FloorTransition, MoveResult, PlayerMoveIntent};
 use crate::dungeon::tile_components::is_door;
-use crate::dungeon::{DoorEntity, DungeonEntityMarker, MobEntity, StairsEntity};
+use crate::dungeon::{DoorEntity, DungeonEntityMarker, MobEntity, MovementConfig, StairsEntity, TileWorldSize};
 use crate::input::NavigationDirection;
 use crate::ui::screens::DungeonPlayer;
-
-const PLAYER_SPEED: f32 = 200.0;
 
 #[instrument(level = "debug", skip_all, fields(event_count = events.len()))]
 pub fn handle_player_move(
     mut events: MessageReader<PlayerMoveIntent>,
     mut player_query: Query<(&mut LinearVelocity, &Transform, &Collider), With<DungeonPlayer>>,
+    movement: Res<MovementConfig>,
+    tile_size: Res<TileWorldSize>,
 ) {
+    let speed = movement.pixels_per_second(tile_size.0);
+
     for event in events.read() {
         let Ok((mut velocity, transform, collider)) = player_query.single_mut() else {
             continue;
@@ -41,7 +43,7 @@ pub fn handle_player_move(
             "player moving"
         );
 
-        velocity.0 = direction * PLAYER_SPEED;
+        velocity.0 = direction * speed;
     }
 }
 

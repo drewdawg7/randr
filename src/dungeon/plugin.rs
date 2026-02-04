@@ -12,7 +12,7 @@ use crate::dungeon::events::{
 };
 use crate::plugins::MobDefeated;
 use crate::dungeon::floor::FloorId;
-use crate::dungeon::state::{DungeonState, TileWorldSize};
+use crate::dungeon::state::{DungeonState, MovementConfig, TileWorldSize};
 use crate::dungeon::systems::{
     handle_floor_transition, handle_mob_defeated, handle_player_collisions, handle_player_move,
     prepare_floor, stop_player_when_idle, SpawnFloor,
@@ -73,6 +73,8 @@ impl Plugin for DungeonPlugin {
             .register_type::<is_door>()
             .insert_resource(self.registry.clone())
             .init_resource::<DungeonState>()
+            .init_resource::<TileWorldSize>()
+            .init_resource::<MovementConfig>()
             .add_message::<FloorTransition>()
             .add_message::<FloorReady>()
             .add_message::<SpawnFloor>()
