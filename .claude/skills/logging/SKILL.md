@@ -54,6 +54,16 @@ pub fn apply_defense(raw_damage: i32, defense: i32) -> i32 { }
 // Computed field
 #[instrument(level = "debug", skip_all, fields(entity_count = layout.entities().len()))]
 fn spawn_entities(...) { }
+
+// Deferred field (computed inside function body)
+#[instrument(level = "debug", skip_all, fields(coal_qty, ore_qty))]
+fn process_crafting(state: &ForgeCraftingState) {
+    let coal_qty = state.coal_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
+    let ore_qty = state.ore_slot.as_ref().map(|(_, q)| *q).unwrap_or(0);
+    tracing::Span::current().record("coal_qty", coal_qty);
+    tracing::Span::current().record("ore_qty", ore_qty);
+    // ... rest of logic
+}
 ```
 
 ## When to Add Logging
@@ -68,6 +78,10 @@ fn spawn_entities(...) { }
 Filter in `src/main.rs`: `"warn,game=debug"`
 - `debug` level for game crate
 - `warn+` for dependencies
+
+Span events: `FmtSpan::ENTER | FmtSpan::CLOSE`
+- `ENTER` logs when spans start (shows initial field values)
+- `CLOSE` logs when spans end (shows deferred field values from `Span::current().record()`)
 
 ## Checklist
 
