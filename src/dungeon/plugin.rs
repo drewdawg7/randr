@@ -19,6 +19,7 @@ use crate::dungeon::systems::{
 };
 use crate::dungeon::tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 use crate::location::LocationId;
+use crate::states::AppState;
 
 #[derive(Resource, Default)]
 pub struct FloorMonsterCount(pub usize);
@@ -85,11 +86,18 @@ impl Plugin for DungeonPlugin {
             .add_message::<MiningResult>()
             .add_observer(on_collider_created)
             .add_systems(
+                FixedPreUpdate,
+                (
+                    handle_player_move.run_if(on_message::<PlayerMoveIntent>),
+                    stop_player_when_idle,
+                )
+                    .chain()
+                    .run_if(in_state(AppState::Dungeon)),
+            )
+            .add_systems(
                 Update,
                 (
                     prepare_floor.run_if(on_message::<SpawnFloor>),
-                    handle_player_move.run_if(on_message::<PlayerMoveIntent>),
-                    stop_player_when_idle,
                     handle_player_collisions.run_if(on_message::<CollisionStart>),
                     handle_player_collision_end.run_if(on_message::<CollisionEnd>),
                     handle_floor_transition.run_if(on_message::<FloorTransition>),

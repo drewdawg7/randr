@@ -25,6 +25,11 @@ impl Plugin for CraftingStationPlugin {
                 (
                     handle_try_start_forge_crafting.run_if(on_message::<TryStartForgeCrafting>),
                     handle_try_start_anvil_crafting.run_if(on_message::<TryStartAnvilCrafting>),
+                ),
+            )
+            .add_systems(
+                FixedUpdate,
+                (
                     poll_forge_timers.run_if(any_with_component::<ForgeActiveTimer>),
                     poll_anvil_timers.run_if(any_with_component::<AnvilActiveTimer>),
                 ),
@@ -34,7 +39,7 @@ impl Plugin for CraftingStationPlugin {
 
 fn poll_forge_timers(
     mut commands: Commands,
-    time: Res<Time>,
+    time: Res<Time<Fixed>>,
     mut query: Query<(Entity, &mut ForgeActiveTimer)>,
 ) {
     for (entity, mut timer) in &mut query {
@@ -47,7 +52,7 @@ fn poll_forge_timers(
 
 fn poll_anvil_timers(
     mut commands: Commands,
-    time: Res<Time>,
+    time: Res<Time<Fixed>>,
     mut query: Query<(Entity, &mut AnvilActiveTimer)>,
 ) {
     for (entity, mut timer) in &mut query {

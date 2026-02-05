@@ -44,13 +44,17 @@ impl Plugin for DungeonScreenPlugin {
             .add_systems(OnEnter(AppState::Dungeon), enter_dungeon)
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
+                FixedFirst,
+                handle_dungeon_movement
+                    .run_if(on_message::<GameAction>)
+                    .run_if(|modal: Res<ActiveModal>| modal.modal.is_none())
+                    .run_if(in_state(AppState::Dungeon)),
+            )
+            .add_systems(
                 Update,
                 (
                     handle_floor_ready.run_if(on_message::<FloorReady>),
                     spawn_player_when_ready.run_if(resource_exists::<PendingPlayerSpawn>),
-                    handle_dungeon_movement
-                        .run_if(on_message::<GameAction>)
-                        .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     handle_move_result.run_if(on_message::<MoveResult>),
                     update_player_sprite_direction,
                     handle_interact_action
