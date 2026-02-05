@@ -44,3 +44,7 @@
 - When the user explicitly says NOT to do something (e.g., "do not look at other project skills"), follow that instruction exactly.
 - Don't assume existing project patterns are valid examples when told to use external sources instead.
 - Read user instructions carefully before starting work.
+
+## Comments
+- Do not add comments to code. The styleguide explicitly forbids unnecessary comments.
+- Doc comments on public structs/types are also unnecessary unless they explain something non-obvious.

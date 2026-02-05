@@ -4,14 +4,24 @@ use crate::dungeon::events::FloorTransition;
 use crate::dungeon::{DungeonRegistry, DungeonState, LayoutId, SpawnFloor};
 use crate::location::LocationId;
 
+#[derive(Resource, Default)]
+pub struct TransitionInProgress;
+
 pub fn handle_floor_transition(
     mut commands: Commands,
     mut events: MessageReader<FloorTransition>,
     mut spawn_events: MessageWriter<SpawnFloor>,
     mut state: ResMut<DungeonState>,
     registry: Res<DungeonRegistry>,
+    transition_in_progress: Option<Res<TransitionInProgress>>,
 ) {
+    if transition_in_progress.is_some() {
+        for _ in events.read() {}
+        return;
+    }
+
     for event in events.read() {
+        commands.insert_resource(TransitionInProgress);
         match event {
             FloorTransition::AdvanceFloor => {
                 state.advance_floor(&registry);
