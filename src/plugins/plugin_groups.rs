@@ -24,7 +24,7 @@ use crate::ui::screens::{
 use crate::ui::widgets::{
     ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemDetailDisplayPlugin,
     ItemDetailPanePlugin, ItemGridPlugin, ItemStatsDisplayPlugin, OutlinedTextPlugin,
-    PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin,
+    PlayerStatsPlugin, RowPlugin, SelectorPlugin, StackPlugin, StatRowPlugin,
 };
 use crate::ui::{MobAnimationPlugin, PlayerSpritePlugin};
 
@@ -97,20 +97,21 @@ pub struct UiWidgetPlugins;
 impl PluginGroup for UiWidgetPlugins {
     fn build(self) -> PluginGroupBuilder {
         PluginGroupBuilder::start::<Self>()
-            .add(PlayerStatsPlugin)
-            .add(ItemGridPlugin)
-            .add(GoldDisplayPlugin)
-            .add(ItemDetailPanePlugin)
-            .add(ItemDetailDisplayPlugin)
-            .add(ItemStatsDisplayPlugin)
-            .add(OutlinedTextPlugin)
-            .add(StatRowPlugin)
-            .add(IconValueRowPlugin)
-            .add(MobAnimationPlugin)
-            .add(PlayerSpritePlugin)
-            .add(RowPlugin)
             .add(ColumnPlugin)
+            .add(GoldDisplayPlugin)
+            .add(IconValueRowPlugin)
+            .add(ItemDetailDisplayPlugin)
+            .add(ItemDetailPanePlugin)
+            .add(ItemGridPlugin)
+            .add(ItemStatsDisplayPlugin)
+            .add(MobAnimationPlugin)
+            .add(OutlinedTextPlugin)
+            .add(PlayerSpritePlugin)
+            .add(PlayerStatsPlugin)
+            .add(RowPlugin)
+            .add(SelectorPlugin)
             .add(StackPlugin)
+            .add(StatRowPlugin)
     }
 }
 

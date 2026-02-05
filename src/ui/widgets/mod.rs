@@ -1,9 +1,9 @@
-mod detail_pane_system;
-mod item_detail_pane;
-mod item_detail_display;
 mod column;
+mod detail_pane_system;
 mod gold_display;
 mod icon_value_row;
+mod item_detail_display;
+mod item_detail_pane;
 mod item_grid;
 mod item_stats_display;
 mod list_item;
@@ -11,6 +11,7 @@ mod nine_slice;
 mod outlined_text;
 mod player_stats;
 mod row;
+mod selector;
 mod stack;
 mod stat_row;
 mod three_slice;
@@ -35,4 +36,5 @@ pub use outlined_text::{
     spawn_outlined_quantity_text, OutlinedQuantityConfig, OutlinedText, OutlinedTextPlugin,
 };
 pub use player_stats::{PlayerStats, PlayerStatsPlugin};
+pub use selector::{spawn_selector, AnimatedSelector, SelectorPlugin};
 pub use stat_row::{StatRow, StatRowPlugin};

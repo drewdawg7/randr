@@ -2,7 +2,8 @@ use bevy::prelude::*;
 
 use super::nine_slice::spawn_nine_slice_panel;
 use super::outlined_text::{spawn_outlined_quantity_text, OutlinedQuantityConfig};
-use crate::assets::{GameFonts, GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey, UiSelectorsSlice};
+use super::selector::{spawn_selector, AnimatedSelector};
+use crate::assets::{GameFonts, GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey};
 use crate::input::NavigationDirection;
 use crate::inventory::{Inventory, InventoryItem, ManagesItems};
 use crate::ui::focus::{FocusPanel, FocusState};
@@ -11,46 +12,33 @@ const CELL_SIZE: f32 = 48.0;
 const GAP: f32 = 4.0;
 const NINE_SLICE_INSET: f32 = 58.0;
 
-/// Plugin for item grid widget.
 pub struct ItemGridPlugin;
 
 impl Plugin for ItemGridPlugin {
     fn build(&self, app: &mut App) {
-        app.add_observer(on_add_item_grid)
-            .add_systems(
-                PostUpdate,
-                (
-                    update_grid_items,
-                    update_grid_selector.run_if(
-                        resource_exists::<FocusState>
-                            .and(resource_changed::<FocusState>)
-                            .or(any_match_filter::<Changed<ItemGrid>>),
-                    ),
-                )
-                    .chain(),
+        app.add_observer(on_add_item_grid).add_systems(
+            PostUpdate,
+            (
+                update_grid_items,
+                update_grid_selector.run_if(
+                    resource_exists::<FocusState>
+                        .and(resource_changed::<FocusState>)
+                        .or(any_match_filter::<Changed<ItemGrid>>),
+                ),
             )
-            .add_systems(
-                PostUpdate,
-                animate_grid_selector
-                    .after(update_grid_selector)
-                    .run_if(any_with_component::<GridSelector>),
-            );
+                .chain(),
+        );
     }
 }
 
-/// An item to display in the grid.
 #[derive(Clone)]
 pub struct ItemGridEntry {
-    /// Sprite sheet containing the item icon
     pub sprite_sheet_key: SpriteSheetKey,
-    /// Slice name in the sprite sheet (e.g., "Slice_337")
     pub sprite_name: String,
-    /// Quantity to display (only shown if > 1)
     pub quantity: u32,
 }
 
 impl ItemGridEntry {
-    /// Create a grid entry from an inventory item.
     pub fn from_inventory_item(inv_item: &InventoryItem) -> Self {
         Self {
             sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
@@ -59,7 +47,6 @@ impl ItemGridEntry {
         }
     }
 
-    /// Create grid entries from all items in an inventory.
     pub fn from_inventory(inventory: &Inventory) -> Vec<Self> {
         inventory
             .get_inventory_items()
@@ -69,14 +56,10 @@ impl ItemGridEntry {
     }
 }
 
-/// Item grid widget with optional items to display.
 #[derive(Component)]
 pub struct ItemGrid {
-    /// Items to display in the grid cells
     pub items: Vec<ItemGridEntry>,
-    /// Currently selected cell index
     pub selected_index: usize,
-    /// Number of columns/rows in the grid (e.g., 3 for 3x3, 4 for 4x4)
     pub grid_size: usize,
 }
 
@@ -90,8 +73,6 @@ impl Default for ItemGrid {
     }
 }
 
-/// Marker component that associates an ItemGrid with a FocusPanel.
-/// The selector is shown when FocusState.focused matches this panel.
 #[derive(Component)]
 pub struct ItemGridFocusPanel(pub FocusPanel);
 
@@ -104,8 +85,6 @@ impl ItemGrid {
         }
     }
 
-    /// Navigate the grid selection in the given direction.
-    /// Allows navigation to all grid slots, including empty ones.
     pub fn navigate(&mut self, direction: NavigationDirection) {
         let gs = self.grid_size;
         let total_slots = gs * gs;
@@ -128,11 +107,9 @@ impl ItemGrid {
     }
 }
 
-/// Marker for the grid container (child of ItemGrid that holds the cells).
 #[derive(Component)]
 pub struct GridContainer;
 
-/// Marker for grid cells with their index.
 #[derive(Component)]
 pub struct GridCell {
     pub index: usize,
@@ -159,16 +136,6 @@ impl GridCellBundle {
     }
 }
 
-/// Marker for the selector sprite with animation state.
-#[derive(Component)]
-pub struct GridSelector {
-    /// Timer for animation
-    pub timer: Timer,
-    /// Current frame (0 = Slice_61, 1 = Slice_91)
-    pub frame: usize,
-    /// Atlas indices for the two frames
-    pub frame_indices: [usize; 2],
-}
 
 fn on_add_item_grid(
     trigger: On<Add, ItemGrid>,
@@ -183,35 +150,20 @@ fn on_add_item_grid(
     let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
     let grid_size = item_grid.map(|g| g.grid_size).unwrap_or(4);
 
-    // Determine if this grid is focused by checking FocusState
     let is_focused = focus_panel
         .flatten()
         .zip(focus_state.as_ref())
         .map(|(panel, state)| state.is_focused(panel.0))
         .unwrap_or(false);
 
-    // Get the cell background sprite if available
     let cell_image = game_sprites
         .get(SpriteSheetKey::GridSlot)
         .and_then(|s| s.image_node(GridSlotSlice::Slot.as_str()));
-
-    // Get the selector sprite frames if available
-    let selector_data = game_sprites
-        .get(SpriteSheetKey::UiSelectors)
-        .and_then(|selectors| {
-            let idx1 = selectors.get(UiSelectorsSlice::SelectorFrame1.as_str())?;
-            let idx2 = selectors.get(UiSelectorsSlice::SelectorFrame2.as_str())?;
-            Some((
-                selectors.image_node(UiSelectorsSlice::SelectorFrame1.as_str())?,
-                [idx1, idx2],
-            ))
-        });
 
     let content_size = grid_size as f32 * CELL_SIZE + (grid_size - 1) as f32 * GAP;
     let grid_width = content_size + 2.0 * NINE_SLICE_INSET;
     let grid_height = grid_width;
 
-    // Set up the ItemGrid entity as the container
     let mut item_grid_entity = commands.entity(entity);
     item_grid_entity.insert(Node {
         width: Val::Px(grid_width),
@@ -223,10 +175,8 @@ fn on_add_item_grid(
     });
 
     item_grid_entity.with_children(|parent| {
-        // Spawn nine-slice background (absolute positioned behind grid)
         spawn_nine_slice_panel::<ShopBgSlice>(parent, &game_sprites, grid_width, grid_height);
 
-        // Grid container on top
         parent
             .spawn((
                 GridContainer,
@@ -246,30 +196,12 @@ fn on_add_item_grid(
                         cell.insert(img.clone());
                     }
 
-                    // Add selector sprite if this is the selected cell and grid is focused
-                    let is_selected = i == selected_index;
-                    if is_selected && is_focused {
-                        if let Some((ref selector_img, frame_indices)) = selector_data {
-                            cell.with_children(|cell_content| {
-                                cell_content.spawn((
-                                    GridSelector {
-                                        timer: Timer::from_seconds(0.5, TimerMode::Repeating),
-                                        frame: 0,
-                                        frame_indices,
-                                    },
-                                    Node {
-                                        position_type: PositionType::Absolute,
-                                        width: Val::Px(CELL_SIZE),
-                                        height: Val::Px(CELL_SIZE),
-                                        ..default()
-                                    },
-                                    selector_img.clone(),
-                                ));
-                            });
-                        }
+                    if i == selected_index && is_focused {
+                        cell.with_children(|cell_content| {
+                            spawn_selector(cell_content, &game_sprites);
+                        });
                     }
 
-                    // Add item sprite if there's an item at this index
                     if let Some(item_grid) = item_grid {
                         if let Some(entry) = item_grid.items.get(i) {
                             if let Some(icon_img) = game_sprites
@@ -287,7 +219,6 @@ fn on_add_item_grid(
                                         icon_img,
                                     ));
 
-                                    // Spawn quantity text with outline if quantity > 1
                                     if entry.quantity > 1 {
                                         spawn_outlined_quantity_text(
                                             cell_content,
@@ -306,15 +237,12 @@ fn on_add_item_grid(
     });
 }
 
-/// Marker for item sprites inside grid cells (to distinguish from selector sprites).
 #[derive(Component)]
 struct GridItemSprite;
 
-/// Marker for quantity text inside grid cells.
 #[derive(Component)]
 struct GridItemQuantityText;
 
-/// Update the item sprites in grid cells when the items list changes.
 fn update_grid_items(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
@@ -326,7 +254,6 @@ fn update_grid_items(
     quantity_texts: Query<Entity, With<GridItemQuantityText>>,
 ) {
     for (item_grid, item_grid_children) in &item_grids {
-        // Find the GridContainer child
         let Some(container_children) = item_grid_children
             .iter()
             .find_map(|child| grid_containers.get(child).ok())
@@ -339,7 +266,6 @@ fn update_grid_items(
                 continue;
             };
 
-            // Remove existing item sprites and quantity text from this cell
             if let Some(children) = cell_children {
                 for cell_child in children.iter() {
                     if item_sprites.contains(cell_child) || quantity_texts.contains(cell_child) {
@@ -350,7 +276,6 @@ fn update_grid_items(
                 }
             }
 
-            // Add item sprite if there's an item at this cell index
             if let Some(entry) = item_grid.items.get(grid_cell.index) {
                 if let Some(icon_img) = game_sprites
                     .get(entry.sprite_sheet_key)
@@ -367,7 +292,6 @@ fn update_grid_items(
                             icon_img,
                         ));
 
-                        // Spawn quantity text with outline if quantity > 1
                         if entry.quantity > 1 {
                             spawn_outlined_quantity_text(
                                 cell_content,
@@ -391,21 +315,18 @@ fn update_grid_selector(
     item_grids: Query<(Entity, &ItemGrid, Option<&ItemGridFocusPanel>, &Children)>,
     grid_containers: Query<&Children, With<GridContainer>>,
     grid_cells: Query<(Entity, &GridCell, Option<&Children>)>,
-    selectors: Query<Entity, With<GridSelector>>,
+    selectors: Query<Entity, With<AnimatedSelector>>,
 ) {
     for (grid_entity, item_grid, focus_panel, item_grid_children) in &item_grids {
-        // Check if this grid is focused
         let is_focused = focus_panel
             .zip(focus_state.as_ref())
             .map(|(panel, state)| state.is_focused(panel.0))
             .unwrap_or(false);
 
-        // Skip if the grid entity is being despawned
         if commands.get_entity(grid_entity).is_err() {
             continue;
         }
 
-        // Find the GridContainer child to get the actual grid cells
         let Some(container_children) = item_grid_children
             .iter()
             .find_map(|child| grid_containers.get(child).ok())
@@ -413,7 +334,6 @@ fn update_grid_selector(
             continue;
         };
 
-        // Remove existing selector from this grid only (check children of grid cells)
         for child in container_children.iter() {
             if let Ok((_, _, Some(cell_children))) = grid_cells.get(child) {
                 for cell_child in cell_children.iter() {
@@ -426,45 +346,20 @@ fn update_grid_selector(
             }
         }
 
-        // Only add selector if grid is focused
         if !is_focused {
             continue;
         }
 
-        // Find the selected cell and add selector
         for child in container_children.iter() {
             if let Ok((cell_entity, grid_cell, _)) = grid_cells.get(child) {
                 if grid_cell.index == item_grid.selected_index {
-                    // Skip if cell entity no longer exists
                     if commands.get_entity(cell_entity).is_err() {
                         break;
                     }
 
-                    // Add selector to this cell
-                    if let Some(selectors_sheet) = game_sprites.get(SpriteSheetKey::UiSelectors) {
-                        if let (Some(idx1), Some(idx2), Some(img)) = (
-                            selectors_sheet.get(UiSelectorsSlice::SelectorFrame1.as_str()),
-                            selectors_sheet.get(UiSelectorsSlice::SelectorFrame2.as_str()),
-                            selectors_sheet.image_node(UiSelectorsSlice::SelectorFrame1.as_str()),
-                        ) {
-                            commands.entity(cell_entity).with_children(|cell| {
-                                cell.spawn((
-                                    GridSelector {
-                                        timer: Timer::from_seconds(0.5, TimerMode::Repeating),
-                                        frame: 0,
-                                        frame_indices: [idx1, idx2],
-                                    },
-                                    Node {
-                                        position_type: PositionType::Absolute,
-                                        width: Val::Px(CELL_SIZE),
-                                        height: Val::Px(CELL_SIZE),
-                                        ..default()
-                                    },
-                                    img,
-                                ));
-                            });
-                        }
-                    }
+                    commands.entity(cell_entity).with_children(|cell| {
+                        spawn_selector(cell, &game_sprites);
+                    });
                     break;
                 }
             }
@@ -472,20 +367,3 @@ fn update_grid_selector(
     }
 }
 
-/// Animate the grid selector by alternating between frames.
-fn animate_grid_selector(
-    time: Res<Time>,
-    mut selectors: Query<(&mut GridSelector, &mut ImageNode)>,
-) {
-    for (mut selector, mut image) in &mut selectors {
-        selector.timer.tick(time.delta());
-        if selector.timer.just_finished() {
-            // Toggle frame
-            selector.frame = (selector.frame + 1) % 2;
-            // Update the atlas index
-            if let Some(ref mut atlas) = image.texture_atlas {
-                atlas.index = selector.frame_indices[selector.frame];
-            }
-        }
-    }
-}

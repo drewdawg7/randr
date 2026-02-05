@@ -1,16 +1,17 @@
 use bevy::prelude::*;
 
-use crate::assets::{GameFonts, GameSprites, GridSlotSlice, SpriteSheetKey, UiSelectorsSlice};
+use crate::assets::{GameFonts, GameSprites, GridSlotSlice, SpriteSheetKey};
 use crate::crafting_station::ForgeCraftingState;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
-use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
-    spawn_outlined_quantity_text, ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent,
-    ItemGrid, ItemGridEntry, ItemGridFocusPanel, OutlinedQuantityConfig,
+    spawn_outlined_quantity_text, spawn_selector, AnimatedSelector, ItemDetailDisplay,
+    ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry, ItemGridFocusPanel,
+    OutlinedQuantityConfig,
 };
+use crate::ui::InfoPanelSource;
 use crate::ui::{Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{
@@ -22,31 +23,19 @@ const SLOT_SIZE: f32 = 48.0;
 const SLOT_GAP: f32 = 8.0;
 const LABEL_FONT_SIZE: f32 = 12.0;
 
-/// Marker for individual forge slots.
 #[derive(Component)]
 pub struct ForgeSlotCell {
     pub slot_type: ForgeSlotIndex,
 }
 
-/// Marker for item sprites inside forge slots.
 #[derive(Component)]
 pub struct ForgeSlotItemSprite;
 
-/// Marker for quantity text inside forge slots.
 #[derive(Component)]
 pub struct ForgeSlotQuantityText;
 
-/// Marker for the slot selector sprite.
-#[derive(Component)]
-pub struct ForgeSlotSelector {
-    pub timer: Timer,
-    pub frame: usize,
-    pub frame_indices: [usize; 2],
-}
 
 
-/// Spawn the forge modal UI with crafting slots, player inventory grid, and detail pane.
-/// Called from RegisteredModal::spawn via run_system_cached.
 pub fn spawn_forge_modal_impl(
     mut commands: Commands,
     game_sprites: &GameSprites,
@@ -99,7 +88,6 @@ pub fn spawn_forge_modal_impl(
     );
 }
 
-/// Spawn the 3-slot horizontal crafting area.
 fn spawn_crafting_slots(
     parent: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
@@ -109,9 +97,8 @@ fn spawn_crafting_slots(
 ) {
     let slots_width = 3.0 * SLOT_SIZE + 2.0 * SLOT_GAP + 32.0;
 
-    let slots_height = SLOT_SIZE + 40.0; // Room for labels
+    let slots_height = SLOT_SIZE + 40.0;
 
-    // Selector is not shown initially - update_forge_slot_selector will add it when needed
     parent
         .spawn((
             ForgeSlotsGrid,
@@ -142,7 +129,6 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Coal,
                         "Coal",
                         forge_state.and_then(|s| s.coal_slot),
-                        false,
                     );
 
                     spawn_slot(
@@ -152,7 +138,6 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Ore,
                         "Ore",
                         forge_state.and_then(|s| s.ore_slot),
-                        false,
                     );
 
                     spawn_slot(
@@ -162,13 +147,11 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Product,
                         "Ingot",
                         forge_state.and_then(|s| s.product_slot),
-                        false,
                     );
                 });
         });
 }
 
-/// Spawn a single crafting slot with label.
 fn spawn_slot(
     parent: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
@@ -176,7 +159,6 @@ fn spawn_slot(
     slot_type: ForgeSlotIndex,
     label: &str,
     contents: Option<(ItemId, u32)>,
-    is_selected: bool,
 ) {
     parent
         .spawn(Node {
@@ -209,10 +191,6 @@ fn spawn_slot(
                 if let Some((item_id, quantity)) = contents {
                     spawn_slot_item(cell, game_sprites, game_fonts, item_id, quantity);
                 }
-
-                if is_selected {
-                    spawn_slot_selector(cell, game_sprites);
-                }
             });
 
             slot_column.spawn((
@@ -223,7 +201,6 @@ fn spawn_slot(
         });
 }
 
-/// Spawn item sprite and quantity in a slot.
 fn spawn_slot_item(
     cell: &mut ChildSpawnerCommands,
     game_sprites: &GameSprites,
@@ -257,50 +234,7 @@ fn spawn_slot_item(
     }
 }
 
-/// Spawn selector sprite in a slot.
-fn spawn_slot_selector(cell: &mut ChildSpawnerCommands, game_sprites: &GameSprites) {
-    if let Some(selectors_sheet) = game_sprites.get(SpriteSheetKey::UiSelectors) {
-        if let (Some(idx1), Some(idx2), Some(img)) = (
-            selectors_sheet.get(UiSelectorsSlice::SelectorFrame1.as_str()),
-            selectors_sheet.get(UiSelectorsSlice::SelectorFrame2.as_str()),
-            selectors_sheet.image_node(UiSelectorsSlice::SelectorFrame1.as_str()),
-        ) {
-            cell.spawn((
-                ForgeSlotSelector {
-                    timer: Timer::from_seconds(0.5, TimerMode::Repeating),
-                    frame: 0,
-                    frame_indices: [idx1, idx2],
-                },
-                Node {
-                    position_type: PositionType::Absolute,
-                    width: Val::Px(SLOT_SIZE),
-                    height: Val::Px(SLOT_SIZE),
-                    ..default()
-                },
-                img,
-            ));
-        }
-    }
-}
 
-/// Animate the forge slot selector.
-pub fn animate_forge_slot_selector(
-    time: Res<Time>,
-    mut selectors: Query<(&mut ForgeSlotSelector, &mut ImageNode)>,
-) {
-    for (mut selector, mut image) in &mut selectors {
-        selector.timer.tick(time.delta());
-        if selector.timer.just_finished() {
-            selector.frame = (selector.frame + 1) % 2;
-            if let Some(ref mut atlas) = image.texture_atlas {
-                atlas.index = selector.frame_indices[selector.frame];
-            }
-        }
-    }
-}
-
-/// Refresh the forge slots display when ForgeCraftingState changes.
-/// Uses Bevy's native change detection via `Changed<ForgeCraftingState>`.
 pub fn refresh_forge_slots(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
@@ -350,7 +284,7 @@ pub fn update_forge_slot_selector(
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
     slot_cells: Query<(Entity, &ForgeSlotCell, Option<&Children>)>,
-    selectors: Query<Entity, With<ForgeSlotSelector>>,
+    selectors: Query<Entity, With<AnimatedSelector>>,
 ) {
     let Some(modal_state) = modal_state else {
         return;
@@ -380,7 +314,7 @@ pub fn update_forge_slot_selector(
     for (cell_entity, slot_cell, _) in &slot_cells {
         if slot_cell.slot_type == modal_state.selected_slot {
             commands.entity(cell_entity).with_children(|cell| {
-                spawn_slot_selector(cell, &game_sprites);
+                spawn_selector(cell, &game_sprites);
             });
             break;
         }
