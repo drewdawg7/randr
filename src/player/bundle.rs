@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use super::components::PlayerMarker;
 use super::{default_player_stats, PlayerGold, PlayerName};
 use crate::entities::Progression;
+use crate::game::player::PlayerPreviousLevel;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
 use crate::stats::StatSheet;
@@ -15,6 +16,7 @@ pub struct PlayerBundle {
     pub progression: Progression,
     pub stats: StatSheet,
     pub inventory: Inventory,
+    pub previous_level: PlayerPreviousLevel,
 }
 
 impl Default for PlayerBundle {
@@ -31,6 +33,7 @@ impl Default for PlayerBundle {
             progression: Progression::new(),
             stats: default_player_stats(),
             inventory,
+            previous_level: PlayerPreviousLevel(1),
         }
     }
 }
