@@ -46,7 +46,7 @@ impl InventoryItem {
     }
 }
 
-#[derive(Resource, Default, Debug, Clone)]
+#[derive(Resource, Component, Default, Debug, Clone)]
 pub struct Inventory {
     pub items: Vec<InventoryItem>,
     max_slots: usize,

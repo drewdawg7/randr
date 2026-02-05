@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use crate::inventory::Inventory;
 use crate::stats::{StatInstance, StatSheet, StatType};
 
-#[derive(Resource, Debug, Clone)]
+#[derive(Resource, Component, Debug, Clone)]
 pub struct PlayerName(pub String);
 
 impl Default for PlayerName {
@@ -14,7 +14,7 @@ impl Default for PlayerName {
     }
 }
 
-#[derive(Resource, Debug, Clone, Default)]
+#[derive(Resource, Component, Debug, Clone, Default)]
 pub struct PlayerGold(pub i32);
 
 impl PlayerGold {

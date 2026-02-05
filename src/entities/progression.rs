@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-#[derive(Resource, Debug, Default, Clone)]
+#[derive(Resource, Component, Debug, Default, Clone)]
 pub struct Progression {
     pub level: i32,
     pub xp: i32,

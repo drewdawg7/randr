@@ -3,7 +3,7 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 
 
-#[derive(Resource, Debug, Clone, PartialEq, Eq)]
+#[derive(Resource, Component, Debug, Clone, PartialEq, Eq)]
 pub struct StatSheet {
    pub stats: HashMap<StatType, StatInstance>      
 }
