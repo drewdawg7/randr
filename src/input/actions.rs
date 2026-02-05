@@ -28,8 +28,11 @@ pub enum GameAction {
     /// Reverse tab switching (Shift+Tab)
     PrevTab,
 
-    /// Mining action (Space)
+    /// Mining/interaction action (Space)
     Mine,
+
+    /// Attack action (Space - context sensitive)
+    Attack,
 
     /// Open inventory modal (i)
     OpenInventory,

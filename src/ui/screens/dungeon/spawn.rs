@@ -19,7 +19,7 @@ use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet, PlayerWalkTimer};
 
-use super::components::{DungeonPlayer, DungeonRoot, FloorRoot};
+use super::components::{DungeonPlayer, DungeonRoot, FacingDirection, FloorRoot};
 
 #[derive(Component)]
 pub struct DungeonCamera;
@@ -49,6 +49,7 @@ struct SensorEntityBundle {
 #[derive(Bundle)]
 struct PlayerBundle {
     marker: DungeonPlayer,
+    facing: FacingDirection,
     sprite: Sprite,
     transform: Transform,
     animation: SpriteAnimation,
@@ -292,6 +293,7 @@ pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &Pl
 
     commands.spawn(PlayerBundle {
         marker: DungeonPlayer,
+        facing: FacingDirection::default(),
         sprite: Sprite::from_atlas_image(
             texture,
             TextureAtlas {

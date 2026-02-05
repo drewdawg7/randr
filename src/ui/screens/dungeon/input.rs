@@ -5,7 +5,7 @@ use crate::dungeon::{MovementConfig, PlayerMoveIntent, TileWorldSize};
 use crate::input::GameAction;
 use crate::states::StateTransitionRequest;
 
-use super::components::DungeonPlayer;
+use super::components::{DungeonPlayer, FacingDirection};
 
 pub fn handle_dungeon_movement(
     mut action_reader: MessageReader<GameAction>,
@@ -30,17 +30,27 @@ pub fn handle_back_action(
 }
 
 pub fn update_player_sprite_direction(
-    mut query: Query<(&LinearVelocity, &mut Sprite), With<DungeonPlayer>>,
+    mut query: Query<(&LinearVelocity, &mut Sprite, &mut FacingDirection), With<DungeonPlayer>>,
     movement: Res<MovementConfig>,
     tile_size: Res<TileWorldSize>,
 ) {
     let threshold = movement.flip_threshold(tile_size.0);
 
-    for (velocity, mut sprite) in &mut query {
-        if velocity.x < -threshold {
-            sprite.flip_x = true;
-        } else if velocity.x > threshold {
-            sprite.flip_x = false;
+    for (velocity, mut sprite, mut facing) in &mut query {
+        if velocity.x.abs() > velocity.y.abs() {
+            if velocity.x < -threshold {
+                sprite.flip_x = true;
+                *facing = FacingDirection::Left;
+            } else if velocity.x > threshold {
+                sprite.flip_x = false;
+                *facing = FacingDirection::Right;
+            }
+        } else {
+            if velocity.y > threshold {
+                *facing = FacingDirection::Up;
+            } else if velocity.y < -threshold {
+                *facing = FacingDirection::Down;
+            }
         }
     }
 }
