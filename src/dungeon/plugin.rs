@@ -15,9 +15,10 @@ use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::{DungeonState, MovementConfig, TileWorldSize};
 use crate::combat::Attacking;
 use crate::dungeon::systems::{
-    handle_floor_transition, handle_mob_defeated, handle_player_collision_end,
-    handle_player_collisions, handle_player_move, prepare_floor, stop_attacking_player,
-    stop_player_when_idle, SpawnFloor,
+    cleanup_mob_health_bars, handle_floor_transition, handle_mob_defeated,
+    handle_player_collision_end, handle_player_collisions, handle_player_move, prepare_floor,
+    spawn_mob_health_bars, stop_attacking_player, stop_player_when_idle,
+    update_mob_health_bar_positions, update_mob_health_bar_values, SpawnFloor,
 };
 use crate::dungeon::tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 use crate::location::LocationId;
@@ -106,7 +107,12 @@ impl Plugin for DungeonPlugin {
                     handle_player_collision_end.run_if(on_message::<CollisionEnd>),
                     handle_floor_transition.run_if(on_message::<FloorTransition>),
                     handle_mob_defeated.run_if(on_message::<MobDefeated>),
-                ),
+                    spawn_mob_health_bars,
+                    update_mob_health_bar_positions,
+                    update_mob_health_bar_values,
+                    cleanup_mob_health_bars,
+                )
+                    .run_if(in_state(AppState::Dungeon)),
             );
     }
 }
