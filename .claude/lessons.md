@@ -28,6 +28,9 @@
 - Understand the actual goal before proposing solutions. Don't just revert to old patterns - find a forward path that achieves the user's intent.
 - When a refactor breaks something, the fix should align with the refactor's goals, not undo them.
 
+## Bevy Systems
+- When a system doesn't run, check its `run_if` conditions. If it uses `any_with_component::<T>`, verify that `T` is actually added to entities (check spawn/bundle code).
+
 ## bevy_ecs_tiled / bevy_ecs_tilemap
 - Tiles have `TilePos` component (grid position), NOT Transform/GlobalTransform
 - Do not add Transform to tile entities - rendering is handled at the TiledTilemap level
@@ -44,6 +47,8 @@
 - When the user explicitly says NOT to do something (e.g., "do not look at other project skills"), follow that instruction exactly.
 - Don't assume existing project patterns are valid examples when told to use external sources instead.
 - Read user instructions carefully before starting work.
+- Only do what the user explicitly asks. Do not take additional steps beyond the request. If asked to create a GitHub issue, create the issue and stop - don't start implementation, create branches, or take other actions.
+- When corrected, don't immediately take more actions to "fix" things. Stop and wait for instructions.
 
 ## Comments
 - Do not add comments to code. The styleguide explicitly forbids unnecessary comments.
