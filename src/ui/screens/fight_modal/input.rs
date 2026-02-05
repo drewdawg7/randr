@@ -9,7 +9,9 @@ use crate::ui::{PlayerAnimationTimer, PlayerSpriteSheet, SelectionState, SpriteA
 
 use super::super::modal::{ActiveModal, ModalType, OpenModal};
 use super::super::results_modal::{ResultsModalData, ResultsSprite};
-use super::state::{FightModal, FightModalButton, FightModalButtonSelection, FightModalMob};
+use super::state::{
+    FightModal, FightModalButton, FightModalButtonSelection, FightModalMob, FightModalPlayerSprite,
+};
 
 struct OpenResultsModalCommand(ResultsModalData);
 
@@ -90,7 +92,10 @@ pub fn handle_fight_modal_select(
 pub fn trigger_attack_animation(
     mut events: MessageReader<PlayerAttackMob>,
     sheet: Res<PlayerSpriteSheet>,
-    mut sprite_query: Query<(&mut SpriteAnimation, &mut PlayerAnimationTimer)>,
+    mut sprite_query: Query<
+        (&mut SpriteAnimation, &mut PlayerAnimationTimer),
+        With<FightModalPlayerSprite>,
+    >,
 ) {
     for _ in events.read() {
         if let Ok((mut anim, mut timer)) = sprite_query.single_mut() {
