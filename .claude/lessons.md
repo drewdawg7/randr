@@ -35,6 +35,7 @@
 
 ## Bevy Systems
 - When a system doesn't run, check its `run_if` conditions. If it uses `any_with_component::<T>`, verify that `T` is actually added to entities (check spawn/bundle code).
+- `resource_changed::<T>()` requires the resource to exist - it panics if the resource is missing. For optional resources (like `FocusState` which is only inserted when modals open), wrap with: `resource_exists::<T>().and(resource_changed::<T>())`
 
 ## bevy_ecs_tiled / bevy_ecs_tilemap
 - Tiles have `TilePos` component (grid position), NOT Transform/GlobalTransform
