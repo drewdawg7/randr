@@ -1,12 +1,9 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-/// Configuration for the toast notification system.
 #[derive(Resource, Clone, Debug)]
 pub struct ToastConfig {
-    /// Maximum number of toasts displayed at once. Default: 5
     pub max_toasts: usize,
-    /// Duration before a toast expires. Default: 3 seconds
     pub duration: Duration,
 }
 
@@ -69,20 +66,24 @@ impl ToastType {
 pub struct Toast {
     pub toast_type: ToastType,
     pub message: String,
-    pub created_at: Duration,
+    timer: Timer,
 }
 
 impl Toast {
-    pub fn new(toast_type: ToastType, message: impl Into<String>, current_time: Duration) -> Self {
+    pub fn new(toast_type: ToastType, message: impl Into<String>, config: &ToastConfig) -> Self {
         Self {
             toast_type,
             message: message.into(),
-            created_at: current_time,
+            timer: Timer::new(config.duration, TimerMode::Once),
         }
     }
 
-    pub fn is_expired(&self, current_time: Duration, config: &ToastConfig) -> bool {
-        current_time.saturating_sub(self.created_at) >= config.duration
+    pub fn tick(&mut self, delta: Duration) {
+        self.timer.tick(delta);
+    }
+
+    pub fn is_expired(&self) -> bool {
+        self.timer.is_finished()
     }
 }
 
@@ -99,8 +100,11 @@ impl ToastQueue {
         }
     }
 
-    pub fn cleanup(&mut self, current_time: Duration, config: &ToastConfig) {
-        self.toasts.retain(|t| !t.is_expired(current_time, config));
+    pub fn tick_and_cleanup(&mut self, delta: Duration) {
+        for toast in &mut self.toasts {
+            toast.tick(delta);
+        }
+        self.toasts.retain(|t| !t.is_expired());
     }
 
     pub fn toasts(&self) -> &[Toast] {
@@ -195,19 +199,17 @@ fn handle_toast_events(
     mut toast_events: MessageReader<ShowToast>,
     mut toast_queue: ResMut<ToastQueue>,
     config: Res<ToastConfig>,
-    time: Res<Time>,
 ) {
-    let current_time = time.elapsed();
     for event in toast_events.read() {
         toast_queue.push(
-            Toast::new(event.toast_type, event.message.clone(), current_time),
+            Toast::new(event.toast_type, event.message.clone(), &config),
             &config,
         );
     }
 }
 
-fn cleanup_toasts(mut toast_queue: ResMut<ToastQueue>, config: Res<ToastConfig>, time: Res<Time>) {
-    toast_queue.cleanup(time.elapsed(), &config);
+fn cleanup_toasts(mut toast_queue: ResMut<ToastQueue>, time: Res<Time>) {
+    toast_queue.tick_and_cleanup(time.delta());
 }
 
 fn update_toast_ui(
