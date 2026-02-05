@@ -4,7 +4,7 @@ mod gold_display;
 mod icon_value_row;
 mod item_detail_display;
 mod item_detail_pane;
-mod item_grid;
+pub mod item_grid;
 mod item_stats_display;
 mod list_item;
 mod nine_slice;
