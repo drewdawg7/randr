@@ -2,7 +2,7 @@
 
 ## Overview
 
-Mob sprites are displayed during combat on the fight screen, MonsterCompendium (opened with 'b' key), and the results/victory modal. Each `MobId` can have an associated animated sprite sheet with idle and optional death animation support.
+Mob sprites are displayed in dungeons, MonsterCompendium (opened with 'b' key), and the results/victory modal. Each `MobId` can have an associated animated sprite sheet with idle and optional death animation support.
 
 ## Adding a New Mob Sprite (with Animation)
 
@@ -85,8 +85,6 @@ Slice indices correspond to grid cells numbered left-to-right, top-to-bottom:
 | `src/ui/animation.rs` | `SpriteAnimation` component, `AnimationConfig`, `animate_sprites()` system |
 | `src/ui/sprite_marker.rs` | `SpriteMarker` trait, `SpriteData`, generic `populate_sprite_markers<M>()` system |
 | `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `MobSpriteSheet`, `DungeonMobSprite` marker |
-| `src/ui/screens/fight_modal/state.rs` | `FightModalMobSprite` marker with `SpriteMarker` impl |
-| `src/ui/screens/fight/ui.rs` | `populate_mob_sprite()` - displays animated sprite in combat |
 | `src/ui/screens/monster_compendium/render.rs` | `update_compendium_mob_sprite()` - displays animated sprite in MonsterCompendium |
 | `assets/sprites/mobs/` | Sprite sheet PNGs and JSON metadata |
 
@@ -108,7 +106,6 @@ pub trait SpriteMarker: Component + Sized {
 | Marker | File | Resource | flip_x | Animation |
 |--------|------|----------|--------|-----------|
 | `DungeonMobSprite` | `mob_animation.rs` | `MobSpriteSheets` | false | idle |
-| `FightModalMobSprite` | `fight_modal/state.rs` | `MobSpriteSheets` | true | idle |
 | `ResultsModalMobSprite` | `results_modal/state.rs` | `MobSpriteSheets` | false | death (fallback: idle) |
 
 ### Registering a New Mob Sprite Marker
@@ -202,7 +199,7 @@ The `frame_size: UVec2` field on `MobSpriteSheet` must match the grid cell dimen
 
 Death animations are stored as `death_animation: Option<AnimationConfig>` in `MobSpriteSheet`. They use `looping: false` to play once and stop on the final frame.
 
-The results modal (`ResultsModalMobSprite`) automatically uses the death animation if available, falling back to idle. Other sprite markers (fight modal, dungeon, compendium) continue to use the idle animation.
+The results modal (`ResultsModalMobSprite`) automatically uses the death animation if available, falling back to idle. Other sprite markers (dungeon, compendium) continue to use the idle animation.
 
 ### Sprite Display Sizes
 
@@ -210,10 +207,8 @@ The sprite display containers should be consistent across all locations:
 
 | Location | Container Size | Inner Sprite Size | File |
 |----------|----------------|-------------------|------|
-| Fight Screen | 224x224 | 192x192 | `src/screens/fight/ui.rs:204-222` |
 | MonsterCompendium | 112x112 | 96x96 | `src/screens/monster_compendium.rs:233-249` |
 | Dungeon Tab | 48x48 | 48x48 | `src/screens/town/tabs/dungeon.rs` |
-| Fight Modal | 128x128 | 128x128 | `src/ui/screens/fight_modal/render.rs` |
 
 ## Special Cases
 

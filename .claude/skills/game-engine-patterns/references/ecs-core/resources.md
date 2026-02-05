@@ -164,13 +164,13 @@ fn handle_mob_death(mut player: PlayerResources, /* ... */) {
 File: `src/combat/plugin.rs`
 
 ```rust
-fn handle_mob_death(
-    fight_mob: Option<Res<FightModalMob>>,  // May not exist
+fn process_combat(
+    active_combat: Option<Res<ActiveCombat>>,  // May not exist
 ) {
-    let Some(ref fight_mob) = fight_mob else {
-        return;  // No active fight modal
+    let Some(ref combat) = active_combat else {
+        return;  // No active combat
     };
-    // Use fight_mob...
+    // Use combat...
 }
 ```
 

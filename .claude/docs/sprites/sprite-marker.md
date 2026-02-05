@@ -64,14 +64,13 @@ The `AnimationClock` ticks every frame unconditionally to maintain consistent ti
 | Marker | File | Resource | flip_x |
 |--------|------|----------|--------|
 | `DungeonPlayerSprite` | `player_sprite.rs` | `PlayerSpriteSheet` | false |
-| `FightModalPlayerSprite` | `fight_modal/state.rs` | `PlayerSpriteSheet` | false |
 
 ### Mob Sprites
 
 | Marker | File | Resource | flip_x |
 |--------|------|----------|--------|
 | `DungeonMobSprite` | `mob_animation.rs` | `MobSpriteSheets` | false |
-| `FightModalMobSprite` | `fight_modal/state.rs` | `MobSpriteSheets` | true |
+| `ResultsModalMobSprite` | `results_modal/state.rs` | `MobSpriteSheets` | false |
 
 ## Adding a New Sprite Marker
 
@@ -155,20 +154,6 @@ Sprites can switch between animations at runtime by mutating `SpriteAnimation` f
 ### Walk Animation Config
 - Frames 13-18, `frame_duration: 0.08`, looping, not synchronized
 - `PlayerWalkTimer`: 0.3s — slightly longer than one tile movement (~0.167s at 6 tiles/sec) to prevent idle flicker between consecutive moves
-
-### Player Attack Animation (Fight Modal)
-
-Same timer pattern but for combat:
-1. `PlayerSpriteSheet::attack_animation` — frames 39-47, 0.08s/frame, non-looping
-2. `PlayerAttackTimer(Timer)` — spawned on fight modal player sprite (0.72s duration)
-3. In `handle_fight_modal_select` (input.rs): after `attack()`, switch `SpriteAnimation` to attack frames with `looping = false`, reset timer
-4. `revert_attack_idle` system: when timer expires, switch back to idle and set `looping = true`
-
-### Key Files
-- `src/ui/player_sprite.rs` — `PlayerWalkTimer`, `PlayerAttackTimer`, revert systems, animation fields
-- `src/ui/screens/dungeon/plugin.rs` — walk animation switch in `handle_dungeon_movement`
-- `src/ui/screens/fight_modal/input.rs` — attack animation switch in `handle_fight_modal_select`
-- `src/ui/screens/fight_modal/render.rs` — spawns `PlayerAttackTimer` on player sprite
 
 ## Special Cases
 

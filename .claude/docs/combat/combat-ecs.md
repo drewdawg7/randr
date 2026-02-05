@@ -2,21 +2,24 @@
 
 ## Overview
 
-Combat is event-driven. The fight modal sends events, combat systems process them:
-- `PlayerAttackMob` - sent when player attacks
-- `EntityDied` - sent when mob or player dies
+Combat uses direct action-based attacks. The player attacks mobs in real-time by pressing a key, which spawns a hitbox that damages nearby enemies.
+
+Key events:
 - `DealDamage` - sent for observation (damage numbers, combat log)
+- `EntityDied` - sent when mob or player dies
 
 ## Key Files
 
 | File | Purpose |
 |------|---------|
-| `src/combat/plugin.rs` | Combat systems: `process_player_attack`, `handle_mob_death`, `handle_player_death` |
-| `src/combat/events.rs` | Combat events (PlayerAttackMob, DealDamage, EntityDied) |
+| `src/combat/action_combat.rs` | ActionCombatPlugin with attack systems |
+| `src/combat/action.rs` | Attack hitbox components |
+| `src/combat/systems/` | Attack input, collision, damage, death rewards, hitbox cleanup |
+| `src/combat/events.rs` | Combat events (DealDamage, EntityDied) |
 | `src/combat/system.rs` | Combat helper functions |
 | `src/mob/components.rs` | ECS components for mob combat data |
 | `src/mob/bundle.rs` | MobCombatBundle for spawning mobs |
-| `src/ui/screens/fight_modal/input.rs` | Sends PlayerAttackMob, handles EntityDied for modal transitions |
+| `src/dungeon/systems/mob_health_bar.rs` | Health bars displayed above dungeon mobs |
 
 ## Mob ECS Components
 
@@ -101,46 +104,23 @@ entity_attacks_player(
 ) -> AttackResult
 ```
 
-## Combat Flow (Event-Driven)
+## Combat Flow (Action-Based)
 
-1. Player walks into mob → `FightModalMob` resource inserted
-2. Player presses OK → `handle_fight_modal_select` sends `PlayerAttackMob` event
-3. `process_player_attack` system:
-   - Applies damage to mob
-   - If mob dies → sends `EntityDied { is_player: false }`
-   - If mob survives → counter-attacks player, may send `EntityDied { is_player: true }`
-4. `handle_mob_death` system (on EntityDied):
-   - Applies rewards, collects loot
-   - Despawns mob, clears occupancy
-   - Inserts `PendingVictory` resource
-5. `handle_combat_outcome` (in fight modal):
-   - Reads `EntityDied` events
-   - If mob died → closes modal, opens results modal with `PendingVictory` data
-   - If player died → closes modal
-
-## FightModalMob Resource
-
-The resource stores entity reference for component queries:
-
-```rust
-#[derive(Resource)]
-pub struct FightModalMob {
-    pub mob_id: MobId,       // For sprite lookup
-    pub pos: GridPosition,   // For occupancy cleanup
-    pub entity: Entity,      // For despawning and component queries
-}
-```
+1. Player presses attack key in dungeon
+2. `handle_attack_input` spawns `AttackHitbox` entity at player position
+3. `check_attack_collisions` detects overlap with mob entities
+4. `apply_attack_damage` applies damage to mobs, sends `DealDamage` event
+5. If mob health reaches 0:
+   - `handle_death_rewards` applies rewards (gold, XP, loot)
+   - `PendingVictory` resource inserted for results modal
+   - Mob entity despawned
+6. `cleanup_expired_hitboxes` removes hitbox after duration
 
 ## Combat Events
 
-Located in `src/combat/events.rs`, registered by `CombatPlugin`:
+Located in `src/combat/events.rs`:
 
 ```rust
-#[derive(Event)]
-pub struct PlayerAttackMob {
-    pub target: Entity,
-}
-
 #[derive(Event)]
 pub struct DealDamage {
     pub target: Entity,
@@ -155,7 +135,6 @@ pub struct EntityDied {
 }
 ```
 
-- `PlayerAttackMob` - triggers combat processing
 - `DealDamage` - observation event for damage numbers, combat log
 - `EntityDied` - triggers death handling and UI transitions
 

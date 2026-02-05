@@ -1,5 +1,8 @@
 # Lessons
 
+## Edits
+- Make edits in bulk. Don't make many small sequential edits to the same file or across files - batch them together to reduce approval overhead.
+
 ## Bash Commands
 - Do not use variables/aliases for single-use commands. Pipe directly or use command substitution inline instead of storing in a variable first.
   - Bad: `LOG=$(ls -t logs | head -1) && tail -100 "$LOG"`

@@ -97,7 +97,7 @@ pub enum ModalBackground {
 | Hints | Spawned if set | Skipped | Skipped |
 
 **When to use each:**
-- `Solid` - Standard modals with title, hints, and solid background (ProfileModal, FightModal)
+- `Solid` - Standard modals with title, hints, and solid background (ProfileModal, ResultsModal)
 - `Atlas` - Sprite-based modals using an image as background (MonsterCompendium book)
 - `None` - Grid-based modals where widgets provide their own backgrounds (InventoryModal, MerchantModal, AnvilModal, ForgeModal)
 

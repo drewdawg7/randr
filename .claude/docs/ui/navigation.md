@@ -100,8 +100,8 @@ fn handle_modal_toggle(commands: &mut Commands, modal_type: ModalType) {
         ModalType::Inventory => commands.toggle_modal::<InventoryModal>(),
         ModalType::Profile => commands.toggle_modal::<ProfileModal>(),
         ModalType::MonsterCompendium => commands.toggle_modal::<MonsterCompendiumModal>(),
-        ModalType::Keybinds | ModalType::FightModal => {
-            // Handled differently
+        ModalType::Keybinds | ModalType::ResultsModal => {
+            // Handled differently (not toggled via navigation)
         }
     }
 }

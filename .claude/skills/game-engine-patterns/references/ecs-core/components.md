@@ -42,7 +42,7 @@ Components serve different purposes based on their structure:
 
 | Type | Purpose | Example |
 |------|---------|---------|
-| Marker | Filter entities in queries | `DungeonPlayer`, `FightModalRoot` |
+| Marker | Filter entities in queries | `DungeonPlayer`, `InventoryModalRoot` |
 | Data | Store entity state | `Health`, `CombatStats` |
 | Newtype | Type-safe wrappers | `GoldReward(i32)`, `XpReward(i32)` |
 | Wrapper | Contain complex types | `MobLootTable(LootTable)` |
@@ -176,9 +176,9 @@ Sometimes markers carry context needed for their purpose.
 #[derive(Component, Debug, Clone, Copy)]
 pub struct MobMarker(pub MobId);
 
-// src/ui/screens/fight_modal/state.rs
+// src/ui/mob_animation.rs
 #[derive(Component)]
-pub struct FightModalMobSprite {
+pub struct DungeonMobSprite {
     pub mob_id: MobId,
 }
 ```

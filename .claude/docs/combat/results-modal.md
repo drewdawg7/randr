@@ -46,7 +46,7 @@ Marker resource to trigger modal spawn. Removed by `spawn_results_modal` system.
 
 ## Usage
 
-### After Mob Victory (fight_modal/input.rs)
+### After Mob Victory (combat/systems/death_rewards.rs)
 
 ```rust
 commands.insert_resource(ResultsModalData {
@@ -93,7 +93,7 @@ Uses `Modal::new().title(&data.title).size(300, 0)` with a Column containing:
 
 ## Not a RegisteredModal
 
-Like the old VictoryModal and FightModal, the results modal is spawned programmatically and not toggled via the navigation system. Its `ModalType::ResultsModal` variant is in the non-toggle arm of `handle_modal_toggle`.
+The results modal is spawned programmatically and not toggled via the navigation system. Its `ModalType::ResultsModal` variant is in the non-toggle arm of `handle_modal_toggle`.
 
 ## Text Colors
 
@@ -105,7 +105,6 @@ Like the old VictoryModal and FightModal, the results modal is spawned programma
 
 ## Related Documentation
 
-- [fight-modal.md](fight-modal.md) - Fight modal (spawns results modal on mob death)
 - [entities.md](../dungeon/entities.md) - Chest interaction system
 - [modals.md](../modals/modals.md) - General modal patterns
 - [modal-builder.md](../modals/modal-builder.md) - Modal builder API
