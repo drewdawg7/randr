@@ -13,16 +13,11 @@ use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 use super::state::{BackpackGrid, EquipmentGrid, InventoryModalRoot};
 
 /// Sync system that reactively updates grids when inventory changes.
-/// Uses Bevy's native change detection via `is_changed()`.
 pub fn sync_inventory_to_grids(
     inventory: Res<Inventory>,
     mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
     mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ) {
-    if !inventory.is_changed() {
-        return;
-    }
-
     if let Ok(mut eq_grid) = equipment_grids.single_mut() {
         eq_grid.items = get_equipment_items(&inventory)
             .iter()

@@ -1,18 +1,20 @@
 use bevy::prelude::*;
 
+use crate::combat::PlayerAttackMob;
+use crate::stats::StatSheet;
 use crate::ui::modal_registry::RegisterModalExt;
 use crate::ui::screens::health_bar::{init_sprite_health_bars, update_sprite_health_bar_visuals};
 use crate::ui::screens::modal::in_fight_modal;
 use crate::ui::SpriteMarkerAppExt;
-
-use crate::combat::PlayerAttackMob;
 
 use super::input::{
     handle_combat_outcome, handle_fight_modal_close, handle_fight_modal_navigation,
     handle_fight_modal_select, trigger_attack_animation,
 };
 use super::render::{update_button_sprites, update_mob_health_bar, update_player_health_bar};
-use super::state::{FightModal, FightModalMobSprite, FightModalPlayerSprite};
+use super::state::{
+    FightModal, FightModalButtonSelection, FightModalMobSprite, FightModalPlayerSprite,
+};
 
 pub struct FightModalPlugin;
 
@@ -26,9 +28,9 @@ impl Plugin for FightModalPlugin {
                     (
                         handle_fight_modal_navigation,
                         handle_fight_modal_select,
-                        update_button_sprites,
+                        update_button_sprites.run_if(resource_changed::<FightModalButtonSelection>),
                         update_mob_health_bar,
-                        update_player_health_bar,
+                        update_player_health_bar.run_if(resource_changed::<StatSheet>),
                         init_sprite_health_bars,
                         update_sprite_health_bar_visuals,
                     )

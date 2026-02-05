@@ -8,6 +8,11 @@
   - Bad: `/Users/drewstewart/code/game/logs/`
   - Good: `logs/`
 
+## GitHub CLI (gh)
+- Don't specify `--repo` when inside a git repository. The `gh` command automatically detects the repo from the git remote.
+  - Bad: `gh issue view 514 --repo username/repo`
+  - Good: `gh issue view 514`
+
 ## Rust Code Navigation
 - Use LSP operations instead of Grep for Rust code. See CLAUDE.md for the full table.
 - Use `ast-grep --pattern 'PATTERN' --lang rust src/` for structural patterns across files.

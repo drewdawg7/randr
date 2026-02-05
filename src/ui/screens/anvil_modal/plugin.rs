@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::inventory::Inventory;
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_anvil_modal;
@@ -22,7 +23,7 @@ impl Plugin for AnvilModalPlugin {
                         tab_toggle_system(FocusPanel::RecipeGrid, FocusPanel::AnvilInventory),
                         handle_anvil_modal_navigation,
                         handle_anvil_modal_select,
-                        refresh_anvil_recipes,
+                        refresh_anvil_recipes.run_if(resource_changed::<Inventory>),
                         update_detail_pane_source::<AnvilDetailPane>,
                         populate_anvil_detail_pane_content,
                     )

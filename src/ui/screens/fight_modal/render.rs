@@ -194,10 +194,6 @@ pub fn update_button_sprites(
         (With<FightModalCancelButton>, Without<FightModalOkButton>),
     >,
 ) {
-    if !selection.is_changed() {
-        return;
-    }
-
     let ok_selected = selection.selected == FightModalButton::Ok;
 
     if let Ok(mut image) = ok_query.single_mut() {
@@ -256,9 +252,6 @@ pub fn update_player_health_bar(
     stats: Res<StatSheet>,
     mut bar_query: Query<&mut Health, With<FightModalPlayerHealthBar>>,
 ) {
-    if !stats.is_changed() {
-        return;
-    }
     let Ok(mut health) = bar_query.single_mut() else {
         return;
     };

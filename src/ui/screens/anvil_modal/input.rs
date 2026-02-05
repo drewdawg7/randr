@@ -119,15 +119,10 @@ pub fn handle_anvil_modal_select(
 }
 
 /// Refresh the recipe grid when inventory changes.
-/// Uses Bevy's native change detection via `is_changed()`.
 pub fn refresh_anvil_recipes(
     inventory: Res<Inventory>,
     mut recipe_grids: Query<&mut ItemGrid, With<AnvilRecipeGrid>>,
 ) {
-    if !inventory.is_changed() {
-        return;
-    }
-
     if let Ok(mut grid) = recipe_grids.single_mut() {
         grid.items = get_recipe_entries(&inventory);
     }
