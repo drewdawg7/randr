@@ -13,37 +13,23 @@ use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{MerchantModalRoot, MerchantPlayerGrid, MerchantStock, MerchantStockGrid};
 
-/// Sync system that reactively updates grids when inventory or stock changes.
-/// Uses Bevy's native change detection via `is_changed()`.
-pub fn sync_merchant_grids(
-    inventory: Res<Inventory>,
-    stock: Option<Res<MerchantStock>>,
-    mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
-    mut player_grids: Query<&mut ItemGrid, (With<MerchantPlayerGrid>, Without<MerchantStockGrid>)>,
+pub fn sync_merchant_stock_grid(
+    stock: Res<MerchantStock>,
+    mut grids: Query<&mut ItemGrid, With<MerchantStockGrid>>,
 ) {
-    let Some(stock) = stock else {
-        return;
-    };
-
-    // Only run if inventory or stock has changed
-    if !inventory.is_changed() && !stock.is_changed() {
-        return;
+    if let Ok(mut grid) = grids.single_mut() {
+        grid.items = get_merchant_stock_entries(&stock);
+        grid.clamp_selection();
     }
+}
 
-    // Update stock grid if stock changed
-    if stock.is_changed() {
-        if let Ok(mut grid) = stock_grids.single_mut() {
-            grid.items = get_merchant_stock_entries(&stock);
-            grid.clamp_selection();
-        }
-    }
-
-    // Update player grid if inventory changed
-    if inventory.is_changed() {
-        if let Ok(mut grid) = player_grids.single_mut() {
-            grid.items = ItemGridEntry::from_inventory(&inventory);
-            grid.clamp_selection();
-        }
+pub fn sync_merchant_player_grid(
+    inventory: Res<Inventory>,
+    mut grids: Query<&mut ItemGrid, With<MerchantPlayerGrid>>,
+) {
+    if let Ok(mut grid) = grids.single_mut() {
+        grid.items = ItemGridEntry::from_inventory(&inventory);
+        grid.clamp_selection();
     }
 }
 
