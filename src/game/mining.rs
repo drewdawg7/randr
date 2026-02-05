@@ -5,6 +5,7 @@ use crate::dungeon::events::{ChestMined, MineableEntityType, MiningResult, RockM
 use crate::dungeon::DungeonCommands;
 use crate::inventory::Inventory;
 use crate::loot::{collect_loot_drops, HasLoot};
+use crate::player::PlayerMarker;
 use crate::rock::Rock;
 use crate::skills::{SkillType, SkillXpGained};
 use crate::stats::{StatSheet, StatType};
@@ -22,9 +23,11 @@ fn on_chest_mined(
     trigger: On<ChestMined>,
     mut commands: Commands,
     mut result_events: MessageWriter<MiningResult>,
-    stats: Res<StatSheet>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<(&StatSheet, &mut Inventory), With<PlayerMarker>>,
 ) {
+    let Ok((stats, mut inventory)) = player.single_mut() else {
+        return;
+    };
     let event = trigger.event();
     let magic_find = stats.value(StatType::MagicFind);
 
@@ -44,9 +47,11 @@ fn on_rock_mined(
     mut commands: Commands,
     mut result_events: MessageWriter<MiningResult>,
     mut xp_events: MessageWriter<SkillXpGained>,
-    stats: Res<StatSheet>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<(&StatSheet, &mut Inventory), With<PlayerMarker>>,
 ) {
+    let Ok((stats, mut inventory)) = player.single_mut() else {
+        return;
+    };
     let event = trigger.event();
     let magic_find = stats.value(StatType::MagicFind);
 
