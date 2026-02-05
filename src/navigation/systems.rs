@@ -45,10 +45,7 @@ fn handle_modal_toggle(commands: &mut Commands, modal_type: ModalType) {
         ModalType::MerchantModal => commands.toggle_modal::<MerchantModal>(),
         ModalType::ForgeModal => commands.toggle_modal::<ForgeModal>(),
         ModalType::SkillsModal => commands.toggle_modal::<SkillsModal>(),
-        ModalType::Profile
-        | ModalType::Keybinds
-        | ModalType::FightModal
-        | ModalType::ResultsModal
-        | ModalType::AnvilModal => {}
+        ModalType::Profile | ModalType::Keybinds | ModalType::ResultsModal | ModalType::AnvilModal => {
+        }
     }
 }

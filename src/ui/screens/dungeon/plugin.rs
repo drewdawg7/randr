@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::crafting_station::{AnvilCraftingStarted, ForgeCraftingStarted};
-use crate::dungeon::{CraftingStationInteraction, FloorReady, MiningResult, MoveResult};
+use crate::dungeon::{CraftingStationInteraction, FloorReady, MiningResult};
 use crate::input::GameAction;
 use crate::states::AppState;
 use crate::ui::screens::modal::ActiveModal;
@@ -18,7 +18,6 @@ use super::interaction::{
 use super::lifecycle::{
     enter_dungeon, handle_floor_ready, on_map_created_queue_player_spawn, spawn_player_when_ready,
 };
-use super::movement::handle_move_result;
 use super::spawn::add_entity_visuals;
 use super::systems::cleanup_dungeon;
 
@@ -44,7 +43,6 @@ impl Plugin for DungeonScreenPlugin {
                 (
                     handle_floor_ready.run_if(on_message::<FloorReady>),
                     spawn_player_when_ready.run_if(resource_exists::<PendingPlayerSpawn>),
-                    handle_move_result.run_if(on_message::<MoveResult>),
                     update_player_sprite_direction,
                     handle_interact_action
                         .run_if(on_message::<GameAction>)

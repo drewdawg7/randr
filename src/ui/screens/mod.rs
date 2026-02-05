@@ -1,6 +1,5 @@
 pub mod anvil_modal;
 mod dungeon;
-mod fight_modal;
 pub mod forge_modal;
 pub mod health_bar;
 pub mod inventory_modal;
@@ -15,8 +14,6 @@ pub mod skills_modal;
 
 pub use anvil_modal::AnvilModalPlugin;
 pub use dungeon::{DungeonPlayer, DungeonScreenPlugin, FacingDirection, FloorRoot};
-pub use fight_modal::state::FightModalMob;
-pub use fight_modal::FightModalPlugin;
 pub use forge_modal::ForgeModalPlugin;
 pub use monster_compendium::MonsterCompendiumPlugin;
 pub use health_bar::{

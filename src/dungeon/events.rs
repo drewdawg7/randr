@@ -4,7 +4,6 @@ use crate::crafting_station::CraftingStationType;
 use crate::dungeon::FloorId;
 use crate::input::NavigationDirection;
 use crate::loot::LootDrop;
-use crate::mob::MobId;
 use crate::rock::RockType;
 
 #[derive(Message, Debug, Clone)]
@@ -14,15 +13,8 @@ pub struct PlayerMoveIntent {
 
 #[derive(Message, Debug, Clone)]
 pub enum MoveResult {
-    Moved {
-        new_pos: Vec2,
-    },
+    Moved { new_pos: Vec2 },
     Blocked,
-    TriggeredCombat {
-        mob_id: MobId,
-        entity: Entity,
-        pos: Vec2,
-    },
     TriggeredStairs,
     TriggeredDoor,
 }

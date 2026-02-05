@@ -17,7 +17,6 @@ use crate::plugins::MobDefeated;
 use crate::skills::{SkillType, SkillXpGained, Skills};
 use crate::stats::StatSheet;
 use crate::states::AppState;
-use crate::ui::screens::FightModalMob;
 
 #[derive(SystemParam)]
 struct PlayerResources<'w> {
@@ -121,7 +120,6 @@ fn handle_mob_death(
     mut skill_xp_events: MessageWriter<SkillXpGained>,
     mut victory_events: MessageWriter<VictoryAchieved>,
     mut player: PlayerResources,
-    fight_mob: Option<Res<FightModalMob>>,
     mut mob_query: Query<(
         &MobMarker,
         &GoldReward,
@@ -134,10 +132,6 @@ fn handle_mob_death(
         if event.is_player {
             continue;
         }
-
-        let Some(ref _fight_mob) = fight_mob else {
-            continue;
-        };
 
         let Ok((mob_marker, gold_reward, xp_reward, loot_table, mut death_processed)) =
             mob_query.get_mut(event.entity)
