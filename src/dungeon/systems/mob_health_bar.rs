@@ -4,7 +4,7 @@ use crate::assets::{GameSprites, HealthBarSlice, SpriteSheetKey};
 use crate::dungeon::MobEntity;
 use crate::mob::components::Health;
 
-const MOB_HEALTH_BAR_OFFSET_Y: f32 = 14.0;
+const MOB_HEALTH_BAR_OFFSET_Y: f32 = 5.0;
 
 #[derive(Component)]
 pub struct MobHealthBar(pub Entity);
