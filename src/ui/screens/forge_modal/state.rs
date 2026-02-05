@@ -4,19 +4,15 @@ use crate::ui::focus::FocusState;
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
 
-/// Component marker for the forge modal UI root.
 #[derive(Component)]
 pub struct ForgeModalRoot;
 
-/// Marker for the crafting slots container (left side).
 #[derive(Component)]
 pub struct ForgeSlotsGrid;
 
-/// Marker for player inventory grid (right side).
 #[derive(Component)]
 pub struct ForgePlayerGrid;
 
-/// Which forge slot is currently selected (when crafting panel is focused).
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Default)]
 pub enum ForgeSlotIndex {
     #[default]
@@ -44,18 +40,14 @@ impl ForgeSlotIndex {
 
 }
 
-/// Tracks forge slot selection state.
 #[derive(Resource, Default, Clone)]
 pub struct ForgeModalState {
-    /// Currently selected forge slot (when FocusPanel::ForgeCraftingSlots is focused)
     pub selected_slot: ForgeSlotIndex,
 }
 
-/// Resource to track which forge entity the modal is operating on.
 #[derive(Resource)]
 pub struct ActiveForgeEntity(pub Entity);
 
-/// Type-safe handle for the forge modal.
 pub struct ForgeModal;
 
 impl RegisteredModal for ForgeModal {
@@ -74,7 +66,6 @@ impl RegisteredModal for ForgeModal {
     }
 }
 
-/// System that spawns the forge modal UI.
 fn do_spawn_forge_modal(
     commands: Commands,
     game_sprites: Res<crate::assets::GameSprites>,
@@ -84,7 +75,7 @@ fn do_spawn_forge_modal(
     active_forge: Res<ActiveForgeEntity>,
     modal_state: Res<ForgeModalState>,
 ) {
-    super::render::spawn_forge_modal_impl(
+    super::spawning::spawn_forge_modal_impl(
         commands,
         &game_sprites,
         &game_fonts,

@@ -8,7 +8,7 @@ use crate::ui::screens::modal::in_forge_modal;
 use crate::ui::FocusState;
 
 use super::input::{handle_forge_modal_navigation, handle_forge_modal_select};
-use super::render::{
+use super::systems::{
     populate_forge_detail_pane_content, refresh_forge_slots, update_forge_detail_pane_source,
     update_forge_slot_selector,
 };
