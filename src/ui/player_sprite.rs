@@ -111,7 +111,7 @@ fn load_player_sprite_sheet(
     player_sheet.walk_animation = AnimationConfig {
         first_frame: 13,
         last_frame: 18,
-        frame_duration: 0.08,
+        frame_duration: 0.10,
         looping: true,
         synchronized: false,
     };
