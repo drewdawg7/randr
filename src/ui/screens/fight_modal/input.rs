@@ -5,7 +5,7 @@ use crate::combat::{EntityDied, PlayerAttackMob, VictoryAchieved};
 use crate::input::{GameAction, NavigationDirection};
 use crate::mob::Health;
 use crate::ui::modal_registry::ModalCommands;
-use crate::ui::{PlayerAttackTimer, PlayerSpriteSheet, SelectionState, SpriteAnimation};
+use crate::ui::{PlayerAnimationTimer, PlayerSpriteSheet, SelectionState, SpriteAnimation};
 
 use super::super::modal::{ActiveModal, ModalType, OpenModal};
 use super::super::results_modal::{ResultsModalData, ResultsSprite};
@@ -90,16 +90,16 @@ pub fn handle_fight_modal_select(
 pub fn trigger_attack_animation(
     mut events: MessageReader<PlayerAttackMob>,
     sheet: Res<PlayerSpriteSheet>,
-    mut sprite_query: Query<(&mut SpriteAnimation, &mut PlayerAttackTimer)>,
+    mut sprite_query: Query<(&mut SpriteAnimation, &mut PlayerAnimationTimer)>,
 ) {
     for _ in events.read() {
-        if let Ok((mut anim, mut attack_timer)) = sprite_query.single_mut() {
+        if let Ok((mut anim, mut timer)) = sprite_query.single_mut() {
             anim.apply_config(&sheet.attack_animation);
             anim.timer = Timer::from_seconds(
                 sheet.attack_animation.frame_duration,
                 TimerMode::Repeating,
             );
-            attack_timer.0.reset();
+            timer.timer.reset();
         }
     }
 }

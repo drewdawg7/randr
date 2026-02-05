@@ -1,7 +1,3 @@
-//! Player sprite animation system.
-//!
-//! Provides animated sprite support for the player character in dungeons.
-
 use bevy::prelude::*;
 
 use crate::input::HeldDirection;
@@ -9,7 +5,6 @@ use crate::input::HeldDirection;
 use super::animation::{AnimationConfig, SpriteAnimation};
 use super::sprite_marker::{SpriteData, SpriteMarker, SpriteMarkerAppExt};
 
-/// Plugin for player sprite animations.
 pub struct PlayerSpritePlugin;
 
 impl Plugin for PlayerSpritePlugin {
@@ -29,16 +24,12 @@ impl Plugin for PlayerSpritePlugin {
             )
             .add_systems(
                 Update,
-                (
-                    sync_player_animation.run_if(any_with_component::<PlayerWalkTimer>),
-                    revert_attack_idle.run_if(any_with_component::<PlayerAttackTimer>),
-                ),
+                handle_player_animation_timers.run_if(any_with_component::<PlayerAnimationTimer>),
             )
             .register_sprite_marker::<DungeonPlayerSprite>();
     }
 }
 
-/// Resource containing the loaded player sprite sheet.
 #[derive(Resource, Default)]
 pub struct PlayerSpriteSheet {
     pub texture: Option<Handle<Image>>,
@@ -46,28 +37,43 @@ pub struct PlayerSpriteSheet {
     pub animation: AnimationConfig,
     pub walk_animation: AnimationConfig,
     pub attack_animation: AnimationConfig,
-    /// Frame dimensions in pixels (used for collider sizing).
     pub frame_size: UVec2,
 }
 
 impl PlayerSpriteSheet {
-    /// Check if the sprite sheet is loaded.
     pub fn is_loaded(&self) -> bool {
         self.texture.is_some() && self.layout.is_some()
     }
 }
 
-/// Timer component that tracks how long the walk animation should play.
-/// When the timer expires, the player reverts to idle animation.
-#[derive(Component)]
-pub struct PlayerWalkTimer(pub Timer);
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum AnimationTimerKind {
+    Walk,
+    Attack,
+}
 
-/// Timer component that tracks how long the attack animation should play.
-/// When the timer expires, the player reverts to idle animation.
 #[derive(Component)]
-pub struct PlayerAttackTimer(pub Timer);
+pub struct PlayerAnimationTimer {
+    pub timer: Timer,
+    pub kind: AnimationTimerKind,
+}
 
-/// Marker component for dungeon player sprites that need population.
+impl PlayerAnimationTimer {
+    pub fn walk(duration: f32) -> Self {
+        Self {
+            timer: Timer::from_seconds(duration, TimerMode::Once),
+            kind: AnimationTimerKind::Walk,
+        }
+    }
+
+    pub fn attack(duration: f32) -> Self {
+        Self {
+            timer: Timer::from_seconds(duration, TimerMode::Once),
+            kind: AnimationTimerKind::Attack,
+        }
+    }
+}
+
 #[derive(Component)]
 pub struct DungeonPlayerSprite;
 
@@ -87,7 +93,6 @@ impl SpriteMarker for DungeonPlayerSprite {
     }
 }
 
-/// System to load player sprite sheet at startup.
 fn load_player_sprite_sheet(
     asset_server: Res<AssetServer>,
     mut layouts: ResMut<Assets<TextureAtlasLayout>>,
@@ -126,38 +131,34 @@ fn load_player_sprite_sheet(
     info!("Loaded player sprite sheet: MiniLightningWarrior");
 }
 
-fn revert_attack_idle(
-    time: Res<Time>,
-    sheet: Res<PlayerSpriteSheet>,
-    mut query: Query<(&mut PlayerAttackTimer, &mut SpriteAnimation)>,
-) {
-    for (mut timer, mut anim) in &mut query {
-        timer.0.tick(time.delta());
-        if timer.0.just_finished() {
-            anim.apply_config(&sheet.animation);
-        }
-    }
-}
-
-fn sync_player_animation(
+fn handle_player_animation_timers(
     time: Res<Time>,
     sheet: Res<PlayerSpriteSheet>,
     held_direction: Res<HeldDirection>,
-    mut query: Query<(&mut PlayerWalkTimer, &mut SpriteAnimation)>,
+    mut query: Query<(&mut PlayerAnimationTimer, &mut SpriteAnimation)>,
 ) {
-    for (mut timer, mut anim) in &mut query {
-        timer.0.tick(time.delta());
+    for (mut timer_comp, mut anim) in &mut query {
+        timer_comp.timer.tick(time.delta());
 
-        let is_idle = anim.first_frame == sheet.animation.first_frame;
-        let is_moving = held_direction.0.is_some();
+        match timer_comp.kind {
+            AnimationTimerKind::Walk => {
+                let is_idle = anim.first_frame == sheet.animation.first_frame;
+                let is_moving = held_direction.0.is_some();
 
-        if is_moving {
-            if is_idle {
-                anim.apply_config(&sheet.walk_animation);
+                if is_moving {
+                    if is_idle {
+                        anim.apply_config(&sheet.walk_animation);
+                    }
+                    timer_comp.timer.reset();
+                } else if timer_comp.timer.just_finished() && !is_idle {
+                    anim.apply_config(&sheet.animation);
+                }
             }
-            timer.0.reset();
-        } else if timer.0.just_finished() && !is_idle {
-            anim.apply_config(&sheet.animation);
+            AnimationTimerKind::Attack => {
+                if timer_comp.timer.just_finished() {
+                    anim.apply_config(&sheet.animation);
+                }
+            }
         }
     }
 }

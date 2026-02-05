@@ -17,7 +17,7 @@ use crate::dungeon::{
 };
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
-use crate::ui::{MobSpriteSheets, PlayerSpriteSheet, PlayerWalkTimer};
+use crate::ui::{MobSpriteSheets, PlayerAnimationTimer, PlayerSpriteSheet};
 
 use super::components::{DungeonPlayer, DungeonRoot, FloorRoot};
 
@@ -52,7 +52,7 @@ struct PlayerBundle {
     sprite: Sprite,
     transform: Transform,
     animation: SpriteAnimation,
-    walk_timer: PlayerWalkTimer,
+    walk_timer: PlayerAnimationTimer,
     rigid_body: RigidBody,
     velocity: LinearVelocity,
     locked_axes: LockedAxes,
@@ -301,7 +301,7 @@ pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &Pl
         ),
         transform: Transform::from_translation(Vec3::new(player_pos.x, player_pos.y, z)),
         animation: SpriteAnimation::new(&player_sheet.animation),
-        walk_timer: PlayerWalkTimer(Timer::from_seconds(0.1, TimerMode::Once)),
+        walk_timer: PlayerAnimationTimer::walk(0.1),
         rigid_body: RigidBody::Dynamic,
         velocity: LinearVelocity::default(),
         locked_axes: LockedAxes::ROTATION_LOCKED,
