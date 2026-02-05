@@ -1,34 +1,26 @@
 use bevy::prelude::*;
-use bevy_ecs_tiled::prelude::*;
 
-use crate::assets::AssetPlugin as GameAssetPlugin;
-use crate::crafting_station::CraftingStationPlugin;
 use crate::dungeon::{DungeonPlugin, FloorId};
-use crate::game::{BlacksmithPlugin, CombatPlugin, CraftingCompletePlugin, CraftingPlugin, ItemPlugin, MerchantPlugin, MiningPlugin, NpcInteractionsPlugin, PlayerPlugin, StoragePlugin, StorageTransactionsPlugin, ToastPlugin};
-use crate::input::{GameAction, InputPlugin};
-use crate::location::{LocationId, StorePlugin};
+use crate::input::GameAction;
+use crate::location::LocationId;
 use crate::navigation::NavigationPlugin;
-use crate::plugins::{EconomyPlugin, MobPlugin, PhysicsDebugTogglePlugin, ToastListenersPlugin};
-use crate::skills::SkillsPlugin;
-use crate::states::{AppState, StateTransitionPlugin};
+use crate::states::AppState;
 use crate::ui::screens::modal::ModalType;
-use crate::ui::screens::{
-    AnvilModalPlugin, DungeonScreenPlugin, FightModalPlugin, ForgeModalPlugin,
-    InventoryModalPlugin, KeybindsPlugin, MainMenuPlugin, MerchantModalPlugin, ModalPlugin,
-    MonsterCompendiumPlugin, ProfilePlugin, ResultsModalPlugin, SkillsModalPlugin,
+
+use super::{
+    CoreGamePlugins, GameMechanicsPlugins, InfrastructurePlugins, ScreenPlugins,
+    UiInfrastructurePlugins, UiWidgetPlugins,
 };
-use crate::ui::widgets::{ItemDetailPanePlugin, ItemDetailDisplayPlugin, ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemGridPlugin, ItemStatsDisplayPlugin, OutlinedTextPlugin, PlayerStatsPlugin, RowPlugin, StackPlugin, StatRowPlugin};
-use crate::ui::{MobAnimationPlugin, PlayerSpritePlugin};
 
 pub struct GamePlugin;
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_plugins((
-            TiledPlugin::default(),
-            StateTransitionPlugin,
-            GameAssetPlugin,
-            InputPlugin,
+        // Infrastructure: assets, states, input, camera, tiled
+        app.add_plugins(InfrastructurePlugins);
+
+        // Navigation (builder-based, stays inline)
+        app.add_plugins(
             NavigationPlugin::new()
                 .state(AppState::Dungeon)
                     .on(GameAction::OpenInventory, ModalType::Inventory)
@@ -38,6 +30,10 @@ impl Plugin for GamePlugin {
                 .global()
                     .on(GameAction::OpenKeybinds, AppState::Keybinds)
                 .build(),
+        );
+
+        // Dungeon (builder-based, stays inline)
+        app.add_plugins(
             DungeonPlugin::new()
                 .location(LocationId::Home)
                     .floor(FloorId::HomeFloor)
@@ -46,56 +42,21 @@ impl Plugin for GamePlugin {
                     .floor(FloorId::MainDungeon2)
                     .floor(FloorId::MainDungeon3)
                 .build(),
-            PlayerPlugin,
-            StoragePlugin,
-            StorePlugin,
-            ItemPlugin,
-            CombatPlugin,
-            CraftingPlugin,
-        ));
+        );
 
-        app.add_plugins((
-            BlacksmithPlugin,
-            CraftingCompletePlugin,
-            CraftingStationPlugin,
-            MerchantPlugin,
-            MiningPlugin,
-            NpcInteractionsPlugin,
-            StorageTransactionsPlugin,
-            MobPlugin,
-            EconomyPlugin,
-            PhysicsDebugTogglePlugin,
-            SkillsPlugin,
-        ));
+        // Core game systems
+        app.add_plugins(CoreGamePlugins);
 
-        app.add_plugins((ToastPlugin, ToastListenersPlugin, ModalPlugin, PlayerStatsPlugin, ItemGridPlugin, GoldDisplayPlugin, ItemDetailPanePlugin, ItemDetailDisplayPlugin, ItemStatsDisplayPlugin));
-        app.add_plugins((OutlinedTextPlugin, StatRowPlugin, IconValueRowPlugin, MobAnimationPlugin, PlayerSpritePlugin, RowPlugin, ColumnPlugin, StackPlugin));
+        // Game mechanics
+        app.add_plugins(GameMechanicsPlugins);
 
-        app.add_plugins((
-            MainMenuPlugin,
-            ProfilePlugin,
-            InventoryModalPlugin,
-            MerchantModalPlugin,
-            ForgeModalPlugin,
-            AnvilModalPlugin,
-            MonsterCompendiumPlugin,
-            KeybindsPlugin,
-            DungeonScreenPlugin,
-            FightModalPlugin,
-            ResultsModalPlugin,
-            SkillsModalPlugin,
-        ));
+        // UI infrastructure
+        app.add_plugins(UiInfrastructurePlugins);
 
-        app.add_systems(Startup, setup);
+        // UI widgets
+        app.add_plugins(UiWidgetPlugins);
+
+        // Screens
+        app.add_plugins(ScreenPlugins);
     }
-}
-
-fn setup(mut commands: Commands) {
-    commands.spawn((
-        Camera2d,
-        Projection::Orthographic(OrthographicProjection {
-            scale: 0.5,
-            ..OrthographicProjection::default_2d()
-        }),
-    ));
 }

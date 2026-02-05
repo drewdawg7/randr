@@ -8,6 +8,37 @@ use crate::game::{
 use crate::skills::SkillLeveledUp;
 use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, TransactionCompleted};
 
+/// Thresholds for toast notifications.
+/// Values below these thresholds will not trigger toasts.
+#[derive(Resource, Clone, Debug)]
+pub struct ToastThresholds {
+    /// Minimum heal amount to show toast. Default: 20
+    pub heal_min: i32,
+    /// Minimum gold change to show toast. Default: 50
+    pub gold_change: i32,
+    /// Minimum gold earned to show toast. Default: 50
+    pub gold_earned: i32,
+    /// Minimum gold spent to show toast. Default: 50 (symmetric with earned)
+    pub gold_spent: i32,
+    /// Minimum loot items to show toast. Default: 3
+    pub loot_items: i32,
+    /// Minimum transaction price to show toast. Default: 100
+    pub transaction: i32,
+}
+
+impl Default for ToastThresholds {
+    fn default() -> Self {
+        Self {
+            heal_min: 20,
+            gold_change: 50,
+            gold_earned: 50,
+            gold_spent: 50, // Symmetric with gold_earned
+            loot_items: 3,
+            transaction: 100,
+        }
+    }
+}
+
 /// SystemParam grouping all item-related event readers to reduce parameter count.
 #[derive(SystemParam)]
 struct ItemEventReaders<'w, 's> {
@@ -25,7 +56,8 @@ pub struct ToastListenersPlugin;
 
 impl Plugin for ToastListenersPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(
+        app.init_resource::<ToastThresholds>()
+            .add_systems(
             Update,
             (
                 listen_player_events.run_if(
@@ -61,6 +93,7 @@ fn listen_player_events(
     mut level_up_events: MessageReader<PlayerLeveledUp>,
     mut healed_events: MessageReader<PlayerHealed>,
     mut gold_changed_events: MessageReader<GoldChanged>,
+    thresholds: Res<ToastThresholds>,
     mut toast_writer: MessageWriter<ShowToast>,
 ) {
     // Level up notifications
@@ -73,14 +106,14 @@ fn listen_player_events(
 
     // Healing notifications (only for significant heals)
     for event in healed_events.read() {
-        if event.amount >= 20 {
+        if event.amount >= thresholds.heal_min {
             toast_writer.write(ShowToast::success(format!("Healed {} HP", event.amount)));
         }
     }
 
     // Gold change notifications (only for significant amounts)
     for event in gold_changed_events.read() {
-        if event.amount.abs() >= 50 {
+        if event.amount.abs() >= thresholds.gold_change {
             if event.amount > 0 {
                 toast_writer.write(ShowToast::success(format!("Gained {} gold", event.amount)));
             } else {
@@ -172,25 +205,26 @@ fn listen_economy_events(
     mut gold_spent_events: MessageReader<GoldSpent>,
     mut loot_collected_events: MessageReader<LootCollected>,
     mut transaction_completed_events: MessageReader<TransactionCompleted>,
+    thresholds: Res<ToastThresholds>,
     mut toast_writer: MessageWriter<ShowToast>,
 ) {
     // Gold earned
     for event in gold_earned_events.read() {
-        if event.amount >= 50 {
+        if event.amount >= thresholds.gold_earned {
             toast_writer.write(ShowToast::success(format!("Earned {} gold", event.amount)));
         }
     }
 
     // Gold spent
     for event in gold_spent_events.read() {
-        if event.amount >= 100 {
+        if event.amount >= thresholds.gold_spent {
             toast_writer.write(ShowToast::info(format!("Spent {} gold", event.amount)));
         }
     }
 
     // Loot collected
     for event in loot_collected_events.read() {
-        if event.total_items >= 3 {
+        if event.total_items >= thresholds.loot_items {
             toast_writer.write(ShowToast::success(format!(
                 "Collected {} items",
                 event.total_items
@@ -200,7 +234,7 @@ fn listen_economy_events(
 
     // Transaction completed
     for event in transaction_completed_events.read() {
-        if event.price >= 100 {
+        if event.price >= thresholds.transaction {
             let action = if event.is_purchase { "Purchased" } else { "Sold" };
             toast_writer.write(ShowToast::info(format!(
                 "{} {} for {} gold",

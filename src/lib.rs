@@ -1,4 +1,5 @@
 pub mod assets;
+pub mod camera;
 pub mod chest;
 pub mod crafting_station;
 pub mod rock;

@@ -1,8 +1,23 @@
 use bevy::prelude::*;
 use std::time::Duration;
 
-const MAX_TOASTS: usize = 5;
-const TOAST_DURATION: Duration = Duration::from_secs(3);
+/// Configuration for the toast notification system.
+#[derive(Resource, Clone, Debug)]
+pub struct ToastConfig {
+    /// Maximum number of toasts displayed at once. Default: 5
+    pub max_toasts: usize,
+    /// Duration before a toast expires. Default: 3 seconds
+    pub duration: Duration,
+}
+
+impl Default for ToastConfig {
+    fn default() -> Self {
+        Self {
+            max_toasts: 5,
+            duration: Duration::from_secs(3),
+        }
+    }
+}
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum ToastType {
@@ -66,8 +81,8 @@ impl Toast {
         }
     }
 
-    pub fn is_expired(&self, current_time: Duration) -> bool {
-        current_time.saturating_sub(self.created_at) >= TOAST_DURATION
+    pub fn is_expired(&self, current_time: Duration, config: &ToastConfig) -> bool {
+        current_time.saturating_sub(self.created_at) >= config.duration
     }
 }
 
@@ -77,15 +92,15 @@ pub struct ToastQueue {
 }
 
 impl ToastQueue {
-    pub fn push(&mut self, toast: Toast) {
+    pub fn push(&mut self, toast: Toast, config: &ToastConfig) {
         self.toasts.insert(0, toast);
-        if self.toasts.len() > MAX_TOASTS {
+        if self.toasts.len() > config.max_toasts {
             self.toasts.pop();
         }
     }
 
-    pub fn cleanup(&mut self, current_time: Duration) {
-        self.toasts.retain(|t| !t.is_expired(current_time));
+    pub fn cleanup(&mut self, current_time: Duration, config: &ToastConfig) {
+        self.toasts.retain(|t| !t.is_expired(current_time, config));
     }
 
     pub fn toasts(&self) -> &[Toast] {
@@ -145,7 +160,8 @@ pub struct ToastPlugin;
 
 impl Plugin for ToastPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<ToastQueue>()
+        app.init_resource::<ToastConfig>()
+            .init_resource::<ToastQueue>()
             .add_message::<ShowToast>()
             .add_systems(Startup, spawn_toast_container)
             .add_systems(
@@ -178,20 +194,20 @@ fn spawn_toast_container(mut commands: Commands) {
 fn handle_toast_events(
     mut toast_events: MessageReader<ShowToast>,
     mut toast_queue: ResMut<ToastQueue>,
+    config: Res<ToastConfig>,
     time: Res<Time>,
 ) {
     let current_time = time.elapsed();
     for event in toast_events.read() {
-        toast_queue.push(Toast::new(
-            event.toast_type,
-            event.message.clone(),
-            current_time,
-        ));
+        toast_queue.push(
+            Toast::new(event.toast_type, event.message.clone(), current_time),
+            &config,
+        );
     }
 }
 
-fn cleanup_toasts(mut toast_queue: ResMut<ToastQueue>, time: Res<Time>) {
-    toast_queue.cleanup(time.elapsed());
+fn cleanup_toasts(mut toast_queue: ResMut<ToastQueue>, config: Res<ToastConfig>, time: Res<Time>) {
+    toast_queue.cleanup(time.elapsed(), &config);
 }
 
 fn update_toast_ui(
