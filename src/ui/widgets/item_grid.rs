@@ -22,7 +22,8 @@ impl Plugin for ItemGridPlugin {
                 (
                     update_grid_items,
                     update_grid_selector.run_if(
-                        resource_changed::<FocusState>
+                        resource_exists::<FocusState>
+                            .and(resource_changed::<FocusState>)
                             .or(any_match_filter::<Changed<ItemGrid>>),
                     ),
                 )

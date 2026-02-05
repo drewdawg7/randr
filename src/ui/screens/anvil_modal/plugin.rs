@@ -26,7 +26,8 @@ impl Plugin for AnvilModalPlugin {
                         handle_anvil_modal_select,
                         refresh_anvil_recipes.run_if(resource_changed::<Inventory>),
                         update_detail_pane_source::<AnvilDetailPane>.run_if(
-                            resource_changed::<FocusState>
+                            resource_exists::<FocusState>
+                                .and(resource_changed::<FocusState>)
                                 .or(any_match_filter::<Changed<ItemGrid>>),
                         ),
                         populate_anvil_detail_pane_content.run_if(

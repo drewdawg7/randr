@@ -28,7 +28,10 @@ impl Plugin for FightModalPlugin {
                     (
                         handle_fight_modal_navigation,
                         handle_fight_modal_select,
-                        update_button_sprites.run_if(resource_changed::<FightModalButtonSelection>),
+                        update_button_sprites.run_if(
+                            resource_exists::<FightModalButtonSelection>
+                                .and(resource_changed::<FightModalButtonSelection>),
+                        ),
                         update_mob_health_bar,
                         update_player_health_bar.run_if(resource_changed::<StatSheet>),
                         init_sprite_health_bars,

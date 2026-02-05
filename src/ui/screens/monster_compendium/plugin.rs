@@ -30,7 +30,10 @@ impl Plugin for MonsterCompendiumPlugin {
                         handle_compendium_navigation,
                         update_monster_list_display.run_if(
                             resource_changed::<CompendiumListState>
-                                .or(resource_changed::<FocusState>),
+                                .or(
+                                    resource_exists::<FocusState>
+                                        .and(resource_changed::<FocusState>),
+                                ),
                         ),
                         update_compendium_mob_sprite.run_if(
                             resource_changed::<CompendiumListState>
@@ -48,7 +51,10 @@ impl Plugin for MonsterCompendiumPlugin {
                         ),
                         update_drops_list_colors.run_if(
                             resource_changed::<DropsListState>
-                                .or(resource_changed::<FocusState>),
+                                .or(
+                                    resource_exists::<FocusState>
+                                        .and(resource_changed::<FocusState>),
+                                ),
                         ),
                     )
                         .run_if(in_monster_compendium_modal),

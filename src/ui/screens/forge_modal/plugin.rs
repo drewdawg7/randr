@@ -31,8 +31,12 @@ impl Plugin for ForgeModalPlugin {
                         handle_forge_modal_select,
                         refresh_forge_slots,
                         update_forge_detail_pane_source.run_if(
-                            resource_changed::<FocusState>
-                                .or(resource_changed::<ForgeModalState>)
+                            resource_exists::<FocusState>
+                                .and(resource_changed::<FocusState>)
+                                .or(
+                                    resource_exists::<ForgeModalState>
+                                        .and(resource_changed::<ForgeModalState>),
+                                )
                                 .or(any_match_filter::<Changed<ItemGrid>>),
                         ),
                         populate_forge_detail_pane_content.run_if(
@@ -47,8 +51,12 @@ impl Plugin for ForgeModalPlugin {
                 PostUpdate,
                 (
                     update_forge_slot_selector.run_if(
-                        resource_changed::<FocusState>
-                            .or(resource_changed::<ForgeModalState>),
+                        resource_exists::<FocusState>
+                            .and(resource_changed::<FocusState>)
+                            .or(
+                                resource_exists::<ForgeModalState>
+                                    .and(resource_changed::<ForgeModalState>),
+                            ),
                     ),
                     animate_forge_slot_selector,
                 )

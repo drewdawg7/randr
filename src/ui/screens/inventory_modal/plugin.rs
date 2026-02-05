@@ -27,7 +27,8 @@ impl Plugin for InventoryModalPlugin {
                         handle_inventory_modal_select,
                         sync_inventory_to_grids.run_if(resource_changed::<Inventory>),
                         update_detail_pane_source::<InventoryDetailPane>.run_if(
-                            resource_changed::<FocusState>
+                            resource_exists::<FocusState>
+                                .and(resource_changed::<FocusState>)
                                 .or(any_match_filter::<Changed<ItemGrid>>),
                         ),
                         populate_inventory_detail_pane_content.run_if(
