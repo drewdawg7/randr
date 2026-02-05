@@ -8,6 +8,7 @@ pub enum GameLayer {
     Mob,
     StaticEntity,
     Trigger,
+    AttackHitbox,
 }
 
 /// Collision layers for static entities (chests, rocks, crafting stations)
@@ -22,5 +23,9 @@ pub fn trigger_layers() -> CollisionLayers {
 
 /// Collision layers for mobs and NPCs
 pub fn mob_layers() -> CollisionLayers {
-    CollisionLayers::new(GameLayer::Mob, [GameLayer::Player])
+    CollisionLayers::new(GameLayer::Mob, [GameLayer::Player, GameLayer::AttackHitbox])
+}
+
+pub fn attack_hitbox_layers() -> CollisionLayers {
+    CollisionLayers::new(GameLayer::AttackHitbox, [GameLayer::Mob])
 }

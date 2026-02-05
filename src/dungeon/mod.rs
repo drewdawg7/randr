@@ -22,7 +22,7 @@ pub use entity::{
 pub use floor::{FloorId, FloorSpec};
 pub use constants::{ColliderConfig, FORGE_COLLIDER, MOB_COLLIDER, PLAYER_COLLIDER, STAIRS_COLLIDER, STATIC_COLLIDER};
 pub use grid::EntitySize;
-pub use physics::GameLayer;
+pub use physics::{attack_hitbox_layers, GameLayer};
 pub use plugin::{DungeonBuilder, DungeonPlugin, DungeonRegistry, FloorMonsterCount, HasLocation, NoLocation, TiledWallCollider};
 pub use spawn::{MobSpawnEntry, SpawnEntityType, SpawnEntry, SpawnTable};
 pub use state::{DepthSorting, DungeonState, MovementConfig, TileWorldSize, TilemapInfo};
