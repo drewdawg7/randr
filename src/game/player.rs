@@ -1,9 +1,7 @@
 use bevy::prelude::*;
 
 use crate::entities::Progression;
-use crate::inventory::{Inventory, ManagesItems};
-use crate::item::ItemId;
-use crate::player::{default_player_stats, PlayerBundle, PlayerGold, PlayerMarker, PlayerName};
+use crate::player::{PlayerBundle, PlayerMarker};
 use crate::stats::StatSheet;
 
 #[derive(Message, Debug, Clone)]
@@ -39,17 +37,7 @@ pub struct PlayerPlugin;
 
 impl Plugin for PlayerPlugin {
     fn build(&self, app: &mut App) {
-        let mut inventory = Inventory::new();
-        let _ = inventory.add_to_inv(ItemId::BasicHPPotion.spawn());
-        let _ = inventory.add_to_inv(ItemId::Coal.spawn());
-        let _ = inventory.add_to_inv(ItemId::IronOre.spawn());
-
-        app.init_resource::<PlayerName>()
-            .insert_resource(PlayerGold(100))
-            .insert_resource(Progression::new())
-            .insert_resource(inventory)
-            .insert_resource(default_player_stats())
-            .add_message::<PlayerDamaged>()
+        app.add_message::<PlayerDamaged>()
             .add_message::<PlayerHealed>()
             .add_message::<PlayerLeveledUp>()
             .add_message::<GoldChanged>()
