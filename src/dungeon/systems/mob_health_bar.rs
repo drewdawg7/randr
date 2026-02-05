@@ -84,15 +84,14 @@ pub fn update_mob_health_bar_values(
     }
 }
 
-pub fn cleanup_mob_health_bars(
-    mut commands: Commands,
-    mut removed: RemovedComponents<MobEntity>,
+pub fn cleanup_mob_health_bar(
+    trigger: On<Remove, MobEntity>,
     health_bars: Query<&MobHealthBar>,
+    mut commands: Commands,
 ) {
-    for entity in removed.read() {
-        if let Ok(health_bar) = health_bars.get(entity) {
-            commands.entity(health_bar.0).despawn();
-        }
+    let entity = trigger.event_target();
+    if let Ok(health_bar) = health_bars.get(entity) {
+        commands.entity(health_bar.0).despawn();
     }
 }
 

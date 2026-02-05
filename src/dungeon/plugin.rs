@@ -15,7 +15,7 @@ use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::{DungeonState, MovementConfig, TileWorldSize};
 use crate::combat::Attacking;
 use crate::dungeon::systems::{
-    cleanup_mob_health_bars, handle_floor_transition, handle_mob_defeated,
+    cleanup_mob_health_bar, handle_floor_transition, handle_mob_defeated,
     handle_player_collision_end, handle_player_collisions, handle_player_move, prepare_floor,
     spawn_mob_health_bars, stop_attacking_player, stop_player_when_idle,
     update_mob_health_bar_positions, update_mob_health_bar_values, SpawnFloor,
@@ -88,6 +88,7 @@ impl Plugin for DungeonPlugin {
             .add_message::<CraftingStationInteraction>()
             .add_message::<MiningResult>()
             .add_observer(on_collider_created)
+            .add_observer(cleanup_mob_health_bar)
             .add_systems(
                 FixedPreUpdate,
                 (
@@ -110,7 +111,6 @@ impl Plugin for DungeonPlugin {
                     spawn_mob_health_bars,
                     update_mob_health_bar_positions,
                     update_mob_health_bar_values,
-                    cleanup_mob_health_bars,
                 )
                     .run_if(in_state(AppState::Dungeon)),
             );
