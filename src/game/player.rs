@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::entities::Progression;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
-use crate::player::{default_player_stats, PlayerGold, PlayerName};
+use crate::player::{default_player_stats, PlayerBundle, PlayerGold, PlayerName};
 use crate::stats::StatSheet;
 
 /// Event fired when the player takes damage
@@ -51,6 +51,7 @@ impl Plugin for PlayerPlugin {
         let _ = inventory.add_to_inv(ItemId::Coal.spawn());
         let _ = inventory.add_to_inv(ItemId::IronOre.spawn());
 
+        // Keep resources temporarily for backward compatibility during migration
         app.init_resource::<PlayerName>()
             .insert_resource(PlayerGold(100))
             .insert_resource(Progression::new())
@@ -61,11 +62,16 @@ impl Plugin for PlayerPlugin {
             .add_message::<PlayerHealed>()
             .add_message::<PlayerLeveledUp>()
             .add_message::<GoldChanged>()
+            .add_systems(Startup, spawn_player_entity)
             .add_systems(
                 Update,
                 handle_level_up.run_if(resource_changed::<Progression>),
             );
     }
+}
+
+fn spawn_player_entity(mut commands: Commands) {
+    commands.spawn(PlayerBundle::default());
 }
 
 /// System that detects level-ups and applies stat bonuses
