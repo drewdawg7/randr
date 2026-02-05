@@ -1,5 +1,6 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
+use crate::combat::{GoldGained, LootDropped, XpGained};
 use crate::game::{
     BrewingResult, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped,
     ItemPickedUp, ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerHealed,
@@ -75,6 +76,11 @@ impl Plugin for ToastListenersPlugin {
                         .or(on_message::<ItemWithdrawn>),
                 ),
                 listen_combat_events.run_if(on_message::<MobDefeated>),
+                listen_action_combat_events.run_if(
+                    on_message::<GoldGained>
+                        .or(on_message::<XpGained>)
+                        .or(on_message::<LootDropped>),
+                ),
                 listen_economy_events.run_if(
                     on_message::<GoldEarned>
                         .or(on_message::<GoldSpent>)
@@ -286,5 +292,27 @@ fn listen_skill_events(
             event.skill.display_name(),
             event.new_level
         )));
+    }
+}
+
+fn listen_action_combat_events(
+    mut gold_events: MessageReader<GoldGained>,
+    mut xp_events: MessageReader<XpGained>,
+    mut loot_events: MessageReader<LootDropped>,
+    mut toast_writer: MessageWriter<ShowToast>,
+) {
+    for event in gold_events.read() {
+        toast_writer.write(ShowToast::success(format!(
+            "{} defeated! +{}g",
+            event.source, event.amount
+        )));
+    }
+
+    for event in xp_events.read() {
+        toast_writer.write(ShowToast::info(format!("+{} xp", event.amount)));
+    }
+
+    for event in loot_events.read() {
+        toast_writer.write(ShowToast::success(format!("Found: {}", event.item_name)));
     }
 }
