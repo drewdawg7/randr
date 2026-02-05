@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::economy::WorthGold;
 use crate::inventory::{Inventory, ManagesItems};
-use crate::player::PlayerGold;
+use crate::player::{PlayerGold, PlayerMarker};
 
 use super::Store;
 
@@ -30,20 +30,21 @@ pub enum TransactionResult {
     SellSuccess { item_name: String, price: i32 },
 }
 
-/// Handle purchase events.
 pub fn handle_purchase(
     mut events: MessageReader<PurchaseEvent>,
     mut result_events: MessageWriter<TransactionResult>,
     mut store: ResMut<Store>,
-    mut gold: ResMut<PlayerGold>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<(&mut PlayerGold, &mut Inventory), With<PlayerMarker>>,
 ) {
+    let Ok((mut gold, mut inventory)) = player.single_mut() else {
+        return;
+    };
+
     for event in events.read() {
         let Some(store_item) = store.inventory.get_mut(event.index) else {
             continue;
         };
 
-        // Take item from store
         let Some(item) = store_item.take_item() else {
             result_events.write(TransactionResult::PurchaseFailedOutOfStock);
             continue;
@@ -52,9 +53,7 @@ pub fn handle_purchase(
         let price = item.purchase_price();
         let item_name = item.name.clone();
 
-        // Check gold
         if gold.0 < price {
-            // Not enough gold - put item back
             store.inventory[event.index].items.push(item);
             result_events.write(TransactionResult::PurchaseFailedInsufficientGold {
                 need: price,
@@ -63,15 +62,12 @@ pub fn handle_purchase(
             continue;
         }
 
-        // Try to add to inventory
         if inventory.add_to_inv(item.clone()).is_err() {
-            // Inventory full - put item back
             store.inventory[event.index].items.push(item);
             result_events.write(TransactionResult::PurchaseFailedInventoryFull);
             continue;
         }
 
-        // Deduct gold
         gold.subtract(price);
         result_events.write(TransactionResult::PurchaseSuccess {
             item_name,
@@ -80,19 +76,20 @@ pub fn handle_purchase(
     }
 }
 
-/// Handle sell events.
 pub fn handle_sell(
     mut events: MessageReader<SellEvent>,
     mut result_events: MessageWriter<TransactionResult>,
-    mut gold: ResMut<PlayerGold>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<(&mut PlayerGold, &mut Inventory), With<PlayerMarker>>,
 ) {
+    let Ok((mut gold, mut inventory)) = player.single_mut() else {
+        return;
+    };
+
     for event in events.read() {
         let Some(inv_item) = inventory.items.get(event.inventory_index) else {
             continue;
         };
 
-        // Can't sell locked items
         if inv_item.item.is_locked {
             continue;
         }
@@ -101,7 +98,6 @@ pub fn handle_sell(
         let item_name = inv_item.item.name.clone();
         let item_id = inv_item.item.item_id;
 
-        // Add gold and remove item
         gold.add(sell_price);
         inventory.decrease_item_quantity(item_id, 1);
 

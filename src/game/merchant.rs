@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::economy::WorthGold;
 use crate::inventory::{Inventory, ManagesItems};
-use crate::player::PlayerGold;
+use crate::player::{PlayerGold, PlayerMarker};
 use crate::ui::screens::merchant_modal::MerchantStock;
 
 #[derive(Message, Debug, Clone)]
@@ -46,10 +46,12 @@ impl Plugin for MerchantPlugin {
 fn handle_buy_item(
     mut buy_events: MessageReader<BuyItemEvent>,
     mut result_events: MessageWriter<MerchantTransactionResult>,
-    mut player_gold: ResMut<PlayerGold>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<(&mut PlayerGold, &mut Inventory), With<PlayerMarker>>,
     mut stock: Option<ResMut<MerchantStock>>,
 ) {
+    let Ok((mut player_gold, mut inventory)) = player.single_mut() else {
+        return;
+    };
     let Some(ref mut stock) = stock else {
         return;
     };
@@ -95,9 +97,12 @@ fn handle_buy_item(
 fn handle_sell_item(
     mut sell_events: MessageReader<SellItemEvent>,
     mut result_events: MessageWriter<MerchantTransactionResult>,
-    mut player_gold: ResMut<PlayerGold>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<(&mut PlayerGold, &mut Inventory), With<PlayerMarker>>,
 ) {
+    let Ok((mut player_gold, mut inventory)) = player.single_mut() else {
+        return;
+    };
+
     for event in sell_events.read() {
         let inv_items = inventory.get_inventory_items();
         let Some(inv_item) = inv_items.get(event.inventory_index) else {

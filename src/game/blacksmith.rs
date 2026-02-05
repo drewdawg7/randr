@@ -3,7 +3,7 @@ use uuid::Uuid;
 
 use crate::inventory::{FindsItems, Inventory, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
-use crate::player::PlayerGold;
+use crate::player::{PlayerGold, PlayerMarker};
 
 #[derive(Message, Debug, Clone)]
 pub struct UpgradeItemEvent {
@@ -184,9 +184,12 @@ pub fn calculate_upgrade_cost(item: &crate::item::Item) -> i32 {
 fn handle_upgrade_item(
     mut upgrade_events: MessageReader<UpgradeItemEvent>,
     mut result_events: MessageWriter<BlacksmithResult>,
-    mut gold: ResMut<PlayerGold>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<(&mut PlayerGold, &mut Inventory), With<PlayerMarker>>,
 ) {
+    let Ok((mut gold, mut inventory)) = player.single_mut() else {
+        return;
+    };
+
     for event in upgrade_events.read() {
         let Some(inv_item) = inventory.find_item_by_uuid(event.item_uuid) else {
             continue;
@@ -232,8 +235,12 @@ fn handle_upgrade_item(
 fn handle_upgrade_quality(
     mut quality_events: MessageReader<UpgradeQualityEvent>,
     mut result_events: MessageWriter<BlacksmithResult>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
 ) {
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
+
     for event in quality_events.read() {
         let Some(inv_item) = inventory.find_item_by_uuid(event.item_uuid) else {
             continue;
@@ -276,8 +283,12 @@ fn handle_upgrade_quality(
 fn handle_smelt_recipe(
     mut smelt_events: MessageReader<SmeltRecipeEvent>,
     mut result_events: MessageWriter<BlacksmithResult>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
 ) {
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
+
     for event in smelt_events.read() {
         process_crafting_recipe(
             event.recipe_id,
@@ -291,8 +302,12 @@ fn handle_smelt_recipe(
 fn handle_forge_recipe(
     mut forge_events: MessageReader<ForgeRecipeEvent>,
     mut result_events: MessageWriter<BlacksmithResult>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
 ) {
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
+
     for event in forge_events.read() {
         process_crafting_recipe(
             event.recipe_id,
