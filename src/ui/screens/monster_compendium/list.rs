@@ -11,10 +11,6 @@ pub fn update_monster_list_display(
     mut items: Query<(&MonsterListItem, &mut TextColor)>,
 ) {
     let Some(focus_state) = focus_state else { return };
-    if !list_state.is_changed() && !focus_state.is_changed() {
-        return;
-    }
-
     let monsters_focused = focus_state.is_focused(FocusPanel::CompendiumMonsterList);
 
     for (item, mut color) in items.iter_mut() {
@@ -32,13 +28,7 @@ pub fn update_compendium_mob_sprite(
     monsters: Option<Res<CompendiumMonsters>>,
     mob_sheets: Res<MobSpriteSheets>,
     query: Query<Entity, With<CompendiumMobSprite>>,
-    added: Query<Entity, Added<CompendiumMobSprite>>,
 ) {
-    let needs_update = list_state.is_changed() || !added.is_empty();
-    if !needs_update {
-        return;
-    }
-
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else {
         return;

@@ -18,13 +18,7 @@ pub fn update_drops_display(
     focus_state: Option<Res<FocusState>>,
     game_sprites: Res<GameSprites>,
     mut drops_section: Query<(Entity, &mut Node, Option<&Children>), With<CompendiumDropsSection>>,
-    added: Query<Entity, Added<CompendiumDropsSection>>,
 ) {
-    let needs_update = list_state.is_changed() || view_state.is_changed() || !added.is_empty();
-    if !needs_update {
-        return;
-    }
-
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else { return };
     let Ok((section_entity, mut node, children)) = drops_section.single_mut() else { return };
@@ -129,11 +123,6 @@ pub fn update_drops_list_colors(
 ) {
     let Some(drops_state) = drops_state else { return };
     let Some(focus_state) = focus_state else { return };
-
-    if !drops_state.is_changed() && !focus_state.is_changed() {
-        return;
-    }
-
     let drops_focused = focus_state.is_focused(FocusPanel::CompendiumDropsList);
 
     for (item, children) in items.iter() {

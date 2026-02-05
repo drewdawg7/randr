@@ -17,13 +17,7 @@ pub fn update_stats_display(
     monsters: Option<Res<CompendiumMonsters>>,
     game_sprites: Res<GameSprites>,
     mut stats_section: Query<(Entity, &mut Node, Option<&Children>), With<CompendiumStatsSection>>,
-    added: Query<Entity, Added<CompendiumStatsSection>>,
 ) {
-    let needs_update = list_state.is_changed() || view_state.is_changed() || !added.is_empty();
-    if !needs_update {
-        return;
-    }
-
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else { return };
     let Ok((section_entity, mut node, children)) = stats_section.single_mut() else { return };
