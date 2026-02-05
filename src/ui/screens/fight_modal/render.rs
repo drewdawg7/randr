@@ -6,7 +6,7 @@ use crate::player::PlayerName;
 use crate::stats::{HasStats, StatSheet};
 use crate::ui::screens::health_bar::SpriteHealthBarBundle;
 use crate::ui::widgets::spawn_three_slice_banner;
-use crate::ui::PlayerAnimationTimer;
+use crate::ui::PlayerAttackTimer;
 use crate::ui::{Modal, SpawnModalExt};
 
 use super::state::{
@@ -109,7 +109,7 @@ fn spawn_player_column(
 
             column.spawn((
                 FightModalPlayerSprite,
-                PlayerAnimationTimer::attack(0.54),
+                PlayerAttackTimer(Timer::from_seconds(0.54, TimerMode::Once)),
                 Node {
                     width: Val::Px(SPRITE_SIZE),
                     height: Val::Px(SPRITE_SIZE),

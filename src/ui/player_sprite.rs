@@ -24,7 +24,10 @@ impl Plugin for PlayerSpritePlugin {
             )
             .add_systems(
                 Update,
-                handle_player_animation_timers.run_if(any_with_component::<PlayerAnimationTimer>),
+                (
+                    sync_player_animation.run_if(any_with_component::<PlayerWalkTimer>),
+                    revert_attack_idle.run_if(any_with_component::<PlayerAttackTimer>),
+                ),
             )
             .register_sprite_marker::<DungeonPlayerSprite>();
     }
@@ -46,33 +49,11 @@ impl PlayerSpriteSheet {
     }
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum AnimationTimerKind {
-    Walk,
-    Attack,
-}
+#[derive(Component)]
+pub struct PlayerWalkTimer(pub Timer);
 
 #[derive(Component)]
-pub struct PlayerAnimationTimer {
-    pub timer: Timer,
-    pub kind: AnimationTimerKind,
-}
-
-impl PlayerAnimationTimer {
-    pub fn walk(duration: f32) -> Self {
-        Self {
-            timer: Timer::from_seconds(duration, TimerMode::Once),
-            kind: AnimationTimerKind::Walk,
-        }
-    }
-
-    pub fn attack(duration: f32) -> Self {
-        Self {
-            timer: Timer::from_seconds(duration, TimerMode::Once),
-            kind: AnimationTimerKind::Attack,
-        }
-    }
-}
+pub struct PlayerAttackTimer(pub Timer);
 
 #[derive(Component)]
 pub struct DungeonPlayerSprite;
@@ -131,34 +112,38 @@ fn load_player_sprite_sheet(
     info!("Loaded player sprite sheet: MiniLightningWarrior");
 }
 
-fn handle_player_animation_timers(
+fn revert_attack_idle(
+    time: Res<Time>,
+    sheet: Res<PlayerSpriteSheet>,
+    mut query: Query<(&mut PlayerAttackTimer, &mut SpriteAnimation)>,
+) {
+    for (mut timer, mut anim) in &mut query {
+        timer.0.tick(time.delta());
+        if timer.0.just_finished() {
+            anim.apply_config(&sheet.animation);
+        }
+    }
+}
+
+fn sync_player_animation(
     time: Res<Time>,
     sheet: Res<PlayerSpriteSheet>,
     held_direction: Res<HeldDirection>,
-    mut query: Query<(&mut PlayerAnimationTimer, &mut SpriteAnimation)>,
+    mut query: Query<(&mut PlayerWalkTimer, &mut SpriteAnimation)>,
 ) {
-    for (mut timer_comp, mut anim) in &mut query {
-        timer_comp.timer.tick(time.delta());
+    for (mut timer, mut anim) in &mut query {
+        timer.0.tick(time.delta());
 
-        match timer_comp.kind {
-            AnimationTimerKind::Walk => {
-                let is_idle = anim.first_frame == sheet.animation.first_frame;
-                let is_moving = held_direction.0.is_some();
+        let is_idle = anim.first_frame == sheet.animation.first_frame;
+        let is_moving = held_direction.0.is_some();
 
-                if is_moving {
-                    if is_idle {
-                        anim.apply_config(&sheet.walk_animation);
-                    }
-                    timer_comp.timer.reset();
-                } else if timer_comp.timer.just_finished() && !is_idle {
-                    anim.apply_config(&sheet.animation);
-                }
+        if is_moving {
+            if is_idle {
+                anim.apply_config(&sheet.walk_animation);
             }
-            AnimationTimerKind::Attack => {
-                if timer_comp.timer.just_finished() {
-                    anim.apply_config(&sheet.animation);
-                }
-            }
+            timer.0.reset();
+        } else if timer.0.just_finished() && !is_idle {
+            anim.apply_config(&sheet.animation);
         }
     }
 }
