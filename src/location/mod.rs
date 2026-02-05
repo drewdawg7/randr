@@ -14,4 +14,4 @@ pub use spec::{
     AlchemistData, BlacksmithData, FieldData, LocationData, LocationSpec, StoreData,
 };
 pub use store::{sell_player_item, PurchaseEvent, SellEvent, Store, StoreError, StorePlugin, TransactionResult};
-pub use traits::{Location, Refreshable};
+pub use traits::Location;

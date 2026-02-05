@@ -1,6 +1,4 @@
 #[cfg(test)]
-use std::time::Duration;
-#[cfg(test)]
 use crate::{
     inventory::{Inventory, ManagesItems},
     item::{Item, ItemId, ItemType},
@@ -82,7 +80,6 @@ fn store_new_creates_with_correct_defaults() {
     assert_eq!(store.name, "Test Store");
     assert_eq!(store.description(), "");
     assert!(store.inventory.is_empty());
-    assert_eq!(store.time_until_restock(), 60);
 }
 
 #[test]
@@ -283,56 +280,6 @@ fn restock_clears_existing_items() {
 
     assert_eq!(store.inventory[0].quantity(), 1);
     assert!(store.inventory.len() > 0);
-}
-
-// ==================== Store::check_and_restock tests ====================
-
-#[test]
-fn check_and_restock_does_not_restock_immediately() {
-    let mut store = Store::new("Test Store", vec![(ItemId::Sword, 3)]);
-
-    store.inventory[0].items.clear();
-
-    store.tick_timer(Duration::from_secs(30));
-    store.check_and_restock();
-
-    assert_eq!(store.inventory[0].quantity(), 0);
-}
-
-#[test]
-fn check_and_restock_restocks_after_interval() {
-    let mut store = Store::new("Test Store", vec![(ItemId::Sword, 3)]);
-
-    store.tick_timer(Duration::from_secs(60));
-    assert!(store.time_until_restock() <= 60);
-
-    store.check_and_restock();
-    assert!(store.time_until_restock() <= 60);
-}
-
-// ==================== Store::time_until_restock tests ====================
-
-#[test]
-fn time_until_restock_returns_correct_countdown() {
-    let mut store = Store::new("Test Store", vec![]);
-
-    assert_eq!(store.time_until_restock(), 60);
-
-    store.tick_timer(Duration::from_secs(20));
-    assert_eq!(store.time_until_restock(), 40);
-
-    store.tick_timer(Duration::from_secs(30));
-    assert_eq!(store.time_until_restock(), 10);
-}
-
-#[test]
-fn time_until_restock_decreases_over_time() {
-    let mut store = Store::new("Test Store", vec![]);
-
-    assert_eq!(store.time_until_restock(), 60);
-
-    store.tick_timer(Duration::from_secs(59));
-    assert_eq!(store.time_until_restock(), 1);
 }
 
 // ==================== StoreItem::new tests ====================

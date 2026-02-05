@@ -1,6 +1,4 @@
-use std::time::Duration;
-
-use crate::location::{Location, LocationId, Refreshable};
+use crate::location::{Location, LocationId};
 
 use super::definition::Blacksmith;
 
@@ -28,19 +26,5 @@ impl Location for Blacksmith {
 
     fn description(&self) -> &str {
         Blacksmith::description(self)
-    }
-}
-
-impl Refreshable for Blacksmith {
-    fn tick(&mut self, _elapsed: Duration) {
-        // No periodic updates needed
-    }
-
-    fn refresh(&mut self) {
-        // No refresh action needed
-    }
-
-    fn time_until_refresh(&self) -> Duration {
-        Duration::MAX
     }
 }

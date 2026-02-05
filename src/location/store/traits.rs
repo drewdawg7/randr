@@ -1,7 +1,5 @@
-use std::time::Duration;
-
 use crate::item::ItemId;
-use crate::location::{Location, LocationId, Refreshable};
+use crate::location::{Location, LocationId};
 
 use super::definition::Store;
 
@@ -27,20 +25,5 @@ impl Location for Store {
 
     fn description(&self) -> &str {
         Store::description(self)
-    }
-}
-
-impl Refreshable for Store {
-    fn tick(&mut self, elapsed: Duration) {
-        self.tick_timer(elapsed);
-        self.check_and_restock();
-    }
-
-    fn refresh(&mut self) {
-        self.restock();
-    }
-
-    fn time_until_refresh(&self) -> Duration {
-        Duration::from_secs(self.time_until_restock())
     }
 }
