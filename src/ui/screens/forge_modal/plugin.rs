@@ -13,7 +13,8 @@ use super::render::{
     update_forge_detail_pane_source, update_forge_slot_selector,
 };
 use super::state::{ActiveForgeEntity, ForgeModal, ForgeModalState};
-use crate::ui::widgets::ItemGrid;
+use crate::inventory::Inventory;
+use crate::ui::widgets::{ItemDetailPane, ItemGrid};
 
 pub struct ForgeModalPlugin;
 
@@ -34,7 +35,10 @@ impl Plugin for ForgeModalPlugin {
                                 .or(resource_changed::<ForgeModalState>)
                                 .or(any_match_filter::<Changed<ItemGrid>>),
                         ),
-                        populate_forge_detail_pane_content,
+                        populate_forge_detail_pane_content.run_if(
+                            resource_changed::<Inventory>
+                                .or(any_match_filter::<Changed<ItemDetailPane>>),
+                        ),
                     )
                         .run_if(in_forge_modal),
                 ),
