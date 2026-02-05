@@ -387,12 +387,10 @@ pub fn update_forge_slot_selector(
     }
 }
 
-/// Updates the detail pane source based on which panel is focused and selected.
-/// Only runs when focus, grid selection, or modal state changes.
 pub fn update_forge_detail_pane_source(
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
-    player_grids: Query<Ref<ItemGrid>, With<ForgePlayerGrid>>,
+    player_grids: Query<&ItemGrid, With<ForgePlayerGrid>>,
     mut panes: Query<&mut ItemDetailPane>,
 ) {
     let Some(focus_state) = focus_state else {
@@ -402,17 +400,6 @@ pub fn update_forge_detail_pane_source(
     let Some(modal_state) = modal_state else {
         return;
     };
-
-    let focus_changed = focus_state.is_changed();
-    let modal_state_changed = modal_state.is_changed();
-    let grid_changed = player_grids
-        .single()
-        .map(|g| g.is_changed())
-        .unwrap_or(false);
-
-    if !focus_changed && !modal_state_changed && !grid_changed {
-        return;
-    }
 
     let source = if focus_state.is_focused(FocusPanel::ForgeCraftingSlots) {
         Some(InfoPanelSource::ForgeSlot {

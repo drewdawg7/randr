@@ -4,7 +4,8 @@ use crate::inventory::Inventory;
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_merchant_modal;
-use crate::ui::widgets::update_detail_pane_source;
+use crate::ui::widgets::{update_detail_pane_source, ItemGrid};
+use crate::ui::FocusState;
 
 use super::input::{handle_merchant_modal_navigation, handle_merchant_modal_select};
 use super::render::{
@@ -28,7 +29,10 @@ impl Plugin for MerchantModalPlugin {
                         handle_merchant_modal_select,
                         sync_merchant_stock_grid.run_if(resource_changed::<MerchantStock>),
                         sync_merchant_player_grid.run_if(resource_changed::<Inventory>),
-                        update_detail_pane_source::<MerchantDetailPane>,
+                        update_detail_pane_source::<MerchantDetailPane>.run_if(
+                            resource_changed::<FocusState>
+                                .or(any_match_filter::<Changed<ItemGrid>>),
+                        ),
                         populate_merchant_detail_pane_content,
                     )
                         .run_if(in_merchant_modal),

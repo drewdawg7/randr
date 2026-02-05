@@ -19,7 +19,14 @@ impl Plugin for ItemGridPlugin {
         app.add_observer(on_add_item_grid)
             .add_systems(
                 PostUpdate,
-                (update_grid_items, update_grid_selector).chain(),
+                (
+                    update_grid_items,
+                    update_grid_selector.run_if(
+                        resource_changed::<FocusState>
+                            .or(any_match_filter::<Changed<ItemGrid>>),
+                    ),
+                )
+                    .chain(),
             )
             .add_systems(
                 PostUpdate,
@@ -376,30 +383,21 @@ fn update_grid_items(
     }
 }
 
-/// Update the grid selector position when selection or focus changes.
 fn update_grid_selector(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     focus_state: Option<Res<FocusState>>,
-    item_grids: Query<(Entity, Ref<ItemGrid>, Option<&ItemGridFocusPanel>, &Children)>,
+    item_grids: Query<(Entity, &ItemGrid, Option<&ItemGridFocusPanel>, &Children)>,
     grid_containers: Query<&Children, With<GridContainer>>,
     grid_cells: Query<(Entity, &GridCell, Option<&Children>)>,
     selectors: Query<Entity, With<GridSelector>>,
 ) {
-    // Only run when FocusState exists and changes, or when ItemGrid changes
-    let focus_changed = focus_state.as_ref().map(|s| s.is_changed()).unwrap_or(false);
-
     for (grid_entity, item_grid, focus_panel, item_grid_children) in &item_grids {
         // Check if this grid is focused
         let is_focused = focus_panel
             .zip(focus_state.as_ref())
             .map(|(panel, state)| state.is_focused(panel.0))
             .unwrap_or(false);
-
-        // Skip if neither focus nor grid changed
-        if !focus_changed && !item_grid.is_changed() {
-            continue;
-        }
 
         // Skip if the grid entity is being despawned
         if commands.get_entity(grid_entity).is_err() {
