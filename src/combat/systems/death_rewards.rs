@@ -5,16 +5,19 @@ use crate::combat::system::{apply_goldfind, player_effective_goldfind, player_ef
 use crate::inventory::Inventory;
 use crate::loot::collect_loot_drops;
 use crate::mob::components::{DeathProcessed, GoldReward, MobLootTable, MobMarker, XpReward};
+use crate::player::PlayerMarker;
 use crate::stats::StatSheet;
 
 pub fn grant_kill_gold(
     mut events: MessageReader<EntityDied>,
     mut gold_writer: MessageWriter<GoldGained>,
     mobs: Query<(&MobMarker, &GoldReward, &DeathProcessed)>,
-    stats: Res<StatSheet>,
-    inventory: Res<Inventory>,
+    player: Query<(&StatSheet, &Inventory), With<PlayerMarker>>,
 ) {
-    let goldfind = player_effective_goldfind(&stats, &inventory);
+    let Ok((stats, inventory)) = player.single() else {
+        return;
+    };
+    let goldfind = player_effective_goldfind(stats, inventory);
 
     for event in events.read() {
         if event.is_player {
@@ -65,11 +68,13 @@ pub fn grant_kill_xp(
 pub fn roll_kill_loot(
     mut events: MessageReader<EntityDied>,
     mut loot_writer: MessageWriter<LootDropped>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<(&StatSheet, &mut Inventory), With<PlayerMarker>>,
     mobs: Query<(&MobLootTable, &DeathProcessed)>,
-    stats: Res<StatSheet>,
 ) {
-    let magic_find = player_effective_magicfind(&stats, &inventory);
+    let Ok((stats, mut inventory)) = player.single_mut() else {
+        return;
+    };
+    let magic_find = player_effective_magicfind(stats, &inventory);
 
     for event in events.read() {
         if event.is_player {

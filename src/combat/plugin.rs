@@ -1,4 +1,4 @@
-use bevy::{ecs::system::SystemParam, prelude::*};
+use bevy::prelude::*;
 use tracing::instrument;
 
 use super::events::{DealDamage, EntityDied, PlayerAttackMob, VictoryAchieved};
@@ -12,19 +12,11 @@ use crate::loot::collect_loot_drops;
 use crate::mob::{
     CombatStats, DeathProcessed, GoldReward, Health, MobLootTable, MobMarker, XpReward,
 };
-use crate::player::PlayerGold;
+use crate::player::{PlayerGold, PlayerMarker};
 use crate::plugins::MobDefeated;
 use crate::skills::{SkillType, SkillXpGained, Skills};
 use crate::stats::StatSheet;
 use crate::states::AppState;
-
-#[derive(SystemParam)]
-struct PlayerResources<'w> {
-    gold: ResMut<'w, PlayerGold>,
-    progression: ResMut<'w, Progression>,
-    inventory: ResMut<'w, Inventory>,
-    stats: ResMut<'w, StatSheet>,
-}
 
 #[derive(Resource)]
 pub struct ActiveCombat {
@@ -58,11 +50,13 @@ fn process_player_attack(
     mut events: MessageReader<PlayerAttackMob>,
     mut deal_damage_events: MessageWriter<DealDamage>,
     mut entity_died_events: MessageWriter<EntityDied>,
-    mut stats: ResMut<StatSheet>,
-    inventory: Res<Inventory>,
+    mut player: Query<(&mut StatSheet, &Inventory), With<PlayerMarker>>,
     skills: Res<Skills>,
     mut mob_query: Query<(&mut Health, &CombatStats)>,
 ) {
+    let Ok((mut stats, inventory)) = player.single_mut() else {
+        return;
+    };
     let combat_level = skills
         .skill(SkillType::Combat)
         .map(|s| s.level)
@@ -75,7 +69,7 @@ fn process_player_attack(
 
         let result = player_attacks_entity(
             &stats,
-            &inventory,
+            inventory,
             &mut mob_health,
             mob_combat_stats,
             combat_level,
@@ -94,7 +88,7 @@ fn process_player_attack(
             });
         } else {
             let counter_result =
-                entity_attacks_player(mob_combat_stats, &mut stats, &inventory, combat_level);
+                entity_attacks_player(mob_combat_stats, &mut stats, inventory, combat_level);
 
             deal_damage_events.write(DealDamage {
                 target: Entity::PLACEHOLDER,
@@ -119,7 +113,10 @@ fn handle_mob_death(
     mut mob_defeated_events: MessageWriter<MobDefeated>,
     mut skill_xp_events: MessageWriter<SkillXpGained>,
     mut victory_events: MessageWriter<VictoryAchieved>,
-    mut player: PlayerResources,
+    mut player: Query<
+        (&mut StatSheet, &mut Inventory, &mut PlayerGold, &mut Progression),
+        With<PlayerMarker>,
+    >,
     mut mob_query: Query<(
         &MobMarker,
         &GoldReward,
@@ -128,6 +125,10 @@ fn handle_mob_death(
         &mut DeathProcessed,
     )>,
 ) {
+    let Ok((mut stats, mut inventory, mut gold, mut progression)) = player.single_mut() else {
+        return;
+    };
+
     for event in events.read() {
         if event.is_player {
             continue;
@@ -147,19 +148,19 @@ fn handle_mob_death(
         let mob_id = mob_marker.0;
         let mob_name = mob_id.spec().name.clone();
 
-        let magic_find = player_effective_magicfind(&player.stats, &player.inventory);
+        let magic_find = player_effective_magicfind(&stats, &inventory);
         let loot_drops = loot_table.0.roll_drops(magic_find);
 
         let rewards = apply_victory_rewards_direct(
-            &mut player.stats,
-            &player.inventory,
-            &mut player.gold,
-            &mut player.progression,
+            &mut stats,
+            &inventory,
+            &mut gold,
+            &mut progression,
             gold_reward.0,
             xp_reward.0,
         );
 
-        collect_loot_drops(&mut *player.inventory, &loot_drops);
+        collect_loot_drops(&mut *inventory, &loot_drops);
 
         mob_defeated_events.write(MobDefeated { mob_id });
 
@@ -186,9 +187,12 @@ fn handle_mob_death(
 fn handle_player_death(
     mut commands: Commands,
     mut events: MessageReader<EntityDied>,
-    mut stats: ResMut<StatSheet>,
-    mut player_gold: ResMut<PlayerGold>,
+    mut player: Query<(&mut StatSheet, &mut PlayerGold), With<PlayerMarker>>,
 ) {
+    let Ok((mut stats, mut player_gold)) = player.single_mut() else {
+        return;
+    };
+
     for event in events.read() {
         if !event.is_player {
             continue;

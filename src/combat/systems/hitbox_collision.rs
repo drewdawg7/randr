@@ -3,9 +3,10 @@ use bevy::prelude::*;
 
 use crate::combat::action::{AttackHitbox, HitEntities};
 use crate::combat::events::DamageEntity;
-use crate::combat::system::{player_attack_value, apply_defense};
+use crate::combat::system::{apply_defense, player_attack_value};
 use crate::inventory::Inventory;
 use crate::mob::components::{CombatStats, MobMarker};
+use crate::player::PlayerMarker;
 use crate::skills::{SkillType, Skills};
 use crate::stats::StatSheet;
 
@@ -14,10 +15,12 @@ pub fn handle_hitbox_collisions(
     mut damage_writer: MessageWriter<DamageEntity>,
     mut hitboxes: Query<(&AttackHitbox, &mut HitEntities)>,
     mobs: Query<&CombatStats, With<MobMarker>>,
-    stats: Res<StatSheet>,
-    inventory: Res<Inventory>,
+    player: Query<(&StatSheet, &Inventory), With<PlayerMarker>>,
     skills: Res<Skills>,
 ) {
+    let Ok((stats, inventory)) = player.single() else {
+        return;
+    };
     let combat_level = skills
         .skill(SkillType::Combat)
         .map(|s| s.level)
@@ -40,7 +43,7 @@ pub fn handle_hitbox_collisions(
             continue;
         };
 
-        let attack = player_attack_value(&stats, &inventory, combat_level);
+        let attack = player_attack_value(stats, inventory, combat_level);
         let raw_damage = attack.roll_damage();
         let damage = apply_defense(raw_damage, mob_combat_stats.defense);
 
