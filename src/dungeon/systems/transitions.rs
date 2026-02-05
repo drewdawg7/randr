@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::dungeon::events::FloorTransition;
-use crate::dungeon::{DungeonRegistry, DungeonState, LayoutId, SpawnFloor};
+use crate::dungeon::{DungeonRegistry, DungeonState, FloorId, SpawnFloor};
 use crate::location::LocationId;
 
 #[derive(Resource, Default)]
@@ -42,11 +42,10 @@ pub fn handle_floor_transition(
         };
         commands.insert_resource(spawn_config);
 
-        let layout_id = state
+        let floor_id = state
             .current_floor()
-            .map(|f| f.layout_id())
-            .unwrap_or(LayoutId::CaveFloor);
+            .unwrap_or(FloorId::HomeFloor);
 
-        spawn_events.write(SpawnFloor { layout_id });
+        spawn_events.write(SpawnFloor { floor_id });
     }
 }

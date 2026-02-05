@@ -12,8 +12,8 @@ use crate::dungeon::constants::{
     STATIC_COLLIDER,
 };
 use crate::dungeon::{
-    map_path, ChestEntity, CraftingStationEntity, DepthSorting, DoorEntity, DungeonEntityMarker,
-    GameLayer, LayoutId, MobEntity, NpcEntity, RockEntity, StairsEntity,
+    ChestEntity, CraftingStationEntity, DepthSorting, DoorEntity, DungeonEntityMarker,
+    FloorId, GameLayer, MobEntity, NpcEntity, RockEntity, StairsEntity,
 };
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
@@ -247,10 +247,10 @@ fn add_animated_mob(
 pub fn spawn_floor_ui(
     commands: &mut Commands,
     asset_server: &AssetServer,
-    layout_id: LayoutId,
+    floor_id: FloorId,
     camera_entity: Entity,
 ) {
-    let path = map_path(layout_id);
+    let path = floor_id.spec().path;
     let map_handle: Handle<TiledMapAsset> = asset_server.load(path);
 
     let floor_root = commands.spawn((FloorRoot, Transform::default(), Visibility::default())).id();

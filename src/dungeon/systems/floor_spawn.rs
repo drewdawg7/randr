@@ -1,13 +1,13 @@
 use bevy::prelude::*;
 use tracing::instrument;
 
-use crate::dungeon::{FloorMonsterCount, FloorReady, LayoutId};
+use crate::dungeon::{FloorId, FloorMonsterCount, FloorReady};
 
 use super::TransitionInProgress;
 
 #[derive(Message)]
 pub struct SpawnFloor {
-    pub layout_id: LayoutId,
+    pub floor_id: FloorId,
 }
 
 #[instrument(level = "debug", skip_all)]
@@ -21,7 +21,7 @@ pub fn prepare_floor(
         commands.remove_resource::<TransitionInProgress>();
 
         floor_ready.write(FloorReady {
-            layout_id: event.layout_id,
+            floor_id: event.floor_id,
         });
     }
 }

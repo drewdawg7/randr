@@ -87,12 +87,11 @@ fn enter_dungeon(
     };
     commands.insert_resource(spawn_config);
 
-    let layout_id = state
+    let floor_id = state
         .current_floor()
-        .map(|f| f.layout_id())
-        .unwrap_or(crate::dungeon::LayoutId::CaveFloor);
+        .unwrap_or(crate::dungeon::FloorId::HomeFloor);
 
-    spawn_floor.write(SpawnFloor { layout_id });
+    spawn_floor.write(SpawnFloor { floor_id });
 }
 
 #[instrument(level = "debug", skip_all)]
@@ -111,7 +110,7 @@ fn handle_floor_ready(
         spawn_floor_ui(
             &mut commands,
             &asset_server,
-            event.layout_id,
+            event.floor_id,
             *camera_query,
         );
     }

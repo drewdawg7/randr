@@ -26,10 +26,8 @@ Predefined floor variants using `define_data!` macro:
 ```rust
 let spec = FloorId::MainDungeon1.spec();
 spec.name;
-spec.layout_id;
+spec.path;  // Direct TMX path, e.g., "maps/cave_floor.tmx"
 spec.spawn_table;
-
-FloorId::HomeFloor.floor_type();
 ```
 
 Current floor variants:
@@ -42,7 +40,7 @@ Current floor variants:
 ```rust
 MyFloor {
     name: "My Floor",
-    layout_id: LayoutId::CaveFloor,
+    path: "maps/cave_floor.tmx",
     spawn_table: SpawnTable::new()
         .mob(MobId::Goblin, 5)
         .chest(1..=2),

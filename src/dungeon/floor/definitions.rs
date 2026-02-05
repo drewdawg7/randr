@@ -1,11 +1,10 @@
-use crate::dungeon::layouts::LayoutId;
 use crate::dungeon::spawn::SpawnTable;
 use crate::mob::MobId;
 
 entity_macros::define_data! {
     spec FloorSpec {
         pub name: &'static str,
-        pub layout_id: LayoutId,
+        pub path: &'static str,
         pub spawn_table: SpawnTable,
     }
 
@@ -14,7 +13,7 @@ entity_macros::define_data! {
     variants {
         HomeFloor {
             name: "Home",
-            layout_id: LayoutId::HomeFloor,
+            path: "maps/home_floor.tmx",
             spawn_table: SpawnTable::new()
                 .npc(MobId::Merchant, 1..=1)
                 .forge(1..=1)
@@ -23,7 +22,7 @@ entity_macros::define_data! {
         }
         MainDungeon1 {
             name: "Dungeon - Floor 1",
-            layout_id: LayoutId::CaveFloor,
+            path: "maps/cave_floor.tmx",
             spawn_table: SpawnTable::new()
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
@@ -41,7 +40,7 @@ entity_macros::define_data! {
         }
         MainDungeon2 {
             name: "Dungeon - Floor 2",
-            layout_id: LayoutId::CaveFloor,
+            path: "maps/cave_floor.tmx",
             spawn_table: SpawnTable::new()
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
@@ -59,7 +58,7 @@ entity_macros::define_data! {
         }
         MainDungeon3 {
             name: "Dungeon - Floor 3",
-            layout_id: LayoutId::CaveFloor,
+            path: "maps/cave_floor.tmx",
             spawn_table: SpawnTable::new()
                 .mob(MobId::Goblin, 5)
                 .mob(MobId::Slime, 3)
@@ -74,11 +73,5 @@ entity_macros::define_data! {
                 .npc_chance(MobId::Merchant, 0.33)
                 .build(),
         }
-    }
-}
-
-impl FloorId {
-    pub fn layout_id(&self) -> LayoutId {
-        self.spec().layout_id
     }
 }

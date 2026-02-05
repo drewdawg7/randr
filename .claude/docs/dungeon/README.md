@@ -4,7 +4,6 @@
 |-------|------|
 | Overview, TileType, DungeonPlugin | [mod.md](mod.md) |
 | FloorType, FloorId, FloorSpec | [floors.md](floors.md) |
-| DungeonLayout, LayoutId | [layouts.md](layouts.md) |
 | TMX/Tiled maps, Map, TilesetGrid | [map.md](map.md) |
 | Player movement, GridOccupancy, collisions | [movement.md](movement.md) |
 | SpawnTable, entity spawning | [spawning.md](spawning.md) |
