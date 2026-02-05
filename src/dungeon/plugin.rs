@@ -13,9 +13,11 @@ use crate::dungeon::events::{
 use crate::plugins::MobDefeated;
 use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::{DungeonState, MovementConfig, TileWorldSize};
+use crate::combat::Attacking;
 use crate::dungeon::systems::{
     handle_floor_transition, handle_mob_defeated, handle_player_collision_end,
-    handle_player_collisions, handle_player_move, prepare_floor, stop_player_when_idle, SpawnFloor,
+    handle_player_collisions, handle_player_move, prepare_floor, stop_attacking_player,
+    stop_player_when_idle, SpawnFloor,
 };
 use crate::dungeon::tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 use crate::location::LocationId;
@@ -88,10 +90,12 @@ impl Plugin for DungeonPlugin {
             .add_systems(
                 FixedPreUpdate,
                 (
-                    handle_player_move.run_if(on_message::<PlayerMoveIntent>),
-                    stop_player_when_idle,
+                    handle_player_move
+                        .run_if(on_message::<PlayerMoveIntent>)
+                        .run_if(not(any_with_component::<Attacking>)),
+                    stop_player_when_idle.run_if(not(any_with_component::<Attacking>)),
+                    stop_attacking_player.run_if(any_with_component::<Attacking>),
                 )
-                    .chain()
                     .run_if(in_state(AppState::Dungeon)),
             )
             .add_systems(

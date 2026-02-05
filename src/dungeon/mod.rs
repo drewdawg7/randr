@@ -28,7 +28,7 @@ pub use spawn::{MobSpawnEntry, SpawnEntityType, SpawnEntry, SpawnTable};
 pub use state::{DepthSorting, DungeonState, MovementConfig, TileWorldSize, TilemapInfo};
 pub use systems::{
     handle_floor_transition, handle_mob_defeated, handle_player_collisions, handle_player_move,
-    on_map_created, prepare_floor, stop_player_when_idle, SpawnFloor,
+    on_map_created, prepare_floor, stop_attacking_player, stop_player_when_idle, SpawnFloor,
 };
 pub use tile::{Tile, TileType};
 pub use tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};

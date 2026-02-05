@@ -2,9 +2,10 @@ use avian2d::prelude::*;
 use bevy::prelude::*;
 use tracing::{debug, instrument};
 
-use crate::dungeon::events::{FloorTransition, MoveResult, OverlappingCraftingStation, PlayerMoveIntent};
+use crate::combat::Attacking;
+use crate::dungeon::events::{FloorTransition, OverlappingCraftingStation, PlayerMoveIntent};
 use crate::dungeon::tile_components::is_door;
-use crate::dungeon::{CraftingStationEntity, DoorEntity, DungeonEntityMarker, MobEntity, MovementConfig, StairsEntity, TileWorldSize};
+use crate::dungeon::{CraftingStationEntity, DoorEntity, MobEntity, MovementConfig, StairsEntity, TileWorldSize};
 use crate::input::NavigationDirection;
 use crate::ui::screens::DungeonPlayer;
 
@@ -72,12 +73,10 @@ pub fn stop_player_when_idle(
 #[instrument(level = "debug", skip_all, fields(collision_count = collision_events.len()))]
 pub fn handle_player_collisions(
     mut collision_events: MessageReader<CollisionStart>,
-    mut result_events: MessageWriter<MoveResult>,
     mut transition_events: MessageWriter<FloorTransition>,
     mut overlapping_station: ResMut<OverlappingCraftingStation>,
     player_query: Query<Entity, With<DungeonPlayer>>,
-    marker_query: Query<&DungeonEntityMarker>,
-    mob_query: Query<&MobEntity>,
+    mob_query: Query<(), With<MobEntity>>,
     crafting_query: Query<(), With<CraftingStationEntity>>,
     stairs_query: Query<(), With<StairsEntity>>,
     door_entity_query: Query<(), With<DoorEntity>>,
@@ -96,14 +95,7 @@ pub fn handle_player_collisions(
             continue;
         };
 
-        if let Ok(mob) = mob_query.get(other) {
-            if let Ok(marker) = marker_query.get(other) {
-                result_events.write(MoveResult::TriggeredCombat {
-                    mob_id: mob.mob_id,
-                    entity: other,
-                    pos: marker.pos,
-                });
-            }
+        if mob_query.get(other).is_ok() {
             continue;
         }
 
@@ -151,5 +143,13 @@ pub fn handle_player_collision_end(
         if crafting_query.get(other).is_ok() && overlapping_station.0 == Some(other) {
             overlapping_station.0 = None;
         }
+    }
+}
+
+pub fn stop_attacking_player(
+    mut velocity: Query<&mut LinearVelocity, (With<DungeonPlayer>, With<Attacking>)>,
+) {
+    for mut vel in &mut velocity {
+        vel.0 = Vec2::ZERO;
     }
 }
