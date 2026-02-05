@@ -344,7 +344,6 @@ pub fn refresh_forge_slots(
     }
 }
 
-/// Update forge slot selector position when modal state or focus changes.
 pub fn update_forge_slot_selector(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
@@ -356,13 +355,6 @@ pub fn update_forge_slot_selector(
     let Some(modal_state) = modal_state else {
         return;
     };
-
-    let focus_changed = focus_state.as_ref().map(|f| f.is_changed()).unwrap_or(false);
-    let modal_changed = modal_state.is_changed();
-
-    if !focus_changed && !modal_changed {
-        return;
-    }
 
     for (_, _, children) in &slot_cells {
         if let Some(children) = children {

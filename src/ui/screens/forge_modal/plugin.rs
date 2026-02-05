@@ -5,13 +5,14 @@ use crate::input::GameAction;
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{ModalCommands, RegisterModalExt};
 use crate::ui::screens::modal::in_forge_modal;
+use crate::ui::FocusState;
 
 use super::input::{handle_forge_modal_navigation, handle_forge_modal_select};
 use super::render::{
     animate_forge_slot_selector, populate_forge_detail_pane_content, refresh_forge_slots,
     update_forge_detail_pane_source, update_forge_slot_selector,
 };
-use super::state::{ActiveForgeEntity, ForgeModal};
+use super::state::{ActiveForgeEntity, ForgeModal, ForgeModalState};
 
 pub struct ForgeModalPlugin;
 
@@ -35,7 +36,13 @@ impl Plugin for ForgeModalPlugin {
             )
             .add_systems(
                 PostUpdate,
-                (update_forge_slot_selector, animate_forge_slot_selector)
+                (
+                    update_forge_slot_selector.run_if(
+                        resource_changed::<FocusState>
+                            .or(resource_changed::<ForgeModalState>),
+                    ),
+                    animate_forge_slot_selector,
+                )
                     .chain()
                     .run_if(in_forge_modal),
             );
