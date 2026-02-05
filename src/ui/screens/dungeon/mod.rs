@@ -8,5 +8,5 @@ pub mod plugin;
 mod spawn;
 mod systems;
 
-pub use components::{DungeonPlayer, FloorRoot};
+pub use components::{DungeonPlayer, FacingDirection, FloorRoot};
 pub use plugin::DungeonScreenPlugin;

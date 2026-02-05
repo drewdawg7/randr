@@ -14,7 +14,7 @@ pub mod results_modal;
 pub mod skills_modal;
 
 pub use anvil_modal::AnvilModalPlugin;
-pub use dungeon::{DungeonPlayer, DungeonScreenPlugin, FloorRoot};
+pub use dungeon::{DungeonPlayer, DungeonScreenPlugin, FacingDirection, FloorRoot};
 pub use fight_modal::state::FightModalMob;
 pub use fight_modal::FightModalPlugin;
 pub use forge_modal::ForgeModalPlugin;

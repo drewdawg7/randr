@@ -29,3 +29,26 @@ pub struct VictoryAchieved {
     pub xp_gained: i32,
     pub loot_drops: Vec<LootDrop>,
 }
+
+#[derive(Message, Debug, Clone)]
+pub struct DamageEntity {
+    pub target: Entity,
+    pub amount: i32,
+}
+
+#[derive(Message, Debug, Clone)]
+pub struct GoldGained {
+    pub amount: i32,
+    pub source: String,
+}
+
+#[derive(Message, Debug, Clone)]
+pub struct XpGained {
+    pub amount: i32,
+    pub source: String,
+}
+
+#[derive(Message, Debug, Clone)]
+pub struct LootDropped {
+    pub item_name: String,
+}
