@@ -30,7 +30,7 @@ impl Plugin for PlayerSpritePlugin {
             .add_systems(
                 Update,
                 (
-                    revert_player_idle.run_if(any_with_component::<PlayerWalkTimer>),
+                    sync_player_animation.run_if(any_with_component::<PlayerWalkTimer>),
                     revert_attack_idle.run_if(any_with_component::<PlayerAttackTimer>),
                 ),
             )
@@ -126,7 +126,6 @@ fn load_player_sprite_sheet(
     info!("Loaded player sprite sheet: MiniLightningWarrior");
 }
 
-/// Reverts the player sprite to idle animation when the attack timer expires.
 fn revert_attack_idle(
     time: Res<Time>,
     sheet: Res<PlayerSpriteSheet>,
@@ -135,18 +134,12 @@ fn revert_attack_idle(
     for (mut timer, mut anim) in &mut query {
         timer.0.tick(time.delta());
         if timer.0.just_finished() {
-            anim.first_frame = sheet.animation.first_frame;
-            anim.last_frame = sheet.animation.last_frame;
-            anim.current_frame = sheet.animation.first_frame;
-            anim.frame_duration = sheet.animation.frame_duration;
-            anim.looping = true;
-            anim.synchronized = true;
+            anim.apply_config(&sheet.animation);
         }
     }
 }
 
-/// Reverts the player sprite to idle animation when the walk timer expires.
-fn revert_player_idle(
+fn sync_player_animation(
     time: Res<Time>,
     sheet: Res<PlayerSpriteSheet>,
     held_direction: Res<HeldDirection>,
@@ -154,12 +147,17 @@ fn revert_player_idle(
 ) {
     for (mut timer, mut anim) in &mut query {
         timer.0.tick(time.delta());
-        if timer.0.just_finished() && held_direction.0.is_none() {
-            anim.first_frame = sheet.animation.first_frame;
-            anim.last_frame = sheet.animation.last_frame;
-            anim.current_frame = sheet.animation.first_frame;
-            anim.frame_duration = sheet.animation.frame_duration;
-            anim.synchronized = true;
+
+        let is_idle = anim.first_frame == sheet.animation.first_frame;
+        let is_moving = held_direction.0.is_some();
+
+        if is_moving {
+            if is_idle {
+                anim.apply_config(&sheet.walk_animation);
+            }
+            timer.0.reset();
+        } else if timer.0.just_finished() && !is_idle {
+            anim.apply_config(&sheet.animation);
         }
     }
 }

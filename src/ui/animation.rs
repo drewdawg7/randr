@@ -65,7 +65,6 @@ pub struct SpriteAnimation {
 }
 
 impl SpriteAnimation {
-    /// Create a new sprite animation from a configuration.
     pub fn new(config: &AnimationConfig) -> Self {
         Self {
             timer: Timer::from_seconds(config.frame_duration, TimerMode::Repeating),
@@ -76,6 +75,15 @@ impl SpriteAnimation {
             frame_duration: config.frame_duration,
             synchronized: config.synchronized,
         }
+    }
+
+    pub fn apply_config(&mut self, config: &AnimationConfig) {
+        self.first_frame = config.first_frame;
+        self.last_frame = config.last_frame;
+        self.current_frame = config.first_frame;
+        self.frame_duration = config.frame_duration;
+        self.looping = config.looping;
+        self.synchronized = config.synchronized;
     }
 }
 

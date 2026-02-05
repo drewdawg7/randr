@@ -94,12 +94,7 @@ pub fn trigger_attack_animation(
 ) {
     for _ in events.read() {
         if let Ok((mut anim, mut attack_timer)) = sprite_query.single_mut() {
-            anim.first_frame = sheet.attack_animation.first_frame;
-            anim.last_frame = sheet.attack_animation.last_frame;
-            anim.current_frame = sheet.attack_animation.first_frame;
-            anim.frame_duration = sheet.attack_animation.frame_duration;
-            anim.looping = false;
-            anim.synchronized = false;
+            anim.apply_config(&sheet.attack_animation);
             anim.timer = Timer::from_seconds(
                 sheet.attack_animation.frame_duration,
                 TimerMode::Repeating,
