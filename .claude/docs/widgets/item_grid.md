@@ -2,7 +2,14 @@
 
 Configurable NxN grid for displaying items with animated selection highlight and quantity text.
 
-**File:** `src/ui/widgets/item_grid.rs`
+**Module:** `src/ui/widgets/item_grid/`
+
+| File | Contents |
+|------|----------|
+| `mod.rs` | Plugin, constants, re-exports |
+| `components.rs` | ItemGrid, ItemGridEntry, ItemGridFocusPanel, markers |
+| `cell.rs` | GridContainer, GridCell, GridCellBundle |
+| `systems.rs` | on_add_item_grid, update_grid_items, update_grid_selector |
 
 ## Component Fields
 
@@ -11,10 +18,20 @@ Configurable NxN grid for displaying items with animated selection highlight and
 pub struct ItemGrid {
     pub items: Vec<ItemGridEntry>,   // Items to display (sprites + quantities)
     pub selected_index: usize,       // Currently selected cell index
-    pub is_focused: bool,            // Whether selector is visible (default: true)
     pub grid_size: usize,            // Columns/rows (default: 4, e.g. 3 for 3x3)
 }
 ```
+
+## ItemGridFocusPanel
+
+Associates an ItemGrid with a FocusPanel for selector visibility:
+
+```rust
+#[derive(Component)]
+pub struct ItemGridFocusPanel(pub FocusPanel);
+```
+
+When the associated FocusPanel is focused, the selector is visible.
 
 ## ItemGridEntry
 
@@ -53,29 +70,36 @@ let entries: Vec<ItemGridEntry> = get_equipment_items(&inventory)
 ## Usage
 
 ```rust
-use crate::ui::widgets::{ItemGrid, ItemGridEntry};
+use crate::ui::widgets::{ItemGrid, ItemGridEntry, ItemGridFocusPanel};
+use crate::ui::focus::FocusPanel;
 
-// 4x4 grid (default)
-parent.spawn(ItemGrid {
-    items: vec![ItemGridEntry {
-        sprite_name: "sword".to_string(),
-        quantity: 1,  // Won't show quantity text
-    }],
-    selected_index: 0,
-    is_focused: true,
-    grid_size: 4,
-});
+// 4x4 grid with focus panel
+parent.spawn((
+    ItemGrid {
+        items: vec![ItemGridEntry {
+            sprite_sheet_key: SpriteSheetKey::Items,
+            sprite_name: "sword".to_string(),
+            quantity: 1,  // Won't show quantity text
+        }],
+        selected_index: 0,
+        grid_size: 4,
+    },
+    ItemGridFocusPanel(FocusPanel::Left),
+));
 
 // Stackable items show quantity in bottom-right corner
-parent.spawn(ItemGrid {
-    items: vec![ItemGridEntry {
-        sprite_name: "potion".to_string(),
-        quantity: 5,  // Shows "5" with black outline
-    }],
-    selected_index: 0,
-    is_focused: true,
-    grid_size: 4,
-});
+parent.spawn((
+    ItemGrid {
+        items: vec![ItemGridEntry {
+            sprite_sheet_key: SpriteSheetKey::Items,
+            sprite_name: "potion".to_string(),
+            quantity: 5,  // Shows "5" with black outline
+        }],
+        selected_index: 0,
+        grid_size: 4,
+    },
+    ItemGridFocusPanel(FocusPanel::Right),
+));
 ```
 
 ## Quantity Display
@@ -102,10 +126,10 @@ const NINE_SLICE_INSET: f32 = 58.0;
 
 ## Selector Behavior
 
-- `is_focused: true` → animated selector sprite visible on `selected_index` cell
-- `is_focused: false` → no selector visible
-- Changing either field triggers `update_grid_selector` (runs in `PostUpdate`, reacts to `Changed<ItemGrid>`)
-- Selector animates between two frames (0.5s interval) using `GridSelector` component
+- Uses shared `AnimatedSelector` from `src/ui/widgets/selector.rs`
+- Selector visible when `ItemGridFocusPanel` is associated and its FocusPanel is focused
+- Changing `selected_index` or FocusState triggers `update_grid_selector`
+- Selector animates between two frames (0.5s interval)
 
 ## Multiple Grids
 
@@ -137,10 +161,9 @@ This enables live updates (e.g., equip/unequip, buy/sell) without rebuilding the
 |-----------|------|
 | `GridContainer` | Marker on the CSS Grid container child |
 | `GridCell { index }` | Marker on each cell with its position |
-| `GridSelector` | Animation state on the selector sprite |
 | `GridItemSprite` | Marker on item icon sprites (for update/despawn) |
 | `GridItemQuantityText` | Marker on quantity text container (for update/despawn) |
 
 ## Plugin
 
-`ItemGridPlugin` — registers the `on_add_item_grid` observer and `PostUpdate` systems: `update_grid_items`, `update_grid_selector`, `animate_grid_selector` (chained in that order).
+`ItemGridPlugin` — registers the `on_add_item_grid` observer and `PostUpdate` systems: `update_grid_items`, `update_grid_selector` (chained in that order).
