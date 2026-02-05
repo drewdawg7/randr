@@ -222,13 +222,7 @@ React to state transitions:
 app.add_systems(Update, log_change.run_if(state_changed::<AppState>));
 ```
 
-**Codebase example** from `src/states/app_state.rs`:
-```rust
-app.add_systems(
-    StateTransition,
-    track_state_transitions.run_if(state_changed::<AppState>),
-);
-```
+Note: When using `StateTransitionEvent<S>`, you don't need `state_changed` run conditions since events only exist during transitions.
 
 ### state_exists
 
@@ -326,22 +320,35 @@ fn despawn_main_menu(mut commands: Commands, query: Query<Entity, With<MainMenuR
 
 ### Pattern: Previous State Tracking
 
+Uses `StateTransitionEvent<S>` to track the previous state for "go back" navigation:
+
 ```rust
 // From src/states/app_state.rs
+use bevy::state::state::StateTransitionEvent;
+
 #[derive(Resource, Default)]
 pub struct PreviousState {
     pub state: Option<AppState>,
-    pub just_entered: bool,
 }
 
 fn track_state_transitions(
-    current: Res<State<AppState>>,
+    mut events: MessageReader<StateTransitionEvent<AppState>>,
     mut previous: ResMut<PreviousState>,
 ) {
-    previous.state = Some(**current);
-    previous.just_entered = true;
+    for transition in events.read() {
+        if let (Some(from), Some(to)) = (transition.exited, transition.entered) {
+            if from != to {
+                previous.state = Some(from);
+                info!("State transition: {:?} -> {:?}", from, to);
+            }
+        }
+    }
 }
 ```
+
+The `StateTransitionEvent` provides:
+- `exited: Option<S>` - the state being exited
+- `entered: Option<S>` - the state being entered
 
 ## Common Mistakes
 
