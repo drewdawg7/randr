@@ -1,8 +1,8 @@
 use bevy::prelude::*;
 
 use crate::entities::Progression;
-use crate::game::{PlayerGold, PlayerName};
 use crate::input::GameAction;
+use crate::player::{PlayerGold, PlayerMarker, PlayerName};
 use crate::stats::{HasStats, StatSheet};
 use crate::states::{AppState, StateTransitionRequest};
 use crate::ui::widgets::StatRow;
@@ -25,11 +25,11 @@ struct ProfileScreenRoot;
 
 fn spawn_profile_screen(
     mut commands: Commands,
-    name: Res<PlayerName>,
-    gold: Res<PlayerGold>,
-    stats: Res<StatSheet>,
-    prog: Res<Progression>,
+    player: Query<(&PlayerName, &PlayerGold, &StatSheet, &Progression), With<PlayerMarker>>,
 ) {
+    let Ok((name, gold, stats, prog)) = player.single() else {
+        return;
+    };
     commands
         .spawn((
             ProfileScreenRoot,

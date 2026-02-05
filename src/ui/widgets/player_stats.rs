@@ -2,11 +2,10 @@ use bevy::prelude::*;
 
 use crate::assets::{GameSprites, SpriteSheetKey, TravelBookSlice, UiAllSlice};
 use crate::entities::Progression;
-use crate::player::PlayerGold;
+use crate::player::{PlayerGold, PlayerMarker};
 use crate::stats::{StatSheet, StatType};
 use crate::ui::{row_node, UiText};
 
-/// Plugin for player stats widget.
 pub struct PlayerStatsPlugin;
 
 impl Plugin for PlayerStatsPlugin {
@@ -15,11 +14,7 @@ impl Plugin for PlayerStatsPlugin {
             .add_systems(Startup, spawn_player_stats)
             .add_systems(
                 Update,
-                (
-                    update_gold_display.run_if(resource_changed::<PlayerGold>),
-                    update_hp_display.run_if(resource_changed::<StatSheet>),
-                    update_xp_display.run_if(resource_changed::<Progression>),
-                ),
+                (update_gold_display, update_hp_display, update_xp_display),
             );
     }
 }
@@ -47,14 +42,14 @@ pub struct PlayerXpText;
 fn on_add_player_stats(
     trigger: On<Add, PlayerStats>,
     mut commands: Commands,
-    stats: Res<StatSheet>,
-    progression: Res<Progression>,
-    gold: Res<PlayerGold>,
+    player: Query<(&StatSheet, &Progression, &PlayerGold), With<PlayerMarker>>,
     game_sprites: Res<GameSprites>,
 ) {
+    let Ok((stats, progression, gold)) = player.single() else {
+        return;
+    };
     let entity = trigger.entity;
 
-    // Get sprite images
     let heart_image = game_sprites
         .get(SpriteSheetKey::UiAll)
         .and_then(|s| s.image_node(UiAllSlice::HeartIcon.as_str()));
@@ -139,13 +134,25 @@ fn on_add_player_stats(
     });
 }
 
-fn update_gold_display(gold: Res<PlayerGold>, mut query: Query<&mut Text, With<PlayerGoldText>>) {
+fn update_gold_display(
+    player: Query<&PlayerGold, (With<PlayerMarker>, Changed<PlayerGold>)>,
+    mut query: Query<&mut Text, With<PlayerGoldText>>,
+) {
+    let Ok(gold) = player.single() else {
+        return;
+    };
     for mut text in query.iter_mut() {
         **text = format!("{}", gold.0);
     }
 }
 
-fn update_hp_display(stats: Res<StatSheet>, mut query: Query<&mut Text, With<PlayerHpText>>) {
+fn update_hp_display(
+    player: Query<&StatSheet, (With<PlayerMarker>, Changed<StatSheet>)>,
+    mut query: Query<&mut Text, With<PlayerHpText>>,
+) {
+    let Ok(stats) = player.single() else {
+        return;
+    };
     let hp = stats.value(StatType::Health);
     let max_hp = stats.max_value(StatType::Health);
     for mut text in query.iter_mut() {
@@ -154,9 +161,12 @@ fn update_hp_display(stats: Res<StatSheet>, mut query: Query<&mut Text, With<Pla
 }
 
 fn update_xp_display(
-    progression: Res<Progression>,
+    player: Query<&Progression, (With<PlayerMarker>, Changed<Progression>)>,
     mut query: Query<&mut Text, With<PlayerXpText>>,
 ) {
+    let Ok(progression) = player.single() else {
+        return;
+    };
     for mut text in query.iter_mut() {
         **text = format!(
             "Level: {}  XP: {}/{}",
