@@ -2,6 +2,8 @@
 
 ## Edits
 - Make edits in bulk. Don't make many small sequential edits to the same file or across files - batch them together to reduce approval overhead.
+- Use ast-grep for bulk code transformations across multiple files, not sed or individual Edit calls.
+- When using ast-grep, don't specify individual file names - just pass the directory and let it find all matches. That's the point of using it.
 
 ## Bash Commands
 - Do not use variables/aliases for single-use commands. Pipe directly or use command substitution inline instead of storing in a variable first.
@@ -35,6 +37,7 @@
 ## Planning
 - Understand the actual goal before proposing solutions. Don't just revert to old patterns - find a forward path that achieves the user's intent.
 - When a refactor breaks something, the fix should align with the refactor's goals, not undo them.
+- Don't enter plan mode unless the user explicitly asks. When given a well-defined issue with a detailed checklist, just execute it.
 
 ## Bevy Systems
 - When a system doesn't run, check its `run_if` conditions. If it uses `any_with_component::<T>`, verify that `T` is actually added to entities (check spawn/bundle code).
@@ -54,6 +57,7 @@
 - User verification happens at the end, after all commits are made. Don't wait for verification before committing.
 
 ## Following Instructions
+- When the user interrupts, STOP immediately and update lessons.md with what was learned from the correction before doing anything else.
 - When the user explicitly says NOT to do something (e.g., "do not look at other project skills"), follow that instruction exactly.
 - Don't assume existing project patterns are valid examples when told to use external sources instead.
 - Read user instructions carefully before starting work.

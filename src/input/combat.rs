@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
-use crate::combat::action::{AttackHitboxBundle, Attacking};
+use crate::combat::hitbox::{AttackHitboxBundle, Attacking};
 use crate::input::GameAction;
 use crate::ui::animation::SpriteAnimation;
 use crate::ui::{DungeonPlayer, FacingDirection, PlayerSpriteSheet};
 
-pub fn handle_attack_input(
+pub fn trigger_player_attack(
     mut commands: Commands,
     mut actions: MessageReader<GameAction>,
     mut player: Query<

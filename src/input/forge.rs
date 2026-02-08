@@ -4,16 +4,14 @@ use tracing::instrument;
 use crate::crafting_station::ForgeCraftingState;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
+use crate::item::enums::MaterialType;
 use crate::item::{ItemId, ItemType};
 use crate::player::PlayerMarker;
-use crate::item::enums::MaterialType;
 use crate::ui::focus::{FocusPanel, FocusState};
-use crate::ui::widgets::ItemGrid;
+use crate::ui::screens::forge_modal::{ActiveForgeEntity, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex};
+use crate::ui::widgets::{ItemGrid, ItemGridEntry};
 
-use crate::ui::widgets::ItemGridEntry;
-use super::state::{ActiveForgeEntity, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex};
-
-pub fn handle_forge_modal_navigation(
+pub fn navigate_forge_ui(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut modal_state: Option<ResMut<ForgeModalState>>,
@@ -44,7 +42,7 @@ pub fn handle_forge_modal_navigation(
     }
 }
 
-pub fn handle_forge_modal_select(
+pub fn transfer_forge_items(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
@@ -162,12 +160,10 @@ fn process_forge_select(
     false
 }
 
-/// Check if an item is coal.
 fn is_coal(item_id: ItemId) -> bool {
     matches!(item_id, ItemId::Coal)
 }
 
-/// Check if an item is a smeltable ore.
 fn is_ore(item_id: ItemId) -> bool {
     matches!(
         item_id.spec().item_type,
@@ -175,7 +171,6 @@ fn is_ore(item_id: ItemId) -> bool {
     )
 }
 
-/// Add items to inventory (handles stacking).
 fn add_items_to_inventory(inventory: &mut Inventory, item_id: ItemId, quantity: u32) {
     for _ in 0..quantity {
         let item = item_id.spawn();

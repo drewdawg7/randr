@@ -3,13 +3,10 @@ use bevy::prelude::*;
 use crate::game::{BuyItemEvent, SellItemEvent};
 use crate::input::GameAction;
 use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::screens::merchant_modal::{MerchantPlayerGrid, MerchantStockGrid};
 use crate::ui::widgets::ItemGrid;
 
-use super::state::{MerchantPlayerGrid, MerchantStockGrid};
-
-/// System to handle arrow key navigation within the focused merchant modal grid.
-/// Only runs when merchant modal is active (via run_if condition).
-pub fn handle_merchant_modal_navigation(
+pub fn navigate_merchant_grid(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut stock_grids: Query<&mut ItemGrid, (With<MerchantStockGrid>, Without<MerchantPlayerGrid>)>,
@@ -34,9 +31,7 @@ pub fn handle_merchant_modal_navigation(
     }
 }
 
-/// System to handle Enter key for buying/selling items.
-/// Only runs when merchant modal is active (via run_if condition).
-pub fn handle_merchant_modal_select(
+pub fn process_transaction(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut buy_events: MessageWriter<BuyItemEvent>,
@@ -70,4 +65,3 @@ pub fn handle_merchant_modal_select(
         }
     }
 }
-

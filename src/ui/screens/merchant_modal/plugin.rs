@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
+use crate::input::{navigate_merchant_grid, process_transaction};
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_merchant_modal;
 use crate::ui::widgets::{update_detail_pane_source, ItemDetailPane, ItemGrid};
 use crate::ui::FocusState;
 
-use super::input::{handle_merchant_modal_navigation, handle_merchant_modal_select};
 use super::render::{
     populate_merchant_detail_pane_content, sync_merchant_player_grid, sync_merchant_stock_grid,
 };
@@ -23,8 +23,8 @@ impl Plugin for MerchantModalPlugin {
                     modal_close_system::<MerchantModal>,
                     (
                         tab_toggle_system(FocusPanel::MerchantStock, FocusPanel::PlayerInventory),
-                        handle_merchant_modal_navigation,
-                        handle_merchant_modal_select,
+                        navigate_merchant_grid,
+                        process_transaction,
                         sync_merchant_stock_grid.run_if(
                             resource_exists::<MerchantStock>
                                 .and(resource_changed::<MerchantStock>),

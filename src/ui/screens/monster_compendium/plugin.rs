@@ -1,11 +1,11 @@
 use bevy::prelude::*;
 
+use crate::input::{navigate_compendium, switch_compendium_panel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_monster_compendium_modal;
 use crate::ui::FocusState;
 
 use super::drops::{update_drops_display, update_drops_list_colors};
-use super::input::{handle_compendium_navigation, handle_compendium_tab};
 use super::list::{update_compendium_mob_sprite, update_monster_list_display};
 use super::state::{
     CompendiumDropsSection, CompendiumListState, CompendiumMobSprite, CompendiumStatsSection,
@@ -26,8 +26,8 @@ impl Plugin for MonsterCompendiumPlugin {
                 (
                     modal_close_system::<MonsterCompendiumModal>,
                     (
-                        handle_compendium_tab,
-                        handle_compendium_navigation,
+                        switch_compendium_panel,
+                        navigate_compendium,
                         update_monster_list_display.run_if(
                             resource_changed::<CompendiumListState>
                                 .or(

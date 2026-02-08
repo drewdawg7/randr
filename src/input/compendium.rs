@@ -2,14 +2,14 @@ use bevy::prelude::*;
 
 use crate::input::{GameAction, NavigationDirection};
 use crate::ui::screens::modal::{ActiveModal, ModalType};
-use crate::ui::{FocusPanel, FocusState, SelectionState};
-
-use super::state::{
+use crate::ui::screens::monster_compendium::state::{
     CompendiumDetailView, CompendiumListState, CompendiumMonsters, CompendiumViewState,
     DropsListState,
 };
+use crate::ui::focus::SelectionState;
+use crate::ui::{FocusPanel, FocusState};
 
-pub fn handle_compendium_tab(
+pub fn switch_compendium_panel(
     mut action_reader: MessageReader<GameAction>,
     active_modal: Res<ActiveModal>,
     mut focus_state: Option<ResMut<FocusState>>,
@@ -30,7 +30,7 @@ pub fn handle_compendium_tab(
     }
 }
 
-pub fn handle_compendium_navigation(
+pub fn navigate_compendium(
     mut action_reader: MessageReader<GameAction>,
     active_modal: Res<ActiveModal>,
     focus_state: Option<Res<FocusState>>,

@@ -1,12 +1,12 @@
 use bevy::prelude::*;
 
+use crate::input::{navigate_inventory_grid, toggle_equipment};
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_inventory_modal;
 use crate::ui::widgets::{update_detail_pane_source, ItemGrid};
 use crate::ui::FocusState;
 
-use super::input::{handle_inventory_modal_navigation, handle_inventory_modal_select};
 use super::render::{populate_inventory_detail_pane_content, sync_inventory_to_grids};
 use super::state::{InventoryDetailPane, InventoryModal};
 
@@ -21,8 +21,8 @@ impl Plugin for InventoryModalPlugin {
                     modal_close_system::<InventoryModal>,
                     (
                         tab_toggle_system(FocusPanel::EquipmentGrid, FocusPanel::BackpackGrid),
-                        handle_inventory_modal_navigation,
-                        handle_inventory_modal_select,
+                        navigate_inventory_grid,
+                        toggle_equipment,
                         sync_inventory_to_grids,
                         update_detail_pane_source::<InventoryDetailPane>.run_if(
                             resource_exists::<FocusState>

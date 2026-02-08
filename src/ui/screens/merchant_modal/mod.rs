@@ -1,7 +1,7 @@
-mod input;
+
 mod plugin;
 mod render;
 mod state;
 
 pub use plugin::MerchantModalPlugin;
-pub use state::{MerchantModal, MerchantStock};
+pub use state::{MerchantModal, MerchantPlayerGrid, MerchantStock, MerchantStockGrid};

@@ -1,19 +1,18 @@
 use bevy::prelude::*;
 
 use crate::crafting_station::TryStartForgeCrafting;
-use crate::input::GameAction;
+use crate::input::{navigate_forge_ui, transfer_forge_items, GameAction};
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{ModalCommands, RegisterModalExt};
 use crate::ui::screens::modal::in_forge_modal;
+use crate::ui::widgets::ItemGrid;
 use crate::ui::FocusState;
 
-use super::input::{handle_forge_modal_navigation, handle_forge_modal_select};
+use super::state::{ActiveForgeEntity, ForgeModal, ForgeModalState};
 use super::systems::{
     populate_forge_detail_pane_content, refresh_forge_slots, update_forge_detail_pane_source,
     update_forge_slot_selector,
 };
-use super::state::{ActiveForgeEntity, ForgeModal, ForgeModalState};
-use crate::ui::widgets::ItemGrid;
 
 pub struct ForgeModalPlugin;
 
@@ -26,8 +25,8 @@ impl Plugin for ForgeModalPlugin {
                     handle_forge_close.run_if(in_forge_modal),
                     (
                         tab_toggle_system(FocusPanel::ForgeCraftingSlots, FocusPanel::ForgeInventory),
-                        handle_forge_modal_navigation,
-                        handle_forge_modal_select,
+                        navigate_forge_ui,
+                        transfer_forge_items,
                         refresh_forge_slots,
                         update_forge_detail_pane_source.run_if(
                             resource_exists::<FocusState>

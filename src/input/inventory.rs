@@ -4,14 +4,11 @@ use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, Inventory, ManagesEquipment};
 use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
+use crate::ui::screens::inventory_modal::render::get_backpack_items;
+use crate::ui::screens::inventory_modal::{BackpackGrid, EquipmentGrid};
 use crate::ui::widgets::ItemGrid;
 
-use super::render::get_backpack_items;
-use super::state::{BackpackGrid, EquipmentGrid};
-
-/// System to handle arrow key navigation within the focused inventory grid.
-/// Only runs when inventory modal is active (via run_if condition).
-pub fn handle_inventory_modal_navigation(
+pub fn navigate_inventory_grid(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
@@ -34,7 +31,7 @@ pub fn handle_inventory_modal_navigation(
     }
 }
 
-pub fn handle_inventory_modal_select(
+pub fn toggle_equipment(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut player: Query<&mut Inventory, With<PlayerMarker>>,
@@ -54,7 +51,6 @@ pub fn handle_inventory_modal_select(
         let eq_focused = focus_state.is_focused(FocusPanel::EquipmentGrid);
 
         if eq_focused {
-            // UNEQUIP: find the slot for the selected equipment item
             let Ok(equipment_grid) = equipment_grids.single() else {
                 continue;
             };
@@ -69,7 +65,6 @@ pub fn handle_inventory_modal_select(
                 let _ = inventory.unequip_item(slot);
             }
         } else {
-            // EQUIP: get the backpack item and equip it
             let Ok(backpack_grid) = backpack_grids.single() else {
                 continue;
             };
@@ -83,7 +78,5 @@ pub fn handle_inventory_modal_select(
                 }
             }
         }
-
-        // Grids will be refreshed reactively by sync_inventory_to_grids
     }
 }

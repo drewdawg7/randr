@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 use crate::crafting_station::{AnvilCraftingStarted, ForgeCraftingStarted};
 use crate::dungeon::{CraftingStationInteraction, FloorReady, MiningResult};
-use crate::input::GameAction;
+use crate::input::{emit_move_intent, request_menu_transition, GameAction};
 use crate::states::AppState;
 use crate::ui::screens::modal::ActiveModal;
 
@@ -11,7 +11,7 @@ use super::crafting_animation::{
     handle_anvil_crafting_started, handle_forge_crafting_started, on_anvil_timer_finished,
     on_forge_timer_finished,
 };
-use super::input::{handle_back_action, handle_dungeon_movement, update_player_sprite_direction};
+use super::systems::update_player_sprite_direction;
 use super::interaction::{
     handle_crafting_station_interaction, handle_interact_action, handle_mining_result,
 };
@@ -33,7 +33,7 @@ impl Plugin for DungeonScreenPlugin {
             .add_systems(OnExit(AppState::Dungeon), cleanup_dungeon)
             .add_systems(
                 FixedFirst,
-                handle_dungeon_movement
+                emit_move_intent
                     .run_if(on_message::<GameAction>)
                     .run_if(|modal: Res<ActiveModal>| modal.modal.is_none())
                     .run_if(in_state(AppState::Dungeon)),
@@ -49,7 +49,7 @@ impl Plugin for DungeonScreenPlugin {
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     handle_crafting_station_interaction.run_if(on_message::<CraftingStationInteraction>),
                     handle_mining_result.run_if(on_message::<MiningResult>),
-                    handle_back_action,
+                    request_menu_transition,
                     handle_forge_crafting_started.run_if(on_message::<ForgeCraftingStarted>),
                     handle_anvil_crafting_started.run_if(on_message::<AnvilCraftingStarted>),
                 )

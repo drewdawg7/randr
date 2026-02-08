@@ -1,6 +1,6 @@
 mod components;
 mod crafting_animation;
-mod input;
+
 mod interaction;
 mod lifecycle;
 pub mod plugin;

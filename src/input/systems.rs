@@ -27,7 +27,7 @@ impl Plugin for InputPlugin {
             .add_message::<NavigationDirection>()
             .init_resource::<NavigationRepeatState>()
             .init_resource::<HeldDirection>()
-            .add_systems(PreUpdate, handle_keyboard_input);
+            .add_systems(PreUpdate, translate_keyboard_input);
     }
 }
 
@@ -50,7 +50,7 @@ fn direction_to_key(dir: NavigationDirection) -> KeyCode {
     }
 }
 
-fn handle_keyboard_input(
+fn translate_keyboard_input(
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
     mut repeat: ResMut<NavigationRepeatState>,

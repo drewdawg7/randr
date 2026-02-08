@@ -1,6 +1,6 @@
 use bevy::prelude::*;
 
-use crate::combat::action::{AttackHitbox, Attacking, HitboxLifetime};
+use crate::combat::hitbox::{AttackHitbox, Attacking, HitboxLifetime};
 
 pub fn cleanup_expired_hitboxes(
     mut commands: Commands,

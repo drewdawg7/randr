@@ -7,16 +7,11 @@ use crate::item::recipe::RecipeId;
 use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_registry::ModalCommands;
-use crate::ui::widgets::ItemGrid;
+use crate::ui::screens::anvil_modal::render::get_recipe_entries;
+use crate::ui::screens::anvil_modal::{ActiveAnvilEntity, AnvilModal, AnvilPlayerGrid, AnvilRecipeGrid};
+use crate::ui::widgets::{ItemGrid, ItemGridEntry};
 
-use crate::ui::widgets::ItemGridEntry;
-
-use super::render::get_recipe_entries;
-use super::state::{ActiveAnvilEntity, AnvilModal, AnvilPlayerGrid, AnvilRecipeGrid};
-
-/// Handle arrow key navigation within the anvil modal.
-/// Only runs when anvil modal is active (via run_if condition).
-pub fn handle_anvil_modal_navigation(
+pub fn navigate_anvil_grid(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut recipe_grids: Query<&mut ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
@@ -27,12 +22,10 @@ pub fn handle_anvil_modal_navigation(
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
             if focus_state.is_focused(FocusPanel::RecipeGrid) {
-                // Navigate recipe grid
                 if let Ok(mut grid) = recipe_grids.single_mut() {
                     grid.navigate(*direction);
                 }
             } else if focus_state.is_focused(FocusPanel::AnvilInventory) {
-                // Navigate player inventory
                 if let Ok(mut grid) = player_grids.single_mut() {
                     grid.navigate(*direction);
                 }
@@ -41,7 +34,7 @@ pub fn handle_anvil_modal_navigation(
     }
 }
 
-pub fn handle_anvil_modal_select(
+pub fn craft_anvil_recipe(
     mut commands: Commands,
     mut action_reader: MessageReader<GameAction>,
     mut try_start_events: MessageWriter<TryStartAnvilCrafting>,
@@ -112,7 +105,7 @@ pub fn handle_anvil_modal_select(
     }
 }
 
-pub fn refresh_anvil_recipes(
+pub fn sync_anvil_recipes(
     player: Query<&Inventory, (With<PlayerMarker>, Changed<Inventory>)>,
     mut recipe_grids: Query<&mut ItemGrid, With<AnvilRecipeGrid>>,
 ) {

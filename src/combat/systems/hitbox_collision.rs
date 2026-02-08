@@ -1,7 +1,7 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::combat::action::{AttackHitbox, HitEntities};
+use crate::combat::hitbox::{AttackHitbox, HitEntities};
 use crate::combat::events::DamageEntity;
 use crate::combat::system::{apply_defense, player_attack_value};
 use crate::inventory::Inventory;
