@@ -1,5 +1,6 @@
 use bevy::prelude::*;
 
+use crate::combat::hitbox::Attacking;
 use crate::input::HeldDirection;
 
 use super::animation::{AnimationConfig, SpriteAnimation};
@@ -24,11 +25,9 @@ impl Plugin for PlayerSpritePlugin {
             )
             .add_systems(
                 Update,
-                (
-                    sync_player_animation.run_if(any_with_component::<PlayerWalkTimer>),
-                    revert_attack_idle.run_if(any_with_component::<PlayerAttackTimer>),
-                ),
+                sync_player_animation.run_if(any_with_component::<PlayerWalkTimer>),
             )
+            .add_observer(revert_to_idle)
             .register_sprite_marker::<DungeonPlayerSprite>();
     }
 }
@@ -51,9 +50,6 @@ impl PlayerSpriteSheet {
 
 #[derive(Component)]
 pub struct PlayerWalkTimer(pub Timer);
-
-#[derive(Component)]
-pub struct PlayerAttackTimer(pub Timer);
 
 #[derive(Component)]
 pub struct DungeonPlayerSprite;
@@ -112,16 +108,13 @@ fn load_player_sprite_sheet(
     info!("Loaded player sprite sheet: MiniLightningWarrior");
 }
 
-fn revert_attack_idle(
-    time: Res<Time>,
+fn revert_to_idle(
+    trigger: On<Remove, Attacking>,
     sheet: Res<PlayerSpriteSheet>,
-    mut query: Query<(&mut PlayerAttackTimer, &mut SpriteAnimation)>,
+    mut query: Query<&mut SpriteAnimation>,
 ) {
-    for (mut timer, mut anim) in &mut query {
-        timer.0.tick(time.delta());
-        if timer.0.just_finished() {
-            anim.apply_config(&sheet.animation);
-        }
+    if let Ok(mut anim) = query.get_mut(trigger.entity) {
+        anim.apply_config(&sheet.animation);
     }
 }
 
