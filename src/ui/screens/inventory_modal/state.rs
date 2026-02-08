@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::inventory::Inventory;
+use crate::player::PlayerMarker;
 use crate::ui::focus::FocusPanel;
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
@@ -61,7 +62,12 @@ impl RegisteredModal for InventoryModal {
     }
 }
 
-/// System that spawns the inventory modal UI.
-fn do_spawn_inventory_modal(mut commands: Commands, inventory: Res<Inventory>) {
-    spawn_inventory_modal(&mut commands, &inventory);
+fn do_spawn_inventory_modal(
+    mut commands: Commands,
+    player: Query<&Inventory, With<PlayerMarker>>,
+) {
+    let Ok(inventory) = player.single() else {
+        return;
+    };
+    spawn_inventory_modal(&mut commands, inventory);
 }

@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::economy::WorthGold;
 use crate::inventory::{Inventory, ManagesEquipment, ManagesItems};
+use crate::player::PlayerMarker;
 use crate::ui::focus::FocusPanel;
 use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
@@ -24,11 +25,15 @@ pub fn sync_merchant_stock_grid(
 }
 
 pub fn sync_merchant_player_grid(
-    inventory: Res<Inventory>,
+    player: Query<&Inventory, (With<PlayerMarker>, Changed<Inventory>)>,
     mut grids: Query<&mut ItemGrid, With<MerchantPlayerGrid>>,
 ) {
+    let Ok(inventory) = player.single() else {
+        return;
+    };
+
     if let Ok(mut grid) = grids.single_mut() {
-        grid.items = ItemGridEntry::from_inventory(&inventory);
+        grid.items = ItemGridEntry::from_inventory(inventory);
         grid.clamp_selection();
     }
 }
@@ -101,15 +106,18 @@ pub fn spawn_merchant_modal_impl(
 pub fn populate_merchant_detail_pane_content(
     mut commands: Commands,
     stock: Option<Res<MerchantStock>>,
-    inventory: Res<Inventory>,
+    player: Query<&Inventory, With<PlayerMarker>>,
     panes: Query<Ref<ItemDetailPane>>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
     let Some(stock) = stock else {
         return;
     };
+    let Ok(inventory) = player.single() else {
+        return;
+    };
 
-    let data_changed = stock.is_changed() || inventory.is_changed();
+    let data_changed = stock.is_changed();
 
     for pane in &panes {
         if !pane.is_changed() && !data_changed {

@@ -4,6 +4,7 @@ use crate::assets::{GameFonts, GameSprites};
 use crate::crafting_station::ForgeCraftingState;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::ItemId;
+use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::{
     spawn_selector, AnimatedSelector, ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent,
@@ -143,13 +144,14 @@ pub fn update_forge_detail_pane_source(
 
 pub fn populate_forge_detail_pane_content(
     mut commands: Commands,
-    inventory: Res<Inventory>,
+    player: Query<&Inventory, With<PlayerMarker>>,
     active_forge: Option<Res<ActiveForgeEntity>>,
     forge_state_query: Query<Ref<ForgeCraftingState>>,
     panes: Query<Ref<ItemDetailPane>>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
-    let inventory_changed = inventory.is_changed();
+    let Ok(inventory) = player.single() else { return };
+    let inventory_changed = false;
     let forge_state_changed = active_forge
         .as_ref()
         .and_then(|af| forge_state_query.get(af.0).ok())

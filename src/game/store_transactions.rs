@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::game::{ItemDeposited, ItemWithdrawn, Storage};
 use crate::inventory::{FindsItems, HasInventory, Inventory, ManagesItems};
+use crate::player::PlayerMarker;
 
 #[derive(Message, Debug, Clone)]
 pub struct StorageWithdrawEvent {
@@ -42,9 +43,13 @@ fn handle_storage_withdraw(
     mut withdraw_events: MessageReader<StorageWithdrawEvent>,
     mut result_events: MessageWriter<StorageTransactionResult>,
     mut withdrawn_events: MessageWriter<ItemWithdrawn>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
     mut storage: ResMut<Storage>,
 ) {
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
+
     for event in withdraw_events.read() {
         let Some(inv_item) = storage.inventory.items.get(event.storage_index) else {
             continue;
@@ -78,9 +83,13 @@ fn handle_storage_deposit(
     mut deposit_events: MessageReader<StorageDepositEvent>,
     mut result_events: MessageWriter<StorageTransactionResult>,
     mut deposited_events: MessageWriter<ItemDeposited>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
     mut storage: ResMut<Storage>,
 ) {
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
+
     for event in deposit_events.read() {
         let Some(inv_item) = inventory.items.get(event.inventory_index) else {
             continue;

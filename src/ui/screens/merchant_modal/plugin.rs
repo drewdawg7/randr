@@ -1,6 +1,5 @@
 use bevy::prelude::*;
 
-use crate::inventory::Inventory;
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_merchant_modal;
@@ -13,7 +12,6 @@ use super::render::{
 };
 use super::state::{MerchantDetailPane, MerchantModal, MerchantStock};
 
-/// Plugin that manages the merchant modal system.
 pub struct MerchantModalPlugin;
 
 impl Plugin for MerchantModalPlugin {
@@ -31,7 +29,7 @@ impl Plugin for MerchantModalPlugin {
                             resource_exists::<MerchantStock>
                                 .and(resource_changed::<MerchantStock>),
                         ),
-                        sync_merchant_player_grid.run_if(resource_changed::<Inventory>),
+                        sync_merchant_player_grid,
                         update_detail_pane_source::<MerchantDetailPane>.run_if(
                             resource_exists::<FocusState>
                                 .and(resource_changed::<FocusState>)
@@ -40,7 +38,6 @@ impl Plugin for MerchantModalPlugin {
                         populate_merchant_detail_pane_content.run_if(
                             resource_exists::<MerchantStock>
                                 .and(resource_changed::<MerchantStock>)
-                                .or(resource_changed::<Inventory>)
                                 .or(any_match_filter::<Changed<ItemDetailPane>>),
                         ),
                     )

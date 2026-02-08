@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::inventory::{EquipmentSlot, Inventory, InventoryItem, ManagesEquipment, ManagesItems};
+use crate::player::PlayerMarker;
 use crate::ui::focus::FocusPanel;
 use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
@@ -12,14 +13,17 @@ use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 
 use super::state::{BackpackGrid, EquipmentGrid, InventoryModalRoot};
 
-/// Sync system that reactively updates grids when inventory changes.
 pub fn sync_inventory_to_grids(
-    inventory: Res<Inventory>,
+    player: Query<&Inventory, (With<PlayerMarker>, Changed<Inventory>)>,
     mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
     mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ) {
+    let Ok(inventory) = player.single() else {
+        return;
+    };
+
     if let Ok(mut eq_grid) = equipment_grids.single_mut() {
-        eq_grid.items = get_equipment_items(&inventory)
+        eq_grid.items = get_equipment_items(inventory)
             .iter()
             .map(|inv_item| ItemGridEntry::from_inventory_item(inv_item))
             .collect();
@@ -27,7 +31,7 @@ pub fn sync_inventory_to_grids(
     }
 
     if let Ok(mut bp_grid) = backpack_grids.single_mut() {
-        bp_grid.items = ItemGridEntry::from_inventory(&inventory);
+        bp_grid.items = ItemGridEntry::from_inventory(inventory);
         bp_grid.clamp_selection();
     }
 }
@@ -96,14 +100,16 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
 
 pub fn populate_inventory_detail_pane_content(
     mut commands: Commands,
-    inventory: Res<Inventory>,
+    player: Query<&Inventory, With<PlayerMarker>>,
     panes: Query<Ref<ItemDetailPane>>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
-    let inventory_changed = inventory.is_changed();
+    let Ok(inventory) = player.single() else {
+        return;
+    };
 
     for pane in &panes {
-        if !pane.is_changed() && !inventory_changed {
+        if !pane.is_changed() {
             continue;
         }
 
@@ -119,10 +125,10 @@ pub fn populate_inventory_detail_pane_content(
 
         let inv_item = match pane.source {
             InfoPanelSource::Equipment { selected_index } => {
-                get_equipment_items(&inventory).into_iter().nth(selected_index)
+                get_equipment_items(inventory).into_iter().nth(selected_index)
             }
             InfoPanelSource::Inventory { selected_index } => {
-                get_backpack_items(&inventory).into_iter().nth(selected_index)
+                get_backpack_items(inventory).into_iter().nth(selected_index)
             }
             _ => None,
         };

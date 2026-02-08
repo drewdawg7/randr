@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
+use crate::player::PlayerMarker;
 
 #[derive(Message, Debug, Clone)]
 pub struct BrewPotionEvent {
@@ -29,8 +30,12 @@ impl Plugin for CraftingPlugin {
 fn handle_brew_potion(
     mut brew_events: MessageReader<BrewPotionEvent>,
     mut result_events: MessageWriter<BrewingResult>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
 ) {
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
+
     for event in brew_events.read() {
         let Ok(recipe) = Recipe::new(event.recipe_id) else {
             continue;

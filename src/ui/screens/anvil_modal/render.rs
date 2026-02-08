@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::assets::{GameFonts, GameSprites};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
+use crate::player::PlayerMarker;
 use crate::ui::focus::FocusPanel;
 use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
@@ -88,14 +89,16 @@ pub fn spawn_anvil_modal_impl(
 pub fn populate_anvil_detail_pane_content(
     mut commands: Commands,
     game_fonts: Res<GameFonts>,
-    inventory: Res<Inventory>,
+    player: Query<&Inventory, With<PlayerMarker>>,
     panes: Query<Ref<ItemDetailPane>>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
 ) {
-    let inventory_changed = inventory.is_changed();
+    let Ok(inventory) = player.single() else {
+        return;
+    };
 
     for pane in &panes {
-        if !pane.is_changed() && !inventory_changed {
+        if !pane.is_changed() {
             continue;
         }
 

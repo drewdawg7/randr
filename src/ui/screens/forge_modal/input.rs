@@ -5,6 +5,7 @@ use crate::crafting_station::ForgeCraftingState;
 use crate::input::{GameAction, NavigationDirection};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::{ItemId, ItemType};
+use crate::player::PlayerMarker;
 use crate::item::enums::MaterialType;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::ItemGrid;
@@ -48,13 +49,14 @@ pub fn handle_forge_modal_select(
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
     active_forge: Option<Res<ActiveForgeEntity>>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
     mut forge_state_query: Query<&mut ForgeCraftingState>,
     mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
 ) {
     let Some(focus_state) = focus_state else { return };
     let Some(modal_state) = modal_state else { return };
     let Some(active_forge) = active_forge else { return };
+    let Ok(mut inventory) = player.single_mut() else { return };
 
     for action in action_reader.read() {
         if *action != GameAction::Select {
@@ -65,7 +67,7 @@ pub fn handle_forge_modal_select(
             &focus_state,
             &modal_state,
             active_forge.0,
-            &mut inventory,
+            inventory.as_mut(),
             &mut forge_state_query,
             &player_grids,
         );

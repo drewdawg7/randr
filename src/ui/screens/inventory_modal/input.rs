@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::input::GameAction;
 use crate::inventory::{EquipmentSlot, Inventory, ManagesEquipment};
+use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::ItemGrid;
 
@@ -33,16 +34,17 @@ pub fn handle_inventory_modal_navigation(
     }
 }
 
-/// System to handle Enter key equipping/unequipping items in the inventory modal.
-/// Only runs when inventory modal is active (via run_if condition).
 pub fn handle_inventory_modal_select(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
     equipment_grids: Query<&ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
     backpack_grids: Query<&ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
 ) {
     let Some(focus_state) = focus_state else { return };
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
 
     for action in action_reader.read() {
         if *action != GameAction::Select {

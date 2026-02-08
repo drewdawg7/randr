@@ -146,11 +146,13 @@ impl RegisteredModal for MerchantModal {
     }
 }
 
-/// System that spawns the merchant modal UI.
 fn do_spawn_merchant_modal(
     commands: Commands,
     stock: Res<MerchantStock>,
-    inventory: Res<crate::inventory::Inventory>,
+    player: Query<&crate::inventory::Inventory, With<crate::player::PlayerMarker>>,
 ) {
-    super::render::spawn_merchant_modal_impl(commands, &stock, &inventory);
+    let Ok(inventory) = player.single() else {
+        return;
+    };
+    super::render::spawn_merchant_modal_impl(commands, &stock, inventory);
 }

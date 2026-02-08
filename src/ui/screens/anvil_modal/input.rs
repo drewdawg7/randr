@@ -1,11 +1,10 @@
-//! Input handling for the anvil modal.
-
 use bevy::prelude::*;
 
 use crate::crafting_station::{AnvilCraftingState, TryStartAnvilCrafting};
 use crate::input::GameAction;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
+use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_registry::ModalCommands;
 use crate::ui::widgets::ItemGrid;
@@ -42,20 +41,21 @@ pub fn handle_anvil_modal_navigation(
     }
 }
 
-/// Handle Enter key for crafting selected recipe.
-/// Only runs when anvil modal is active (via run_if condition).
 pub fn handle_anvil_modal_select(
     mut commands: Commands,
     mut action_reader: MessageReader<GameAction>,
     mut try_start_events: MessageWriter<TryStartAnvilCrafting>,
     focus_state: Option<Res<FocusState>>,
     active_anvil: Option<Res<ActiveAnvilEntity>>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
     mut anvil_state_query: Query<&mut AnvilCraftingState>,
     recipe_grids: Query<&ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
     mut player_grids: Query<&mut ItemGrid, (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>)>,
 ) {
     let Some(focus_state) = focus_state else { return };
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
 
     let Some(active_anvil) = active_anvil else {
         return;
@@ -70,7 +70,6 @@ pub fn handle_anvil_modal_select(
             continue;
         }
 
-        // Only handle crafting when recipe grid is focused
         if !focus_state.is_focused(FocusPanel::RecipeGrid) {
             continue;
         }
@@ -86,7 +85,6 @@ pub fn handle_anvil_modal_select(
 
         let spec = recipe_id.spec();
 
-        // Check if player has all ingredients
         let can_craft = spec
             .ingredients
             .iter()
@@ -96,21 +94,17 @@ pub fn handle_anvil_modal_select(
             continue;
         }
 
-        // Consume ingredients
         for (item_id, required) in &spec.ingredients {
             inventory.decrease_item_quantity(*item_id, *required);
         }
 
-        // Set selected recipe
         anvil_state.selected_recipe = Some(*recipe_id);
 
-        // Refresh inventory grid
         if let Ok(mut grid) = player_grids.single_mut() {
             grid.items = ItemGridEntry::from_inventory(&inventory);
             grid.clamp_selection();
         }
 
-        // Emit event to start crafting and close modal
         try_start_events.write(TryStartAnvilCrafting {
             entity: active_anvil.0,
         });
@@ -118,12 +112,15 @@ pub fn handle_anvil_modal_select(
     }
 }
 
-/// Refresh the recipe grid when inventory changes.
 pub fn refresh_anvil_recipes(
-    inventory: Res<Inventory>,
+    player: Query<&Inventory, (With<PlayerMarker>, Changed<Inventory>)>,
     mut recipe_grids: Query<&mut ItemGrid, With<AnvilRecipeGrid>>,
 ) {
+    let Ok(inventory) = player.single() else {
+        return;
+    };
+
     if let Ok(mut grid) = recipe_grids.single_mut() {
-        grid.items = get_recipe_entries(&inventory);
+        grid.items = get_recipe_entries(inventory);
     }
 }

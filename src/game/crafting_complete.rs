@@ -3,6 +3,7 @@ use tracing::instrument;
 
 use crate::crafting_station::{AnvilCraftingState, ForgeCraftingState};
 use crate::inventory::{Inventory, ManagesItems};
+use crate::player::PlayerMarker;
 use crate::skills::{blacksmith_bonus_item_chance, SkillType, SkillXpGained, Skills};
 
 #[derive(Message, Debug, Clone)]
@@ -93,10 +94,13 @@ fn process_forge_complete_event(
 fn handle_anvil_crafting_complete(
     mut events: MessageReader<AnvilCraftingCompleteEvent>,
     mut xp_events: MessageWriter<SkillXpGained>,
-    mut inventory: ResMut<Inventory>,
+    mut player: Query<&mut Inventory, With<PlayerMarker>>,
     skills: Res<Skills>,
     mut anvil_query: Query<&mut AnvilCraftingState>,
 ) {
+    let Ok(mut inventory) = player.single_mut() else {
+        return;
+    };
     let blacksmith_level = skills
         .skill(SkillType::Blacksmith)
         .map(|s| s.level)
