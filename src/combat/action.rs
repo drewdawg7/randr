@@ -3,12 +3,11 @@ use std::collections::HashSet;
 use avian2d::prelude::*;
 use bevy::prelude::*;
 
-use crate::dungeon::attack_hitbox_layers;
+use crate::dungeon::{attack_hitbox_layers, PLAYER_COLLIDER};
 use crate::ui::FacingDirection;
 
-const HITBOX_OFFSET: f32 = 20.0;
-const HITBOX_WIDTH: f32 = 24.0;
-const HITBOX_HEIGHT: f32 = 16.0;
+const HITBOX_WIDTH: f32 = 12.0;
+const HITBOX_HEIGHT: f32 = 36.0;
 const HITBOX_DURATION_SECS: f32 = 9.0 / 16.0;
 
 #[derive(Component)]
@@ -42,9 +41,12 @@ pub struct AttackHitboxBundle {
 }
 
 impl AttackHitboxBundle {
-    pub fn new(owner: Entity, position: Vec2, facing: FacingDirection) -> Self {
-        let size = facing.hitbox_size(HITBOX_WIDTH, HITBOX_HEIGHT);
-        let offset = facing.to_offset(HITBOX_OFFSET);
+    pub fn new(owner: Entity, position: Vec2, facing: FacingDirection, player_sprite_size: Vec2) -> Self {
+        let size = Vec2::new(HITBOX_WIDTH, HITBOX_HEIGHT);
+        let player_half_width = player_sprite_size.x * PLAYER_COLLIDER.scale_x / 2.0;
+        let hitbox_half_width = HITBOX_WIDTH / 2.0;
+        let offset = facing.to_offset(player_half_width + hitbox_half_width)
+            + Vec2::Y * PLAYER_COLLIDER.offset_y;
 
         Self {
             hitbox: AttackHitbox(owner),

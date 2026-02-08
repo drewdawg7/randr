@@ -63,3 +63,27 @@
 ## Comments
 - Do not add comments to code. The styleguide explicitly forbids unnecessary comments.
 - Doc comments on public structs/types are also unnecessary unless they explain something non-obvious.
+
+## Naming
+- Don't use "handle_X" naming pattern - this is JavaScript/React, not idiomatic Rust/Bevy.
+- Name systems for what they do, not "handle_X".
+
+## Module Organization
+- Organize modules by domain, not by technical concern.
+  - Good: `input/combat.rs`, `input/navigation.rs`
+  - Bad: `combat/systems/attack_input.rs` (input logic in combat module)
+- Don't create redundant files like `action.rs` + `action_combat.rs` - consolidate.
+
+## Bevy Patterns
+- Use observers for reactive logic (e.g., `OnAdd<Component>` to spawn related entities).
+- Input systems should only set state/components, not perform game logic.
+- Don't couple input handling to game systems - use components/observers to decouple.
+
+## Constants and Values
+- A constant is still a magic number if it's not derived from anything meaningful.
+- Derive values from existing config/constants when possible (e.g., hitbox offset from player collider config).
+- When values depend on other entities, query them at runtime rather than hardcoding.
+
+## Research
+- When asked about best practices, do web research - don't just explore the codebase.
+- Search for relevant terms (e.g., "hitbox" when working on hitboxes, not just "ECS patterns").

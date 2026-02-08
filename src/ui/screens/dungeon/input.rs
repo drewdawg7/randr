@@ -37,20 +37,12 @@ pub fn update_player_sprite_direction(
     let threshold = movement.flip_threshold(tile_size.0);
 
     for (velocity, mut sprite, mut facing) in &mut query {
-        if velocity.x.abs() > velocity.y.abs() {
-            if velocity.x < -threshold {
-                sprite.flip_x = true;
-                *facing = FacingDirection::Left;
-            } else if velocity.x > threshold {
-                sprite.flip_x = false;
-                *facing = FacingDirection::Right;
-            }
-        } else {
-            if velocity.y > threshold {
-                *facing = FacingDirection::Up;
-            } else if velocity.y < -threshold {
-                *facing = FacingDirection::Down;
-            }
+        if velocity.x < -threshold {
+            sprite.flip_x = true;
+            *facing = FacingDirection::Left;
+        } else if velocity.x > threshold {
+            sprite.flip_x = false;
+            *facing = FacingDirection::Right;
         }
     }
 }

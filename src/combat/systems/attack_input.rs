@@ -27,6 +27,7 @@ pub fn handle_attack_input(
         entity,
         transform.translation.truncate(),
         *facing,
+        sprite_sheet.frame_size.as_vec2(),
     ));
 
     anim.apply_config(&sprite_sheet.attack_animation);
