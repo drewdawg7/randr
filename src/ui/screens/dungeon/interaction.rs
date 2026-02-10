@@ -29,7 +29,7 @@ pub fn handle_interact_action(
     crafting_query: Query<&CraftingStationEntity>,
     chest_query: Query<(), With<ChestEntity>>,
     rock_query: Query<&RockEntity>,
-    player_query: Query<&Position, With<DungeonPlayer>>,
+    player_query: Query<(Entity, &Position), With<DungeonPlayer>>,
 ) {
     let is_interact = action_reader
         .read()
@@ -48,53 +48,48 @@ pub fn handle_interact_action(
         }
     }
 
-    let Ok(&Position(Vec2 { x: px, y: py })) = player_query.single() else {
+    let Ok((player_entity, &Position(player_pos))) = player_query.single() else {
         return;
     };
 
-    let step = tile_size
+    let tile_size = tile_size
         .map(|t| t.0)
         .unwrap_or(crate::dungeon::constants::DEFAULT_TILE_SIZE);
-    let adjacent_positions: [Vec2; 4] = [
-        Vec2::new(px, py - step),
-        Vec2::new(px, py + step),
-        Vec2::new(px - step, py),
-        Vec2::new(px + step, py),
-    ];
+    let interaction_radius = tile_size * crate::dungeon::constants::INTERACTION_RADIUS_MULTIPLIER;
+    let interaction_shape = Collider::circle(interaction_radius);
 
-    let filter = SpatialQueryFilter::from_mask([GameLayer::StaticEntity, GameLayer::Mob]);
+    let filter = SpatialQueryFilter::from_mask([GameLayer::StaticEntity, GameLayer::Mob])
+        .with_excluded_entities([player_entity]);
 
-    for pos in adjacent_positions {
-        let intersections = spatial_query.point_intersections(pos, &filter);
+    let nearby_entities = spatial_query.shape_intersections(&interaction_shape, player_pos, 0.0, &filter);
 
-        for entity in intersections {
-            let Ok(marker) = marker_query.get(entity) else {
-                continue;
-            };
+    for entity in nearby_entities {
+        let Ok(marker) = marker_query.get(entity) else {
+            continue;
+        };
 
-            if let Ok(npc) = npc_query.get(entity) {
-                if npc.mob_id == MobId::Merchant {
-                    commands.trigger(MerchantInteraction { entity });
-                }
-                return;
+        if let Ok(npc) = npc_query.get(entity) {
+            if npc.mob_id == MobId::Merchant {
+                commands.trigger(MerchantInteraction { entity });
             }
+            return;
+        }
 
-            if chest_query.get(entity).is_ok() {
-                commands.trigger(ChestMined {
-                    entity,
-                    pos: marker.pos,
-                });
-                return;
-            }
+        if chest_query.get(entity).is_ok() {
+            commands.trigger(ChestMined {
+                entity,
+                pos: marker.pos,
+            });
+            return;
+        }
 
-            if let Ok(rock) = rock_query.get(entity) {
-                commands.trigger(RockMined {
-                    entity,
-                    pos: marker.pos,
-                    rock_type: rock.rock_type,
-                });
-                return;
-            }
+        if let Ok(rock) = rock_query.get(entity) {
+            commands.trigger(RockMined {
+                entity,
+                pos: marker.pos,
+                rock_type: rock.rock_type,
+            });
+            return;
         }
     }
 }
