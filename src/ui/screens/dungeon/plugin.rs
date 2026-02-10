@@ -13,7 +13,7 @@ use super::crafting_animation::{
 };
 use super::systems::update_player_sprite_direction;
 use super::interaction::{
-    handle_crafting_station_interaction, handle_interact_action, handle_mining_result,
+    open_crafting_modal, process_interaction, show_mining_results,
 };
 use super::lifecycle::{
     enter_dungeon, handle_floor_ready, on_map_created_queue_player_spawn, spawn_player_when_ready,
@@ -44,11 +44,11 @@ impl Plugin for DungeonScreenPlugin {
                     handle_floor_ready.run_if(on_message::<FloorReady>),
                     spawn_player_when_ready.run_if(resource_exists::<PendingPlayerSpawn>),
                     update_player_sprite_direction,
-                    handle_interact_action
+                    process_interaction
                         .run_if(on_message::<GameAction>)
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
-                    handle_crafting_station_interaction.run_if(on_message::<CraftingStationInteraction>),
-                    handle_mining_result.run_if(on_message::<MiningResult>),
+                    open_crafting_modal.run_if(on_message::<CraftingStationInteraction>),
+                    show_mining_results.run_if(on_message::<MiningResult>),
                     request_menu_transition,
                     handle_forge_crafting_started.run_if(on_message::<ForgeCraftingStarted>),
                     handle_anvil_crafting_started.run_if(on_message::<AnvilCraftingStarted>),

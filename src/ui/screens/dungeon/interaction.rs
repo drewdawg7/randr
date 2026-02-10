@@ -17,7 +17,7 @@ use crate::ui::screens::results_modal::ResultsModalData;
 use super::components::DungeonPlayer;
 
 #[instrument(level = "debug", skip_all)]
-pub fn handle_interact_action(
+pub fn process_interaction(
     mut commands: Commands,
     mut action_reader: MessageReader<crate::input::GameAction>,
     mut crafting_events: MessageWriter<CraftingStationInteraction>,
@@ -92,7 +92,7 @@ pub fn handle_interact_action(
 }
 
 #[instrument(level = "debug", skip_all, fields(event_count = events.len()))]
-pub fn handle_crafting_station_interaction(
+pub fn open_crafting_modal(
     mut commands: Commands,
     mut events: MessageReader<CraftingStationInteraction>,
     forge_query: Query<&ForgeActiveTimer>,
@@ -116,7 +116,7 @@ pub fn handle_crafting_station_interaction(
     }
 }
 
-pub fn handle_mining_result(mut commands: Commands, mut events: MessageReader<MiningResult>) {
+pub fn show_mining_results(mut commands: Commands, mut events: MessageReader<MiningResult>) {
     for event in events.read() {
         let title = match &event.mineable_type {
             MineableEntityType::Chest => "Chest Opened!".to_string(),
