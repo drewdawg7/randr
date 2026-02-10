@@ -11,6 +11,6 @@ pub use mob_health_bar::{
     cleanup_mob_health_bar, spawn_mob_health_bars, update_mob_health_bar_positions,
     update_mob_health_bar_values, MobHealthBar, MobHealthBarSprite,
 };
-pub use movement::{handle_player_collision_end, handle_player_collisions, handle_player_move, stop_attacking_player, stop_player_when_idle};
+pub use movement::{handle_player_collisions, handle_player_move, stop_attacking_player, stop_player_when_idle};
 pub use spawning::on_map_created;
 pub use transitions::{handle_floor_transition, TransitionInProgress};

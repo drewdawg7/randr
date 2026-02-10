@@ -38,6 +38,8 @@
 - Understand the actual goal before proposing solutions. Don't just revert to old patterns - find a forward path that achieves the user's intent.
 - When a refactor breaks something, the fix should align with the refactor's goals, not undo them.
 - Don't enter plan mode unless the user explicitly asks. When given a well-defined issue with a detailed checklist, just execute it.
+- When something "doesn't work", verify the specific failure mode before assuming the cause. "X doesn't work" could mean X fails silently, X triggers wrong behavior, or X is never called.
+- Avoid special cases and fallbacks - there should be one consistent way of doing things. If similar things are handled differently, unify the approach.
 
 ## Bevy Systems
 - When a system doesn't run, check its `run_if` conditions. If it uses `any_with_component::<T>`, verify that `T` is actually added to entities (check spawn/bundle code).
@@ -91,3 +93,9 @@
 ## Research
 - When asked about best practices, do web research - don't just explore the codebase.
 - Search for relevant terms (e.g., "hitbox" when working on hitboxes, not just "ECS patterns").
+
+## Bevy Ecosystem
+- ALWAYS prefer Bevy ecosystem crates over building custom solutions. The entire point of using Bevy is to leverage its ecosystem.
+- Never recommend "build in-house" when a Bevy crate exists for the functionality.
+- When evaluating solutions, search for existing Bevy crates first before designing custom implementations.
+- When adopting a crate, use it directly. Don't create wrapper abstractions or registry patterns that just duplicate the crate's functionality. Simplify by removing existing code, not by wrapping new code in old patterns.

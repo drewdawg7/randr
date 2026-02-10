@@ -6,7 +6,7 @@ use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActive
 use crate::dungeon::{
     ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction,
     DungeonEntityMarker, GameLayer, MerchantInteraction, MineableEntityType, MiningResult,
-    NpcEntity, OverlappingCraftingStation, RockEntity, RockMined, TileWorldSize,
+    NpcEntity, RockEntity, RockMined, TileWorldSize,
 };
 use crate::mob::MobId;
 use crate::ui::screens::anvil_modal::ActiveAnvilEntity;
@@ -21,7 +21,6 @@ pub fn handle_interact_action(
     mut commands: Commands,
     mut action_reader: MessageReader<crate::input::GameAction>,
     mut crafting_events: MessageWriter<CraftingStationInteraction>,
-    overlapping_station: Res<OverlappingCraftingStation>,
     tile_size: Option<Res<TileWorldSize>>,
     spatial_query: SpatialQuery,
     marker_query: Query<&DungeonEntityMarker>,
@@ -33,19 +32,9 @@ pub fn handle_interact_action(
 ) {
     let is_interact = action_reader
         .read()
-        .any(|a| *a == crate::input::GameAction::Mine);
+        .any(|a| *a == crate::input::GameAction::Interact);
     if !is_interact {
         return;
-    }
-
-    if let Some(entity) = overlapping_station.0 {
-        if let Ok(crafting) = crafting_query.get(entity) {
-            crafting_events.write(CraftingStationInteraction {
-                entity,
-                station_type: crafting.station_type,
-            });
-            return;
-        }
     }
 
     let Ok((player_entity, &Position(player_pos))) = player_query.single() else {
@@ -64,9 +53,13 @@ pub fn handle_interact_action(
     let nearby_entities = spatial_query.shape_intersections(&interaction_shape, player_pos, 0.0, &filter);
 
     for entity in nearby_entities {
-        let Ok(marker) = marker_query.get(entity) else {
-            continue;
-        };
+        if let Ok(crafting) = crafting_query.get(entity) {
+            crafting_events.write(CraftingStationInteraction {
+                entity,
+                station_type: crafting.station_type,
+            });
+            return;
+        }
 
         if let Ok(npc) = npc_query.get(entity) {
             if npc.mob_id == MobId::Merchant {
@@ -74,6 +67,10 @@ pub fn handle_interact_action(
             }
             return;
         }
+
+        let Ok(marker) = marker_query.get(entity) else {
+            continue;
+        };
 
         if chest_query.get(entity).is_ok() {
             commands.trigger(ChestMined {

@@ -35,5 +35,5 @@ pub use tile_components::{can_have_entity, can_spawn_player, is_door, is_solid};
 
 pub use events::{
     ChestMined, CraftingStationInteraction, FloorReady, FloorTransition, MerchantInteraction,
-    MineableEntityType, MiningResult, MoveResult, OverlappingCraftingStation, PlayerMoveIntent, RockMined,
+    MineableEntityType, MiningResult, MoveResult, PlayerMoveIntent, RockMined,
 };

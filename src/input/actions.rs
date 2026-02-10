@@ -28,8 +28,8 @@ pub enum GameAction {
     /// Reverse tab switching (Shift+Tab)
     PrevTab,
 
-    /// Mining/interaction action (Space)
-    Mine,
+    /// Interact with nearby entities (Space)
+    Interact,
 
     /// Attack action (Space - context sensitive)
     Attack,

@@ -96,7 +96,7 @@ fn translate_keyboard_input(
     }
 
     if keyboard.just_pressed(KeyCode::Space) {
-        action_writer.write(GameAction::Mine);
+        action_writer.write(GameAction::Interact);
         action_writer.write(GameAction::Attack);
     }
 
