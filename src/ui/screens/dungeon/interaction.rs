@@ -47,7 +47,7 @@ pub fn process_interaction(
     let interaction_radius = tile_size * crate::dungeon::constants::INTERACTION_RADIUS_MULTIPLIER;
     let interaction_shape = Collider::circle(interaction_radius);
 
-    let filter = SpatialQueryFilter::from_mask([GameLayer::StaticEntity, GameLayer::Mob])
+    let filter = SpatialQueryFilter::from_mask([GameLayer::StaticEntity, GameLayer::Mob, GameLayer::Trigger])
         .with_excluded_entities([player_entity]);
 
     let nearby_entities = spatial_query.shape_intersections(&interaction_shape, player_pos, 0.0, &filter);
