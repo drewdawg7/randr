@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::game::{ItemDeposited, ItemWithdrawn, Storage};
-use crate::inventory::{FindsItems, HasInventory, Inventory, ManagesItems};
+use crate::inventory::{FindsItems, HasInventory, Inventory, InventoryError, ManagesItems};
 use crate::player::PlayerMarker;
 
 #[derive(Message, Debug, Clone)]
@@ -109,15 +109,23 @@ fn handle_storage_deposit(
             continue;
         };
 
-        storage
-            .add_to_inv(inv_item.item)
-            .expect("Storage capacity already verified");
-        result_events.write(StorageTransactionResult::DepositSuccess {
-            item_name: item_name.clone(),
-        });
-        deposited_events.write(ItemDeposited {
-            item_name: item_name.clone(),
-        });
-        info!("Deposited {} into storage", item_name);
+        match storage.add_to_inv(inv_item.item.clone()) {
+            Ok(_) => {
+                result_events.write(StorageTransactionResult::DepositSuccess {
+                    item_name: item_name.clone(),
+                });
+                deposited_events.write(ItemDeposited {
+                    item_name: item_name.clone(),
+                });
+                info!("Deposited {} into storage", item_name);
+            }
+            Err(InventoryError::Full) => {
+                result_events.write(StorageTransactionResult::DepositFailed {
+                    reason: "Storage is full (unexpected)".to_string(),
+                });
+                warn!("Storage full despite capacity check. Re-adding item to inventory.");
+                let _ = inventory.add_to_inv(inv_item.item);
+            }
+        }
     }
 }
