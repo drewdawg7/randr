@@ -66,3 +66,6 @@ pub struct MiningResult {
     pub mineable_type: MineableEntityType,
     pub loot_drops: Vec<LootDrop>,
 }
+
+#[derive(Resource, Default, Debug)]
+pub struct InteractableNearby(pub Option<Entity>);

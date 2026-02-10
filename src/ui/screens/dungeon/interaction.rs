@@ -1,12 +1,11 @@
-use avian2d::prelude::*;
 use bevy::prelude::*;
 use tracing::instrument;
 
 use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
 use crate::dungeon::{
     ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction,
-    DungeonEntityMarker, GameLayer, MerchantInteraction, MineableEntityType, MiningResult,
-    NpcEntity, RockEntity, RockMined, TileWorldSize,
+    DungeonEntityMarker, InteractableNearby, MerchantInteraction, MineableEntityType,
+    MiningResult, NpcEntity, RockEntity, RockMined,
 };
 use crate::mob::MobId;
 use crate::ui::screens::anvil_modal::ActiveAnvilEntity;
@@ -14,21 +13,17 @@ use crate::ui::screens::forge_modal::ActiveForgeEntity;
 use crate::ui::screens::modal::{ModalType, OpenModal};
 use crate::ui::screens::results_modal::ResultsModalData;
 
-use super::components::DungeonPlayer;
-
 #[instrument(level = "debug", skip_all)]
 pub fn process_interaction(
     mut commands: Commands,
     mut action_reader: MessageReader<crate::input::GameAction>,
     mut crafting_events: MessageWriter<CraftingStationInteraction>,
-    tile_size: Option<Res<TileWorldSize>>,
-    spatial_query: SpatialQuery,
+    nearby: Res<InteractableNearby>,
     marker_query: Query<&DungeonEntityMarker>,
     npc_query: Query<&NpcEntity>,
     crafting_query: Query<&CraftingStationEntity>,
     chest_query: Query<(), With<ChestEntity>>,
     rock_query: Query<&RockEntity>,
-    player_query: Query<(Entity, &Position), With<DungeonPlayer>>,
 ) {
     let is_interact = action_reader
         .read()
@@ -37,57 +32,43 @@ pub fn process_interaction(
         return;
     }
 
-    let Ok((player_entity, &Position(player_pos))) = player_query.single() else {
+    let Some(entity) = nearby.0 else {
         return;
     };
 
-    let tile_size = tile_size
-        .map(|t| t.0)
-        .unwrap_or(crate::dungeon::constants::DEFAULT_TILE_SIZE);
-    let interaction_radius = tile_size * crate::dungeon::constants::INTERACTION_RADIUS_MULTIPLIER;
-    let interaction_shape = Collider::circle(interaction_radius);
+    if let Ok(crafting) = crafting_query.get(entity) {
+        crafting_events.write(CraftingStationInteraction {
+            entity,
+            station_type: crafting.station_type,
+        });
+        return;
+    }
 
-    let filter = SpatialQueryFilter::from_mask([GameLayer::StaticEntity, GameLayer::Mob, GameLayer::Trigger])
-        .with_excluded_entities([player_entity]);
-
-    let nearby_entities = spatial_query.shape_intersections(&interaction_shape, player_pos, 0.0, &filter);
-
-    for entity in nearby_entities {
-        if let Ok(crafting) = crafting_query.get(entity) {
-            crafting_events.write(CraftingStationInteraction {
-                entity,
-                station_type: crafting.station_type,
-            });
-            return;
+    if let Ok(npc) = npc_query.get(entity) {
+        if npc.mob_id == MobId::Merchant {
+            commands.trigger(MerchantInteraction { entity });
         }
+        return;
+    }
 
-        if let Ok(npc) = npc_query.get(entity) {
-            if npc.mob_id == MobId::Merchant {
-                commands.trigger(MerchantInteraction { entity });
-            }
-            return;
-        }
+    let Ok(marker) = marker_query.get(entity) else {
+        return;
+    };
 
-        let Ok(marker) = marker_query.get(entity) else {
-            continue;
-        };
+    if chest_query.get(entity).is_ok() {
+        commands.trigger(ChestMined {
+            entity,
+            pos: marker.pos,
+        });
+        return;
+    }
 
-        if chest_query.get(entity).is_ok() {
-            commands.trigger(ChestMined {
-                entity,
-                pos: marker.pos,
-            });
-            return;
-        }
-
-        if let Ok(rock) = rock_query.get(entity) {
-            commands.trigger(RockMined {
-                entity,
-                pos: marker.pos,
-                rock_type: rock.rock_type,
-            });
-            return;
-        }
+    if let Ok(rock) = rock_query.get(entity) {
+        commands.trigger(RockMined {
+            entity,
+            pos: marker.pos,
+            rock_type: rock.rock_type,
+        });
     }
 }
 

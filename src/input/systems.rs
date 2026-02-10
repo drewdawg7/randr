@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::dungeon::InteractableNearby;
+
 use super::actions::{GameAction, HeldDirection, NavigationDirection};
 
 const REPEAT_INTERVAL: f32 = 0.1;
@@ -53,6 +55,7 @@ fn direction_to_key(dir: NavigationDirection) -> KeyCode {
 fn translate_keyboard_input(
     time: Res<Time>,
     keyboard: Res<ButtonInput<KeyCode>>,
+    nearby: Res<InteractableNearby>,
     mut repeat: ResMut<NavigationRepeatState>,
     mut held: ResMut<HeldDirection>,
     mut action_writer: MessageWriter<GameAction>,
@@ -96,8 +99,11 @@ fn translate_keyboard_input(
     }
 
     if keyboard.just_pressed(KeyCode::Space) {
-        action_writer.write(GameAction::Interact);
-        action_writer.write(GameAction::Attack);
+        if nearby.0.is_some() {
+            action_writer.write(GameAction::Interact);
+        } else {
+            action_writer.write(GameAction::Attack);
+        }
     }
 
     if keyboard.just_pressed(KeyCode::KeyI) {

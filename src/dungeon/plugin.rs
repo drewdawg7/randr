@@ -7,16 +7,16 @@ use tracing::{debug, instrument};
 
 use crate::dungeon::config::DungeonConfig;
 use crate::dungeon::events::{
-    CraftingStationInteraction, FloorReady, FloorTransition, MiningResult, MoveResult,
-    PlayerMoveIntent,
+    CraftingStationInteraction, FloorReady, FloorTransition, InteractableNearby, MiningResult,
+    MoveResult, PlayerMoveIntent,
 };
 use crate::plugins::MobDefeated;
 use crate::dungeon::floor::FloorId;
 use crate::dungeon::state::{DungeonState, MovementConfig, TileWorldSize};
 use crate::combat::Attacking;
 use crate::dungeon::systems::{
-    cleanup_mob_health_bar, handle_floor_transition, handle_mob_defeated,
-    handle_player_collisions, handle_player_move, prepare_floor,
+    cleanup_mob_health_bar, detect_nearby_interactables, handle_floor_transition,
+    handle_mob_defeated, handle_player_collisions, handle_player_move, prepare_floor,
     spawn_mob_health_bars, stop_attacking_player, stop_player_when_idle,
     update_mob_health_bar_positions, update_mob_health_bar_values, SpawnFloor,
 };
@@ -79,6 +79,7 @@ impl Plugin for DungeonPlugin {
             .init_resource::<DungeonState>()
             .init_resource::<TileWorldSize>()
             .init_resource::<MovementConfig>()
+            .init_resource::<InteractableNearby>()
             .add_message::<FloorTransition>()
             .add_message::<FloorReady>()
             .add_message::<SpawnFloor>()
@@ -88,6 +89,10 @@ impl Plugin for DungeonPlugin {
             .add_message::<MiningResult>()
             .add_observer(on_collider_created)
             .add_observer(cleanup_mob_health_bar)
+            .add_systems(
+                First,
+                detect_nearby_interactables.run_if(in_state(AppState::Dungeon)),
+            )
             .add_systems(
                 FixedPreUpdate,
                 (
