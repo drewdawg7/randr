@@ -4,7 +4,7 @@ use crate::input::{craft_anvil_recipe, navigate_anvil_grid, sync_anvil_recipes};
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_anvil_modal;
-use crate::ui::widgets::{update_detail_pane_source, ItemGrid};
+use crate::ui::widgets::{update_detail_pane_source, ItemGridSelection};
 use crate::ui::FocusState;
 
 use super::render::populate_anvil_detail_pane_content;
@@ -27,7 +27,7 @@ impl Plugin for AnvilModalPlugin {
                         update_detail_pane_source::<AnvilDetailPane>.run_if(
                             resource_exists::<FocusState>
                                 .and(resource_changed::<FocusState>)
-                                .or(any_match_filter::<Changed<ItemGrid>>),
+                                .or(any_match_filter::<Changed<ItemGridSelection>>),
                         ),
                         populate_anvil_detail_pane_content,
                     )

@@ -4,7 +4,7 @@ use crate::input::{navigate_inventory_grid, toggle_equipment};
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{modal_close_system, RegisterModalExt};
 use crate::ui::screens::modal::in_inventory_modal;
-use crate::ui::widgets::{update_detail_pane_source, ItemGrid};
+use crate::ui::widgets::{update_detail_pane_source, ItemGridSelection};
 use crate::ui::FocusState;
 
 use super::render::{populate_inventory_detail_pane_content, sync_inventory_to_grids};
@@ -27,7 +27,7 @@ impl Plugin for InventoryModalPlugin {
                         update_detail_pane_source::<InventoryDetailPane>.run_if(
                             resource_exists::<FocusState>
                                 .and(resource_changed::<FocusState>)
-                                .or(any_match_filter::<Changed<ItemGrid>>),
+                                .or(any_match_filter::<Changed<ItemGridSelection>>),
                         ),
                         populate_inventory_detail_pane_content,
                     )

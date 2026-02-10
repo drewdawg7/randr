@@ -5,7 +5,7 @@ use crate::input::{navigate_forge_ui, transfer_forge_items, GameAction};
 use crate::ui::focus::{tab_toggle_system, FocusPanel};
 use crate::ui::modal_registry::{ModalCommands, RegisterModalExt};
 use crate::ui::screens::modal::in_forge_modal;
-use crate::ui::widgets::ItemGrid;
+use crate::ui::widgets::ItemGridSelection;
 use crate::ui::FocusState;
 
 use super::state::{ActiveForgeEntity, ForgeModal, ForgeModalState};
@@ -35,7 +35,7 @@ impl Plugin for ForgeModalPlugin {
                                     resource_exists::<ForgeModalState>
                                         .and(resource_changed::<ForgeModalState>),
                                 )
-                                .or(any_match_filter::<Changed<ItemGrid>>),
+                                .or(any_match_filter::<Changed<ItemGridSelection>>),
                         ),
                         populate_forge_detail_pane_content,
                     )
