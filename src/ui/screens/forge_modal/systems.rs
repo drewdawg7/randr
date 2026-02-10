@@ -8,7 +8,7 @@ use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::{
     spawn_selector, AnimatedSelector, ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent,
-    ItemGrid,
+    ItemGridSelection,
 };
 use crate::ui::InfoPanelSource;
 
@@ -105,7 +105,7 @@ pub fn update_forge_slot_selector(
 pub fn update_forge_detail_pane_source(
     focus_state: Option<Res<FocusState>>,
     modal_state: Option<Res<ForgeModalState>>,
-    player_grids: Query<&ItemGrid, With<ForgePlayerGrid>>,
+    player_grids: Query<&ItemGridSelection, With<ForgePlayerGrid>>,
     mut panes: Query<&mut ItemDetailPane>,
 ) {
     let Some(focus_state) = focus_state else {
@@ -124,8 +124,8 @@ pub fn update_forge_detail_pane_source(
         player_grids
             .single()
             .ok()
-            .map(|g| InfoPanelSource::Inventory {
-                selected_index: g.selected_index,
+            .map(|s| InfoPanelSource::Inventory {
+                selected_index: s.selected_index,
             })
     } else {
         None

@@ -8,7 +8,7 @@ use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
-    ItemGridFocusPanel, PriceDisplay,
+    ItemGridFocusPanel, ItemGridSelection, PriceDisplay,
 };
 use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 
@@ -16,25 +16,25 @@ use super::state::{MerchantModalRoot, MerchantPlayerGrid, MerchantStock, Merchan
 
 pub fn sync_merchant_stock_grid(
     stock: Res<MerchantStock>,
-    mut grids: Query<&mut ItemGrid, With<MerchantStockGrid>>,
+    mut grids: Query<(&mut ItemGrid, &mut ItemGridSelection), With<MerchantStockGrid>>,
 ) {
-    if let Ok(mut grid) = grids.single_mut() {
+    if let Ok((mut grid, mut selection)) = grids.single_mut() {
         grid.items = get_merchant_stock_entries(&stock);
-        grid.clamp_selection();
+        selection.clamp(grid.items.len());
     }
 }
 
 pub fn sync_merchant_player_grid(
     player: Query<&Inventory, (With<PlayerMarker>, Changed<Inventory>)>,
-    mut grids: Query<&mut ItemGrid, With<MerchantPlayerGrid>>,
+    mut grids: Query<(&mut ItemGrid, &mut ItemGridSelection), With<MerchantPlayerGrid>>,
 ) {
     let Ok(inventory) = player.single() else {
         return;
     };
 
-    if let Ok(mut grid) = grids.single_mut() {
+    if let Ok((mut grid, mut selection)) = grids.single_mut() {
         grid.items = ItemGridEntry::from_inventory(inventory);
-        grid.clamp_selection();
+        selection.clamp(grid.items.len());
     }
 }
 
@@ -81,18 +81,18 @@ pub fn spawn_merchant_modal_impl(
                         ItemGridFocusPanel(FocusPanel::MerchantStock),
                         ItemGrid {
                             items: stock_entries,
-                            selected_index: 0,
                             grid_size: 5,
                         },
+                        ItemGridSelection::default(),
                     ));
                     row.spawn((
                         MerchantPlayerGrid,
                         ItemGridFocusPanel(FocusPanel::PlayerInventory),
                         ItemGrid {
                             items: player_entries,
-                            selected_index: 0,
                             grid_size: 5,
                         },
+                        ItemGridSelection::default(),
                     ));
                     row.spawn(ItemDetailPane {
                         source: InfoPanelSource::Store { selected_index: 0 },

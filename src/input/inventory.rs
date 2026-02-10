@@ -6,25 +6,31 @@ use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::inventory_modal::render::get_backpack_items;
 use crate::ui::screens::inventory_modal::{BackpackGrid, EquipmentGrid};
-use crate::ui::widgets::ItemGrid;
+use crate::ui::widgets::{ItemGrid, ItemGridSelection};
 
 pub fn navigate_inventory_grid(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
-    mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
-    mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
+    mut equipment_grids: Query<
+        (&ItemGrid, &mut ItemGridSelection),
+        (With<EquipmentGrid>, Without<BackpackGrid>),
+    >,
+    mut backpack_grids: Query<
+        (&ItemGrid, &mut ItemGridSelection),
+        (With<BackpackGrid>, Without<EquipmentGrid>),
+    >,
 ) {
     let Some(focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
             if focus_state.is_focused(FocusPanel::EquipmentGrid) {
-                if let Ok(mut grid) = equipment_grids.single_mut() {
-                    grid.navigate(*direction);
+                if let Ok((grid, mut selection)) = equipment_grids.single_mut() {
+                    selection.navigate(*direction, grid.grid_size);
                 }
             } else if focus_state.is_focused(FocusPanel::BackpackGrid) {
-                if let Ok(mut grid) = backpack_grids.single_mut() {
-                    grid.navigate(*direction);
+                if let Ok((grid, mut selection)) = backpack_grids.single_mut() {
+                    selection.navigate(*direction, grid.grid_size);
                 }
             }
         }
@@ -35,8 +41,11 @@ pub fn toggle_equipment(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut player: Query<&mut Inventory, With<PlayerMarker>>,
-    equipment_grids: Query<&ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
-    backpack_grids: Query<&ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
+    equipment_grids: Query<&ItemGridSelection, (With<EquipmentGrid>, Without<BackpackGrid>)>,
+    backpack_grids: Query<
+        (&ItemGrid, &ItemGridSelection),
+        (With<BackpackGrid>, Without<EquipmentGrid>),
+    >,
 ) {
     let Some(focus_state) = focus_state else { return };
     let Ok(mut inventory) = player.single_mut() else {
@@ -51,10 +60,10 @@ pub fn toggle_equipment(
         let eq_focused = focus_state.is_focused(FocusPanel::EquipmentGrid);
 
         if eq_focused {
-            let Ok(equipment_grid) = equipment_grids.single() else {
+            let Ok(selection) = equipment_grids.single() else {
                 continue;
             };
-            let selected = equipment_grid.selected_index;
+            let selected = selection.selected_index;
             let equipped_slots: Vec<EquipmentSlot> = EquipmentSlot::all()
                 .iter()
                 .copied()
@@ -65,10 +74,10 @@ pub fn toggle_equipment(
                 let _ = inventory.unequip_item(slot);
             }
         } else {
-            let Ok(backpack_grid) = backpack_grids.single() else {
+            let Ok((_, selection)) = backpack_grids.single() else {
                 continue;
             };
-            let selected = backpack_grid.selected_index;
+            let selected = selection.selected_index;
             let backpack_items = get_backpack_items(&inventory);
 
             if let Some(inv_item) = backpack_items.get(selected) {

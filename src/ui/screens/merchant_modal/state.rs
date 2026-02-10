@@ -6,7 +6,7 @@ use crate::location::store::StoreItem;
 use crate::ui::focus::FocusPanel;
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
-use crate::ui::widgets::{DetailPaneContext, ItemGrid};
+use crate::ui::widgets::{DetailPaneContext, ItemGridSelection};
 use crate::ui::InfoPanelSource;
 
 /// Component marker for the merchant modal UI.
@@ -30,15 +30,15 @@ impl DetailPaneContext for MerchantDetailPane {
     const LEFT_FOCUS: FocusPanel = FocusPanel::MerchantStock;
     const RIGHT_FOCUS: FocusPanel = FocusPanel::PlayerInventory;
 
-    fn source_from_left_grid(grid: &ItemGrid) -> InfoPanelSource {
+    fn source_from_left_grid(selection: &ItemGridSelection) -> InfoPanelSource {
         InfoPanelSource::Store {
-            selected_index: grid.selected_index,
+            selected_index: selection.selected_index,
         }
     }
 
-    fn source_from_right_grid(grid: &ItemGrid) -> InfoPanelSource {
+    fn source_from_right_grid(selection: &ItemGridSelection) -> InfoPanelSource {
         InfoPanelSource::Inventory {
-            selected_index: grid.selected_index,
+            selected_index: selection.selected_index,
         }
     }
 }

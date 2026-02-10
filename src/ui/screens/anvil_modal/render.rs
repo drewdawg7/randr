@@ -9,7 +9,7 @@ use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
-    ItemGridFocusPanel, ItemStatsDisplay, OutlinedText,
+    ItemGridFocusPanel, ItemGridSelection, ItemStatsDisplay, OutlinedText,
 };
 use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 
@@ -64,18 +64,18 @@ pub fn spawn_anvil_modal_impl(
                         ItemGridFocusPanel(FocusPanel::RecipeGrid),
                         ItemGrid {
                             items: recipe_entries,
-                            selected_index: 0,
                             grid_size: 5,
                         },
+                        ItemGridSelection::default(),
                     ));
                     row.spawn((
                         AnvilPlayerGrid,
                         ItemGridFocusPanel(FocusPanel::AnvilInventory),
                         ItemGrid {
                             items: player_entries,
-                            selected_index: 0,
                             grid_size: 5,
                         },
+                        ItemGridSelection::default(),
                     ));
                     row.spawn(ItemDetailPane {
                         source: InfoPanelSource::Recipe { selected_index: 0 },

@@ -9,25 +9,31 @@ use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_registry::ModalCommands;
 use crate::ui::screens::anvil_modal::render::get_recipe_entries;
 use crate::ui::screens::anvil_modal::{ActiveAnvilEntity, AnvilModal, AnvilPlayerGrid, AnvilRecipeGrid};
-use crate::ui::widgets::{ItemGrid, ItemGridEntry};
+use crate::ui::widgets::{ItemGrid, ItemGridEntry, ItemGridSelection};
 
 pub fn navigate_anvil_grid(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
-    mut recipe_grids: Query<&mut ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
-    mut player_grids: Query<&mut ItemGrid, (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>)>,
+    mut recipe_grids: Query<
+        (&ItemGrid, &mut ItemGridSelection),
+        (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>),
+    >,
+    mut player_grids: Query<
+        (&ItemGrid, &mut ItemGridSelection),
+        (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>),
+    >,
 ) {
     let Some(focus_state) = focus_state else { return };
 
     for action in action_reader.read() {
         if let GameAction::Navigate(direction) = action {
             if focus_state.is_focused(FocusPanel::RecipeGrid) {
-                if let Ok(mut grid) = recipe_grids.single_mut() {
-                    grid.navigate(*direction);
+                if let Ok((grid, mut selection)) = recipe_grids.single_mut() {
+                    selection.navigate(*direction, grid.grid_size);
                 }
             } else if focus_state.is_focused(FocusPanel::AnvilInventory) {
-                if let Ok(mut grid) = player_grids.single_mut() {
-                    grid.navigate(*direction);
+                if let Ok((grid, mut selection)) = player_grids.single_mut() {
+                    selection.navigate(*direction, grid.grid_size);
                 }
             }
         }
@@ -42,8 +48,11 @@ pub fn craft_anvil_recipe(
     active_anvil: Option<Res<ActiveAnvilEntity>>,
     mut player: Query<&mut Inventory, With<PlayerMarker>>,
     mut anvil_state_query: Query<&mut AnvilCraftingState>,
-    recipe_grids: Query<&ItemGrid, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
-    mut player_grids: Query<&mut ItemGrid, (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>)>,
+    recipe_grids: Query<&ItemGridSelection, (With<AnvilRecipeGrid>, Without<AnvilPlayerGrid>)>,
+    mut player_grids: Query<
+        (&mut ItemGrid, &mut ItemGridSelection),
+        (With<AnvilPlayerGrid>, Without<AnvilRecipeGrid>),
+    >,
 ) {
     let Some(focus_state) = focus_state else { return };
     let Ok(mut inventory) = player.single_mut() else {
@@ -67,12 +76,12 @@ pub fn craft_anvil_recipe(
             continue;
         }
 
-        let Ok(recipe_grid) = recipe_grids.single() else {
+        let Ok(selection) = recipe_grids.single() else {
             continue;
         };
 
         let recipes = RecipeId::all_forging_recipes();
-        let Some(recipe_id) = recipes.get(recipe_grid.selected_index) else {
+        let Some(recipe_id) = recipes.get(selection.selected_index) else {
             continue;
         };
 
@@ -93,9 +102,9 @@ pub fn craft_anvil_recipe(
 
         anvil_state.selected_recipe = Some(*recipe_id);
 
-        if let Ok(mut grid) = player_grids.single_mut() {
+        if let Ok((mut grid, mut selection)) = player_grids.single_mut() {
             grid.items = ItemGridEntry::from_inventory(&inventory);
-            grid.clamp_selection();
+            selection.clamp(grid.items.len());
         }
 
         try_start_events.write(TryStartAnvilCrafting {

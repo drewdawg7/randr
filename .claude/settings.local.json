@@ -249,7 +249,9 @@
       "WebFetch(domain:bevyengine.org)",
       "Bash(cargo search:*)",
       "Skill(styleguide)",
-      "Skill(game-engine-patterns)"
+      "Skill(game-engine-patterns)",
+      "WebFetch(domain:joonaa.dev)",
+      "Bash(cargo tree:*)"
     ]
   },
   "enabledMcpjsonServers": [

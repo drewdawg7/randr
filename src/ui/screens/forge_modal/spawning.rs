@@ -8,7 +8,7 @@ use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
 use crate::ui::widgets::{
     spawn_outlined_quantity_text, ItemDetailPane, ItemGrid, ItemGridEntry, ItemGridFocusPanel,
-    OutlinedQuantityConfig,
+    ItemGridSelection, OutlinedQuantityConfig,
 };
 use crate::ui::InfoPanelSource;
 use crate::ui::{Modal, ModalBackground, SpawnModalExt};
@@ -61,9 +61,9 @@ pub fn spawn_forge_modal_impl(
                         ItemGridFocusPanel(FocusPanel::ForgeInventory),
                         ItemGrid {
                             items: player_entries,
-                            selected_index: 0,
                             grid_size: 5,
                         },
+                        ItemGridSelection::default(),
                     ));
                     row.spawn(ItemDetailPane {
                         source: InfoPanelSource::None,

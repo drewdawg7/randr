@@ -7,7 +7,7 @@ use crate::ui::modal_content_row;
 use crate::ui::InfoPanelSource;
 use crate::ui::widgets::{
     ItemDetailDisplay, ItemDetailPane, ItemDetailPaneContent, ItemGrid, ItemGridEntry,
-    ItemGridFocusPanel,
+    ItemGridFocusPanel, ItemGridSelection,
 };
 use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 
@@ -15,24 +15,30 @@ use super::state::{BackpackGrid, EquipmentGrid, InventoryModalRoot};
 
 pub fn sync_inventory_to_grids(
     player: Query<&Inventory, (With<PlayerMarker>, Changed<Inventory>)>,
-    mut equipment_grids: Query<&mut ItemGrid, (With<EquipmentGrid>, Without<BackpackGrid>)>,
-    mut backpack_grids: Query<&mut ItemGrid, (With<BackpackGrid>, Without<EquipmentGrid>)>,
+    mut equipment_grids: Query<
+        (&mut ItemGrid, &mut ItemGridSelection),
+        (With<EquipmentGrid>, Without<BackpackGrid>),
+    >,
+    mut backpack_grids: Query<
+        (&mut ItemGrid, &mut ItemGridSelection),
+        (With<BackpackGrid>, Without<EquipmentGrid>),
+    >,
 ) {
     let Ok(inventory) = player.single() else {
         return;
     };
 
-    if let Ok(mut eq_grid) = equipment_grids.single_mut() {
+    if let Ok((mut eq_grid, mut eq_selection)) = equipment_grids.single_mut() {
         eq_grid.items = get_equipment_items(inventory)
             .iter()
             .map(|inv_item| ItemGridEntry::from_inventory_item(inv_item))
             .collect();
-        eq_grid.clamp_selection();
+        eq_selection.clamp(eq_grid.items.len());
     }
 
-    if let Ok(mut bp_grid) = backpack_grids.single_mut() {
+    if let Ok((mut bp_grid, mut bp_selection)) = backpack_grids.single_mut() {
         bp_grid.items = ItemGridEntry::from_inventory(inventory);
-        bp_grid.clamp_selection();
+        bp_selection.clamp(bp_grid.items.len());
     }
 }
 
@@ -76,18 +82,18 @@ pub fn spawn_inventory_modal(commands: &mut Commands, inventory: &Inventory) {
                         ItemGridFocusPanel(FocusPanel::EquipmentGrid),
                         ItemGrid {
                             items: equipment_entries,
-                            selected_index: 0,
                             grid_size: 3,
                         },
+                        ItemGridSelection::default(),
                     ));
                     row.spawn((
                         BackpackGrid,
                         ItemGridFocusPanel(FocusPanel::BackpackGrid),
                         ItemGrid {
                             items: backpack_entries,
-                            selected_index: 0,
                             grid_size: 4,
                         },
+                        ItemGridSelection::default(),
                     ));
                     row.spawn(ItemDetailPane {
                         source: InfoPanelSource::Equipment { selected_index: 0 },

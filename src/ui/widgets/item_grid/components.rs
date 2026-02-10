@@ -32,7 +32,6 @@ impl ItemGridEntry {
 #[derive(Component)]
 pub struct ItemGrid {
     pub items: Vec<ItemGridEntry>,
-    pub selected_index: usize,
     pub grid_size: usize,
 }
 
@@ -40,23 +39,27 @@ impl Default for ItemGrid {
     fn default() -> Self {
         Self {
             items: Vec::new(),
-            selected_index: 0,
             grid_size: 4,
         }
     }
 }
 
-impl ItemGrid {
-    pub fn clamp_selection(&mut self) {
-        if self.items.is_empty() {
+#[derive(Component, Default)]
+pub struct ItemGridSelection {
+    pub selected_index: usize,
+}
+
+impl ItemGridSelection {
+    pub fn clamp(&mut self, item_count: usize) {
+        if item_count == 0 {
             self.selected_index = 0;
         } else {
-            self.selected_index = self.selected_index.min(self.items.len() - 1);
+            self.selected_index = self.selected_index.min(item_count - 1);
         }
     }
 
-    pub fn navigate(&mut self, direction: NavigationDirection) {
-        let gs = self.grid_size;
+    pub fn navigate(&mut self, direction: NavigationDirection, grid_size: usize) {
+        let gs = grid_size;
         let total_slots = gs * gs;
 
         let current = self.selected_index;

@@ -5,7 +5,7 @@ use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
-use crate::ui::widgets::{DetailPaneContext, ItemGrid};
+use crate::ui::widgets::{DetailPaneContext, ItemGridSelection};
 use crate::ui::InfoPanelSource;
 
 /// Marker component for the anvil modal root entity.
@@ -29,15 +29,15 @@ impl DetailPaneContext for AnvilDetailPane {
     const LEFT_FOCUS: FocusPanel = FocusPanel::RecipeGrid;
     const RIGHT_FOCUS: FocusPanel = FocusPanel::AnvilInventory;
 
-    fn source_from_left_grid(grid: &ItemGrid) -> InfoPanelSource {
+    fn source_from_left_grid(selection: &ItemGridSelection) -> InfoPanelSource {
         InfoPanelSource::Recipe {
-            selected_index: grid.selected_index,
+            selected_index: selection.selected_index,
         }
     }
 
-    fn source_from_right_grid(grid: &ItemGrid) -> InfoPanelSource {
+    fn source_from_right_grid(selection: &ItemGridSelection) -> InfoPanelSource {
         InfoPanelSource::Inventory {
-            selected_index: grid.selected_index,
+            selected_index: selection.selected_index,
         }
     }
 }

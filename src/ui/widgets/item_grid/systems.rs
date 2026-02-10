@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
 use super::cell::{GridCell, GridCellBundle, GridContainer};
-use super::components::{GridItemQuantityText, GridItemSprite, ItemGrid, ItemGridFocusPanel};
+use super::components::{
+    GridItemQuantityText, GridItemSprite, ItemGrid, ItemGridFocusPanel, ItemGridSelection,
+};
 use super::{CELL_SIZE, GAP, NINE_SLICE_INSET};
 use crate::assets::{GameFonts, GameSprites, GridSlotSlice, ShopBgSlice, SpriteSheetKey};
 use crate::ui::focus::FocusState;
@@ -17,15 +19,16 @@ pub fn on_add_item_grid(
     game_sprites: Res<GameSprites>,
     game_fonts: Res<GameFonts>,
     focus_state: Option<Res<FocusState>>,
-    item_grids: Query<(&ItemGrid, Option<&ItemGridFocusPanel>)>,
+    item_grids: Query<(&ItemGrid, Option<&ItemGridSelection>, Option<&ItemGridFocusPanel>)>,
 ) {
     let entity = trigger.entity;
-    let (item_grid, focus_panel) = item_grids.get(entity).ok().unzip();
-    let selected_index = item_grid.map(|g| g.selected_index).unwrap_or(0);
-    let grid_size = item_grid.map(|g| g.grid_size).unwrap_or(4);
+    let Ok((item_grid, selection, focus_panel)) = item_grids.get(entity) else {
+        return;
+    };
+    let selected_index = selection.map(|s| s.selected_index).unwrap_or(0);
+    let grid_size = item_grid.grid_size;
 
     let is_focused = focus_panel
-        .flatten()
         .zip(focus_state.as_ref())
         .map(|(panel, state)| state.is_focused(panel.0))
         .unwrap_or(false);
@@ -76,34 +79,32 @@ pub fn on_add_item_grid(
                         });
                     }
 
-                    if let Some(item_grid) = item_grid {
-                        if let Some(entry) = item_grid.items.get(i) {
-                            if let Some(icon_img) = game_sprites
-                                .get(entry.sprite_sheet_key)
-                                .and_then(|s| s.image_node(&entry.sprite_name))
-                            {
-                                cell.with_children(|cell_content| {
-                                    cell_content.spawn((
-                                        GridItemSprite,
-                                        Node {
-                                            width: Val::Px(ITEM_SPRITE_SIZE),
-                                            height: Val::Px(ITEM_SPRITE_SIZE),
-                                            ..default()
-                                        },
-                                        icon_img,
-                                    ));
+                    if let Some(entry) = item_grid.items.get(i) {
+                        if let Some(icon_img) = game_sprites
+                            .get(entry.sprite_sheet_key)
+                            .and_then(|s| s.image_node(&entry.sprite_name))
+                        {
+                            cell.with_children(|cell_content| {
+                                cell_content.spawn((
+                                    GridItemSprite,
+                                    Node {
+                                        width: Val::Px(ITEM_SPRITE_SIZE),
+                                        height: Val::Px(ITEM_SPRITE_SIZE),
+                                        ..default()
+                                    },
+                                    icon_img,
+                                ));
 
-                                    if entry.quantity > 1 {
-                                        spawn_outlined_quantity_text(
-                                            cell_content,
-                                            &game_fonts,
-                                            entry.quantity,
-                                            OutlinedQuantityConfig::default(),
-                                            GridItemQuantityText,
-                                        );
-                                    }
-                                });
-                            }
+                                if entry.quantity > 1 {
+                                    spawn_outlined_quantity_text(
+                                        cell_content,
+                                        &game_fonts,
+                                        entry.quantity,
+                                        OutlinedQuantityConfig::default(),
+                                        GridItemQuantityText,
+                                    );
+                                }
+                            });
                         }
                     }
                 }
@@ -180,12 +181,12 @@ pub fn update_grid_selector(
     mut commands: Commands,
     game_sprites: Res<GameSprites>,
     focus_state: Option<Res<FocusState>>,
-    item_grids: Query<(Entity, &ItemGrid, Option<&ItemGridFocusPanel>, &Children)>,
+    item_grids: Query<(Entity, &ItemGridSelection, Option<&ItemGridFocusPanel>, &Children)>,
     grid_containers: Query<&Children, With<GridContainer>>,
     grid_cells: Query<(Entity, &GridCell, Option<&Children>)>,
     selectors: Query<Entity, With<AnimatedSelector>>,
 ) {
-    for (grid_entity, item_grid, focus_panel, item_grid_children) in &item_grids {
+    for (grid_entity, selection, focus_panel, item_grid_children) in &item_grids {
         let is_focused = focus_panel
             .zip(focus_state.as_ref())
             .map(|(panel, state)| state.is_focused(panel.0))
@@ -220,7 +221,7 @@ pub fn update_grid_selector(
 
         for child in container_children.iter() {
             if let Ok((cell_entity, grid_cell, _)) = grid_cells.get(child) {
-                if grid_cell.index == item_grid.selected_index {
+                if grid_cell.index == selection.selected_index {
                     if commands.get_entity(cell_entity).is_err() {
                         break;
                     }

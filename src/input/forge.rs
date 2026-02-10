@@ -9,13 +9,13 @@ use crate::item::{ItemId, ItemType};
 use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::screens::forge_modal::{ActiveForgeEntity, ForgeModalState, ForgePlayerGrid, ForgeSlotIndex};
-use crate::ui::widgets::{ItemGrid, ItemGridEntry};
+use crate::ui::widgets::{ItemGrid, ItemGridEntry, ItemGridSelection};
 
 pub fn navigate_forge_ui(
     mut action_reader: MessageReader<GameAction>,
     focus_state: Option<Res<FocusState>>,
     mut modal_state: Option<ResMut<ForgeModalState>>,
-    mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
+    mut player_grids: Query<(&ItemGrid, &mut ItemGridSelection), With<ForgePlayerGrid>>,
 ) {
     let Some(focus_state) = focus_state else { return };
 
@@ -34,8 +34,8 @@ pub fn navigate_forge_ui(
                     }
                 }
             } else if focus_state.is_focused(FocusPanel::ForgeInventory) {
-                if let Ok(mut grid) = player_grids.single_mut() {
-                    grid.navigate(*direction);
+                if let Ok((grid, mut selection)) = player_grids.single_mut() {
+                    selection.navigate(*direction, grid.grid_size);
                 }
             }
         }
@@ -49,7 +49,7 @@ pub fn transfer_forge_items(
     active_forge: Option<Res<ActiveForgeEntity>>,
     mut player: Query<&mut Inventory, With<PlayerMarker>>,
     mut forge_state_query: Query<&mut ForgeCraftingState>,
-    mut player_grids: Query<&mut ItemGrid, With<ForgePlayerGrid>>,
+    mut player_grids: Query<(&mut ItemGrid, &mut ItemGridSelection), With<ForgePlayerGrid>>,
 ) {
     let Some(focus_state) = focus_state else { return };
     let Some(modal_state) = modal_state else { return };
@@ -71,9 +71,9 @@ pub fn transfer_forge_items(
         );
 
         if transfer_occurred {
-            if let Ok(mut grid) = player_grids.single_mut() {
+            if let Ok((mut grid, mut selection)) = player_grids.single_mut() {
                 grid.items = ItemGridEntry::from_inventory(&inventory);
-                grid.clamp_selection();
+                selection.clamp(grid.items.len());
             }
         }
     }
@@ -91,7 +91,7 @@ fn process_forge_select(
     entity: Entity,
     inventory: &mut Inventory,
     forge_state_query: &mut Query<&mut ForgeCraftingState>,
-    player_grids: &Query<&mut ItemGrid, With<ForgePlayerGrid>>,
+    player_grids: &Query<(&mut ItemGrid, &mut ItemGridSelection), With<ForgePlayerGrid>>,
 ) -> bool {
     let Ok(mut forge_state) = forge_state_query.get_mut(entity) else {
         return false;
@@ -121,7 +121,7 @@ fn process_forge_select(
     } else {
         let selected = player_grids
             .single()
-            .map(|g| g.selected_index)
+            .map(|(_, s)| s.selected_index)
             .unwrap_or(0);
 
         let inv_items = inventory.get_inventory_items();
