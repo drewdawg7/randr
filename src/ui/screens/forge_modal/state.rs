@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::inventory::Inventory;
+use crate::player::PlayerMarker;
 use crate::ui::focus::FocusState;
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
@@ -56,7 +58,9 @@ impl RegisteredModal for ForgeModal {
 
     fn spawn(world: &mut World) {
         world.insert_resource(ForgeModalState::default());
-        world.run_system_cached(do_spawn_forge_modal).ok();
+        if let Err(e) = world.run_system_cached(do_spawn_forge_modal) {
+            tracing::error!("Failed to spawn forge modal: {:?}", e);
+        }
     }
 
     fn cleanup(world: &mut World) {
@@ -70,16 +74,20 @@ fn do_spawn_forge_modal(
     commands: Commands,
     game_sprites: Res<crate::assets::GameSprites>,
     game_fonts: Res<crate::assets::GameFonts>,
-    inventory: Res<crate::inventory::Inventory>,
+    player_query: Query<&Inventory, With<PlayerMarker>>,
     forge_state_query: Query<&crate::crafting_station::ForgeCraftingState>,
     active_forge: Res<ActiveForgeEntity>,
     modal_state: Res<ForgeModalState>,
 ) {
+    let Ok(inventory) = player_query.single() else {
+        tracing::error!("No player inventory found for forge modal");
+        return;
+    };
     super::spawning::spawn_forge_modal_impl(
         commands,
         &game_sprites,
         &game_fonts,
-        &inventory,
+        inventory,
         &forge_state_query,
         &active_forge,
         &modal_state,

@@ -1,5 +1,7 @@
 use bevy::prelude::*;
 
+use crate::inventory::Inventory;
+use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_registry::RegisteredModal;
 use crate::ui::screens::modal::ModalType;
@@ -52,7 +54,9 @@ impl RegisteredModal for AnvilModal {
     const MODAL_TYPE: ModalType = ModalType::AnvilModal;
 
     fn spawn(world: &mut World) {
-        world.run_system_cached(do_spawn_anvil_modal).ok();
+        if let Err(e) = world.run_system_cached(do_spawn_anvil_modal) {
+            tracing::error!("Failed to spawn anvil modal: {:?}", e);
+        }
     }
 
     fn cleanup(world: &mut World) {
@@ -66,12 +70,16 @@ fn do_spawn_anvil_modal(
     commands: Commands,
     game_sprites: Res<crate::assets::GameSprites>,
     game_fonts: Res<crate::assets::GameFonts>,
-    inventory: Res<crate::inventory::Inventory>,
+    player_query: Query<&Inventory, With<PlayerMarker>>,
 ) {
+    let Ok(inventory) = player_query.single() else {
+        tracing::error!("No player inventory found for anvil modal");
+        return;
+    };
     super::render::spawn_anvil_modal_impl(
         commands,
         &game_sprites,
         &game_fonts,
-        &inventory,
+        inventory,
     );
 }
