@@ -65,6 +65,7 @@
 - Read user instructions carefully before starting work.
 - Only do what the user explicitly asks. Do not take additional steps beyond the request. If asked to create a GitHub issue, create the issue and stop - don't start implementation, create branches, or take other actions.
 - When corrected, don't immediately take more actions to "fix" things. Stop and wait for instructions.
+- ALWAYS read lessons.md before starting any work - planning, exploration, or implementation. This is explicitly stated in CLAUDE.md.
 
 ## Comments
 - Do not add comments to code. The styleguide explicitly forbids unnecessary comments.
@@ -84,6 +85,7 @@
 - Use observers for reactive logic (e.g., `OnAdd<Component>` to spawn related entities).
 - Input systems should only set state/components, not perform game logic.
 - Don't couple input handling to game systems - use components/observers to decouple.
+- Use `With<T>` filter instead of querying a component you don't need to read. Avoids unused variables.
 
 ## Constants and Values
 - A constant is still a magic number if it's not derived from anything meaningful.

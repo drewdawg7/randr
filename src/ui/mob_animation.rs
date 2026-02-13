@@ -370,12 +370,9 @@ fn load_mob_sprite_sheets(
     info!("Loaded mob sprite sheets for all mobs");
 }
 
-/// Marker for entities currently playing a hurt animation.
 #[derive(Component)]
 pub struct PlayingHurtAnimation;
 
-/// Triggers hurt animation when a mob takes damage.
-/// `Without<PlayingHurtAnimation>` prevents restarting mid-animation.
 fn trigger_hurt_animation(
     mut commands: Commands,
     mut events: MessageReader<DamageEntity>,
@@ -398,13 +395,12 @@ fn trigger_hurt_animation(
     }
 }
 
-/// Reverts mob to idle animation after hurt animation completes.
 fn revert_hurt_animation(
     mut commands: Commands,
-    mut query: Query<(Entity, &mut SpriteAnimation, &PlayingHurtAnimation, &MobMarker)>,
+    mut query: Query<(Entity, &mut SpriteAnimation, &MobMarker), With<PlayingHurtAnimation>>,
     mob_sheets: Res<MobSpriteSheets>,
 ) {
-    for (entity, mut animation, _, mob_marker) in &mut query {
+    for (entity, mut animation, mob_marker) in &mut query {
         let animation_finished = !animation.looping && animation.current_frame >= animation.last_frame;
         if !animation_finished {
             continue;
