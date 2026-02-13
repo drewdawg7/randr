@@ -4,7 +4,7 @@ use bevy::prelude::Vec2;
 pub const DEFAULT_TILE_SIZE: f32 = 32.0;
 
 /// Multiplier for interaction radius relative to tile size.
-pub const INTERACTION_RADIUS_MULTIPLIER: f32 = 1.5;
+pub const INTERACTION_RADIUS_MULTIPLIER: f32 = 0.3;
 pub const CHEST_SPRITE_NAME: &str = "Slice_1";
 
 /// Configuration for creating entity colliders from sprite dimensions.
