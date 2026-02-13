@@ -34,6 +34,11 @@
 - Always include logging/instrumentation in fix plans - never propose a fix without visibility into what's happening.
 - Don't try to run the game - you can't interact with it. Ask the user to run and report back.
 
+## Tracing Code
+- When asked to trace where something comes from, READ THE CODEBASE directly. Don't use git log, git blame, or search for random files.
+- Follow imports and function calls to find the source of data.
+- Don't brute force search - trace the actual code path.
+
 ## Planning
 - Understand the actual goal before proposing solutions. Don't just revert to old patterns - find a forward path that achieves the user's intent.
 - When a refactor breaks something, the fix should align with the refactor's goals, not undo them.
