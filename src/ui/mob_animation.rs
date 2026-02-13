@@ -5,9 +5,12 @@
 
 use bevy::prelude::*;
 
+use crate::combat::events::DamageEntity;
+use crate::mob::components::MobMarker;
 use crate::mob::MobId;
+use crate::states::AppState;
 
-use super::animation::AnimationConfig;
+use super::animation::{AnimationConfig, SpriteAnimation};
 use super::sprite_marker::{SpriteData, SpriteMarker, SpriteMarkerAppExt};
 
 /// Plugin for mob sprite animations.
@@ -17,6 +20,15 @@ impl Plugin for MobAnimationPlugin {
     fn build(&self, app: &mut App) {
         app.init_resource::<MobSpriteSheets>()
             .add_systems(PreStartup, load_mob_sprite_sheets)
+            .add_systems(
+                Update,
+                (
+                    trigger_hurt_animation.run_if(on_message::<DamageEntity>),
+                    revert_hurt_animation,
+                )
+                    .chain()
+                    .run_if(in_state(AppState::Dungeon)),
+            )
             .register_sprite_marker::<DungeonMobSprite>();
     }
 }
@@ -27,6 +39,7 @@ pub struct MobSpriteSheet {
     pub texture: Handle<Image>,
     pub layout: Handle<TextureAtlasLayout>,
     pub animation: AnimationConfig,
+    pub hurt_animation: Option<AnimationConfig>,
     pub death_animation: Option<AnimationConfig>,
     /// Frame dimensions in pixels (used for aspect ratio in rendering).
     pub frame_size: UVec2,
@@ -92,6 +105,13 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: Some(AnimationConfig {
+                first_frame: 18,
+                last_frame: 21,
+                frame_duration: 0.1,
+                looping: false,
+                synchronized: false,
+            }),
             death_animation: Some(AnimationConfig {
                 first_frame: 30,
                 last_frame: 33,
@@ -119,6 +139,13 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: Some(AnimationConfig {
+                first_frame: 24,
+                last_frame: 27,
+                frame_duration: 0.1,
+                looping: false,
+                synchronized: false,
+            }),
             death_animation: Some(AnimationConfig {
                 first_frame: 40,
                 last_frame: 44,
@@ -146,6 +173,7 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: None,
             death_animation: None,
             frame_size: UVec2::new(64, 32),
         },
@@ -167,6 +195,7 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: None,
             death_animation: Some(AnimationConfig {
                 first_frame: 98,
                 last_frame: 103,
@@ -194,6 +223,7 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: None,
             death_animation: None,
             frame_size: UVec2::splat(32),
         },
@@ -216,6 +246,13 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: Some(AnimationConfig {
+                first_frame: 18,
+                last_frame: 21,
+                frame_duration: 0.1,
+                looping: false,
+                synchronized: false,
+            }),
             death_animation: Some(AnimationConfig {
                 first_frame: 36,
                 last_frame: 41,
@@ -244,6 +281,13 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: Some(AnimationConfig {
+                first_frame: 18,
+                last_frame: 21,
+                frame_duration: 0.1,
+                looping: false,
+                synchronized: false,
+            }),
             death_animation: Some(AnimationConfig {
                 first_frame: 30,
                 last_frame: 33,
@@ -271,6 +315,13 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: Some(AnimationConfig {
+                first_frame: 18,
+                last_frame: 21,
+                frame_duration: 0.1,
+                looping: false,
+                synchronized: false,
+            }),
             death_animation: Some(AnimationConfig {
                 first_frame: 30,
                 last_frame: 33,
@@ -298,6 +349,13 @@ fn load_mob_sprite_sheets(
                 looping: true,
                 synchronized: true,
             },
+            hurt_animation: Some(AnimationConfig {
+                first_frame: 21,
+                last_frame: 24,
+                frame_duration: 0.1,
+                looping: false,
+                synchronized: false,
+            }),
             death_animation: Some(AnimationConfig {
                 first_frame: 42,
                 last_frame: 48,
@@ -310,4 +368,51 @@ fn load_mob_sprite_sheets(
     );
 
     info!("Loaded mob sprite sheets for all mobs");
+}
+
+/// Marker for entities currently playing a hurt animation.
+#[derive(Component)]
+pub struct PlayingHurtAnimation;
+
+/// Triggers hurt animation when a mob takes damage.
+/// `Without<PlayingHurtAnimation>` prevents restarting mid-animation.
+fn trigger_hurt_animation(
+    mut commands: Commands,
+    mut events: MessageReader<DamageEntity>,
+    mut mobs: Query<(&MobMarker, &mut SpriteAnimation), Without<PlayingHurtAnimation>>,
+    mob_sheets: Res<MobSpriteSheets>,
+) {
+    for event in events.read() {
+        let Ok((marker, mut animation)) = mobs.get_mut(event.target) else {
+            continue;
+        };
+        let Some(sheet) = mob_sheets.get(marker.0) else {
+            continue;
+        };
+        let Some(hurt_config) = &sheet.hurt_animation else {
+            continue;
+        };
+
+        animation.apply_config(hurt_config);
+        commands.entity(event.target).insert(PlayingHurtAnimation);
+    }
+}
+
+/// Reverts mob to idle animation after hurt animation completes.
+fn revert_hurt_animation(
+    mut commands: Commands,
+    mut query: Query<(Entity, &mut SpriteAnimation, &PlayingHurtAnimation, &MobMarker)>,
+    mob_sheets: Res<MobSpriteSheets>,
+) {
+    for (entity, mut animation, _, mob_marker) in &mut query {
+        let animation_finished = !animation.looping && animation.current_frame >= animation.last_frame;
+        if !animation_finished {
+            continue;
+        }
+
+        if let Some(sheet) = mob_sheets.get(mob_marker.0) {
+            animation.apply_config(&sheet.animation);
+        }
+        commands.entity(entity).remove::<PlayingHurtAnimation>();
+    }
 }
