@@ -35,6 +35,7 @@ end
 
 local new_sprite = Sprite(FRAME_SIZE, FRAME_SIZE, original_image.colorMode)
 local frame_num = 0
+local tag_ranges = {}
 
 for i, row in ipairs(sorted_rows) do
     local tag_start = frame_num + 1
@@ -55,11 +56,15 @@ for i, row in ipairs(sorted_rows) do
         end
     end
     if frame_num >= tag_start then
-        local tag = new_sprite:newTag(tag_start, frame_num)
-        tag.name = "animation_" .. i
-        print(string.format("  %s: frames %d-%d (%d frames)",
-            tag.name, tag_start, frame_num, frame_num - tag_start + 1))
+        table.insert(tag_ranges, { from = tag_start, to = frame_num, index = i })
     end
+end
+
+for _, r in ipairs(tag_ranges) do
+    local tag = new_sprite:newTag(r.from, r.to)
+    tag.name = "animation_" .. r.index
+    print(string.format("  %s: frames %d-%d (%d frames)",
+        tag.name, r.from, r.to, r.to - r.from + 1))
 end
 
 new_sprite:saveAs(sprite.filename)
