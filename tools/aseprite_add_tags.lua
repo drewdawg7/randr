@@ -1,61 +1,67 @@
 local sprite = app.activeSprite
 if not sprite then
-    print("ERROR: No active sprite. Open a file via CLI: aseprite -b file.aseprite --script-param cols=N --script this_script.lua")
+    print("ERROR: No active sprite")
     return
 end
 
-local cols = tonumber(app.params["cols"])
-if not cols or cols < 1 then
-    print("ERROR: Missing or invalid 'cols' parameter. Pass --script-param cols=N")
-    return
+local FRAME_SIZE = 32
+local original_image = sprite.cels[1].image:clone()
+
+local rows = {}
+for _, slice in ipairs(sprite.slices) do
+    local row = math.floor(slice.bounds.y / FRAME_SIZE)
+    local col = math.floor(slice.bounds.x / FRAME_SIZE)
+    if not rows[row] then rows[row] = {} end
+    table.insert(rows[row], { col = col, bounds = slice.bounds })
 end
 
-local total_frames = #sprite.frames
-local num_rows = math.ceil(total_frames / cols)
+local sorted_rows = {}
+for row_idx, slices in pairs(rows) do
+    table.sort(slices, function(a, b) return a.col < b.col end)
+    table.insert(sorted_rows, { index = row_idx, slices = slices })
+end
+table.sort(sorted_rows, function(a, b) return a.index < b.index end)
 
-local nonempty = {}
-for _, cel in ipairs(sprite.cels) do
-    local fn = cel.frameNumber
-    if not nonempty[fn] and cel.image then
-        for pixel in cel.image:pixels() do
-            if app.pixelColor.rgbaA(pixel()) > 0 then
-                nonempty[fn] = true
-                break
+local function has_content(image, x, y)
+    for py = y, y + FRAME_SIZE - 1 do
+        for px = x, x + FRAME_SIZE - 1 do
+            if app.pixelColor.rgbaA(image:getPixel(px, py)) > 0 then
+                return true
             end
         end
     end
+    return false
 end
 
-while #sprite.tags > 0 do
-    sprite:deleteTag(sprite.tags[1])
-end
+local new_sprite = Sprite(FRAME_SIZE, FRAME_SIZE, original_image.colorMode)
+local frame_num = 0
 
-local tags_created = 0
-for row = 1, num_rows do
-    local row_start = (row - 1) * cols + 1
-    local row_end = math.min(row * cols, total_frames)
-
-    local first_nonempty = nil
-    local last_nonempty = nil
-    for f = row_start, row_end do
-        if nonempty[f] then
-            if not first_nonempty then
-                first_nonempty = f
+for i, row in ipairs(sorted_rows) do
+    local tag_start = frame_num + 1
+    for _, slice in ipairs(row.slices) do
+        if not has_content(original_image, slice.bounds.x, slice.bounds.y) then
+            break
+        end
+        frame_num = frame_num + 1
+        if frame_num > 1 then
+            new_sprite:newEmptyFrame()
+        end
+        local cel = new_sprite:newCel(new_sprite.layers[1], frame_num)
+        for py = 0, FRAME_SIZE - 1 do
+            for px = 0, FRAME_SIZE - 1 do
+                cel.image:drawPixel(px, py,
+                    original_image:getPixel(slice.bounds.x + px, slice.bounds.y + py))
             end
-            last_nonempty = f
         end
     end
-
-    if first_nonempty and last_nonempty then
-        local tag = sprite:newTag(first_nonempty, last_nonempty)
-        tag.name = "animation_" .. row
-        tags_created = tags_created + 1
+    if frame_num >= tag_start then
+        local tag = new_sprite:newTag(tag_start, frame_num)
+        tag.name = "animation_" .. i
         print(string.format("  %s: frames %d-%d (%d frames)",
-            tag.name, first_nonempty, last_nonempty, last_nonempty - first_nonempty + 1))
-    else
-        print(string.format("  Row %d: skipped (empty)", row))
+            tag.name, tag_start, frame_num, frame_num - tag_start + 1))
     end
 end
 
-sprite:saveAs(sprite.filename)
-print(string.format("\nDone: %d tags added to %s", tags_created, sprite.filename))
+new_sprite:saveAs(sprite.filename)
+sprite:close()
+print(string.format("\nDone: %s -> %d frames", new_sprite.filename, frame_num))
