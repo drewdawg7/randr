@@ -137,6 +137,8 @@
 - When evaluating solutions, search for existing Bevy crates first before designing custom implementations.
 - When adopting a crate, use it directly. Don't create wrapper abstractions or registry patterns that just duplicate the crate's functionality. Simplify by removing existing code, not by wrapping new code in old patterns.
 - When an issue says existing implementations are being REPLACED, do NOT explore or reference those old implementations. They are the wrong pattern. Only follow the issue's target pattern.
+- Don't hardcode asset paths or slice names directly in rendering functions. Store asset handles in resources. Don't pass them as function parameters — use Bevy's resource system.
+- When data is already embedded in the asset file (e.g., 9-slice center rects in .aseprite slices), let the crate read it. Don't re-specify it in code — that defeats the purpose of using the crate.
 
 ## GitHub Issues
 - NEVER create checklist-style issues. Checklists are not actionable.

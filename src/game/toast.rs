@@ -1,4 +1,5 @@
 use bevy::prelude::*;
+use bevy_aseprite_ultra::prelude::*;
 use std::time::Duration;
 
 #[derive(Resource, Clone, Debug)]
@@ -24,42 +25,10 @@ pub enum ToastType {
     Warning,
 }
 
-impl ToastType {
-    pub fn icon(&self) -> &'static str {
-        match self {
-            ToastType::Error => "[!]",
-            ToastType::Success => "[+]",
-            ToastType::Info => "[i]",
-            ToastType::Warning => "[?]",
-        }
-    }
-
-    pub fn label(&self) -> &'static str {
-        match self {
-            ToastType::Error => "ERROR",
-            ToastType::Success => "SUCCESS",
-            ToastType::Info => "INFO",
-            ToastType::Warning => "WARNING",
-        }
-    }
-
-    pub fn color(&self) -> Color {
-        match self {
-            ToastType::Error => Color::srgb(0.9, 0.2, 0.2),
-            ToastType::Success => Color::srgb(0.2, 0.8, 0.2),
-            ToastType::Info => Color::srgb(0.2, 0.5, 0.9),
-            ToastType::Warning => Color::srgb(0.9, 0.7, 0.2),
-        }
-    }
-
-    pub fn bg_color(&self) -> Color {
-        match self {
-            ToastType::Error => Color::srgb(0.3, 0.1, 0.1),
-            ToastType::Success => Color::srgb(0.1, 0.3, 0.1),
-            ToastType::Info => Color::srgb(0.1, 0.2, 0.3),
-            ToastType::Warning => Color::srgb(0.3, 0.25, 0.1),
-        }
-    }
+#[derive(Resource)]
+struct ToastSprite {
+    aseprite: Handle<Aseprite>,
+    slice_name: String,
 }
 
 #[derive(Debug, Clone)]
@@ -167,6 +136,7 @@ impl Plugin for ToastPlugin {
         app.init_resource::<ToastConfig>()
             .init_resource::<ToastQueue>()
             .add_message::<ShowToast>()
+            .add_systems(PreStartup, load_toast_sprite)
             .add_systems(Startup, spawn_toast_container)
             .add_systems(
                 Update,
@@ -178,6 +148,13 @@ impl Plugin for ToastPlugin {
                     .chain(),
             );
     }
+}
+
+fn load_toast_sprite(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.insert_resource(ToastSprite {
+        aseprite: asset_server.load("sprites/toast_1.aseprite"),
+        slice_name: "Slice 1".into(),
+    });
 }
 
 fn spawn_toast_container(mut commands: Commands) {
@@ -215,6 +192,7 @@ fn cleanup_toasts(mut toast_queue: ResMut<ToastQueue>, time: Res<Time>) {
 fn update_toast_ui(
     mut commands: Commands,
     toast_queue: Res<ToastQueue>,
+    toast_sprite: Res<ToastSprite>,
     container_query: Query<Entity, With<ToastContainer>>,
     toast_elements: Query<Entity, With<ToastElement>>,
 ) {
@@ -227,44 +205,32 @@ fn update_toast_ui(
         commands.entity(entity).despawn();
     }
 
-    let toasts = toast_queue.toasts();
-    for (index, toast) in toasts.iter().enumerate() {
-        spawn_toast_element(&mut commands, container, index, toast);
-    }
-}
-
-fn spawn_toast_element(commands: &mut Commands, parent: Entity, index: usize, toast: &Toast) {
-    let toast_type = toast.toast_type;
-    let color = toast_type.color();
-    let bg_color = toast_type.bg_color();
-
-    commands.entity(parent).with_children(|parent| {
-        parent
-            .spawn((
-                ToastElement { index },
-                Node {
-                    width: Val::Px(350.0),
-                    padding: UiRect::all(Val::Px(12.0)),
-                    border: UiRect::all(Val::Px(2.0)),
-                    ..default()
-                },
-                BackgroundColor(bg_color),
-                BorderColor::all(color),
-            ))
-            .with_children(|parent| {
-                parent.spawn((
-                    Text::new(format!(
-                        "{} {}: {}",
-                        toast_type.icon(),
-                        toast_type.label(),
-                        &toast.message
-                    )),
-                    TextFont {
-                        font_size: 16.0,
+    for (index, toast) in toast_queue.toasts().iter().enumerate() {
+        commands.entity(container).with_children(|parent| {
+            parent
+                .spawn((
+                    ToastElement { index },
+                    Node {
+                        width: Val::Px(350.0),
+                        padding: UiRect::all(Val::Px(12.0)),
                         ..default()
                     },
-                    TextColor(Color::srgb(0.95, 0.95, 0.95)),
-                ));
-            });
-    });
+                    ImageNode::default(),
+                    AseSlice {
+                        name: toast_sprite.slice_name.clone().into(),
+                        aseprite: toast_sprite.aseprite.clone(),
+                    },
+                ))
+                .with_children(|parent| {
+                    parent.spawn((
+                        Text::new(toast.message.clone()),
+                        TextFont {
+                            font_size: 16.0,
+                            ..default()
+                        },
+                        TextColor(Color::srgb(0.95, 0.95, 0.95)),
+                    ));
+                });
+        });
+    }
 }
