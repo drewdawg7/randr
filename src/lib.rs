@@ -13,6 +13,7 @@ pub mod player;
 pub mod ui;
 pub mod entities;
 pub mod combat;
+pub mod data;
 pub mod dungeon;
 pub mod item;
 pub mod registry;

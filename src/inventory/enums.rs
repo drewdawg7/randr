@@ -1,4 +1,6 @@
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+use serde::Deserialize;
+
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 pub enum EquipmentSlot {
     Weapon,
     OffHand,

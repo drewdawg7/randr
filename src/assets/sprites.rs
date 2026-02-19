@@ -5,7 +5,7 @@ use bevy::{
 use serde::Deserialize;
 use std::collections::HashMap;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, strum::EnumIter)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, strum::EnumIter, Deserialize)]
 pub enum SpriteSheetKey {
     UiAll,
     IconItems,

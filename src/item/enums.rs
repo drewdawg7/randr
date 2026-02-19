@@ -1,5 +1,6 @@
 use bevy::prelude::Color;
 use rand::Rng;
+use serde::Deserialize;
 
 use crate::skills::blacksmith_quality_bonus;
 use crate::stats::StatSheet;
@@ -10,7 +11,7 @@ use crate::stats::StatSheet;
 // Item Type Hierarchy
 // ─────────────────────────────────────────────────────────────────────────────
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 pub enum ItemType {
     Equipment(EquipmentType),
     Material(MaterialType),
@@ -18,7 +19,7 @@ pub enum ItemType {
     QuestItem,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 pub enum EquipmentType {
     Weapon,
     Shield,
@@ -27,7 +28,7 @@ pub enum EquipmentType {
     Armor(crate::inventory::EquipmentSlot),
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 pub enum MaterialType {
     Ore,
     Fuel,
@@ -36,14 +37,14 @@ pub enum MaterialType {
     UpgradeStone,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 pub enum ConsumableType {
     Potion,
     Food,
     Scroll,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 pub enum ToolKind {
     Pickaxe,
 }
@@ -168,7 +169,7 @@ pub struct UpgradeResult {
     pub stat_increases: StatSheet,
 }
 
-#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash)]
+#[derive(Debug, Copy, Clone, Eq, PartialEq, PartialOrd, Ord, Hash, Deserialize)]
 pub enum ItemQuality {
     Poor,
     Normal,

@@ -1,7 +1,7 @@
 use std::collections::HashMap;
 
 use bevy::prelude::*;
-
+use serde::Deserialize;
 
 #[derive(Resource, Component, Debug, Clone, PartialEq, Eq)]
 pub struct StatSheet {
@@ -98,7 +98,7 @@ impl StatInstance {
 
 }
 
-#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Debug, Copy, Clone, Hash, Eq, PartialEq, Deserialize)]
 pub enum StatType {
     Health,
     Attack,

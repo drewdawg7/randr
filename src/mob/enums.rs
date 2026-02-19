@@ -1,6 +1,6 @@
-// MobId is now defined in definitions.rs via macro
+use serde::Deserialize;
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
 pub enum MobQuality {
     Normal,
     Boss,
