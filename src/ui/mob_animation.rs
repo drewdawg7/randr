@@ -49,31 +49,65 @@ impl AseMobSheets {
     }
 }
 
-const MOB_FRAME_SIZE: UVec2 = UVec2::splat(32);
-
-const MOB_SHEET_DEFS: [(MobId, &str, &str, Option<&str>, Option<&str>); 7] = [
-    (MobId::Goblin,        "goblin",         "a_1", Some("a_4"), Some("a_6")),
-    (MobId::Slime,         "slime",          "a_1", Some("a_4"), None),
-    (MobId::Merchant,      "merchant",       "a_1", None,        None),
-    (MobId::DwarfDefender, "dwarf_defender", "a_1", Some("a_4"), Some("a_7")),
-    (MobId::DwarfWarrior,  "dwarf_warrior",  "a_1", Some("a_4"), Some("a_6")),
-    (MobId::DwarfMiner,    "dwarf_miner",    "a_1", Some("a_4"), Some("a_6")),
-    (MobId::DwarfKing,     "dwarf_king",     "a_1", Some("a_4"), Some("a_7")),
-];
-
 fn load_mob_sprite_sheets(
     asset_server: Res<AssetServer>,
     mut ase_sheets: ResMut<AseMobSheets>,
 ) {
-    for (mob_id, file, idle_tag, hurt_tag, death_tag) in MOB_SHEET_DEFS {
-        ase_sheets.insert(mob_id, AseMobSheet {
-            aseprite: asset_server.load(format!("sprites/mobs/{file}.aseprite")),
-            idle_tag,
-            hurt_tag,
-            death_tag,
-            frame_size: MOB_FRAME_SIZE,
-        });
-    }
+    ase_sheets.insert(MobId::Goblin, AseMobSheet {
+        aseprite: asset_server.load("sprites/mobs/goblin.aseprite"),
+        idle_tag: "a_1",
+        hurt_tag: Some("a_4"),
+        death_tag: Some("a_6"),
+        frame_size: UVec2::splat(32),
+    });
+
+    ase_sheets.insert(MobId::Slime, AseMobSheet {
+        aseprite: asset_server.load("sprites/mobs/slime.aseprite"),
+        idle_tag: "a_1",
+        hurt_tag: Some("a_4"),
+        death_tag: None,
+        frame_size: UVec2::splat(32),
+    });
+
+    ase_sheets.insert(MobId::Merchant, AseMobSheet {
+        aseprite: asset_server.load("sprites/mobs/merchant.aseprite"),
+        idle_tag: "idle",
+        hurt_tag: Some("damage"),
+        death_tag: Some("death"),
+        frame_size: UVec2::splat(32),
+    });
+
+    ase_sheets.insert(MobId::DwarfDefender, AseMobSheet {
+        aseprite: asset_server.load("sprites/mobs/dwarf_defender.aseprite"),
+        idle_tag: "a_1",
+        hurt_tag: Some("a_4"),
+        death_tag: Some("a_7"),
+        frame_size: UVec2::splat(32),
+    });
+
+    ase_sheets.insert(MobId::DwarfWarrior, AseMobSheet {
+        aseprite: asset_server.load("sprites/mobs/dwarf_warrior.aseprite"),
+        idle_tag: "a_1",
+        hurt_tag: Some("a_4"),
+        death_tag: Some("a_6"),
+        frame_size: UVec2::splat(32),
+    });
+
+    ase_sheets.insert(MobId::DwarfMiner, AseMobSheet {
+        aseprite: asset_server.load("sprites/mobs/dwarf_miner.aseprite"),
+        idle_tag: "a_1",
+        hurt_tag: Some("a_4"),
+        death_tag: Some("a_6"),
+        frame_size: UVec2::splat(32),
+    });
+
+    ase_sheets.insert(MobId::DwarfKing, AseMobSheet {
+        aseprite: asset_server.load("sprites/mobs/dwarf_king.aseprite"),
+        idle_tag: "a_1",
+        hurt_tag: Some("a_4"),
+        death_tag: Some("a_7"),
+        frame_size: UVec2::splat(32),
+    });
 }
 
 #[derive(Component)]
