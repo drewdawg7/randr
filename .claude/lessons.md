@@ -115,6 +115,10 @@
 ## Aseprite Scripting
 - The `aseprite_add_tags.lua` script is DESTRUCTIVE — it overwrites the source file. ALWAYS copy source files from Downloads/aseprite_sprites first, then run the script on the copies. Never run on originals.
 - When the user says "convert files from X to Y", the workflow is: copy from X, then convert. Don't skip the copy step.
+- When copying multiple files from a source, verify ALL files were copied — don't assume any are "already correct" without checking file size/integrity.
+- Source filenames in Downloads don't match destination names (e.g., MiniNobleMan → merchant, MiniDwarfShieldbreaker → dwarf_defender). Always refer to the issue's filename mapping.
+- `aseprite -b --list-tags` can return empty for valid multi-layer files. Don't trust CLI output alone — check file size and compare against originals.
+- Some aseprite files already have proper tags (e.g., merchant has idle/walk/jump/damage/death) and don't need the conversion script. Check before converting.
 - Aseprite tag names must be short (~4 chars max like "a_1") or the timeline display breaks with staggering/nesting artifacts.
 - When creating tags programmatically, create ALL frames first, THEN add all tags in a separate pass. Aseprite auto-extends existing tags when new frames are added after them.
 - When scanning sprite sheet rows for content, don't break at the first empty cell — scan the entire row and include up to the last non-empty cell (animations can have gaps).
