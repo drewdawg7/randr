@@ -18,7 +18,8 @@ impl Plugin for MobAnimationPlugin {
                 Update,
                 (
                     trigger_hurt_animation.run_if(on_message::<DamageEntity>),
-                    revert_hurt_animation,
+                    revert_hurt_animation
+                        .run_if(any_with_component::<PlayingHurtAnimation>),
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon)),
@@ -131,7 +132,7 @@ fn trigger_hurt_animation(
         };
 
         ase_anim.animation = Animation::tag(hurt_tag)
-            .with_repeat(AnimationRepeat::Count(1))
+            .with_repeat(AnimationRepeat::Count(0))
             .with_then(sheet.idle_tag, AnimationRepeat::Loop);
         commands.entity(event.target).insert(PlayingHurtAnimation);
     }
