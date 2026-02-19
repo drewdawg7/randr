@@ -1,11 +1,12 @@
 use bevy::prelude::*;
 use tracing::instrument;
 
-use super::events::{DealDamage, EntityDied, PlayerAttackMob, VictoryAchieved};
+use super::events::{DealDamage, EntityDied, PlayerAttackMob};
 use super::system::{
     apply_victory_rewards_direct, entity_attacks_player, player_attacks_entity,
     player_effective_magicfind, process_player_defeat,
 };
+
 use crate::entities::Progression;
 use crate::inventory::Inventory;
 use crate::loot::collect_loot_drops;
@@ -31,7 +32,6 @@ impl Plugin for CombatPlugin {
         app.add_message::<PlayerAttackMob>()
             .add_message::<DealDamage>()
             .add_message::<EntityDied>()
-            .add_message::<VictoryAchieved>()
             .add_systems(
                 Update,
                 (
@@ -113,7 +113,6 @@ fn handle_mob_death(
     mut events: MessageReader<EntityDied>,
     mut mob_defeated_events: MessageWriter<MobDefeated>,
     mut skill_xp_events: MessageWriter<SkillXpGained>,
-    mut victory_events: MessageWriter<VictoryAchieved>,
     mut player: Query<
         (&mut StatSheet, &mut Inventory, &mut PlayerGold, &mut Progression),
         With<PlayerMarker>,
@@ -147,12 +146,11 @@ fn handle_mob_death(
         death_processed.0 = true;
 
         let mob_id = mob_marker.0;
-        let mob_name = mob_id.spec().name.clone();
 
         let magic_find = player_effective_magicfind(&stats, &inventory);
         let loot_drops = loot_table.0.roll_drops(magic_find);
 
-        let rewards = apply_victory_rewards_direct(
+        apply_victory_rewards_direct(
             &mut stats,
             &inventory,
             &mut gold,
@@ -171,14 +169,6 @@ fn handle_mob_death(
         });
 
         commands.entity(event.entity).insert(DyingMob);
-
-        victory_events.write(VictoryAchieved {
-            mob_id,
-            mob_name,
-            gold_gained: rewards.gold_gained,
-            xp_gained: rewards.xp_gained,
-            loot_drops,
-        });
 
         commands.remove_resource::<ActiveCombat>();
     }

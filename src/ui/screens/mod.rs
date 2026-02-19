@@ -9,7 +9,6 @@ pub mod merchant_modal;
 pub mod modal;
 pub mod monster_compendium;
 mod profile;
-pub mod results_modal;
 pub mod skills_modal;
 
 pub use anvil_modal::AnvilModalPlugin;
@@ -30,5 +29,4 @@ pub use modal::{
     MODAL_OVERLAY_COLOR, MODAL_OVERLAY_Z_INDEX,
 };
 pub use profile::ProfilePlugin;
-pub use results_modal::ResultsModalPlugin;
 pub use skills_modal::SkillsModalPlugin;

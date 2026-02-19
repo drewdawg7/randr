@@ -21,7 +21,7 @@ use crate::states::StateTransitionPlugin;
 use crate::ui::screens::{
     AnvilModalPlugin, DungeonScreenPlugin, ForgeModalPlugin, InventoryModalPlugin, KeybindsPlugin,
     MainMenuPlugin, MerchantModalPlugin, ModalPlugin, MonsterCompendiumPlugin, ProfilePlugin,
-    ResultsModalPlugin, SkillsModalPlugin,
+    SkillsModalPlugin,
 };
 use crate::ui::widgets::{
     ColumnPlugin, GoldDisplayPlugin, IconValueRowPlugin, ItemDetailDisplayPlugin,
@@ -134,7 +134,6 @@ impl PluginGroup for ScreenPlugins {
             .add(MonsterCompendiumPlugin)
             .add(KeybindsPlugin)
             .add(DungeonScreenPlugin)
-            .add(ResultsModalPlugin)
             .add(SkillsModalPlugin)
     }
 }

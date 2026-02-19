@@ -31,7 +31,6 @@ pub enum ModalType {
     Inventory,
     Keybinds,
     MonsterCompendium,
-    ResultsModal,
     MerchantModal,
     ForgeModal,
     AnvilModal,
@@ -119,11 +118,6 @@ pub fn in_forge_modal(active_modal: Res<ActiveModal>) -> bool {
 /// Run condition: returns true when the anvil modal is active.
 pub fn in_anvil_modal(active_modal: Res<ActiveModal>) -> bool {
     active_modal.modal == Some(ModalType::AnvilModal)
-}
-
-/// Run condition: returns true when the results modal is active.
-pub fn in_results_modal(active_modal: Res<ActiveModal>) -> bool {
-    active_modal.modal == Some(ModalType::ResultsModal)
 }
 
 /// Run condition: returns true when the skills modal is active.

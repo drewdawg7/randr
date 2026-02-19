@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 
 use crate::crafting_station::{AnvilCraftingStarted, ForgeCraftingStarted};
-use crate::dungeon::{CraftingStationInteraction, FloorReady, MiningResult};
+use crate::dungeon::{CraftingStationInteraction, FloorReady};
 use crate::input::{emit_move_intent, request_menu_transition, GameAction};
 use crate::states::AppState;
 use crate::ui::screens::modal::ActiveModal;
@@ -12,9 +12,7 @@ use super::crafting_animation::{
     on_forge_timer_finished,
 };
 use super::systems::update_player_sprite_direction;
-use super::interaction::{
-    open_crafting_modal, process_interaction, show_mining_results,
-};
+use super::interaction::{open_crafting_modal, process_interaction};
 use super::lifecycle::{
     enter_dungeon, handle_floor_ready, on_map_created_queue_player_spawn, spawn_player_when_ready,
 };
@@ -48,7 +46,6 @@ impl Plugin for DungeonScreenPlugin {
                         .run_if(on_message::<GameAction>)
                         .run_if(|modal: Res<ActiveModal>| modal.modal.is_none()),
                     open_crafting_modal.run_if(on_message::<CraftingStationInteraction>),
-                    show_mining_results.run_if(on_message::<MiningResult>),
                     request_menu_transition,
                     handle_forge_crafting_started.run_if(on_message::<ForgeCraftingStarted>),
                     handle_anvil_crafting_started.run_if(on_message::<AnvilCraftingStarted>),

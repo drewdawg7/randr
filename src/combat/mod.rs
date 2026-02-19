@@ -11,8 +11,7 @@ mod tests;
 pub use hitbox::{AttackHitbox, AttackHitboxBundle, Attacking, HitEntities, HitboxLifetime};
 pub use action_combat::ActionCombatPlugin;
 pub use events::{
-    DamageEntity, DealDamage, EntityDied, GoldGained, LootDropped, PlayerAttackMob, VictoryAchieved,
-    XpGained,
+    DamageEntity, DealDamage, EntityDied, GoldGained, LootDropped, PlayerAttackMob, XpGained,
 };
 pub use plugin::{ActiveCombat, CombatPlugin};
 

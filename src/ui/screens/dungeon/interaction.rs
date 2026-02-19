@@ -4,14 +4,12 @@ use tracing::instrument;
 use crate::crafting_station::{AnvilActiveTimer, CraftingStationType, ForgeActiveTimer};
 use crate::dungeon::{
     ChestEntity, ChestMined, CraftingStationEntity, CraftingStationInteraction,
-    DungeonEntityMarker, InteractableNearby, MerchantInteraction, MineableEntityType,
-    MiningResult, NpcEntity, RockEntity, RockMined,
+    DungeonEntityMarker, InteractableNearby, MerchantInteraction, NpcEntity, RockEntity, RockMined,
 };
 use crate::mob::MobId;
 use crate::ui::screens::anvil_modal::ActiveAnvilEntity;
 use crate::ui::screens::forge_modal::ActiveForgeEntity;
 use crate::ui::screens::modal::{ModalType, OpenModal};
-use crate::ui::screens::results_modal::ResultsModalData;
 
 #[instrument(level = "debug", skip_all)]
 pub fn process_interaction(
@@ -94,26 +92,5 @@ pub fn open_crafting_modal(
                 }
             }
         }
-    }
-}
-
-pub fn show_mining_results(mut commands: Commands, mut events: MessageReader<MiningResult>) {
-    for event in events.read() {
-        let title = match &event.mineable_type {
-            MineableEntityType::Chest => "Chest Opened!".to_string(),
-            MineableEntityType::Rock { rock_type } => {
-                format!("{} Mined!", rock_type.display_name())
-            }
-        };
-
-        commands.insert_resource(ResultsModalData {
-            title,
-            subtitle: None,
-            sprite: None,
-            gold_gained: None,
-            xp_gained: None,
-            loot_drops: event.loot_drops.clone(),
-        });
-        commands.trigger(OpenModal(ModalType::ResultsModal));
     }
 }

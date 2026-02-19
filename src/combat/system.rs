@@ -27,12 +27,6 @@ pub fn apply_goldfind(base_gold: i32, goldfind: i32) -> i32 {
     ((base_gold as f64) * multiplier).round() as i32
 }
 
-#[derive(Debug, Clone)]
-pub struct VictoryRewards {
-    pub gold_gained: i32,
-    pub xp_gained: i32,
-}
-
 const ATTACK_VARIANCE: f64 = 0.25;
 
 pub fn player_take_damage(stats: &mut StatSheet, amount: i32) {
@@ -82,17 +76,12 @@ pub fn apply_victory_rewards_direct(
     progression: &mut crate::entities::Progression,
     base_gold: i32,
     base_xp: i32,
-) -> VictoryRewards {
+) {
     let goldfind = player_effective_goldfind(stats, inventory);
     let gold_gained = apply_goldfind(base_gold, goldfind);
     gold.add(gold_gained);
 
     progression.add_xp(base_xp);
-
-    VictoryRewards {
-        gold_gained,
-        xp_gained: base_xp,
-    }
 }
 
 use crate::mob::{CombatStats, Health};

@@ -1,6 +1,7 @@
 use bevy::{ecs::system::SystemParam, prelude::*};
 
 use crate::combat::{GoldGained, LootDropped, XpGained};
+use crate::dungeon::{MineableEntityType, MiningResult};
 use crate::game::{
     BrewingResult, GoldChanged, ItemDeposited, ItemDropped, ItemEquipped,
     ItemPickedUp, ItemUnequipped, ItemUsed, ItemWithdrawn, PlayerHealed,
@@ -87,6 +88,7 @@ impl Plugin for ToastListenersPlugin {
                         .or(on_message::<LootCollected>)
                         .or(on_message::<TransactionCompleted>),
                 ),
+                listen_mining_events.run_if(on_message::<MiningResult>),
                 listen_brewing_events.run_if(on_message::<BrewingResult>),
                 listen_skill_events.run_if(on_message::<SkillLeveledUp>),
             ),
@@ -292,6 +294,34 @@ fn listen_skill_events(
             event.skill.display_name(),
             event.new_level
         )));
+    }
+}
+
+fn listen_mining_events(
+    mut events: MessageReader<MiningResult>,
+    mut toast_writer: MessageWriter<ShowToast>,
+) {
+    for event in events.read() {
+        let title = match &event.mineable_type {
+            MineableEntityType::Chest => "Chest Opened!".to_string(),
+            MineableEntityType::Rock { rock_type } => format!("{} Mined!", rock_type.display_name()),
+        };
+
+        if event.loot_drops.is_empty() {
+            toast_writer.write(ShowToast::info(title));
+        } else {
+            for drop in &event.loot_drops {
+                if drop.quantity > 1 {
+                    toast_writer.write(ShowToast::success(
+                        format!("{}: {} x{}", title, drop.item.name, drop.quantity),
+                    ));
+                } else {
+                    toast_writer.write(ShowToast::success(
+                        format!("{}: {}", title, drop.item.name),
+                    ));
+                }
+            }
+        }
     }
 }
 
