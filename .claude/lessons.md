@@ -12,6 +12,9 @@
 - Use relative paths from the working directory, not absolute paths.
   - Bad: `/Users/drewstewart/code/game/logs/`
   - Good: `logs/`
+- Don't split simple log queries into multiple commands. Combine into one call or run them in parallel.
+  - Bad: 1) find latest log, 2) filter it, 3) filter again separately
+  - Good: single jq command with inline log path lookup
 
 ## GitHub CLI (gh)
 - Don't specify `--repo` when inside a git repository. The `gh` command automatically detects the repo from the git remote.
@@ -48,6 +51,7 @@
 
 ## Bevy Systems
 - When a system doesn't run, check its `run_if` conditions. If it uses `any_with_component::<T>`, verify that `T` is actually added to entities (check spawn/bundle code).
+- Systems that poll for transient state (like animation markers) should have `run_if` conditions to avoid wasting cycles every frame. Don't dismiss unnecessary per-frame work as "harmless".
 - `resource_changed::<T>()` requires the resource to exist - it panics if the resource is missing. For optional resources (like `FocusState` which is only inserted when modals open), wrap with: `resource_exists::<T>().and(resource_changed::<T>())`
 
 ## bevy_ecs_tiled / bevy_ecs_tilemap
