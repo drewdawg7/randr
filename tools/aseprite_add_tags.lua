@@ -39,10 +39,14 @@ local tag_ranges = {}
 
 for i, row in ipairs(sorted_rows) do
     local tag_start = frame_num + 1
-    for _, slice in ipairs(row.slices) do
-        if not has_content(original_image, slice.bounds.x, slice.bounds.y) then
-            break
+    local last_content = 0
+    for j, s in ipairs(row.slices) do
+        if has_content(original_image, s.bounds.x, s.bounds.y) then
+            last_content = j
         end
+    end
+    for j = 1, last_content do
+        local slice = row.slices[j]
         frame_num = frame_num + 1
         if frame_num > 1 then
             new_sprite:newEmptyFrame()
@@ -62,11 +66,12 @@ end
 
 for _, r in ipairs(tag_ranges) do
     local tag = new_sprite:newTag(r.from, r.to)
-    tag.name = "animation_" .. r.index
+    tag.name = "a_" .. r.index
     print(string.format("  %s: frames %d-%d (%d frames)",
         tag.name, r.from, r.to, r.to - r.from + 1))
 end
 
-new_sprite:saveAs(sprite.filename)
+local filename = sprite.filename
 sprite:close()
+new_sprite:saveAs(filename)
 print(string.format("\nDone: %s -> %d frames", new_sprite.filename, frame_num))
