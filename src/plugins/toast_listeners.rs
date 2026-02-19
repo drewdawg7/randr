@@ -10,21 +10,13 @@ use crate::game::{
 use crate::skills::SkillLeveledUp;
 use super::{GoldEarned, GoldSpent, LootCollected, MobDefeated, TransactionCompleted};
 
-/// Thresholds for toast notifications.
-/// Values below these thresholds will not trigger toasts.
 #[derive(Resource, Clone, Debug)]
 pub struct ToastThresholds {
-    /// Minimum heal amount to show toast. Default: 20
     pub heal_min: i32,
-    /// Minimum gold change to show toast. Default: 50
     pub gold_change: i32,
-    /// Minimum gold earned to show toast. Default: 50
     pub gold_earned: i32,
-    /// Minimum gold spent to show toast. Default: 50 (symmetric with earned)
     pub gold_spent: i32,
-    /// Minimum loot items to show toast. Default: 3
     pub loot_items: i32,
-    /// Minimum transaction price to show toast. Default: 100
     pub transaction: i32,
 }
 
@@ -34,14 +26,13 @@ impl Default for ToastThresholds {
             heal_min: 20,
             gold_change: 50,
             gold_earned: 50,
-            gold_spent: 50, // Symmetric with gold_earned
+            gold_spent: 50,
             loot_items: 3,
             transaction: 100,
         }
     }
 }
 
-/// SystemParam grouping all item-related event readers to reduce parameter count.
 #[derive(SystemParam)]
 struct ItemEventReaders<'w, 's> {
     picked_up: MessageReader<'w, 's, ItemPickedUp>,
@@ -53,7 +44,6 @@ struct ItemEventReaders<'w, 's> {
     withdrawn: MessageReader<'w, 's, ItemWithdrawn>,
 }
 
-/// Plugin that listens to game events and triggers toast notifications
 pub struct ToastListenersPlugin;
 
 impl Plugin for ToastListenersPlugin {
@@ -96,7 +86,6 @@ impl Plugin for ToastListenersPlugin {
     }
 }
 
-/// Listen to player-related events
 fn listen_player_events(
     mut level_up_events: MessageReader<PlayerLeveledUp>,
     mut healed_events: MessageReader<PlayerHealed>,
@@ -104,51 +93,45 @@ fn listen_player_events(
     thresholds: Res<ToastThresholds>,
     mut toast_writer: MessageWriter<ShowToast>,
 ) {
-    // Level up notifications
     for event in level_up_events.read() {
-        toast_writer.write(ShowToast::success(format!(
+        toast_writer.write(ShowToast::new(format!(
             "Level Up! You are now level {}",
             event.new_level
         )));
     }
 
-    // Healing notifications (only for significant heals)
     for event in healed_events.read() {
         if event.amount >= thresholds.heal_min {
-            toast_writer.write(ShowToast::success(format!("Healed {} HP", event.amount)));
+            toast_writer.write(ShowToast::new(format!("Healed {} HP", event.amount)));
         }
     }
 
-    // Gold change notifications (only for significant amounts)
     for event in gold_changed_events.read() {
         if event.amount.abs() >= thresholds.gold_change {
             if event.amount > 0 {
-                toast_writer.write(ShowToast::success(format!("Gained {} gold", event.amount)));
+                toast_writer.write(ShowToast::new(format!("Gained {} gold", event.amount)));
             } else {
-                toast_writer.write(ShowToast::info(format!("Spent {} gold", -event.amount)));
+                toast_writer.write(ShowToast::new(format!("Spent {} gold", -event.amount)));
             }
         }
     }
 }
 
-/// Listen to item-related events
 fn listen_item_events(mut events: ItemEventReaders, mut toast_writer: MessageWriter<ShowToast>) {
-    // Item pickup notifications
     for event in events.picked_up.read() {
         let item_name = &event.item_id.spec().name;
         if event.quantity > 1 {
-            toast_writer.write(ShowToast::success(format!(
+            toast_writer.write(ShowToast::new(format!(
                 "Picked up {} x{}",
                 item_name, event.quantity
             )));
         } else {
-            toast_writer.write(ShowToast::success(format!("Picked up {}", item_name)));
+            toast_writer.write(ShowToast::new(format!("Picked up {}", item_name)));
         }
     }
 
-    // Equipment notifications
     for event in events.equipped.read() {
-        toast_writer.write(ShowToast::info(format!(
+        toast_writer.write(ShowToast::new(format!(
             "Equipped {} to {:?}",
             event.item_id.spec().name,
             event.slot
@@ -156,58 +139,53 @@ fn listen_item_events(mut events: ItemEventReaders, mut toast_writer: MessageWri
     }
 
     for event in events.unequipped.read() {
-        toast_writer.write(ShowToast::info(format!(
+        toast_writer.write(ShowToast::new(format!(
             "Unequipped {} from {:?}",
             event.item_id.spec().name,
             event.slot
         )));
     }
 
-    // Item use notifications
     for event in events.used.read() {
-        toast_writer.write(ShowToast::info(format!("Used {}", event.item_id.spec().name)));
+        toast_writer.write(ShowToast::new(format!("Used {}", event.item_id.spec().name)));
     }
 
-    // Item drop notifications
     for event in events.dropped.read() {
         if event.quantity > 1 {
-            toast_writer.write(ShowToast::warning(format!(
+            toast_writer.write(ShowToast::new(format!(
                 "Dropped {} x{}",
                 event.item_id.spec().name,
                 event.quantity
             )));
         } else {
-            toast_writer.write(ShowToast::warning(format!(
+            toast_writer.write(ShowToast::new(format!(
                 "Dropped {}",
                 event.item_id.spec().name
             )));
         }
     }
 
-    // Storage notifications
     for event in events.deposited.read() {
-        toast_writer.write(ShowToast::info(format!("Deposited {}", event.item_name)));
+        toast_writer.write(ShowToast::new(format!("Deposited {}", event.item_name)));
     }
 
     for event in events.withdrawn.read() {
-        toast_writer.write(ShowToast::info(format!("Withdrew {}", event.item_name)));
+        toast_writer.write(ShowToast::new(format!("Withdrew {}", event.item_name)));
     }
 }
 
-/// Listen to combat-related events
 fn listen_combat_events(
     mut mob_defeated_events: MessageReader<MobDefeated>,
     mut toast_writer: MessageWriter<ShowToast>,
 ) {
     for event in mob_defeated_events.read() {
-        toast_writer.write(ShowToast::success(format!(
+        toast_writer.write(ShowToast::new(format!(
             "Defeated {}!",
             event.mob_id.spec().name
         )));
     }
 }
 
-/// Listen to economy-related events
 fn listen_economy_events(
     mut gold_earned_events: MessageReader<GoldEarned>,
     mut gold_spent_events: MessageReader<GoldSpent>,
@@ -216,35 +194,31 @@ fn listen_economy_events(
     thresholds: Res<ToastThresholds>,
     mut toast_writer: MessageWriter<ShowToast>,
 ) {
-    // Gold earned
     for event in gold_earned_events.read() {
         if event.amount >= thresholds.gold_earned {
-            toast_writer.write(ShowToast::success(format!("Earned {} gold", event.amount)));
+            toast_writer.write(ShowToast::new(format!("Earned {} gold", event.amount)));
         }
     }
 
-    // Gold spent
     for event in gold_spent_events.read() {
         if event.amount >= thresholds.gold_spent {
-            toast_writer.write(ShowToast::info(format!("Spent {} gold", event.amount)));
+            toast_writer.write(ShowToast::new(format!("Spent {} gold", event.amount)));
         }
     }
 
-    // Loot collected
     for event in loot_collected_events.read() {
         if event.total_items >= thresholds.loot_items {
-            toast_writer.write(ShowToast::success(format!(
+            toast_writer.write(ShowToast::new(format!(
                 "Collected {} items",
                 event.total_items
             )));
         }
     }
 
-    // Transaction completed
     for event in transaction_completed_events.read() {
         if event.price >= thresholds.transaction {
             let action = if event.is_purchase { "Purchased" } else { "Sold" };
-            toast_writer.write(ShowToast::info(format!(
+            toast_writer.write(ShowToast::new(format!(
                 "{} {} for {} gold",
                 action, event.item.name, event.price
             )));
@@ -252,7 +226,6 @@ fn listen_economy_events(
     }
 }
 
-/// Listen to brewing-related events
 fn listen_brewing_events(
     mut brewing_events: MessageReader<BrewingResult>,
     mut toast_writer: MessageWriter<ShowToast>,
@@ -260,22 +233,22 @@ fn listen_brewing_events(
     for event in brewing_events.read() {
         match event {
             BrewingResult::Success { item_name } => {
-                toast_writer.write(ShowToast::success(format!("Crafted {}!", item_name)));
+                toast_writer.write(ShowToast::new(format!("Crafted {}!", item_name)));
             }
             BrewingResult::InsufficientIngredients { recipe_name } => {
-                toast_writer.write(ShowToast::warning(format!(
+                toast_writer.write(ShowToast::new(format!(
                     "Missing ingredients for {}",
                     recipe_name
                 )));
             }
             BrewingResult::InventoryFull { item_name } => {
-                toast_writer.write(ShowToast::error(format!(
+                toast_writer.write(ShowToast::new(format!(
                     "Inventory full - could not add {}",
                     item_name
                 )));
             }
             BrewingResult::CraftingFailed { recipe_name } => {
-                toast_writer.write(ShowToast::error(format!(
+                toast_writer.write(ShowToast::new(format!(
                     "Failed to craft {}",
                     recipe_name
                 )));
@@ -289,7 +262,7 @@ fn listen_skill_events(
     mut toast_writer: MessageWriter<ShowToast>,
 ) {
     for event in skill_events.read() {
-        toast_writer.write(ShowToast::success(format!(
+        toast_writer.write(ShowToast::new(format!(
             "{} Level Up! Now level {}",
             event.skill.display_name(),
             event.new_level
@@ -308,17 +281,13 @@ fn listen_mining_events(
         };
 
         if event.loot_drops.is_empty() {
-            toast_writer.write(ShowToast::info(title));
+            toast_writer.write(ShowToast::new(title));
         } else {
             for drop in &event.loot_drops {
                 if drop.quantity > 1 {
-                    toast_writer.write(ShowToast::success(
-                        format!("{}: {} x{}", title, drop.item.name, drop.quantity),
-                    ));
+                    toast_writer.write(ShowToast::new(format!("{}: {} x{}", title, drop.item.name, drop.quantity)));
                 } else {
-                    toast_writer.write(ShowToast::success(
-                        format!("{}: {}", title, drop.item.name),
-                    ));
+                    toast_writer.write(ShowToast::new(format!("{}: {}", title, drop.item.name)));
                 }
             }
         }
@@ -332,17 +301,17 @@ fn listen_action_combat_events(
     mut toast_writer: MessageWriter<ShowToast>,
 ) {
     for event in gold_events.read() {
-        toast_writer.write(ShowToast::success(format!(
+        toast_writer.write(ShowToast::new(format!(
             "{} defeated! +{}g",
             event.source, event.amount
         )));
     }
 
     for event in xp_events.read() {
-        toast_writer.write(ShowToast::info(format!("+{} xp", event.amount)));
+        toast_writer.write(ShowToast::new(format!("+{} xp", event.amount)));
     }
 
     for event in loot_events.read() {
-        toast_writer.write(ShowToast::success(format!("Found: {}", event.item_name)));
+        toast_writer.write(ShowToast::new(format!("Found: {}", event.item_name)));
     }
 }

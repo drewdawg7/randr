@@ -2,76 +2,24 @@ use bevy::prelude::*;
 use bevy_aseprite_ultra::prelude::*;
 use std::time::Duration;
 
-#[derive(Resource, Clone, Debug)]
-pub struct ToastConfig {
-    pub max_toasts: usize,
-    pub duration: Duration,
-}
-
-impl Default for ToastConfig {
-    fn default() -> Self {
-        Self {
-            max_toasts: 5,
-            duration: Duration::from_secs(3),
-        }
-    }
-}
-
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum ToastType {
-    Error,
-    Success,
-    Info,
-    Warning,
-}
+const TOAST_DURATION: Duration = Duration::from_secs(3);
 
 #[derive(Resource)]
 struct ToastSprite {
     aseprite: Handle<Aseprite>,
-    slice_name: String,
 }
 
 #[derive(Message, Debug, Clone)]
-pub struct ShowToast {
-    pub toast_type: ToastType,
-    pub message: String,
-}
+pub struct ShowToast(pub String);
 
 impl ShowToast {
-    pub fn error(message: impl Into<String>) -> Self {
-        Self {
-            toast_type: ToastType::Error,
-            message: message.into(),
-        }
-    }
-
-    pub fn success(message: impl Into<String>) -> Self {
-        Self {
-            toast_type: ToastType::Success,
-            message: message.into(),
-        }
-    }
-
-    pub fn info(message: impl Into<String>) -> Self {
-        Self {
-            toast_type: ToastType::Info,
-            message: message.into(),
-        }
-    }
-
-    pub fn warning(message: impl Into<String>) -> Self {
-        Self {
-            toast_type: ToastType::Warning,
-            message: message.into(),
-        }
+    pub fn new(message: impl Into<String>) -> Self {
+        Self(message.into())
     }
 }
 
 #[derive(Component)]
-pub struct ToastContainer;
-
-#[derive(Component)]
-struct ToastElement;
+struct ToastContainer;
 
 #[derive(Component)]
 struct ToastTimer(Timer);
@@ -80,8 +28,7 @@ pub struct ToastPlugin;
 
 impl Plugin for ToastPlugin {
     fn build(&self, app: &mut App) {
-        app.init_resource::<ToastConfig>()
-            .add_message::<ShowToast>()
+        app.add_message::<ShowToast>()
             .add_systems(PreStartup, load_toast_sprite)
             .add_systems(Startup, spawn_toast_container)
             .add_systems(
@@ -97,7 +44,6 @@ impl Plugin for ToastPlugin {
 fn load_toast_sprite(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(ToastSprite {
         aseprite: asset_server.load("sprites/toast_1.aseprite"),
-        slice_name: "Slice 1".into(),
     });
 }
 
@@ -120,40 +66,30 @@ fn spawn_toast(
     mut commands: Commands,
     mut events: MessageReader<ShowToast>,
     toast_sprite: Res<ToastSprite>,
-    config: Res<ToastConfig>,
     container: Query<Entity, With<ToastContainer>>,
 ) {
-    let container = match container.single() {
-        Ok(e) => e,
-        Err(_) => return,
+    let Ok(container) = container.single() else {
+        return;
     };
 
     for event in events.read() {
         commands.entity(container).with_children(|parent| {
             parent
                 .spawn((
-                    ToastElement,
-                    ToastTimer(Timer::new(config.duration, TimerMode::Once)),
-                    Node::default(),
+                    ToastTimer(Timer::new(TOAST_DURATION, TimerMode::Once)),
+                    Node {
+                        padding: UiRect::all(Val::Px(8.0)),
+                        ..default()
+                    },
+                    ImageNode::default(),
+                    AseSlice {
+                        name: "Slice 1".into(),
+                        aseprite: toast_sprite.aseprite.clone(),
+                    },
                 ))
-                .with_children(|parent| {
-                    parent.spawn((
-                        Node {
-                            position_type: PositionType::Absolute,
-                            left: Val::Px(0.0),
-                            top: Val::Px(0.0),
-                            width: Val::Percent(100.0),
-                            height: Val::Percent(100.0),
-                            ..default()
-                        },
-                        ImageNode::default(),
-                        AseSlice {
-                            name: toast_sprite.slice_name.clone().into(),
-                            aseprite: toast_sprite.aseprite.clone(),
-                        },
-                    ));
-                    parent.spawn((
-                        Text::new(event.message.clone()),
+                .with_children(|toast| {
+                    toast.spawn((
+                        Text::new(event.0.clone()),
                         TextFont {
                             font_size: 16.0,
                             ..default()
