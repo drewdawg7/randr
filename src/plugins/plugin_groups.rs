@@ -2,6 +2,7 @@
 
 use bevy::app::PluginGroupBuilder;
 use bevy::prelude::*;
+use bevy_aseprite_ultra::AsepriteUltraPlugin;
 use bevy_ecs_tiled::prelude::TiledPlugin;
 
 use crate::assets::AssetPlugin as GameAssetPlugin;
@@ -37,6 +38,7 @@ pub struct InfrastructurePlugins;
 impl PluginGroup for InfrastructurePlugins {
     fn build(self) -> PluginGroupBuilder {
         PluginGroupBuilder::start::<Self>()
+            .add(AsepriteUltraPlugin)
             .add(TiledPlugin::default())
             .add(StateTransitionPlugin)
             .add(GameAssetPlugin)

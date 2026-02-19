@@ -1,5 +1,6 @@
 use avian2d::prelude::*;
 use bevy::prelude::*;
+use bevy_aseprite_ultra::prelude::*;
 use bevy_ecs_tiled::prelude::*;
 use tracing::instrument;
 
@@ -17,6 +18,7 @@ use crate::dungeon::{
 };
 use crate::mob::MobCombatBundle;
 use crate::ui::animation::SpriteAnimation;
+use crate::ui::player_sprite::PLAYER_IDLE_TAG;
 use crate::ui::{MobSpriteSheets, PlayerSpriteSheet, PlayerWalkTimer};
 
 use super::components::{DungeonPlayer, DungeonRoot, FacingDirection, FloorRoot};
@@ -50,9 +52,9 @@ struct SensorEntityBundle {
 struct PlayerBundle {
     marker: DungeonPlayer,
     facing: FacingDirection,
+    ase_animation: AseAnimation,
     sprite: Sprite,
     transform: Transform,
-    animation: SpriteAnimation,
     walk_timer: PlayerWalkTimer,
     rigid_body: RigidBody,
     velocity: LinearVelocity,
@@ -280,29 +282,23 @@ pub fn position_camera(commands: &mut Commands, camera_entity: Entity, center: V
 
 #[instrument(level = "debug", skip_all, fields(?player_pos))]
 pub fn spawn_player(commands: &mut Commands, player_pos: Vec2, player_sheet: &PlayerSpriteSheet, depth: &DepthSorting) {
-    let Some(texture) = player_sheet.texture.clone() else {
-        return;
-    };
-    let Some(layout) = player_sheet.layout.clone() else {
+    let Some(aseprite) = player_sheet.aseprite.clone() else {
         return;
     };
 
     let z = depth.entity_z(player_pos.y);
-    let sprite_size = player_sheet.frame_size.as_vec2();
-    let collider = PLAYER_COLLIDER.create_collider(sprite_size);
+    let collider = PLAYER_COLLIDER.create_collider(player_sheet.frame_size.as_vec2());
 
     commands.spawn(PlayerBundle {
         marker: DungeonPlayer,
         facing: FacingDirection::default(),
-        sprite: Sprite::from_atlas_image(
-            texture,
-            TextureAtlas {
-                layout,
-                index: player_sheet.animation.first_frame,
-            },
-        ),
+        ase_animation: AseAnimation {
+            aseprite,
+            animation: Animation::tag(PLAYER_IDLE_TAG)
+                .with_repeat(AnimationRepeat::Loop),
+        },
+        sprite: Sprite::default(),
         transform: Transform::from_translation(Vec3::new(player_pos.x, player_pos.y, z)),
-        animation: SpriteAnimation::new(&player_sheet.animation),
         walk_timer: PlayerWalkTimer(Timer::from_seconds(0.1, TimerMode::Once)),
         rigid_body: RigidBody::Dynamic,
         velocity: LinearVelocity::default(),
