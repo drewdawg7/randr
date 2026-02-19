@@ -1,11 +1,10 @@
-//! Results modal rendering.
-
 use bevy::prelude::*;
+use bevy_aseprite_ultra::prelude::*;
 
 use crate::ui::widgets::Column;
-use crate::ui::{Modal, SpawnModalExt};
+use crate::ui::{AseMobSheets, Modal, SpawnModalExt};
 
-use super::state::{ResultsModalData, ResultsModalMobSprite, ResultsModalRoot, ResultsSprite};
+use super::state::{ResultsModalData, ResultsModalRoot, ResultsSprite};
 
 const SPRITE_SIZE: f32 = 128.0;
 const MODAL_WIDTH: f32 = 300.0;
@@ -16,8 +15,11 @@ const LOOT_FONT_SIZE: f32 = 20.0;
 const GOLD_COLOR: Color = Color::srgb(1.0, 0.84, 0.0);
 const XP_COLOR: Color = Color::srgb(0.6, 0.8, 1.0);
 
-/// System to spawn the results modal UI.
-pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData>) {
+pub fn do_spawn_results_modal(
+    mut commands: Commands,
+    data: Res<ResultsModalData>,
+    ase_sheets: Res<AseMobSheets>,
+) {
     let title = data.title.clone();
     let subtitle = data.subtitle.clone();
     let sprite = data.sprite.clone();
@@ -29,6 +31,16 @@ pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData
         .map(|drop| (drop.item.name.clone(), drop.quantity))
         .collect();
 
+    let mob_ase: Option<(Handle<Aseprite>, &'static str)> = sprite.as_ref().and_then(|s| {
+        match s {
+            ResultsSprite::Mob(mob_id) => {
+                let sheet = ase_sheets.get(*mob_id)?;
+                let tag = sheet.death_tag.unwrap_or(sheet.idle_tag);
+                Some((sheet.aseprite.clone(), tag))
+            }
+        }
+    });
+
     commands.spawn_modal(
         Modal::builder()
             .title(&title)
@@ -39,19 +51,20 @@ pub fn do_spawn_results_modal(mut commands: Commands, data: Res<ResultsModalData
             .content(Box::new(move |c| {
                 c.spawn(Column::new().gap(8.0).align_center())
                     .with_children(|col| {
-                        if let Some(sprite) = &sprite {
-                            match sprite {
-                                ResultsSprite::Mob(mob_id) => {
-                                    col.spawn((
-                                        ResultsModalMobSprite { mob_id: *mob_id },
-                                        Node {
-                                            width: Val::Px(SPRITE_SIZE),
-                                            height: Val::Px(SPRITE_SIZE),
-                                            ..default()
-                                        },
-                                    ));
-                                }
-                            }
+                        if let Some((aseprite, tag)) = &mob_ase {
+                            col.spawn((
+                                AseAnimation {
+                                    aseprite: aseprite.clone(),
+                                    animation: Animation::tag(tag)
+                                        .with_repeat(AnimationRepeat::Count(1)),
+                                },
+                                ImageNode::default(),
+                                Node {
+                                    width: Val::Px(SPRITE_SIZE),
+                                    height: Val::Px(SPRITE_SIZE),
+                                    ..default()
+                                },
+                            ));
                         }
 
                         if let Some(subtitle) = &subtitle {

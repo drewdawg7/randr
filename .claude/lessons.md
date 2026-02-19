@@ -101,8 +101,32 @@
 - When asked about best practices, do web research - don't just explore the codebase.
 - Search for relevant terms (e.g., "hitbox" when working on hitboxes, not just "ECS patterns").
 
+## Skills & Project Knowledge
+- Check project skills BEFORE searching the filesystem for paths, tools, or conventions. Skills contain critical info like tool locations and workflows.
+- Aseprite is on the PATH - just use `aseprite` directly. Don't use the full application path.
+- When the user says information "is already there", check skills and docs before searching elsewhere.
+
+## Planning
+- When a plan is approved, execute it. Don't keep second-guessing or changing the approach based on misinterpretations of feedback.
+- Show actual code in plans, not just high-level descriptions. The user needs to see what will be implemented.
+- When data already exists in the file (slices, metadata, etc.), USE IT directly via the API. Don't write manual scanning/detection code when the information is already structured.
+- Never assume a bug is in a library/API. Always assume you are doing something wrong first.
+
+## Aseprite Scripting
+- The `aseprite_add_tags.lua` script is DESTRUCTIVE — it overwrites the source file. ALWAYS copy source files from Downloads/aseprite_sprites first, then run the script on the copies. Never run on originals.
+- When the user says "convert files from X to Y", the workflow is: copy from X, then convert. Don't skip the copy step.
+- Aseprite tag names must be short (~4 chars max like "a_1") or the timeline display breaks with staggering/nesting artifacts.
+- When creating tags programmatically, create ALL frames first, THEN add all tags in a separate pass. Aseprite auto-extends existing tags when new frames are added after them.
+- When scanning sprite sheet rows for content, don't break at the first empty cell — scan the entire row and include up to the last non-empty cell (animations can have gaps).
+
 ## Bevy Ecosystem
 - ALWAYS prefer Bevy ecosystem crates over building custom solutions. The entire point of using Bevy is to leverage its ecosystem.
 - Never recommend "build in-house" when a Bevy crate exists for the functionality.
 - When evaluating solutions, search for existing Bevy crates first before designing custom implementations.
 - When adopting a crate, use it directly. Don't create wrapper abstractions or registry patterns that just duplicate the crate's functionality. Simplify by removing existing code, not by wrapping new code in old patterns.
+
+## GitHub Issues
+- NEVER create checklist-style issues. Checklists are not actionable.
+- Issues must detail concrete code changes: what structs/systems to add/modify/remove, with code examples showing the target state.
+- Include enough context and code examples that someone could implement from the issue alone.
+- Show what the code should look like, not just what steps to take.

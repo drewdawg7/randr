@@ -53,7 +53,7 @@ fn field_new_accepts_empty_mob_weights() {
 fn field_from_spec_creates_from_location_spec() {
     let mut mob_weights = HashMap::new();
     mob_weights.insert(MobId::Slime, 60);
-    mob_weights.insert(MobId::Cow, 40);
+    mob_weights.insert(MobId::Goblin, 40);
 
     let data = FieldData {
         mob_weights: mob_weights.clone(),
@@ -74,7 +74,7 @@ fn field_from_spec_creates_from_location_spec() {
     assert_eq!(field.description, "A peaceful field near the village");
     assert_eq!(field.mob_weights.len(), 2);
     assert_eq!(field.mob_weights.get(&MobId::Slime), Some(&60));
-    assert_eq!(field.mob_weights.get(&MobId::Cow), Some(&40));
+    assert_eq!(field.mob_weights.get(&MobId::Goblin), Some(&40));
 }
 
 // ==================== Field::location_id() tests ====================

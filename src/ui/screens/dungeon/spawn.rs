@@ -17,9 +17,8 @@ use crate::dungeon::{
     FloorId, GameLayer, MobEntity, NpcEntity, RockEntity, StairsEntity,
 };
 use crate::mob::MobCombatBundle;
-use crate::ui::animation::SpriteAnimation;
 use crate::ui::player_sprite::PLAYER_IDLE_TAG;
-use crate::ui::{MobSpriteSheets, PlayerSpriteSheet, PlayerWalkTimer};
+use crate::ui::{AseMobSheets, PlayerSpriteSheet, PlayerWalkTimer};
 
 use super::components::{DungeonPlayer, DungeonRoot, FacingDirection, FloorRoot};
 
@@ -36,9 +35,9 @@ struct StaticEntityBundle {
 #[derive(Bundle)]
 struct AnimatedMobBundle {
     combat: MobCombatBundle,
+    ase_animation: AseAnimation,
     sprite: Sprite,
     transform: Transform,
-    animation: SpriteAnimation,
     collider: Collider,
 }
 
@@ -76,7 +75,7 @@ pub fn add_entity_visuals(
     mob_query: Query<&MobEntity>,
     npc_query: Query<&NpcEntity>,
     game_sprites: Res<GameSprites>,
-    mob_sheets: Res<MobSpriteSheets>,
+    ase_sheets: Res<AseMobSheets>,
     depth_sorting: Option<Res<DepthSorting>>,
 ) {
     let entity = trigger.entity;
@@ -179,7 +178,7 @@ pub fn add_entity_visuals(
             entity,
             world_pos,
             mob.mob_id,
-            &mob_sheets,
+            &ase_sheets,
         );
         return;
     }
@@ -190,7 +189,7 @@ pub fn add_entity_visuals(
             entity,
             world_pos,
             npc.mob_id,
-            &mob_sheets,
+            &ase_sheets,
         );
     }
 }
@@ -224,25 +223,22 @@ fn add_animated_mob(
     entity: Entity,
     world_pos: Vec3,
     mob_id: crate::mob::MobId,
-    mob_sheets: &MobSpriteSheets,
+    ase_sheets: &AseMobSheets,
 ) {
-    let Some(sheet) = mob_sheets.get(mob_id) else {
+    let Some(sheet) = ase_sheets.get(mob_id) else {
         return;
     };
-    let sprite_size = sheet.frame_size.as_vec2();
-    let collider = MOB_COLLIDER.create_collider(sprite_size);
+    let collider = MOB_COLLIDER.create_collider(sheet.frame_size.as_vec2());
 
     commands.entity(entity).insert(AnimatedMobBundle {
         combat: MobCombatBundle::from_mob_id(mob_id),
-        sprite: Sprite::from_atlas_image(
-            sheet.texture.clone(),
-            TextureAtlas {
-                layout: sheet.layout.clone(),
-                index: sheet.animation.first_frame,
-            },
-        ),
+        ase_animation: AseAnimation {
+            aseprite: sheet.aseprite.clone(),
+            animation: Animation::tag(sheet.idle_tag)
+                .with_repeat(AnimationRepeat::Loop),
+        },
+        sprite: Sprite::default(),
         transform: Transform::from_translation(world_pos),
-        animation: SpriteAnimation::new(&sheet.animation),
         collider,
     });
 }

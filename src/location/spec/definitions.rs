@@ -120,7 +120,6 @@ entity_macros::define_data! {
             data: LocationData::Field(FieldData {
                 mob_weights: HashMap::from([
                     (MobId::Slime, 5),
-                    (MobId::Cow, 5),
                     (MobId::Goblin, 3),
                 ]),
             }),

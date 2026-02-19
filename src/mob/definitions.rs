@@ -37,20 +37,6 @@ entity_macros::define_entity! {
                 .build(),
             entity_size: EntitySize::default(),
         }
-        Cow {
-            name: String::from("Cow"),
-            quality: MobQuality::Normal,
-            max_health: 20..=25,
-            attack: 1..=4,
-            defense: 0..=2,
-            dropped_gold: 1..=3,
-            dropped_xp: 5..=9,
-            loot: LootTable::new()
-                .with(ItemId::Cowhide, 3, 4, 1..=3)
-                .with(ItemId::GoldRing, 1, 1000, 1..=1)
-                .build(),
-            entity_size: EntitySize::default(),
-        }
         Goblin {
             name: String::from("Goblin"),
             quality: MobQuality::Normal,
@@ -157,34 +143,6 @@ entity_macros::define_entity! {
                 .build(),
             entity_size: EntitySize::default(),
         }
-        Dragon {
-            name: String::from("Dragon"),
-            quality: MobQuality::Boss,
-            max_health: 500..=700,
-            attack: 50..=70,
-            defense: 30..=50,
-            dropped_gold: 250..=350,
-            dropped_xp: 500..=750,
-            loot: LootTable::new()
-                .with(ItemId::GoldRing, 1, 100, 1..=1)
-                .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1)
-                .build(),
-            entity_size: EntitySize::default(),
-        }
-        BlackDragon {
-            name: String::from("Black Dragon"),
-            quality: MobQuality::Boss,
-            max_health: 550..=750,
-            attack: 55..=75,
-            defense: 35..=55,
-            dropped_gold: 300..=400,
-            dropped_xp: 550..=800,
-            loot: LootTable::new()
-                .with(ItemId::GoldRing, 1, 100, 1..=1)
-                .with(ItemId::QualityUpgradeStone, 1, 1, 1..=1)
-                .build(),
-            entity_size: EntitySize::default(),
-        }
         Merchant {
             name: String::from("Merchant"),
             quality: MobQuality::Normal,
@@ -287,9 +245,9 @@ mod tests {
 
     #[test]
     fn mob_spec_with_multiplier_preserves_quality() {
-        let base = MobId::Dragon.spec();
+        let base = MobId::DwarfKing.spec();
         let scaled = base.with_multiplier(1.5);
-        assert!(matches!(scaled.quality, MobQuality::Boss));
+        assert!(matches!(scaled.quality, MobQuality::Normal));
     }
 
     #[test]
@@ -328,25 +286,13 @@ mod tests {
     fn mob_id_all_contains_expected_mobs() {
         assert!(MobId::ALL.contains(&MobId::Goblin));
         assert!(MobId::ALL.contains(&MobId::Slime));
-        assert!(MobId::ALL.contains(&MobId::Dragon));
+        assert!(MobId::ALL.contains(&MobId::DwarfKing));
     }
 
     #[test]
     fn slime_is_normal_quality() {
         let spec = MobId::Slime.spec();
         assert!(matches!(spec.quality, MobQuality::Normal));
-    }
-
-    #[test]
-    fn dragon_is_boss_quality() {
-        let spec = MobId::Dragon.spec();
-        assert!(matches!(spec.quality, MobQuality::Boss));
-    }
-
-    #[test]
-    fn black_dragon_is_boss_quality() {
-        let spec = MobId::BlackDragon.spec();
-        assert!(matches!(spec.quality, MobQuality::Boss));
     }
 
     #[test]

@@ -9,7 +9,6 @@ impl Default for Field {
     fn default() -> Self {
         let mut mob_weights = HashMap::new();
         mob_weights.insert(MobId::Slime, 5);
-        mob_weights.insert(MobId::Cow, 5);
         mob_weights.insert(MobId::Goblin, 3);
         Self {
             location_id: LocationId::VillageField,
