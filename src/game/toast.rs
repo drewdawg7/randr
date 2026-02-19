@@ -29,8 +29,6 @@ pub enum ToastType {
 struct ToastSprite {
     aseprite: Handle<Aseprite>,
     slice_name: String,
-    image_mode: Option<NodeImageMode>,
-    padding: UiRect,
 }
 
 #[derive(Message, Debug, Clone)]
@@ -89,8 +87,6 @@ impl Plugin for ToastPlugin {
             .add_systems(
                 Update,
                 (
-                    resolve_toast_nine_patch
-                        .run_if(|ts: Res<ToastSprite>| ts.image_mode.is_none()),
                     spawn_toast.run_if(on_message::<ShowToast>),
                     tick_toast_timers.run_if(any_with_component::<ToastTimer>),
                 ),
@@ -102,37 +98,7 @@ fn load_toast_sprite(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.insert_resource(ToastSprite {
         aseprite: asset_server.load("sprites/toast_1.aseprite"),
         slice_name: "Slice 1".into(),
-        image_mode: None,
-        padding: UiRect::default(),
     });
-}
-
-fn resolve_toast_nine_patch(
-    mut toast_sprite: ResMut<ToastSprite>,
-    aseprites: Res<Assets<Aseprite>>,
-) {
-    let Some(aseprite) = aseprites.get(&toast_sprite.aseprite) else {
-        return;
-    };
-    let Some(slice_meta) = aseprite.slices.get(&toast_sprite.slice_name) else {
-        return;
-    };
-    if let Some(b) = slice_meta.nine_patch {
-        let border = BorderRect {
-            min_inset: Vec2::new(b.x, b.y),
-            max_inset: Vec2::new(b.z, b.w),
-        };
-        toast_sprite.image_mode = Some(NodeImageMode::Sliced(TextureSlicer {
-            border,
-            ..default()
-        }));
-        toast_sprite.padding = UiRect {
-            left: Val::Px(b.x),
-            top: Val::Px(b.y),
-            right: Val::Px(b.z),
-            bottom: Val::Px(b.w),
-        };
-    }
 }
 
 fn spawn_toast_container(mut commands: Commands) {
@@ -161,9 +127,6 @@ fn spawn_toast(
         Ok(e) => e,
         Err(_) => return,
     };
-    let Some(image_mode) = &toast_sprite.image_mode else {
-        return;
-    };
 
     for event in events.read() {
         commands.entity(container).with_children(|parent| {
@@ -171,10 +134,7 @@ fn spawn_toast(
                 .spawn((
                     ToastElement,
                     ToastTimer(Timer::new(config.duration, TimerMode::Once)),
-                    Node {
-                        padding: toast_sprite.padding,
-                        ..default()
-                    },
+                    Node::default(),
                 ))
                 .with_children(|parent| {
                     parent.spawn((
@@ -186,10 +146,7 @@ fn spawn_toast(
                             height: Val::Percent(100.0),
                             ..default()
                         },
-                        ImageNode {
-                            image_mode: image_mode.clone(),
-                            ..default()
-                        },
+                        ImageNode::default(),
                         AseSlice {
                             name: toast_sprite.slice_name.clone().into(),
                             aseprite: toast_sprite.aseprite.clone(),
