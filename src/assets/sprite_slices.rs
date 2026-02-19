@@ -114,19 +114,6 @@ impl TravelBookSlice {
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum BookSlotSlice {
-    Slot,
-}
-
-impl BookSlotSlice {
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Slot => "slot",
-        }
-    }
-}
-
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum GridSlotSlice {
     Slot,
 }
@@ -550,55 +537,3 @@ impl DungeonTileSlice {
     }
 }
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
-pub enum CaveTileSlice {
-    // Floor tiles (6 variants)
-    Floor1,
-    Floor2,
-    Floor3,
-    Floor4,
-    Floor5,
-    Floor6,
-    // Backwalls (top walls in cave - where player enters from)
-    Backwall1,
-    Backwall2,
-    Backwall3,
-    // Front roof (bottom walls - the front of the cave)
-    FrontRoof,
-    // Side walls
-    LeftRoof,
-    RightRoof,
-    // Corners
-    FrontLeftCornerRoof,
-    FrontRightCornerRoof,
-    BackwallRoofLeft,
-    BackwallRoofRight,
-    BackwallRoof,
-    // Filler for interior walls
-    RoofFiller,
-}
-
-impl CaveTileSlice {
-    pub const fn as_str(self) -> &'static str {
-        match self {
-            Self::Floor1 => "floor_1",
-            Self::Floor2 => "floor_2",
-            Self::Floor3 => "floor_3",
-            Self::Floor4 => "floor_4",
-            Self::Floor5 => "floor_5",
-            Self::Floor6 => "floor_6",
-            Self::Backwall1 => "backwall_1",
-            Self::Backwall2 => "backwall_2",
-            Self::Backwall3 => "backwall_3",
-            Self::FrontRoof => "front_roof",
-            Self::LeftRoof => "left_roof",
-            Self::RightRoof => "right_roof",
-            Self::FrontLeftCornerRoof => "front_left_corner_roof",
-            Self::FrontRightCornerRoof => "front_right_corner_roof",
-            Self::BackwallRoofLeft => "backwall_roof_left",
-            Self::BackwallRoofRight => "backwall_roof_right",
-            Self::BackwallRoof => "backwall_roof",
-            Self::RoofFiller => "roof_filler",
-        }
-    }
-}

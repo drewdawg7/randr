@@ -66,6 +66,7 @@
 - Don't run unnecessary commands (like `git status`) when you already know the state from your own actions.
 - Don't ask permission to commit. Just commit when the work is ready.
 - User verification happens at the end, after all commits are made. Don't wait for verification before committing.
+- Before creating a new branch, check for uncommitted changes on any existing branch. If there are uncommitted changes, commit them and merge that branch into main FIRST, then create the new branch. Never just switch branches and leave work behind.
 
 ## Following Instructions
 - When the user says they updated files to match a pattern you already applied, just apply the same pattern. Don't re-inspect the files — trust the user.
@@ -105,6 +106,8 @@
 ## Research
 - When asked about best practices, do web research - don't just explore the codebase.
 - Search for relevant terms (e.g., "hitbox" when working on hitboxes, not just "ECS patterns").
+- When the user asks for research, go DEEP. Don't present surface-level summaries with "simple alternatives". Research the actual topic requested, not workarounds.
+- Don't propose simple workarounds when the user explicitly asks about a specific technique (e.g., don't suggest sprite tinting when they ask about Material2d shaders).
 
 ## Skills & Project Knowledge
 - Check project skills BEFORE searching the filesystem for paths, tools, or conventions. Skills contain critical info like tool locations and workflows.
@@ -133,6 +136,7 @@
 - Never recommend "build in-house" when a Bevy crate exists for the functionality.
 - When evaluating solutions, search for existing Bevy crates first before designing custom implementations.
 - When adopting a crate, use it directly. Don't create wrapper abstractions or registry patterns that just duplicate the crate's functionality. Simplify by removing existing code, not by wrapping new code in old patterns.
+- When an issue says existing implementations are being REPLACED, do NOT explore or reference those old implementations. They are the wrong pattern. Only follow the issue's target pattern.
 
 ## GitHub Issues
 - NEVER create checklist-style issues. Checklists are not actionable.
