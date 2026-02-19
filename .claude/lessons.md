@@ -95,6 +95,7 @@
 ## Bevy Patterns
 - Use observers for reactive logic (e.g., `OnAdd<Component>` to spawn related entities).
 - Input systems should only set state/components, not perform game logic.
+- Entities should manage their own lifecycle. Don't write manual tick/despawn systems when Bevy has built-in alternatives. Always check what Bevy provides before writing custom systems.
 - Don't couple input handling to game systems - use components/observers to decouple.
 - Use `With<T>` filter instead of querying a component you don't need to read. Avoids unused variables.
 
@@ -107,6 +108,8 @@
 - When asked about best practices, do web research - don't just explore the codebase.
 - Search for relevant terms (e.g., "hitbox" when working on hitboxes, not just "ECS patterns").
 - When the user asks for research, go DEEP. Don't present surface-level summaries with "simple alternatives". Research the actual topic requested, not workarounds.
+- Read documentation (API docs, official guides, crate docs), NOT GitHub source code. Documentation exists for a reason — use it.
+- Write concise search queries. Don't add redundant synonyms or terms implied by other terms (e.g., "bevy" implies ECS, "toast" implies notification/popup).
 - Don't propose simple workarounds when the user explicitly asks about a specific technique (e.g., don't suggest sprite tinting when they ask about Material2d shaders).
 
 ## Skills & Project Knowledge
@@ -140,6 +143,7 @@
 - Don't hardcode asset paths or slice names directly in rendering functions. Store asset handles in resources. Don't pass them as function parameters — use Bevy's resource system.
 - When data is already embedded in the asset file (e.g., 9-slice center rects in .aseprite slices), let the crate read it. Don't re-specify it in code — that defeats the purpose of using the crate.
 - When using sprite-based UI, don't hardcode layout values (width, padding, etc.). Let the sprite and 9-slice stretching drive the layout dynamically.
+- Don't guess how crate features work. Research the actual API (docs, source, examples) before writing code. A 9-slice sprite that renders stretched means you didn't set up 9-slice rendering correctly — research first, code second.
 
 ## GitHub Issues
 - NEVER create checklist-style issues. Checklists are not actionable.

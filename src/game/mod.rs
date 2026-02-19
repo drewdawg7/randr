@@ -17,7 +17,7 @@ pub use crate::player::{PlayerGold, PlayerName};
 pub use crate::storage::Storage;
 pub use player::{GoldChanged, PlayerDamaged, PlayerHealed, PlayerLeveledUp, PlayerPlugin};
 pub use storage::{ItemDeposited, ItemWithdrawn, StoragePlugin};
-pub use toast::{ShowToast, ToastConfig, ToastPlugin, ToastQueue, ToastType};
+pub use toast::{ShowToast, ToastConfig, ToastPlugin, ToastType};
 pub use blacksmith::{
     calculate_upgrade_cost, BlacksmithPlugin, BlacksmithResult, ForgeRecipeEvent,
     SmeltRecipeEvent, UpgradeItemEvent, UpgradeQualityEvent,
