@@ -30,6 +30,7 @@ struct ToastSprite {
     aseprite: Handle<Aseprite>,
     slice_name: String,
     image_mode: Option<NodeImageMode>,
+    padding: UiRect,
 }
 
 #[derive(Message, Debug, Clone)]
@@ -102,6 +103,7 @@ fn load_toast_sprite(mut commands: Commands, asset_server: Res<AssetServer>) {
         aseprite: asset_server.load("sprites/toast_1.aseprite"),
         slice_name: "Slice 1".into(),
         image_mode: None,
+        padding: UiRect::default(),
     });
 }
 
@@ -115,15 +117,22 @@ fn resolve_toast_nine_patch(
     let Some(slice_meta) = aseprite.slices.get(&toast_sprite.slice_name) else {
         return;
     };
-    toast_sprite.image_mode = slice_meta.nine_patch.map(|b| {
-        NodeImageMode::Sliced(TextureSlicer {
-            border: BorderRect {
-                min_inset: Vec2::new(b.x, b.y),
-                max_inset: Vec2::new(b.z, b.w),
-            },
+    if let Some(b) = slice_meta.nine_patch {
+        let border = BorderRect {
+            min_inset: Vec2::new(b.x, b.y),
+            max_inset: Vec2::new(b.z, b.w),
+        };
+        toast_sprite.image_mode = Some(NodeImageMode::Sliced(TextureSlicer {
+            border,
             ..default()
-        })
-    });
+        }));
+        toast_sprite.padding = UiRect {
+            left: Val::Px(b.x),
+            top: Val::Px(b.y),
+            right: Val::Px(b.z),
+            bottom: Val::Px(b.w),
+        };
+    }
 }
 
 fn spawn_toast_container(mut commands: Commands) {
@@ -162,17 +171,30 @@ fn spawn_toast(
                 .spawn((
                     ToastElement,
                     ToastTimer(Timer::new(config.duration, TimerMode::Once)),
-                    Node::default(),
-                    ImageNode {
-                        image_mode: image_mode.clone(),
+                    Node {
+                        padding: toast_sprite.padding,
                         ..default()
-                    },
-                    AseSlice {
-                        name: toast_sprite.slice_name.clone().into(),
-                        aseprite: toast_sprite.aseprite.clone(),
                     },
                 ))
                 .with_children(|parent| {
+                    parent.spawn((
+                        Node {
+                            position_type: PositionType::Absolute,
+                            left: Val::Px(0.0),
+                            top: Val::Px(0.0),
+                            width: Val::Percent(100.0),
+                            height: Val::Percent(100.0),
+                            ..default()
+                        },
+                        ImageNode {
+                            image_mode: image_mode.clone(),
+                            ..default()
+                        },
+                        AseSlice {
+                            name: toast_sprite.slice_name.clone().into(),
+                            aseprite: toast_sprite.aseprite.clone(),
+                        },
+                    ));
                     parent.spawn((
                         Text::new(event.message.clone()),
                         TextFont {
