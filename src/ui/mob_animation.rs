@@ -80,25 +80,25 @@ fn load_mob_sprite_sheets(
 
     ase_sheets.insert(MobId::DwarfDefender, AseMobSheet {
         aseprite: asset_server.load("sprites/mobs/dwarf_defender.aseprite"),
-        idle_tag: "a_1",
-        hurt_tag: Some("a_4"),
-        death_tag: Some("a_7"),
+        idle_tag: "idle",
+        hurt_tag: Some("hurt"),
+        death_tag: Some("death"),
         frame_size: UVec2::splat(32),
     });
 
     ase_sheets.insert(MobId::DwarfWarrior, AseMobSheet {
         aseprite: asset_server.load("sprites/mobs/dwarf_warrior.aseprite"),
-        idle_tag: "a_1",
-        hurt_tag: Some("a_4"),
-        death_tag: Some("a_6"),
+        idle_tag: "idle",
+        hurt_tag: Some("hurt"),
+        death_tag: Some("death"),
         frame_size: UVec2::splat(32),
     });
 
     ase_sheets.insert(MobId::DwarfMiner, AseMobSheet {
         aseprite: asset_server.load("sprites/mobs/dwarf_miner.aseprite"),
-        idle_tag: "a_1",
-        hurt_tag: Some("a_4"),
-        death_tag: Some("a_6"),
+        idle_tag: "idle",
+        hurt_tag: Some("hurt"),
+        death_tag: Some("death"),
         frame_size: UVec2::splat(32),
     });
 

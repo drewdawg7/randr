@@ -68,6 +68,7 @@
 - User verification happens at the end, after all commits are made. Don't wait for verification before committing.
 
 ## Following Instructions
+- When the user says they updated files to match a pattern you already applied, just apply the same pattern. Don't re-inspect the files — trust the user.
 - When the user interrupts, STOP immediately and update lessons.md with what was learned from the correction before doing anything else.
 - When the user explicitly says NOT to do something (e.g., "do not look at other project skills"), follow that instruction exactly.
 - Don't assume existing project patterns are valid examples when told to use external sources instead.
