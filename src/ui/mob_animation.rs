@@ -178,6 +178,7 @@ fn trigger_death_animation(
         };
         commands.entity(entity).remove::<PlayingHurtAnimation>();
         ase_anim.animation = Animation::tag(death_tag)
+            .with_speed(0.5)
             .with_repeat(AnimationRepeat::Count(0))
             .with_then(sheet.idle_tag, AnimationRepeat::Loop);
     }
