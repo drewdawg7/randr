@@ -20,6 +20,9 @@ impl Plugin for MobAnimationPlugin {
                     trigger_hurt_animation.run_if(on_message::<DamageEntity>),
                     revert_hurt_animation
                         .run_if(any_with_component::<PlayingHurtAnimation>),
+                    trigger_death_animation.run_if(any_with_component::<DyingMob>),
+                    despawn_after_death_animation
+                        .run_if(any_with_component::<DyingMob>),
                 )
                     .chain()
                     .run_if(in_state(AppState::Dungeon)),
@@ -114,10 +117,16 @@ fn load_mob_sprite_sheets(
 #[derive(Component)]
 pub struct PlayingHurtAnimation;
 
+#[derive(Component)]
+pub struct DyingMob;
+
 fn trigger_hurt_animation(
     mut commands: Commands,
     mut events: MessageReader<DamageEntity>,
-    mut mobs: Query<(&MobMarker, &mut AseAnimation), Without<PlayingHurtAnimation>>,
+    mut mobs: Query<
+        (&MobMarker, &mut AseAnimation),
+        (Without<PlayingHurtAnimation>, Without<DyingMob>),
+    >,
     ase_sheets: Res<AseMobSheets>,
 ) {
     for event in events.read() {
@@ -149,6 +158,43 @@ fn revert_hurt_animation(
         };
         if ase_anim.animation.tag.as_deref() == Some(sheet.idle_tag) {
             commands.entity(entity).remove::<PlayingHurtAnimation>();
+        }
+    }
+}
+
+fn trigger_death_animation(
+    mut commands: Commands,
+    mut query: Query<(Entity, &MobMarker, &mut AseAnimation), Added<DyingMob>>,
+    ase_sheets: Res<AseMobSheets>,
+) {
+    for (entity, marker, mut ase_anim) in &mut query {
+        let Some(sheet) = ase_sheets.get(marker.0) else {
+            commands.entity(entity).despawn();
+            continue;
+        };
+        let Some(death_tag) = sheet.death_tag else {
+            commands.entity(entity).despawn();
+            continue;
+        };
+        commands.entity(entity).remove::<PlayingHurtAnimation>();
+        ase_anim.animation = Animation::tag(death_tag)
+            .with_repeat(AnimationRepeat::Count(0))
+            .with_then(sheet.idle_tag, AnimationRepeat::Loop);
+    }
+}
+
+fn despawn_after_death_animation(
+    mut commands: Commands,
+    query: Query<(Entity, &AseAnimation, &MobMarker), With<DyingMob>>,
+    ase_sheets: Res<AseMobSheets>,
+) {
+    for (entity, ase_anim, mob_marker) in &query {
+        let Some(sheet) = ase_sheets.get(mob_marker.0) else {
+            commands.entity(entity).despawn();
+            continue;
+        };
+        if ase_anim.animation.tag.as_deref() == Some(sheet.idle_tag) {
+            commands.entity(entity).despawn();
         }
     }
 }

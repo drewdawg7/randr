@@ -33,7 +33,7 @@ impl Plugin for ActionCombatPlugin {
                     )
                         .run_if(on_message::<EntityDied>),
                     death_rewards::mark_death_processed.run_if(on_message::<EntityDied>),
-                    death_rewards::despawn_dead_entity.run_if(on_message::<EntityDied>),
+                    death_rewards::mark_mob_dying.run_if(on_message::<EntityDied>),
                     (
                         rewards::apply_gold_gain.run_if(on_message::<GoldGained>),
                         rewards::apply_xp_gain.run_if(on_message::<XpGained>),

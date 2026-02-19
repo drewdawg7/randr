@@ -7,6 +7,7 @@ use crate::loot::collect_loot_drops;
 use crate::mob::components::{DeathProcessed, GoldReward, MobLootTable, MobMarker, XpReward};
 use crate::player::PlayerMarker;
 use crate::stats::StatSheet;
+use crate::ui::DyingMob;
 
 pub fn grant_kill_gold(
     mut events: MessageReader<EntityDied>,
@@ -116,12 +117,12 @@ pub fn mark_death_processed(
     }
 }
 
-pub fn despawn_dead_entity(mut commands: Commands, mut events: MessageReader<EntityDied>) {
+pub fn mark_mob_dying(mut commands: Commands, mut events: MessageReader<EntityDied>) {
     for event in events.read() {
         if event.is_player {
             continue;
         }
 
-        commands.entity(event.entity).despawn();
+        commands.entity(event.entity).insert(DyingMob);
     }
 }

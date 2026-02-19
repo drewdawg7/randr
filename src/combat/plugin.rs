@@ -13,6 +13,7 @@ use crate::mob::{
     CombatStats, DeathProcessed, GoldReward, Health, MobLootTable, MobMarker, XpReward,
 };
 use crate::player::{PlayerGold, PlayerMarker};
+use crate::ui::DyingMob;
 use crate::plugins::MobDefeated;
 use crate::skills::{SkillType, SkillXpGained, Skills};
 use crate::stats::StatSheet;
@@ -169,7 +170,7 @@ fn handle_mob_death(
             amount: xp_reward.0 as u64,
         });
 
-        commands.entity(event.entity).despawn();
+        commands.entity(event.entity).insert(DyingMob);
 
         victory_events.write(VictoryAchieved {
             mob_id,
