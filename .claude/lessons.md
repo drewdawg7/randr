@@ -1,5 +1,8 @@
 # Lessons
 
+## Subagents
+- Always use Opus model for subagents. Never use Sonnet or Haiku.
+
 ## Edits
 - Make edits in bulk. Don't make many small sequential edits to the same file or across files - batch them together to reduce approval overhead.
 - Use ast-grep for bulk code transformations across multiple files, not sed or individual Edit calls.
