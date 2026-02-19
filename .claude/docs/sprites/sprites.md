@@ -47,9 +47,6 @@ sheet.image_node_sliced("panel_bg", 8.0) -> Option<ImageNode>
 
 // ImageNode + Node bundle with sizing
 sheet.image_bundle("heart", 32.0, 32.0) -> Option<impl Bundle>
-
-// ImageNode + Node + SpriteAnimation bundle
-sheet.image_bundle_animated("chest", 64.0, 64.0, AnimationConfig::default()) -> Option<impl Bundle>
 ```
 
 ## Common Patterns
@@ -68,21 +65,6 @@ cell.spawn((
 **After (using image_bundle):**
 ```rust
 cell.spawn(sheet.image_bundle("heart", 32.0, 32.0)?);
-```
-
-### Spawning Animated UI Sprites
-
-```rust
-// With default animation (frames 0-3, 0.15s per frame)
-cell.spawn(sheet.image_bundle_animated("chest", 64.0, 64.0, AnimationConfig::default())?);
-
-// With custom animation
-let config = AnimationConfig {
-    first_frame: 0,
-    last_frame: 7,
-    frame_duration: 0.1,
-};
-cell.spawn(sheet.image_bundle_animated("explosion", 128.0, 128.0, config)?);
 ```
 
 ## GameSprites Resource
@@ -113,7 +95,6 @@ pub struct AnimationConfig {
 | `image_node()` | Need ImageNode without sizing (parent controls size) |
 | `image_node_sliced()` | Nine-slice backgrounds/panels |
 | `image_bundle()` | UI sprites with fixed size, no animation |
-| `image_bundle_animated()` | Animated UI sprites with fixed size |
 | `sprite()` | 2D world sprites |
 | `sprite_sized()` | 2D world sprites with custom size |
 

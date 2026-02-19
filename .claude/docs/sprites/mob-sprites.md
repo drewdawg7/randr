@@ -83,93 +83,17 @@ Slice indices correspond to grid cells numbered left-to-right, top-to-bottom:
 | File | Purpose |
 |------|---------|
 | `src/ui/animation.rs` | `SpriteAnimation` component, `AnimationConfig`, `animate_sprites()` system |
-| `src/ui/sprite_marker.rs` | `SpriteMarker` trait, `SpriteData`, generic `populate_sprite_markers<M>()` system |
-| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `MobSpriteSheets` resource, `MobSpriteSheet`, `DungeonMobSprite` marker |
+| `src/ui/mob_animation.rs` | `MobAnimationPlugin`, `AseMobSheets` resource, `AseMobSheet` |
 | `src/ui/screens/monster_compendium/render.rs` | `update_compendium_mob_sprite()` - displays animated sprite in MonsterCompendium |
 | `assets/sprites/mobs/` | Sprite sheet PNGs and JSON metadata |
-
-## Sprite Marker System
-
-The codebase uses a **generic sprite marker pattern** to reduce code duplication. See `src/ui/sprite_marker.rs`.
-
-### SpriteMarker Trait
-
-```rust
-pub trait SpriteMarker: Component + Sized {
-    type Resources: SystemParam;
-    fn resolve(&self, resources: &<Self::Resources as SystemParam>::Item<'_, '_>) -> Option<SpriteData>;
-}
-```
-
-### Existing Mob Sprite Markers
-
-| Marker | File | Resource | flip_x | Animation |
-|--------|------|----------|--------|-----------|
-| `DungeonMobSprite` | `mob_animation.rs` | `MobSpriteSheets` | false | idle |
-| `ResultsModalMobSprite` | `results_modal/state.rs` | `MobSpriteSheets` | false | death (fallback: idle) |
-
-### Registering a New Mob Sprite Marker
-
-1. Define the marker component with `mob_id` field
-2. Implement `SpriteMarker` trait
-3. Register with `app.register_sprite_marker::<YourMarker>()`
-
-Example:
-```rust
-#[derive(Component)]
-pub struct MyMobSprite {
-    pub mob_id: MobId,
-}
-
-impl SpriteMarker for MyMobSprite {
-    type Resources = Res<'static, MobSpriteSheets>;
-
-    fn resolve(&self, sheets: &Res<MobSpriteSheets>) -> Option<SpriteData> {
-        let sheet = sheets.get(self.mob_id)?;
-        Some(SpriteData {
-            texture: sheet.texture.clone(),
-            layout: sheet.layout.clone(),
-            animation: sheet.animation.clone(),
-            flip_x: false,
-        })
-    }
-}
-
-// In plugin:
-app.register_sprite_marker::<MyMobSprite>();
-```
 
 ## How It Works
 
 ### Animation System
 
-1. **Loading**: `load_mob_sprite_sheets()` runs at `PreStartup`, loading textures and creating `TextureAtlasLayout` for each mob
-2. **Populating**: When a marker entity is detected via `Added<M>`, the generic `populate_sprite_markers<M>()` system:
-   - Calls `marker.resolve()` to get sprite data
-   - Removes the marker
-   - Inserts `ImageNode` + `SpriteAnimation`
-3. **Animating**: `animate_sprites()` runs every frame, ticking timers and updating atlas indices for all `SpriteAnimation` components
-
-### Components
-
-```rust
-/// Unified animation config used by all sprite sheets
-pub struct AnimationConfig {
-    pub first_frame: usize,
-    pub last_frame: usize,
-    pub frame_duration: f32,
-    pub looping: bool,  // If false, stops on last frame
-}
-
-/// Unified animation component for all animated sprites
-pub struct SpriteAnimation {
-    pub timer: Timer,
-    pub current_frame: usize,
-    pub first_frame: usize,
-    pub last_frame: usize,
-    pub looping: bool,
-}
-```
+1. **Loading**: `load_mob_sprite_sheets()` runs at `PreStartup`, loading aseprite files for each mob
+2. **Spawning**: Mobs are spawned with `AseAnimation` component using tag-based animations (idle, hurt, death)
+3. **Animating**: `bevy_aseprite_ultra` handles animation playback via `Animation::tag()` with chaining support (`.with_then()`, `.with_repeat()`, `.with_speed()`)
 
 ## Currently Supported Mobs
 
@@ -214,6 +138,4 @@ The sprite display containers should be consistent across all locations:
 
 ### CompendiumMobSprite
 
-The `CompendiumMobSprite` in `src/ui/screens/monster_compendium/render.rs` does NOT use the `SpriteMarker` trait because it:
-- Doesn't remove the marker (sprite updates dynamically on selection change)
-- Uses `SpriteAnimation::new(&sheet.animation)` directly
+The `CompendiumMobSprite` in `src/ui/screens/monster_compendium/list.rs` updates dynamically on selection change by inserting a new `AseAnimation` component with the selected mob's aseprite handle and idle tag.
