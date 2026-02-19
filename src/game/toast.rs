@@ -210,11 +210,7 @@ fn update_toast_ui(
             parent
                 .spawn((
                     ToastElement { index },
-                    Node {
-                        width: Val::Px(350.0),
-                        padding: UiRect::all(Val::Px(12.0)),
-                        ..default()
-                    },
+                    Node::default(),
                     ImageNode::default(),
                     AseSlice {
                         name: toast_sprite.slice_name.clone().into(),
