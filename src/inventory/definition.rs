@@ -98,8 +98,4 @@ impl Inventory {
             .filter(|inv_item| inv_item.item.item_type.is_equipment())
     }
 
-    /// Count of equipment items in inventory.
-    pub fn equipment_count(&self) -> usize {
-        self.equipment_items().count()
-    }
 }

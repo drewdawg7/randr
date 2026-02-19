@@ -168,14 +168,6 @@ impl UiText {
 
     // ===== Preset Constructors =====
 
-    /// Title text preset (48px, cream, margin bottom 20px).
-    pub fn title(text: impl Into<String>) -> Self {
-        Self::new(text)
-            .size(font_sizes::TITLE)
-            .cream()
-            .margin_bottom(20.0)
-    }
-
     /// Section header preset (24px, yellow, margin bottom 10px).
     pub fn section(text: impl Into<String>) -> Self {
         Self::new(text)
@@ -197,14 +189,6 @@ impl UiText {
     /// Stat value preset (20px, white - chain .green()/.red() for +/-).
     pub fn stat(text: impl Into<String>) -> Self {
         Self::new(text).medium()
-    }
-
-    /// Instruction text preset (16px, dark gray, margin top 15px).
-    pub fn instruction(text: impl Into<String>) -> Self {
-        Self::new(text)
-            .size(16.0)
-            .dark_gray()
-            .margin_top(15.0)
     }
 
     // ===== Build Methods =====

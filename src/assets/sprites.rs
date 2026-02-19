@@ -213,14 +213,6 @@ impl SpriteSheet {
         self.sprites.get(name).copied()
     }
 
-    pub fn contains(&self, name: &str) -> bool {
-        self.sprites.contains_key(name)
-    }
-
-    pub fn names(&self) -> impl Iterator<Item = &str> {
-        self.sprites.keys().map(|s| s.as_str())
-    }
-
     pub fn sprite(&self, name: &str) -> Option<Sprite> {
         let index = self.get(name)?;
         Some(Sprite::from_atlas_image(
@@ -266,12 +258,6 @@ impl SpriteSheet {
         })
     }
 
-    /// Returns (ImageNode, Node) bundle with sizing for UI sprites.
-    ///
-    /// # Example
-    /// ```ignore
-    /// cell.spawn(sheet.image_bundle("heart", 32.0, 32.0)?);
-    /// ```
     pub fn image_bundle(&self, name: &str, width: f32, height: f32) -> Option<impl Bundle> {
         let image_node = self.image_node(name)?;
         Some((

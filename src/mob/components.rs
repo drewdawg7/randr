@@ -33,9 +33,6 @@ impl Health {
         self.current > 0
     }
 
-    pub fn heal(&mut self, amount: i32) {
-        self.current = (self.current + amount).min(self.max);
-    }
 }
 
 /// Combat stats for attack and defense calculations.

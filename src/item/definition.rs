@@ -28,10 +28,6 @@ impl Item {
         self.is_equipped = is_equipped
     }
 
-    pub fn toggle_lock(&mut self) {
-        self.is_locked = !self.is_locked;
-    }
-
     pub fn upgrade(&mut self) -> Result<UpgradeResult, ItemError> {
         if !self.item_type.is_equipment() {
             return Err(ItemError::NotEquipment);
