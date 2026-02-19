@@ -8,8 +8,7 @@ use bevy::prelude::*;
 
 pub use bonuses::{
     blacksmith_bonus_item_chance, blacksmith_quality_bonus, blacksmith_speed_multiplier,
-    combat_attack_bonus, combat_defense_bonus, mining_gem_chance, BlacksmithBonuses,
-    CombatBonuses, MiningBonuses,
+    combat_attack_bonus, combat_defense_bonus, BlacksmithBonuses, CombatBonuses, MiningBonuses,
 };
 pub use events::{SkillLeveledUp, SkillXpGained};
 pub use plugin::SkillsPlugin;

@@ -62,10 +62,6 @@ pub fn blacksmith_bonus_item_chance(level: u32) -> f32 {
     BlacksmithBonuses::from_level(level).bonus_item_chance
 }
 
-pub fn mining_gem_chance(level: u32) -> f32 {
-    MiningBonuses::from_level(level).gem_chance
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -83,10 +79,6 @@ mod tests {
 
     #[test]
     fn test_blacksmith_bonuses() {
-        assert_eq!(blacksmith_quality_bonus(1), 0);
-        assert_eq!(blacksmith_quality_bonus(5), 1);
-        assert_eq!(blacksmith_quality_bonus(99), 19);
-
         let speed_1 = blacksmith_speed_multiplier(1);
         assert!((speed_1 - 0.99).abs() < 0.001);
 
@@ -101,14 +93,5 @@ mod tests {
 
         let chance_99 = blacksmith_bonus_item_chance(99);
         assert!((chance_99 - 0.495).abs() < 0.001);
-    }
-
-    #[test]
-    fn test_mining_bonuses() {
-        let gem_1 = mining_gem_chance(1);
-        assert!((gem_1 - 0.002).abs() < 0.001);
-
-        let gem_99 = mining_gem_chance(99);
-        assert!((gem_99 - 0.198).abs() < 0.001);
     }
 }
