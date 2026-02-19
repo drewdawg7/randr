@@ -19,7 +19,6 @@ pub mod registry;
 pub mod inventory;
 pub mod skills;
 pub mod stats;
-pub mod utils;
 pub mod game;
 pub mod input;
 pub mod states;

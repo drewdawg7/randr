@@ -27,15 +27,6 @@ pub fn modal_content_row() -> Node {
     }
 }
 
-pub fn separator_node() -> Node {
-    Node {
-        width: Val::Percent(100.0),
-        height: Val::Px(2.0),
-        margin: UiRect::vertical(Val::Px(10.0)),
-        ..default()
-    }
-}
-
 pub const SCREEN_BG_COLOR: Color = Color::srgb(0.1, 0.1, 0.1);
 
 pub fn screen_root_node() -> Node {
@@ -45,8 +36,4 @@ pub fn screen_root_node() -> Node {
         flex_direction: FlexDirection::Column,
         ..default()
     }
-}
-
-pub fn screen_root_bundle() -> (Node, BackgroundColor) {
-    (screen_root_node(), BackgroundColor(SCREEN_BG_COLOR))
 }

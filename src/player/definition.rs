@@ -2,7 +2,6 @@ use std::collections::HashMap;
 
 use bevy::prelude::*;
 
-use crate::inventory::Inventory;
 use crate::stats::{StatInstance, StatSheet, StatType};
 
 #[derive(Resource, Component, Debug, Clone)]
@@ -36,24 +35,6 @@ pub fn default_player_stats() -> StatSheet {
     sheet.insert(StatType::Mining.instance(100));
     sheet.insert(StatType::Health.instance(100));
     sheet
-}
-
-pub fn effective_magicfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
-    let base = stats.value(StatType::MagicFind);
-    let equipment = inventory.sum_equipment_stats(StatType::MagicFind);
-    base + equipment
-}
-
-pub fn effective_mining(stats: &StatSheet, inventory: &Inventory) -> i32 {
-    let base = stats.value(StatType::Mining);
-    let equipment = inventory.sum_equipment_stats(StatType::Mining);
-    base + equipment
-}
-
-pub fn effective_goldfind(stats: &StatSheet, inventory: &Inventory) -> i32 {
-    let base = stats.value(StatType::GoldFind);
-    let equipment = inventory.sum_equipment_stats(StatType::GoldFind);
-    base + equipment
 }
 
 #[cfg(test)]
@@ -115,30 +96,6 @@ mod tests {
         assert_eq!(stats.value(StatType::GoldFind), 0);
         assert_eq!(stats.value(StatType::Mining), 100);
         assert_eq!(stats.value(StatType::Health), 100);
-    }
-
-    #[test]
-    fn effective_magicfind_with_no_equipment() {
-        let stats = default_player_stats();
-        let inventory = Inventory::new();
-        let result = effective_magicfind(&stats, &inventory);
-        assert_eq!(result, 0);
-    }
-
-    #[test]
-    fn effective_mining_with_no_equipment() {
-        let stats = default_player_stats();
-        let inventory = Inventory::new();
-        let result = effective_mining(&stats, &inventory);
-        assert_eq!(result, 100);
-    }
-
-    #[test]
-    fn effective_goldfind_with_no_equipment() {
-        let stats = default_player_stats();
-        let inventory = Inventory::new();
-        let result = effective_goldfind(&stats, &inventory);
-        assert_eq!(result, 0);
     }
 }
 
