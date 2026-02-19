@@ -5,12 +5,6 @@ use serde::Deserialize;
 use crate::skills::blacksmith_quality_bonus;
 use crate::stats::StatSheet;
 
-// ItemId is now defined in definitions.rs via macro
-
-// ─────────────────────────────────────────────────────────────────────────────
-// Item Type Hierarchy
-// ─────────────────────────────────────────────────────────────────────────────
-
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Deserialize)]
 pub enum ItemType {
     Equipment(EquipmentType),
@@ -48,10 +42,6 @@ pub enum ConsumableType {
 pub enum ToolKind {
     Pickaxe,
 }
-
-// ─────────────────────────────────────────────────────────────────────────────
-// ItemType Helper Methods
-// ─────────────────────────────────────────────────────────────────────────────
 
 impl ItemType {
     pub fn is_equipment(&self) -> bool {
