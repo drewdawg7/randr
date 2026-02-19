@@ -251,7 +251,16 @@
       "Skill(styleguide)",
       "Skill(game-engine-patterns)",
       "WebFetch(domain:joonaa.dev)",
-      "Bash(cargo tree:*)"
+      "Bash(cargo tree:*)",
+      "WebFetch(domain:lommix.com)",
+      "WebFetch(domain:www.aseprite.org)",
+      "WebFetch(domain:community.aseprite.org)",
+      "WebFetch(domain:behreajj.medium.com)",
+      "Bash(aseprite:*)",
+      "Bash(\"/Users/drewstewart/Library/Application Support/Steam/steamapps/common/Aseprite/Aseprite.app/Contents/MacOS/aseprite\" -b assets/sprites/player/lightning_warrior.aseprite --script tools/aseprite_add_tags.lua)",
+      "Bash(for f in /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_king.aseprite /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_warrior.aseprite /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_miner.aseprite /Users/drewstewart/code/game/assets/sprites/mobs/dwarf_defender.aseprite /Users/drewstewart/code/game/assets/sprites/mobs/goblin.aseprite /Users/drewstewart/code/game/assets/sprites/mobs/slime.aseprite /Users/drewstewart/code/game/assets/sprites/mobs/merchant.aseprite)",
+      "Bash(do echo \"=== Converting $f ===\")",
+      "Bash(\"$ASEPRITE\" -b \"$f\" --script /Users/drewstewart/code/game/tools/aseprite_add_tags.lua)"
     ]
   },
   "enabledMcpjsonServers": [

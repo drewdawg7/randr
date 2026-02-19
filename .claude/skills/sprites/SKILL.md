@@ -31,6 +31,13 @@ ASEPRITE="/Users/drewstewart/Library/Application Support/Steam/steamapps/common/
 
 See [aseprite.md](references/aseprite.md) for full CLI options.
 
+**Convert slice-based sheets to tagged frames:**
+```bash
+"$ASEPRITE" -b input.aseprite --script tools/aseprite_add_tags.lua
+```
+
+Reads existing slices from a sprite sheet, groups by row, detects empty cells to find animation boundaries, and outputs a multi-frame file with tagged animations (`a_1`, `a_2`, etc.). Assumes 32x32 frame size. Tags must use short names (max ~4 chars) to display correctly in Aseprite.
+
 ### 2. Place Files
 
 ```
