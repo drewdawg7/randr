@@ -15,7 +15,6 @@ use crate::game::{
     StorageTransactionsPlugin, ToastPlugin,
 };
 use crate::input::InputPlugin;
-use crate::location::StorePlugin;
 use crate::skills::SkillsPlugin;
 use crate::states::StateTransitionPlugin;
 use crate::ui::screens::{
@@ -55,7 +54,6 @@ impl PluginGroup for CoreGamePlugins {
         PluginGroupBuilder::start::<Self>()
             .add(PlayerPlugin)
             .add(StoragePlugin)
-            .add(StorePlugin)
             .add(ItemPlugin)
             .add(CombatPlugin)
             .add(ActionCombatPlugin)

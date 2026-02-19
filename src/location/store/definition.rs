@@ -48,31 +48,6 @@ impl Store {
         }
     }
 
-    pub fn get_store_item_by_id(&self, item_id: ItemId) -> Option<&StoreItem> {
-        self.inventory.iter().find(|si| si.item_id == item_id)
-    }
-
-    pub fn get_store_item_by_id_mut(&mut self, item_id: ItemId) -> Option<&mut StoreItem> {
-        self.inventory.iter_mut().find(|si| si.item_id == item_id)
-    }
-
-    pub fn add_item(&mut self, item: Item) {
-        let item_id = item.item_id;
-        match self.get_store_item_by_id_mut(item_id) {
-            Some(store_item) => {
-                store_item.items.push(item);
-            }
-            None => {
-                let store_item = StoreItem {
-                    item_id,
-                    items: vec![item],
-                    max_quantity: 1,
-                };
-                self.inventory.push(store_item);
-            }
-        };
-    }
-
     pub fn purchase_item(
         &mut self,
         gold: &mut PlayerGold,
@@ -121,14 +96,4 @@ impl Display for Store {
         }
         Ok(())
     }
-}
-
-pub fn sell_player_item(gold: &mut PlayerGold, inventory: &mut Inventory, item: &Item) -> i32 {
-    if item.is_locked {
-        return 0;
-    }
-    let sell_price = item.sell_price();
-    gold.add(sell_price);
-    inventory.decrease_item_quantity(item.item_id, 1);
-    sell_price
 }
