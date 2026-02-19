@@ -12,7 +12,6 @@ pub struct StoreItem {
 impl StoreItem {
     pub fn new(item_id: ItemId, quantity: i32) -> Self {
         let max_quantity = quantity;
-        // Equipment only stocks 1 at a time
         let actual_quantity = if item_id.spec().item_type.is_equipment() {
             1
         } else {
@@ -34,15 +33,12 @@ impl StoreItem {
         !self.items.is_empty()
     }
 
-    /// Take an item from stock (for purchasing)
     pub fn take_item(&mut self) -> Option<Item> {
         self.items.pop()
     }
 
-    /// Respawn items up to max_quantity (equipment is capped at 1)
     pub fn restock(&mut self) {
         self.items.clear();
-        // Equipment only stocks 1 at a time
         let quantity = if self.item_id.spec().item_type.is_equipment() {
             1
         } else {
@@ -53,7 +49,6 @@ impl StoreItem {
         }
     }
 
-    /// Get a reference to the first item (for display purposes)
     pub fn display_item(&self) -> Option<&Item> {
         self.items.first()
     }
