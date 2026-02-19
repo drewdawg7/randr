@@ -103,9 +103,9 @@ fn load_mob_sprite_sheets(
 
     ase_sheets.insert(MobId::DwarfKing, AseMobSheet {
         aseprite: asset_server.load("sprites/mobs/dwarf_king.aseprite"),
-        idle_tag: "a_1",
-        hurt_tag: Some("a_4"),
-        death_tag: Some("a_7"),
+        idle_tag: "idle",
+        hurt_tag: Some("hurt"),
+        death_tag: Some("death"),
         frame_size: UVec2::splat(32),
     });
 }
