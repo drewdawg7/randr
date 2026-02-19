@@ -66,10 +66,30 @@ fn spawn_toast(
     mut commands: Commands,
     mut events: MessageReader<ShowToast>,
     toast_sprite: Res<ToastSprite>,
+    aseprites: Res<Assets<Aseprite>>,
     container: Query<Entity, With<ToastContainer>>,
 ) {
     let Ok(container) = container.single() else {
         return;
+    };
+    let Some(aseprite) = aseprites.get(&toast_sprite.aseprite) else {
+        return;
+    };
+    let Some(slice) = aseprite.slices.get("Slice 1") else {
+        return;
+    };
+
+    let image_mode = match slice.nine_patch {
+        Some(borders) => NodeImageMode::Sliced(TextureSlicer {
+            border: BorderRect {
+                min_inset: Vec2::new(borders.x, borders.y),
+                max_inset: Vec2::new(borders.z, borders.w),
+            },
+            center_scale_mode: SliceScaleMode::Stretch,
+            sides_scale_mode: SliceScaleMode::Stretch,
+            max_corner_scale: 1.0,
+        }),
+        None => NodeImageMode::Auto,
     };
 
     for event in events.read() {
@@ -81,7 +101,10 @@ fn spawn_toast(
                         padding: UiRect::all(Val::Px(8.0)),
                         ..default()
                     },
-                    ImageNode::default(),
+                    ImageNode {
+                        image_mode: image_mode.clone(),
+                        ..default()
+                    },
                     AseSlice {
                         name: "Slice 1".into(),
                         aseprite: toast_sprite.aseprite.clone(),
