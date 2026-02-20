@@ -27,18 +27,6 @@ impl MobId {
         MobId::Merchant,
     ];
 
-    pub fn filename(&self) -> &'static str {
-        match self {
-            MobId::Slime => "slime",
-            MobId::Goblin => "goblin",
-            MobId::DwarfDefender => "dwarf_defender",
-            MobId::DwarfWarrior => "dwarf_warrior",
-            MobId::DwarfMiner => "dwarf_miner",
-            MobId::DwarfKing => "dwarf_king",
-            MobId::Merchant => "merchant",
-        }
-    }
-
     pub fn spec(&self) -> &'static MobSpec {
         super::data::get_spec(*self)
     }

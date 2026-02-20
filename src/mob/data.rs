@@ -1,91 +1,14 @@
 use std::collections::HashMap;
 use std::sync::OnceLock;
 
-use serde::Deserialize;
-
-use crate::data::StatRange;
-use crate::dungeon::EntitySize;
-use crate::item::ItemId;
-use crate::loot::LootTable;
-
-use super::definitions::{MobId, MobQuality, MobSpec, MobSpriteData};
+use super::definitions::{MobId, MobSpec, MobSpriteData};
 
 const MOBS_DIR: &str = "assets/data/mobs";
 
-#[derive(Deserialize)]
-struct LootEntryRon {
-    item: ItemId,
-    numerator: i32,
-    denominator: i32,
-    quantity: StatRange,
-}
+static MOB_SPECS: OnceLock<HashMap<MobId, MobSpec>> = OnceLock::new();
 
-#[derive(Deserialize)]
-struct MobEntry {
-    id: MobId,
-    name: String,
-    quality: MobQuality,
-    max_health: StatRange,
-    attack: StatRange,
-    defense: StatRange,
-    dropped_gold: StatRange,
-    dropped_xp: StatRange,
-    #[serde(default)]
-    loot: Vec<LootEntryRon>,
-    #[serde(default)]
-    entity_size: Option<(f32, f32)>,
-    sprite: MobSpriteData,
-}
-
-impl MobEntry {
-    fn into_parts(self) -> (MobId, MobSpec, MobSpriteData) {
-        let loot = self
-            .loot
-            .into_iter()
-            .fold(LootTable::new(), |builder, entry| {
-                builder.with(entry.item, entry.numerator, entry.denominator, entry.quantity)
-            })
-            .build();
-
-        let entity_size = match self.entity_size {
-            Some((w, h)) => EntitySize::new(w, h),
-            None => EntitySize::default(),
-        };
-
-        let id = self.id;
-        let sprite = self.sprite;
-
-        (
-            id,
-            MobSpec {
-                id,
-                name: self.name,
-                max_health: self.max_health,
-                attack: self.attack,
-                defense: self.defense,
-                dropped_gold: self.dropped_gold,
-                dropped_xp: self.dropped_xp,
-                quality: self.quality,
-                loot,
-                entity_size,
-                sprite: sprite.clone(),
-            },
-            sprite,
-        )
-    }
-}
-
-struct MobData {
-    specs: HashMap<MobId, MobSpec>,
-    sprites: HashMap<MobId, MobSpriteData>,
-}
-
-static MOB_DATA: OnceLock<MobData> = OnceLock::new();
-
-fn load_mob_data() -> MobData {
+fn load_from_filesystem() -> HashMap<MobId, MobSpec> {
     let mut specs = HashMap::new();
-    let mut sprites = HashMap::new();
-
     for dir_entry in std::fs::read_dir(MOBS_DIR)
         .unwrap_or_else(|e| panic!("Failed to read {MOBS_DIR}: {e}"))
     {
@@ -97,40 +20,37 @@ fn load_mob_data() -> MobData {
 
         let contents = std::fs::read_to_string(&path)
             .unwrap_or_else(|e| panic!("Failed to read {}: {e}", path.display()));
-        let entry: MobEntry = ron::from_str(&contents)
+        let spec: MobSpec = ron::from_str(&contents)
             .unwrap_or_else(|e| panic!("Failed to parse {}: {e}", path.display()));
-        let (id, spec, sprite) = entry.into_parts();
-        specs.insert(id, spec);
-        sprites.insert(id, sprite);
+        specs.insert(spec.id, spec);
     }
 
     for id in MobId::ALL {
         assert!(specs.contains_key(id), "Missing RON file for {id:?}");
     }
 
-    MobData { specs, sprites }
+    specs
+}
+
+pub fn populate(specs: HashMap<MobId, MobSpec>) {
+    MOB_SPECS.set(specs).ok();
 }
 
 pub fn init() {
-    MOB_DATA.get_or_init(load_mob_data);
+    MOB_SPECS.get_or_init(load_from_filesystem);
 }
 
 pub fn get_spec(id: MobId) -> &'static MobSpec {
-    MOB_DATA
-        .get_or_init(load_mob_data)
-        .specs
+    MOB_SPECS
+        .get_or_init(load_from_filesystem)
         .get(&id)
         .unwrap_or_else(|| panic!("No spec for {id:?}"))
 }
 
 pub fn get_sprite(id: MobId) -> &'static MobSpriteData {
-    MOB_DATA
-        .get_or_init(load_mob_data)
-        .sprites
-        .get(&id)
-        .unwrap_or_else(|| panic!("No sprite data for {id:?}"))
+    &get_spec(id).sprite
 }
 
 pub fn specs_loaded() -> bool {
-    MOB_DATA.get().is_some()
+    MOB_SPECS.get().is_some()
 }

@@ -10,8 +10,6 @@ use std::collections::HashMap;
 use std::sync::LazyLock;
 
 use crate::item::ItemId;
-use crate::registry::RegistryDefaults;
-
 // RecipeType and other enums are kept separate
 pub use super::enums::{ForgeMaterial, RecipeType};
 
@@ -204,16 +202,6 @@ entity_macros::define_data! {
             output_quantity: 1,
             recipe_type: RecipeType::Forging,
         }
-    }
-}
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RegistryDefaults (no spawn for recipes, just lookup)
-// ─────────────────────────────────────────────────────────────────────────────
-
-impl RegistryDefaults<RecipeId> for RecipeSpec {
-    fn defaults() -> impl IntoIterator<Item = (RecipeId, Self)> {
-        RecipeId::ALL.iter().map(|id| (*id, id.spec().clone()))
     }
 }
 

@@ -100,53 +100,6 @@ impl ItemId {
         ItemId::QualityUpgradeStone,
     ];
 
-    pub fn filename(&self) -> &'static str {
-        match self {
-            ItemId::Sword => "sword",
-            ItemId::Dagger => "dagger",
-            ItemId::GoldSword => "gold_sword",
-            ItemId::IronSword => "iron_sword",
-            ItemId::CopperSword => "copper_sword",
-            ItemId::BonkStick => "bonk_stick",
-            ItemId::BasicShield => "basic_shield",
-            ItemId::IronHelmet => "iron_helmet",
-            ItemId::IronChestplate => "iron_chestplate",
-            ItemId::IronGauntlets => "iron_gauntlets",
-            ItemId::IronGreaves => "iron_greaves",
-            ItemId::IronLeggings => "iron_leggings",
-            ItemId::GoldHelmet => "gold_helmet",
-            ItemId::GoldChestplate => "gold_chestplate",
-            ItemId::GoldGauntlets => "gold_gauntlets",
-            ItemId::GoldGreaves => "gold_greaves",
-            ItemId::GoldLeggings => "gold_leggings",
-            ItemId::CopperHelmet => "copper_helmet",
-            ItemId::CopperChestplate => "copper_chestplate",
-            ItemId::CopperGauntlets => "copper_gauntlets",
-            ItemId::CopperGreaves => "copper_greaves",
-            ItemId::CopperLeggings => "copper_leggings",
-            ItemId::CopperPickaxe => "copper_pickaxe",
-            ItemId::GoldRing => "gold_ring",
-            ItemId::ImbaRing => "imba_ring",
-            ItemId::Coal => "coal",
-            ItemId::CopperOre => "copper_ore",
-            ItemId::IronOre => "iron_ore",
-            ItemId::GoldOre => "gold_ore",
-            ItemId::GoldIngot => "gold_ingot",
-            ItemId::IronIngot => "iron_ingot",
-            ItemId::CopperIngot => "copper_ingot",
-            ItemId::BlueCrystal => "blue_crystal",
-            ItemId::RedCrystal => "red_crystal",
-            ItemId::GreenCrystal => "green_crystal",
-            ItemId::WhiteCrystal => "white_crystal",
-            ItemId::OrangeCrystal => "orange_crystal",
-            ItemId::YellowCrystal => "yellow_crystal",
-            ItemId::Cowhide => "cowhide",
-            ItemId::SlimeGel => "slime_gel",
-            ItemId::BasicHPPotion => "basic_hp_potion",
-            ItemId::QualityUpgradeStone => "quality_upgrade_stone",
-        }
-    }
-
     pub fn spec(&self) -> &'static ItemSpec {
         super::data::get_spec(*self)
     }
@@ -176,16 +129,7 @@ pub struct ItemSpec {
 }
 
 use uuid::Uuid;
-use crate::registry::SpawnFromSpec;
 use super::definition::Item;
-
-impl SpawnFromSpec<ItemId> for ItemSpec {
-    type Output = Item;
-
-    fn spawn_from_spec(item_id: ItemId, spec: &Self) -> Self::Output {
-        spec.spawn(item_id)
-    }
-}
 
 impl ItemSpec {
     fn spawn(&self, id: ItemId) -> Item {

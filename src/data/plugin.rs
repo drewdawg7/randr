@@ -6,29 +6,8 @@ use bevy_common_assets::ron::RonAssetPlugin;
 
 use crate::item::definitions::{ItemId, ItemSpec};
 use crate::mob::definitions::{MobId, MobSpec};
+use crate::registry::Registry;
 use crate::states::AppState;
-
-#[derive(Resource)]
-pub struct MobRegistry(HashMap<MobId, MobSpec>);
-
-impl MobRegistry {
-    pub fn get(&self, id: MobId) -> &MobSpec {
-        self.0
-            .get(&id)
-            .unwrap_or_else(|| panic!("No mob spec for {id:?}"))
-    }
-}
-
-#[derive(Resource)]
-pub struct ItemRegistry(HashMap<ItemId, ItemSpec>);
-
-impl ItemRegistry {
-    pub fn get(&self, id: ItemId) -> &ItemSpec {
-        self.0
-            .get(&id)
-            .unwrap_or_else(|| panic!("No item spec for {id:?}"))
-    }
-}
 
 pub struct DataPlugin;
 
@@ -98,13 +77,16 @@ fn check_loading_complete(
         .into_iter()
         .map(|spec| (spec.id, spec.clone()))
         .collect();
-    commands.insert_resource(MobRegistry(mob_map));
-
     let item_map: HashMap<ItemId, ItemSpec> = item_specs
         .into_iter()
         .map(|spec| (spec.id, spec.clone()))
         .collect();
-    commands.insert_resource(ItemRegistry(item_map));
+
+    crate::mob::data::populate(mob_map.clone());
+    crate::item::data::populate(item_map.clone());
+
+    commands.insert_resource(Registry::new(mob_map));
+    commands.insert_resource(Registry::new(item_map));
 
     commands.remove_resource::<PendingLoads>();
     next_state.set(AppState::Menu);

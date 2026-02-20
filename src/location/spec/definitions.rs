@@ -12,8 +12,6 @@ use std::time::Duration;
 
 use crate::item::ItemId;
 use crate::mob::MobId;
-use crate::registry::RegistryDefaults;
-
 // ─────────────────────────────────────────────────────────────────────────────
 // Location-Specific Data Types
 // ─────────────────────────────────────────────────────────────────────────────
@@ -142,16 +140,6 @@ entity_macros::define_data! {
     }
 }
 
-
-// ─────────────────────────────────────────────────────────────────────────────
-// RegistryDefaults
-// ─────────────────────────────────────────────────────────────────────────────
-
-impl RegistryDefaults<LocationId> for LocationSpec {
-    fn defaults() -> impl IntoIterator<Item = (LocationId, Self)> {
-        LocationId::ALL.iter().map(|id| (*id, id.spec().clone()))
-    }
-}
 
 // ─────────────────────────────────────────────────────────────────────────────
 // Additional LocationId Methods
