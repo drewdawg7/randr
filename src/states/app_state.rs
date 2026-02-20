@@ -23,6 +23,7 @@ impl StateTransitionRequest {
 impl From<AppState> for StateTransitionRequest {
     fn from(state: AppState) -> Self {
         match state {
+            AppState::Loading => panic!("Cannot create StateTransitionRequest from Loading state"),
             AppState::Menu => StateTransitionRequest::Menu,
             AppState::Dungeon => StateTransitionRequest::Dungeon,
             AppState::Profile => StateTransitionRequest::Profile,
@@ -34,6 +35,7 @@ impl From<AppState> for StateTransitionRequest {
 #[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 pub enum AppState {
     #[default]
+    Loading,
     Menu,
     Dungeon,
     Profile,
@@ -94,9 +96,9 @@ mod tests {
     }
 
     #[test]
-    fn app_state_default_is_menu() {
+    fn app_state_default_is_loading() {
         let state = AppState::default();
-        assert_eq!(state, AppState::Menu);
+        assert_eq!(state, AppState::Loading);
     }
 }
 
