@@ -47,7 +47,7 @@ impl ItemEntry {
 
 static ITEM_SPECS: OnceLock<HashMap<ItemId, ItemSpec>> = OnceLock::new();
 
-pub fn init() {
+fn load_item_specs() -> HashMap<ItemId, ItemSpec> {
     let specs: HashMap<ItemId, ItemSpec> = std::fs::read_dir(ITEMS_DIR)
         .unwrap_or_else(|e| panic!("Failed to read {ITEMS_DIR}: {e}"))
         .filter_map(|entry| {
@@ -66,7 +66,11 @@ pub fn init() {
         assert!(specs.contains_key(id), "Missing RON file for {id:?}");
     }
 
-    ITEM_SPECS.set(specs).expect("Item specs already initialized");
+    specs
+}
+
+pub fn init() {
+    ITEM_SPECS.get_or_init(load_item_specs);
 }
 
 pub fn get_spec(id: ItemId) -> &'static ItemSpec {

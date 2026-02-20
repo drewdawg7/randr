@@ -133,6 +133,7 @@
 - Show actual code in plans, not just high-level descriptions. The user needs to see what will be implemented.
 - When data already exists in the file (slices, metadata, etc.), USE IT directly via the API. Don't write manual scanning/detection code when the information is already structured.
 - Never assume a bug is in a library/API. Always assume you are doing something wrong first.
+- ACTUALLY READ AND APPLY LESSONS BEFORE PLANNING. Don't just read them — cross-check every plan decision against relevant lessons. If a lesson says "don't do X", the plan must not do X, regardless of what an issue says.
 
 ## Aseprite Scripting
 - The `aseprite_add_tags.lua` script is DESTRUCTIVE — it overwrites the source file. ALWAYS copy source files from Downloads/aseprite_sprites first, then run the script on the copies. Never run on originals.

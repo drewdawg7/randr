@@ -1,0 +1,21 @@
+(
+    id: Slime,
+    name: "Slime",
+    quality: Normal,
+    max_health: (15, 22),
+    attack: (2, 4),
+    defense: (1, 3),
+    dropped_gold: (1, 3),
+    dropped_xp: (5, 9),
+    loot: [
+        (item: SlimeGel, numerator: 3, denominator: 4, quantity: (1, 4)),
+        (item: GoldRing, numerator: 1, denominator: 100, quantity: (1, 1)),
+    ],
+    sprite: (
+        aseprite_path: "sprites/mobs/slime.aseprite",
+        idle_tag: "a_1",
+        hurt_tag: Some("a_4"),
+        death_tag: None,
+        frame_size: (32, 32),
+    ),
+)

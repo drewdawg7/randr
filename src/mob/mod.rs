@@ -1,5 +1,6 @@
 pub mod bundle;
 pub mod components;
+pub mod data;
 pub mod definitions;
 pub mod enums;
 

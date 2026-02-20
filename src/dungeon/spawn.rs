@@ -151,8 +151,17 @@ impl SpawnTable {
 mod tests {
     use super::*;
 
+    fn init() {
+        if crate::mob::data::specs_loaded() {
+            return;
+        }
+        crate::item::data::init();
+        crate::mob::data::init();
+    }
+
     #[test]
     fn mob_entry_stores_size_from_spec() {
+        init();
         let table = SpawnTable::new().mob(MobId::Goblin, 1).build();
 
         assert_eq!(table.entries.len(), 1);
@@ -170,6 +179,7 @@ mod tests {
 
     #[test]
     fn weighted_mobs() {
+        init();
         let table = SpawnTable::new()
             .mob(MobId::Goblin, 5)
             .mob(MobId::Slime, 3)

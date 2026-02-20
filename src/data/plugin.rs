@@ -10,4 +10,5 @@ impl Plugin for DataPlugin {
 
 fn load_data() {
     crate::item::data::init();
+    crate::mob::data::init();
 }

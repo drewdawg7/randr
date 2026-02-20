@@ -1,0 +1,18 @@
+(
+    id: Merchant,
+    name: "Merchant",
+    quality: Normal,
+    max_health: (1, 1),
+    attack: (0, 0),
+    defense: (0, 0),
+    dropped_gold: (0, 0),
+    dropped_xp: (0, 0),
+    loot: [],
+    sprite: (
+        aseprite_path: "sprites/mobs/merchant.aseprite",
+        idle_tag: "idle",
+        hurt_tag: Some("damage"),
+        death_tag: Some("death"),
+        frame_size: (32, 32),
+    ),
+)

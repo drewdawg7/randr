@@ -57,61 +57,16 @@ fn load_mob_sprite_sheets(
     asset_server: Res<AssetServer>,
     mut ase_sheets: ResMut<AseMobSheets>,
 ) {
-    ase_sheets.insert(MobId::Goblin, AseMobSheet {
-        aseprite: asset_server.load("sprites/mobs/goblin.aseprite"),
-        idle_tag: "a_1",
-        hurt_tag: Some("a_4"),
-        death_tag: Some("a_6"),
-        frame_size: UVec2::splat(32),
-    });
-
-    ase_sheets.insert(MobId::Slime, AseMobSheet {
-        aseprite: asset_server.load("sprites/mobs/slime.aseprite"),
-        idle_tag: "a_1",
-        hurt_tag: Some("a_4"),
-        death_tag: None,
-        frame_size: UVec2::splat(32),
-    });
-
-    ase_sheets.insert(MobId::Merchant, AseMobSheet {
-        aseprite: asset_server.load("sprites/mobs/merchant.aseprite"),
-        idle_tag: "idle",
-        hurt_tag: Some("damage"),
-        death_tag: Some("death"),
-        frame_size: UVec2::splat(32),
-    });
-
-    ase_sheets.insert(MobId::DwarfDefender, AseMobSheet {
-        aseprite: asset_server.load("sprites/mobs/dwarf_defender.aseprite"),
-        idle_tag: "idle",
-        hurt_tag: Some("hurt"),
-        death_tag: Some("death"),
-        frame_size: UVec2::splat(32),
-    });
-
-    ase_sheets.insert(MobId::DwarfWarrior, AseMobSheet {
-        aseprite: asset_server.load("sprites/mobs/dwarf_warrior.aseprite"),
-        idle_tag: "idle",
-        hurt_tag: Some("hurt"),
-        death_tag: Some("death"),
-        frame_size: UVec2::splat(32),
-    });
-
-    ase_sheets.insert(MobId::DwarfMiner, AseMobSheet {
-        aseprite: asset_server.load("sprites/mobs/dwarf_miner.aseprite"),
-        idle_tag: "idle",
-        hurt_tag: Some("hurt"),
-        death_tag: Some("death"),
-        frame_size: UVec2::splat(32),
-    });
-
-    ase_sheets.insert(MobId::DwarfKing, AseMobSheet {
-        aseprite: asset_server.load("sprites/mobs/dwarf_king.aseprite"),
-        idle_tag: "idle",
-        hurt_tag: Some("hurt"),
-        death_tag: Some("death"),
-        frame_size: UVec2::splat(32),
-    });
+    for &mob_id in MobId::ALL {
+        let sprite = crate::mob::data::get_sprite(mob_id);
+        ase_sheets.insert(mob_id, AseMobSheet {
+            aseprite: asset_server.load(&sprite.aseprite_path),
+            idle_tag: sprite.idle_tag.as_str(),
+            hurt_tag: sprite.hurt_tag.as_deref(),
+            death_tag: sprite.death_tag.as_deref(),
+            frame_size: UVec2::new(sprite.frame_size.0, sprite.frame_size.1),
+        });
+    }
 }
 
 #[derive(Component)]

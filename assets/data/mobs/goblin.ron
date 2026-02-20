@@ -1,0 +1,22 @@
+(
+    id: Goblin,
+    name: "Goblin",
+    quality: Normal,
+    max_health: (33, 41),
+    attack: (10, 15),
+    defense: (5, 10),
+    dropped_gold: (10, 19),
+    dropped_xp: (13, 20),
+    loot: [
+        (item: Sword, numerator: 1, denominator: 15, quantity: (1, 1)),
+        (item: BasicShield, numerator: 1, denominator: 15, quantity: (1, 1)),
+        (item: GoldRing, numerator: 1, denominator: 100, quantity: (1, 1)),
+    ],
+    sprite: (
+        aseprite_path: "sprites/mobs/goblin.aseprite",
+        idle_tag: "a_1",
+        hurt_tag: Some("a_4"),
+        death_tag: Some("a_6"),
+        frame_size: (32, 32),
+    ),
+)
