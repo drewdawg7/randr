@@ -140,6 +140,12 @@
 - ACTUALLY READ AND APPLY LESSONS BEFORE PLANNING. Don't just read them — cross-check every plan decision against relevant lessons. If a lesson says "don't do X", the plan must not do X, regardless of what an issue says.
 - Data accessors should be self-initializing. Never require callers to ensure init order.
 
+## Scope Control
+- When refactoring a loading/storage layer, ONLY change the loading/storage layer. Do NOT touch call sites that use the loaded data.
+- Specs (MobSpec, ItemSpec) are used to initialize game data (Items, MobCombatBundles, components). After initialization, the game runs on the created data. Spec access patterns (id.spec()) are correct and should not be changed when refactoring the loading pipeline.
+- Understand the boundary between "loading infrastructure" and "game logic" — changing how data is loaded does NOT mean changing how data is accessed or used.
+- When the user says "only X is changing", take that literally. Do not expand scope to touch call sites, game logic, or access patterns that are working correctly.
+
 ## Aseprite Scripting
 - The `aseprite_add_tags.lua` script is DESTRUCTIVE — it overwrites the source file. ALWAYS copy source files from Downloads/aseprite_sprites first, then run the script on the copies. Never run on originals.
 - When the user says "convert files from X to Y", the workflow is: copy from X, then convert. Don't skip the copy step.
