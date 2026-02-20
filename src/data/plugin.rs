@@ -1,14 +1,111 @@
+use std::collections::HashMap;
+
+use bevy::asset::LoadedFolder;
 use bevy::prelude::*;
+use bevy_common_assets::ron::RonAssetPlugin;
+
+use crate::item::definitions::{ItemId, ItemSpec};
+use crate::mob::definitions::{MobId, MobSpec};
+use crate::states::AppState;
+
+#[derive(Resource)]
+pub struct MobRegistry(HashMap<MobId, MobSpec>);
+
+impl MobRegistry {
+    pub fn get(&self, id: MobId) -> &MobSpec {
+        self.0
+            .get(&id)
+            .unwrap_or_else(|| panic!("No mob spec for {id:?}"))
+    }
+}
+
+#[derive(Resource)]
+pub struct ItemRegistry(HashMap<ItemId, ItemSpec>);
+
+impl ItemRegistry {
+    pub fn get(&self, id: ItemId) -> &ItemSpec {
+        self.0
+            .get(&id)
+            .unwrap_or_else(|| panic!("No item spec for {id:?}"))
+    }
+}
 
 pub struct DataPlugin;
 
 impl Plugin for DataPlugin {
     fn build(&self, app: &mut App) {
-        app.add_systems(PreStartup, load_data);
+        app.add_plugins((
+            RonAssetPlugin::<MobSpec>::new(&["mob.ron"]),
+            RonAssetPlugin::<ItemSpec>::new(&["item.ron"]),
+        ))
+        .add_systems(OnEnter(AppState::Loading), start_loading)
+        .add_systems(
+            Update,
+            check_loading_complete.run_if(in_state(AppState::Loading)),
+        );
     }
 }
 
-fn load_data() {
-    crate::item::data::init();
-    crate::mob::data::init();
+#[derive(Resource)]
+struct PendingLoads {
+    mob_folder: Handle<LoadedFolder>,
+    item_folder: Handle<LoadedFolder>,
+}
+
+fn start_loading(mut commands: Commands, asset_server: Res<AssetServer>) {
+    commands.insert_resource(PendingLoads {
+        mob_folder: asset_server.load_folder("data/mobs"),
+        item_folder: asset_server.load_folder("data/items"),
+    });
+}
+
+fn check_loading_complete(
+    mut commands: Commands,
+    pending: Res<PendingLoads>,
+    folders: Res<Assets<LoadedFolder>>,
+    mob_assets: Res<Assets<MobSpec>>,
+    item_assets: Res<Assets<ItemSpec>>,
+    mut next_state: ResMut<NextState<AppState>>,
+) {
+    let (Some(mob_folder), Some(item_folder)) = (
+        folders.get(&pending.mob_folder),
+        folders.get(&pending.item_folder),
+    ) else {
+        return;
+    };
+
+    let mob_specs: Vec<&MobSpec> = mob_folder
+        .handles
+        .iter()
+        .filter_map(|h| mob_assets.get(h.id().typed::<MobSpec>()))
+        .collect();
+
+    if mob_specs.len() != mob_folder.handles.len() {
+        return;
+    }
+
+    let item_specs: Vec<&ItemSpec> = item_folder
+        .handles
+        .iter()
+        .filter_map(|h| item_assets.get(h.id().typed::<ItemSpec>()))
+        .collect();
+
+    if item_specs.len() != item_folder.handles.len() {
+        return;
+    }
+
+    let mob_map: HashMap<MobId, MobSpec> = mob_specs
+        .into_iter()
+        .map(|spec| (spec.id, spec.clone()))
+        .collect();
+    commands.insert_resource(MobRegistry(mob_map));
+
+    let item_map: HashMap<ItemId, ItemSpec> = item_specs
+        .into_iter()
+        .map(|spec| (spec.id, spec.clone()))
+        .collect();
+    commands.insert_resource(ItemRegistry(item_map));
+
+    commands.remove_resource::<PendingLoads>();
+    next_state.set(AppState::Menu);
 }

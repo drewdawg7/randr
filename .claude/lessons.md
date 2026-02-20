@@ -47,10 +47,13 @@
 
 ## Data Migration
 - When externalizing data to files (RON, JSON, etc.), deserialize directly into the EXISTING structs. Don't create intermediate "data" structs or elaborate conversion layers. Add `Deserialize` to existing types and load directly.
+- NO intermediate wrapper structs at all — not even "thin" ones. If another module (e.g., items) uses a wrapper pattern, that doesn't make it correct. The user explicitly rejects intermediate Entry structs. Instead, put the `id` field on the spec struct itself and deserialize directly.
+- Don't create new helper functions when existing types already solve the problem. If `StatRange` already exists and converts to `RangeInclusive<i32>`, use `StatRange` as the field type instead of creating `deserialize_with` helpers.
+- Only add `Deserialize` to types that are actually needed for deserialization. Don't add it speculatively.
 - Don't introduce new resource types or change APIs when the goal is just to change the data source. If `id.spec()` works today, it should still work after — just backed by file data instead of compile-time statics.
 - Use declarative patterns: `#[serde(from = "...")]` + `From` impl, not manual Visitor boilerplate.
 - Generate data files programmatically from existing code, don't write them one by one.
-- RON data files use simple naming: `item_name.ron`, not `item_name.item.ron`.
+- RON data files use typed extensions for `bevy_common_assets`: `item_name.mob.ron`, `item_name.item.ron` (each asset type needs a unique extension).
 
 ## Planning
 - Understand the actual goal before proposing solutions. Don't just revert to old patterns - find a forward path that achieves the user's intent.
@@ -76,6 +79,7 @@
 - Don't run unnecessary commands (like `git status`) when you already know the state from your own actions.
 - Don't ask permission to commit. Just commit when the work is ready.
 - User verification happens at the end, after all commits are made. Don't wait for verification before committing.
+- Never add Co-Authored-By lines to commits.
 - Before creating a new branch, check for uncommitted changes on any existing branch. If there are uncommitted changes, commit them and merge that branch into main FIRST, then create the new branch. Never just switch branches and leave work behind.
 
 ## Following Instructions
