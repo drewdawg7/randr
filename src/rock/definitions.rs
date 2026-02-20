@@ -1,3 +1,4 @@
+use crate::data::StatRange;
 use crate::item::ItemId;
 use crate::loot::LootTable;
 use crate::stats::{HasStats, StatSheet, StatType};
@@ -16,34 +17,34 @@ entity_macros::define_entity! {
             name: "Iron Rock",
             health: 50,
             loot: LootTable::new()
-                .with(ItemId::IronOre, 1, 1, 1..=3)
-                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1)
+                .with(ItemId::IronOre, 1, 1, StatRange(1, 3))
+                .with(ItemId::QualityUpgradeStone, 1, 100, StatRange(1, 1))
                 .build(),
         }
         Coal {
             name: "Coal Rock",
             health: 50,
             loot: LootTable::new()
-                .with(ItemId::Coal, 1, 1, 1..=2)
-                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1)
+                .with(ItemId::Coal, 1, 1, StatRange(1, 2))
+                .with(ItemId::QualityUpgradeStone, 1, 100, StatRange(1, 1))
                 .build(),
         }
         Gold {
             name: "Gold Rock",
             health: 50,
             loot: LootTable::new()
-                .with(ItemId::GoldOre, 1, 1, 1..=3)
-                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1)
+                .with(ItemId::GoldOre, 1, 1, StatRange(1, 3))
+                .with(ItemId::QualityUpgradeStone, 1, 100, StatRange(1, 1))
                 .build(),
         }
         Mixed {
             name: "Mixed Rock",
             health: 100,
             loot: LootTable::new()
-                .with(ItemId::GoldOre, 1, 2, 1..=4)
-                .with(ItemId::IronOre, 1, 2, 1..=4)
-                .with(ItemId::Coal, 1, 2, 1..=4)
-                .with(ItemId::QualityUpgradeStone, 1, 100, 1..=1)
+                .with(ItemId::GoldOre, 1, 2, StatRange(1, 4))
+                .with(ItemId::IronOre, 1, 2, StatRange(1, 4))
+                .with(ItemId::Coal, 1, 2, StatRange(1, 4))
+                .with(ItemId::QualityUpgradeStone, 1, 100, StatRange(1, 1))
                 .build(),
         }
     }

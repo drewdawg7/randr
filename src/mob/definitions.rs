@@ -1,12 +1,9 @@
-use std::ops::RangeInclusive;
-
+use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
+use crate::data::StatRange;
 use crate::dungeon::EntitySize;
 use crate::loot::LootTable;
-use crate::registry::RegistryDefaults;
-
-pub use super::enums::MobQuality;
 
 #[derive(Debug, Copy, Clone, Eq, PartialEq, Hash, Serialize, Deserialize)]
 pub enum MobId {
@@ -35,72 +32,85 @@ impl MobId {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, Deserialize)]
+pub enum MobQuality {
+    Normal,
+    Boss,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+pub struct MobSpriteData {
+    pub aseprite_path: String,
+    pub idle_tag: String,
+    pub hurt_tag: Option<String>,
+    pub death_tag: Option<String>,
+    pub frame_size: (u32, u32),
+}
+
+#[derive(Debug, Clone, Deserialize, Asset, TypePath)]
 pub struct MobSpec {
+    pub id: MobId,
     pub name: String,
-    pub max_health: RangeInclusive<i32>,
-    pub attack: RangeInclusive<i32>,
-    pub defense: RangeInclusive<i32>,
-    pub dropped_gold: RangeInclusive<i32>,
-    pub dropped_xp: RangeInclusive<i32>,
     pub quality: MobQuality,
+    pub max_health: StatRange,
+    pub attack: StatRange,
+    pub defense: StatRange,
+    pub dropped_gold: StatRange,
+    pub dropped_xp: StatRange,
+    #[serde(default)]
     pub loot: LootTable,
+    #[serde(default)]
     pub entity_size: EntitySize,
+    pub sprite: MobSpriteData,
 }
 
 impl MobSpec {
     pub fn with_multiplier(&self, multiplier: f32) -> MobSpec {
-        let scale_range = |r: &RangeInclusive<i32>| {
-            let start = (*r.start() as f32 * multiplier).round() as i32;
-            let end = (*r.end() as f32 * multiplier).round() as i32;
-            start..=end
-        };
-
         MobSpec {
+            id: self.id,
             name: self.name.clone(),
-            max_health: scale_range(&self.max_health),
-            attack: scale_range(&self.attack),
-            defense: scale_range(&self.defense),
-            dropped_gold: scale_range(&self.dropped_gold),
-            dropped_xp: scale_range(&self.dropped_xp),
+            max_health: self.max_health.scale(multiplier),
+            attack: self.attack.scale(multiplier),
+            defense: self.defense.scale(multiplier),
+            dropped_gold: self.dropped_gold.scale(multiplier),
+            dropped_xp: self.dropped_xp.scale(multiplier),
             quality: self.quality.clone(),
             loot: self.loot.clone(),
             entity_size: self.entity_size,
+            sprite: self.sprite.clone(),
         }
     }
 
     pub fn with_name(&self, name: impl Into<String>) -> MobSpec {
         MobSpec {
+            id: self.id,
             name: name.into(),
-            max_health: self.max_health.clone(),
-            attack: self.attack.clone(),
-            defense: self.defense.clone(),
-            dropped_gold: self.dropped_gold.clone(),
-            dropped_xp: self.dropped_xp.clone(),
+            max_health: self.max_health,
+            attack: self.attack,
+            defense: self.defense,
+            dropped_gold: self.dropped_gold,
+            dropped_xp: self.dropped_xp,
             quality: self.quality.clone(),
             loot: self.loot.clone(),
             entity_size: self.entity_size,
+            sprite: self.sprite.clone(),
         }
     }
 
     pub fn with_quality(&self, quality: MobQuality) -> MobSpec {
         MobSpec {
+            id: self.id,
             name: self.name.clone(),
-            max_health: self.max_health.clone(),
-            attack: self.attack.clone(),
-            defense: self.defense.clone(),
-            dropped_gold: self.dropped_gold.clone(),
-            dropped_xp: self.dropped_xp.clone(),
+            max_health: self.max_health,
+            attack: self.attack,
+            defense: self.defense,
+            dropped_gold: self.dropped_gold,
+            dropped_xp: self.dropped_xp,
             quality,
             loot: self.loot.clone(),
             entity_size: self.entity_size,
+            sprite: self.sprite.clone(),
         }
-    }
-}
-
-impl RegistryDefaults<MobId> for MobSpec {
-    fn defaults() -> impl IntoIterator<Item = (MobId, Self)> {
-        MobId::ALL.iter().map(|id| (*id, id.spec().clone()))
     }
 }
 
@@ -129,12 +139,12 @@ mod tests {
         let base = MobId::Goblin.spec();
         let scaled = base.with_multiplier(2.0);
 
-        assert_eq!(*scaled.max_health.start(), (*base.max_health.start() as f32 * 2.0).round() as i32);
-        assert_eq!(*scaled.max_health.end(), (*base.max_health.end() as f32 * 2.0).round() as i32);
-        assert_eq!(*scaled.attack.start(), (*base.attack.start() as f32 * 2.0).round() as i32);
-        assert_eq!(*scaled.attack.end(), (*base.attack.end() as f32 * 2.0).round() as i32);
-        assert_eq!(*scaled.defense.start(), (*base.defense.start() as f32 * 2.0).round() as i32);
-        assert_eq!(*scaled.defense.end(), (*base.defense.end() as f32 * 2.0).round() as i32);
+        assert_eq!(scaled.max_health.start(), (base.max_health.start() as f32 * 2.0).round() as i32);
+        assert_eq!(scaled.max_health.end(), (base.max_health.end() as f32 * 2.0).round() as i32);
+        assert_eq!(scaled.attack.start(), (base.attack.start() as f32 * 2.0).round() as i32);
+        assert_eq!(scaled.attack.end(), (base.attack.end() as f32 * 2.0).round() as i32);
+        assert_eq!(scaled.defense.start(), (base.defense.start() as f32 * 2.0).round() as i32);
+        assert_eq!(scaled.defense.end(), (base.defense.end() as f32 * 2.0).round() as i32);
     }
 
     #[test]
@@ -207,12 +217,12 @@ mod tests {
     fn merchant_has_zero_combat_stats() {
         init();
         let spec = MobId::Merchant.spec();
-        assert_eq!(*spec.attack.start(), 0);
-        assert_eq!(*spec.attack.end(), 0);
-        assert_eq!(*spec.defense.start(), 0);
-        assert_eq!(*spec.defense.end(), 0);
-        assert_eq!(*spec.dropped_gold.start(), 0);
-        assert_eq!(*spec.dropped_xp.start(), 0);
+        assert_eq!(spec.attack.start(), 0);
+        assert_eq!(spec.attack.end(), 0);
+        assert_eq!(spec.defense.start(), 0);
+        assert_eq!(spec.defense.end(), 0);
+        assert_eq!(spec.dropped_gold.start(), 0);
+        assert_eq!(spec.dropped_xp.start(), 0);
     }
 
     #[test]

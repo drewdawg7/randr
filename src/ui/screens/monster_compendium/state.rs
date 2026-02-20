@@ -1,7 +1,6 @@
-use std::ops::RangeInclusive;
-
 use bevy::prelude::*;
 
+use crate::data::StatRange;
 use crate::item::ItemId;
 use crate::loot::definition::LootItem;
 use crate::mob::MobId;
@@ -102,8 +101,8 @@ impl DropEntry {
             item_id,
             item_name: spec.name.clone(),
             drop_percent: item.drop_chance_percent(),
-            quantity_min: *item.quantity_range().start(),
-            quantity_max: *item.quantity_range().end(),
+            quantity_min: item.quantity_range().start(),
+            quantity_max: item.quantity_range().end(),
         }
     }
 }
@@ -113,11 +112,11 @@ pub struct MonsterEntry {
     pub name: String,
     pub mob_id: MobId,
     pub drops: Vec<DropEntry>,
-    pub max_health: RangeInclusive<i32>,
-    pub attack: RangeInclusive<i32>,
-    pub defense: RangeInclusive<i32>,
-    pub dropped_gold: RangeInclusive<i32>,
-    pub dropped_xp: RangeInclusive<i32>,
+    pub max_health: StatRange,
+    pub attack: StatRange,
+    pub defense: StatRange,
+    pub dropped_gold: StatRange,
+    pub dropped_xp: StatRange,
 }
 
 /// Pre-computed list of monsters for the compendium display.

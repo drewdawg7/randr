@@ -8,7 +8,7 @@ use crate::dungeon::EntitySize;
 use crate::item::ItemId;
 use crate::loot::LootTable;
 
-use super::definitions::{MobId, MobQuality, MobSpec};
+use super::definitions::{MobId, MobQuality, MobSpec, MobSpriteData};
 
 const MOBS_DIR: &str = "assets/data/mobs";
 
@@ -18,15 +18,6 @@ struct LootEntryRon {
     numerator: i32,
     denominator: i32,
     quantity: StatRange,
-}
-
-#[derive(Debug, Clone, Deserialize)]
-pub struct MobSpriteData {
-    pub aseprite_path: String,
-    pub idle_tag: String,
-    pub hurt_tag: Option<String>,
-    pub death_tag: Option<String>,
-    pub frame_size: (u32, u32),
 }
 
 #[derive(Deserialize)]
@@ -52,7 +43,7 @@ impl MobEntry {
             .loot
             .into_iter()
             .fold(LootTable::new(), |builder, entry| {
-                builder.with(entry.item, entry.numerator, entry.denominator, entry.quantity.into())
+                builder.with(entry.item, entry.numerator, entry.denominator, entry.quantity)
             })
             .build();
 
@@ -61,20 +52,25 @@ impl MobEntry {
             None => EntitySize::default(),
         };
 
+        let id = self.id;
+        let sprite = self.sprite;
+
         (
-            self.id,
+            id,
             MobSpec {
+                id,
                 name: self.name,
-                max_health: self.max_health.into(),
-                attack: self.attack.into(),
-                defense: self.defense.into(),
-                dropped_gold: self.dropped_gold.into(),
-                dropped_xp: self.dropped_xp.into(),
+                max_health: self.max_health,
+                attack: self.attack,
+                defense: self.defense,
+                dropped_gold: self.dropped_gold,
+                dropped_xp: self.dropped_xp,
                 quality: self.quality,
                 loot,
                 entity_size,
+                sprite: sprite.clone(),
             },
-            self.sprite,
+            sprite,
         )
     }
 }

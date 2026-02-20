@@ -1,3 +1,4 @@
+use bevy::prelude::*;
 use serde::{Deserialize, Serialize};
 
 use crate::assets::SpriteSheetKey;
@@ -112,8 +113,9 @@ impl ItemId {
     }
 }
 
-#[derive(Debug, Clone, Deserialize)]
+#[derive(Debug, Clone, Deserialize, Asset, TypePath)]
 pub struct ItemSpec {
+    pub id: ItemId,
     pub name: String,
     pub item_type: ItemType,
     pub quality: Option<ItemQuality>,
@@ -127,7 +129,7 @@ pub struct ItemSpec {
 }
 
 use uuid::Uuid;
-use crate::registry::{RegistryDefaults, SpawnFromSpec};
+use crate::registry::SpawnFromSpec;
 use super::definition::Item;
 
 impl SpawnFromSpec<ItemId> for ItemSpec {
@@ -172,6 +174,7 @@ impl ItemSpec {
         }
 
         ItemSpec {
+            id: self.id,
             name: self.name.clone(),
             item_type: self.item_type,
             quality: self.quality,
@@ -186,6 +189,7 @@ impl ItemSpec {
 
     pub fn with_name(&self, name: impl Into<String>) -> ItemSpec {
         ItemSpec {
+            id: self.id,
             name: name.into(),
             item_type: self.item_type,
             quality: self.quality,
@@ -200,6 +204,7 @@ impl ItemSpec {
 
     pub fn with_quality(&self, quality: ItemQuality) -> ItemSpec {
         ItemSpec {
+            id: self.id,
             name: self.name.clone(),
             item_type: self.item_type,
             quality: Some(quality),
@@ -210,12 +215,6 @@ impl ItemSpec {
             sprite_name: self.sprite_name.clone(),
             sprite_sheet: self.sprite_sheet,
         }
-    }
-}
-
-impl RegistryDefaults<ItemId> for ItemSpec {
-    fn defaults() -> impl IntoIterator<Item = (ItemId, Self)> {
-        ItemId::ALL.iter().map(|id| (*id, id.spec().clone()))
     }
 }
 

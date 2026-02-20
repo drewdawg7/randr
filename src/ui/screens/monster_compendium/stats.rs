@@ -1,8 +1,7 @@
-use std::ops::RangeInclusive;
-
 use bevy::prelude::*;
 
 use crate::assets::{GameSprites, ItemDetailIconsSlice};
+use crate::data::StatRange;
 
 use super::constants::*;
 use super::state::{
@@ -99,7 +98,7 @@ fn spawn_stat_item(
     parent: &mut ChildSpawnerCommands,
     icon_slice: ItemDetailIconsSlice,
     label: &str,
-    range: &RangeInclusive<i32>,
+    range: &StatRange,
     game_sprites: &GameSprites,
 ) {
     let value_str = if range.start() == range.end() {

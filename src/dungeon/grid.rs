@@ -1,6 +1,9 @@
+use serde::Deserialize;
+
 use crate::dungeon::constants::DEFAULT_TILE_SIZE;
 
-#[derive(Debug, Clone, Copy, PartialEq)]
+#[derive(Debug, Clone, Copy, PartialEq, Deserialize)]
+#[serde(from = "(f32, f32)")]
 pub struct EntitySize {
     pub width: f32,
     pub height: f32,
@@ -25,5 +28,11 @@ impl EntitySize {
             width: tile_size,
             height: tile_size,
         }
+    }
+}
+
+impl From<(f32, f32)> for EntitySize {
+    fn from((w, h): (f32, f32)) -> Self {
+        Self::new(w, h)
     }
 }

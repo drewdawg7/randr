@@ -11,6 +11,8 @@ use crate::stats::StatSheet;
 use crate::economy::WorthGold;
 
 #[cfg(test)]
+use crate::data::StatRange;
+#[cfg(test)]
 use super::definition::{LootItem, LootTable};
 #[cfg(test)]
 use super::enums::LootError;
@@ -45,33 +47,33 @@ fn mock_spawn_item(id: ItemId) -> Option<Item> {
 
 #[test]
 fn loot_item_new_creates_valid_loot_item() {
-    let result = LootItem::new(ItemId::IronOre, 1, 4, 1..=3);
+    let result = LootItem::new(ItemId::IronOre, 1, 4, StatRange(1, 3));
     assert!(result.is_ok());
 }
 
 #[test]
 fn loot_item_new_returns_invalid_division_when_denominator_is_zero() {
-    let result = LootItem::new(ItemId::IronOre, 1, 0, 1..=1);
+    let result = LootItem::new(ItemId::IronOre, 1, 0, StatRange(1, 1));
     assert!(matches!(result, Err(LootError::InvalidDivision)));
 }
 
 #[test]
 fn loot_item_new_returns_invalid_division_when_denominator_less_than_numerator() {
-    let result = LootItem::new(ItemId::IronOre, 5, 3, 1..=1);
+    let result = LootItem::new(ItemId::IronOre, 5, 3, StatRange(1, 1));
     assert!(matches!(result, Err(LootError::InvalidDivision)));
 }
 
 #[test]
 fn loot_item_new_accepts_equal_numerator_and_denominator() {
     // 100% chance (1/1) should be valid
-    let result = LootItem::new(ItemId::IronOre, 1, 1, 1..=1);
+    let result = LootItem::new(ItemId::IronOre, 1, 1, StatRange(1, 1));
     assert!(result.is_ok());
 }
 
 #[test]
 fn loot_item_new_accepts_zero_numerator() {
     // 0% chance (0/4) should be valid
-    let result = LootItem::new(ItemId::IronOre, 0, 4, 1..=1);
+    let result = LootItem::new(ItemId::IronOre, 0, 4, StatRange(1, 1));
     assert!(result.is_ok());
 }
 
@@ -88,8 +90,8 @@ fn loot_table_new_creates_empty_table() {
 #[test]
 fn loot_table_with_chains_loot_item_additions() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)
-        .with(ItemId::GoldOre, 1, 8, 1..=2)
+        .with(ItemId::IronOre, 1, 4, StatRange(1, 1))
+        .with(ItemId::GoldOre, 1, 8, StatRange(1, 2))
         .build();
 
     assert_eq!(table.ore_proportions().count(), 2);
@@ -98,8 +100,8 @@ fn loot_table_with_chains_loot_item_additions() {
 #[test]
 fn loot_table_with_silently_ignores_invalid_items() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)
-        .with(ItemId::GoldOre, 5, 3, 1..=1)
+        .with(ItemId::IronOre, 1, 4, StatRange(1, 1))
+        .with(ItemId::GoldOre, 5, 3, StatRange(1, 1))
         .build();
 
     assert_eq!(table.ore_proportions().count(), 1);
@@ -108,8 +110,8 @@ fn loot_table_with_silently_ignores_invalid_items() {
 #[test]
 fn loot_table_with_ignores_duplicate_items() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)
-        .with(ItemId::IronOre, 1, 8, 1..=2)
+        .with(ItemId::IronOre, 1, 4, StatRange(1, 1))
+        .with(ItemId::IronOre, 1, 8, StatRange(1, 2))
         .build();
 
     assert_eq!(table.ore_proportions().count(), 1);
@@ -120,13 +122,13 @@ fn loot_table_with_ignores_duplicate_items() {
 #[test]
 fn loot_table_add_loot_item_adds_items_correctly() {
     let mut table = LootTable::new().build();
-    let item = LootItem::new(ItemId::IronOre, 1, 4, 1..=1).unwrap();
+    let item = LootItem::new(ItemId::IronOre, 1, 4, StatRange(1, 1)).unwrap();
 
     let result = table.add_loot_item(item);
     assert_eq!(result, Ok(0));
     assert_eq!(table.ore_proportions().count(), 1);
 
-    let item2 = LootItem::new(ItemId::GoldOre, 1, 4, 1..=1).unwrap();
+    let item2 = LootItem::new(ItemId::GoldOre, 1, 4, StatRange(1, 1)).unwrap();
     let result2 = table.add_loot_item(item2);
     assert_eq!(result2, Ok(1));
     assert_eq!(table.ore_proportions().count(), 2);
@@ -135,8 +137,8 @@ fn loot_table_add_loot_item_adds_items_correctly() {
 #[test]
 fn loot_table_add_loot_item_returns_item_already_in_table_for_duplicates() {
     let mut table = LootTable::new().build();
-    let item1 = LootItem::new(ItemId::IronOre, 1, 4, 1..=1).unwrap();
-    let item2 = LootItem::new(ItemId::IronOre, 1, 8, 1..=2).unwrap();
+    let item1 = LootItem::new(ItemId::IronOre, 1, 4, StatRange(1, 1)).unwrap();
+    let item2 = LootItem::new(ItemId::IronOre, 1, 8, StatRange(1, 2)).unwrap();
 
     table.add_loot_item(item1).unwrap();
     let result = table.add_loot_item(item2);
@@ -149,7 +151,7 @@ fn loot_table_add_loot_item_returns_item_already_in_table_for_duplicates() {
 #[test]
 fn loot_table_check_item_kind_returns_true_when_item_exists() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .with(ItemId::IronOre, 1, 4, StatRange(1, 1))
         .build();
 
     assert!(table.check_item_kind(&ItemId::IronOre));
@@ -158,7 +160,7 @@ fn loot_table_check_item_kind_returns_true_when_item_exists() {
 #[test]
 fn loot_table_check_item_kind_returns_false_when_item_missing() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .with(ItemId::IronOre, 1, 4, StatRange(1, 1))
         .build();
 
     assert!(!table.check_item_kind(&ItemId::GoldOre));
@@ -175,7 +177,7 @@ fn loot_table_check_item_kind_returns_false_for_empty_table() {
 #[test]
 fn loot_table_get_loot_item_from_kind_finds_item() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .with(ItemId::IronOre, 1, 4, StatRange(1, 1))
         .build();
 
     let result = table.get_loot_item_from_kind(&ItemId::IronOre);
@@ -185,7 +187,7 @@ fn loot_table_get_loot_item_from_kind_finds_item() {
 #[test]
 fn loot_table_get_loot_item_from_kind_returns_none_when_missing() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)
+        .with(ItemId::IronOre, 1, 4, StatRange(1, 1))
         .build();
 
     let result = table.get_loot_item_from_kind(&ItemId::GoldOre);
@@ -197,8 +199,8 @@ fn loot_table_get_loot_item_from_kind_returns_none_when_missing() {
 #[test]
 fn loot_table_ore_proportions_returns_correct_drop_chances() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 4, 1..=1)
-        .with(ItemId::GoldOre, 1, 2, 1..=1)
+        .with(ItemId::IronOre, 1, 4, StatRange(1, 1))
+        .with(ItemId::GoldOre, 1, 2, StatRange(1, 1))
         .build();
 
     let proportions: Vec<(ItemId, f32)> = table.ore_proportions().collect();
@@ -234,7 +236,7 @@ fn loot_table_roll_drops_empty_table_returns_no_drops() {
 #[test]
 fn loot_table_roll_drops_100_percent_always_drops() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=1)
+        .with(ItemId::IronOre, 1, 1, StatRange(1, 1))
         .build();
 
     for _ in 0..100 {
@@ -247,7 +249,7 @@ fn loot_table_roll_drops_100_percent_always_drops() {
 #[test]
 fn loot_table_roll_drops_0_percent_never_drops() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 0, 4, 1..=1)
+        .with(ItemId::IronOre, 0, 4, StatRange(1, 1))
         .build();
 
     for _ in 0..100 {
@@ -259,7 +261,7 @@ fn loot_table_roll_drops_0_percent_never_drops() {
 #[test]
 fn loot_table_roll_drops_probability_statistical_test() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 2, 1..=1)
+        .with(ItemId::IronOre, 1, 2, StatRange(1, 1))
         .build();
 
     let iterations = 1000;
@@ -283,7 +285,7 @@ fn loot_table_roll_drops_probability_statistical_test() {
 #[test]
 fn loot_table_roll_drops_quantity_within_range() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=5)
+        .with(ItemId::IronOre, 1, 1, StatRange(1, 5))
         .build();
 
     for _ in 0..100 {
@@ -296,7 +298,7 @@ fn loot_table_roll_drops_quantity_within_range() {
 #[test]
 fn loot_table_roll_drops_single_quantity_always_returns_that_value() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 3..=3)
+        .with(ItemId::IronOre, 1, 1, StatRange(3, 3))
         .build();
 
     for _ in 0..50 {
@@ -309,8 +311,8 @@ fn loot_table_roll_drops_single_quantity_always_returns_that_value() {
 #[test]
 fn loot_table_roll_drops_multiple_items_roll_independently() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=1)
-        .with(ItemId::GoldOre, 1, 1, 1..=1)
+        .with(ItemId::IronOre, 1, 1, StatRange(1, 1))
+        .with(ItemId::GoldOre, 1, 1, StatRange(1, 1))
         .build();
 
     let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
@@ -320,7 +322,7 @@ fn loot_table_roll_drops_multiple_items_roll_independently() {
 #[test]
 fn loot_table_roll_drops_handles_spawn_failure() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=1)
+        .with(ItemId::IronOre, 1, 1, StatRange(1, 1))
         .build();
 
     let drops = table.roll_drops_with_spawner(0, |_| None);
@@ -332,7 +334,7 @@ fn loot_table_roll_drops_handles_spawn_failure() {
 #[test]
 fn loot_drop_contains_spawned_item_with_quantity() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 2..=2)
+        .with(ItemId::IronOre, 1, 1, StatRange(2, 2))
         .build();
 
     let drops = table.roll_drops_with_spawner(0, mock_spawn_item);
@@ -383,7 +385,7 @@ fn worth_gold_sell_price_rounds_down_for_odd_values() {
 #[test]
 fn loot_table_roll_drops_magic_find_zero_no_bonus() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 1, 1..=1)
+        .with(ItemId::IronOre, 1, 1, StatRange(1, 1))
         .build();
 
     for _ in 0..10 {
@@ -395,7 +397,7 @@ fn loot_table_roll_drops_magic_find_zero_no_bonus() {
 #[test]
 fn loot_table_roll_drops_magic_find_increases_chances() {
     let table = LootTable::new()
-        .with(ItemId::IronOre, 1, 10, 1..=1)
+        .with(ItemId::IronOre, 1, 10, StatRange(1, 1))
         .build();
 
     let iterations = 1000;

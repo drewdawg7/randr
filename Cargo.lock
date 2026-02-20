@@ -634,6 +634,21 @@ dependencies = [
 ]
 
 [[package]]
+name = "bevy_common_assets"
+version = "0.15.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ad51a6e9def88caadc4ce2a5670382d6ff19fa1e7e7af934326c5c0b376bdd9f"
+dependencies = [
+ "anyhow",
+ "bevy_app",
+ "bevy_asset",
+ "bevy_reflect",
+ "ron 0.11.0",
+ "serde",
+ "thiserror 2.0.18",
+]
+
+[[package]]
 name = "bevy_core_pipeline"
 version = "0.18.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2698,6 +2713,7 @@ dependencies = [
  "avian2d",
  "bevy",
  "bevy_aseprite_ultra",
+ "bevy_common_assets",
  "bevy_ecs_tiled",
  "bon",
  "entity_macros",
@@ -4738,6 +4754,19 @@ dependencies = [
  "bitflags 2.10.0",
  "serde",
  "serde_derive",
+]
+
+[[package]]
+name = "ron"
+version = "0.11.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "db09040cc89e461f1a265139777a2bde7f8d8c67c4936f700c63ce3e2904d468"
+dependencies = [
+ "base64 0.22.1",
+ "bitflags 2.10.0",
+ "serde",
+ "serde_derive",
+ "unicode-ident",
 ]
 
 [[package]]

@@ -31,6 +31,7 @@ impl ItemEntry {
         (
             self.id,
             ItemSpec {
+                id: self.id,
                 name: self.name,
                 item_type: self.item_type,
                 quality: self.quality,
