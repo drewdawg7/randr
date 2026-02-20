@@ -1,0 +1,12 @@
+(
+    id: GoldGreaves,
+    name: "Gold Greaves",
+    item_type: Equipment(Armor(Feet)),
+    quality: None,
+    stats: {Defense: 30},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 150,
+    sprite_name: "gold_greaves",
+    sprite_sheet: Some(Greaves),
+)

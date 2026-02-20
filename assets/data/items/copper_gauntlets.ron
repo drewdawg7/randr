@@ -1,0 +1,12 @@
+(
+    id: CopperGauntlets,
+    name: "Copper Gauntlets",
+    item_type: Equipment(Armor(Hands)),
+    quality: None,
+    stats: {Defense: 32},
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 180,
+    sprite_name: "Slice_558",
+    sprite_sheet: None,
+)

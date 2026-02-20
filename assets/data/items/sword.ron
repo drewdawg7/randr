@@ -1,0 +1,12 @@
+(
+    id: Sword,
+    name: "Sword",
+    item_type: Equipment(Weapon),
+    quality: None,
+    stats: {Attack: 10},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 15,
+    sprite_name: "Slice_155",
+    sprite_sheet: None,
+)

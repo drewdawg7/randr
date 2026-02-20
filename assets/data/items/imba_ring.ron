@@ -1,0 +1,12 @@
+(
+    id: ImbaRing,
+    name: "IMBA RING",
+    item_type: Equipment(Ring),
+    quality: Some(Normal),
+    stats: {GoldFind: 200, MagicFind: 200},
+    max_upgrades: 99,
+    max_stack_quantity: 1,
+    gold_value: 25000,
+    sprite_name: "Slice_1009",
+    sprite_sheet: None,
+)

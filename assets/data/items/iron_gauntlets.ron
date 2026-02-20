@@ -1,0 +1,12 @@
+(
+    id: IronGauntlets,
+    name: "Iron Gauntlets",
+    item_type: Equipment(Armor(Hands)),
+    quality: None,
+    stats: {Defense: 24},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 120,
+    sprite_name: "Slice_558",
+    sprite_sheet: None,
+)

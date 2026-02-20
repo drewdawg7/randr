@@ -1,0 +1,12 @@
+(
+    id: BasicShield,
+    name: "Basic Shield",
+    item_type: Equipment(Shield),
+    quality: None,
+    stats: {Defense: 4},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 15,
+    sprite_name: "Slice_100",
+    sprite_sheet: None,
+)

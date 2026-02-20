@@ -1,0 +1,12 @@
+(
+    id: GoldChestplate,
+    name: "Gold Chestplate",
+    item_type: Equipment(Armor(Chest)),
+    quality: None,
+    stats: {Defense: 60},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 300,
+    sprite_name: "gold_chestplate",
+    sprite_sheet: Some(Chestplates),
+)

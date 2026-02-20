@@ -45,6 +45,13 @@
 - Follow imports and function calls to find the source of data.
 - Don't brute force search - trace the actual code path.
 
+## Data Migration
+- When externalizing data to files (RON, JSON, etc.), deserialize directly into the EXISTING structs. Don't create intermediate "data" structs or elaborate conversion layers. Add `Deserialize` to existing types and load directly.
+- Don't introduce new resource types or change APIs when the goal is just to change the data source. If `id.spec()` works today, it should still work after — just backed by file data instead of compile-time statics.
+- Use declarative patterns: `#[serde(from = "...")]` + `From` impl, not manual Visitor boilerplate.
+- Generate data files programmatically from existing code, don't write them one by one.
+- RON data files use simple naming: `item_name.ron`, not `item_name.item.ron`.
+
 ## Planning
 - Understand the actual goal before proposing solutions. Don't just revert to old patterns - find a forward path that achieves the user's intent.
 - When a refactor breaks something, the fix should align with the refactor's goals, not undo them.
@@ -94,6 +101,7 @@
   - Good: `input/combat.rs`, `input/navigation.rs`
   - Bad: `combat/systems/attack_input.rs` (input logic in combat module)
 - Don't create redundant files like `action.rs` + `action_combat.rs` - consolidate.
+- Never put logic or type definitions in `mod.rs`. It's only for module declarations and re-exports. Create dedicated files for types/logic (e.g., `data/stat_range.rs` not `data/mod.rs`).
 
 ## Bevy Patterns
 - Use observers for reactive logic (e.g., `OnAdd<Component>` to spawn related entities).

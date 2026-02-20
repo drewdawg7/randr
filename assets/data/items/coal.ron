@@ -1,0 +1,12 @@
+(
+    id: Coal,
+    name: "Coal",
+    item_type: Material(Fuel),
+    quality: Some(Normal),
+    stats: {},
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 4,
+    sprite_name: "Slice_693",
+    sprite_sheet: None,
+)

@@ -1,0 +1,12 @@
+(
+    id: GoldRing,
+    name: "Midas' Touch",
+    item_type: Equipment(Ring),
+    quality: None,
+    stats: {GoldFind: 10},
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 50,
+    sprite_name: "gold_ring",
+    sprite_sheet: Some(GoldRing),
+)

@@ -1,0 +1,12 @@
+(
+    id: SlimeGel,
+    name: "Slime Gel",
+    item_type: Material(CraftingMaterial),
+    quality: Some(Normal),
+    stats: {},
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 4,
+    sprite_name: "Slice_952",
+    sprite_sheet: None,
+)

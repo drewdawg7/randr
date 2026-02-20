@@ -1,0 +1,12 @@
+(
+    id: BlueCrystal,
+    name: "Blue Crystal",
+    item_type: Material(Gem),
+    quality: Some(Normal),
+    stats: {},
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 50,
+    sprite_name: "sapphire_small",
+    sprite_sheet: Some(CraftingMaterials),
+)

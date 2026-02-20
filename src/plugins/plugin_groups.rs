@@ -8,6 +8,7 @@ use bevy_ecs_tiled::prelude::TiledPlugin;
 use crate::assets::AssetPlugin as GameAssetPlugin;
 use crate::camera::CameraPlugin;
 use crate::crafting_station::CraftingStationPlugin;
+use crate::data::DataPlugin;
 use crate::combat::ActionCombatPlugin;
 use crate::game::{
     BlacksmithPlugin, CombatPlugin, CraftingCompletePlugin, CraftingPlugin, ItemPlugin,
@@ -40,6 +41,7 @@ impl PluginGroup for InfrastructurePlugins {
             .add(AsepriteUltraPlugin)
             .add(TiledPlugin::default())
             .add(StateTransitionPlugin)
+            .add(DataPlugin)
             .add(GameAssetPlugin)
             .add(InputPlugin)
             .add(CameraPlugin)

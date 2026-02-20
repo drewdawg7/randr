@@ -1,0 +1,12 @@
+(
+    id: CopperPickaxe,
+    name: "Copper Pickaxe",
+    item_type: Equipment(Tool(Pickaxe)),
+    quality: None,
+    stats: {Attack: 10, Mining: 10},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 50,
+    sprite_name: "Slice_826",
+    sprite_sheet: None,
+)

@@ -1,0 +1,12 @@
+(
+    id: Dagger,
+    name: "Dagger",
+    item_type: Equipment(Weapon),
+    quality: None,
+    stats: {Attack: 6},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 10,
+    sprite_name: "Slice_156",
+    sprite_sheet: None,
+)

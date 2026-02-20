@@ -3,9 +3,18 @@ use std::collections::HashMap;
 use bevy::prelude::*;
 use serde::Deserialize;
 
-#[derive(Resource, Component, Debug, Clone, PartialEq, Eq)]
+#[derive(Resource, Component, Debug, Clone, PartialEq, Eq, Deserialize)]
+#[serde(from = "HashMap<StatType, i32>")]
 pub struct StatSheet {
-   pub stats: HashMap<StatType, StatInstance>      
+   pub stats: HashMap<StatType, StatInstance>
+}
+
+impl From<HashMap<StatType, i32>> for StatSheet {
+    fn from(map: HashMap<StatType, i32>) -> Self {
+        Self {
+            stats: map.into_iter().map(|(t, v)| (t, t.instance(v))).collect(),
+        }
+    }
 }
 
 impl Default for StatSheet {

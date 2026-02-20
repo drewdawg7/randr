@@ -1,0 +1,12 @@
+(
+    id: QualityUpgradeStone,
+    name: "Magic Rock",
+    item_type: Material(UpgradeStone),
+    quality: Some(Mythic),
+    stats: {},
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 500,
+    sprite_name: "Slice_57",
+    sprite_sheet: None,
+)

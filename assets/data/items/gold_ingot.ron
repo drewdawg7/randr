@@ -1,0 +1,12 @@
+(
+    id: GoldIngot,
+    name: "Gold Ingot",
+    item_type: Material(CraftingMaterial),
+    quality: Some(Normal),
+    stats: {},
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 10,
+    sprite_name: "gold_ingot",
+    sprite_sheet: Some(CraftingMaterials),
+)

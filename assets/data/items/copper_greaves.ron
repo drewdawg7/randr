@@ -1,0 +1,12 @@
+(
+    id: CopperGreaves,
+    name: "Copper Greaves",
+    item_type: Equipment(Armor(Feet)),
+    quality: None,
+    stats: {Defense: 40},
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 225,
+    sprite_name: "copper_greaves",
+    sprite_sheet: Some(Greaves),
+)

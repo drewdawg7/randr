@@ -1,0 +1,12 @@
+(
+    id: WhiteCrystal,
+    name: "White Crystal",
+    item_type: Material(Gem),
+    quality: Some(Normal),
+    stats: {},
+    max_upgrades: 0,
+    max_stack_quantity: 99,
+    gold_value: 75,
+    sprite_name: "diamond_small",
+    sprite_sheet: Some(CraftingMaterials),
+)

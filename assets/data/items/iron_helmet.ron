@@ -1,0 +1,12 @@
+(
+    id: IronHelmet,
+    name: "Iron Helmet",
+    item_type: Equipment(Armor(Head)),
+    quality: None,
+    stats: {Defense: 36},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 180,
+    sprite_name: "iron_helmet",
+    sprite_sheet: Some(Headgear),
+)

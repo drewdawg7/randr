@@ -1,0 +1,12 @@
+(
+    id: GoldLeggings,
+    name: "Gold Leggings",
+    item_type: Equipment(Armor(Legs)),
+    quality: None,
+    stats: {Defense: 54},
+    max_upgrades: 5,
+    max_stack_quantity: 1,
+    gold_value: 270,
+    sprite_name: "gold_leggings",
+    sprite_sheet: Some(Leggings),
+)

@@ -1,0 +1,12 @@
+(
+    id: CopperHelmet,
+    name: "Copper Helmet",
+    item_type: Equipment(Armor(Head)),
+    quality: None,
+    stats: {Defense: 48},
+    max_upgrades: 7,
+    max_stack_quantity: 1,
+    gold_value: 270,
+    sprite_name: "copper_helmet",
+    sprite_sheet: Some(Headgear),
+)
