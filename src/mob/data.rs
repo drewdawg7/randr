@@ -121,8 +121,7 @@ pub fn init() {
 
 pub fn get_spec(id: MobId) -> &'static MobSpec {
     MOB_DATA
-        .get()
-        .expect("Mob specs not initialized")
+        .get_or_init(load_mob_data)
         .specs
         .get(&id)
         .unwrap_or_else(|| panic!("No spec for {id:?}"))
@@ -130,8 +129,7 @@ pub fn get_spec(id: MobId) -> &'static MobSpec {
 
 pub fn get_sprite(id: MobId) -> &'static MobSpriteData {
     MOB_DATA
-        .get()
-        .expect("Mob sprites not initialized")
+        .get_or_init(load_mob_data)
         .sprites
         .get(&id)
         .unwrap_or_else(|| panic!("No sprite data for {id:?}"))

@@ -75,8 +75,7 @@ pub fn init() {
 
 pub fn get_spec(id: ItemId) -> &'static ItemSpec {
     ITEM_SPECS
-        .get()
-        .expect("Item specs not initialized")
+        .get_or_init(load_item_specs)
         .get(&id)
         .unwrap_or_else(|| panic!("No spec for {id:?}"))
 }
