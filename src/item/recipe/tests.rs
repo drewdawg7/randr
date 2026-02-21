@@ -3,10 +3,11 @@ use uuid::Uuid;
 
 #[cfg(test)]
 use crate::{
+    assets::SpriteSheetKey,
     inventory::{FindsItems, Inventory, ManagesItems},
     item::enums::{ItemQuality, MaterialType},
     item::recipe::{Recipe, RecipeError, RecipeId},
-    item::{Item, ItemId, ItemType},
+    item::{Item, ItemId, ItemType, SpriteInfo},
     stats::StatSheet,
 };
 
@@ -26,6 +27,7 @@ fn create_test_material(id: ItemId) -> Item {
         stats: StatSheet::new(),
         gold_value: 10,
         quality: ItemQuality::Normal,
+        sprite: SpriteInfo { name: String::new(), sheet_key: SpriteSheetKey::IconItems },
     }
 }
 

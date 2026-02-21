@@ -2,9 +2,11 @@
 use uuid::Uuid;
 
 #[cfg(test)]
+use crate::assets::SpriteSheetKey;
+#[cfg(test)]
 use crate::item::enums::{ItemQuality, ItemType, MaterialType};
 #[cfg(test)]
-use crate::item::{Item, ItemId};
+use crate::item::{Item, ItemId, SpriteInfo};
 #[cfg(test)]
 use crate::stats::StatSheet;
 #[cfg(test)]
@@ -35,6 +37,7 @@ fn create_test_material(id: ItemId, gold_value: i32) -> Item {
         stats: StatSheet::new(),
         gold_value,
         quality: ItemQuality::Normal,
+        sprite: SpriteInfo { name: String::new(), sheet_key: SpriteSheetKey::IconItems },
     }
 }
 

@@ -2,9 +2,11 @@
 use uuid::Uuid;
 
 #[cfg(test)]
+use crate::assets::SpriteSheetKey;
+#[cfg(test)]
 use crate::item::enums::{EquipmentType, ItemQuality, ItemType, MaterialType};
 #[cfg(test)]
-use crate::item::{Item, ItemId};
+use crate::item::{Item, ItemId, SpriteInfo};
 #[cfg(test)]
 use crate::stats::{StatSheet, StatType};
 
@@ -29,6 +31,7 @@ fn create_test_weapon(id: ItemId, attack: i32) -> Item {
         stats: StatSheet::new().with(StatType::Attack, attack),
         gold_value: 100,
         quality: ItemQuality::Normal,
+        sprite: SpriteInfo { name: String::new(), sheet_key: SpriteSheetKey::IconItems },
     }
 }
 
@@ -48,6 +51,7 @@ fn create_test_shield(id: ItemId, defense: i32) -> Item {
         stats: StatSheet::new().with(StatType::Defense, defense),
         gold_value: 80,
         quality: ItemQuality::Normal,
+        sprite: SpriteInfo { name: String::new(), sheet_key: SpriteSheetKey::IconItems },
     }
 }
 
@@ -67,6 +71,7 @@ fn create_test_material(id: ItemId) -> Item {
         stats: StatSheet::new(),
         gold_value: 10,
         quality: ItemQuality::Normal,
+        sprite: SpriteInfo { name: String::new(), sheet_key: SpriteSheetKey::IconItems },
     }
 }
 

@@ -152,10 +152,6 @@ mod tests {
     use super::*;
 
     fn init() {
-        if crate::mob::data::specs_loaded() {
-            return;
-        }
-        crate::item::data::init();
         crate::mob::data::init();
     }
 
