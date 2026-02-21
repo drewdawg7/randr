@@ -5,6 +5,7 @@ use bevy::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 
 use crate::item::definitions::{ItemId, ItemSpec};
+use crate::item::ItemRegistry;
 use crate::mob::definitions::{MobId, MobSpec};
 use crate::registry::Registry;
 use crate::states::AppState;
@@ -85,8 +86,13 @@ fn check_loading_complete(
     crate::mob::data::populate(mob_map.clone());
     crate::item::data::populate(item_map.clone());
 
+    let mut item_registry = ItemRegistry::new();
+    for (_, spec) in &item_map {
+        item_registry.register(spec.clone());
+    }
+    commands.insert_resource(item_registry);
+
     commands.insert_resource(Registry::new(mob_map));
-    commands.insert_resource(Registry::new(item_map));
 
     commands.remove_resource::<PendingLoads>();
     next_state.set(AppState::Menu);

@@ -2,9 +2,9 @@ use uuid::Uuid;
 
 use crate::{item::enums::{ItemError, ItemQuality, UpgradeResult}, stats::{StatSheet, StatType}};
 
-// ItemId now comes from definitions (macro-generated)
 pub use super::definitions::ItemId;
 pub use super::enums::ItemType;
+pub use super::sprite_info::SpriteInfo;
 
 #[derive(Debug, Clone)]
 pub struct Item {
@@ -21,6 +21,7 @@ pub struct Item {
     pub stats: StatSheet,
     pub gold_value: i32,
     pub quality: ItemQuality,
+    pub sprite: SpriteInfo,
 }
 
 impl Item {

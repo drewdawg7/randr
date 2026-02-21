@@ -130,16 +130,17 @@ pub struct ItemSpec {
 
 use uuid::Uuid;
 use super::definition::Item;
+use super::sprite_info::SpriteInfo;
 
 impl ItemSpec {
-    fn spawn(&self, id: ItemId) -> Item {
+    pub(super) fn to_item(&self) -> Item {
         let quality = self.quality.unwrap_or_else(ItemQuality::roll);
         let base_stats = self.stats.clone();
         let stats = quality.multiply_stats(&base_stats);
 
         Item {
             item_uuid: Uuid::new_v4(),
-            item_id: id,
+            item_id: self.id,
             item_type: self.item_type,
             name: self.name.clone(),
             is_equipped: false,
@@ -151,6 +152,10 @@ impl ItemSpec {
             base_stats,
             stats,
             quality,
+            sprite: SpriteInfo {
+                name: self.sprite_name.clone(),
+                sheet_key: self.sprite_sheet.unwrap_or(SpriteSheetKey::IconItems),
+            },
         }
     }
 
@@ -216,7 +221,7 @@ pub struct ItemSpawner {
 
 impl ItemSpawner {
     pub fn spawn(self) -> Item {
-        self.spec.spawn(self.id)
+        self.spec.to_item()
     }
 
     pub fn with_multiplier(mut self, multiplier: f32) -> Self {
@@ -237,7 +242,7 @@ impl ItemSpawner {
 
 impl ItemId {
     pub fn spawn(&self) -> Item {
-        self.spec().spawn(*self)
+        self.spec().to_item()
     }
 
     pub fn with_multiplier(&self, multiplier: f32) -> ItemSpawner {
