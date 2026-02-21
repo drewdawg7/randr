@@ -4,7 +4,7 @@ use bevy::asset::LoadedFolder;
 use bevy::prelude::*;
 use bevy_common_assets::ron::RonAssetPlugin;
 
-use crate::item::definitions::{ItemId, ItemSpec};
+use crate::item::definitions::ItemSpec;
 use crate::item::ItemRegistry;
 use crate::mob::definitions::{MobId, MobSpec};
 use crate::registry::Registry;
@@ -78,20 +78,15 @@ fn check_loading_complete(
         .into_iter()
         .map(|spec| (spec.id, spec.clone()))
         .collect();
-    let item_map: HashMap<ItemId, ItemSpec> = item_specs
-        .into_iter()
-        .map(|spec| (spec.id, spec.clone()))
-        .collect();
-
-    crate::mob::data::populate(mob_map.clone());
-    crate::item::data::populate(item_map.clone());
 
     let mut item_registry = ItemRegistry::new();
-    for (_, spec) in &item_map {
+    for spec in item_specs {
         item_registry.register(spec.clone());
     }
-    commands.insert_resource(item_registry);
 
+    crate::mob::data::populate(mob_map.clone());
+
+    commands.insert_resource(item_registry);
     commands.insert_resource(Registry::new(mob_map));
 
     commands.remove_resource::<PendingLoads>();

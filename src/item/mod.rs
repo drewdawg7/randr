@@ -1,4 +1,3 @@
-pub mod data;
 pub mod definition;
 pub mod definitions;
 pub mod enums;
