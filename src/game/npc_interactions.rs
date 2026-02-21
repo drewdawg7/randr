@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 
 use crate::dungeon::MerchantInteraction;
+use crate::item::ItemRegistry;
 use crate::ui::screens::merchant_modal::MerchantStock;
 use crate::ui::screens::modal::{ModalType, OpenModal};
 
@@ -12,7 +13,7 @@ impl Plugin for NpcInteractionsPlugin {
     }
 }
 
-fn on_merchant_interaction(_trigger: On<MerchantInteraction>, mut commands: Commands) {
-    commands.insert_resource(MerchantStock::generate());
+fn on_merchant_interaction(_trigger: On<MerchantInteraction>, mut commands: Commands, registry: Res<ItemRegistry>) {
+    commands.insert_resource(MerchantStock::generate(&registry));
     commands.trigger(OpenModal(ModalType::MerchantModal));
 }

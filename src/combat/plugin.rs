@@ -9,6 +9,7 @@ use super::system::{
 
 use crate::entities::Progression;
 use crate::inventory::Inventory;
+use crate::item::ItemRegistry;
 use crate::loot::collect_loot_drops;
 use crate::mob::{
     CombatStats, DeathProcessed, GoldReward, Health, MobLootTable, MobMarker, XpReward,
@@ -124,6 +125,7 @@ fn handle_mob_death(
         &MobLootTable,
         &mut DeathProcessed,
     )>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok((mut stats, mut inventory, mut gold, mut progression)) = player.single_mut() else {
         return;
@@ -148,7 +150,7 @@ fn handle_mob_death(
         let mob_id = mob_marker.0;
 
         let magic_find = player_effective_magicfind(&stats, &inventory);
-        let loot_drops = loot_table.0.roll_drops(magic_find);
+        let loot_drops = loot_table.0.roll_drops(magic_find, &registry);
 
         apply_victory_rewards_direct(
             &mut stats,

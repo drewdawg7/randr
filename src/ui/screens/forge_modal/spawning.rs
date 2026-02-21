@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::assets::{GameFonts, GameSprites, GridSlotSlice, SpriteSheetKey};
 use crate::crafting_station::ForgeCraftingState;
 use crate::inventory::Inventory;
-use crate::item::ItemId;
+use crate::item::{ItemId, ItemRegistry};
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_content_row;
 use crate::ui::widgets::{
@@ -30,6 +30,7 @@ pub fn spawn_forge_modal_impl(
     forge_state_query: &Query<&ForgeCraftingState>,
     active_forge: &ActiveForgeEntity,
     modal_state: &ForgeModalState,
+    registry: &ItemRegistry,
 ) {
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::ForgeInventory),
@@ -40,6 +41,7 @@ pub fn spawn_forge_modal_impl(
     let game_sprites = game_sprites.clone();
     let game_fonts = game_fonts.clone();
     let modal_state = modal_state.clone();
+    let registry = registry.clone();
 
     commands.spawn_modal(
         Modal::builder()
@@ -55,6 +57,7 @@ pub fn spawn_forge_modal_impl(
                         &game_fonts,
                         forge_state.as_ref(),
                         &modal_state,
+                        &registry,
                     );
                     row.spawn((
                         ForgePlayerGrid,
@@ -80,6 +83,7 @@ fn spawn_crafting_slots(
     game_fonts: &GameFonts,
     forge_state: Option<&ForgeCraftingState>,
     _modal_state: &ForgeModalState,
+    registry: &ItemRegistry,
 ) {
     let slots_width = 3.0 * SLOT_SIZE + 2.0 * SLOT_GAP + 32.0;
     let slots_height = SLOT_SIZE + 40.0;
@@ -114,6 +118,7 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Coal,
                         "Coal",
                         forge_state.and_then(|s| s.coal_slot),
+                        registry,
                     );
 
                     spawn_slot(
@@ -123,6 +128,7 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Ore,
                         "Ore",
                         forge_state.and_then(|s| s.ore_slot),
+                        registry,
                     );
 
                     spawn_slot(
@@ -132,6 +138,7 @@ fn spawn_crafting_slots(
                         ForgeSlotIndex::Product,
                         "Ingot",
                         forge_state.and_then(|s| s.product_slot),
+                        registry,
                     );
                 });
         });
@@ -144,6 +151,7 @@ fn spawn_slot(
     slot_type: ForgeSlotIndex,
     label: &str,
     contents: Option<(ItemId, u32)>,
+    registry: &ItemRegistry,
 ) {
     parent
         .spawn(Node {
@@ -174,7 +182,7 @@ fn spawn_slot(
 
             slot_entity.with_children(|cell| {
                 if let Some((item_id, quantity)) = contents {
-                    spawn_slot_item(cell, game_sprites, game_fonts, item_id, quantity);
+                    spawn_slot_item(cell, game_sprites, game_fonts, item_id, quantity, registry);
                 }
             });
 
@@ -192,10 +200,12 @@ pub fn spawn_slot_item(
     game_fonts: &GameFonts,
     item_id: ItemId,
     quantity: u32,
+    registry: &ItemRegistry,
 ) {
+    let item = registry.spawn(item_id);
     if let Some(icon_img) = game_sprites
-        .get(item_id.sprite_sheet_key())
-        .and_then(|s| s.image_node(item_id.sprite_name()))
+        .get(item.sprite.sheet_key)
+        .and_then(|s| s.image_node(&item.sprite.name))
     {
         cell.spawn((
             ForgeSlotItemSprite,

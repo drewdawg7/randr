@@ -9,37 +9,38 @@ use crate::item::ItemId;
 pub struct ItemEquipped {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
+    pub item_name: String,
     pub slot: EquipmentSlot,
 }
 
-/// Event fired when an item is unequipped
 #[derive(Message, Debug, Clone)]
 pub struct ItemUnequipped {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
+    pub item_name: String,
     pub slot: EquipmentSlot,
 }
 
-/// Event fired when an item is used (consumables, etc.)
 #[derive(Message, Debug, Clone)]
 pub struct ItemUsed {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
+    pub item_name: String,
 }
 
-/// Event fired when an item is dropped from inventory
 #[derive(Message, Debug, Clone)]
 pub struct ItemDropped {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
+    pub item_name: String,
     pub quantity: u32,
 }
 
-/// Event fired when an item is picked up into inventory
 #[derive(Message, Debug, Clone)]
 pub struct ItemPickedUp {
     pub item_uuid: Uuid,
     pub item_id: ItemId,
+    pub item_name: String,
     pub quantity: u32,
     pub was_stacked: bool,
 }

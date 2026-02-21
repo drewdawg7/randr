@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::assets::{GameFonts, GameSprites};
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
+use crate::item::ItemRegistry;
 use crate::player::PlayerMarker;
 use crate::ui::focus::FocusPanel;
 use crate::ui::modal_content_row;
@@ -16,7 +17,7 @@ use crate::ui::{FocusState, Modal, ModalBackground, SpawnModalExt};
 use super::state::{AnvilModalRoot, AnvilPlayerGrid, AnvilRecipeGrid};
 
 /// Convert forging recipes to grid entries for display.
-pub fn get_recipe_entries(inventory: &Inventory) -> Vec<ItemGridEntry> {
+pub fn get_recipe_entries(inventory: &Inventory, registry: &ItemRegistry) -> Vec<ItemGridEntry> {
     RecipeId::all_forging_recipes()
         .iter()
         .map(|recipe_id| {
@@ -26,10 +27,11 @@ pub fn get_recipe_entries(inventory: &Inventory) -> Vec<ItemGridEntry> {
                 .iter()
                 .all(|(item_id, required)| inventory.count_item(*item_id) >= *required);
 
+            let output_item = registry.spawn(spec.output);
             ItemGridEntry {
-                sprite_sheet_key: spec.output.sprite_sheet_key(),
-                sprite_name: spec.output.sprite_name().to_string(),
-                quantity: if can_craft { 1 } else { 0 }, // 0 = grayed out
+                sprite_sheet_key: output_item.sprite.sheet_key,
+                sprite_name: output_item.sprite.name,
+                quantity: if can_craft { 1 } else { 0 },
             }
         })
         .collect()
@@ -43,12 +45,13 @@ pub fn spawn_anvil_modal_impl(
     _game_sprites: &GameSprites,
     _game_fonts: &GameFonts,
     inventory: &Inventory,
+    registry: &ItemRegistry,
 ) {
     commands.insert_resource(FocusState {
         focused: Some(FocusPanel::RecipeGrid),
     });
 
-    let recipe_entries = get_recipe_entries(inventory);
+    let recipe_entries = get_recipe_entries(inventory, registry);
     let player_entries = ItemGridEntry::from_inventory(inventory);
 
     commands.spawn_modal(
@@ -92,6 +95,7 @@ pub fn populate_anvil_detail_pane_content(
     player: Query<&Inventory, With<PlayerMarker>>,
     panes: Query<Ref<ItemDetailPane>>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok(inventory) = player.single() else {
         return;
@@ -148,7 +152,7 @@ pub fn populate_anvil_detail_pane_content(
                     can_craft,
                 } => {
                     let spec = recipe_id.spec();
-                    let output_item = spec.output.spawn();
+                    let output_item = registry.spawn(spec.output);
 
                     let name_color = if can_craft {
                         Color::srgb(0.3, 0.9, 0.3)
@@ -180,7 +184,7 @@ pub fn populate_anvil_detail_pane_content(
 
                     for (item_id, required) in &spec.ingredients {
                         let have = inventory.count_item(*item_id);
-                        let item = item_id.spawn();
+                        let item = registry.spawn(*item_id);
                         let color = if have >= *required {
                             Color::srgb(0.3, 0.9, 0.3)
                         } else {
@@ -217,7 +221,7 @@ pub fn populate_anvil_detail_pane_content(
                     }
                 }
                 RecipeOrItem::Item { item_id, quantity } => {
-                    let item = item_id.spawn();
+                    let item = registry.spawn(item_id);
                     let display = ItemDetailDisplay::builder(&item).quantity(quantity).build();
                     parent.spawn(display);
                 }

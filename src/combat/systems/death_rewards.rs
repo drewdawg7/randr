@@ -3,6 +3,7 @@ use bevy::prelude::*;
 use crate::combat::events::{EntityDied, GoldGained, LootDropped, XpGained};
 use crate::combat::system::{apply_goldfind, player_effective_goldfind, player_effective_magicfind};
 use crate::inventory::Inventory;
+use crate::item::ItemRegistry;
 use crate::loot::collect_loot_drops;
 use crate::mob::components::{DeathProcessed, GoldReward, MobLootTable, MobMarker, XpReward};
 use crate::player::PlayerMarker;
@@ -71,6 +72,7 @@ pub fn roll_kill_loot(
     mut loot_writer: MessageWriter<LootDropped>,
     mut player: Query<(&StatSheet, &mut Inventory), With<PlayerMarker>>,
     mobs: Query<(&MobLootTable, &DeathProcessed)>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok((stats, mut inventory)) = player.single_mut() else {
         return;
@@ -90,7 +92,7 @@ pub fn roll_kill_loot(
             continue;
         }
 
-        let drops = loot_table.0.roll_drops(magic_find);
+        let drops = loot_table.0.roll_drops(magic_find, &registry);
         for drop in &drops {
             loot_writer.write(LootDropped {
                 item_name: drop.item.name.clone(),

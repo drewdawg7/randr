@@ -4,6 +4,7 @@ use crate::chest::Chest;
 use crate::dungeon::events::{ChestMined, MineableEntityType, MiningResult, RockMined};
 use crate::dungeon::DungeonCommands;
 use crate::inventory::Inventory;
+use crate::item::ItemRegistry;
 use crate::loot::{collect_loot_drops, HasLoot};
 use crate::player::PlayerMarker;
 use crate::rock::Rock;
@@ -24,6 +25,7 @@ fn on_chest_mined(
     mut commands: Commands,
     mut result_events: MessageWriter<MiningResult>,
     mut player: Query<(&StatSheet, &mut Inventory), With<PlayerMarker>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok((stats, mut inventory)) = player.single_mut() else {
         return;
@@ -31,7 +33,7 @@ fn on_chest_mined(
     let event = trigger.event();
     let magic_find = stats.value(StatType::MagicFind);
 
-    let loot_drops = Chest::default().roll_drops(magic_find);
+    let loot_drops = Chest::default().roll_drops(magic_find, &registry);
 
     collect_loot_drops(&mut *inventory, &loot_drops);
     commands.despawn_dungeon_entity(event.entity);
@@ -48,6 +50,7 @@ fn on_rock_mined(
     mut result_events: MessageWriter<MiningResult>,
     mut xp_events: MessageWriter<SkillXpGained>,
     mut player: Query<(&StatSheet, &mut Inventory), With<PlayerMarker>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok((stats, mut inventory)) = player.single_mut() else {
         return;
@@ -60,7 +63,7 @@ fn on_rock_mined(
         amount: event.rock_type.mining_xp(),
     });
 
-    let loot_drops = Rock::new(event.rock_type).roll_drops(magic_find);
+    let loot_drops = Rock::new(event.rock_type).roll_drops(magic_find, &registry);
 
     collect_loot_drops(&mut *inventory, &loot_drops);
     commands.despawn_dungeon_entity(event.entity);

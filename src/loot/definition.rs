@@ -3,7 +3,7 @@ use rand::Rng;
 use serde::Deserialize;
 
 use crate::data::StatRange;
-use crate::item::{Item, ItemId};
+use crate::item::{Item, ItemId, ItemRegistry};
 use crate::loot::enums::LootError;
 
 #[derive(Debug, Clone)]
@@ -84,8 +84,8 @@ impl LootTable {
         })
     }
 
-    pub fn roll_drops(&self, magic_find: i32) -> Vec<LootDrop> {
-        self.roll_drops_with_spawner(magic_find, |id| Some(id.spawn()))
+    pub fn roll_drops(&self, magic_find: i32, registry: &ItemRegistry) -> Vec<LootDrop> {
+        self.roll_drops_with_spawner(magic_find, |id| Some(registry.spawn(id)))
     }
 
     pub fn roll_drops_with_spawner<F>(&self, magic_find: i32, spawn_item: F) -> Vec<LootDrop>

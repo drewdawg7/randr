@@ -3,6 +3,7 @@ use tracing::instrument;
 
 use crate::crafting_station::{AnvilCraftingState, ForgeCraftingState};
 use crate::inventory::{Inventory, ManagesItems};
+use crate::item::ItemRegistry;
 use crate::player::PlayerMarker;
 use crate::skills::{blacksmith_bonus_item_chance, SkillType, SkillXpGained, Skills};
 
@@ -97,11 +98,12 @@ fn handle_anvil_crafting_complete(
     mut player: Query<&mut Inventory, With<PlayerMarker>>,
     skills: Res<Skills>,
     mut anvil_query: Query<&mut AnvilCraftingState>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok(mut inventory) = player.single_mut() else {
         return;
     };
-    let blacksmith_level = skills
+    let _blacksmith_level = skills
         .skill(SkillType::Blacksmith)
         .map(|s| s.level)
         .unwrap_or(1);
@@ -116,7 +118,7 @@ fn handle_anvil_crafting_complete(
         };
 
         let spec = recipe_id.spec();
-        let item = spec.output.spawn_with_quality_bonus(blacksmith_level);
+        let item = registry.spawn(spec.output);
         let _ = inventory.add_to_inv(item);
 
         let ingredient_count: u32 = spec.ingredients.values().sum();

@@ -1,6 +1,6 @@
 use std::fmt::Display;
 
-use crate::{economy::WorthGold, item::{Item, ItemId}};
+use crate::{economy::WorthGold, item::{Item, ItemId, ItemRegistry}};
 
 #[derive(Debug, Clone)]
 pub struct StoreItem {
@@ -10,14 +10,15 @@ pub struct StoreItem {
 }
 
 impl StoreItem {
-    pub fn new(item_id: ItemId, quantity: i32) -> Self {
+    pub fn new(item_id: ItemId, quantity: i32, registry: &ItemRegistry) -> Self {
         let max_quantity = quantity;
-        let actual_quantity = if item_id.spec().item_type.is_equipment() {
+        let sample = registry.spawn(item_id);
+        let actual_quantity = if sample.item_type.is_equipment() {
             1
         } else {
             quantity
         };
-        let items = (0..actual_quantity).map(|_| item_id.spawn()).collect();
+        let items = (0..actual_quantity).map(|_| registry.spawn(item_id)).collect();
         Self {
             item_id,
             items,
@@ -37,15 +38,16 @@ impl StoreItem {
         self.items.pop()
     }
 
-    pub fn restock(&mut self) {
+    pub fn restock(&mut self, registry: &ItemRegistry) {
         self.items.clear();
-        let quantity = if self.item_id.spec().item_type.is_equipment() {
+        let sample = registry.spawn(self.item_id);
+        let quantity = if sample.item_type.is_equipment() {
             1
         } else {
             self.max_quantity
         };
         for _ in 0..quantity {
-            self.items.push(self.item_id.spawn());
+            self.items.push(registry.spawn(self.item_id));
         }
     }
 

@@ -1,12 +1,14 @@
 use bevy::prelude::*;
 
 use crate::assets::GameSprites;
+use crate::item::ItemRegistry;
+use crate::loot::definition::LootItem;
 use crate::ui::{FocusPanel, FocusState, SelectionState};
 
 use super::constants::*;
 use super::state::{
     CompendiumDetailView, CompendiumDropsSection, CompendiumListState, CompendiumMonsters,
-    CompendiumViewState, DropEntry, DropListItem, DropsListState,
+    CompendiumViewState, DropListItem, DropsListState,
 };
 
 pub fn update_drops_display(
@@ -18,6 +20,7 @@ pub fn update_drops_display(
     focus_state: Option<Res<FocusState>>,
     game_sprites: Res<GameSprites>,
     mut drops_section: Query<(Entity, &mut Node, Option<&Children>), With<CompendiumDropsSection>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Some(monsters) = monsters else { return };
     let Some(entry) = monsters.get(list_state.selected) else { return };
@@ -63,7 +66,7 @@ pub fn update_drops_display(
             for (idx, drop) in entry.drops.iter().enumerate() {
                 let is_selected = drops_focused && idx == drops_state.selected;
                 let text_color = if is_selected { SELECTED_COLOR } else { NORMAL_COLOR };
-                spawn_drop_row(parent, idx, drop, &*game_sprites, text_color);
+                spawn_drop_row(parent, idx, drop, &*game_sprites, text_color, &registry);
             }
         }
     });
@@ -72,20 +75,25 @@ pub fn update_drops_display(
 fn spawn_drop_row(
     parent: &mut ChildSpawnerCommands,
     idx: usize,
-    drop: &DropEntry,
+    loot_item: &LootItem,
     game_sprites: &GameSprites,
     text_color: Color,
+    registry: &ItemRegistry,
 ) {
-    let quantity_str = if drop.quantity_min == drop.quantity_max {
-        format!("({})", drop.quantity_min)
+    let spec = registry.get(loot_item.item_id());
+    let quantity_range = loot_item.quantity_range();
+    let quantity_str = if quantity_range.start() == quantity_range.end() {
+        format!("({})", quantity_range.start())
     } else {
-        format!("({}-{})", drop.quantity_min, drop.quantity_max)
+        format!("({}-{})", quantity_range.start(), quantity_range.end())
     };
 
     let display_text = format!(
         "{} - {:.0}% {}",
-        drop.item_name, drop.drop_percent, quantity_str
+        spec.name, loot_item.drop_chance_percent(), quantity_str
     );
+
+    let sprite_sheet_key = spec.sprite_sheet.unwrap_or(crate::assets::SpriteSheetKey::IconItems);
 
     parent
         .spawn((
@@ -99,9 +107,8 @@ fn spawn_drop_row(
             },
         ))
         .with_children(|row| {
-            if let Some(sheet) = game_sprites.get(drop.item_id.sprite_sheet_key()) {
-                let sprite_name = drop.item_id.sprite_name();
-                if let Some(bundle) = sheet.image_bundle(sprite_name, DROP_ICON_SIZE, DROP_ICON_SIZE)
+            if let Some(sheet) = game_sprites.get(sprite_sheet_key) {
+                if let Some(bundle) = sheet.image_bundle(&spec.sprite_name, DROP_ICON_SIZE, DROP_ICON_SIZE)
                 {
                     row.spawn(bundle);
                 }

@@ -1,7 +1,6 @@
 use bevy::prelude::*;
 
 use crate::data::StatRange;
-use crate::item::ItemId;
 use crate::loot::definition::LootItem;
 use crate::mob::MobId;
 use crate::ui::modal_registry::RegisteredModal;
@@ -85,33 +84,10 @@ impl SelectionState for DropsListState {
 }
 
 #[derive(Clone)]
-pub struct DropEntry {
-    pub item_id: ItemId,
-    pub item_name: String,
-    pub drop_percent: f32,
-    pub quantity_min: i32,
-    pub quantity_max: i32,
-}
-
-impl DropEntry {
-    pub fn from_loot_item(item: &LootItem) -> Self {
-        let item_id = item.item_id();
-        let spec = item_id.spec();
-        Self {
-            item_id,
-            item_name: spec.name.clone(),
-            drop_percent: item.drop_chance_percent(),
-            quantity_min: item.quantity_range().start(),
-            quantity_max: item.quantity_range().end(),
-        }
-    }
-}
-
-#[derive(Clone)]
 pub struct MonsterEntry {
     pub name: String,
     pub mob_id: MobId,
-    pub drops: Vec<DropEntry>,
+    pub drops: Vec<LootItem>,
     pub max_health: StatRange,
     pub attack: StatRange,
     pub defense: StatRange,
@@ -130,15 +106,15 @@ impl CompendiumMonsters {
                 .iter()
                 .map(|mob_id| {
                     let spec = mob_id.spec();
-                    let mut drops: Vec<DropEntry> = spec
+                    let mut drops: Vec<LootItem> = spec
                         .loot
                         .iter()
-                        .map(DropEntry::from_loot_item)
+                        .cloned()
                         .collect();
 
                     drops.sort_by(|a, b| {
-                        a.drop_percent
-                            .partial_cmp(&b.drop_percent)
+                        a.drop_chance_percent()
+                            .partial_cmp(&b.drop_chance_percent())
                             .unwrap_or(std::cmp::Ordering::Equal)
                     });
 

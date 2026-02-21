@@ -3,6 +3,7 @@ use uuid::Uuid;
 
 use crate::inventory::{FindsItems, Inventory, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
+use crate::item::ItemRegistry;
 use crate::player::{PlayerGold, PlayerMarker};
 
 #[derive(Message, Debug, Clone)]
@@ -140,6 +141,7 @@ fn process_crafting_recipe(
     operation: CraftingOperation,
     result_events: &mut MessageWriter<BlacksmithResult>,
     inventory: &mut Inventory,
+    registry: &ItemRegistry,
 ) -> bool {
     let Ok(recipe) = Recipe::new(recipe_id) else {
         return false;
@@ -155,7 +157,7 @@ fn process_crafting_recipe(
 
     match recipe.craft(inventory) {
         Ok(item_id) => {
-            let item = item_id.spawn();
+            let item = registry.spawn(item_id);
             let item_name = recipe.name().to_string();
 
             match inventory.add_to_inv(item) {
@@ -284,6 +286,7 @@ fn handle_smelt_recipe(
     mut smelt_events: MessageReader<SmeltRecipeEvent>,
     mut result_events: MessageWriter<BlacksmithResult>,
     mut player: Query<&mut Inventory, With<PlayerMarker>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok(mut inventory) = player.single_mut() else {
         return;
@@ -295,6 +298,7 @@ fn handle_smelt_recipe(
             CraftingOperation::Smelt,
             &mut result_events,
             &mut inventory,
+            &registry,
         );
     }
 }
@@ -303,6 +307,7 @@ fn handle_forge_recipe(
     mut forge_events: MessageReader<ForgeRecipeEvent>,
     mut result_events: MessageWriter<BlacksmithResult>,
     mut player: Query<&mut Inventory, With<PlayerMarker>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok(mut inventory) = player.single_mut() else {
         return;
@@ -314,6 +319,7 @@ fn handle_forge_recipe(
             CraftingOperation::Forge,
             &mut result_events,
             &mut inventory,
+            &registry,
         );
     }
 }

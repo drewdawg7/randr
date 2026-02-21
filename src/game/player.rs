@@ -1,7 +1,9 @@
 use bevy::prelude::*;
 
 use crate::entities::Progression;
+use crate::item::ItemRegistry;
 use crate::player::{PlayerBundle, PlayerMarker};
+use crate::states::AppState;
 use crate::stats::StatSheet;
 
 #[derive(Message, Debug, Clone)]
@@ -41,13 +43,16 @@ impl Plugin for PlayerPlugin {
             .add_message::<PlayerHealed>()
             .add_message::<PlayerLeveledUp>()
             .add_message::<GoldChanged>()
-            .add_systems(Startup, spawn_player_entity)
+            .add_systems(
+                OnEnter(AppState::Menu),
+                spawn_player_entity.run_if(not(any_with_component::<PlayerMarker>)),
+            )
             .add_systems(Update, handle_level_up);
     }
 }
 
-fn spawn_player_entity(mut commands: Commands) {
-    commands.spawn(PlayerBundle::default());
+fn spawn_player_entity(mut commands: Commands, registry: Res<ItemRegistry>) {
+    commands.spawn(PlayerBundle::new(&registry));
 }
 
 fn handle_level_up(

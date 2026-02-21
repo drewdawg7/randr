@@ -3,7 +3,7 @@ use bevy::prelude::*;
 use crate::assets::{GameFonts, GameSprites};
 use crate::crafting_station::ForgeCraftingState;
 use crate::inventory::{Inventory, ManagesItems};
-use crate::item::ItemId;
+use crate::item::{ItemId, ItemRegistry};
 use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::widgets::{
@@ -25,6 +25,7 @@ pub fn refresh_forge_slots(
     slot_cells: Query<(Entity, &ForgeSlotCell, Option<&Children>)>,
     item_sprites: Query<Entity, With<ForgeSlotItemSprite>>,
     quantity_texts: Query<Entity, With<ForgeSlotQuantityText>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Some(active_forge) = active_forge else {
         return;
@@ -53,7 +54,7 @@ pub fn refresh_forge_slots(
 
         if let Some((item_id, quantity)) = contents {
             commands.entity(cell_entity).with_children(|cell| {
-                spawn_slot_item(cell, &game_sprites, &game_fonts, item_id, quantity);
+                spawn_slot_item(cell, &game_sprites, &game_fonts, item_id, quantity, &registry);
             });
         }
     }
@@ -149,6 +150,7 @@ pub fn populate_forge_detail_pane_content(
     forge_state_query: Query<Ref<ForgeCraftingState>>,
     panes: Query<Ref<ItemDetailPane>>,
     content_query: Query<(Entity, Option<&Children>), With<ItemDetailPaneContent>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok(inventory) = player.single() else { return };
     let inventory_changed = false;
@@ -193,7 +195,7 @@ pub fn populate_forge_detail_pane_content(
             continue;
         };
 
-        let item = item_id.spawn();
+        let item = registry.spawn(item_id);
         let display = ItemDetailDisplay::builder(&item).quantity(quantity).build();
 
         commands.entity(content_entity).with_children(|parent| {

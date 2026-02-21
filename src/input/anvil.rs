@@ -4,6 +4,7 @@ use crate::crafting_station::{AnvilCraftingState, TryStartAnvilCrafting};
 use crate::input::GameAction;
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::RecipeId;
+use crate::item::ItemRegistry;
 use crate::player::PlayerMarker;
 use crate::ui::focus::{FocusPanel, FocusState};
 use crate::ui::modal_registry::ModalCommands;
@@ -117,12 +118,13 @@ pub fn craft_anvil_recipe(
 pub fn sync_anvil_recipes(
     player: Query<&Inventory, (With<PlayerMarker>, Changed<Inventory>)>,
     mut recipe_grids: Query<&mut ItemGrid, With<AnvilRecipeGrid>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok(inventory) = player.single() else {
         return;
     };
 
     if let Ok(mut grid) = recipe_grids.single_mut() {
-        grid.items = get_recipe_entries(inventory);
+        grid.items = get_recipe_entries(inventory, &registry);
     }
 }

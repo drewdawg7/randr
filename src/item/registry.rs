@@ -5,7 +5,7 @@ use bevy::prelude::*;
 use super::definition::Item;
 use super::definitions::{ItemId, ItemSpec};
 
-#[derive(Resource)]
+#[derive(Clone, Resource)]
 pub struct ItemRegistry(HashMap<ItemId, ItemSpec>);
 
 impl ItemRegistry {

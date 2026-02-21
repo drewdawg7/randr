@@ -78,6 +78,7 @@ fn do_spawn_forge_modal(
     forge_state_query: Query<&crate::crafting_station::ForgeCraftingState>,
     active_forge: Res<ActiveForgeEntity>,
     modal_state: Res<ForgeModalState>,
+    registry: Res<crate::item::ItemRegistry>,
 ) {
     let Ok(inventory) = player_query.single() else {
         tracing::error!("No player inventory found for forge modal");
@@ -91,5 +92,6 @@ fn do_spawn_forge_modal(
         &forge_state_query,
         &active_forge,
         &modal_state,
+        &registry,
     );
 }

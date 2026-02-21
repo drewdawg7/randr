@@ -2,6 +2,7 @@ use bevy::prelude::*;
 
 use crate::inventory::{Inventory, ManagesItems};
 use crate::item::recipe::{Recipe, RecipeId};
+use crate::item::ItemRegistry;
 use crate::player::PlayerMarker;
 
 #[derive(Message, Debug, Clone)]
@@ -31,6 +32,7 @@ fn handle_brew_potion(
     mut brew_events: MessageReader<BrewPotionEvent>,
     mut result_events: MessageWriter<BrewingResult>,
     mut player: Query<&mut Inventory, With<PlayerMarker>>,
+    registry: Res<ItemRegistry>,
 ) {
     let Ok(mut inventory) = player.single_mut() else {
         return;
@@ -50,7 +52,7 @@ fn handle_brew_potion(
 
         match recipe.craft(&mut *inventory) {
             Ok(item_id) => {
-                let item = item_id.spawn();
+                let item = registry.spawn(item_id);
                 let item_name = recipe.name().to_string();
 
                 match inventory.add_to_inv(item) {

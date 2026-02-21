@@ -45,8 +45,8 @@ pub fn get_merchant_stock_entries(stock: &MerchantStock) -> Vec<ItemGridEntry> {
         .iter()
         .filter_map(|store_item| {
             store_item.display_item().map(|item| ItemGridEntry {
-                sprite_sheet_key: item.item_id.sprite_sheet_key(),
-                sprite_name: item.item_id.sprite_name().to_string(),
+                sprite_sheet_key: item.sprite.sheet_key,
+                sprite_name: item.sprite.name.clone(),
                 quantity: store_item.quantity() as u32,
             })
         })

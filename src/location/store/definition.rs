@@ -5,7 +5,7 @@ use bevy::prelude::Resource;
 use crate::{
     economy::WorthGold,
     inventory::{Inventory, ManagesItems},
-    item::{Item, ItemId},
+    item::{Item, ItemId, ItemRegistry},
     location::{LocationId, LocationSpec, StoreData},
     player::PlayerGold,
 };
@@ -21,11 +21,11 @@ pub struct Store {
 }
 
 impl Store {
-    pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &StoreData) -> Self {
+    pub fn from_spec(location_id: LocationId, spec: &LocationSpec, data: &StoreData, registry: &ItemRegistry) -> Self {
         let inventory = data
             .initial_stock
             .iter()
-            .map(|(item_id, quantity)| StoreItem::new(*item_id, *quantity))
+            .map(|(item_id, quantity)| StoreItem::new(*item_id, *quantity, registry))
             .collect();
         Store {
             location_id,
@@ -35,10 +35,10 @@ impl Store {
         }
     }
 
-    pub fn new(name: &str, initial_stock: Vec<(ItemId, i32)>) -> Self {
+    pub fn new(name: &str, initial_stock: Vec<(ItemId, i32)>, registry: &ItemRegistry) -> Self {
         let inventory = initial_stock
             .into_iter()
-            .map(|(item_id, quantity)| StoreItem::new(item_id, quantity))
+            .map(|(item_id, quantity)| StoreItem::new(item_id, quantity, registry))
             .collect();
         Store {
             location_id: LocationId::VillageStore,

@@ -71,6 +71,7 @@ fn do_spawn_anvil_modal(
     game_sprites: Res<crate::assets::GameSprites>,
     game_fonts: Res<crate::assets::GameFonts>,
     player_query: Query<&Inventory, With<PlayerMarker>>,
+    registry: Res<crate::item::ItemRegistry>,
 ) {
     let Ok(inventory) = player_query.single() else {
         tracing::error!("No player inventory found for anvil modal");
@@ -81,5 +82,6 @@ fn do_spawn_anvil_modal(
         &game_sprites,
         &game_fonts,
         inventory,
+        &registry,
     );
 }

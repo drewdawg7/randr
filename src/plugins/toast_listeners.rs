@@ -119,48 +119,44 @@ fn listen_player_events(
 
 fn listen_item_events(mut events: ItemEventReaders, mut toast_writer: MessageWriter<ShowToast>) {
     for event in events.picked_up.read() {
-        let item_name = &event.item_id.spec().name;
         if event.quantity > 1 {
             toast_writer.write(ShowToast::new(format!(
                 "Picked up {} x{}",
-                item_name, event.quantity
+                event.item_name, event.quantity
             )));
         } else {
-            toast_writer.write(ShowToast::new(format!("Picked up {}", item_name)));
+            toast_writer.write(ShowToast::new(format!("Picked up {}", event.item_name)));
         }
     }
 
     for event in events.equipped.read() {
         toast_writer.write(ShowToast::new(format!(
             "Equipped {} to {:?}",
-            event.item_id.spec().name,
-            event.slot
+            event.item_name, event.slot
         )));
     }
 
     for event in events.unequipped.read() {
         toast_writer.write(ShowToast::new(format!(
             "Unequipped {} from {:?}",
-            event.item_id.spec().name,
-            event.slot
+            event.item_name, event.slot
         )));
     }
 
     for event in events.used.read() {
-        toast_writer.write(ShowToast::new(format!("Used {}", event.item_id.spec().name)));
+        toast_writer.write(ShowToast::new(format!("Used {}", event.item_name)));
     }
 
     for event in events.dropped.read() {
         if event.quantity > 1 {
             toast_writer.write(ShowToast::new(format!(
                 "Dropped {} x{}",
-                event.item_id.spec().name,
-                event.quantity
+                event.item_name, event.quantity
             )));
         } else {
             toast_writer.write(ShowToast::new(format!(
                 "Dropped {}",
-                event.item_id.spec().name
+                event.item_name
             )));
         }
     }

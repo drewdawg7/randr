@@ -14,8 +14,8 @@ pub struct ItemGridEntry {
 impl ItemGridEntry {
     pub fn from_inventory_item(inv_item: &InventoryItem) -> Self {
         Self {
-            sprite_sheet_key: inv_item.item.item_id.sprite_sheet_key(),
-            sprite_name: inv_item.item.item_id.sprite_name().to_string(),
+            sprite_sheet_key: inv_item.item.sprite.sheet_key,
+            sprite_name: inv_item.item.sprite.name.clone(),
             quantity: inv_item.quantity,
         }
     }

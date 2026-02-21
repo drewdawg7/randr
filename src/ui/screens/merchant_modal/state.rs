@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use rand::Rng;
 
-use crate::item::ItemId;
+use crate::item::{ItemId, ItemRegistry};
 use crate::location::store::StoreItem;
 use crate::ui::focus::FocusPanel;
 use crate::ui::modal_registry::RegisteredModal;
@@ -51,7 +51,7 @@ pub struct MerchantStock {
 
 impl MerchantStock {
     /// Generate random merchant stock from a pool of items.
-    pub fn generate() -> Self {
+    pub fn generate(registry: &ItemRegistry) -> Self {
         let mut rng = rand::thread_rng();
 
         // Pool of items the merchant can sell
@@ -116,7 +116,7 @@ impl MerchantStock {
             .take(num_items)
             .map(|idx| {
                 let (item_id, quantity) = pool[idx];
-                StoreItem::new(item_id, quantity)
+                StoreItem::new(item_id, quantity, registry)
             })
             .collect();
 
