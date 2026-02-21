@@ -13,7 +13,6 @@ use crate::stats::{StatSheet, StatType};
 #[cfg(test)]
 use super::{EquipmentSlot, FindsItems, HasInventory, Inventory, InventoryError, InventoryItem, ManagesEquipment, ManagesItems};
 
-// ==================== Test Helpers ====================
 
 #[cfg(test)]
 fn create_test_weapon(id: ItemId, attack: i32) -> Item {
@@ -100,7 +99,6 @@ impl HasInventory for MockInventoryHolder {
     }
 }
 
-// ==================== InventoryItem::new() tests ====================
 
 #[test]
 fn inventory_item_new_creates_with_quantity_one() {
@@ -121,7 +119,6 @@ fn inventory_item_new_preserves_item_data() {
     assert_eq!(inv_item.item.stats.value(StatType::Attack), 25);
 }
 
-// ==================== InventoryItem::uuid() tests ====================
 
 #[test]
 fn inventory_item_uuid_returns_item_uuid() {
@@ -132,7 +129,6 @@ fn inventory_item_uuid_returns_item_uuid() {
     assert_eq!(inv_item.uuid(), expected_uuid);
 }
 
-// ==================== InventoryItem::decrease_quantity() tests ====================
 
 #[test]
 fn inventory_item_decrease_quantity_decreases_correctly() {
@@ -164,7 +160,6 @@ fn inventory_item_decrease_quantity_to_exactly_zero() {
     assert_eq!(inv_item.quantity, 0);
 }
 
-// ==================== InventoryItem::increase_quantity() tests ====================
 
 #[test]
 fn inventory_item_increase_quantity_increases_correctly() {
@@ -186,7 +181,6 @@ fn inventory_item_increase_quantity_multiple_times() {
     assert_eq!(inv_item.quantity, 7); // 1 + 3 + 2 + 1
 }
 
-// ==================== Inventory::new() tests ====================
 
 #[test]
 fn inventory_new_initializes_empty_items() {
@@ -206,7 +200,6 @@ fn inventory_new_sets_max_slots_to_fifteen() {
     assert_eq!(inv.max_slots(), 15);
 }
 
-// ==================== Inventory::new_unlimited() tests ====================
 
 #[test]
 fn inventory_new_unlimited_has_max_slots() {
@@ -214,7 +207,6 @@ fn inventory_new_unlimited_has_max_slots() {
     assert_eq!(inv.max_slots(), usize::MAX);
 }
 
-// ==================== Inventory::max_slots() tests ====================
 
 #[test]
 fn inventory_max_slots_returns_correct_value() {
@@ -222,7 +214,6 @@ fn inventory_max_slots_returns_correct_value() {
     assert_eq!(inv.max_slots(), 15);
 }
 
-// ==================== Inventory::sum_equipment_stats() tests ====================
 
 #[test]
 fn inventory_sum_equipment_stats_returns_zero_when_empty() {
@@ -254,7 +245,6 @@ fn inventory_sum_equipment_stats_sums_multiple_items() {
     assert_eq!(holder.inventory().sum_equipment_stats(StatType::Defense), 15);
 }
 
-// ==================== Inventory::equipment() accessor tests ====================
 
 #[test]
 fn inventory_equipment_accessor_returns_reference() {
@@ -277,7 +267,6 @@ fn inventory_equipment_mut_allows_modification() {
     assert!(holder.inventory().equipment().is_empty());
 }
 
-// ==================== HasInventory::add_to_inv() tests ====================
 
 #[test]
 fn add_to_inv_adds_new_item() {
@@ -355,7 +344,6 @@ fn add_to_inv_stacks_up_to_max_stack_quantity() {
     assert_eq!(holder.inventory().items.len(), 2);
 }
 
-// ==================== HasInventory::find_item_by_uuid() tests ====================
 
 #[test]
 fn find_item_by_uuid_finds_item_in_inventory() {
@@ -379,7 +367,6 @@ fn find_item_by_uuid_returns_none_when_not_found() {
     assert!(found.is_none());
 }
 
-// ==================== HasInventory::find_item_by_id() tests ====================
 
 #[test]
 fn find_item_by_id_finds_item_in_inventory() {
@@ -411,7 +398,6 @@ fn find_item_by_id_returns_none_when_not_found() {
     assert!(found.is_none());
 }
 
-// ==================== HasInventory::decrease_item_quantity() tests ====================
 
 #[test]
 fn decrease_item_quantity_decreases_in_inventory() {
@@ -453,7 +439,6 @@ fn decrease_item_quantity_works_on_equipment() {
     assert!(holder.inventory().equipment().is_empty());
 }
 
-// ==================== HasInventory::remove_item_from_inventory() tests ====================
 
 #[test]
 fn remove_item_from_inventory_removes_by_uuid() {
@@ -485,7 +470,6 @@ fn remove_item_from_inventory_only_removes_matching_item() {
     assert_eq!(holder.inventory().items[0].item.item_id, ItemId::Dagger);
 }
 
-// ==================== HasInventory::equip_item() tests ====================
 
 #[test]
 fn equip_item_adds_to_equipment_slot() {
@@ -524,7 +508,6 @@ fn equip_item_replaces_existing_equipped_item() {
     assert!(holder.find_item_by_id(ItemId::Sword).is_some());
 }
 
-// ==================== HasInventory::unequip_item() tests ====================
 
 #[test]
 fn unequip_item_moves_to_inventory() {
@@ -581,7 +564,6 @@ fn unequip_item_succeeds_for_empty_slot() {
     assert!(result.is_ok());
 }
 
-// ==================== HasInventory::equip_from_inventory() tests ====================
 
 #[test]
 fn equip_from_inventory_moves_from_inventory_to_equipment() {
@@ -646,7 +628,6 @@ fn equip_from_inventory_does_nothing_for_invalid_uuid() {
     assert!(holder.inventory().equipment().is_empty());
 }
 
-// ==================== HasInventory::get_equipped_item() tests ====================
 
 #[test]
 fn get_equipped_item_returns_item_in_slot() {
@@ -667,7 +648,6 @@ fn get_equipped_item_returns_none_for_empty_slot() {
     assert!(equipped.is_none());
 }
 
-// ==================== HasInventory::remove_item() tests ====================
 
 #[test]
 fn remove_item_removes_from_equipment() {
@@ -719,7 +699,6 @@ fn remove_item_returns_removed_item() {
     assert_eq!(removed_item.item.item_id, ItemId::Sword);
 }
 
-// ==================== EquipmentSlot::all() tests ====================
 
 #[test]
 fn equipment_slot_all_returns_all_slots() {
@@ -737,7 +716,6 @@ fn equipment_slot_all_returns_all_slots() {
     assert!(all_slots.contains(&EquipmentSlot::Legs));
 }
 
-// ==================== Integration/User Flow tests ====================
 
 #[test]
 fn user_flow_add_equip_unequip_remove() {

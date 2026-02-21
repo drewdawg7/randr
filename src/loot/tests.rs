@@ -19,7 +19,6 @@ use super::definition::{LootItem, LootTable};
 #[cfg(test)]
 use super::enums::LootError;
 
-// ==================== Test Helpers ====================
 
 #[cfg(test)]
 fn create_test_material(id: ItemId, gold_value: i32) -> Item {
@@ -46,7 +45,6 @@ fn mock_spawn_item(id: ItemId) -> Option<Item> {
     Some(create_test_material(id, 10))
 }
 
-// ==================== LootItem::new() tests ====================
 
 #[test]
 fn loot_item_new_creates_valid_loot_item() {
@@ -80,7 +78,6 @@ fn loot_item_new_accepts_zero_numerator() {
     assert!(result.is_ok());
 }
 
-// ==================== LootTable::new() tests ====================
 
 #[test]
 fn loot_table_new_creates_empty_table() {
@@ -88,7 +85,6 @@ fn loot_table_new_creates_empty_table() {
     assert_eq!(table.ore_proportions().count(), 0);
 }
 
-// ==================== LootTable::with() builder tests ====================
 
 #[test]
 fn loot_table_with_chains_loot_item_additions() {
@@ -120,7 +116,6 @@ fn loot_table_with_ignores_duplicate_items() {
     assert_eq!(table.ore_proportions().count(), 1);
 }
 
-// ==================== LootTable::add_loot_item() tests ====================
 
 #[test]
 fn loot_table_add_loot_item_adds_items_correctly() {
@@ -149,7 +144,6 @@ fn loot_table_add_loot_item_returns_item_already_in_table_for_duplicates() {
     assert!(matches!(result, Err(LootError::ItemAlreadyInTable)));
 }
 
-// ==================== LootTable::check_item_kind() tests ====================
 
 #[test]
 fn loot_table_check_item_kind_returns_true_when_item_exists() {
@@ -175,7 +169,6 @@ fn loot_table_check_item_kind_returns_false_for_empty_table() {
     assert!(!table.check_item_kind(&ItemId::IronOre));
 }
 
-// ==================== LootTable::get_loot_item_from_kind() tests ====================
 
 #[test]
 fn loot_table_get_loot_item_from_kind_finds_item() {
@@ -197,7 +190,6 @@ fn loot_table_get_loot_item_from_kind_returns_none_when_missing() {
     assert!(result.is_none());
 }
 
-// ==================== LootTable::ore_proportions() tests ====================
 
 #[test]
 fn loot_table_ore_proportions_returns_correct_drop_chances() {
@@ -227,7 +219,6 @@ fn loot_table_ore_proportions_returns_empty_for_empty_table() {
     assert_eq!(table.ore_proportions().count(), 0);
 }
 
-// ==================== LootTable::roll_drops_with_spawner() tests ====================
 
 #[test]
 fn loot_table_roll_drops_empty_table_returns_no_drops() {
@@ -332,7 +323,6 @@ fn loot_table_roll_drops_handles_spawn_failure() {
     assert!(drops.is_empty());
 }
 
-// ==================== LootDrop tests ====================
 
 #[test]
 fn loot_drop_contains_spawned_item_with_quantity() {
@@ -347,7 +337,6 @@ fn loot_drop_contains_spawned_item_with_quantity() {
     assert_eq!(drops[0].quantity, 2);
 }
 
-// ==================== WorthGold trait tests (Item implementation) ====================
 
 #[test]
 fn worth_gold_gold_value_returns_base_value_for_normal_quality() {
@@ -383,7 +372,6 @@ fn worth_gold_sell_price_rounds_down_for_odd_values() {
     assert_eq!(item.sell_price(), 50);
 }
 
-// ==================== Magic Find bonus tests ====================
 
 #[test]
 fn loot_table_roll_drops_magic_find_zero_no_bonus() {
